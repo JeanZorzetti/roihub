@@ -18,5 +18,7 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 # exports manuais de crawl stats lidos via fs em runtime (aba /infra)
 COPY --from=build /app/docs ./docs
+# insights.json gerado pelo ml/analyze.py, lido via fs em runtime (aba /insights)
+COPY --from=build /app/data ./data
 EXPOSE 3000
 CMD ["node", "server.js"]

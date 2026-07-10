@@ -193,6 +193,11 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .wk-table table { margin-top: 6px; font-size: 13px; }
 .wk-table td, .wk-table th { padding: 6px 10px; }
 
+/* aba Insights */
+.insight-line { font-size: 14px; margin: 8px 0; }
+.reason-list { margin: 6px 0 2px; padding-left: 18px; font-size: 13px; color: var(--ink2); }
+.reason-list li { margin: 2px 0; }
+
 /* tabela-gêmea dos gráficos */
 .table-details { margin-top: 20px; }
 .table-details summary { cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 14px; color: var(--ink2); }

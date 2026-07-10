@@ -45,11 +45,16 @@
 - Basic auth fail-closed: sem `HUB_PASS` em produção → 503.
 - Score em `lib/score.mjs`, agregação em `lib/series.mjs` (JS puro com JSDoc pra rodar no node:test sem tooling).
 
+## Aba Insights (ML) — SHIPPED 10/07 (noite)
+
+- **F0–F2 do `handoff-ml.md` implementados**: `ml/` (Python 3.13, venv em `C:\venvs\roihub-ml`) gera `data/insights.json` (versionado) e a aba `/insights` renderiza — health 0–100 explicável, tendência Theil-Sen 4/12/26 sem, changepoints PELT, anomalias MAD, diagnóstico crawl↔SEO. Detalhes/gotchas/pendências (F3 forecast, F4 narrativa) em `handoff-ml.md`.
+- **Rotina de sexta agora**: export de crawl em `docs/` → `C:\venvs\roihub-ml\Scripts\python ml\analyze.py` → commit+push.
+- pytest 11/11 em `ml/test_ml.py`; extração validada 100% contra os totais 28d do hub.
+
 ## Próximos candidatos
 
-- **★ ML de diagnóstico/insights das 2 abas — brief completo em `handoff-ml.md`** (decisão: Python sozinho, batch local → `data/insights.json` versionado, sem infra nova).
-
-- Conferir `/seo` em prod depois do deploy (deploy é automático no push).
+- F3 (forecast + kill-gates nimblabs) e F4 (narrativa claude-cli) do `handoff-ml.md`.
+- Conferir `/seo`, `/infra` e `/insights` em prod depois do deploy (deploy é automático no push).
 - `.env` local com a credencial agora existe (gitignorado) — dev local mostra dados reais.
 - Se a aba SEO pedir interação real (crosshair, filtro de janela), aí sim entra client JS — hoje é 100% server.
 

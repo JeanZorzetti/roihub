@@ -1,6 +1,16 @@
-# ROI Hub — handoff: ML de diagnóstico e insights (não iniciado)
+# ROI Hub — handoff: ML de diagnóstico e insights
 
-**Objetivo:** um motor que diagnostica e gera insights por projeto a partir dos dados das duas abas do hub — `/seo` (Search Console via API) e `/infra` (crawl stats via export manual) — e entrega as conclusões DENTRO do hub. Pedido do Jean em 10/07/2026; nada implementado ainda, este arquivo é o brief completo pra sessão nova.
+**Objetivo:** um motor que diagnostica e gera insights por projeto a partir dos dados das duas abas do hub — `/seo` (Search Console via API) e `/infra` (crawl stats via export manual) — e entrega as conclusões DENTRO do hub. Pedido do Jean em 10/07/2026.
+
+## ✅ STATUS 10/07 (noite): F0–F2 SHIPPED
+
+- `ml/` implementado (gsc.py, crawl.py, diagnostics.py, analyze.py, test_ml.py 11/11 pytest) + aba `/insights` no hub.
+- **Venv fora do OneDrive**: `C:\venvs\roihub-ml` (Python 3.13; `C:\venvs\roihub-ml\Scripts\python -m pip install -r ml/requirements.txt`). ruptures instala limpo no 3.13.
+- **Rotina de sexta ganha um passo**: depois do export de crawl, `C:\venvs\roihub-ml\Scripts\python ml\analyze.py` → commit+push (o JSON versionado é o deploy).
+- **F0 validado**: `--dump` bate 100% com os totais 28d do hub (script node descartável na sessão de 10/07, todas as 10 propriedades idênticas).
+- **Achado real do 1º run**: 4 projetos (sirius, polarisia, estetiacrm, nimblabs) com changepoint de impressões PRA CIMA na mesma semana de 13/05/2026 — padrão de algo update; cruzar manualmente com deploys/updates.
+- Gotchas novos: `.env` do repo tem BOM UTF-8 (ler com `utf-8-sig`); console Windows é cp1252 (prints do analyze.py só ASCII).
+- **Falta**: F3 (forecast Holt-Winters + kill-gates nimblabs) e F4 (narrativa via claude-cli) — briefs abaixo continuam válidos. Conferir `/insights` em prod.
 
 ## Decisão de linguagem: Python, SOZINHO
 
