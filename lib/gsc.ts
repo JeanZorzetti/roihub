@@ -69,6 +69,24 @@ async function queryClicks(
   return res.data.rows?.[0]?.clicks ?? 0;
 }
 
+export type GscStatus =
+  | { state: "off" }
+  | { state: "error"; message: string }
+  | { state: "ok"; properties: string[] };
+
+// Estado da conexão GSC pro rodapé — distingue "env ausente" de "env quebrada",
+// senão tudo vira SEED silencioso e o deploy fica impossível de diagnosticar.
+export async function gscStatus(): Promise<GscStatus> {
+  const clientP = getClient();
+  if (!clientP) return { state: "off" };
+  try {
+    const sites = await listSites(await clientP);
+    return { state: "ok", properties: sites.map((s) => s.siteUrl) };
+  } catch (e) {
+    return { state: "error", message: e instanceof Error ? e.message.slice(0, 200) : String(e) };
+  }
+}
+
 // Cliques dos últimos 28d (fechando 3 dias atrás, GSC atrasa) vs os 28d anteriores.
 // Qualquer falha (env ausente, sem propriedade, quota) → null e o hub usa o seoSeed.
 export async function gscTrend(siteUrl: string): Promise<GscTrend> {

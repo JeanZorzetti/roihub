@@ -1,6 +1,6 @@
 import projects from "@/data/projects.json";
 import { checkHealth, type Health } from "@/lib/health";
-import { gscTrend, type GscTrend } from "@/lib/gsc";
+import { gscTrend, gscStatus, type GscTrend } from "@/lib/gsc";
 import { computeScore, seoScoreFromClicks, WEIGHTS } from "@/lib/score.mjs";
 
 type Project = (typeof projects)[number];
@@ -70,7 +70,10 @@ function TrendCell({ p }: { p: Evaluated }) {
 }
 
 export default async function Page() {
-  const evaluated = await Promise.all(projects.map(evaluate));
+  const [gsc, evaluated] = await Promise.all([
+    gscStatus(),
+    Promise.all(projects.map(evaluate)),
+  ]);
   evaluated.sort((a, b) => b.score - a.score);
   const foco = evaluated[0];
   const down = evaluated.filter((p) => !p.health.ok);
@@ -200,6 +203,16 @@ export default async function Page() {
         </table>
       </div>
 
+      <p className={gsc.state === "error" ? "foot gsc-err" : "foot"}>
+        {gsc.state === "off" &&
+          "GSC: desligado — a env GOOGLE_SERVICE_ACCOUNT_JSON não está configurada neste ambiente."}
+        {gsc.state === "error" && `GSC: ERRO — ${gsc.message}`}
+        {gsc.state === "ok" &&
+          `GSC: conectado — ${gsc.properties.length} propriedades: ${gsc.properties
+            .map((p) => p.replace("sc-domain:", ""))
+            .sort()
+            .join(", ")}`}
+      </p>
       <p className="foot">
         Score = receita×{WEIGHTS.receita} + blockers×{WEIGHTS.blockers} + SEO×{WEIGHTS.seo} +
         decay×{WEIGHTS.decay}, cada critério 0–10. Site fora do ar força decay 10. SEO vem do

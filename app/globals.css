@@ -148,3 +148,4 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 /* rodapé */
 .foot { margin-top: 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .foot code { background: var(--surface); border: 1px solid var(--grid); border-radius: 4px; padding: 0 5px; font-size: 12px; }
+.gsc-err { color: var(--crit-ink); font-weight: 600; }
