@@ -1,41 +1,49 @@
 # ROI Hub — handoff
 
-**O que é:** hub administrativo dos 10 projetos full-SEO. Rankeia por score de prioridade 0–100 e responde uma pergunta só: **em qual projeto trabalhar hoje** (e quais 9 ignorar). SplitJud ficou de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
+**O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
-## Feito (10/07/2026)
+## 🎯 PRÓXIMA SESSÃO: Aba SEO (progressão)
 
-- Next.js 16 App Router, uma página (`app/page.tsx`), sem DB, sem cron.
-- **Score** = receita×0.35 + blockers×0.25 + SEO×0.2 + decay×0.2 (cada 0–10) → 0–100. Lógica em `lib/score.mjs`, testes em `test/score.test.mjs` (`npm test`, 6/6 verdes).
-- **Automático a cada carregamento:** health check das 10 URLs (`lib/health.ts`; site fora do ar → decay forçado a 10 + banner) e tração SEO via Search Console (`lib/gsc.ts`: cliques 28d vs 28d anteriores → nota 0–10).
-- **Manual:** `data/projects.json` (receita, blockers, decay, seoSeed, próxima ação) — semeado com o estado real dos 10 projetos em 10/07. Editar + push = redeploy.
-- Basic auth via `middleware.ts` — **fail closed**: sem `HUB_PASS` em produção o app responde 503.
-- Build local OK, página verificada via Playwright (10/10 sites responderam 200; foco do dia = Goiânia 73).
+Pedido do Jean (10/07): **aba exclusiva de SEO com análise de progressão** — saber se o SEO de cada projeto está MELHORANDO ao longo do tempo, não só o snapshot 28d.
 
-## Decisões
+Notas pra implementação:
 
-- **Sem DB**: critérios manuais vivem no `projects.json` versionado. Editar pelo git é o fluxo (ou pedir pro Claude).
-- **Página dinâmica** (sem ISR): 1 usuário, dados frescos a cada load; health check usa `no-store`.
-- **GSC via service account** (uma credencial pra todas as propriedades), não OAuth. Sem a env, cai no `seoSeed` manual com pill "SEED".
-- Design system light do admin ROI Labs + paleta dataviz validada (sequencial azul pro score, status com ícone+label).
-- TypeScript pinado em ^5 — npm resolve TS 7 por padrão e o build do Next 16 quebra com ele.
-- `turbopack.root` setado no `next.config.mjs` — existe um `package-lock.json` solto em `C:\Users\jeanz` que faz o Next inferir o root errado.
+- **Não precisa de DB**: a API do Search Console guarda 16 meses de histórico. `searchAnalytics/query` com `dimensions: ["date"]` devolve série diária de clicks/impressions/ctr/position por propriedade. Progressão = calcular na hora.
+- **Reusar `lib/gsc.ts`**: `resolveProperty` + `listSites` (cache 10 min) já resolvem propriedade por host. Adicionar um `queryTimeseries(property, host, start, end)` ao lado do `queryClicks` existente (mesmo endpoint, só acrescenta `dimensions`).
+- Rota nova `app/seo/page.tsx` + navegação de abas no topo (o middleware de basic auth já cobre qualquer rota).
+- **10 projetos = small multiples** (um mini-gráfico por projeto), NUNCA 10 séries num gráfico só. Carregar a skill `dataviz` antes de escrever o UI (paleta/marks já usados no hub: ramp azul sequencial, chrome em `app/globals.css`).
+- Métricas que respondem "está melhorando?": cliques e impressões semanais (agregar os dias em semanas pra suavizar), Δ 28d vs 28d anteriores (o hub já calcula), e posição média (cair = melhor — inverter leitura).
+- Impressões importam mais que cliques pra sites novos (nimblabs ~0 cliques): impressão subindo = Google começando a servir o site.
+- Projeto sem env GSC ou sem propriedade → mostrar estado vazio honesto (mesmo padrão pill SEED da home).
 
-## Próximos passos (pro Jean)
+## Estado atual (fim da sessão de 10/07)
 
-1. **EasyPanel:** criar app apontando pro repo `JeanZorzetti/roihub` (Dockerfile na raiz, porta 3000) + subdomínio (sugestão: `hub.roilabs.com.br`).
-2. **Envs em prod:** `HUB_USER`, `HUB_PASS` (obrigatório) e `GOOGLE_SERVICE_ACCOUNT_JSON` = conteúdo (1 linha) de `nimblabs/docs/review-dispute-agent-498311-5b9d7f27155c.json`.
-3. **GSC:** adicionar `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com` como usuário "Restrito" nas propriedades que faltam (siriuscrm, estetiacrm, polarisia, roilabs/goiânia). As 4 do nimblabs já têm acesso.
+- **App no ar** em `hub.roilabs.com.br` com basic auth. Home completa: score = receita×0.35 + blockers×0.25 + SEO×0.2 + decay×0.2 (0–10 cada), FOCO DE HOJE, health check ao vivo das 10 URLs, tabela rankeada.
+- **GSC automático PRONTO no código, pendente só a env em prod**: a service account `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com` tem acesso Full às **10 propriedades** (verificado via sites.list em 10/07 — Jean adicionou tudo). Local com a credencial: 10/10 pills GSC com cliques reais.
+- **Última pendência (Jean, no EasyPanel):** colar o JSON de 1 linha na env `GOOGLE_SERVICE_ACCOUNT_JSON` + Deploy. Ele colou o COMANDO PowerShell em vez do resultado (deixei o valor pronto no clipboard + backup em `nimblabs/docs/review-dispute-agent-498311-oneline.txt`). **Primeira coisa da próxima sessão: abrir o hub e ler a linha "GSC:" do rodapé** — desligado/ERRO/conectado diz exatamente o estado.
 
-## GSC — como funciona (10/07, verificado e2e)
+## Commits (todos na main, deploy automático)
 
-- **Service account REUSADA** do review-dispute-agent (projeto GCP `review-dispute-agent-498311`, API Search Console já ativa). ⚠️ Se esse projeto GCP for deletado, o hub perde o GSC.
-- **Auto-descoberta de propriedades**: `lib/gsc.ts` chama `sites.list` (cache 10 min — propriedade adicionada aparece sem redeploy) e casa cada projeto por host: `sc-domain:` exato > domínio-pai > URL-prefix. Zero config por projeto no `projects.json`.
-- Toda query filtra página por `https://<host>/` — isola subdomínio quando a propriedade cobre vários.
-- Verificado local com a credencial real: nimblabs/aftercare/context/reviewshield com pill GSC e cliques reais; demais em SEED.
+- `879c5fa` app inicial completo (score+health+GSC+auth+Docker)
+- `3b4c7f3` GSC auto-descoberta de propriedades (sites.list, cache 10 min, filtro por host) — zero config por projeto
+- `3d2c552` linha de status GSC no rodapé (desligado / ERRO com mensagem / conectado + lista)
+- `c4e1e50` fix: env malformada mostrava 500 em vez do estado de erro (JSON.parse fora do try no gscStatus)
 
-## Gotchas
+## Decisões de arquitetura
 
-- `gscHostFilter` filtra por página "contains" — para domínios com vários subdomínios na mesma propriedade (roilabs, nimblabs, estetiacrm).
-- GSC atrasa ~3 dias; as janelas de 28d fecham em D-3.
-- Falha de GSC nunca derruba o hub — cai silenciosamente pro seed (try/catch em `lib/gsc.ts`).
-- Warning de build "middleware → proxy" é só deprecation do Next 16; funciona.
+- **Sem DB**: critérios manuais em `data/projects.json` versionado (editar + push = redeploy). Vale pra aba SEO também — histórico vem da API.
+- **Página dinâmica** (sem ISR): 1 usuário, health `no-store` a cada load; site fora do ar → decay forçado 10 + banner.
+- **Service account REUSADA** do projeto GCP `review-dispute-agent-498311` (API já ativa). ⚠️ Se esse projeto GCP for deletado, o hub perde o GSC.
+- Basic auth fail-closed: sem `HUB_PASS` em produção → 503.
+- Score em `lib/score.mjs` (JS puro com JSDoc pra rodar no node:test sem tooling) — `npm test`, 6/6.
+
+## Gotchas (vários valem pra qualquer projeto novo nesta máquina)
+
+- **TypeScript pinado `^5`**: npm resolve TS 7 por padrão e o build do Next 16 quebra com ele.
+- **`turbopack.root` obrigatório** no next.config: há um `package-lock.json` solto em `C:\Users\jeanz` que faz o Next inferir o root errado.
+- **PS 5.1 + git commit**: aspas duplas dentro de here-string `-m` quebram o argumento — não usar `"` na mensagem.
+- **Matar dev server**: `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where { $_.CommandLine -match "next" } | ForEach { Stop-Process -Id $_.ProcessId -Force }` — kill simples deixa órfão segurando a porta 3000.
+- GSC atrasa ~3 dias; janelas de 28d fecham em D-3.
+- Falha de GSC nunca derruba o hub — `gscTrend` cai pro `seoSeed` (pill SEED); `gscStatus` reporta o motivo no rodapé.
+- Warning "middleware → proxy" no build é só deprecation do Next 16.
+- Quando o GSC entrar em prod, **scores dos nimblabs vão CAIR** (0–1 cliques reais → SEO ~2/10). É o comportamento desejado.
