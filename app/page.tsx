@@ -14,10 +14,7 @@ type Evaluated = Project & {
 };
 
 async function evaluate(p: Project): Promise<Evaluated> {
-  const [health, trend] = await Promise.all([
-    checkHealth(p.url),
-    gscTrend(p.gscProperty, p.gscHostFilter),
-  ]);
+  const [health, trend] = await Promise.all([checkHealth(p.url), gscTrend(p.url)]);
   const seoAuto = trend ? seoScoreFromClicks(trend.current, trend.previous) : null;
   const seo = seoAuto ?? p.seoSeed;
   const decayEff = health.ok ? p.decay : 10; // site fora do ar = decay máximo
@@ -61,7 +58,7 @@ function TrendCell({ p }: { p: Evaluated }) {
   const pct = deltaPct(p.trend);
   return (
     <span className="trend">
-      {p.trend!.current} cliques{" "}
+      {p.trend!.current} {p.trend!.current === 1 ? "clique" : "cliques"}{" "}
       {pct !== null && (
         <span className={pct >= 0 ? "delta-up" : "delta-down"}>
           {pct >= 0 ? "▲" : "▼"} {Math.abs(pct)}%

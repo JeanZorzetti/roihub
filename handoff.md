@@ -23,8 +23,15 @@
 ## Próximos passos (pro Jean)
 
 1. **EasyPanel:** criar app apontando pro repo `JeanZorzetti/roihub` (Dockerfile na raiz, porta 3000) + subdomínio (sugestão: `hub.roilabs.com.br`).
-2. **Envs em prod:** `HUB_USER`, `HUB_PASS` (obrigatório) e depois `GOOGLE_SERVICE_ACCOUNT_JSON` (passos no `.env.example`).
-3. **GSC:** conferir se as propriedades em `projects.json` batem com as reais no Search Console (assumi `sc-domain:`; se forem URL-prefix, trocar o campo `gscProperty`).
+2. **Envs em prod:** `HUB_USER`, `HUB_PASS` (obrigatório) e `GOOGLE_SERVICE_ACCOUNT_JSON` = conteúdo (1 linha) de `nimblabs/docs/review-dispute-agent-498311-5b9d7f27155c.json`.
+3. **GSC:** adicionar `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com` como usuário "Restrito" nas propriedades que faltam (siriuscrm, estetiacrm, polarisia, roilabs/goiânia). As 4 do nimblabs já têm acesso.
+
+## GSC — como funciona (10/07, verificado e2e)
+
+- **Service account REUSADA** do review-dispute-agent (projeto GCP `review-dispute-agent-498311`, API Search Console já ativa). ⚠️ Se esse projeto GCP for deletado, o hub perde o GSC.
+- **Auto-descoberta de propriedades**: `lib/gsc.ts` chama `sites.list` (cache 10 min — propriedade adicionada aparece sem redeploy) e casa cada projeto por host: `sc-domain:` exato > domínio-pai > URL-prefix. Zero config por projeto no `projects.json`.
+- Toda query filtra página por `https://<host>/` — isola subdomínio quando a propriedade cobre vários.
+- Verificado local com a credencial real: nimblabs/aftercare/context/reviewshield com pill GSC e cliques reais; demais em SEED.
 
 ## Gotchas
 
