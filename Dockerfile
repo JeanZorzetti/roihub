@@ -16,5 +16,7 @@ ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+# exports manuais de crawl stats lidos via fs em runtime (aba /infra)
+COPY --from=build /app/docs ./docs
 EXPOSE 3000
 CMD ["node", "server.js"]

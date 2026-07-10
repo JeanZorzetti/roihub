@@ -3,15 +3,17 @@ import type { GscStatus } from "@/lib/gsc";
 
 // Chrome compartilhado entre as páginas (ranking e SEO).
 
-export function Tabs({ active }: { active: "home" | "seo" }) {
+export function Tabs({ active }: { active: "home" | "seo" | "infra" }) {
+  const tab = (key: string, href: string, label: string) => (
+    <Link href={href} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
+      {label}
+    </Link>
+  );
   return (
     <nav className="tabs" aria-label="Seções">
-      <Link href="/" className={active === "home" ? "tab active" : "tab"} aria-current={active === "home" ? "page" : undefined}>
-        Ranking
-      </Link>
-      <Link href="/seo" className={active === "seo" ? "tab active" : "tab"} aria-current={active === "seo" ? "page" : undefined}>
-        SEO
-      </Link>
+      {tab("home", "/", "Ranking")}
+      {tab("seo", "/seo", "SEO")}
+      {tab("infra", "/infra", "Infra")}
     </nav>
   );
 }

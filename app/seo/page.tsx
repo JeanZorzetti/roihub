@@ -3,6 +3,7 @@ import projects from "@/data/projects.json";
 import { gscSeries, gscStatus, isoDaysAgo } from "@/lib/gsc";
 import { bucketWeeks, totals28 } from "@/lib/series.mjs";
 import { Tabs, GscFoot } from "../tabs";
+import { WeekChart, Stat, Delta, InvDelta, num, compact, fmtDay } from "../viz";
 
 // GSC roda a cada request (16 meses de histórico na API — sem DB, sem cache de build).
 export const dynamic = "force-dynamic";
@@ -12,101 +13,7 @@ type Week = { start: string; end: string; clicks: number; impressions: number; p
 type Window28 = { clicks: number; impressions: number; position: number | null };
 type Row = Project & { weeks: Week[]; t: { current: Window28; previous: Window28 } | null };
 
-const num = new Intl.NumberFormat("pt-BR");
-const compact = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
 const fmtPos = (v: number | null) => (v === null ? "—" : v.toFixed(1).replace(".", ","));
-const fmtDay = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
-
-// Δ% pra métricas onde subir é bom (cliques, impressões).
-function Delta({ cur, prev }: { cur: number; prev: number }) {
-  if (prev === 0) return null; // sem base de comparação
-  const pct = Math.round(((cur - prev) / prev) * 100);
-  if (pct === 0) return null;
-  return (
-    <span className={pct > 0 ? "delta-up" : "delta-down"}>
-      {pct > 0 ? "▲" : "▼"} {Math.abs(pct)}%
-    </span>
-  );
-}
-
-// Posição média: CAIR é melhor — cor pela direção invertida.
-function PosDelta({ cur, prev }: { cur: number | null; prev: number | null }) {
-  if (cur === null || prev === null) return null;
-  const d = cur - prev;
-  if (Math.abs(d) < 0.05) return null;
-  return (
-    <span className={d < 0 ? "delta-up" : "delta-down"}>
-      {d < 0 ? "▼" : "▲"} {Math.abs(d).toFixed(1).replace(".", ",")}
-    </span>
-  );
-}
-
-// Colunas com topo arredondado 4px e base reta (spec dataviz: data-end redondo, baseline quadrada).
-function barPath(x: number, y: number, w: number, h: number): string {
-  const r = Math.min(4, h, w / 2);
-  return `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z`;
-}
-
-const CW = 248;
-const CH = 72;
-const PLOT_TOP = 14; // reserva pro rótulo do endpoint
-const BASE = CH - 2;
-
-function WeekChart({
-  title,
-  weeks,
-  metric,
-  unit,
-}: {
-  title: string;
-  weeks: Week[];
-  metric: "clicks" | "impressions";
-  unit: [string, string];
-}) {
-  const values = weeks.map((w) => w[metric]);
-  const max = Math.max(...values);
-  const slot = CW / weeks.length;
-  const lastH = max > 0 ? Math.round((values[values.length - 1] / max) * (BASE - PLOT_TOP)) : 0;
-  return (
-    <figure className="wk-chart">
-      <figcaption>{title}</figcaption>
-      <svg viewBox={`0 0 ${CW} ${CH}`} role="img" aria-label={`${title}, últimas ${weeks.length} semanas`}>
-        <line x1="0" y1={BASE} x2={CW} y2={BASE} className="axis" />
-        {weeks.map((w, i) => {
-          const v = values[i];
-          const h = max > 0 ? Math.round((v / max) * (BASE - PLOT_TOP)) : 0;
-          return (
-            // ponytail: tooltip = <title> nativo do SVG (hover, sem JS no cliente);
-            // a tabela em <details> cobre teclado — upgrade pra tooltip JS se fizer falta
-            <g key={w.end} className="wk">
-              <title>{`${fmtDay(w.start)}–${fmtDay(w.end)}: ${num.format(v)} ${v === 1 ? unit[0] : unit[1]}`}</title>
-              <rect x={i * slot} y="0" width={slot} height={BASE} fill="transparent" />
-              {h > 0 && <path className="bar" d={barPath(i * slot + 1, BASE - h, slot - 2, h)} />}
-            </g>
-          );
-        })}
-        {max > 0 && (
-          <text className="wk-end" x={CW - 1} y={Math.max(10, BASE - lastH - 4)} textAnchor="end">
-            {compact.format(values[values.length - 1])}
-          </text>
-        )}
-      </svg>
-      <div className="wk-range" aria-hidden>
-        <span>{fmtDay(weeks[0].start)}</span>
-        <span>{fmtDay(weeks[weeks.length - 1].end)}</span>
-      </div>
-    </figure>
-  );
-}
-
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="stat-label">{label}</div>
-      <div className="stat-value">{children}</div>
-    </div>
-  );
-}
 
 export default async function SeoPage() {
   const end = isoDaysAgo(3);
@@ -161,16 +68,24 @@ export default async function SeoPage() {
                     <Delta cur={p.t.current.impressions} prev={p.t.previous.impressions} />
                   </Stat>
                   <Stat label="Posição média">
-                    {fmtPos(p.t.current.position)} <PosDelta cur={p.t.current.position} prev={p.t.previous.position} />
+                    {fmtPos(p.t.current.position)}{" "}
+                    <InvDelta
+                      cur={p.t.current.position}
+                      prev={p.t.previous.position}
+                      fmt={(d) => d.toFixed(1).replace(".", ",")}
+                    />
                   </Stat>
                 </div>
                 <div className="seo-charts">
-                  <WeekChart title="Cliques / semana" weeks={p.weeks} metric="clicks" unit={["clique", "cliques"]} />
+                  <WeekChart
+                    title="Cliques / semana"
+                    points={p.weeks.map((w) => ({ start: w.start, end: w.end, value: w.clicks }))}
+                    fmt={(v) => `${num.format(v)} ${v === 1 ? "clique" : "cliques"}`}
+                  />
                   <WeekChart
                     title="Impressões / semana"
-                    weeks={p.weeks}
-                    metric="impressions"
-                    unit={["impressão", "impressões"]}
+                    points={p.weeks.map((w) => ({ start: w.start, end: w.end, value: w.impressions }))}
+                    fmt={(v) => `${num.format(v)} ${v === 1 ? "impressão" : "impressões"}`}
                   />
                 </div>
               </>

@@ -1,0 +1,7 @@
+Resposta,Relação do total de solicitações
+OK (200),0.4060
+Erro do DNS,0.2222
+Conteúdo movido permanentemente (301),0.2094
+Conteúdo movido temporariamente (302),0.1154
+Não encontrado (404),0.0427
+robots.txt indisponível,0.0043

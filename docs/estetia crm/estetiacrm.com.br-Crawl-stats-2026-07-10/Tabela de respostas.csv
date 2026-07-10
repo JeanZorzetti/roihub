@@ -1,0 +1,8 @@
+Resposta,Relação do total de solicitações
+OK (200),0.8130
+Não encontrado (404),0.0664
+Conteúdo movido permanentemente (301),0.0485
+Conteúdo movido temporariamente (302),0.0373
+Não foi possível acessar a página,0.0197
+robots.txt indisponível,0.0138
+Outro erro de cliente (4XX),0.0013
