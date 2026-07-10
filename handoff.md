@@ -45,7 +45,9 @@
 - Basic auth fail-closed: sem `HUB_PASS` em produção → 503.
 - Score em `lib/score.mjs`, agregação em `lib/series.mjs` (JS puro com JSDoc pra rodar no node:test sem tooling).
 
-## Próximos candidatos (nenhum urgente)
+## Próximos candidatos
+
+- **★ ML de diagnóstico/insights das 2 abas — brief completo em `handoff-ml.md`** (decisão: Python sozinho, batch local → `data/insights.json` versionado, sem infra nova).
 
 - Conferir `/seo` em prod depois do deploy (deploy é automático no push).
 - `.env` local com a credencial agora existe (gitignorado) — dev local mostra dados reais.
