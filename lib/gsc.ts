@@ -40,7 +40,7 @@ function resolveProperty(host: string, sites: Site[]): string | null {
   return [...names].find((n) => n.startsWith(`https://${host}/`)) ?? null;
 }
 
-function isoDaysAgo(n: number): string {
+export function isoDaysAgo(n: number): string {
   return new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
 }
 
@@ -67,6 +67,59 @@ async function queryClicks(
     },
   });
   return res.data.rows?.[0]?.clicks ?? 0;
+}
+
+export type GscDay = { date: string; clicks: number; impressions: number; position: number };
+export type GscSeries = { property: string; days: GscDay[] } | null;
+
+// Mesmo endpoint do queryClicks, só acrescenta dimensions:["date"] → série diária.
+async function queryTimeseries(
+  client: Client,
+  property: string,
+  host: string,
+  startDate: string,
+  endDate: string
+): Promise<GscDay[]> {
+  const url = `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+    property
+  )}/searchAnalytics/query`;
+  const res = await client.request<{
+    rows?: { keys: string[]; clicks: number; impressions: number; position: number }[];
+  }>({
+    url,
+    method: "POST",
+    data: {
+      startDate,
+      endDate,
+      dimensions: ["date"],
+      dimensionFilterGroups: [
+        { filters: [{ dimension: "page", operator: "contains", expression: `https://${host}/` }] },
+      ],
+      rowLimit: 500,
+    },
+  });
+  return (res.data.rows ?? []).map((r) => ({
+    date: r.keys[0],
+    clicks: r.clicks,
+    impressions: r.impressions,
+    position: r.position,
+  }));
+}
+
+// Série diária dos últimos 84 dias (12 semanas fechando em D-3, GSC atrasa).
+// Qualquer falha → null e a aba SEO mostra o estado vazio (SEED).
+export async function gscSeries(siteUrl: string): Promise<GscSeries> {
+  try {
+    const clientP = getClient();
+    if (!clientP) return null;
+    const client = await clientP;
+    const host = new URL(siteUrl).hostname;
+    const property = resolveProperty(host, await listSites(client));
+    if (!property) return null;
+    return { property, days: await queryTimeseries(client, property, host, isoDaysAgo(86), isoDaysAgo(3)) };
+  } catch {
+    return null;
+  }
 }
 
 export type GscStatus =

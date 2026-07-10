@@ -2,6 +2,7 @@ import projects from "@/data/projects.json";
 import { checkHealth, type Health } from "@/lib/health";
 import { gscTrend, gscStatus, type GscTrend } from "@/lib/gsc";
 import { computeScore, seoScoreFromClicks, WEIGHTS } from "@/lib/score.mjs";
+import { Tabs, GscFoot } from "./tabs";
 
 type Project = (typeof projects)[number];
 type Evaluated = Project & {
@@ -95,8 +96,11 @@ export default async function Page() {
   return (
     <main className="page">
       <div className="topbar">
-        <div className="brand">
-          ROI <span>Hub</span>
+        <div className="topbar-left">
+          <div className="brand">
+            ROI <span>Hub</span>
+          </div>
+          <Tabs active="home" />
         </div>
         <div className="topbar-meta">
           {projects.length} projetos · 1 foco · atualizado {atualizado}
@@ -203,16 +207,7 @@ export default async function Page() {
         </table>
       </div>
 
-      <p className={gsc.state === "error" ? "foot gsc-err" : "foot"}>
-        {gsc.state === "off" &&
-          "GSC: desligado — a env GOOGLE_SERVICE_ACCOUNT_JSON não está configurada neste ambiente."}
-        {gsc.state === "error" && `GSC: ERRO — ${gsc.message}`}
-        {gsc.state === "ok" &&
-          `GSC: conectado — ${gsc.properties.length} propriedades: ${gsc.properties
-            .map((p) => p.replace("sc-domain:", ""))
-            .sort()
-            .join(", ")}`}
-      </p>
+      <GscFoot gsc={gsc} />
       <p className="foot">
         Score = receita×{WEIGHTS.receita} + blockers×{WEIGHTS.blockers} + SEO×{WEIGHTS.seo} +
         decay×{WEIGHTS.decay}, cada critério 0–10. Site fora do ar força decay 10. SEO vem do
