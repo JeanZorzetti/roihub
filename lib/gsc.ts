@@ -77,10 +77,12 @@ export type GscStatus =
 // Estado da conexão GSC pro rodapé — distingue "env ausente" de "env quebrada",
 // senão tudo vira SEED silencioso e o deploy fica impossível de diagnosticar.
 export async function gscStatus(): Promise<GscStatus> {
-  const clientP = getClient();
-  if (!clientP) return { state: "off" };
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) return { state: "off" };
   try {
-    const sites = await listSites(await clientP);
+    // getClient() faz JSON.parse síncrono — precisa estar DENTRO do try:
+    // env malformada deve virar state error, nunca derrubar a página.
+    const client = await getClient()!;
+    const sites = await listSites(client);
     return { state: "ok", properties: sites.map((s) => s.siteUrl) };
   } catch (e) {
     return { state: "error", message: e instanceof Error ? e.message.slice(0, 200) : String(e) };
