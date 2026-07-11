@@ -99,6 +99,11 @@ a:hover { text-decoration: underline; }
 }
 .acao small { display: block; font-weight: 400; color: var(--ink2); font-size: 13px; margin-top: 2px; }
 
+/* ação já marcada como feita na aba Agenda */
+.acao.done, td.acao-cell.done { text-decoration: line-through; color: var(--muted); }
+.acao.done { border-left-color: var(--muted); background: #f4f4f4; }
+.acao.done small { text-decoration: none; }
+
 .hero-blockers { margin: 16px 0 0; padding: 0 0 0 18px; color: var(--ink2); font-size: 14px; }
 .hero-blockers li { margin: 2px 0; }
 

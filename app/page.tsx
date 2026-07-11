@@ -3,7 +3,11 @@ import insights from "@/data/insights.json";
 import { checkHealth, type Health } from "@/lib/health";
 import { gscTrend, gscStatus, type GscTrend } from "@/lib/gsc";
 import { computeScore, seoScoreFromClicks, decayFromHealth, WEIGHTS } from "@/lib/score.mjs";
+import { dbOn, listDone } from "@/lib/db";
+import { hash8, NO_DATE } from "@/lib/agenda.mjs";
 import { Tabs, GscFoot } from "./tabs";
+
+export const dynamic = "force-dynamic";
 
 type Project = (typeof projects)[number];
 type Insight = { health?: number; flags?: string[]; crawl?: { detail?: string } | null };
@@ -84,11 +88,14 @@ function TrendCell({ p }: { p: Evaluated }) {
 }
 
 export default async function Page() {
-  const [gsc, evaluated] = await Promise.all([
+  const [gsc, evaluated, doneSet] = await Promise.all([
     gscStatus(),
     Promise.all(projects.map(evaluate)),
+    // falha de DB nunca derruba o hub — sem agenda, nada é riscado
+    dbOn() ? listDone().catch(() => new Set<string>()) : new Set<string>(),
   ]);
   evaluated.sort((a, b) => b.score - a.score);
+  const acaoDone = (p: Project) => doneSet.has(`acao:${p.slug}:${hash8(p.acao)}@${NO_DATE}`);
   const foco = evaluated[0];
   const down = evaluated.filter((p) => !p.health.ok);
   const atualizado = new Date().toLocaleString("pt-BR", {
@@ -147,8 +154,8 @@ export default async function Page() {
           </div>
         </div>
 
-        <div className="acao">
-          → {foco.acao}
+        <div className={acaoDone(foco) ? "acao done" : "acao"}>
+          {acaoDone(foco) ? "✓" : "→"} {foco.acao}
           {foco.receitaNota && <small>{foco.receitaNota}</small>}
         </div>
 
@@ -213,7 +220,7 @@ export default async function Page() {
                     />
                   </div>
                 </td>
-                <td className="acao-cell">{p.acao}</td>
+                <td className={acaoDone(p) ? "acao-cell done" : "acao-cell"}>{p.acao}</td>
               </tr>
             ))}
           </tbody>
@@ -229,7 +236,8 @@ export default async function Page() {
         <code>data/insights.json</code> (10 − saúde/10, marcado ML) quando gerado há ≤ 10 dias;
         senão usa o manual. Flags do insights (ex.: crawl-waste) entram nos blockers do foco.
         Critérios manuais: edite <code>data/projects.json</code> e dê push — o deploy é
-        automático. Saúde e GSC são coletados ao vivo a cada carregamento.
+        automático. Saúde e GSC são coletados ao vivo a cada carregamento. Ação riscada = marcada
+        como feita na aba Agenda (conclusão real = trocar a ação no projects.json).
       </p>
     </main>
   );

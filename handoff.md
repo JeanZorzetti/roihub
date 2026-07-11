@@ -7,6 +7,13 @@
 - Portfólio é **100% SEO** — nada de tráfego pago, nem branded defense. A ação "Subir Google Ads branded 'sirius crm'" (reintroduzida em `33ea5f2` após a investigação do declining) foi trocada por: validar entity SEO em prod (Rich Results Test) + medir posição branded no GSC ~28/07; sem recuperação → reforçar entity SEO on-site.
 - Regra pra edições futuras do projects.json (soma à regra "só tarefa DEV"): **acao/blockers nunca propõem mídia paga**.
 
+## 11/07 — home risca ações já feitas na agenda
+
+- Pedido do Jean: a home não refletia o check da /agenda. Agora a home lê o mesmo `hub_done` (`listDone()`, chave `acao:{slug}:{hash8(acao)}@1970-01-01`) e risca a ação no hero (✓ + cinza) e na coluna "Próxima ação". Sem `DATABASE_URL`/DB fora → nada riscado (catch → set vazio, hub nunca cai por DB).
+- Home ganhou `force-dynamic` explícito (antes dependia só do `no-store` do health check; agora tem query PG).
+- Riscar ≠ concluir: conclusão real segue sendo trocar a ação no projects.json (rodapé explica).
+- Verificado E2E local com DB real (goiania riscada de verdade + sirius com row de teste, removida depois).
+
 ## 11/07 — data de início no GSC por projeto (`gscInicio`)
 
 - Pedido do Jean: marcar quando cada projeto entrou no GSC pra ter régua de revisão de performance/crawl. Decisão (confirmada): **campo opcional `gscInicio: "AAAA-MM-DD"` no projects.json** — sem DB, sem arquivo novo; editar+push como todo metadado manual.
