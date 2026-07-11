@@ -36,16 +36,14 @@
     "nome": "Estética Fábrica (landing B2B)",
     "url": "https://estetia.estetiacrm.com.br/",
     "receita": 6,
-    "receitaNota": "Landing B2B gera leads, mas leads caem no vazio",
-    "blockers": 8,
-    "blockersLista": [
-      "SIRIUS_API_KEY faltando — lead da landing não chega no CRM"
-    ],
+    "receitaNota": "Leads da landing chegam no Sirius (verificado E2E 11/07); falta tráfego + fechamento",
+    "blockers": 2,
+    "blockersLista": [],
     "seoSeed": 3,
-    "decay": 5,
-    "decayNota": "Cada lead perdido é receita queimada",
-    "acaoDesc": "A landing B2B já envia lead pro Sirius CRM no código — falta só a env SIRIUS_API_KEY no deploy (EasyPanel). Gerar a key no Sirius, setar, redeploy e validar com um lead de teste ponta a ponta. Cada lead perdido hoje é receita queimada.",
-    "acao": "Configurar SIRIUS_API_KEY pra leads chegarem no Sirius CRM"
+    "decay": 2,
+    "decayNota": "",
+    "acaoDesc": "✅ SIRIUS_API_KEY resolvido 11/07: a key JÁ estava no EasyPanel — verificado E2E em prod (POST /api/lead → contato + deal no stage Lead do pipeline Estetia; teste deletado depois). Próximo gargalo é tráfego: só 3 artigos de fundo de funil publicados dos 20 planejados (9 fundo/8 meio/3 topo, plano no repo). GSC da propriedade já existe (sc-domain:estetia.estetiacrm.com.br).",
+    "acao": "Publicar artigos 4–20 do blog da landing (fundo de funil primeiro)"
   },
   {
     "slug": "roilabs",
@@ -150,14 +148,14 @@
     "url": "https://nimblabs.com/",
     "receita": 3,
     "receitaNota": "Hub dos micro-SaaS; receita vem dos bets, não dele",
-    "blockers": 3,
+    "blockers": 5,
     "blockersLista": [
-      "Revisar kill-gates D+90/180/270 dos 3 bets via GSC"
+      "Context Keeper NÃO INDEXADO — Google nunca crawleou o subdomínio; relógio D+90 roda sem medir nada"
     ],
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "Revisar os 3 bets do portfólio contra o GSC nos marcos D+90/180/270 (tese v2 em nimblabs/docs/PORTFOLIO-EN-STRATEGY.md). Decisão kill/keep por bet é o que mantém o WIP≤3 honesto — bet morto libera slot pro próximo.",
-    "acao": "Rodar revisão dos kill-gates contra o GSC"
+    "acaoDesc": "✅ Revisão interina rodada 11/07 (nimblabs/docs/killgate-review-2026-07-11.md): Aftercare NO RITMO (~93 imp/sem dobrando, p9 em 'aftercare cheek filler'); ReviewShield EM RISCO (blog impressiona, checker indexado mas p78 — precisa on-page + links internos); CK VERMELHO (home e posts 'unknown to Google' após 30d; sitemap e site OK). Ação manual: Request Indexing no GSC UI pra home + /blog + 2–3 posts do CK, e backlink da página npm do daemon → context.nimblabs.com. Kill de canal (10/10) improvável.",
+    "acao": "Pedir indexação do Context Keeper no GSC UI (home + posts) — relógio roda sem medição"
   }
 ]
