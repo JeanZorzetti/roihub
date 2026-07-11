@@ -2,6 +2,15 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 11/07 — decay do score agora vem do insights.json (ML)
+
+- **Pedido do Jean**: o ranking da home não reagia às abas novas; o `/insights` já tinha `health` 0–100 por projeto sem alimentar o score. Semântica confirmada com ele: saúde baixa = precisa de atenção = decay ALTO (mapeamento invertido).
+- `decayFromHealth(health, generatedAt)` em `lib/score.mjs`: `10 − saúde/10`, só quando o insights.json foi gerado há ≤ 10 dias (mesma régua de "velho" do /insights); senão `null` → cai no `decay` manual do projects.json. Site fora do ar continua forçando 10 (precedência máxima).
+- Flags do insights (hoje só `crawl-waste`, com o detail do crawl) entram como linhas ⚠ nos blockers exibidos do foco — **não** mudam a nota `blockers` (manual).
+- Meter do foco ganha sufixo "· ML" quando o decay é automático; rodapé explica a regra.
+- Efeito medido na simulação (seoSeed, dados de 10/07): top 4 estável (receita+blockers dominam); polarisia (saúde 80) cai 5º→8º; context/nimblabs/estetiacrm/reviewshield (crawl-waste) sobem. Ou seja: rodar `ml/analyze.py` na sexta agora move o ranking sozinho.
+- Testes 19/19 (`decayFromHealth` coberto) + tsc limpo.
+
 ## Estado atual (fim da sessão de 10/07, tarde)
 
 - **App no ar** em `hub.roilabs.com.br` com basic auth. **GSC conectado em prod** (rodapé "conectado — 10 propriedades", confirmado pelo Jean 10/07).

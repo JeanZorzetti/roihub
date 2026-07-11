@@ -1,15 +1,18 @@
 import projects from "@/data/projects.json";
+import insights from "@/data/insights.json";
 import { checkHealth, type Health } from "@/lib/health";
 import { gscTrend, gscStatus, type GscTrend } from "@/lib/gsc";
-import { computeScore, seoScoreFromClicks, WEIGHTS } from "@/lib/score.mjs";
+import { computeScore, seoScoreFromClicks, decayFromHealth, WEIGHTS } from "@/lib/score.mjs";
 import { Tabs, GscFoot } from "./tabs";
 
 type Project = (typeof projects)[number];
+type Insight = { health?: number; flags?: string[]; crawl?: { detail?: string } | null };
 type Evaluated = Project & {
   health: Health;
   trend: GscTrend;
   seo: number;
   seoAuto: number | null;
+  decayAuto: number | null;
   decayEff: number;
   score: number;
 };
@@ -18,9 +21,19 @@ async function evaluate(p: Project): Promise<Evaluated> {
   const [health, trend] = await Promise.all([checkHealth(p.url), gscTrend(p.url)]);
   const seoAuto = trend ? seoScoreFromClicks(trend.current, trend.previous) : null;
   const seo = seoAuto ?? p.seoSeed;
-  const decayEff = health.ok ? p.decay : 10; // site fora do ar = decay máximo
+  const insight = (insights.projects as unknown as Record<string, Insight>)[p.slug];
+  const decayAuto = insight ? decayFromHealth(insight.health, insights.generatedAt) : null;
+  const decayEff = !health.ok ? 10 : decayAuto ?? p.decay; // site fora do ar = decay máximo
+  const blockersLista = insight?.flags?.length
+    ? [
+        ...p.blockersLista,
+        ...insight.flags.map((f) =>
+          f === "crawl-waste" && insight.crawl?.detail ? `⚠ ${f} — ${insight.crawl.detail}` : `⚠ ${f}`
+        ),
+      ]
+    : p.blockersLista;
   const score = computeScore({ receita: p.receita, blockers: p.blockers, seo, decay: decayEff });
-  return { ...p, health, trend, seo, seoAuto, decayEff, score };
+  return { ...p, blockersLista, health, trend, seo, seoAuto, decayAuto, decayEff, score };
 }
 
 function scoreColor(score: number): string {
@@ -90,7 +103,7 @@ export default async function Page() {
     { label: `Receita ×${WEIGHTS.receita}`, value: foco.receita },
     { label: `Blockers ×${WEIGHTS.blockers}`, value: foco.blockers },
     { label: `SEO ×${WEIGHTS.seo}`, value: foco.seo },
-    { label: `Decay ×${WEIGHTS.decay}`, value: foco.decayEff },
+    { label: `Decay ×${WEIGHTS.decay}${foco.decayAuto !== null ? " · ML" : ""}`, value: foco.decayEff },
   ];
 
   return (
@@ -212,9 +225,11 @@ export default async function Page() {
         Score = receita×{WEIGHTS.receita} + blockers×{WEIGHTS.blockers} + SEO×{WEIGHTS.seo} +
         decay×{WEIGHTS.decay}, cada critério 0–10. Site fora do ar força decay 10. SEO vem do
         Search Console quando <code>GOOGLE_SERVICE_ACCOUNT_JSON</code> está configurada (pill
-        GSC); senão usa o <code>seoSeed</code> manual (pill SEED). Critérios manuais: edite{" "}
-        <code>data/projects.json</code> e dê push — o deploy é automático. Saúde e GSC são
-        coletados ao vivo a cada carregamento.
+        GSC); senão usa o <code>seoSeed</code> manual (pill SEED). Decay vem da saúde do{" "}
+        <code>data/insights.json</code> (10 − saúde/10, marcado ML) quando gerado há ≤ 10 dias;
+        senão usa o manual. Flags do insights (ex.: crawl-waste) entram nos blockers do foco.
+        Critérios manuais: edite <code>data/projects.json</code> e dê push — o deploy é
+        automático. Saúde e GSC são coletados ao vivo a cada carregamento.
       </p>
     </main>
   );
