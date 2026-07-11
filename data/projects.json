@@ -8,14 +8,14 @@
     "receitaNota": "Gate 3 (1º fornecedor) destrava o marketplace pago-pelo-sucesso",
     "blockers": 4,
     "blockersLista": [
-      "Checkpoint da malha ~15/07 precisa dos secrets GSC_SA_KEY + PSI_API_KEY",
-      "Crawl com 33,6% redirect — conferir se o fix trailing-slash pegou"
+      "CLS ~1,0 no hub /porcelanato/ (PSI 48) e template da malha (PSI 44) — meta ≤ 0,1",
+      "Queda dos 33,6% redirect só mensurável no export de 17/07 (fix confirmado vivo 11/07)"
     ],
     "seoSeed": 6,
     "decay": 5,
     "decayNota": "98 páginas no ar",
-    "acaoDesc": "Secrets pro script de checkpoint da malha (mesma SA nimblabs@ do roihub — usar sc-domain:goiania, URL-prefix dá 403). Checkpoint de 11/07 deu 41/41 indexadas; reavaliação D+30 ~28/07. No export semanal de crawl stats, conferir se o fix trailing-slash (absolute_redirect off) derrubou os 33,6% de redirects.",
-    "acao": "Setar GSC_SA_KEY + PSI_API_KEY pro checkpoint de 15/07 e conferir a queda dos redirects"
+    "acaoDesc": "Baseline CWV de 11/07 (cwv.md no vault, PSI mobile): /porcelanato/ score 48 / CLS 1,03 e malha score 44 / CLS 1,0 — layout shift enorme nas páginas de dinheiro (provável imagem/grid sem dimensão reservada); meta CLS ≤ 0,1. Na sequência, ciclo 15: expandir guia de limpeza por acabamento + interlink guia→malha. Secrets GSC_SA_KEY/PSI_API_KEY setados e validados 11/07 (run verde); redirects reavaliar no export de sexta 17/07 na aba /infra.",
+    "acao": "Corrigir CLS ~1,0 dos templates hub/malha (PSI 44–48) e rodar ciclo 15 (interlink guia→malha)"
   },
   {
     "slug": "sirius",
