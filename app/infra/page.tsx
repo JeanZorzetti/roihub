@@ -11,7 +11,7 @@ import {
   crawlTotals28,
 } from "@/lib/crawl.mjs";
 import { Tabs } from "../tabs";
-import { WeekChart, Stat, Delta, InvDelta, num, fmtDay } from "../viz";
+import { WeekChart, Stat, Delta, InvDelta, num, fmtDay, sinceGsc } from "../viz";
 
 // Lê os exports do repo a cada request — arquivo novo só aparece depois de commit+push (sem DB).
 export const dynamic = "force-dynamic";
@@ -88,7 +88,7 @@ function loadProperties(): Property[] {
           const h = new URL(p.url).hostname;
           return h === host || h.endsWith(`.${host}`);
         })
-        .map((p) => p.nome),
+        .map((p) => (p.gscInicio ? `${p.nome} (${sinceGsc(p.gscInicio)})` : p.nome)),
     });
   }
   return props.sort((a, b) => b.t.current.requests - a.t.current.requests);

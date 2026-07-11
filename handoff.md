@@ -2,6 +2,12 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 11/07 — data de início no GSC por projeto (`gscInicio`)
+
+- Pedido do Jean: marcar quando cada projeto entrou no GSC pra ter régua de revisão de performance/crawl. Decisão (confirmada): **campo opcional `gscInicio: "AAAA-MM-DD"` no projects.json** — sem DB, sem arquivo novo; editar+push como todo metadado manual.
+- Exibição via `sinceGsc()` em `app/viz.tsx`: "/seo" mostra "· GSC desde 28/06 · D+13" ao lado da URL do card; "/infra" mostra no "cobre: Nome (GSC desde … · D+N)". Projeto sem o campo não mostra nada.
+- Preenchido por enquanto **só goiânia (28/06/2026)** — os outros 9 entram quando o Jean confirmar as datas.
+
 ## 11/07 — agenda: modal de edição de tarefa
 
 - Pedido do Jean: clicar na tarefa → modal de edição. Título da tarefa (só as do banco; "ações do ranking" continuam texto) virou botão que abre `<dialog>` nativo com os mesmos campos do form de adicionar (título, data, recorrência, projeto) → server action `update` → `UPDATE hub_tasks`.

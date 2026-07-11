@@ -3,7 +3,7 @@ import projects from "@/data/projects.json";
 import { gscSeries, gscStatus, isoDaysAgo } from "@/lib/gsc";
 import { bucketWeeks, totals28 } from "@/lib/series.mjs";
 import { Tabs, GscFoot } from "../tabs";
-import { WeekChart, Stat, Delta, InvDelta, num, compact, fmtDay } from "../viz";
+import { WeekChart, Stat, Delta, InvDelta, num, compact, fmtDay, sinceGsc } from "../viz";
 
 // GSC roda a cada request (16 meses de histórico na API — sem DB, sem cache de build).
 export const dynamic = "force-dynamic";
@@ -54,6 +54,7 @@ export default async function SeoPage() {
                   <a href={p.url} target="_blank" rel="noreferrer">
                     {p.url.replace("https://", "").replace(/\/$/, "")}
                   </a>
+                  {p.gscInicio && <> · {sinceGsc(p.gscInicio)}</>}
                 </div>
               </div>
               {p.t === null && <span className="pill">SEED</span>}

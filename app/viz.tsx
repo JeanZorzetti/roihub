@@ -1,9 +1,17 @@
 // Peças de dataviz compartilhadas entre /seo e /infra: chart de colunas semanais,
 // stat com delta. Tudo server component — sem JS no cliente.
 
+import { todaySP } from "@/lib/agenda.mjs";
+
 export const num = new Intl.NumberFormat("pt-BR");
 export const compact = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
 export const fmtDay = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+// Idade do projeto no GSC (gscInicio do projects.json) — régua de revisão de performance/crawl.
+export function sinceGsc(inicio: string): string {
+  const d = Math.round((Date.parse(todaySP()) - Date.parse(inicio)) / 86400000);
+  return `GSC desde ${fmtDay(inicio)} · D+${d}`;
+}
 
 export type WeekPoint = { start: string; end: string; value: number | null };
 
