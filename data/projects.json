@@ -14,6 +14,7 @@
     "seoSeed": 6,
     "decay": 5,
     "decayNota": "98 páginas no ar",
+    "acaoDesc": "Secrets pro script de checkpoint da malha (mesma SA nimblabs@ do roihub — usar sc-domain:goiania, URL-prefix dá 403). Checkpoint de 11/07 deu 41/41 indexadas; reavaliação D+30 ~28/07. No export semanal de crawl stats, conferir se o fix trailing-slash (absolute_redirect off) derrubou os 33,6% de redirects.",
     "acao": "Setar GSC_SA_KEY + PSI_API_KEY pro checkpoint de 15/07 e conferir a queda dos redirects"
   },
   {
@@ -27,6 +28,7 @@
     "seoSeed": 6,
     "decay": 4,
     "decayNota": "",
+    "acaoDesc": "O ML do /insights marcou cliques em declínio. Abrir o detalhe do sirius lá (Theil-Sen/changepoints) e cruzar com o GSC: se a queda começou perto de 13/05, pode ser o mesmo algo update que marcou changepoint em 4 projetos. Único projeto com receita real provada — prioridade.",
     "acao": "Investigar trend declining de cliques (ver /insights)"
   },
   {
@@ -42,6 +44,7 @@
     "seoSeed": 3,
     "decay": 5,
     "decayNota": "Cada lead perdido é receita queimada",
+    "acaoDesc": "A landing B2B já envia lead pro Sirius CRM no código — falta só a env SIRIUS_API_KEY no deploy (EasyPanel). Gerar a key no Sirius, setar, redeploy e validar com um lead de teste ponta a ponta. Cada lead perdido hoje é receita queimada.",
     "acao": "Configurar SIRIUS_API_KEY pra leads chegarem no Sirius CRM"
   },
   {
@@ -57,6 +60,7 @@
     "seoSeed": 7,
     "decay": 7,
     "decayNota": "Medição SEO parada há dias",
+    "acaoDesc": "✅ Consertado 11/07: era BOM (U+FEFF) no secret SERPER_API_KEY quebrando o header do fetch — fix f159ea7 (strip no script), run verde 0 erros. Falta conferir a run de segunda 13/07 (09:00 UTC) e então trocar esta ação por outra no projects.json (blocker e decay 7 também estão desatualizados).",
     "acao": "Consertar o cron serper.dev — sem ele você opera SEO no escuro"
   },
   {
@@ -73,6 +77,7 @@
     "seoSeed": 4,
     "decay": 4,
     "decayNota": "",
+    "acaoDesc": "Spec 011-byos-claude-token já criada (cfb0f0b) no sofia-next — rodar speckit-clarify → plan → tasks → implement. BYOS = usuário traz a própria assinatura Claude (setup-token oficial, nunca token em cliente terceiro). Com a 011 no ar, criar a spec da home V4 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07).",
     "acao": "Avançar spec 011 BYOS, depois home V4"
   },
   {
@@ -89,6 +94,7 @@
     "seoSeed": 5,
     "decay": 3,
     "decayNota": "",
+    "acaoDesc": "Fechar o que sobrou da auditoria de 06/2026 + performance da landing. Fork do Sirius pronto e no ar mas sem nenhuma venda registrada — fechar o básico antes de investir em tráfego pago.",
     "acao": "Fechar pendências da auditoria 06/2026"
   },
   {
@@ -104,6 +110,7 @@
     "seoSeed": 2,
     "decay": 3,
     "decayNota": "",
+    "acaoDesc": "App tem 33 testes passando mas nunca foi confirmado rodando em produção. Checar/subir reviewshield.nimblabs.com no EasyPanel (gotcha: Prisma 7 lê a url do prisma.config.ts, não do schema) e rodar um fluxo de disputa ponta a ponta.",
     "acao": "Confirmar deploy em produção"
   },
   {
@@ -119,6 +126,7 @@
     "seoSeed": 3,
     "decay": 3,
     "decayNota": "",
+    "acaoDesc": "Os 4 bugs do e2e já estão corrigidos no monorepo — falta versionar e publicar @jeanzorzetti/context-keeper no npm. Sem o publish, quem instala o daemon ainda pega a versão bugada (e o dashboard precisa de CONTEXT_KEEPER_API_URL + _TOKEN configurados no cliente).",
     "acao": "npm publish do daemon com os 4 fixes e2e"
   },
   {
@@ -134,6 +142,7 @@
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "SEO passivo — estável parado",
+    "acaoDesc": "Puxar impressões/cliques dos 20 artigos do funil B2B clínicas (9 fundo, 8 meio, 3 topo) no GSC e aplicar o kill-gate D+90 da tese do portfólio (nimblabs/docs/PORTFOLIO-EN-STRATEGY.md): sem tração = matar ou pivotar, com tração = dobrar no que rankeia.",
     "acao": "Checar GSC dos 20 artigos e decidir no gate D+90"
   },
   {
@@ -149,6 +158,7 @@
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "",
+    "acaoDesc": "Revisar os 3 bets do portfólio contra o GSC nos marcos D+90/180/270 (tese v2 em nimblabs/docs/PORTFOLIO-EN-STRATEGY.md). Decisão kill/keep por bet é o que mantém o WIP≤3 honesto — bet morto libera slot pro próximo.",
     "acao": "Rodar revisão dos kill-gates contra o GSC"
   }
 ]

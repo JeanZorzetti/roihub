@@ -15,6 +15,7 @@ type Item = {
   meta: string | null;
   taskId: number | null; // null = ação automática do projects.json
   task?: Task; // presente só em tarefa do banco — habilita edição
+  desc?: string | null; // descrição de ação do ranking (acaoDesc do projects.json)
 };
 
 function itemFromTask(t: Task, today: string): { item: Item; bucket: string } {
@@ -49,6 +50,7 @@ function Check({ item, done }: { item: Item; done: boolean }) {
 }
 
 function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: boolean }) {
+  const desc = item.task?.descricao ?? item.desc;
   return (
     <li className="ag-item">
       {canWrite && <Check item={item} done={done} />}
@@ -57,14 +59,14 @@ function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: bo
           <EditTask task={item.task} done={done} />
         ) : canWrite && item.taskId === null ? (
           <EditTask
-            task={{ id: 0, titulo: item.titulo, descricao: null, projeto: item.projeto, due: null, weekday: null }}
+            task={{ id: 0, titulo: item.titulo, descricao: item.desc ?? null, projeto: item.projeto, due: null, weekday: null }}
             done={done}
             acaoKey={item.key}
           />
         ) : (
           <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
         )}
-        {item.task?.descricao && !done && <div className="ag-desc">{item.task.descricao}</div>}
+        {desc && !done && <div className="ag-desc">{desc}</div>}
         <div className="ag-meta">
           {item.projeto && <span className="pill">{item.projeto}</span>}
           {item.taskId === null && <span className="pill">AÇÃO DO RANKING</span>}
@@ -114,6 +116,7 @@ export default async function Page() {
     projeto: p.slug,
     meta: null,
     taskId: null,
+    desc: p.acaoDesc ?? null,
   }));
 
   const all = [...Object.values(buckets).flat(), ...acoes];
