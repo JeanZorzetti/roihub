@@ -5,14 +5,15 @@
     "url": "https://goiania.roilabs.com.br/",
     "receita": 8,
     "receitaNota": "Gate 3 (1º fornecedor) destrava o marketplace pago-pelo-sucesso",
-    "blockers": 9,
+    "blockers": 4,
     "blockersLista": [
-      "Contatar fornecedor #1 dos 6 rankeados — parado desde 04/07, só você resolve"
+      "Checkpoint da malha ~15/07 precisa dos secrets GSC_SA_KEY + PSI_API_KEY",
+      "Crawl com 33,6% redirect — conferir se o fix trailing-slash pegou"
     ],
     "seoSeed": 6,
     "decay": 5,
-    "decayNota": "98 páginas no ar; sem fornecedor o acervo envelhece",
-    "acao": "WhatsApp/ligação pro fornecedor #1 da lista — Gate 3 destrava tudo"
+    "decayNota": "98 páginas no ar",
+    "acao": "Setar GSC_SA_KEY + PSI_API_KEY pro checkpoint de 15/07 e conferir a queda dos redirects"
   },
   {
     "slug": "sirius",
@@ -20,14 +21,12 @@
     "url": "https://siriuscrm.com.br/",
     "receita": 9,
     "receitaNota": "3 vendas orgânicas — único projeto com receita real provada",
-    "blockers": 7,
-    "blockersLista": [
-      "Definir orçamento e subir campanha Google Ads (só você)"
-    ],
+    "blockers": 2,
+    "blockersLista": [],
     "seoSeed": 6,
     "decay": 4,
     "decayNota": "",
-    "acao": "Subir campanha Google Ads — 3 vendas orgânicas provam demanda"
+    "acao": "Investigar trend declining de cliques (ver /insights)"
   },
   {
     "slug": "fabrica",
@@ -97,15 +96,14 @@
     "url": "https://reviewshield.nimblabs.com/",
     "receita": 5,
     "receitaNota": "AgaaS cobra por review removido (Home Services US); 33 testes",
-    "blockers": 6,
+    "blockers": 4,
     "blockersLista": [
-      "Confirmar deploy em produção",
-      "Primeiro outreach US"
+      "Confirmar deploy em produção"
     ],
     "seoSeed": 2,
     "decay": 3,
     "decayNota": "",
-    "acao": "Validar prod e fazer o primeiro outreach US"
+    "acao": "Confirmar deploy em produção"
   },
   {
     "slug": "context",

@@ -2,6 +2,12 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 11/07 — hub é só do Jean (dev): tarefas comerciais fora da equação
+
+- Decisão do Jean: captação/comercial é da Maria Eduarda e NÃO entra no ranking. `projects.json` limpo: goiânia perdeu o blocker "contatar fornecedor" (9→4, ação virou os secrets do checkpoint 15/07 + redirects do crawl), sirius perdeu "subir Google Ads" (7→2, ação virou investigar o trend declining do /insights), reviewshield perdeu "primeiro outreach US" (6→4). Receita segue intocada — mede valor na mesa, não tarefa.
+- **Regra pra edições futuras do projects.json: blockers/acao = só tarefa DEV.** Tarefas da Duda vivem no vault (`backlog-pendencias` seção "Não-dev").
+- Ranking resultante (sim. com seoSeed): goiania 64 > sirius 56 > fabrica 55 > roilabs 55 > …
+
 ## 11/07 — decay do score agora vem do insights.json (ML)
 
 - **Pedido do Jean**: o ranking da home não reagia às abas novas; o `/insights` já tinha `health` 0–100 por projeto sem alimentar o score. Semântica confirmada com ele: saúde baixa = precisa de atenção = decay ALTO (mapeamento invertido).
