@@ -1,23 +1,38 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { dbOn, insertTask, removeTask, setDone } from "@/lib/db";
+import { dbOn, insertTask, removeTask, setDone, updateTask } from "@/lib/db";
 import projects from "@/data/projects.json";
 
 const SLUGS = new Set(projects.map((p) => p.slug));
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export async function addTask(fd: FormData): Promise<void> {
-  if (!dbOn()) return;
+function taskFields(fd: FormData) {
   const titulo = String(fd.get("titulo") ?? "").trim().slice(0, 200);
-  if (!titulo) return;
   const wdRaw = String(fd.get("weekday") ?? "");
   const weekday = /^[0-6]$/.test(wdRaw) ? Number(wdRaw) : null;
   const dueRaw = String(fd.get("due") ?? "");
   const due = weekday === null && ISO_DATE.test(dueRaw) ? dueRaw : null; // recorrente ignora data
   const projRaw = String(fd.get("projeto") ?? "");
   const projeto = SLUGS.has(projRaw) ? projRaw : null;
-  await insertTask({ titulo, projeto, due, weekday });
+  return { titulo, projeto, due, weekday };
+}
+
+export async function addTask(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const t = taskFields(fd);
+  if (!t.titulo) return;
+  await insertTask(t);
+  revalidatePath("/agenda");
+}
+
+export async function update(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const id = Number(fd.get("id"));
+  if (!Number.isInteger(id)) return;
+  const t = taskFields(fd);
+  if (!t.titulo) return;
+  await updateTask(id, t);
   revalidatePath("/agenda");
 }
 

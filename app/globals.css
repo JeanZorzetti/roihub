@@ -239,6 +239,16 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
   color: var(--muted); font-size: 16px; line-height: 1; padding: 2px 6px;
 }
 .ag-del:hover { color: var(--crit-ink); }
+.ag-edit { border: none; background: none; padding: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.ag-edit:hover { text-decoration: underline; }
+.ag-edit.done:hover { text-decoration: line-through underline; }
+.ag-dialog {
+  border: 1px solid var(--grid); border-radius: 10px; background: var(--surface); color: var(--ink);
+  padding: 16px; width: min(420px, calc(100vw - 32px));
+}
+.ag-dialog::backdrop { background: rgba(11, 11, 11, 0.35); }
+.ag-dialog form { display: flex; flex-direction: column; gap: 8px; }
+.ag-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 
 /* rodapé */
 .foot { margin-top: 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }

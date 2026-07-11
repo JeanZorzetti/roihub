@@ -3,6 +3,7 @@ import { dbOn, listTasks, listDone, type Task } from "@/lib/db";
 import { todaySP, addDaysISO, nextOccurrence, hash8, brShort, WD_LABELS, NO_DATE } from "@/lib/agenda.mjs";
 import { Tabs } from "../tabs";
 import { addTask, toggle, del } from "./actions";
+import { EditTask } from "./edit-task";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +14,11 @@ type Item = {
   projeto: string | null;
   meta: string | null;
   taskId: number | null; // null = ação automática do projects.json
+  task?: Task; // presente só em tarefa do banco — habilita edição
 };
 
 function itemFromTask(t: Task, today: string): { item: Item; bucket: string } {
-  const base = { titulo: t.titulo, projeto: t.projeto, taskId: t.id, key: `task:${t.id}` };
+  const base = { titulo: t.titulo, projeto: t.projeto, taskId: t.id, key: `task:${t.id}`, task: t };
   if (t.weekday !== null) {
     const occ = nextOccurrence(t.weekday, today);
     const meta = `toda ${WD_LABELS[t.weekday]} · ${brShort(occ)}`;
@@ -51,7 +53,11 @@ function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: bo
     <li className="ag-item">
       {canWrite && <Check item={item} done={done} />}
       <div className="ag-body">
-        <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
+        {canWrite && item.task ? (
+          <EditTask task={item.task} done={done} />
+        ) : (
+          <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
+        )}
         <div className="ag-meta">
           {item.projeto && <span className="pill">{item.projeto}</span>}
           {item.taskId === null && <span className="pill">AÇÃO DO RANKING</span>}

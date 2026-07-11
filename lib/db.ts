@@ -68,6 +68,17 @@ export async function insertTask(t: Omit<Task, "id">): Promise<void> {
   ]);
 }
 
+export async function updateTask(id: number, t: Omit<Task, "id">): Promise<void> {
+  await ensure();
+  await pool().query(`UPDATE hub_tasks SET titulo = $2, projeto = $3, due = $4, weekday = $5 WHERE id = $1`, [
+    id,
+    t.titulo,
+    t.projeto,
+    t.due,
+    t.weekday,
+  ]);
+}
+
 export async function setDone(key: string, occurrence: string, done: boolean): Promise<void> {
   await ensure();
   if (done)

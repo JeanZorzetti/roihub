@@ -2,6 +2,13 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 11/07 — agenda: modal de edição de tarefa
+
+- Pedido do Jean: clicar na tarefa → modal de edição. Título da tarefa (só as do banco; "ações do ranking" continuam texto) virou botão que abre `<dialog>` nativo com os mesmos campos do form de adicionar (título, data, recorrência, projeto) → server action `update` → `UPDATE hub_tasks`.
+- Único client component da aba: `app/agenda/edit-task.tsx` (precisa de `showModal()`); resto segue 100% server. Parsing de campos unificado em `taskFields()` no actions.ts (add e update validam igual).
+- Done antigo não é limpo ao mudar data/recorrência: linhas órfãs em `hub_done` são inertes (lookup usa a ocorrência nova).
+- Verificado: tsc + build + 24/24 testes.
+
 ## 11/07 — aba Agenda (checklist com persistência em Postgres)
 
 - Pedido do Jean: "calendário com checklist" interativo. Duas correções dele mudaram o desenho: o vault Obsidian só cobre roilabs/goiânia (2 de 10 — o hub é o único agregador dos 10) e o "sem-DB" era decisão minha, não requisito dele → **agora tem Postgres**.
