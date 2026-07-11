@@ -86,16 +86,15 @@
     "url": "https://estetiacrm.com.br/",
     "receita": 5,
     "receitaNota": "Fork do Sirius pronto; sem vendas registradas",
-    "blockers": 4,
+    "blockers": 2,
     "blockersLista": [
-      "Rotacionar segredos expostos na auditoria (Groq, CRON_SECRET, INTEGRATION_ENCRYPTION_KEY, PG, MinIO, Redis)",
-      "GitHub Actions bloqueado por billing da conta — CI não roda"
+      "Preço divergente: checkout MP 149/297/597 vs PLAN_PRICING/UI 67/147/397"
     ],
     "seoSeed": 5,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ 11/07: cron LGPD retention agendado in-app (instrumentation.ts + node-cron, mensal dia 1 04:00 UTC — commit 8694ce4; rota validada em prod com dryRun: 6 orgs, 0 erros). Restam itens SÓ do Jean: rotacionar segredos expostos no chat da auditoria (INTEGRATION_ENCRYPTION_KEY exige re-encrypt), resolver billing do GitHub Actions (github.com/settings/billing) e conferir PUSHER_SECRET em prod. Deferido (dev, sem payoff até CI voltar): 109 testes vitest falhando + sweep pino (233 console.*). Landing: 50→80 em 06/2026, re-medir PSI se quiser caçar os 90+.",
-    "acao": "Rotacionar segredos + destravar billing do GitHub Actions"
+    "acaoDesc": "✅ 11/07: AUDITORIA 06/2026 FECHADA. Manhã: cron LGPD in-app (8694ce4, validado em prod). Tarde (Jean rotacionou segredos + liberou billing + conferiu Pusher): CI validado (fix client-wa 6a0e389), suíte 109 falhando→0 (644 verdes), job de testes BLOQUEANTE, e 5 bugs reais corrigidos (3e0933f: intent 'sirius' do fork nunca disparava p/ Estetia, DemoScheduler p/ lead frio, form de deal travava silenciosamente com valor vazio, grid layout rejeitava layouts válidos, caminho de erro de API crashava). ⚠️ NOVO achado: preços divergem entre lib/mercado-pago/products.ts (149/297/597, Estetia) e lib/entitlements.ts+PricingComparison (67/147/397, Sirius) — decidir canônico e alinhar. Deferido: sweep pino (233 console.*). Landing: 50→80 em 06/2026.",
+    "acao": "Alinhar preço canônico (checkout 149/297/597 vs UI 147)"
   },
   {
     "slug": "reviewshield",
