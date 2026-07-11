@@ -5,6 +5,7 @@
 ## 11/07 — agenda: modal de edição de tarefa
 
 - Pedido do Jean: clicar na tarefa → modal de edição. Título da tarefa (só as do banco; "ações do ranking" continuam texto) virou botão que abre `<dialog>` nativo com os mesmos campos do form de adicionar (título, data, recorrência, projeto) → server action `update` → `UPDATE hub_tasks`.
+- **+ campo `descricao`** (pedido seguinte): coluna nova via `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` no `ensure()` (o padrão aditivo combinado), textarea no modal (2000 chars), exibida em cinza sob o título quando a tarefa está pendente (some quando feita). Form de adicionar NÃO tem o campo — descrição entra pelo modal. As 3 tarefas seed já foram descritas direto no banco (passo-a-passo da rotina de sexta; alerta do serper quebrado 06/07 no rank tracking; pré-requisitos do checkpoint da malha).
 - Único client component da aba: `app/agenda/edit-task.tsx` (precisa de `showModal()`); resto segue 100% server. Parsing de campos unificado em `taskFields()` no actions.ts (add e update validam igual).
 - Done antigo não é limpo ao mudar data/recorrência: linhas órfãs em `hub_done` são inertes (lookup usa a ocorrência nova).
 - Verificado: tsc + build + 24/24 testes.

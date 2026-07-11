@@ -22,6 +22,14 @@ export function EditTask({ task, done }: { task: Task; done: boolean }) {
         <form action={update} onSubmit={() => ref.current?.close()}>
           <input type="hidden" name="id" value={task.id} />
           <input name="titulo" defaultValue={task.titulo} required maxLength={200} className="ag-in" autoFocus />
+          <textarea
+            name="descricao"
+            defaultValue={task.descricao ?? ""}
+            placeholder="Descrição…"
+            rows={4}
+            maxLength={2000}
+            className="ag-in"
+          />
           <input type="date" name="due" defaultValue={task.due ?? ""} className="ag-in" title="Data (ignorada se repetir)" />
           <select name="weekday" defaultValue={task.weekday ?? ""} className="ag-in" title="Repetição semanal">
             <option value="">não repete</option>

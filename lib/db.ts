@@ -5,6 +5,7 @@ import { Pool } from "pg";
 export type Task = {
   id: number;
   titulo: string;
+  descricao: string | null;
   projeto: string | null;
   due: string | null; // YYYY-MM-DD
   weekday: number | null; // 0-6 = recorrente semanal (domingo=0)
@@ -38,6 +39,7 @@ function ensure(): Promise<unknown> {
         done_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (key, occurrence)
       );
+      ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS descricao TEXT;
     `);
   return g.hubSchema;
 }
@@ -45,7 +47,7 @@ function ensure(): Promise<unknown> {
 export async function listTasks(): Promise<Task[]> {
   await ensure();
   const r = await pool().query(
-    `SELECT id, titulo, projeto, to_char(due, 'YYYY-MM-DD') AS due, weekday
+    `SELECT id, titulo, descricao, projeto, to_char(due, 'YYYY-MM-DD') AS due, weekday
      FROM hub_tasks ORDER BY due NULLS LAST, id`
   );
   return r.rows;
@@ -60,8 +62,9 @@ export async function listDone(): Promise<Set<string>> {
 
 export async function insertTask(t: Omit<Task, "id">): Promise<void> {
   await ensure();
-  await pool().query(`INSERT INTO hub_tasks (titulo, projeto, due, weekday) VALUES ($1, $2, $3, $4)`, [
+  await pool().query(`INSERT INTO hub_tasks (titulo, descricao, projeto, due, weekday) VALUES ($1, $2, $3, $4, $5)`, [
     t.titulo,
+    t.descricao,
     t.projeto,
     t.due,
     t.weekday,
@@ -70,13 +73,10 @@ export async function insertTask(t: Omit<Task, "id">): Promise<void> {
 
 export async function updateTask(id: number, t: Omit<Task, "id">): Promise<void> {
   await ensure();
-  await pool().query(`UPDATE hub_tasks SET titulo = $2, projeto = $3, due = $4, weekday = $5 WHERE id = $1`, [
-    id,
-    t.titulo,
-    t.projeto,
-    t.due,
-    t.weekday,
-  ]);
+  await pool().query(
+    `UPDATE hub_tasks SET titulo = $2, descricao = $3, projeto = $4, due = $5, weekday = $6 WHERE id = $1`,
+    [id, t.titulo, t.descricao, t.projeto, t.due, t.weekday]
+  );
 }
 
 export async function setDone(key: string, occurrence: string, done: boolean): Promise<void> {

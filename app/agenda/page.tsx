@@ -58,6 +58,7 @@ function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: bo
         ) : (
           <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
         )}
+        {item.task?.descricao && !done && <div className="ag-desc">{item.task.descricao}</div>}
         <div className="ag-meta">
           {item.projeto && <span className="pill">{item.projeto}</span>}
           {item.taskId === null && <span className="pill">AÇÃO DO RANKING</span>}
