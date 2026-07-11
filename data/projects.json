@@ -28,8 +28,8 @@
     "seoSeed": 6,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "✅ Entity SEO shipped 11/07 (ef1f16b): descoberto que TODOS os sameAs do site apontavam pra perfis mortos ou de TERCEIROS (linkedin/roilabs deletada, linkedin/roi-labs = consultoria americana, twitter+github roilabs = estranhos) — veneno pra desambiguação do brand homônimo. Criada fonte única lib/geo/entity.ts com perfis VERIFICADOS (linkedin roi-labs-curadoria + instagram roilabs.curadoria + founder Jean com linkedin/github reais); @graph ganhou founder/alternateName/@id; footer corrigido (Twitter→Instagram, GitHub→JeanZorzetti). Contexto: cliques declining era 100% branded ('sirius crm' 21→7, posição própria 2,0→~5). Agora: (1) validar schema em prod no Rich Results Test; (2) subir Google Ads branded 'sirius crm' — protege o nome dos homônimos e reativa a demanda que trouxe as 3 vendas; (3) medir posição branded no GSC em ~28/07.",
-    "acao": "Subir Google Ads branded 'sirius crm' (protege nome + reativa demanda)"
+    "acaoDesc": "✅ Entity SEO shipped 11/07 (ef1f16b): descoberto que TODOS os sameAs do site apontavam pra perfis mortos ou de TERCEIROS (linkedin/roilabs deletada, linkedin/roi-labs = consultoria americana, twitter+github roilabs = estranhos) — veneno pra desambiguação do brand homônimo. Criada fonte única lib/geo/entity.ts com perfis VERIFICADOS (linkedin roi-labs-curadoria + instagram roilabs.curadoria + founder Jean com linkedin/github reais); @graph ganhou founder/alternateName/@id; footer corrigido (Twitter→Instagram, GitHub→JeanZorzetti). Contexto: cliques declining era 100% branded ('sirius crm' 21→7, posição própria 2,0→~5). Agora: (1) validar schema em prod no Rich Results Test; (2) medir posição branded no GSC em ~28/07 — sem recuperação, reforçar entity SEO on-site (brand signals/conteúdo). SEM Google Ads: decisão do Jean 11/07, portfólio é 100% SEO.",
+    "acao": "Validar entity SEO em prod (Rich Results Test) e medir posição branded no GSC ~28/07"
   },
   {
     "slug": "fabrica",

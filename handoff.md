@@ -2,6 +2,11 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 11/07 — SEM Google Ads em nenhum projeto (decisão do Jean)
+
+- Portfólio é **100% SEO** — nada de tráfego pago, nem branded defense. A ação "Subir Google Ads branded 'sirius crm'" (reintroduzida em `33ea5f2` após a investigação do declining) foi trocada por: validar entity SEO em prod (Rich Results Test) + medir posição branded no GSC ~28/07; sem recuperação → reforçar entity SEO on-site.
+- Regra pra edições futuras do projects.json (soma à regra "só tarefa DEV"): **acao/blockers nunca propõem mídia paga**.
+
 ## 11/07 — data de início no GSC por projeto (`gscInicio`)
 
 - Pedido do Jean: marcar quando cada projeto entrou no GSC pra ter régua de revisão de performance/crawl. Decisão (confirmada): **campo opcional `gscInicio: "AAAA-MM-DD"` no projects.json** — sem DB, sem arquivo novo; editar+push como todo metadado manual.
