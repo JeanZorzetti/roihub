@@ -203,6 +203,43 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .table-details summary { cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 14px; color: var(--ink2); }
 .table-details td, .table-details th { white-space: nowrap; }
 
+/* aba Agenda */
+.ag-add { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 20px; align-items: center; }
+.ag-in {
+  font: inherit; font-size: 14px; color: var(--ink);
+  border: 1px solid var(--grid); border-radius: 8px; padding: 6px 10px; background: #fff;
+}
+.ag-in.grow { flex: 1; min-width: 220px; }
+.ag-btn {
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--accent); border-radius: 8px; padding: 6px 14px;
+  background: var(--accent); color: #fff;
+}
+.ag-btn:hover { background: var(--seq550); }
+.ag-section { margin-bottom: 16px; padding: 14px 16px; }
+.ag-h { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
+.ag-h.alert { color: var(--crit-ink); }
+.ag-list { list-style: none; margin: 0; padding: 0; }
+.ag-item { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--grid); }
+.ag-item:last-child { border-bottom: none; }
+.ag-check {
+  width: 22px; height: 22px; cursor: pointer; flex: none; margin-top: 1px;
+  border: 1.5px solid var(--muted); border-radius: 6px; background: #fff;
+  color: var(--green-aa); font-size: 14px; font-weight: 700; line-height: 1; padding: 0;
+}
+.ag-check:hover { border-color: var(--green-aa); }
+.ag-check.done { border-color: var(--green-aa); background: #f2f7f2; }
+.ag-body { flex: 1; min-width: 0; }
+.ag-title { font-size: 14px; font-weight: 500; }
+.ag-title.done { text-decoration: line-through; color: var(--muted); font-weight: 400; }
+.ag-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ag-meta .pill { margin-left: 0; }
+.ag-del {
+  border: none; background: none; cursor: pointer; flex: none;
+  color: var(--muted); font-size: 16px; line-height: 1; padding: 2px 6px;
+}
+.ag-del:hover { color: var(--crit-ink); }
+
 /* rodapé */
 .foot { margin-top: 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .foot code { background: var(--surface); border: 1px solid var(--grid); border-radius: 4px; padding: 0 5px; font-size: 12px; }

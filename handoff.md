@@ -2,6 +2,16 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 11/07 — aba Agenda (checklist com persistência em Postgres)
+
+- Pedido do Jean: "calendário com checklist" interativo. Duas correções dele mudaram o desenho: o vault Obsidian só cobre roilabs/goiânia (2 de 10 — o hub é o único agregador dos 10) e o "sem-DB" era decisão minha, não requisito dele → **agora tem Postgres**.
+- **DB: reusa o servidor do roilabs_db** (`2.24.207.200:5443`, user `roilabs_db`), tabelas com prefixo `hub_` pra não colidir com o Prisma do /app: `hub_tasks` (titulo, projeto?, due?, weekday? 0-6 = recorrente semanal) e `hub_done` (key, occurrence, PK composto). Schema criado automaticamente no 1º uso (`CREATE TABLE IF NOT EXISTS` em `lib/db.ts`, pool pg singleton). Sem `DATABASE_URL` → banner de setup + ações do ranking em modo leitura.
+- `/agenda`: buckets Atrasadas / Hoje / Próximos 7 dias / Mais tarde / Sem data + **"Ações dos projetos"** (espelha a `acao` do projects.json de graça — key com hash do texto, mudou a ação = check reseta) + "✓ Feitas" recolhido com undo. Form de nova tarefa (data OU recorrência semanal + projeto opcional). Tudo server actions + forms, zero JS no cliente; helpers de data puros em `lib/agenda.mjs` (fuso São Paulo, testados).
+- Recorrente reseta a cada ocorrência (done por data); ocorrência perdida some sem cobrar (ponytail: sem nag de recorrente atrasado — upgrade se fizer falta).
+- Seeds no DB (11/07): rotina de sexta (crawl+analyze.py), conferir rank tracking (toda segunda), checkpoint da malha 15/07.
+- Verificado: 24/24 testes, build limpo, **E2E local com DB real** (marcar→Feitas, desmarcar, adicionar, apagar via Playwright).
+- ⚠️ **Ops pendente (Jean, 2 min): setar `DATABASE_URL` na EasyPanel do hub + redeploy** — valor no `.env` local (host externo `2.24.207.200:5443`; se o hub estiver no mesmo EasyPanel do doc_crm_roilabs_db, pode usar o hostname interno `doc_crm_roilabs_db:5432`). Senha PG segue na lista de rotação.
+
 ## 11/07 — hub é só do Jean (dev): tarefas comerciais fora da equação
 
 - Decisão do Jean: captação/comercial é da Maria Eduarda e NÃO entra no ranking. `projects.json` limpo: goiânia perdeu o blocker "contatar fornecedor" (9→4, ação virou os secrets do checkpoint 15/07 + redirects do crawl), sirius perdeu "subir Google Ads" (7→2, ação virou investigar o trend declining do /insights), reviewshield perdeu "primeiro outreach US" (6→4). Receita segue intocada — mede valor na mesa, não tarefa.
