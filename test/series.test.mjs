@@ -35,6 +35,19 @@ test("posição ponderada por impressões; sem impressão = null", () => {
   assert.equal(weeks[0].clicks, 0); // dias ausentes contam como zero
 });
 
+test("ctr agregado = cliques/impressões da janela; sem impressão = null", () => {
+  const weeks = bucketWeeks(
+    [day("2026-07-06", 2, 10, 5), day("2026-07-07", 1, 30, 5)],
+    "2026-07-07",
+    2
+  );
+  assert.equal(weeks[1].ctr, 3 / 40);
+  assert.equal(weeks[0].ctr, null);
+  const t = totals28([day("2026-06-10", 3, 30, 8)], "2026-07-07");
+  assert.equal(t.current.ctr, 0.1);
+  assert.equal(t.previous.ctr, null);
+});
+
 test("totals28 separa as janelas no dia certo", () => {
   const days = [
     day("2026-06-10", 3, 30, 8), // end-27 → primeira data da janela atual

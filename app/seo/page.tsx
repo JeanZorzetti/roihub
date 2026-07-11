@@ -9,11 +9,12 @@ import { WeekChart, Stat, Delta, InvDelta, num, compact, fmtDay } from "../viz";
 export const dynamic = "force-dynamic";
 
 type Project = (typeof projects)[number];
-type Week = { start: string; end: string; clicks: number; impressions: number; position: number | null };
-type Window28 = { clicks: number; impressions: number; position: number | null };
+type Week = { start: string; end: string; clicks: number; impressions: number; position: number | null; ctr: number | null };
+type Window28 = { clicks: number; impressions: number; position: number | null; ctr: number | null };
 type Row = Project & { weeks: Week[]; t: { current: Window28; previous: Window28 } | null };
 
 const fmtPos = (v: number | null) => (v === null ? "—" : v.toFixed(1).replace(".", ","));
+const fmtCtr = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1).replace(".", ",")}%`);
 
 export default async function SeoPage() {
   const end = isoDaysAgo(3);
@@ -67,6 +68,12 @@ export default async function SeoPage() {
                     {compact.format(p.t.current.impressions)}{" "}
                     <Delta cur={p.t.current.impressions} prev={p.t.previous.impressions} />
                   </Stat>
+                  <Stat label="CTR 28d">
+                    {fmtCtr(p.t.current.ctr)}{" "}
+                    {p.t.current.ctr !== null && p.t.previous.ctr !== null && (
+                      <Delta cur={p.t.current.ctr} prev={p.t.previous.ctr} />
+                    )}
+                  </Stat>
                   <Stat label="Posição média">
                     {fmtPos(p.t.current.position)}{" "}
                     <InvDelta
@@ -117,7 +124,7 @@ export default async function SeoPage() {
               {withData.map((p) => (
                 <Fragment key={p.slug}>
                   <tr>
-                    <td rowSpan={3} className="proj-name">
+                    <td rowSpan={4} className="proj-name">
                       {p.nome}
                     </td>
                     <td>Cliques</td>
@@ -129,6 +136,12 @@ export default async function SeoPage() {
                     <td>Impressões</td>
                     {p.weeks.map((w) => (
                       <td key={w.end}>{num.format(w.impressions)}</td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td>CTR</td>
+                    {p.weeks.map((w) => (
+                      <td key={w.end}>{fmtCtr(w.ctr)}</td>
                     ))}
                   </tr>
                   <tr>
@@ -147,7 +160,8 @@ export default async function SeoPage() {
       <GscFoot gsc={gsc} />
       <p className="foot">
         Semanas de 7 dias fechando em {fmtDay(end)} (GSC atrasa ~3 dias). Δ compara os últimos 28 dias com os 28
-        anteriores. Posição média ponderada por impressões — <b>cair é melhor</b>. Impressão subindo em site novo =
+        anteriores. Posição média ponderada por impressões — <b>cair é melhor</b>. CTR agregado da janela
+        (cliques÷impressões), não média dos CTRs diários. Impressão subindo em site novo =
         Google começando a servir o site, mesmo com 0 cliques. Tudo calculado ao vivo da API do Search Console (16
         meses de histórico) — sem banco.
       </p>
