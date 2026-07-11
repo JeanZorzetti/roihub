@@ -7,6 +7,13 @@
 - Portfólio é **100% SEO** — nada de tráfego pago, nem branded defense. A ação "Subir Google Ads branded 'sirius crm'" (reintroduzida em `33ea5f2` após a investigação do declining) foi trocada por: validar entity SEO em prod (Rich Results Test) + medir posição branded no GSC ~28/07; sem recuperação → reforçar entity SEO on-site.
 - Regra pra edições futuras do projects.json (soma à regra "só tarefa DEV"): **acao/blockers nunca propõem mídia paga**.
 
+## 11/07 — /agenda ordena as ações pelo ranking da home
+
+- Pedido do Jean: "Ações dos projetos" estava na ordem do arquivo projects.json, não na prioridade da home. `evaluate()`/`evaluateAll()` extraídos de `app/page.tsx` para `lib/evaluate.ts` (fonte única de score) — home e agenda usam a MESMA avaliação ao vivo (saúde + GSC + insights), então a ordem nunca diverge. Cada ação ganhou meta `#N · score S`.
+- Custo: /agenda agora faz os mesmos 10 health checks + 10 gscTrend da home a cada load (paralelo, 1 usuário — ok; se pesar, cachear o evaluateAll por request/minuto).
+- Tarefas do banco (buckets datados) seguem ordenadas por data/id — prioridade por projeto dentro do bucket não foi pedida (adicionar se fizer falta).
+- Verificado E2E local: DOM da /agenda com pendentes #2..#10 na ordem exata da home (#1 goiania em Feitas por já estar riscada).
+
 ## 11/07 — home risca ações já feitas na agenda
 
 - Pedido do Jean: a home não refletia o check da /agenda. Agora a home lê o mesmo `hub_done` (`listDone()`, chave `acao:{slug}:{hash8(acao)}@1970-01-01`) e risca a ação no hero (✓ + cinza) e na coluna "Próxima ação". Sem `DATABASE_URL`/DB fora → nada riscado (catch → set vazio, hub nunca cai por DB).

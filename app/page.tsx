@@ -1,44 +1,13 @@
 import projects from "@/data/projects.json";
-import insights from "@/data/insights.json";
-import { checkHealth, type Health } from "@/lib/health";
-import { gscTrend, gscStatus, type GscTrend } from "@/lib/gsc";
-import { computeScore, seoScoreFromClicks, decayFromHealth, WEIGHTS } from "@/lib/score.mjs";
+import { type Health } from "@/lib/health";
+import { gscStatus, type GscTrend } from "@/lib/gsc";
+import { WEIGHTS } from "@/lib/score.mjs";
+import { evaluateAll, type Project, type Evaluated } from "@/lib/evaluate";
 import { dbOn, listDone } from "@/lib/db";
 import { hash8, NO_DATE } from "@/lib/agenda.mjs";
 import { Tabs, GscFoot } from "./tabs";
 
 export const dynamic = "force-dynamic";
-
-type Project = (typeof projects)[number];
-type Insight = { health?: number; flags?: string[]; crawl?: { detail?: string } | null };
-type Evaluated = Project & {
-  health: Health;
-  trend: GscTrend;
-  seo: number;
-  seoAuto: number | null;
-  decayAuto: number | null;
-  decayEff: number;
-  score: number;
-};
-
-async function evaluate(p: Project): Promise<Evaluated> {
-  const [health, trend] = await Promise.all([checkHealth(p.url), gscTrend(p.url)]);
-  const seoAuto = trend ? seoScoreFromClicks(trend.current, trend.previous) : null;
-  const seo = seoAuto ?? p.seoSeed;
-  const insight = (insights.projects as unknown as Record<string, Insight>)[p.slug];
-  const decayAuto = insight ? decayFromHealth(insight.health, insights.generatedAt) : null;
-  const decayEff = !health.ok ? 10 : decayAuto ?? p.decay; // site fora do ar = decay máximo
-  const blockersLista = insight?.flags?.length
-    ? [
-        ...p.blockersLista,
-        ...insight.flags.map((f) =>
-          f === "crawl-waste" && insight.crawl?.detail ? `⚠ ${f} — ${insight.crawl.detail}` : `⚠ ${f}`
-        ),
-      ]
-    : p.blockersLista;
-  const score = computeScore({ receita: p.receita, blockers: p.blockers, seo, decay: decayEff });
-  return { ...p, blockersLista, health, trend, seo, seoAuto, decayAuto, decayEff, score };
-}
 
 function scoreColor(score: number): string {
   if (score >= 70) return "var(--seq650)";
@@ -90,11 +59,10 @@ function TrendCell({ p }: { p: Evaluated }) {
 export default async function Page() {
   const [gsc, evaluated, doneSet] = await Promise.all([
     gscStatus(),
-    Promise.all(projects.map(evaluate)),
+    evaluateAll(),
     // falha de DB nunca derruba o hub — sem agenda, nada é riscado
     dbOn() ? listDone().catch(() => new Set<string>()) : new Set<string>(),
   ]);
-  evaluated.sort((a, b) => b.score - a.score);
   const acaoDone = (p: Project) => doneSet.has(`acao:${p.slug}:${hash8(p.acao)}@${NO_DATE}`);
   const foco = evaluated[0];
   const down = evaluated.filter((p) => !p.health.ok);

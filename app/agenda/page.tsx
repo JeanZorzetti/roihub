@@ -1,4 +1,5 @@
 import projects from "@/data/projects.json";
+import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listTasks, listDone, type Task } from "@/lib/db";
 import { todaySP, addDaysISO, nextOccurrence, hash8, brShort, WD_LABELS, NO_DATE } from "@/lib/agenda.mjs";
 import { Tabs } from "../tabs";
@@ -102,19 +103,22 @@ function Section({ title, items, doneSet, canWrite, alert }: { title: string; it
 export default async function Page() {
   const on = dbOn();
   const today = todaySP();
-  const [tasks, doneSet] = on ? await Promise.all([listTasks(), listDone()]) : [[] as Task[], new Set<string>()];
+  const [ranked, [tasks, doneSet]] = await Promise.all([
+    evaluateAll(), // mesma avaliação da home — ações na ordem do ranking
+    on ? Promise.all([listTasks(), listDone()]) : [[] as Task[], new Set<string>()],
+  ]);
 
   const buckets: Record<string, Item[]> = { atrasadas: [], hoje: [], semana: [], depois: [], semdata: [] };
   for (const t of tasks) {
     const { item, bucket } = itemFromTask(t, today);
     buckets[bucket].push(item);
   }
-  const acoes: Item[] = projects.map((p) => ({
+  const acoes: Item[] = ranked.map((p, i) => ({
     key: `acao:${p.slug}:${hash8(p.acao)}`,
     occ: NO_DATE,
     titulo: p.acao,
     projeto: p.slug,
-    meta: null,
+    meta: `#${i + 1} · score ${p.score}`,
     taskId: null,
     desc: p.acaoDesc ?? null,
   }));
@@ -187,7 +191,8 @@ export default async function Page() {
       <p className="foot">
         Tarefas datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>); recorrente
         reseta sozinha a cada ocorrência. "Ações dos projetos" espelha a <code>acao</code> do{" "}
-        <code>data/projects.json</code> — mudou o texto, o check reseta. Ação de projeto feita de verdade = editar o
+        <code>data/projects.json</code> na ordem do ranking da home (mesmo score, ao vivo) — mudou o
+        texto, o check reseta. Ação de projeto feita de verdade = editar o
         projects.json (aqui o check é só pra riscar do dia). Clicar numa ação abre o modal: salvar vira tarefa do
         banco e risca a ação original.
       </p>
