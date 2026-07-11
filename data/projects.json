@@ -28,8 +28,8 @@
     "seoSeed": 6,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "✅ Investigado 11/07: o declínio é 100% branded — query 'sirius crm' sozinho perdeu 14 cliques (21→7 entre janelas 28d; homepage -14, /features -5, /download -4). Duas causas: (1) demanda branded decaiu (impressões de 'sirius crm' ~77/sem no fim de abril → ~6/sem em junho — o pico de awareness de abril/maio se dissipou); (2) posição no próprio brand caiu de 2,0 → ~4,4-5,4, então quando as impressões voltaram (~26/sem) os cliques não voltaram (CTR 17%→6%). Nome homônimo disputado (Hitachi, ERP Sirius, Sirius Jewels…). Hipótese do algo update 13/05 REJEITADA: o changepoint é crescimento não-branded do blog (posições 40-70) — sinal bom, e é ele que 'piora' a posição média 8,4→14,4 (efeito mix). Próximo: brand entity SEO (Organization schema + sameAs, perfis) pra recuperar o top 1 do próprio nome, e Google Ads branded pra reativar demanda.",
-    "acao": "Recuperar posição 1 no brand 'sirius crm' (entity SEO + sameAs)"
+    "acaoDesc": "✅ Entity SEO shipped 11/07 (ef1f16b): descoberto que TODOS os sameAs do site apontavam pra perfis mortos ou de TERCEIROS (linkedin/roilabs deletada, linkedin/roi-labs = consultoria americana, twitter+github roilabs = estranhos) — veneno pra desambiguação do brand homônimo. Criada fonte única lib/geo/entity.ts com perfis VERIFICADOS (linkedin roi-labs-curadoria + instagram roilabs.curadoria + founder Jean com linkedin/github reais); @graph ganhou founder/alternateName/@id; footer corrigido (Twitter→Instagram, GitHub→JeanZorzetti). Contexto: cliques declining era 100% branded ('sirius crm' 21→7, posição própria 2,0→~5). Agora: (1) validar schema em prod no Rich Results Test; (2) subir Google Ads branded 'sirius crm' — protege o nome dos homônimos e reativa a demanda que trouxe as 3 vendas; (3) medir posição branded no GSC em ~28/07.",
+    "acao": "Subir Google Ads branded 'sirius crm' (protege nome + reativa demanda)"
   },
   {
     "slug": "fabrica",
