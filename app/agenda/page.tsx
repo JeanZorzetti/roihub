@@ -55,6 +55,12 @@ function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: bo
       <div className="ag-body">
         {canWrite && item.task ? (
           <EditTask task={item.task} done={done} />
+        ) : canWrite && item.taskId === null ? (
+          <EditTask
+            task={{ id: 0, titulo: item.titulo, descricao: null, projeto: item.projeto, due: null, weekday: null }}
+            done={done}
+            acaoKey={item.key}
+          />
         ) : (
           <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
         )}
@@ -179,7 +185,8 @@ export default async function Page() {
         Tarefas datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>); recorrente
         reseta sozinha a cada ocorrência. "Ações dos projetos" espelha a <code>acao</code> do{" "}
         <code>data/projects.json</code> — mudou o texto, o check reseta. Ação de projeto feita de verdade = editar o
-        projects.json (aqui o check é só pra riscar do dia).
+        projects.json (aqui o check é só pra riscar do dia). Clicar numa ação abre o modal: salvar vira tarefa do
+        banco e risca a ação original.
       </p>
     </main>
   );

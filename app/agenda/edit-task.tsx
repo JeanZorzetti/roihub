@@ -4,9 +4,10 @@ import { useRef } from "react";
 import projects from "@/data/projects.json";
 import { WD_LABELS } from "@/lib/agenda.mjs";
 import type { Task } from "@/lib/db";
-import { update } from "./actions";
+import { update, promote } from "./actions";
 
-export function EditTask({ task, done }: { task: Task; done: boolean }) {
+/** Com acaoKey (ação do ranking): salvar cria tarefa no banco e risca a ação original. */
+export function EditTask({ task, done, acaoKey }: { task: Task; done: boolean; acaoKey?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   return (
     <>
@@ -19,8 +20,12 @@ export function EditTask({ task, done }: { task: Task; done: boolean }) {
         {task.titulo}
       </button>
       <dialog ref={ref} className="ag-dialog">
-        <form action={update} onSubmit={() => ref.current?.close()}>
-          <input type="hidden" name="id" value={task.id} />
+        <form action={acaoKey ? promote : update} onSubmit={() => ref.current?.close()}>
+          {acaoKey ? (
+            <input type="hidden" name="key" value={acaoKey} />
+          ) : (
+            <input type="hidden" name="id" value={task.id} />
+          )}
           <input name="titulo" defaultValue={task.titulo} required maxLength={200} className="ag-in" autoFocus />
           <textarea
             name="descricao"
@@ -47,6 +52,9 @@ export function EditTask({ task, done }: { task: Task; done: boolean }) {
               </option>
             ))}
           </select>
+          {acaoKey && (
+            <p className="ag-desc">Salvar cria uma tarefa editável na agenda e risca esta ação do ranking.</p>
+          )}
           <div className="ag-dialog-actions">
             <button type="button" className="ag-in" onClick={() => ref.current?.close()}>
               Cancelar

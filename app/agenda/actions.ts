@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { dbOn, insertTask, removeTask, setDone, updateTask } from "@/lib/db";
+import { NO_DATE } from "@/lib/agenda.mjs";
 import projects from "@/data/projects.json";
 
 const SLUGS = new Set(projects.map((p) => p.slug));
@@ -34,6 +35,18 @@ export async function update(fd: FormData): Promise<void> {
   const t = taskFields(fd);
   if (!t.titulo) return;
   await updateTask(id, t);
+  revalidatePath("/agenda");
+}
+
+/** Ação do ranking (projects.json, read-only) vira tarefa do banco; a original é riscada. */
+export async function promote(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const key = String(fd.get("key") ?? "");
+  if (!key.startsWith("acao:")) return;
+  const t = taskFields(fd);
+  if (!t.titulo) return;
+  await insertTask(t);
+  await setDone(key, NO_DATE, true);
   revalidatePath("/agenda");
 }
 
