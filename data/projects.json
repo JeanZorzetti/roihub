@@ -88,14 +88,14 @@
     "receitaNota": "Fork do Sirius pronto; sem vendas registradas",
     "blockers": 4,
     "blockersLista": [
-      "Pendências da auditoria 06/2026",
-      "Performance da landing"
+      "Rotacionar segredos expostos na auditoria (Groq, CRON_SECRET, INTEGRATION_ENCRYPTION_KEY, PG, MinIO, Redis)",
+      "GitHub Actions bloqueado por billing da conta — CI não roda"
     ],
     "seoSeed": 5,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "Fechar o que sobrou da auditoria de 06/2026 + performance da landing. Fork do Sirius pronto e no ar mas sem nenhuma venda registrada — fechar o básico antes de investir em tráfego pago.",
-    "acao": "Fechar pendências da auditoria 06/2026"
+    "acaoDesc": "✅ 11/07: cron LGPD retention agendado in-app (instrumentation.ts + node-cron, mensal dia 1 04:00 UTC — commit 8694ce4; rota validada em prod com dryRun: 6 orgs, 0 erros). Restam itens SÓ do Jean: rotacionar segredos expostos no chat da auditoria (INTEGRATION_ENCRYPTION_KEY exige re-encrypt), resolver billing do GitHub Actions (github.com/settings/billing) e conferir PUSHER_SECRET em prod. Deferido (dev, sem payoff até CI voltar): 109 testes vitest falhando + sweep pino (233 console.*). Landing: 50→80 em 06/2026, re-medir PSI se quiser caçar os 90+.",
+    "acao": "Rotacionar segredos + destravar billing do GitHub Actions"
   },
   {
     "slug": "reviewshield",
