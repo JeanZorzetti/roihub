@@ -2,6 +2,12 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 12/07 — ação do Context Keeper era fantasma: publish já tinha saído em 10/06
+
+- Pedido do Jean: executar "npm publish do daemon com os 4 fixes e2e" e atualizar a /agenda. Verificado no registry ANTES de publicar: `@jeanzorzetti/context-keeper@1.2.0` (e MCP 0.2.0) publicados em **10/06 16:32 UTC** — tarball conferido (contém `quality.js`/providers/hook + `response_format: json_object` no groq.js, o fix do bug 4). Nada a publicar; a ação do ranking estava desatualizada (memória/projects.json).
+- Atualização: `projects.json` do card `context` → blocker removido (`blockers` 5→2, lista vazia), acaoDesc com ✅ e nova acao "Hashear User.apiToken (hoje plaintext no banco)" (confirmado no código: `findUnique({ where: { apiToken } })`). Ação antiga marcada feita em `hub_done` (`acao:context:9547cb72`) pro histórico.
+- Verificação da página ao vivo bloqueada por basic auth (HUB_PASS só no EasyPanel); dados conferidos direto nas duas fontes da página (projects.json na main + hub_done no PG).
+
 ## 11/07 — SEM Google Ads em nenhum projeto (decisão do Jean)
 
 - Portfólio é **100% SEO** — nada de tráfego pago, nem branded defense. A ação "Subir Google Ads branded 'sirius crm'" (reintroduzida em `33ea5f2` após a investigação do declining) foi trocada por: validar entity SEO em prod (Rich Results Test) + medir posição branded no GSC ~28/07; sem recuperação → reforçar entity SEO on-site.
