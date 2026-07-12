@@ -116,15 +116,13 @@
     "url": "https://context.nimblabs.com/",
     "receita": 3,
     "receitaNota": "No ar; sem billing ativo",
-    "blockers": 5,
-    "blockersLista": [
-      "Republicar daemon no npm — 4 fixes e2e corrigidos e não publicados"
-    ],
+    "blockers": 2,
+    "blockersLista": [],
     "seoSeed": 3,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "Os 4 bugs do e2e já estão corrigidos no monorepo — falta versionar e publicar @jeanzorzetti/context-keeper no npm. Sem o publish, quem instala o daemon ainda pega a versão bugada (e o dashboard precisa de CONTEXT_KEEPER_API_URL + _TOKEN configurados no cliente).",
-    "acao": "npm publish do daemon com os 4 fixes e2e"
+    "acaoDesc": "✅ 12/07: verificado no registry que o publish JÁ TINHA SAÍDO em 10/06 — @jeanzorzetti/context-keeper@1.2.0 (e MCP 0.2.0) no npm; tarball conferido com o fix do extractor (response_format json_object) + overhaul (quality gate, providers local-first, hook SessionEnd). O ranking estava desatualizado. Única pendência técnica própria: User.apiToken em plaintext no banco (lookup findUnique por token) — hashear. Indexação do subdomínio no GSC é ação do card nimblabs (não duplicar).",
+    "acao": "Hashear User.apiToken (hoje plaintext no banco)"
   },
   {
     "slug": "aftercare",
