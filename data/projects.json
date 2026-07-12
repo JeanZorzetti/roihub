@@ -102,13 +102,13 @@
     "receitaNota": "AgaaS cobra por review removido (Home Services US); 33 testes",
     "blockers": 4,
     "blockersLista": [
-      "Confirmar deploy em produção"
+      "GOOGLE_CLIENT_ID faltando no EasyPanel — OAuth GBP quebrado (client_id=undefined)"
     ],
     "seoSeed": 2,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "App tem 33 testes passando mas nunca foi confirmado rodando em produção. Checar/subir reviewshield.nimblabs.com no EasyPanel (gotcha: Prisma 7 lê a url do prisma.config.ts, não do schema) e rodar um fluxo de disputa ponta a ponta.",
-    "acao": "Confirmar deploy em produção"
+    "acaoDesc": "✅ 12/07: deploy em prod CONFIRMADO — /api/checker E2E ok (DB+Ollama+triage, runId persistido) e fix dos redirects 0.0.0.0:3000 (magic link/OAuth callback/logout, commit 5a1d137). Falta: setar GOOGLE_CLIENT_ID (+conferir GOOGLE_CLIENT_SECRET e demais envs do .env.example) no EasyPanel — hoje /api/auth/google sai com client_id=undefined — e então rodar o fluxo de disputa ponta a ponta com conta GBP real. Detalhes em review-dispute-agent/handoff.md.",
+    "acao": "Setar GOOGLE_CLIENT_ID no EasyPanel e rodar disputa E2E"
   },
   {
     "slug": "context",
