@@ -2,6 +2,13 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 12/07 — recorrência DIÁRIA na agenda (weekday=7) + 10 tarefas de artigo/dia
+
+- Pedido do Jean: 10 tarefas contínuas, 1 por projeto, "publicar um novo artigo por dia". A agenda só tinha recorrência semanal (weekday 0-6) → **`weekday = 7` agora = diária** (ocorrência sempre = hoje; cai no bucket "Hoje" e reseta a cada dia). Diff mínimo: 1 branch em `nextOccurrence()` (lib/agenda.mjs), label "todo dia" no meta, opção nos 2 selects (add + modal), regex `^[0-7]$` no actions.ts, e CHECK do banco trocado de 0-6 → 0-7 (par DROP IF EXISTS + ADD no `ensure()`, idempotente — padrão aditivo; já apliquei no PROD direto).
+- **10 tarefas inseridas** (ids 6–15): "Publicar 1 artigo novo no blog", weekday=7, uma por slug do projects.json, com descrição de cadência. Inserção idempotente (checa título+projeto+weekday antes).
+- Ação da fabrica "Publicar artigos 4–20..." **EXECUTADA** (blog do estetia-demo 3→20 artigos, ver handoff s5 lá) → marcada feita em hub_done (`acao:fabrica:e0c29431`) e card atualizado: nova acao = submeter sitemap + indexação no GSC.
+- Verificado: tsc 0 erros, testes (incl. 2 casos novos de `nextOccurrence(7,…)`).
+
 ## 12/07 — ação do Context Keeper era fantasma: publish já tinha saído em 10/06
 
 - Pedido do Jean: executar "npm publish do daemon com os 4 fixes e2e" e atualizar a /agenda. Verificado no registry ANTES de publicar: `@jeanzorzetti/context-keeper@1.2.0` (e MCP 0.2.0) publicados em **10/06 16:32 UTC** — tarball conferido (contém `quality.js`/providers/hook + `response_format: json_object` no groq.js, o fix do bug 4). Nada a publicar; a ação do ranking estava desatualizada (memória/projects.json).

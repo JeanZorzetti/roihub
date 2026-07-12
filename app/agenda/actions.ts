@@ -12,7 +12,7 @@ function taskFields(fd: FormData) {
   const titulo = String(fd.get("titulo") ?? "").trim().slice(0, 200);
   const descricao = String(fd.get("descricao") ?? "").trim().slice(0, 2000) || null;
   const wdRaw = String(fd.get("weekday") ?? "");
-  const weekday = /^[0-6]$/.test(wdRaw) ? Number(wdRaw) : null;
+  const weekday = /^[0-7]$/.test(wdRaw) ? Number(wdRaw) : null; // 7 = diária
   const dueRaw = String(fd.get("due") ?? "");
   const due = weekday === null && ISO_DATE.test(dueRaw) ? dueRaw : null; // recorrente ignora data
   const projRaw = String(fd.get("projeto") ?? "");

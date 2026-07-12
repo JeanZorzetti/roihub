@@ -8,7 +8,7 @@ export type Task = {
   descricao: string | null;
   projeto: string | null;
   due: string | null; // YYYY-MM-DD
-  weekday: number | null; // 0-6 = recorrente semanal (domingo=0)
+  weekday: number | null; // 0-6 = recorrente semanal (domingo=0); 7 = diária
 };
 
 const g = globalThis as unknown as { hubPool?: Pool; hubSchema?: Promise<unknown> };
@@ -30,7 +30,7 @@ function ensure(): Promise<unknown> {
         titulo TEXT NOT NULL,
         projeto TEXT,
         due DATE,
-        weekday INT CHECK (weekday BETWEEN 0 AND 6),
+        weekday INT CHECK (weekday BETWEEN 0 AND 7),
         criado TIMESTAMPTZ NOT NULL DEFAULT now()
       );
       CREATE TABLE IF NOT EXISTS hub_done (
@@ -40,6 +40,9 @@ function ensure(): Promise<unknown> {
         PRIMARY KEY (key, occurrence)
       );
       ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS descricao TEXT;
+      -- weekday=7 (diária) em tabela criada com o CHECK antigo 0-6: troca idempotente
+      ALTER TABLE hub_tasks DROP CONSTRAINT IF EXISTS hub_tasks_weekday_check;
+      ALTER TABLE hub_tasks ADD CONSTRAINT hub_tasks_weekday_check CHECK (weekday BETWEEN 0 AND 7);
     `);
   return g.hubSchema;
 }

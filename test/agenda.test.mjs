@@ -20,6 +20,8 @@ test("nextOccurrence: hoje conta; senão avança até o weekday", () => {
   assert.equal(nextOccurrence(6, "2026-07-11"), "2026-07-11"); // sábado hoje
   assert.equal(nextOccurrence(1, "2026-07-11"), "2026-07-13"); // segunda que vem
   assert.equal(nextOccurrence(5, "2026-07-11"), "2026-07-17"); // sexta que vem
+  assert.equal(nextOccurrence(7, "2026-07-11"), "2026-07-11"); // 7 = diária: sempre hoje
+  assert.equal(nextOccurrence(7, "2026-07-12"), "2026-07-12");
 });
 
 test("hash8 estável e sensível ao texto", () => {

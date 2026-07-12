@@ -23,7 +23,7 @@ function itemFromTask(t: Task, today: string): { item: Item; bucket: string } {
   const base = { titulo: t.titulo, projeto: t.projeto, taskId: t.id, key: `task:${t.id}`, task: t };
   if (t.weekday !== null) {
     const occ = nextOccurrence(t.weekday, today);
-    const meta = `toda ${WD_LABELS[t.weekday]} · ${brShort(occ)}`;
+    const meta = t.weekday === 7 ? `todo dia · ${brShort(occ)}` : `toda ${WD_LABELS[t.weekday]} · ${brShort(occ)}`;
     return { item: { ...base, occ, meta }, bucket: occ === today ? "hoje" : "semana" };
   }
   if (t.due) {
@@ -150,8 +150,9 @@ export default async function Page() {
         <form action={addTask} className="card ag-add">
           <input name="titulo" placeholder="Nova tarefa…" required maxLength={200} className="ag-in grow" />
           <input type="date" name="due" className="ag-in" title="Data (ignorada se repetir)" />
-          <select name="weekday" className="ag-in" title="Repetição semanal">
+          <select name="weekday" className="ag-in" title="Repetição">
             <option value="">não repete</option>
+            <option value="7">todo dia</option>
             {WD_LABELS.map((l, i) => (
               <option key={l} value={i}>
                 toda {l}

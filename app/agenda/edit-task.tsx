@@ -36,8 +36,9 @@ export function EditTask({ task, done, acaoKey }: { task: Task; done: boolean; a
             className="ag-in"
           />
           <input type="date" name="due" defaultValue={task.due ?? ""} className="ag-in" title="Data (ignorada se repetir)" />
-          <select name="weekday" defaultValue={task.weekday ?? ""} className="ag-in" title="Repetição semanal">
+          <select name="weekday" defaultValue={task.weekday ?? ""} className="ag-in" title="Repetição">
             <option value="">não repete</option>
+            <option value="7">todo dia</option>
             {WD_LABELS.map((l: string, i: number) => (
               <option key={l} value={i}>
                 toda {l}

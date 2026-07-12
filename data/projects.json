@@ -42,8 +42,8 @@
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "✅ SIRIUS_API_KEY resolvido 11/07: a key JÁ estava no EasyPanel — verificado E2E em prod (POST /api/lead → contato + deal no stage Lead do pipeline Estetia; teste deletado depois). Próximo gargalo é tráfego: só 3 artigos de fundo de funil publicados dos 20 planejados (9 fundo/8 meio/3 topo, plano no repo). GSC da propriedade já existe (sc-domain:estetia.estetiacrm.com.br).",
-    "acao": "Publicar artigos 4–20 do blog da landing (fundo de funil primeiro)"
+    "acaoDesc": "✅ 12/07: artigos 4–20 PUBLICADOS — blog foi de 3 → 20 artigos (6 fundo + 8 meio + 3 topo, 177 FAQs, fronteira de keywords com o Doc-CRM respeitada; handoff em Docs/handoff/s5-blog-artigos-4-20.md do estetia-demo; push 5804c83, deploy automático EasyPanel). De passagem: 6 links internos sem /blog/ corrigidos. Próximo: submeter sitemap atualizado no GSC (sc-domain:estetia.estetiacrm.com.br) e pedir indexação dos artigos de fundo primeiro; cadência segue na tarefa diária da agenda.",
+    "acao": "Submeter sitemap + pedir indexação dos 20 artigos no GSC"
   },
   {
     "slug": "roilabs",
