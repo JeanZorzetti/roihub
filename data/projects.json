@@ -42,8 +42,8 @@
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "✅ 12/07: artigos 4–20 PUBLICADOS — blog foi de 3 → 20 artigos (6 fundo + 8 meio + 3 topo, 177 FAQs, fronteira de keywords com o Doc-CRM respeitada; handoff em Docs/handoff/s5-blog-artigos-4-20.md do estetia-demo; push 5804c83, deploy automático EasyPanel). De passagem: 6 links internos sem /blog/ corrigidos. Próximo: submeter sitemap atualizado no GSC (sc-domain:estetia.estetiacrm.com.br) e pedir indexação dos artigos de fundo primeiro; cadência segue na tarefa diária da agenda.",
-    "acao": "Submeter sitemap + pedir indexação dos 20 artigos no GSC"
+    "acaoDesc": "Hoje os 21 artigos do blog usam TODOS a mesma /demo-aurora.jpg, com imageAlt genérico — imagem repetida não ilustra nada, não ganha Google Imagens e o og:image é idêntico em todo compartilhamento. Tarefa: (1) escolher 1 imagem de banco por artigo, correlata ao conteúdo, licença livre e comercial (Unsplash/Pexels), self-hospedada em /public/blog/<slug>.jpg — nada de hotlink; (2) infra de SEO de imagem: alt descritivo e único por post (imageAlt já existe no BlogPost), width/height fixos pra não voltar CLS, lazy loading fora da dobra, og:image por artigo e nome de arquivo com a keyword. Estender o src/__tests__/blog-data.test.ts pra travar imagem/alt duplicados ou vazios. Blog em C:\\dev\\estetia-demo (src/lib/blog/posts/, 21 posts). DEPOIS disto: submeter sitemap atualizado no GSC (sc-domain:estetia.estetiacrm.com.br) e pedir indexação dos artigos de fundo primeiro — a cadência de 1 artigo/dia segue na tarefa diária da agenda.",
+    "acao": "Trocar a imagem única dos 21 artigos por imagens de banco correlatas + infra de SEO de alt/og:image"
   },
   {
     "slug": "roilabs",
