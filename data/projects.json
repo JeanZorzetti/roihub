@@ -14,8 +14,8 @@
     "seoSeed": 6,
     "decay": 4,
     "decayNota": "98 páginas no ar; CWV verde",
-    "acaoDesc": "✅ LCP da malha RESOLVIDO 13/07 (5 commits, 14b4e1f→02080e2): 5,9s → 2,5s (mediana de 5 runs), score 68 → 92, CLS 0,002. Causas reais, achadas medindo e não chutando: (1) o LCP era TEXTO, esperando a cadeia de fontes do Google (2 conexões em série) — fontes agora self-hosted, variáveis e subsetadas, 202→82 KB, com preload; (2) o logo do header era um PNG de 170 KB exibido a 180×34 → 13,8 KB; (3) com o texto rápido, o LCP virou a foto do produto, que tinha 41% do tempo em Load Delay — ganhou preload, e o 1º card parou de usar loading=lazy (lazy em imagem de LCP é o anti-padrão clássico); (4) gtag.js (161 KB) + Clarity baixavam durante o carregamento e roubavam a banda dela — agora baixam no evento load, com dataLayer/clarity enfileirando desde o início (pageview do GA4 verificado saindo). Doc em Docs/Obsidian/80-dev/fontes.md. ⚠️ NOVO: IndexNow responde 403 na API mesmo com a chave certa e servida (200) — a cada build o site 'pinga' 94 URLs que não chegam; numa malha pSEO isso é o canal de recrawl morto. Investigar (chave já usada em outro host? host não verificado?). Depois: export de sexta 17/07 na aba /infra pra ver se os 33,6% de redirect caíram. ⚠️ O MESMO logo de 170 KB está no site institucional (site/public/roilabs-logo.png) — mesma correção de 1 comando, mas é deploy do roilabs.",
-    "acao": "Consertar o IndexNow (403) — o recrawl da malha de 98 páginas está mudo"
+    "acaoDesc": "MANUAL (Jean, login Microsoft) — NÃO é tarefa de código. Causa do IndexNow 403 já achada e verificada 13/07: o Bing trata cada subdomínio como site à parte e recusa o ping enquanto não conhecer o host — a chave está certa (apex → 200, Yandex aceita a mesma chave → 202, key file servido 200/text-plain/sem BOM; NADA a consertar no servidor, não reabra essa investigação). Desbloqueio: adicionar goiania.roilabs.com.br no Bing Webmaster Tools e verificar — o import do GSC traz verificação + sitemap de uma vez. Gate pra fechar sem deploy: pnpm indexnow:check (repo ROI Labs/ROI Labs, site-goiania). Contexto: ✅ LCP resolvido 13/07 (5,9s→2,5s, doc Docs/Obsidian/80-dev/fontes.md). Depois do Bing: export de sexta 17/07 na aba /infra pra ver se os 33,6% de redirect caíram.",
+    "acao": "Verificar goiania.roilabs.com.br no Bing Webmaster Tools — destrava o IndexNow 403 (manual)"
   },
   {
     "slug": "sirius",
@@ -42,7 +42,7 @@
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
+    "acaoDesc": "MANUAL (Jean, GSC UI) — repo do site: C:/dev/estetia-demo. ✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
     "acao": "Submeter sitemap do blog no GSC e pedir indexação dos 21 artigos"
   },
   {
@@ -56,8 +56,8 @@
     "seoSeed": 7,
     "decay": 3,
     "decayNota": "Rank tracking de volta desde 13/07",
-    "acaoDesc": "✅ Cron serper consertado (BOM U+FEFF no secret, fix f159ea7) — rodou 3× verde em 13/07, 0 erros, commitando no vault. ⚠️ IMPORTANTE, não é bug: as colunas de posição do rank-tracking.csv estão VAZIAS porque o script reporta honestamente '0/40 keywords no top 50' — a malha simplesmente ainda não rankeia (2 semanas de vida). O tracker está OK; o dado é que não há dado. Não 'consertar' isso. (O gatilho AGENDADO de 13/07 09:00 UTC não apareceu em Actions — atraso de cron do GitHub, não código; o script está provado.) Novo alvo dev: o export de crawl de 10/07 mostrou roilabs.com.br com só 40,6% de respostas OK na aba /infra — mapear pra onde vão os ~59% de redirects/404/erros e derrubar (mesma classe de desperdício que queimava 46% do crawl do goiânia antes do fix de trailing slash). Reavaliar no export de sexta 17/07.",
-    "acao": "Investigar o crawl 40,6% OK do roilabs.com.br — 6 em cada 10 hits do Googlebot desperdiçados"
+    "acaoDesc": "Repo: ROI Labs/ROI Labs, arquivo site/public/roilabs-logo.png — 173.709 bytes conferidos em disco 13/07, exibido pequeno no header. Mesma correção de 1 comando que tirou 170 KB do goiânia (reencodar ~500px, <100 KB) + deploy do /site. ⚠️ O card anterior ('investigar crawl 40,6% OK') foi INVESTIGADO E ENCERRADO 13/07 — improcedente, não reabrir: Crawl Stats do GSC é média de 90 DIAS e 222 das 234 requisições eram anteriores ao fix de trailing slash de 03/07 (DNS errors param em 27/06; www já responde 301 e /obrigado já tem noindex — sondados 13/07). O % agregado só melhora quando a janela rolar; em 17/07 julgar pelo mix dos DIAS NOVOS do export, não pelo total. Dev vivo no /app admin (mesmo monorepo): 26 API routes e só 3 logam — logger estruturado pronto em app/src/lib/log.ts (13/07), falta instrumentar as rotas de dinheiro.",
+    "acao": "Reencodar o logo de 170 KB do site institucional (site/public/roilabs-logo.png) + deploy"
   },
   {
     "slug": "polarisia",
@@ -72,7 +72,7 @@
     "seoSeed": 4,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. Spec 012 da home V4 pronta desde 12/07 no sofia-next: rodar speckit-implement nas T001–T017 e reposicionar a home em 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07). É a última peça antes de pensar em billing. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
+    "acaoDesc": "Repo: ROI Labs/Imob/sofia-next (github JeanZorzetti/sofia-ia). ✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. Spec 012 da home V4 pronta desde 12/07 no sofia-next: rodar speckit-implement nas T001–T017 e reposicionar a home em 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07). É a última peça antes de pensar em billing. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
     "acao": "Implementar a home V4 'sites de produção' (spec 012, T001–T017)"
   },
   {
@@ -86,8 +86,8 @@
     "seoSeed": 5,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ Preço canônico alinhado (checkout MP × entitlements/UI) — fechado até 13/07; auditoria 06/2026 já estava encerrada desde 11/07 (CI bloqueante, 644 testes verdes, 5 bugs reais corrigidos). Último deferido da auditoria: sweep dos 233 console.* pra pino (logging estruturado) — depois disso o card zera a dívida técnica conhecida e o próximo movimento vira SEO/distribuição (landing já subiu 50→80 em 06/2026).",
-    "acao": "Sweep de logging: trocar os 233 console.* por pino"
+    "acaoDesc": "⚠️ Repo: Doc-CRM (github JeanZorzetti/estetia) — em 13/07 esta tarefa foi executada no monorepo roilabs por engano porque o card não dizia o repo. Contagem verificada 13/07 no Doc-CRM: 1.084 console.* versionados, dos quais 791 são scripts/ CLI (stdout legível é o CERTO lá — não tocar) + seeds/e2e; o escopo real são ~222 em código de runtime: lib 76, components 74, app 52, hooks 18, instrumentation 2. NÃO usar pino: o repo builda com output standalone e o transport do pino (worker_threads/thread-stream) não é traçado no bundle — quebraria só em prod. Usar logger JSON zero-dep com a API do pino; implementação de referência pronta e testada em ROI Labs/app/src/lib/log.ts (serializer de Error, redaction LGPD, teste-guard anti-console.*). Ordem: server primeiro (app/api + lib server-side); components/hooks (~92) são client — lá é remover debug log ou manter console.error, logger não se aplica. Depois disso o card zera a dívida técnica conhecida e o próximo movimento vira SEO/distribuição.",
+    "acao": "Logging estruturado no Doc-CRM: ~222 console.* de runtime → logger JSON (não é pino; não é o repo roilabs)"
   },
   {
     "slug": "reviewshield",
@@ -100,7 +100,7 @@
     "seoSeed": 2,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina.",
+    "acaoDesc": "Repo: ROI Labs/review-dispute-agent. ✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina.",
     "acao": "On-page + links internos pro /checker (p78 no GSC) — sair da zona de risco do kill-gate"
   },
   {
@@ -114,7 +114,7 @@
     "seoSeed": 3,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ User.apiToken hasheado — fechado até 13/07 (publish 1.2.0 já estava no npm desde 10/06). Indexação do subdomínio segue no card nimblabs (não duplicar). Enquanto o índice não vem, deixar as páginas prontas pra citação em IA seguindo o playbook GEO/AEO do portfólio: llms.txt, @graph único (SoftwareApplication + Organization), BLUF nos posts do blog e whitelist de crawlers IA no robots — dev tool de contexto pra Claude Code é exatamente o tipo de produto que ChatGPT/Perplexity citam, e citação converte 4–23× melhor.",
+    "acaoDesc": "Repo: ROI Labs/context-keeper. ✅ User.apiToken hasheado — fechado até 13/07 (publish 1.2.0 já estava no npm desde 10/06). llms.txt confirmado 404 em 13/07 — tarefa segue válida. Indexação do subdomínio segue no card nimblabs (não duplicar). Enquanto o índice não vem, deixar as páginas prontas pra citação em IA seguindo o playbook GEO/AEO do portfólio: llms.txt, @graph único (SoftwareApplication + Organization), BLUF nos posts do blog e whitelist de crawlers IA no robots — dev tool de contexto pra Claude Code é exatamente o tipo de produto que ChatGPT/Perplexity citam, e citação converte 4–23× melhor.",
     "acao": "GEO/AEO on-page do CK: llms.txt + @graph único + BLUF no blog"
   },
   {
@@ -146,7 +146,7 @@
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "✅ Request Indexing do Context Keeper enviado no GSC UI (home + posts) — fechado até 13/07. Duas pontas dev restantes da revisão de 11/07: (1) backlink da página npm do daemon (@jeanzorzetti/context-keeper — link no README + republish patch) → context.nimblabs.com, o backlink mais barato que existe pra destravar o crawl; (2) conferir em ~20/07 (7–10 dias) se home/posts do CK saíram de 'unknown to Google'. Na sequência: o export de 10/07 mostrou nimblabs.com com 60,3% OK no crawl — investigar junto com o do roilabs.",
+    "acaoDesc": "Repo: ROI Labs/context-keeper (README npm) + ROI Labs/nimblabs (site). ✅ Request Indexing do Context Keeper enviado no GSC UI (home + posts) — fechado até 13/07. Duas pontas dev restantes da revisão de 11/07: (1) backlink da página npm do daemon (@jeanzorzetti/context-keeper — link no README + republish patch) → context.nimblabs.com, o backlink mais barato que existe pra destravar o crawl; (2) conferir em ~20/07 (7–10 dias) se home/posts do CK saíram de 'unknown to Google'. ⚠️ Sobre o '60,3% OK' do crawl de nimblabs.com: ANTES de investigar, datar as falhas — Crawl Stats do GSC é média de 90 dias e o caso idêntico do roilabs (40,6%) era 100% pré-fix, zero bug vivo. Só abrir investigação se houver falha em DIAS NOVOS.",
     "acao": "Backlink npm → context.nimblabs.com e conferir indexação do CK (~20/07)"
   }
 ]

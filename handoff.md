@@ -2,6 +2,34 @@
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
+## 13/07 — auditoria dos 10 cards de ação: 3 estavam improcedentes/errados; convenção "Repo:" adotada
+
+- **Gatilho (Jean):** "já é a quarta tarefa improcedente que pego da agenda". Auditei os 10 `acao`/`acaoDesc` do
+  projects.json contra os repos e a prod ANTES de reescrever — cada afirmação nova tem verificação datada.
+- **Padrão da falha (é processo, não código):** os cards são texto curado à mão; o trabalho acontece
+  (ou uma investigação conclui) e ninguém volta pra atualizar o card — o hub segue mandando executar
+  o que já morreu. Agravante: nenhum card dizia **em qual repo** executar.
+- **Caso pior (13/07):** o card do **estetiacrm** ("233 console.* → pino") foi executado **no monorepo roilabs**
+  por engano — sem "Repo:" no texto, o executor assumiu o repo errado. A premissa numérica era quase certa
+  **no Doc-CRM**: 1.084 console.* versionados, ~222 em runtime (lib 76, components 74, app 52, hooks 18).
+  E "pino" era prescrição errada: Doc-CRM builda `output: standalone` (worker_threads do transport não é
+  traçado no bundle; quebra só em prod). Card reescrito: logger JSON zero-dep, referência em
+  `ROI Labs/app/src/lib/log.ts` (shipped 13/07 no roilabs).
+- **goiania:** "Consertar IndexNow 403" → causa JÁ achada 13/07 (Bing não conhece o subdomínio; Yandex 202
+  prova chave/arquivo ok). Card virou o desbloqueio real: **manual**, verificar o host no Bing Webmaster Tools.
+- **roilabs:** "Investigar crawl 40,6% OK" → investigação CONCLUÍDA 13/07, zero bug vivo (Crawl Stats = média
+  de 90 dias; 222/234 requisições pré-fix; www 301 e /obrigado noindex sondados hoje). Card virou a tarefa viva
+  e verificada: logo de 173.709 bytes em `site/public/roilabs-logo.png` (conferido em disco hoje).
+- **Válidos, mantidos:** sirius (gate 28/07), fabrica (sitemap GSC — pendente por handoff de hoje), polarisia
+  (spec 012), reviewshield (/checker p78), context (**llms.txt confirmado 404 hoje**), aftercare (gate ~29/08),
+  nimblabs (backlink npm; adicionado aviso pra DATAR as falhas antes de investigar o "60,3% OK" — mesmo gotcha
+  de 90 dias do roilabs).
+- **Convenção nova:** todo card com tarefa de dev começa com `Repo: …` (ou `MANUAL (Jean…)`). Ao fechar
+  trabalho de um projeto, **atualizar o card no projects.json faz parte do fechamento** — o rodapé da /agenda
+  já dizia isso; agora é regra de handoff.
+- Verificado: JSON parseia (10 projetos, todos com acao+acaoDesc), suíte verde. projects.json é import
+  estático — o push publica via redeploy automático.
+
 ## 12/07 — recorrência DIÁRIA na agenda (weekday=7) + 10 tarefas de artigo/dia
 
 - Pedido do Jean: 10 tarefas contínuas, 1 por projeto, "publicar um novo artigo por dia". A agenda só tinha recorrência semanal (weekday 0-6) → **`weekday = 7` agora = diária** (ocorrência sempre = hoje; cai no bucket "Hoje" e reseta a cada dia). Diff mínimo: 1 branch em `nextOccurrence()` (lib/agenda.mjs), label "todo dia" no meta, opção nos 2 selects (add + modal), regex `^[0-7]$` no actions.ts, e CHECK do banco trocado de 0-6 → 0-7 (par DROP IF EXISTS + ADD no `ensure()`, idempotente — padrão aditivo; já apliquei no PROD direto).
