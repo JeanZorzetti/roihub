@@ -6,16 +6,15 @@
     "gscInicio": "2026-06-28",
     "receita": 8,
     "receitaNota": "Gate 3 (1º fornecedor) destrava o marketplace pago-pelo-sucesso",
-    "blockers": 4,
+    "blockers": 3,
     "blockersLista": [
-      "CLS ~1,0 no hub /porcelanato/ (PSI 48) e template da malha (PSI 44) — meta ≤ 0,1",
       "Queda dos 33,6% redirect só mensurável no export de 17/07 (fix confirmado vivo 11/07)"
     ],
     "seoSeed": 6,
     "decay": 5,
     "decayNota": "98 páginas no ar",
-    "acaoDesc": "Baseline CWV de 11/07 (cwv.md no vault, PSI mobile): /porcelanato/ score 48 / CLS 1,03 e malha score 44 / CLS 1,0 — layout shift enorme nas páginas de dinheiro (provável imagem/grid sem dimensão reservada); meta CLS ≤ 0,1. Na sequência, ciclo 15: expandir guia de limpeza por acabamento + interlink guia→malha. Secrets GSC_SA_KEY/PSI_API_KEY setados e validados 11/07 (run verde); redirects reavaliar no export de sexta 17/07 na aba /infra.",
-    "acao": "Corrigir CLS ~1,0 dos templates hub/malha (PSI 44–48) e rodar ciclo 15 (interlink guia→malha)"
+    "acaoDesc": "✅ CLS ~1,0 dos templates hub/malha corrigido e ciclo 15 (interlink guia→malha) rodado — fechados até 13/07. Próxima dor de perf documentada no baseline CWV: LCP ~5,9s nas páginas internas da malha, meta ≤ 2,5s — investigar hero image sem preload/priority, payload e render-blocking no template. São as páginas de dinheiro: perf ruim ali segura exatamente o tráfego que o Gate 3 precisa mostrar. Na sequência, conferir no export de sexta 17/07 (aba /infra) se os 33,6% de redirect caíram com o fix de 11/07.",
+    "acao": "Derrubar LCP ~5,9s das páginas internas da malha (meta ≤ 2,5s)"
   },
   {
     "slug": "sirius",
@@ -28,8 +27,8 @@
     "seoSeed": 6,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "✅ Entity SEO shipped 11/07 (ef1f16b): descoberto que TODOS os sameAs do site apontavam pra perfis mortos ou de TERCEIROS (linkedin/roilabs deletada, linkedin/roi-labs = consultoria americana, twitter+github roilabs = estranhos) — veneno pra desambiguação do brand homônimo. Criada fonte única lib/geo/entity.ts com perfis VERIFICADOS (linkedin roi-labs-curadoria + instagram roilabs.curadoria + founder Jean com linkedin/github reais); @graph ganhou founder/alternateName/@id; footer corrigido (Twitter→Instagram, GitHub→JeanZorzetti). Contexto: cliques declining era 100% branded ('sirius crm' 21→7, posição própria 2,0→~5). Agora: (1) validar schema em prod no Rich Results Test; (2) medir posição branded no GSC em ~28/07 — sem recuperação, reforçar entity SEO on-site (brand signals/conteúdo). SEM Google Ads: decisão do Jean 11/07, portfólio é 100% SEO.",
-    "acao": "Validar entity SEO em prod (Rich Results Test) e medir posição branded no GSC ~28/07"
+    "acaoDesc": "✅ Entity SEO no ar e validado em prod (Rich Results Test) — fechado até 13/07. Agora é dar tempo pro Google reprocessar a entidade: em ~28/07 medir no GSC a posição branded ('sirius crm', era 2,0 → ~5) e os cliques branded (21 → 7/sem). Recuperou = caso encerrado. Não recuperou = reforçar entity SEO on-site (brand signals, alternateName em mais superfícies, conteúdo de marca). SEM Google Ads (decisão 11/07, portfólio 100% SEO).",
+    "acao": "Gate 28/07: medir posição branded 'sirius crm' no GSC (recuperação entity SEO)"
   },
   {
     "slug": "fabrica",
@@ -42,8 +41,8 @@
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "Hoje os 21 artigos do blog usam TODOS a mesma /demo-aurora.jpg, com imageAlt genérico — imagem repetida não ilustra nada, não ganha Google Imagens e o og:image é idêntico em todo compartilhamento. Tarefa: (1) escolher 1 imagem de banco por artigo, correlata ao conteúdo, licença livre e comercial (Unsplash/Pexels), self-hospedada em /public/blog/<slug>.jpg — nada de hotlink; (2) infra de SEO de imagem: alt descritivo e único por post (imageAlt já existe no BlogPost), width/height fixos pra não voltar CLS, lazy loading fora da dobra, og:image por artigo e nome de arquivo com a keyword. Estender o src/__tests__/blog-data.test.ts pra travar imagem/alt duplicados ou vazios. Blog em C:\\dev\\estetia-demo (src/lib/blog/posts/, 21 posts). DEPOIS disto: submeter sitemap atualizado no GSC (sc-domain:estetia.estetiacrm.com.br) e pedir indexação dos artigos de fundo primeiro — a cadência de 1 artigo/dia segue na tarefa diária da agenda.",
-    "acao": "Trocar a imagem única dos 21 artigos por imagens de banco correlatas + infra de SEO de alt/og:image"
+    "acaoDesc": "✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
+    "acao": "Submeter sitemap do blog no GSC e pedir indexação dos 21 artigos"
   },
   {
     "slug": "roilabs",
@@ -51,15 +50,13 @@
     "url": "https://roilabs.com.br/",
     "receita": 4,
     "receitaNota": "Institucional; alimenta o funil do Goiânia",
-    "blockers": 6,
-    "blockersLista": [
-      "Cron serper.dev quebrado desde 06/07 (40/40 erros) — rank tracking cego"
-    ],
+    "blockers": 2,
+    "blockersLista": [],
     "seoSeed": 7,
-    "decay": 7,
-    "decayNota": "Medição SEO parada há dias",
-    "acaoDesc": "✅ Consertado 11/07: era BOM (U+FEFF) no secret SERPER_API_KEY quebrando o header do fetch — fix f159ea7 (strip no script), run verde 0 erros. Falta conferir a run de segunda 13/07 (09:00 UTC) e então trocar esta ação por outra no projects.json (blocker e decay 7 também estão desatualizados).",
-    "acao": "Consertar o cron serper.dev — sem ele você opera SEO no escuro"
+    "decay": 3,
+    "decayNota": "Rank tracking de volta desde 13/07",
+    "acaoDesc": "✅ Cron serper consertado (BOM U+FEFF no secret, fix f159ea7) — dispatch manual verde 11/07 (1m54s, 0 erros); a run agendada de hoje 13/07 09:00 UTC ainda não tinha disparado no push — conferir no fim do dia em Actions. Blocker e decay atualizados pela evidência do fix. Novo alvo dev: o export de crawl de 10/07 mostrou roilabs.com.br com só 40,6% de respostas OK na aba /infra — mapear pra onde vão os ~59% de redirects/404/erros e derrubar (mesma classe de desperdício que queimava 46% do crawl do goiânia antes do fix de trailing slash). Reavaliar no export de sexta 17/07.",
+    "acao": "Investigar o crawl 40,6% OK do roilabs.com.br — 6 em cada 10 hits do Googlebot desperdiçados"
   },
   {
     "slug": "polarisia",
@@ -67,16 +64,15 @@
     "url": "https://polarisia.com.br/",
     "receita": 4,
     "receitaNota": "Sem billing ainda; estratégia V4 + BYOS a caminho",
-    "blockers": 6,
+    "blockers": 4,
     "blockersLista": [
-      "Spec 011 BYOS: falta clarify/plan/tasks",
-      "Home V4 'sites de produção' depois da 011"
+      "Home V4: T001–T017 pendentes (spec 012 pronta desde 12/07)"
     ],
     "seoSeed": 4,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "Spec 011-byos-claude-token já criada (cfb0f0b) no sofia-next — rodar speckit-clarify → plan → tasks → implement. BYOS = usuário traz a própria assinatura Claude (setup-token oficial, nunca token em cliente terceiro). Com a 011 no ar, criar a spec da home V4 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07).",
-    "acao": "Avançar spec 011 BYOS, depois home V4"
+    "acaoDesc": "✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. Spec 012 da home V4 pronta desde 12/07 no sofia-next: rodar speckit-implement nas T001–T017 e reposicionar a home em 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07). É a última peça antes de pensar em billing. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
+    "acao": "Implementar a home V4 'sites de produção' (spec 012, T001–T017)"
   },
   {
     "slug": "estetiacrm",
@@ -84,15 +80,13 @@
     "url": "https://estetiacrm.com.br/",
     "receita": 5,
     "receitaNota": "Fork do Sirius pronto; sem vendas registradas",
-    "blockers": 2,
-    "blockersLista": [
-      "Preço divergente: checkout MP 149/297/597 vs PLAN_PRICING/UI 67/147/397"
-    ],
+    "blockers": 1,
+    "blockersLista": [],
     "seoSeed": 5,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ 11/07: AUDITORIA 06/2026 FECHADA. Manhã: cron LGPD in-app (8694ce4, validado em prod). Tarde (Jean rotacionou segredos + liberou billing + conferiu Pusher): CI validado (fix client-wa 6a0e389), suíte 109 falhando→0 (644 verdes), job de testes BLOQUEANTE, e 5 bugs reais corrigidos (3e0933f: intent 'sirius' do fork nunca disparava p/ Estetia, DemoScheduler p/ lead frio, form de deal travava silenciosamente com valor vazio, grid layout rejeitava layouts válidos, caminho de erro de API crashava). ⚠️ NOVO achado: preços divergem entre lib/mercado-pago/products.ts (149/297/597, Estetia) e lib/entitlements.ts+PricingComparison (67/147/397, Sirius) — decidir canônico e alinhar. Deferido: sweep pino (233 console.*). Landing: 50→80 em 06/2026.",
-    "acao": "Alinhar preço canônico (checkout 149/297/597 vs UI 147)"
+    "acaoDesc": "✅ Preço canônico alinhado (checkout MP × entitlements/UI) — fechado até 13/07; auditoria 06/2026 já estava encerrada desde 11/07 (CI bloqueante, 644 testes verdes, 5 bugs reais corrigidos). Último deferido da auditoria: sweep dos 233 console.* pra pino (logging estruturado) — depois disso o card zera a dívida técnica conhecida e o próximo movimento vira SEO/distribuição (landing já subiu 50→80 em 06/2026).",
+    "acao": "Sweep de logging: trocar os 233 console.* por pino"
   },
   {
     "slug": "reviewshield",
@@ -100,15 +94,13 @@
     "url": "https://reviewshield.nimblabs.com/",
     "receita": 5,
     "receitaNota": "AgaaS cobra por review removido (Home Services US); 33 testes",
-    "blockers": 4,
-    "blockersLista": [
-      "GOOGLE_CLIENT_ID faltando no EasyPanel — OAuth GBP quebrado (client_id=undefined)"
-    ],
+    "blockers": 2,
+    "blockersLista": [],
     "seoSeed": 2,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ 12/07: deploy em prod CONFIRMADO — /api/checker E2E ok (DB+Ollama+triage, runId persistido) e fix dos redirects 0.0.0.0:3000 (magic link/OAuth callback/logout, commit 5a1d137). Falta: setar GOOGLE_CLIENT_ID (+conferir GOOGLE_CLIENT_SECRET e demais envs do .env.example) no EasyPanel — hoje /api/auth/google sai com client_id=undefined — e então rodar o fluxo de disputa ponta a ponta com conta GBP real. Detalhes em review-dispute-agent/handoff.md.",
-    "acao": "Setar GOOGLE_CLIENT_ID no EasyPanel e rodar disputa E2E"
+    "acaoDesc": "✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina.",
+    "acao": "On-page + links internos pro /checker (p78 no GSC) — sair da zona de risco do kill-gate"
   },
   {
     "slug": "context",
@@ -121,8 +113,8 @@
     "seoSeed": 3,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "✅ 12/07: verificado no registry que o publish JÁ TINHA SAÍDO em 10/06 — @jeanzorzetti/context-keeper@1.2.0 (e MCP 0.2.0) no npm; tarball conferido com o fix do extractor (response_format json_object) + overhaul (quality gate, providers local-first, hook SessionEnd). O ranking estava desatualizado. Única pendência técnica própria: User.apiToken em plaintext no banco (lookup findUnique por token) — hashear. Indexação do subdomínio no GSC é ação do card nimblabs (não duplicar).",
-    "acao": "Hashear User.apiToken (hoje plaintext no banco)"
+    "acaoDesc": "✅ User.apiToken hasheado — fechado até 13/07 (publish 1.2.0 já estava no npm desde 10/06). Indexação do subdomínio segue no card nimblabs (não duplicar). Enquanto o índice não vem, deixar as páginas prontas pra citação em IA seguindo o playbook GEO/AEO do portfólio: llms.txt, @graph único (SoftwareApplication + Organization), BLUF nos posts do blog e whitelist de crawlers IA no robots — dev tool de contexto pra Claude Code é exatamente o tipo de produto que ChatGPT/Perplexity citam, e citação converte 4–23× melhor.",
+    "acao": "GEO/AEO on-page do CK: llms.txt + @graph único + BLUF no blog"
   },
   {
     "slug": "aftercare",
@@ -132,13 +124,13 @@
     "receitaNota": "Pivot B2B clínicas; 20 artigos no funil",
     "blockers": 3,
     "blockersLista": [
-      "Aguardando dados GSC pro kill-gate D+90"
+      "Aguardando dados GSC pro kill-gate D+90 (~29/08)"
     ],
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "SEO passivo — estável parado",
-    "acaoDesc": "Puxar impressões/cliques dos 20 artigos do funil B2B clínicas (9 fundo, 8 meio, 3 topo) no GSC e aplicar o kill-gate D+90 da tese do portfólio (nimblabs/docs/PORTFOLIO-EN-STRATEGY.md): sem tração = matar ou pivotar, com tração = dobrar no que rankeia.",
-    "acao": "Checar GSC dos 20 artigos e decidir no gate D+90"
+    "acaoDesc": "Puxar impressões/cliques dos 20 artigos do funil B2B clínicas (9 fundo, 8 meio, 3 topo) no GSC e aplicar o kill-gate D+90 da tese do portfólio (nimblabs/docs/PORTFOLIO-EN-STRATEGY.md): sem tração = matar ou pivotar, com tração = dobrar no que rankeia. Hoje 13/07 é D+43 — o gate cai ~29/08/2026. Revisão interina de 11/07 marcou NO RITMO (~93 imp/sem dobrando, p9 em 'aftercare cheek filler'). Até o gate: nada a fazer aqui, SEO passivo por design.",
+    "acao": "Checar GSC dos 20 artigos e decidir no gate D+90 (~29/08)"
   },
   {
     "slug": "nimblabs",
@@ -146,14 +138,14 @@
     "url": "https://nimblabs.com/",
     "receita": 3,
     "receitaNota": "Hub dos micro-SaaS; receita vem dos bets, não dele",
-    "blockers": 5,
+    "blockers": 4,
     "blockersLista": [
-      "Context Keeper NÃO INDEXADO — Google nunca crawleou o subdomínio; relógio D+90 roda sem medir nada"
+      "Context Keeper: Request Indexing enviado — aguardando entrar no índice (checar ~20/07)"
     ],
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "✅ Revisão interina rodada 11/07 (nimblabs/docs/killgate-review-2026-07-11.md): Aftercare NO RITMO (~93 imp/sem dobrando, p9 em 'aftercare cheek filler'); ReviewShield EM RISCO (blog impressiona, checker indexado mas p78 — precisa on-page + links internos); CK VERMELHO (home e posts 'unknown to Google' após 30d; sitemap e site OK). Ação manual: Request Indexing no GSC UI pra home + /blog + 2–3 posts do CK, e backlink da página npm do daemon → context.nimblabs.com. Kill de canal (10/10) improvável.",
-    "acao": "Pedir indexação do Context Keeper no GSC UI (home + posts) — relógio roda sem medição"
+    "acaoDesc": "✅ Request Indexing do Context Keeper enviado no GSC UI (home + posts) — fechado até 13/07. Duas pontas dev restantes da revisão de 11/07: (1) backlink da página npm do daemon (@jeanzorzetti/context-keeper — link no README + republish patch) → context.nimblabs.com, o backlink mais barato que existe pra destravar o crawl; (2) conferir em ~20/07 (7–10 dias) se home/posts do CK saíram de 'unknown to Google'. Na sequência: o export de 10/07 mostrou nimblabs.com com 60,3% OK no crawl — investigar junto com o do roilabs.",
+    "acao": "Backlink npm → context.nimblabs.com e conferir indexação do CK (~20/07)"
   }
 ]
