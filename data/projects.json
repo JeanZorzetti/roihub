@@ -8,13 +8,14 @@
     "receitaNota": "Gate 3 (1º fornecedor) destrava o marketplace pago-pelo-sucesso",
     "blockers": 3,
     "blockersLista": [
+      "IndexNow devolve 403 — 94 URLs 'enviadas' a cada build não chegam a ninguém",
       "Queda dos 33,6% redirect só mensurável no export de 17/07 (fix confirmado vivo 11/07)"
     ],
     "seoSeed": 6,
-    "decay": 5,
-    "decayNota": "98 páginas no ar",
-    "acaoDesc": "✅ CLS ~1,0 dos templates hub/malha corrigido e ciclo 15 (interlink guia→malha) rodado — fechados até 13/07. Próxima dor de perf documentada no baseline CWV: LCP ~5,9s nas páginas internas da malha, meta ≤ 2,5s — investigar hero image sem preload/priority, payload e render-blocking no template. São as páginas de dinheiro: perf ruim ali segura exatamente o tráfego que o Gate 3 precisa mostrar. Na sequência, conferir no export de sexta 17/07 (aba /infra) se os 33,6% de redirect caíram com o fix de 11/07.",
-    "acao": "Derrubar LCP ~5,9s das páginas internas da malha (meta ≤ 2,5s)"
+    "decay": 4,
+    "decayNota": "98 páginas no ar; CWV verde",
+    "acaoDesc": "✅ LCP da malha RESOLVIDO 13/07 (5 commits, 14b4e1f→02080e2): 5,9s → 2,5s (mediana de 5 runs), score 68 → 92, CLS 0,002. Causas reais, achadas medindo e não chutando: (1) o LCP era TEXTO, esperando a cadeia de fontes do Google (2 conexões em série) — fontes agora self-hosted, variáveis e subsetadas, 202→82 KB, com preload; (2) o logo do header era um PNG de 170 KB exibido a 180×34 → 13,8 KB; (3) com o texto rápido, o LCP virou a foto do produto, que tinha 41% do tempo em Load Delay — ganhou preload, e o 1º card parou de usar loading=lazy (lazy em imagem de LCP é o anti-padrão clássico); (4) gtag.js (161 KB) + Clarity baixavam durante o carregamento e roubavam a banda dela — agora baixam no evento load, com dataLayer/clarity enfileirando desde o início (pageview do GA4 verificado saindo). Doc em Docs/Obsidian/80-dev/fontes.md. ⚠️ NOVO: IndexNow responde 403 na API mesmo com a chave certa e servida (200) — a cada build o site 'pinga' 94 URLs que não chegam; numa malha pSEO isso é o canal de recrawl morto. Investigar (chave já usada em outro host? host não verificado?). Depois: export de sexta 17/07 na aba /infra pra ver se os 33,6% de redirect caíram. ⚠️ O MESMO logo de 170 KB está no site institucional (site/public/roilabs-logo.png) — mesma correção de 1 comando, mas é deploy do roilabs.",
+    "acao": "Consertar o IndexNow (403) — o recrawl da malha de 98 páginas está mudo"
   },
   {
     "slug": "sirius",
