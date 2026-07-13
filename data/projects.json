@@ -56,7 +56,7 @@
     "seoSeed": 7,
     "decay": 3,
     "decayNota": "Rank tracking de volta desde 13/07",
-    "acaoDesc": "✅ Cron serper consertado (BOM U+FEFF no secret, fix f159ea7) — dispatch manual verde 11/07 (1m54s, 0 erros); a run agendada de hoje 13/07 09:00 UTC ainda não tinha disparado no push — conferir no fim do dia em Actions. Blocker e decay atualizados pela evidência do fix. Novo alvo dev: o export de crawl de 10/07 mostrou roilabs.com.br com só 40,6% de respostas OK na aba /infra — mapear pra onde vão os ~59% de redirects/404/erros e derrubar (mesma classe de desperdício que queimava 46% do crawl do goiânia antes do fix de trailing slash). Reavaliar no export de sexta 17/07.",
+    "acaoDesc": "✅ Cron serper consertado (BOM U+FEFF no secret, fix f159ea7) — rodou 3× verde em 13/07, 0 erros, commitando no vault. ⚠️ IMPORTANTE, não é bug: as colunas de posição do rank-tracking.csv estão VAZIAS porque o script reporta honestamente '0/40 keywords no top 50' — a malha simplesmente ainda não rankeia (2 semanas de vida). O tracker está OK; o dado é que não há dado. Não 'consertar' isso. (O gatilho AGENDADO de 13/07 09:00 UTC não apareceu em Actions — atraso de cron do GitHub, não código; o script está provado.) Novo alvo dev: o export de crawl de 10/07 mostrou roilabs.com.br com só 40,6% de respostas OK na aba /infra — mapear pra onde vão os ~59% de redirects/404/erros e derrubar (mesma classe de desperdício que queimava 46% do crawl do goiânia antes do fix de trailing slash). Reavaliar no export de sexta 17/07.",
     "acao": "Investigar o crawl 40,6% OK do roilabs.com.br — 6 em cada 10 hits do Googlebot desperdiçados"
   },
   {
