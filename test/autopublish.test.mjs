@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { PROJECTS, projectBySlug } from "../lib/autopublish-projects.mjs";
 import { authorized, missingEnv, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
-import { extractInventory, renderDraft, catalogUpsert } from "../lib/autopublish-render.mjs";
+import { extractInventory, renderDraft, catalogUpsert, registryUpsert } from "../lib/autopublish-render.mjs";
 import { gscQueryPages, inspectUrl, mergeGscWindows } from "../lib/gsc.ts";
 import {
   commitFiles,
@@ -894,6 +894,24 @@ test("catálogo insere e substitui um slug preservando exports", () => {
   assert.equal((replaced.match(/slug: "new"/g) ?? []).length, 1);
   assert.match(replaced, /title: "Updated"/);
   assert.match(replaced, /export function getAllPosts/);
+});
+
+test("registry TypeScript rejeita aliases orfaos, duplicados e bindings colidentes", () => {
+  const malformed = [
+    `import { post as existingPost } from './posts/existing-guide'
+export const blogPosts: BlogPost[] = []`,
+    `import { post as existingPost } from './posts/existing-guide'
+export const blogPosts: BlogPost[] = [existingPost, missingPost]`,
+    `import { post as existingPost } from './posts/existing-guide'
+import { post as existingPost } from './posts/existing-guide'
+export const blogPosts: BlogPost[] = [existingPost]`,
+    `import { post as existingPost } from './posts/existing-guide'
+const autoContextGuidePost = 1
+export const blogPosts: BlogPost[] = [existingPost]`,
+  ];
+  for (const source of malformed) {
+    assert.throws(() => registryUpsert(source, "context-guide"), /registry-format/);
+  }
 });
 
 test("inventário extrai frontmatter, Astro e múltiplos posts TypeScript no contentPath", () => {
