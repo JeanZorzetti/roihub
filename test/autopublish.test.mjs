@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { PROJECTS, projectBySlug } from "../lib/autopublish-projects.mjs";
 import { authorized, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
 import { extractInventory, renderDraft, catalogUpsert } from "../lib/autopublish-render.mjs";
@@ -38,7 +40,10 @@ const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), 
 
 async function withEnv(values, operation) {
   const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
-  Object.assign(process.env, values);
+  for (const [key, value] of Object.entries(values)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
   try {
     return await operation();
   } finally {
@@ -142,6 +147,509 @@ test("Bearer exige igualdade integral", () => {
   assert.equal(authorized("Basic secret", "secret"), false);
   assert.equal(authorized("Bearer secre", "secret"), false);
   assert.equal(authorized(null, "secret"), false);
+});
+
+test("cron auth falha fechado", () => {
+  assert.equal(authorized("Bearer secret", ""), false);
+  assert.equal(authorized("Bearer ", ""), false);
+  assert.equal(authorized("", ""), false);
+  assert.equal(authorized("Bearer secret ", "secret"), false);
+  assert.equal(authorized(`Bearer ${"x".repeat(500)}`, "secret"), false);
+  assert.equal(authorized(`Bearer ${"x".repeat(500)}`, "x".repeat(500)), false);
+});
+
+test("cron auth compara no fallback Edge sem node:crypto ou Buffer", () => {
+  const edge = spawnSync(process.execPath, ["--input-type=module", "-e", `
+    import assert from "node:assert/strict";
+    globalThis.Buffer = undefined;
+    process.getBuiltinModule = undefined;
+    const { authorized } = await import("./lib/autopublish-core.mjs");
+    assert.equal(authorized("Bearer secret", "secret"), true);
+    assert.equal(authorized("Bearer wrong", "secret"), false);
+  `], {
+    cwd: new URL("..", import.meta.url),
+    encoding: "utf8",
+  });
+  assert.equal(edge.status, 0, edge.stderr);
+});
+
+test("route usa Node e limite de cinco minutos", async () => {
+  const route = await import("../app/api/seo/autopublish/route.ts");
+  assert.equal(route.runtime, "nodejs");
+  assert.equal(route.maxDuration, 300);
+  assert.equal(typeof route.POST, "function");
+});
+
+test("route rejeita Bearer inválido sem expor a requisição", async () => {
+  const { POST } = await import("../app/api/seo/autopublish/route.ts");
+  await withEnv({ CRON_SECRET: "route-secret" }, async () => {
+    for (const authorization of [null, "Basic route-secret", "Bearer  route-secret", `Bearer ${"x".repeat(500)}`]) {
+      const headers = authorization ? { authorization } : {};
+      const response = await POST(new Request("http://localhost/api/seo/autopublish", {
+        method: "POST",
+        headers,
+        body: '{"secretBody":"must-not-leak"}',
+      }));
+      assert.equal(response.status, 401);
+      assert.deepEqual(await response.json(), { error: "unauthorized" });
+    }
+  });
+});
+
+test("route rejeita JSON e unions fora do formato exato", async () => {
+  const { POST } = await import("../app/api/seo/autopublish/route.ts");
+  const bodies = [
+    "{",
+    "null",
+    "[]",
+    JSON.stringify({ phase: "unknown" }),
+    JSON.stringify({ phase: "publish", project: "missing", runDate: "2026-07-24" }),
+    JSON.stringify({ phase: "publish", project: "context", runDate: "2026-02-30" }),
+    JSON.stringify({ phase: "publish", project: "context", runDate: "2026-07-24", dryRun: "true" }),
+    JSON.stringify({ phase: "publish", project: "context", runDate: "2026-07-24", extra: true }),
+    JSON.stringify({ phase: "verify", publicationId: 0 }),
+    JSON.stringify({ phase: "verify", publicationId: 1.5 }),
+    JSON.stringify({ phase: "verify", publicationId: 1, extra: true }),
+  ];
+  await withEnv({ CRON_SECRET: "route-secret" }, async () => {
+    for (const body of bodies) {
+      const response = await POST(new Request("http://localhost/api/seo/autopublish", {
+        method: "POST",
+        headers: { authorization: "Bearer route-secret" },
+        body,
+      }));
+      assert.equal(response.status, 400, body);
+      assert.deepEqual(await response.json(), { error: "invalid-request" }, body);
+    }
+  });
+});
+
+test("route lista somente envs ausentes antes de publicar", async () => {
+  const { POST } = await import("../app/api/seo/autopublish/route.ts");
+  await withEnv({
+    CRON_SECRET: "route-secret",
+    DATABASE_URL: undefined,
+    GITHUB_TOKEN: undefined,
+    GOOGLE_SERVICE_ACCOUNT_JSON: undefined,
+    OPENAI_API_KEY: undefined,
+    UNSPLASH_ACCESS_KEY: undefined,
+  }, async () => {
+    const response = await POST(new Request("http://localhost/api/seo/autopublish", {
+      method: "POST",
+      headers: { authorization: "Bearer route-secret" },
+      body: JSON.stringify({
+        phase: "publish",
+        project: "context",
+        runDate: "2026-07-24",
+        dryRun: true,
+      }),
+    }));
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), {
+      error: "missing-env",
+      fields: [
+        "DATABASE_URL",
+        "GITHUB_TOKEN",
+        "GOOGLE_SERVICE_ACCOUNT_JSON",
+        "OPENAI_API_KEY",
+        "UNSPLASH_ACCESS_KEY",
+      ],
+    });
+  });
+});
+
+test("handler HTTP retorna 200 estável para publish e verify", async () => {
+  const { handleAutopublish } = await import("../app/api/seo/autopublish/handler.ts");
+  const env = {
+    CRON_SECRET: "route-secret",
+    DATABASE_URL: "postgres://db",
+    GITHUB_TOKEN: "github",
+    GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
+    OPENAI_API_KEY: "openai",
+    UNSPLASH_ACCESS_KEY: "unsplash",
+  };
+  let publishArgs;
+  const dependencies = {
+    env,
+    publishProject: async (...args) => {
+      publishArgs = args;
+      return { id: 7, status: "published", reason: null };
+    },
+    verifyPublication: async (id) => ({ id, status: "pending", attempt: 1, deployment: "pending" }),
+  };
+  const request = (body) => new Request("http://localhost/api/seo/autopublish", {
+    method: "POST",
+    headers: { authorization: "Bearer route-secret" },
+    body: JSON.stringify(body),
+  });
+
+  const published = await handleAutopublish(request({
+    phase: "publish",
+    project: "context",
+    runDate: "2026-07-24",
+    dryRun: true,
+  }), dependencies);
+  assert.equal(published.status, 200);
+  assert.deepEqual(await published.json(), { id: 7, status: "published", reason: null });
+  assert.deepEqual(publishArgs, ["context", "2026-07-24", { dryRun: true }]);
+
+  const verified = await handleAutopublish(request({
+    phase: "verify",
+    publicationId: 7,
+  }), dependencies);
+  assert.equal(verified.status, 200);
+  assert.deepEqual(await verified.json(), {
+    id: 7,
+    status: "pending",
+    attempt: 1,
+    deployment: "pending",
+  });
+});
+
+test("handler HTTP converte github-conflict em 409 estável", async () => {
+  const { handleAutopublish } = await import("../app/api/seo/autopublish/handler.ts");
+  const response = await handleAutopublish(new Request("http://localhost/api/seo/autopublish", {
+    method: "POST",
+    headers: { authorization: "Bearer route-secret" },
+    body: JSON.stringify({
+      phase: "publish",
+      project: "context",
+      runDate: "2026-07-24",
+    }),
+  }), {
+    env: {
+      CRON_SECRET: "route-secret",
+      DATABASE_URL: "postgres://db",
+      GITHUB_TOKEN: "github",
+      GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
+      OPENAI_API_KEY: "openai",
+      UNSPLASH_ACCESS_KEY: "unsplash",
+    },
+    publishProject: async () => ({ status: "blocked", reason: "github-conflict" }),
+    verifyPublication: async () => {
+      throw new Error("unexpected-verify");
+    },
+  });
+  assert.equal(response.status, 409);
+  assert.deepEqual(await response.json(), { error: "github-conflict" });
+});
+
+test("handler HTTP retorna 503 para env ausente e banco indisponível", async () => {
+  const { handleAutopublish } = await import("../app/api/seo/autopublish/handler.ts");
+  const request = () => new Request("http://localhost/api/seo/autopublish", {
+    method: "POST",
+    headers: { authorization: "Bearer route-secret" },
+    body: JSON.stringify({
+      phase: "publish",
+      project: "context",
+      runDate: "2026-07-24",
+    }),
+  });
+  const unavailable = {
+    publishProject: async () => {
+      throw new Error("database");
+    },
+    verifyPublication: async () => {
+      throw new Error("unexpected-verify");
+    },
+  };
+
+  const missing = await handleAutopublish(request(), {
+    ...unavailable,
+    env: { CRON_SECRET: "route-secret" },
+  });
+  assert.equal(missing.status, 503);
+  assert.deepEqual(await missing.json(), {
+    error: "missing-env",
+    fields: [
+      "DATABASE_URL",
+      "GITHUB_TOKEN",
+      "GOOGLE_SERVICE_ACCOUNT_JSON",
+      "OPENAI_API_KEY",
+      "UNSPLASH_ACCESS_KEY",
+    ],
+  });
+
+  const database = await handleAutopublish(request(), {
+    ...unavailable,
+    env: {
+      CRON_SECRET: "route-secret",
+      DATABASE_URL: "postgres://db",
+      GITHUB_TOKEN: "github",
+      GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
+      OPENAI_API_KEY: "openai",
+      UNSPLASH_ACCESS_KEY: "unsplash",
+    },
+  });
+  assert.equal(database.status, 503);
+  assert.deepEqual(await database.json(), { error: "database-unavailable" });
+});
+
+test("middleware isola Bearer do cron sem enfraquecer Basic Auth", async () => {
+  const [{ middleware }, { NextRequest }] = await Promise.all([
+    import("../middleware.ts"),
+    import("next/server.js"),
+  ]);
+  await withEnv({
+    CRON_SECRET: "route-secret",
+    HUB_USER: "roi",
+    HUB_PASS: "hub-pass",
+  }, async () => {
+    const cron = (authorization) => middleware(new NextRequest(
+      "http://localhost/api/seo/autopublish",
+      { headers: { authorization } }
+    ));
+    assert.equal(cron("Bearer route-secret").headers.get("x-middleware-next"), "1");
+    assert.equal(cron(`Basic ${Buffer.from("roi:hub-pass").toString("base64")}`).status, 401);
+    const rejected = cron("Bearer wrong");
+    assert.equal(rejected.status, 401);
+    assert.deepEqual(await rejected.json(), { error: "unauthorized" });
+
+    const page = middleware(new NextRequest("http://localhost/seo", {
+      headers: {
+        authorization: `Basic ${Buffer.from("roi:hub-pass").toString("base64")}`,
+      },
+    }));
+    assert.equal(page.headers.get("x-middleware-next"), "1");
+    const pageRejected = middleware(new NextRequest("http://localhost/seo", {
+      headers: { authorization: "Bearer route-secret" },
+    }));
+    assert.equal(pageRejected.status, 401);
+    assert.equal(pageRejected.headers.get("www-authenticate"), 'Basic realm="roihub"');
+  });
+});
+
+test("workflow agenda 08:00 BRT com dispatch dry-run seguro", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/seo-autopublish.yml", import.meta.url),
+    "utf8"
+  ).replaceAll("\r\n", "\n");
+  assert.equal(workflow, `name: SEO autopublish
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/run-autopublish.mjs
+        env:
+          HUB_URL: \${{ secrets.HUB_URL }}
+          HUB_CRON_SECRET: \${{ secrets.HUB_CRON_SECRET }}
+          DRY_RUN: \${{ inputs.dry_run || 'false' }}
+`);
+});
+
+test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
+  const runner = await import("../scripts/run-autopublish.mjs");
+  assert.deepEqual(runner.PROJECT_SLUGS, [
+    "goiania",
+    "sirius",
+    "fabrica",
+    "roilabs",
+    "polarisia",
+    "estetiacrm",
+    "reviewshield",
+    "context",
+    "aftercare",
+    "nimblabs",
+  ]);
+  assert.equal(typeof runner.runAutopublish, "function");
+  assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T02:59:59.000Z")), "2026-07-23");
+  assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T03:00:00.000Z")), "2026-07-24");
+});
+
+test("runner dry-run publica dez resumos sem verificar nem esperar", async () => {
+  const { PROJECT_SLUGS, runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  const requests = [];
+  const sleeps = [];
+  const logs = [];
+  const exitCode = await runAutopublish({
+    env: {
+      HUB_URL: "https://hub.example",
+      HUB_CRON_SECRET: "runner-secret",
+      DRY_RUN: "true",
+    },
+    now: new Date("2026-07-24T02:59:59.000Z"),
+    fetchImpl: async (url, init) => {
+      requests.push({ url, init, body: JSON.parse(init.body) });
+      return jsonResponse({
+        status: "dry-run",
+        action: "new",
+        reason: "arbitrary response must not be logged",
+      });
+    },
+    sleep: async (milliseconds) => sleeps.push(milliseconds),
+    log: (line) => logs.push(line),
+  });
+
+  assert.equal(exitCode, 0);
+  assert.equal(requests.length, 10);
+  assert.deepEqual(requests.map(({ body }) => body.project), PROJECT_SLUGS);
+  for (const { url, init, body } of requests) {
+    assert.equal(url, "https://hub.example/api/seo/autopublish");
+    assert.equal(init.method, "POST");
+    assert.equal(init.headers.authorization, "Bearer runner-secret");
+    assert.equal(body.phase, "publish");
+    assert.equal(body.runDate, "2026-07-23");
+    assert.equal(body.dryRun, true);
+  }
+  assert.deepEqual(sleeps, []);
+  assert.equal(logs.length, 10);
+  assert.ok(logs.every((line) => /^slug=[a-z0-9-]+ status=dry-run$/.test(line)));
+  assert.ok(logs.every((line) => !line.includes("runner-secret") && !line.includes("arbitrary")));
+});
+
+test("runner real verifica commits em no máximo cinco rounds", async () => {
+  const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  const requests = [];
+  const sleeps = [];
+  const logs = [];
+  const attempts = new Map();
+  const exitCode = await runAutopublish({
+    env: {
+      HUB_URL: "https://hub.example",
+      HUB_CRON_SECRET: "runner-secret",
+      DRY_RUN: "false",
+    },
+    now: new Date("2026-07-24T12:00:00.000Z"),
+    fetchImpl: async (_url, init) => {
+      const body = JSON.parse(init.body);
+      requests.push(body);
+      if (body.phase === "publish") {
+        if (body.project === "goiania") return jsonResponse({ id: 1, status: "published" });
+        if (body.project === "sirius") return jsonResponse({ id: 2, status: "updated" });
+        return jsonResponse({ id: 100, status: "blocked", reason: "global-disabled" });
+      }
+      const attempt = (attempts.get(body.publicationId) ?? 0) + 1;
+      attempts.set(body.publicationId, attempt);
+      if (body.publicationId === 2) {
+        return jsonResponse({ id: 2, status: "reverted", reason: "verification:http" });
+      }
+      return jsonResponse(attempt < 5
+        ? { id: 1, status: "pending", reason: "arbitrary response must not be logged" }
+        : { id: 1, status: "published" });
+    },
+    sleep: async (milliseconds) => sleeps.push(milliseconds),
+    log: (line) => logs.push(line),
+  });
+
+  assert.equal(exitCode, 1);
+  assert.equal(requests.filter(({ phase }) => phase === "publish").length, 10);
+  const verifies = requests.filter(({ phase }) => phase === "verify");
+  assert.equal(verifies.length, 6);
+  assert.equal(verifies.filter(({ publicationId }) => publicationId === 1).length, 5);
+  assert.equal(verifies.filter(({ publicationId }) => publicationId === 2).length, 1);
+  assert.ok(verifies.every((body) => Object.keys(body).sort().join(",") === "phase,publicationId"));
+  assert.deepEqual(sleeps, [90_000, 60_000, 60_000, 60_000, 60_000]);
+  assert.ok(logs.every((line) => !line.includes("runner-secret") && !line.includes("arbitrary")));
+});
+
+test("runner trata blocked como resultado editorial", async () => {
+  const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  let verifies = 0;
+  let sleeps = 0;
+  const exitCode = await runAutopublish({
+    env: {
+      HUB_URL: "https://hub.example",
+      HUB_CRON_SECRET: "runner-secret",
+      DRY_RUN: "false",
+    },
+    fetchImpl: async (_url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.phase === "verify") verifies += 1;
+      return jsonResponse({ id: 1, status: "blocked", reason: "project-disabled" });
+    },
+    sleep: async () => {
+      sleeps += 1;
+    },
+    log: () => {},
+  });
+  assert.equal(exitCode, 0);
+  assert.equal(verifies, 0);
+  assert.equal(sleeps, 0);
+});
+
+test("runner retorna não-zero para publish failed", async () => {
+  const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  const exitCode = await runAutopublish({
+    env: {
+      HUB_URL: "https://hub.example",
+      HUB_CRON_SECRET: "runner-secret",
+      DRY_RUN: "false",
+    },
+    fetchImpl: async (_url, init) => {
+      const { project } = JSON.parse(init.body);
+      return jsonResponse(project === "context"
+        ? { status: "failed", reason: "openai-output" }
+        : { status: "blocked", reason: "project-disabled" });
+    },
+    sleep: async () => {
+      throw new Error("unexpected-sleep");
+    },
+    log: () => {},
+  });
+  assert.equal(exitCode, 1);
+});
+
+test("runner falha fechado para resultados incompatíveis com a fase", async () => {
+  const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  const env = {
+    HUB_URL: "https://hub.example",
+    HUB_CRON_SECRET: "runner-secret",
+    DRY_RUN: "false",
+  };
+  const logs = [];
+  const missingId = await runAutopublish({
+    env,
+    fetchImpl: async () => jsonResponse({ status: "published" }),
+    sleep: async () => {
+      throw new Error("unexpected-sleep");
+    },
+    log: (line) => logs.push(line),
+  });
+  assert.equal(missingId, 1);
+
+  const wrongVerifyStatus = await runAutopublish({
+    env,
+    fetchImpl: async (_url, init) => {
+      const body = JSON.parse(init.body);
+      if (body.phase === "verify") return jsonResponse({ id: 1, status: "dry-run" });
+      return jsonResponse(body.project === "context"
+        ? { id: 1, status: "published" }
+        : { status: "blocked", reason: "project-disabled" });
+    },
+    sleep: async () => {},
+    log: (line) => logs.push(line),
+  });
+  assert.equal(wrongVerifyStatus, 1);
+  assert.ok(logs.some((line) => line.endsWith("status=failed reason=invalid-result")));
+});
+
+test("runner executado diretamente propaga exit code sem vazar env", () => {
+  const child = spawnSync(process.execPath, ["scripts/run-autopublish.mjs"], {
+    cwd: new URL("..", import.meta.url),
+    env: {
+      ...process.env,
+      HUB_URL: ":",
+      HUB_CRON_SECRET: "entry-secret",
+      DRY_RUN: "false",
+    },
+    encoding: "utf8",
+  });
+  assert.equal(child.status, 1);
+  assert.ok(!`${child.stdout}${child.stderr}`.includes("entry-secret"));
 });
 
 test("query com URL existente vira update; lacuna vira new", () => {

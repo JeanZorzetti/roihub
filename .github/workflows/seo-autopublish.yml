@@ -1,0 +1,24 @@
+name: SEO autopublish
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/run-autopublish.mjs
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          HUB_CRON_SECRET: ${{ secrets.HUB_CRON_SECRET }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}

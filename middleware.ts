@@ -1,6 +1,13 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server.js";
+import { authorized } from "./lib/autopublish-core.mjs";
 
 export function middleware(req: NextRequest) {
+  if (req.nextUrl.pathname === "/api/seo/autopublish") {
+    return authorized(req.headers.get("authorization"), process.env.CRON_SECRET ?? "")
+      ? NextResponse.next()
+      : NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const pass = process.env.HUB_PASS;
   if (!pass) {
     // Fail closed em produção: hub lista blockers e notas internas de todos os projetos.
