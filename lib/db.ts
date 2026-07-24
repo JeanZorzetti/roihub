@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { validTransition } from "./autopublish-core.mjs";
 
 // Postgres da agenda (tabelas hub_*). Sem DATABASE_URL → aba mostra estado de setup.
 
@@ -9,6 +10,86 @@ export type Task = {
   projeto: string | null;
   due: string | null; // YYYY-MM-DD
   weekday: number | null; // 0-6 = recorrente semanal (domingo=0); 7 = diária
+};
+
+export type PublicationStatus = "running" | "published" | "updated" | "blocked" | "failed" | "reverted";
+export type PublicationAction = "new" | "update" | "block";
+
+export type Publication = {
+  id: number;
+  projectSlug: string;
+  runDate: string;
+  status: PublicationStatus;
+  action: PublicationAction;
+  query: string | null;
+  intent: string | null;
+  targetUrl: string | null;
+  repository: string;
+  commitSha: string | null;
+  previousSha: string | null;
+  model: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  imageSource: string | null;
+  estimatedCostUsd: number;
+  reason: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  finishedAt: string | null;
+};
+
+export type BeginPublicationInput = {
+  projectSlug: string;
+  runDate: string;
+  repository: string;
+  action?: PublicationAction;
+  query?: string | null;
+  intent?: string | null;
+  targetUrl?: string | null;
+  previousSha?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type FinishPublicationInput = Partial<
+  Pick<
+    Publication,
+    | "action"
+    | "query"
+    | "intent"
+    | "targetUrl"
+    | "commitSha"
+    | "previousSha"
+    | "model"
+    | "inputTokens"
+    | "outputTokens"
+    | "imageSource"
+    | "estimatedCostUsd"
+    | "reason"
+    | "metadata"
+  >
+>;
+
+type PublicationRow = {
+  id: string;
+  project_slug: string;
+  run_date: Date | string;
+  status: PublicationStatus;
+  action: PublicationAction;
+  query: string | null;
+  intent: string | null;
+  target_url: string | null;
+  repository: string;
+  commit_sha: string | null;
+  previous_sha: string | null;
+  model: string | null;
+  input_tokens: number;
+  output_tokens: number;
+  image_source: string | null;
+  estimated_cost_usd: string;
+  reason: string | null;
+  metadata: Record<string, unknown>;
+  created_at: Date | string;
+  finished_at: Date | string | null;
 };
 
 const g = globalThis as unknown as { hubPool?: Pool; hubSchema?: Promise<unknown> };
@@ -43,8 +124,217 @@ function ensure(): Promise<unknown> {
       -- weekday=7 (diária) em tabela criada com o CHECK antigo 0-6: troca idempotente
       ALTER TABLE hub_tasks DROP CONSTRAINT IF EXISTS hub_tasks_weekday_check;
       ALTER TABLE hub_tasks ADD CONSTRAINT hub_tasks_weekday_check CHECK (weekday BETWEEN 0 AND 7);
+      CREATE TABLE IF NOT EXISTS seo_publications (
+        id BIGSERIAL PRIMARY KEY,
+        project_slug TEXT NOT NULL,
+        run_date DATE NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('running','published','updated','blocked','failed','reverted')),
+        action TEXT NOT NULL CHECK (action IN ('new','update','block')),
+        query TEXT,
+        intent TEXT,
+        target_url TEXT,
+        repository TEXT NOT NULL,
+        commit_sha TEXT,
+        previous_sha TEXT,
+        model TEXT,
+        input_tokens INT NOT NULL DEFAULT 0,
+        output_tokens INT NOT NULL DEFAULT 0,
+        image_source TEXT,
+        estimated_cost_usd NUMERIC(12,6) NOT NULL DEFAULT 0,
+        reason TEXT,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        finished_at TIMESTAMPTZ,
+        UNIQUE (project_slug, run_date)
+      );
+      CREATE TABLE IF NOT EXISTS seo_projects (
+        project_slug TEXT PRIMARY KEY,
+        enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        paused_reason TEXT,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      INSERT INTO seo_projects (project_slug, enabled, paused_reason)
+      VALUES
+        ('*', FALSE, 'Aguardando canários'),
+        ('goiania', FALSE, 'Aguardando ativação'),
+        ('sirius', FALSE, 'Aguardando ativação'),
+        ('fabrica', FALSE, 'Aguardando ativação'),
+        ('roilabs', FALSE, 'Aguardando ativação'),
+        ('polarisia', FALSE, 'Aguardando ativação'),
+        ('estetiacrm', FALSE, 'Aguardando ativação'),
+        ('reviewshield', FALSE, 'Aguardando ativação'),
+        ('context', FALSE, 'Aguardando ativação'),
+        ('aftercare', FALSE, 'Aguardando ativação'),
+        ('nimblabs', FALSE, 'Aguardando ativação')
+      ON CONFLICT (project_slug) DO NOTHING;
     `);
   return g.hubSchema;
+}
+
+function iso(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+function publication(row: PublicationRow): Publication {
+  return {
+    id: Number(row.id),
+    projectSlug: row.project_slug,
+    runDate: iso(row.run_date).slice(0, 10),
+    status: row.status,
+    action: row.action,
+    query: row.query,
+    intent: row.intent,
+    targetUrl: row.target_url,
+    repository: row.repository,
+    commitSha: row.commit_sha,
+    previousSha: row.previous_sha,
+    model: row.model,
+    inputTokens: row.input_tokens,
+    outputTokens: row.output_tokens,
+    imageSource: row.image_source,
+    estimatedCostUsd: Number(row.estimated_cost_usd),
+    reason: row.reason,
+    metadata: row.metadata,
+    createdAt: iso(row.created_at),
+    finishedAt: row.finished_at ? iso(row.finished_at) : null,
+  };
+}
+
+async function publicationByRun(projectSlug: string, runDate: string): Promise<Publication | null> {
+  const result = await pool().query<PublicationRow>(
+    `SELECT * FROM seo_publications WHERE project_slug = $1 AND run_date = $2`,
+    [projectSlug, runDate]
+  );
+  return result.rows[0] ? publication(result.rows[0]) : null;
+}
+
+export async function beginPublication(
+  input: BeginPublicationInput
+): Promise<{ publication: Publication; created: boolean }> {
+  await ensure();
+  const result = await pool().query<PublicationRow>(
+    `INSERT INTO seo_publications
+       (project_slug, run_date, status, action, query, intent, target_url, repository, previous_sha, metadata)
+     VALUES ($1, $2, 'running', $3, $4, $5, $6, $7, $8, $9::jsonb)
+     ON CONFLICT DO NOTHING
+     RETURNING *`,
+    [
+      input.projectSlug,
+      input.runDate,
+      input.action ?? "block",
+      input.query ?? null,
+      input.intent ?? null,
+      input.targetUrl ?? null,
+      input.repository,
+      input.previousSha ?? null,
+      JSON.stringify(input.metadata ?? {}),
+    ]
+  );
+  if (result.rows[0]) return { publication: publication(result.rows[0]), created: true };
+  const existing = await publicationByRun(input.projectSlug, input.runDate);
+  if (!existing) throw new Error("publication-conflict-without-row");
+  return { publication: existing, created: false };
+}
+
+export async function getPublication(id: number): Promise<Publication | null> {
+  await ensure();
+  const result = await pool().query<PublicationRow>(`SELECT * FROM seo_publications WHERE id = $1`, [id]);
+  return result.rows[0] ? publication(result.rows[0]) : null;
+}
+
+export async function listPublications(limit = 50): Promise<Publication[]> {
+  await ensure();
+  const safeLimit = Math.min(200, Math.max(1, Math.trunc(limit) || 50));
+  const result = await pool().query<PublicationRow>(
+    `SELECT * FROM seo_publications ORDER BY created_at DESC, id DESC LIMIT $1`,
+    [safeLimit]
+  );
+  return result.rows.map(publication);
+}
+
+export async function finishPublication(
+  id: number,
+  status: Exclude<PublicationStatus, "running">,
+  updates: FinishPublicationInput = {}
+): Promise<Publication> {
+  await ensure();
+  const current = await getPublication(id);
+  if (!current || !validTransition(current.status, status)) throw new Error("invalid-publication-transition");
+  const value = <K extends keyof FinishPublicationInput>(key: K): FinishPublicationInput[K] =>
+    updates[key] === undefined ? current[key] : updates[key];
+  const result = await pool().query<PublicationRow>(
+    `UPDATE seo_publications SET
+       status = $2,
+       action = $3,
+       query = $4,
+       intent = $5,
+       target_url = $6,
+       commit_sha = $7,
+       previous_sha = $8,
+       model = $9,
+       input_tokens = $10,
+       output_tokens = $11,
+       image_source = $12,
+       estimated_cost_usd = $13,
+       reason = $14,
+       metadata = metadata || $15::jsonb,
+       finished_at = now()
+     WHERE id = $1 AND status = $16
+     RETURNING *`,
+    [
+      id,
+      status,
+      value("action"),
+      value("query"),
+      value("intent"),
+      value("targetUrl"),
+      value("commitSha"),
+      value("previousSha"),
+      value("model"),
+      value("inputTokens"),
+      value("outputTokens"),
+      value("imageSource"),
+      value("estimatedCostUsd"),
+      value("reason"),
+      JSON.stringify(updates.metadata ?? {}),
+      current.status,
+    ]
+  );
+  if (!result.rows[0]) throw new Error("publication-transition-race");
+  return publication(result.rows[0]);
+}
+
+export async function updatePublicationMetadata(
+  id: number,
+  verification: Record<string, unknown>
+): Promise<Publication> {
+  await ensure();
+  const result = await pool().query<PublicationRow>(
+    `UPDATE seo_publications SET metadata = metadata || $2::jsonb WHERE id = $1 RETURNING *`,
+    [id, JSON.stringify(verification)]
+  );
+  if (!result.rows[0]) throw new Error("publication-not-found");
+  return publication(result.rows[0]);
+}
+
+export async function projectEnabled(slug: string): Promise<boolean> {
+  await ensure();
+  const result = await pool().query<{ enabled: boolean }>(
+    `SELECT enabled FROM seo_projects WHERE project_slug = $1`,
+    [slug]
+  );
+  return result.rows[0]?.enabled === true;
+}
+
+export async function setProjectEnabled(slug: string, enabled: boolean, reason: string | null): Promise<void> {
+  await ensure();
+  const result = await pool().query(
+    `UPDATE seo_projects
+     SET enabled = $2, paused_reason = $3, updated_at = now()
+     WHERE project_slug = $1`,
+    [slug, enabled, reason]
+  );
+  if (!result.rowCount) throw new Error("project-not-found");
 }
 
 export async function listTasks(): Promise<Task[]> {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PROJECTS, projectBySlug } from "../lib/autopublish-projects.mjs";
-import { authorized, rankCandidates, validateDraft, estimateCost } from "../lib/autopublish-core.mjs";
+import { authorized, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
 import { extractInventory, renderDraft, catalogUpsert } from "../lib/autopublish-render.mjs";
 
 const draft = {
@@ -70,6 +70,13 @@ test("estimativa inclui tokens, busca e imagem", () => {
     estimateCost({ inputTokens: 1_000_000, outputTokens: 1_000_000, webSearchCalls: 1, generatedImage: true }),
     17.515
   );
+});
+
+test("status só avança por transições permitidas", () => {
+  assert.equal(validTransition("running", "published"), true);
+  assert.equal(validTransition("running", "blocked"), true);
+  assert.equal(validTransition("published", "reverted"), true);
+  assert.equal(validTransition("blocked", "published"), false);
 });
 
 test("renderiza Markdown, MDX, Astro e post TypeScript sem script/import gerado", () => {
