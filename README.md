@@ -66,10 +66,11 @@ para chamar essa rota. Configure também `HUB_URL` no GitHub Actions. Nunca regi
 os valores desses três campos.
 
 Crie um GitHub fine-grained token com acesso somente a **Contents: read and write**
-nos nove alvos abaixo (oito repositórios únicos, pois dois alvos compartilham o
+nos dez alvos abaixo (nove repositórios únicos, pois dois alvos compartilham o
 monorepo):
 
 - `goiania` — `JeanZorzetti/roilabs`
+- `tapepro` — `JeanZorzetti/tape`
 - `sirius` — `JeanZorzetti/sirius`
 - `fabrica` — `JeanZorzetti/estetia-demo`
 - `roilabs` — `JeanZorzetti/roilabs`
@@ -78,6 +79,10 @@ monorepo):
 - `reviewshield` — `JeanZorzetti/review-dispute`
 - `context` — `JeanZorzetti/context-keeper`
 - `aftercare` — `JeanZorzetti/aftercare-nimblabs`
+
+**Tapepro é o único projeto que baixa a imagem** em vez de hotlinkar: o schema dele valida
+`imagem` como asset local do Astro (`image()`), que não aceita URL externa. O crédito e o
+trigger de download da API continuam. Os demais seguem a regra abaixo.
 
 A capa vem só do Unsplash — não há geração de imagem de fallback. Mantenha a URL
 retornada para hotlink, exiba a atribuição do fotógrafo e do Unsplash e acione o
@@ -120,8 +125,9 @@ Somente depois, mantenha o global desligado e habilite estes canários, nesta or
 (um por renderizador em uso):
 
 1. `goiania` — Astro
-2. `sirius` — TypeScript post
-3. `context` — MDX
+2. `tapepro` — Astro content collection pt-BR
+3. `sirius` — TypeScript post
+4. `context` — MDX
 
 Habilite o global temporariamente, rode `dry_run=false` e desligue-o ao terminar os
 quatro. Para cada canário, valide build, HTTP 200, canonical, schema, sitemap e

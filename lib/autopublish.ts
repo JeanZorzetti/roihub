@@ -354,7 +354,10 @@ export async function publishProject(
       return { status: "dry-run", action, targetPath: renderedPath, validation };
     }
 
-    const image = await pickImage(draft);
+    // astro-content-ptbr valida a imagem como asset local, então precisa dos bytes.
+    const image = await pickImage(draft, undefined, {
+      embed: project.renderer === "astro-content-ptbr",
+    });
     const finalDraft = image ? { ...draft, image } : draft;
     const finalRendered = renderDraft(finalDraft, project, existingTarget?.content ?? null);
     const files: { path: string; content?: string; base64?: string }[] = [

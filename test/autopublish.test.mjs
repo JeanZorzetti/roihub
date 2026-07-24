@@ -155,7 +155,7 @@ const githubTransport = (project, handler) => async (url, init = {}) => {
 };
 
 test("configura exatamente os dez projetos e remotes", () => {
-  assert.equal(PROJECTS.length, 9);
+  assert.equal(PROJECTS.length, 10);
   assert.equal(projectBySlug("goiania").repository, "JeanZorzetti/roilabs");
   assert.equal(projectBySlug("reviewshield").conversionUrl, "https://reviewshield.nimblabs.com/checker");
   assert.equal(projectBySlug("missing"), null);
@@ -579,10 +579,11 @@ jobs:
 `);
 });
 
-test("runner exporta os nove slugs e calcula a data de São Paulo", async () => {
+test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
   const runner = await import("../scripts/run-autopublish.mjs");
   assert.deepEqual(runner.PROJECT_SLUGS, [
     "goiania",
+    "tapepro",
     "sirius",
     "fabrica",
     "roilabs",
@@ -623,7 +624,7 @@ test("runner rejeita configuração ausente ou DRY_RUN inválido sem chamar nem 
   }
 });
 
-test("runner dry-run publica nove resumos sem verificar nem esperar", async () => {
+test("runner dry-run publica dez resumos sem verificar nem esperar", async () => {
   const { PROJECT_SLUGS, runAutopublish } = await import("../scripts/run-autopublish.mjs");
   const requests = [];
   const sleeps = [];
@@ -1051,6 +1052,36 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
 
   const catalog = renderDraft(hostile, catalogFixture, "export const posts = [];");
   assert.ok(!catalog.content.includes("<script"));
+});
+
+test("Tapepro gera frontmatter pt-BR válido com imagem como asset local relativo", () => {
+  const project = projectBySlug("tapepro");
+  const withBytes = { ...draft, image: { ...draft.image, base64: "d2VicA==" } };
+  const rendered = renderDraft(withBytes, project, null);
+
+  assert.equal(rendered.path, "src/content/blog/daily-guide.mdx");
+  // O MDX está em src/content/blog e o asset em src/assets/conteudo: dois níveis acima.
+  assert.match(rendered.content, /^imagem: "\.\.\/\.\.\/assets\/conteudo\/daily-guide\.jpg"$/m);
+  assert.deepEqual(rendered.imageFile, {
+    path: "src/assets/conteudo/daily-guide.jpg",
+    base64: "d2VicA==",
+  });
+
+  // Todo campo obrigatório do zod em src/content.config.ts precisa existir.
+  for (const field of [
+    "titulo", "h1", "descricao", "intencao", "resumo",
+    "publicadoEm", "tempoLeituraMin", "imagem", "imagemAlt",
+  ]) {
+    assert.match(rendered.content, new RegExp(`^${field}:`, "m"), `faltou ${field}`);
+  }
+
+  const frontmatter = rendered.content.split("---")[1];
+  const descricao = frontmatter.match(/^descricao: "(.*)"$/m)[1];
+  assert.ok(descricao.length <= 160, `descricao passou de 160: ${descricao.length}`);
+  assert.match(frontmatter, /^publicadoEm: 2026-07-24$/m);
+  assert.match(frontmatter, /^tempoLeituraMin: [1-9]\d*$/m);
+  assert.ok(rendered.content.includes("## Fontes"));
+  assert.ok(rendered.content.includes("Photo by A on Unsplash"));
 });
 
 test("Aftercare usa apenas a autoria configurada como credencial", () => {

@@ -461,7 +461,11 @@ function trustedHttpsUrl(value: unknown, origin: string) {
   }
 }
 
-export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fetch) {
+export async function pickImage(
+  intentValue: unknown,
+  fetchImpl: FetchImpl = fetch,
+  { embed = false } = {}
+) {
   const intent = imageIntent(intentValue);
   const searchUrl = new URL("https://api.unsplash.com/search/photos");
   searchUrl.searchParams.set("query", intent);
@@ -495,10 +499,19 @@ export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fet
       },
     });
     if (!downloaded.ok) throw new Error("unsplash-output");
-    return {
+    const picked = {
       src: trustedImage.href,
       alt: String(match.alt_description ?? match.description ?? intent),
       credit: `Photo by ${String(user?.name ?? "Unsplash contributor")} on Unsplash`,
+    };
+    // embed: schema que valida a imagem como asset local (Astro image()) não aceita
+    // hotlink. O crédito e o trigger de download continuam, como a licença pede.
+    if (!embed) return picked;
+    const bytes = await fetchImpl(trustedImage.href);
+    if (!bytes.ok) throw new Error("unsplash-output");
+    return {
+      ...picked,
+      base64: Buffer.from(await bytes.arrayBuffer()).toString("base64"),
     };
   }
 
