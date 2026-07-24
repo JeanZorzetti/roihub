@@ -1659,6 +1659,15 @@ test("GitHub lê somente blobs do contentPath pelas URLs codificadas", async () 
       headSha: "head0",
       files: [{ path: "content/blog/a.mdx", sha: "blob0", content: "old" }],
     });
+
+    // 404 tem código próprio: fine-grained token sem o repo no escopo responde 404,
+    // não 403, e sem isso o motivo vira github-output e aponta para o lugar errado.
+    for (const [status, code] of [[404, "github-missing"], [403, "github-auth"], [500, "github-output"]]) {
+      await assert.rejects(
+        () => readRepository(project, async () => new Response("", { status })),
+        (error) => error.message === code
+      );
+    }
   });
 });
 

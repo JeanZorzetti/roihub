@@ -117,6 +117,7 @@ function failure(error: unknown) {
     "unsplash-rate",
     "unsplash-output",
     "github-auth",
+    "github-missing",
     "github-rate",
     "github-output",
   ].includes(code)) {

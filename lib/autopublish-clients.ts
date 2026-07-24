@@ -518,6 +518,10 @@ async function githubJson(
     }
     if (response.status === 401 || response.status === 403) throw new Error("github-auth");
     if (response.status === 429) throw new Error("github-rate");
+    // Fine-grained token sem o repo no escopo devolve 404, não 403 — o GitHub não
+    // revela a existência de repo privado. Sem código próprio isso vira "resposta
+    // malformada" e manda quem investiga para o lado errado.
+    if (response.status === 404) throw new Error("github-missing");
     throw new Error("github-output");
   }
   try {
