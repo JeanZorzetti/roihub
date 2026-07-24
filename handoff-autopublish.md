@@ -114,11 +114,9 @@ renderizar e `typescript-catalog` nem leu o repo — os dois seguem sem validaç
 
 ## ⚠️ Bloqueios abertos em 2026-07-24
 
-1. **`hub.roilabs.com.br` está devolvendo 500 em toda rota.** Causa achada e corrigida em `5c5811d`
-   (middleware importava módulo que referenciava `process.getBuiltinModule`, proibido no Edge Runtime —
-   ver `nextjs_middleware_edge_forbidden_node_api` na memória). **Falta redeployar o EasyPanel**: o hub
-   segue 500 até o rebuild. Como o `Dockerfile` mudou (instala `@anthropic-ai/claude-code`), tem que ser
-   **rebuild de imagem**, não só restart.
+1. ~~Hub com 500 em toda rota~~ — **RESOLVIDO** em `5c5811d` + redeploy. O middleware importava módulo
+   que referenciava `process.getBuiltinModule`, proibido no Edge Runtime. Ver
+   `nextjs_middleware_edge_forbidden_node_api` na memória.
 2. **`JeanZorzetti/nimblabs` está fora do escopo do `GITHUB_TOKEN`** (a API devolve 404; o repo existe).
    Ele é um dos 4 canários. **Ainda aberto após a 1a tentativa de edição:** o token enxerga 57 repos,
    incluindo os outros 8 alvos, mas `nimblabs` não está na lista. Como o repo é privado, o GitHub responde
