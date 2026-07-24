@@ -208,9 +208,10 @@ export type ClaudeRun = (
 
 // Formato de retorno idêntico ao da Responses API para manter responseText/usageOf.
 // Knob real: pesquisa + artigo completo varia muito com a quantidade de buscas.
-// Medido: 166s local, 240s na VPS de produção para o MESMO projeto. 240s de teto
-// ficava na borda do observado, então o default carrega ~2x o pior caso visto.
-const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_TIMEOUT_MS) || 420_000;
+// Medido em produção: context 240s, goiania 366s (monorepo, inventário maior), e 166s
+// local. A dispersão é grande, então o teto acompanha o pior caso visto com folga —
+// timeout aqui não economiza nada, só descarta um artigo que estava quase pronto.
+const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_TIMEOUT_MS) || 600_000;
 
 export const claudeRun: ClaudeRun = async (prompt, {
   webSearch = false,

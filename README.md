@@ -102,11 +102,15 @@ $env:DRY_RUN='true'
 node scripts/run-autopublish.mjs
 ```
 
-**Timeout medido:** ~166s local e **240s em produção** para o mesmo projeto; projetos
+**Timeout medido em produção:** `context` 240s, `goiania` 366s (monorepo, inventário maior), 166s local. Projetos
 `ymyl-restricted` somam a chamada do classificador. A rota declara
 `maxDuration = 900` e o **proxy do EasyPanel precisa aceitar o mesmo**, senão o cron
 recebe `http-504` antes do fim. Os dez projetos rodam em série: ~40 min por execução.
-Ajuste `CLAUDE_TIMEOUT_MS` se a pesquisa ficar mais lenta.
+Ajuste `CLAUDE_TIMEOUT_MS` (default 600s) se a pesquisa ficar mais lenta.
+
+⚠️ **O EasyPanel faz auto-deploy por push.** Um push durante a execução reinicia o
+container e os projetos em andamento recebem `http-502`. Não faça deploy entre 08:00
+e 08:45 BRT, quando o cron diário roda.
 
 Antes do rollout, confirme que os seis campos do hub e os secrets `HUB_URL` e
 `HUB_CRON_SECRET` existem. Execute primeiro um `workflow_dispatch` com

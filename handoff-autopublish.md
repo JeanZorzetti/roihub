@@ -8,8 +8,8 @@
 |---|---|
 | Plano | `docs/superpowers/plans/2026-07-24-seo-autopublishing.md` (Tasks 1–8, todas completas) |
 | Ledger | `.superpowers/sdd/2026-07-24-seo-autopublishing/progress.md` |
-| Último commit | `4d02a66` |
-| Verificação local | `npm test` 103/103 · `npx tsc --noEmit` 0 · `npm run build` 0 · `git diff --check` limpo |
+| Último commit | ver `git log` |
+| Verificação local | `npm test` 106/106 · `npx tsc --noEmit` 0 · `npm run build` 0 · `git diff --check` limpo |
 | No ar? | **Não.** Nenhum artigo foi publicado, nenhum `workflow_dispatch` rodou, nenhum commit foi escrito em repo de projeto. |
 
 ## O que mudou depois do Codex
@@ -90,6 +90,27 @@ publicação fecha — sem erro no código.
 4. Para cada canário validar: build, HTTP 200, canonical, schema, sitemap, atribuição da imagem.
 5. Só depois habilitar os 10 e deixar o global ligado para o cron diário (08:00 BRT).
 
+## Dry-run dos 10 em produção — 2026-07-24 (run 30122666183)
+
+**6 de 10 passaram.** O dry-run corta depois do `renderDraft` e antes do Unsplash e do commit, então
+ele exercita GSC, leitura do repo, inventário, claude-cli, guardrails **e a renderização** — mas não a
+imagem nem a escrita.
+
+| Projeto | Resultado | Leitura |
+|---|---|---|
+| fabrica, roilabs, polarisia, estetiacrm, reviewshield, context | `dry-run` | pipeline completo OK |
+| goiania | `dry-run` (reteste) | Astro OK, `validation: []`, **366s** |
+| sirius | `block decision:unsafe` (reteste) | guardrail funcionando: o modelo ficou incerto sobre duplicar intenção existente e preferiu não publicar. Não é falha de infra — mas se repetir todo dia, o sirius nunca publica |
+| aftercare | `llm-rate` | **as contas Claude esgotaram no 9º projeto.** Duas contas úteis não cobrem 10 artigos/dia |
+| nimblabs | `github-missing` | repo fora do escopo do token |
+
+Os `http-502` de goiania e sirius no run original **foram auto-inflingidos**: um push durante a execução
+disparou o auto-deploy do EasyPanel, o container reiniciou e derrubou os dois primeiros da fila. Ambos
+passaram no reteste com o container estável.
+
+**Renderizadores validados:** Astro (goiania) e MDX (context). `typescript-post` bloqueou antes de
+renderizar e `typescript-catalog` nem leu o repo — os dois seguem sem validação.
+
 ## ⚠️ Bloqueios abertos em 2026-07-24
 
 1. **`hub.roilabs.com.br` está devolvendo 500 em toda rota.** Causa achada e corrigida em `5c5811d`
@@ -104,6 +125,12 @@ publicação fecha — sem erro no código.
    Claude subscription access for Claude Code"*. A rotação pula a conta automaticamente, então o robô roda
    com 2 contas — mas o rate limit somado é menor do que você planejou.
 4. **Rotacionar os secrets** depois do rollout: os valores foram colados em conversa.
+5. **Rate limit é o gargalo real, não o custo.** Com 2 contas úteis o run esgotou no 9º projeto. Ou some
+   uma 3ª conta que funcione, ou reduza a cadência (ex.: 5 projetos/dia alternando), ou aceite que os
+   últimos da fila falham. A ordem da fila é fixa em `PROJECTS`, então são **sempre os mesmos** que
+   perdem — `aftercare` e `nimblabs` no fim. Vale rotacionar a ordem por dia.
+6. **Auto-deploy por push derruba o run em andamento.** Confirmado: o EasyPanel redeploya a cada push em
+   `main` e os projetos em voo tomam `http-502`. Não faça deploy entre 08:00 e 08:45 BRT.
 
 ## Pendências conhecidas
 
