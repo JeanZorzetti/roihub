@@ -95,6 +95,12 @@ $env:DRY_RUN='true'
 node scripts/run-autopublish.mjs
 ```
 
+**Timeout medido:** uma publicação leva ~170s (pesquisa + artigo); projetos
+`ymyl-restricted` somam a chamada do classificador. A rota declara
+`maxDuration = 600` e o **proxy do EasyPanel precisa aceitar o mesmo**, senão o cron
+recebe `http-504` antes do fim. Os dez projetos rodam em série: ~30 min por execução.
+Ajuste `CLAUDE_TIMEOUT_MS` se a pesquisa ficar mais lenta.
+
 Antes do rollout, confirme que os seis campos do hub e os secrets `HUB_URL` e
 `HUB_CRON_SECRET` existem. Execute primeiro um `workflow_dispatch` com
 `dry_run=true` e confirme dez resumos transitórios, sem linha em

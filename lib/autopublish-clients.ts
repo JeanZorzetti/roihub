@@ -153,6 +153,9 @@ function spawnClaude(prompt: string, args: string[], timeoutMs: number) {
   return new Promise<string>((resolve, reject) => {
     const child = spawn(process.env.CLAUDE_BIN || "claude", args, {
       stdio: ["pipe", "pipe", "pipe"],
+      // No Windows o binário é um shim .cmd e só é encontrado via shell. Os args são
+      // fixos e o prompt vai por stdin, então nada do modelo chega à linha de comando.
+      shell: process.platform === "win32",
     });
     let stdout = "";
     let stderr = "";
@@ -184,7 +187,10 @@ export type ClaudeRun = (
 ) => Promise<JsonRecord>;
 
 // Formato de retorno idêntico ao da Responses API para manter responseText/usageOf.
-export const claudeRun: ClaudeRun = async (prompt, { webSearch = false, timeoutMs = 120_000 } = {}) => {
+// Knob real: pesquisa + artigo completo varia muito com a quantidade de buscas.
+const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_TIMEOUT_MS) || 240_000;
+
+export const claudeRun: ClaudeRun = async (prompt, { webSearch = false, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) => {
   if (!process.env.CLAUDE_CODE_OAUTH_TOKEN?.trim()) throw new Error("llm-auth");
   const args = ["-p", "--output-format", "json", "--max-turns", webSearch ? "12" : "1"];
   if (webSearch) args.push("--allowedTools", "WebSearch");
