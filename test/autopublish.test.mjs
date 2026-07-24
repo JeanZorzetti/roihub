@@ -208,11 +208,11 @@ test("cron auth compara no fallback Edge sem node:crypto ou Buffer", () => {
   assert.equal(edge.status, 0, edge.stderr);
 });
 
-test("route usa Node e limite de dez minutos", async () => {
+test("route usa Node e limite de quinze minutos", async () => {
   const route = await import("../app/api/seo/autopublish/route.ts");
   assert.equal(route.runtime, "nodejs");
-  // ~170s medidos por publicação, mais o classificador YMYL: 300s não cabia.
-  assert.equal(route.maxDuration, 600);
+  // 240s medidos em produção por publicação, mais o classificador YMYL.
+  assert.equal(route.maxDuration, 900);
   assert.equal(typeof route.POST, "function");
 });
 

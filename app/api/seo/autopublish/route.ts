@@ -2,9 +2,9 @@
 import { handleAutopublish } from "./handler.ts";
 
 export const runtime = "nodejs";
-// Medido: pesquisa + artigo levam ~170s por projeto, e o YMYL soma uma 2a chamada.
+// Medido em produção: 240s por projeto, e o YMYL soma uma 2a chamada ao classificador.
 // O proxy do EasyPanel precisa acompanhar, senão o cron recebe 504 antes do fim.
-export const maxDuration = 600;
+export const maxDuration = 900;
 
 export async function POST(request: Request) {
   return handleAutopublish(request);
