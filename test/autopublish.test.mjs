@@ -1123,6 +1123,7 @@ test("researchAndDraft converte saída malformada em llm-output sanitizado", asy
       { output_text: "secret prompt echo, no JSON here" },
       { output_text: "{ not json at all }" },
       { output_text: JSON.stringify(["array", "not", "object"]) },
+      { output_text: "```json\n{\"decision\":{\"action\":\"new\"}}\n```" },
     ]) {
       await assert.rejects(
         () => researchAndDraft({}, async () => response),
@@ -1361,6 +1362,38 @@ test("claude-cli classifica Aftercare em chamada independente sem WebSearch", as
     webSearchCalls: 1,
     generatedImage: false,
   });
+});
+
+test("claude-cli extrai o JSON mesmo com prosa e chaves antes do objeto", async () => {
+  const { image, ...normalizedDraft } = draft;
+  const payload = {
+    decision: { action: "new", targetPath: null, overlap: "none", reason: "New intent." },
+    draft: normalizedDraft,
+  };
+  const context = {
+    project: projectBySlug("context"),
+    candidate: { action: "new", targetPath: null, query: "daily guide" },
+    inventory: [],
+    runDate: "2026-07-24",
+  };
+
+  // Caso real de produção: o modelo explica antes de responder, e a explicação cita
+  // um objeto — o recorte ingênuo do 1o "{" ao último "}" morria exatamente aqui.
+  for (const wrapper of [
+    `Não consegui ler as datas via WebFetch. Segue a decisão.\n\`\`\`json\n${JSON.stringify(payload)}\n\`\`\``,
+    `O schema pede {slug} e {title} preenchidos. Resultado:\n${JSON.stringify(payload)}`,
+    `\`\`\`\n${JSON.stringify(payload)}\n\`\`\`\nEspero que ajude.`,
+    JSON.stringify(payload),
+  ]) {
+    const result = await withEnv({ CLAUDE_CODE_OAUTH_TOKENS: "test-token" }, () =>
+      researchAndDraft(context, async () => ({
+        output_text: wrapper,
+        usage: { input_tokens: 1, output_tokens: 1 },
+      }))
+    );
+    assert.equal(result.action, "new");
+    assert.equal(result.draft.title, normalizedDraft.title);
+  }
 });
 
 test("claude-cli falha fechado para decisão semântica incerta ou malformada", async () => {

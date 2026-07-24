@@ -261,18 +261,29 @@ export const claudeRun: ClaudeRun = async (prompt, {
   throw lastError;
 };
 
-// claude-cli não tem json_schema strict: o JSON vem no texto, às vezes cercado de fences.
+// claude-cli não tem json_schema strict: o JSON vem no texto. Observado em produção,
+// o modelo escreve prosa antes do objeto ("não consegui ler as datas, segue a decisão"),
+// e essa prosa pode conter chaves — então recortar do 1o "{" ao último "}" quebra.
+// Ordem: bloco cercado por fence, depois cada "{" como início candidato.
 function parseJsonBlock(text: string | null): JsonRecord {
-  const start = text?.indexOf("{") ?? -1;
-  const end = text?.lastIndexOf("}") ?? -1;
-  if (!text || start < 0 || end <= start) throw new Error("llm-output");
-  try {
-    const parsed = JSON.parse(text.slice(start, end + 1)) as JsonRecord;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
-    return parsed;
-  } catch {
-    throw new Error("llm-output");
+  if (!text) throw new Error("llm-output");
+  const candidates: string[] = [];
+  for (const match of text.matchAll(/```(?:json)?\s*\n([\s\S]*?)```/g)) {
+    candidates.push(match[1]);
   }
+  const end = text.lastIndexOf("}");
+  for (let start = text.indexOf("{"); start >= 0 && start < end; start = text.indexOf("{", start + 1)) {
+    candidates.push(text.slice(start, end + 1));
+  }
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as JsonRecord;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    } catch {
+      // candidato inválido: tenta o próximo início.
+    }
+  }
+  throw new Error("llm-output");
 }
 
 const schemaInstruction = (schema: unknown) =>
