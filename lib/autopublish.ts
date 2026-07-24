@@ -470,7 +470,8 @@ async function revertPublication(
   let revertCommitSha: string;
   try {
     revertCommitSha = await revertCommit(project, publication.commitSha, publication.previousSha);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "github-conflict") throw error;
     throw new Error("verification-revert");
   }
   return finish(db, publication.id, "reverted", {

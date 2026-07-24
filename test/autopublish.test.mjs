@@ -334,6 +334,50 @@ test("handler HTTP converte github-conflict em 409 estável", async () => {
   assert.deepEqual(await response.json(), { error: "github-conflict" });
 });
 
+test("handler HTTP preserva 409 quando verify encontra conflito no rollback", async () => {
+  const { handleAutopublish } = await import("../app/api/seo/autopublish/handler.ts");
+  const db = fakeDb({
+    existing: {
+      id: 43,
+      projectSlug: "context",
+      status: "published",
+      targetUrl: "https://context.nimblabs.com/blog/context-guide",
+      commitSha: "commit1",
+      previousSha: "head0",
+      metadata: { title: "Context Guide" },
+    },
+  });
+  const response = await handleAutopublish(new Request("http://localhost/api/seo/autopublish", {
+    method: "POST",
+    headers: { authorization: "Bearer route-secret" },
+    body: JSON.stringify({ phase: "verify", publicationId: 43 }),
+  }), {
+    env: {
+      CRON_SECRET: "route-secret",
+      DATABASE_URL: "postgres://db",
+      GITHUB_TOKEN: "github",
+      GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
+      OPENAI_API_KEY: "openai",
+      UNSPLASH_ACCESS_KEY: "unsplash",
+    },
+    publishProject: async () => {
+      throw new Error("unexpected-publish");
+    },
+    verifyPublication: (id) => verifyPublication(id, {
+      db,
+      deploymentState: async () => "failure",
+      revertCommit: async () => {
+        throw new Error("github-conflict");
+      },
+      fetch: async () => {
+        throw new Error("unexpected-fetch");
+      },
+    }),
+  });
+  assert.equal(response.status, 409);
+  assert.deepEqual(await response.json(), { error: "github-conflict" });
+});
+
 test("handler HTTP retorna 503 para env ausente e banco indisponível", async () => {
   const { handleAutopublish } = await import("../app/api/seo/autopublish/handler.ts");
   const request = () => new Request("http://localhost/api/seo/autopublish", {
