@@ -268,6 +268,10 @@ export async function researchAndDraft(
     safeAction = "block";
     safeTarget = null;
     safeReason = "semantic:same";
+  } else if (action === "update" && overlap !== "same") {
+    safeAction = "block";
+    safeTarget = null;
+    safeReason = "semantic:update-overlap";
   } else if (action === "update" && !matchingTarget) {
     safeAction = "block";
     safeTarget = null;

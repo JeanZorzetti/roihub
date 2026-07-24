@@ -85,10 +85,12 @@ function safeContentPath(path: unknown, root: string) {
 }
 
 function decisionBlock(action: unknown, overlap: unknown, reason: unknown) {
-  if (action === "duplicate" || (action === "new" && overlap === "same")) {
+  if (action === "duplicate"
+    || (overlap === "same" && (action === "new" || action === "block"))) {
     return "decision:duplicate";
   }
   if (action === "unsafe" || overlap === "uncertain") return "decision:unsafe";
+  if (action === "update" && overlap !== "same") return "decision:unsafe";
   if (!["new", "update", "block"].includes(String(action))
     || !["none", "same"].includes(String(overlap))) {
     return "decision:unsafe";

@@ -196,6 +196,34 @@ test("guardrail bloqueia fonte ausente, placeholder e YMYL clínico", () => {
     description: "A visual tour of modern spa interior design.",
     primaryKeyword: "spa interior design",
   }, projectBySlug("aftercare")).includes("ymyl"));
+  assert.ok(validateDraft({
+    ...base,
+    slug: "post-procedure-aftercare-workflow",
+    title: "Post-procedure aftercare workflow",
+    description: "A post-procedure aftercare workflow for clinics.",
+    primaryKeyword: "post-procedure aftercare workflow",
+    cluster: "aftercare-workflow",
+    bluf: "Patients should avoid alcohol, sun exposure, and exercise after a procedure.",
+    sections: [{
+      heading: "What patients should avoid",
+      paragraphs: [
+        "Avoid alcohol after the procedure.",
+        "Stay out of the sun and do not exercise.",
+      ],
+    }],
+    faqs: [{
+      q: "Can I exercise after the procedure?",
+      a: "Avoid exercise until the recovery period ends.",
+    }],
+  }, projectBySlug("aftercare")).includes("ymyl"));
+  assert.ok(validateDraft({
+    ...base,
+    bluf: "Support the immune system with plenty of rest.",
+    sections: [{
+      heading: "Immune system support",
+      paragraphs: ["Support the immune system with plenty of rest."],
+    }],
+  }, projectBySlug("aftercare")).includes("ymyl"));
   assert.deepEqual(validateDraft({
     ...base,
     sources: [{
@@ -624,6 +652,21 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
   assert.equal(missingUpdateTarget.action, "block");
   assert.equal(missingUpdateTarget.reason, "semantic:update-target");
 
+  const existingPath = "apps/web/content/blog/daily-guide.mdx";
+  const updateWithoutSameOverlap = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+    researchAndDraft({
+      ...context,
+      inventory: [{ path: existingPath }],
+    }, responses({
+      action: "update",
+      targetPath: existingPath,
+      overlap: "none",
+      reason: "Refresh the existing entry despite no overlap.",
+    }))
+  );
+  assert.equal(updateWithoutSameOverlap.action, "block");
+  assert.equal(updateWithoutSameOverlap.reason, "semantic:update-overlap");
+
   await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
     assert.rejects(
       () => researchAndDraft(context, responses({
@@ -962,6 +1005,78 @@ test("publishProject bloqueia decisão semântica incerta antes da imagem e do G
   assert.equal(committed, false);
 });
 
+test("publishProject classifica same mais new como duplicate", async () => {
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({ headSha: "head0", files: [] }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "block",
+      targetPath: null,
+      overlap: "same",
+      reason: "semantic:same",
+    }),
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "decision:duplicate");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
+test("publishProject bloqueia update sem overlap same antes da imagem e do GitHub", async () => {
+  const targetPath = "apps/web/content/blog/context-guide.mdx";
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [{
+        path: targetPath,
+        content: `---
+title: "Context Guide"
+slug: "context-guide"
+primaryKeyword: "context guide"
+---
+Old content.`,
+      }],
+    }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "update",
+      targetPath,
+      overlap: "none",
+      reason: "Refresh the entry despite no semantic overlap.",
+    }),
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "decision:unsafe");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
 test("publishProject bloqueia intenção duplicada mesmo com outro slug", async () => {
   let picked = false;
   let committed = false;
@@ -1029,6 +1144,8 @@ test("update bloqueia intenção pertencente a outro post antes da imagem", asyn
         ...researched,
         action: "update",
         targetPath: "apps/web/content/blog/guide-a.mdx",
+        overlap: "same",
+        reason: "The target covers the same intent.",
         draft: {
           ...researched.draft,
           slug: "guide-a",
@@ -1248,6 +1365,8 @@ test("update no catálogo bloqueia slug diferente do post selecionado", async ()
       ...validContextDraft(),
       action: "update",
       targetPath: "lib/blog.ts",
+      overlap: "same",
+      reason: "The catalog entry covers the same intent.",
     }),
     pickImage: async () => {
       picked = true;
