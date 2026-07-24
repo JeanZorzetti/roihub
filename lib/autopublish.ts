@@ -110,9 +110,9 @@ function failure(error: unknown) {
   }
   if ([
     "gsc-unavailable",
-    "openai-auth",
-    "openai-rate",
-    "openai-output",
+    "llm-auth",
+    "llm-rate",
+    "llm-output",
     "unsplash-auth",
     "unsplash-rate",
     "unsplash-output",

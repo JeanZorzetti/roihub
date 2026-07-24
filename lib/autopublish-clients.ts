@@ -1,3 +1,5 @@
+import { spawn } from "node:child_process";
+
 type JsonRecord = Record<string, unknown>;
 
 export function responseText(response: unknown): string | null {
@@ -39,7 +41,6 @@ type Project = {
   [key: string]: unknown;
 };
 
-const OPENAI_URL = "https://api.openai.com/v1";
 const GITHUB_URL = "https://api.github.com";
 
 const EDITORIAL_DRAFT_SCHEMA = {
@@ -137,39 +138,92 @@ const RISK_SCHEMA = {
   required: ["classification"],
 } as const;
 
-function openaiError(status: number) {
-  if (status === 401 || status === 403) return new Error("openai-auth");
-  if (status === 429) return new Error("openai-rate");
-  return new Error("openai-output");
+// Classifica pela mensagem, nunca a repassa: o corpo pode conter o prompt inteiro.
+export function claudeError(message: string) {
+  const text = message.toLowerCase();
+  if (/usage limit|rate limit|too many requests|429/.test(text)) return new Error("llm-rate");
+  if (/unauthor|authentication|not logged in|invalid token|oauth|forbidden/.test(text)) {
+    return new Error("llm-auth");
+  }
+  return new Error("llm-output");
 }
 
-async function openaiJson(
-  path: string,
-  body: JsonRecord,
-  fetchImpl: FetchImpl
-): Promise<JsonRecord> {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new Error("openai-auth");
-  let response: Response;
-  try {
-    response = await fetchImpl(`${OPENAI_URL}${path}`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${key}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
+// Prompt vai por stdin: o inventário de um monorepo estoura o limite de argv.
+function spawnClaude(prompt: string, args: string[], timeoutMs: number) {
+  return new Promise<string>((resolve, reject) => {
+    const child = spawn(process.env.CLAUDE_BIN || "claude", args, {
+      stdio: ["pipe", "pipe", "pipe"],
     });
-  } catch {
-    throw new Error("openai-output");
-  }
-  if (!response.ok) throw openaiError(response.status);
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("llm-output"));
+    }, timeoutMs);
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.on("error", () => {
+      clearTimeout(timer);
+      reject(new Error("llm-output"));
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) resolve(stdout);
+      else reject(claudeError(stderr || stdout));
+    });
+    child.stdin.on("error", () => {});
+    child.stdin.end(prompt);
+  });
+}
+
+export type ClaudeRun = (
+  prompt: string,
+  options?: { webSearch?: boolean; timeoutMs?: number }
+) => Promise<JsonRecord>;
+
+// Formato de retorno idêntico ao da Responses API para manter responseText/usageOf.
+export const claudeRun: ClaudeRun = async (prompt, { webSearch = false, timeoutMs = 120_000 } = {}) => {
+  if (!process.env.CLAUDE_CODE_OAUTH_TOKEN?.trim()) throw new Error("llm-auth");
+  const args = ["-p", "--output-format", "json", "--max-turns", webSearch ? "12" : "1"];
+  if (webSearch) args.push("--allowedTools", "WebSearch");
+  const raw = await spawnClaude(prompt, args, timeoutMs);
+  let payload: JsonRecord;
   try {
-    return await response.json() as JsonRecord;
+    payload = JSON.parse(raw) as JsonRecord;
   } catch {
-    throw new Error("openai-output");
+    throw new Error("llm-output");
+  }
+  if (payload?.is_error || typeof payload?.result !== "string") {
+    throw claudeError(typeof payload?.result === "string" ? payload.result : "");
+  }
+  const usage = payload.usage as JsonRecord | undefined;
+  return {
+    output_text: payload.result,
+    usage: {
+      input_tokens: Number(usage?.input_tokens) || 0,
+      output_tokens: Number(usage?.output_tokens) || 0,
+    },
+  };
+};
+
+// claude-cli não tem json_schema strict: o JSON vem no texto, às vezes cercado de fences.
+function parseJsonBlock(text: string | null): JsonRecord {
+  const start = text?.indexOf("{") ?? -1;
+  const end = text?.lastIndexOf("}") ?? -1;
+  if (!text || start < 0 || end <= start) throw new Error("llm-output");
+  try {
+    const parsed = JSON.parse(text.slice(start, end + 1)) as JsonRecord;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+    return parsed;
+  } catch {
+    throw new Error("llm-output");
   }
 }
+
+const schemaInstruction = (schema: unknown) =>
+  `Return ONLY a JSON object valid against this JSON Schema. No prose, no code fences.\n${JSON.stringify(schema)}`;
 
 const usageOf = (response: JsonRecord) => {
   const usage = response.usage as JsonRecord | undefined;
@@ -184,58 +238,20 @@ export async function researchAndDraft(
     candidate?: { action?: string; targetPath?: string | null };
     [key: string]: unknown;
   },
-  fetchImpl: FetchImpl = fetch
+  run: ClaudeRun = claudeRun
 ) {
-  const base = {
-    model: "gpt-5.6-terra",
-    reasoning: { effort: "medium" },
-    store: false,
-  };
-  const research = await openaiJson("/responses", {
-    ...base,
-    tools: [{ type: "web_search" }],
-    input: [
-      {
-        role: "system",
-        content: "Research the search intent with current primary sources. Return concise evidence with source URLs.",
-      },
-      { role: "user", content: JSON.stringify(context) },
-    ],
-  }, fetchImpl);
-  const researchText = responseText(research);
-  if (!researchText) throw new Error("openai-output");
+  // Uma chamada só: o claude-cli pesquisa e devolve a decisão no mesmo turno, e duas
+  // chamadas com WebSearch não cabem no maxDuration de 300s da rota.
+  const drafted = await run([
+    "You are the editorial engine of ROI Labs. Research the search intent with web search and current primary sources, then decide.",
+    "Use the complete inventory to decide whether the intent is new, the same as an existing entry to update, or uncertain and therefore blocked. A same intent must never be new, an update must target an existing inventory path, and uncertainty must block.",
+    "Never invent a source: every entry in sources must be a page you actually retrieved, with an https URL and an ISO publication date. The bluf must have between 40 and 60 words.",
+    "Do not copy the candidate heuristic: decide from the inventory itself.",
+    schemaInstruction(DRAFT_SCHEMA),
+    `CONTEXT:\n${JSON.stringify(context)}`,
+  ].join("\n\n"), { webSearch: true });
 
-  const drafted = await openaiJson("/responses", {
-    ...base,
-    input: [
-      {
-        role: "system",
-        content: "Use the complete inventory to decide whether the intent is new, the same as an existing entry to update, or uncertain and therefore blocked. A same intent must never be new, an update must target an inventory path, and uncertainty must block. Return the decision and normalized editorial draft. Do not invent sources.",
-      },
-      {
-        role: "user",
-        content: JSON.stringify({ context, research: researchText }),
-      },
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "normalized_draft",
-        strict: true,
-        schema: DRAFT_SCHEMA,
-      },
-    },
-  }, fetchImpl);
-  const draftedText = responseText(drafted);
-  if (!draftedText) throw new Error("openai-output");
-
-  let output: JsonRecord;
-  try {
-    output = JSON.parse(draftedText) as JsonRecord;
-    if (!output || typeof output !== "object" || Array.isArray(output)) throw new Error();
-  } catch {
-    throw new Error("openai-output");
-  }
+  const output = parseJsonBlock(responseText(drafted));
   const decision = output.decision as JsonRecord | null;
   const draft = output.draft as JsonRecord | null;
   const action = decision?.action;
@@ -253,7 +269,7 @@ export async function researchAndDraft(
     || !draft
     || typeof draft !== "object"
     || Array.isArray(draft)) {
-    throw new Error("openai-output");
+    throw new Error("llm-output");
   }
 
   const normalizePath = (value: unknown) => String(value ?? "")
@@ -303,38 +319,19 @@ export async function researchAndDraft(
   let riskClassification: "operational" | "clinical" | "uncertain" | undefined;
   let classifierUsage = { inputTokens: 0, outputTokens: 0 };
   if ((context.project as JsonRecord | undefined)?.risk === "ymyl-restricted") {
-    const classified = await openaiJson("/responses", {
-      ...base,
-      input: [
-        {
-          role: "system",
-          content: "Classify the draft independently. Operational means software, administration, scheduling, communication, analytics, billing, marketing, or other non-clinical business workflow only. Clinical includes any instruction, recommendation, diagnosis, treatment, preparation, recovery, patient conduct, symptom, medication, procedure, or health claim. If any part is ambiguous, return uncertain.",
-        },
-        { role: "user", content: JSON.stringify(draft) },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "editorial_risk",
-          strict: true,
-          schema: RISK_SCHEMA,
-        },
-      },
-    }, fetchImpl);
-    const classifiedText = responseText(classified);
-    try {
-      const parsed = classifiedText ? JSON.parse(classifiedText) as JsonRecord : null;
-      if (!parsed || !["operational", "clinical", "uncertain"].includes(String(parsed.classification))) {
-        throw new Error();
-      }
-      riskClassification = parsed.classification as typeof riskClassification;
-    } catch {
-      throw new Error("openai-output");
+    const classified = await run([
+      "Classify the draft independently. Operational means software, administration, scheduling, communication, analytics, billing, marketing, or other non-clinical business workflow only. Clinical includes any instruction, recommendation, diagnosis, treatment, preparation, recovery, patient conduct, symptom, medication, procedure, or health claim. If any part is ambiguous, return uncertain.",
+      schemaInstruction(RISK_SCHEMA),
+      `DRAFT:\n${JSON.stringify(draft)}`,
+    ].join("\n\n"));
+    const parsed = parseJsonBlock(responseText(classified));
+    if (!["operational", "clinical", "uncertain"].includes(String(parsed.classification))) {
+      throw new Error("llm-output");
     }
+    riskClassification = parsed.classification as typeof riskClassification;
     classifierUsage = usageOf(classified);
   }
 
-  const researchUsage = usageOf(research);
   const draftUsage = usageOf(drafted);
   return {
     action: safeAction,
@@ -344,8 +341,8 @@ export async function researchAndDraft(
     draft,
     ...(riskClassification ? { riskClassification } : {}),
     usage: {
-      inputTokens: researchUsage.inputTokens + draftUsage.inputTokens + classifierUsage.inputTokens,
-      outputTokens: researchUsage.outputTokens + draftUsage.outputTokens + classifierUsage.outputTokens,
+      inputTokens: draftUsage.inputTokens + classifierUsage.inputTokens,
+      outputTokens: draftUsage.outputTokens + classifierUsage.outputTokens,
       webSearchCalls: 1,
       generatedImage: false,
     },
@@ -405,11 +402,13 @@ export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fet
   searchUrl.searchParams.set("per_page", "10");
   const search = await unsplashJson(searchUrl.toString(), fetchImpl);
   const tokens = normalizeIntent(intent).split(" ").filter(Boolean);
-  const match = (Array.isArray(search.results) ? search.results : []).find((value) => {
-    const photo = value as JsonRecord;
+  const results = (Array.isArray(search.results) ? search.results : []) as JsonRecord[];
+  // Sem OpenAI não há geração de fallback: o melhor esforço é o 1º resultado da busca,
+  // que já vem filtrado por orientação e content_filter=high.
+  const match = results.find((photo) => {
     const words = new Set(normalizeIntent(`${photo.description ?? ""} ${photo.alt_description ?? ""}`).split(" "));
     return tokens.some((token) => words.has(token));
-  }) as JsonRecord | undefined;
+  }) ?? results[0];
 
   if (match) {
     const links = match.links as JsonRecord | undefined;
@@ -435,23 +434,7 @@ export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fet
     };
   }
 
-  const generated = await openaiJson("/images/generations", {
-    model: "gpt-image-2",
-    size: "1536x1024",
-    quality: "low",
-    output_format: "webp",
-    output_compression: 75,
-    n: 1,
-    prompt: `Editorial landscape image for ${intent}. No text or logos.`,
-  }, fetchImpl);
-  const first = Array.isArray(generated.data) ? generated.data[0] as JsonRecord | undefined : undefined;
-  if (typeof first?.b64_json !== "string") throw new Error("openai-output");
-  return {
-    src: "generated",
-    alt: intent,
-    credit: "Generated by OpenAI",
-    base64: first.b64_json,
-  };
+  throw new Error("unsplash-output");
 }
 
 const encodedRepo = (project: Project) => project.repository

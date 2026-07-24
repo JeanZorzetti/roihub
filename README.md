@@ -41,10 +41,17 @@ nesse arquivo.
 
 ### Contrato de ambiente
 
-O deploy do hub exige `CRON_SECRET`, `DATABASE_URL`, `GITHUB_TOKEN`,
-`GOOGLE_SERVICE_ACCOUNT_JSON`, `OPENAI_API_KEY` e `UNSPLASH_ACCESS_KEY`.
+O deploy do hub exige `CLAUDE_CODE_OAUTH_TOKEN`, `CRON_SECRET`, `DATABASE_URL`,
+`GITHUB_TOKEN`, `GOOGLE_SERVICE_ACCOUNT_JSON` e `UNSPLASH_ACCESS_KEY`.
 Ausência, valor vazio ou somente espaços interrompe a rota com `503`; a resposta
 contém apenas os nomes ausentes.
+
+O motor editorial é o **claude-cli**, não uma API paga: a imagem Docker instala
+`@anthropic-ai/claude-code` e autentica por `CLAUDE_CODE_OAUTH_TOKEN`, gerado com
+`claude setup-token` na sua máquina. Uma chamada por projeto pesquisa (WebSearch) e
+decide no mesmo turno; projetos `ymyl-restricted` levam uma segunda chamada só para
+classificar risco. O custo marginal por artigo é zero — o limite é o rate limit da
+assinatura, não crédito.
 
 `CRON_SECRET` fica no ambiente do hub e protege `/api/seo/autopublish`.
 `HUB_CRON_SECRET` fica nos secrets do GitHub Actions e deve conter o mesmo segredo
@@ -66,19 +73,20 @@ monorepo):
 - `aftercare` — `JeanZorzetti/aftercare-nimblabs`
 - `nimblabs` — `JeanZorzetti/nimblabs`
 
-O uso de GPT Image pode exigir verificação da organização OpenAI. Para imagens do
-Unsplash, mantenha a URL retornada para hotlink, exiba a atribuição do fotógrafo e
-do Unsplash e acione o endpoint de download informado pela API quando a imagem for
-usada; não copie o arquivo para o repositório.
+A capa vem só do Unsplash — não há geração de imagem de fallback. Mantenha a URL
+retornada para hotlink, exiba a atribuição do fotógrafo e do Unsplash e acione o
+endpoint de download informado pela API quando a imagem for usada; não copie o
+arquivo para o repositório. Busca sem nenhum resultado bloqueia a publicação
+(`unsplash-output`) em vez de publicar sem capa.
 
 ### Gates e dry-run
 
 O kill switch global (`*`) permanece **desligado por padrão**. O cron agendado não
 publica enquanto ele estiver desligado.
 
-O dry-run executa pesquisa e geração editorial — portanto pode gerar custo de
-OpenAI — mas é transitório: não cria nem reutiliza linha no banco e não escreve
-imagem ou commit no GitHub.
+O dry-run executa pesquisa e geração editorial — portanto consome rate limit da
+assinatura Claude — mas é transitório: não cria nem reutiliza linha no banco e não
+escreve imagem ou commit no GitHub.
 
 ```powershell
 $env:HUB_URL='https://hub.roilabs.com.br'

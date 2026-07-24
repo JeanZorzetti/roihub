@@ -7,6 +7,8 @@ import { authorized, missingEnv, rankCandidates, validateDraft, estimateCost, va
 import { extractInventory, renderDraft, catalogUpsert, registryUpsert } from "../lib/autopublish-render.mjs";
 import { gscQueryPages, inspectUrl, mergeGscWindows } from "../lib/gsc.ts";
 import {
+  claudeError,
+  claudeRun,
   commitFiles,
   deploymentState,
   githubTreeFiles,
@@ -166,10 +168,10 @@ test("produção lista somente nomes das envs ausentes em ordem estável", () =>
       DATABASE_URL: "x",
       GITHUB_TOKEN: 7,
       GOOGLE_SERVICE_ACCOUNT_JSON: "x",
-      OPENAI_API_KEY: "",
+      CLAUDE_CODE_OAUTH_TOKEN: "",
       UNSPLASH_ACCESS_KEY: undefined,
     }),
-    ["CRON_SECRET", "GITHUB_TOKEN", "OPENAI_API_KEY", "UNSPLASH_ACCESS_KEY"]
+    ["CLAUDE_CODE_OAUTH_TOKEN", "CRON_SECRET", "GITHUB_TOKEN", "UNSPLASH_ACCESS_KEY"]
   );
 });
 
@@ -246,7 +248,7 @@ test("route lista somente envs ausentes antes de publicar", async () => {
     DATABASE_URL: undefined,
     GITHUB_TOKEN: undefined,
     GOOGLE_SERVICE_ACCOUNT_JSON: undefined,
-    OPENAI_API_KEY: undefined,
+    CLAUDE_CODE_OAUTH_TOKEN: undefined,
     UNSPLASH_ACCESS_KEY: undefined,
   }, async () => {
     const response = await POST(new Request("http://localhost/api/seo/autopublish", {
@@ -263,10 +265,10 @@ test("route lista somente envs ausentes antes de publicar", async () => {
     assert.deepEqual(await response.json(), {
       error: "missing-env",
       fields: [
+        "CLAUDE_CODE_OAUTH_TOKEN",
         "DATABASE_URL",
         "GITHUB_TOKEN",
         "GOOGLE_SERVICE_ACCOUNT_JSON",
-        "OPENAI_API_KEY",
         "UNSPLASH_ACCESS_KEY",
       ],
     });
@@ -280,7 +282,7 @@ test("handler HTTP retorna 200 estável para publish e verify", async () => {
     DATABASE_URL: "postgres://db",
     GITHUB_TOKEN: "github",
     GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
-    OPENAI_API_KEY: "openai",
+    CLAUDE_CODE_OAUTH_TOKEN: "claude",
     UNSPLASH_ACCESS_KEY: "unsplash",
   };
   let publishArgs;
@@ -337,7 +339,7 @@ test("handler HTTP converte github-conflict em 409 estável", async () => {
       DATABASE_URL: "postgres://db",
       GITHUB_TOKEN: "github",
       GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
-      OPENAI_API_KEY: "openai",
+      CLAUDE_CODE_OAUTH_TOKEN: "claude",
       UNSPLASH_ACCESS_KEY: "unsplash",
     },
     publishProject: async () => ({ status: "blocked", reason: "github-conflict" }),
@@ -372,7 +374,7 @@ test("handler HTTP preserva 409 quando verify encontra conflito no rollback", as
       DATABASE_URL: "postgres://db",
       GITHUB_TOKEN: "github",
       GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
-      OPENAI_API_KEY: "openai",
+      CLAUDE_CODE_OAUTH_TOKEN: "claude",
       UNSPLASH_ACCESS_KEY: "unsplash",
     },
     publishProject: async () => {
@@ -421,10 +423,10 @@ test("handler HTTP retorna 503 para env ausente e banco indisponível", async ()
   assert.deepEqual(await missing.json(), {
     error: "missing-env",
     fields: [
+      "CLAUDE_CODE_OAUTH_TOKEN",
       "DATABASE_URL",
       "GITHUB_TOKEN",
       "GOOGLE_SERVICE_ACCOUNT_JSON",
-      "OPENAI_API_KEY",
       "UNSPLASH_ACCESS_KEY",
     ],
   });
@@ -436,7 +438,7 @@ test("handler HTTP retorna 503 para env ausente e banco indisponível", async ()
       DATABASE_URL: "postgres://db",
       GITHUB_TOKEN: "github",
       GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
-      OPENAI_API_KEY: "openai",
+      CLAUDE_CODE_OAUTH_TOKEN: "claude",
       UNSPLASH_ACCESS_KEY: "unsplash",
     },
   });
@@ -460,7 +462,7 @@ test("handler HTTP expõe só nomes de envs ausentes, nunca valores", async () =
       DATABASE_URL: "postgres://must-not-leak",
       GITHUB_TOKEN: " ",
       GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
-      OPENAI_API_KEY: "",
+      CLAUDE_CODE_OAUTH_TOKEN: "",
       UNSPLASH_ACCESS_KEY: "unsplash-must-not-leak",
     },
     publishProject: async () => {
@@ -473,7 +475,7 @@ test("handler HTTP expõe só nomes de envs ausentes, nunca valores", async () =
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), {
     error: "missing-env",
-    fields: ["GITHUB_TOKEN", "OPENAI_API_KEY"],
+    fields: ["CLAUDE_CODE_OAUTH_TOKEN", "GITHUB_TOKEN"],
   });
 });
 
@@ -710,7 +712,7 @@ test("runner retorna não-zero para publish failed", async () => {
     fetchImpl: async (_url, init) => {
       const { project } = JSON.parse(init.body);
       return jsonResponse(project === "context"
-        ? { status: "failed", reason: "openai-output" }
+        ? { status: "failed", reason: "llm-output" }
         : { status: "blocked", reason: "project-disabled" });
     },
     sleep: async () => {
@@ -1081,17 +1083,21 @@ test("responseText ignora itens e contents malformados", () => {
   assert.equal(responseText({ output: [null, { content: [null, 1] }] }), null);
 });
 
-test("researchAndDraft converte Responses malformada em openai-output sanitizado", async () => {
-  await withEnv({ OPENAI_API_KEY: "test-openai-key" }, async () => {
-    await assert.rejects(
-      () => researchAndDraft({}, async () => jsonResponse({
-        body: "secret response body",
-        output: [null, { content: null }, { content: [null, 1] }],
-      })),
-      (error) => error instanceof Error
-        && error.message === "openai-output"
-        && !error.message.includes("secret response body")
-    );
+test("researchAndDraft converte saída malformada em llm-output sanitizado", async () => {
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "claude" }, async () => {
+    for (const response of [
+      { body: "secret prompt echo", output: [null, { content: null }, { content: [null, 1] }] },
+      { output_text: "secret prompt echo, no JSON here" },
+      { output_text: "{ not json at all }" },
+      { output_text: JSON.stringify(["array", "not", "object"]) },
+    ]) {
+      await assert.rejects(
+        () => researchAndDraft({}, async () => response),
+        (error) => error instanceof Error
+          && error.message === "llm-output"
+          && !error.message.includes("secret prompt echo")
+      );
+    }
   });
 });
 
@@ -1228,36 +1234,27 @@ test("GSC estrito tenta tres vezes e falha fechado", async () => {
   assert.deepEqual(delays, [250, 500]);
 });
 
-test("OpenAI pesquisa e decide update sem copiar a heurística do candidato", async () => {
+test("claude-cli pesquisa e decide update sem copiar a heurística do candidato", async () => {
   const { image, ...normalizedDraft } = draft;
   const targetPath = "apps/web/content/blog/daily-guide.mdx";
   const calls = [];
-  const fetchImpl = async (url, init) => {
-    calls.push({ url, init, body: JSON.parse(init.body) });
-    return calls.length === 1
-      ? jsonResponse({
-        output: [{
-          type: "message",
-          role: "assistant",
-          content: [{ type: "output_text", text: "Research with cited evidence.", annotations: [] }],
-        }],
-        usage: { input_tokens: 3, output_tokens: 4 },
-      })
-      : jsonResponse({
-        output_text: JSON.stringify({
-          decision: {
-            action: "update",
-            targetPath,
-            overlap: "same",
-            reason: "The inventory already covers the same search intent.",
-          },
-          draft: normalizedDraft,
-        }),
-        usage: { input_tokens: 5, output_tokens: 6 },
-      });
+  const run = async (prompt, options) => {
+    calls.push({ prompt, options });
+    return {
+      output_text: "```json\n" + JSON.stringify({
+        decision: {
+          action: "update",
+          targetPath,
+          overlap: "same",
+          reason: "The inventory already covers the same search intent.",
+        },
+        draft: normalizedDraft,
+      }) + "\n```",
+      usage: { input_tokens: 8, output_tokens: 10 },
+    };
   };
 
-  const result = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () => researchAndDraft({
+  const result = await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () => researchAndDraft({
     project: projectBySlug("context"),
     candidate: { action: "new", targetPath: null, query: "daily guide" },
     inventory: [{
@@ -1268,7 +1265,7 @@ test("OpenAI pesquisa e decide update sem copiar a heurística do candidato", as
       headings: ["How it works"],
     }],
     runDate: "2026-07-24",
-  }, fetchImpl));
+  }, run));
 
   assert.deepEqual(result, {
     action: "update",
@@ -1278,43 +1275,22 @@ test("OpenAI pesquisa e decide update sem copiar a heurística do candidato", as
     draft: normalizedDraft,
     usage: { inputTokens: 8, outputTokens: 10, webSearchCalls: 1, generatedImage: false },
   });
-  assert.equal(calls.length, 2);
-  assert.ok(calls.every(({ url, init, body }) =>
-    url === "https://api.openai.com/v1/responses"
-    && init.method === "POST"
-    && body.model === "gpt-5.6-terra"
-    && body.reasoning.effort === "medium"
-    && body.store === false
-  ));
-  assert.deepEqual(calls[0].body.tools, [{ type: "web_search" }]);
-  assert.equal("tools" in calls[1].body, false);
-  assert.equal(calls[1].body.text.format.type, "json_schema");
-  assert.equal(calls[1].body.text.format.strict, true);
-  assert.deepEqual(calls[1].body.text.format.schema.properties.decision.required, [
-    "action",
-    "targetPath",
-    "overlap",
-    "reason",
-  ]);
-  assert.equal(
-    JSON.parse(calls[1].body.input[1].content).context.inventory[0].path,
-    targetPath
-  );
+  // Uma chamada só: pesquisa e decisão no mesmo turno cabem no maxDuration da rota.
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].options.webSearch, true);
+  assert.match(calls[0].prompt, /Do not copy the candidate heuristic/);
+  assert.match(calls[0].prompt, /between 40 and 60 words/);
+  assert.ok(calls[0].prompt.includes(targetPath));
+  assert.ok(calls[0].prompt.includes('"required":["action","targetPath","overlap","reason"]'));
 });
 
-test("OpenAI classifica Aftercare em chamada independente", async () => {
+test("claude-cli classifica Aftercare em chamada independente sem WebSearch", async () => {
   const { image, ...normalizedDraft } = draft;
   const calls = [];
-  const fetchImpl = async (_url, init) => {
-    calls.push(JSON.parse(init.body));
-    if (calls.length === 1) {
-      return jsonResponse({
-        output_text: "Research with cited evidence.",
-        usage: { input_tokens: 1, output_tokens: 2 },
-      });
-    }
-    if (calls.length === 2) {
-      return jsonResponse({
+  const run = async (prompt, options) => {
+    calls.push({ prompt, options });
+    return calls.length === 1
+      ? {
         output_text: JSON.stringify({
           decision: {
             action: "new",
@@ -1325,39 +1301,36 @@ test("OpenAI classifica Aftercare em chamada independente", async () => {
           draft: normalizedDraft,
         }),
         usage: { input_tokens: 3, output_tokens: 4 },
-      });
-    }
-    return jsonResponse({
-      output_text: JSON.stringify({ classification: "clinical" }),
-      usage: { input_tokens: 5, output_tokens: 6 },
-    });
+      }
+      : {
+        output_text: JSON.stringify({ classification: "clinical" }),
+        usage: { input_tokens: 5, output_tokens: 6 },
+      };
   };
 
-  const result = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+  const result = await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
     researchAndDraft({
       project: projectBySlug("aftercare"),
       candidate: { action: "new", targetPath: null, query: "clinic workflow" },
       inventory: [],
       runDate: "2026-07-24",
-    }, fetchImpl)
+    }, run)
   );
 
   assert.equal(result.riskClassification, "clinical");
-  assert.equal(calls.length, 3);
-  assert.deepEqual(calls[2].text.format.schema.properties.classification.enum, [
-    "operational",
-    "clinical",
-    "uncertain",
-  ]);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].options, undefined);
+  assert.match(calls[1].prompt, /Classify the draft independently/);
+  assert.ok(calls[1].prompt.includes('"operational","clinical","uncertain"'));
   assert.deepEqual(result.usage, {
-    inputTokens: 9,
-    outputTokens: 12,
+    inputTokens: 8,
+    outputTokens: 10,
     webSearchCalls: 1,
     generatedImage: false,
   });
 });
 
-test("OpenAI falha fechado para decisão semântica incerta ou malformada", async () => {
+test("claude-cli falha fechado para decisão semântica incerta ou malformada", async () => {
   const { image, ...normalizedDraft } = draft;
   const context = {
     project: projectBySlug("context"),
@@ -1365,17 +1338,12 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
     inventory: [],
     runDate: "2026-07-24",
   };
-  const responses = (decision) => {
-    let call = 0;
-    return async () => {
-      call += 1;
-      return call === 1
-        ? jsonResponse({ output_text: "Research with cited evidence." })
-        : jsonResponse({ output_text: JSON.stringify({ decision, draft: normalizedDraft }) });
-    };
-  };
+  const responses = (decision) => async () => ({
+    output_text: JSON.stringify({ decision, draft: normalizedDraft }),
+    usage: { input_tokens: 1, output_tokens: 1 },
+  });
 
-  const uncertain = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+  const uncertain = await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
     researchAndDraft(context, responses({
       action: "new",
       targetPath: null,
@@ -1387,7 +1355,7 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
   assert.equal(uncertain.overlap, "uncertain");
   assert.equal(uncertain.reason, "semantic:uncertain");
 
-  const sameAsNew = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+  const sameAsNew = await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
     researchAndDraft(context, responses({
       action: "new",
       targetPath: null,
@@ -1398,7 +1366,7 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
   assert.equal(sameAsNew.action, "block");
   assert.equal(sameAsNew.reason, "semantic:same");
 
-  const missingUpdateTarget = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+  const missingUpdateTarget = await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
     researchAndDraft(context, responses({
       action: "update",
       targetPath: "apps/web/content/blog/missing.mdx",
@@ -1410,7 +1378,7 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
   assert.equal(missingUpdateTarget.reason, "semantic:update-target");
 
   const existingPath = "apps/web/content/blog/daily-guide.mdx";
-  const updateWithoutSameOverlap = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+  const updateWithoutSameOverlap = await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
     researchAndDraft({
       ...context,
       inventory: [{ path: existingPath }],
@@ -1424,7 +1392,7 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
   assert.equal(updateWithoutSameOverlap.action, "block");
   assert.equal(updateWithoutSameOverlap.reason, "semantic:update-overlap");
 
-  await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
     assert.rejects(
       () => researchAndDraft(context, responses({
         action: "publish",
@@ -1432,37 +1400,40 @@ test("OpenAI falha fechado para decisão semântica incerta ou malformada", asyn
         overlap: "none",
         reason: "Invalid action.",
       })),
-      /openai-output/
+      /llm-output/
+    )
+  );
+
+  // Texto sem bloco JSON nenhum também precisa falhar fechado.
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "test-token" }, () =>
+    assert.rejects(
+      () => researchAndDraft(context, async () => ({ output_text: "I could not comply." })),
+      /llm-output/
     )
   );
 });
 
-test("OpenAI não vaza body em erros de auth ou rate limit", async () => {
-  await withEnv({ OPENAI_API_KEY: "test-openai-key" }, async () => {
-    for (const [status, code] of [[401, "openai-auth"], [429, "openai-rate"]]) {
-      await assert.rejects(
-        () => researchAndDraft({}, async () => new Response("secret response body", { status })),
-        (error) => error instanceof Error
-          && error.message === code
-          && !error.message.includes("secret response body")
-      );
-    }
-    await assert.rejects(
-      () => researchAndDraft({}, async () => {
-        throw new Error("secret network details");
-      }),
-      (error) => error instanceof Error
-        && error.message === "openai-output"
-        && !error.message.includes("secret network details")
-    );
-  });
+test("claude-cli exige token e classifica a falha sem repassar a mensagem", async () => {
+  await assert.rejects(
+    () => withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "   " }, () => claudeRun("prompt")),
+    /llm-auth/
+  );
+
+  for (const [message, code] of [
+    ["Claude usage limit reached, resets at 5pm", "llm-rate"],
+    ["429 Too Many Requests", "llm-rate"],
+    ["Unauthorized: run claude setup-token", "llm-auth"],
+    ["Invalid token for secret-account@example.com", "llm-auth"],
+    ["ENOENT spawn claude at /secret/path", "llm-output"],
+  ]) {
+    const error = claudeError(message);
+    assert.equal(error.message, code);
+    assert.ok(!error.message.includes("secret"));
+  }
 });
 
-test("imagem usa hotlink Unsplash com crédito e recorre ao GPT Image 2", async () => {
-  await withEnv({
-    UNSPLASH_ACCESS_KEY: "test-unsplash-key",
-    OPENAI_API_KEY: "test-openai-key",
-  }, async () => {
+test("imagem usa hotlink Unsplash com crédito e cai no 1o resultado sem match", async () => {
+  await withEnv({ UNSPLASH_ACCESS_KEY: "test-unsplash-key" }, async () => {
     const calls = [];
     const unsplashFetch = async (url, init = {}) => {
       calls.push({ url: String(url), init });
@@ -1500,29 +1471,34 @@ test("imagem usa hotlink Unsplash com crédito e recorre ao GPT Image 2", async 
     assert.equal(searchUrl.searchParams.get("per_page"), "10");
     assert.equal(calls[1].url, "https://api.unsplash.com/photos/crm/download");
 
+    // Sem GPT Image: nenhum resultado casou por token, então vale o 1o da busca.
     const fallbackCalls = [];
     const fallbackFetch = async (url, init = {}) => {
       fallbackCalls.push({ url: String(url), init });
       return fallbackCalls.length === 1
-        ? jsonResponse({ results: [] })
-        : jsonResponse({ data: [{ b64_json: "d2VicA==" }] });
+        ? jsonResponse({
+          results: [{
+            description: "Desk",
+            alt_description: "Desk with laptop",
+            urls: { regular: "https://images.unsplash.com/desk" },
+            links: { download_location: "https://api.unsplash.com/photos/desk/download" },
+            user: { name: "Bruno Lima" },
+          }],
+        })
+        : new Response(null, { status: 200 });
     };
     assert.deepEqual(await pickImage("workflow automation", fallbackFetch), {
-      src: "generated",
-      alt: "workflow automation",
-      credit: "Generated by OpenAI",
-      base64: "d2VicA==",
+      src: "https://images.unsplash.com/desk",
+      alt: "Desk with laptop",
+      credit: "Photo by Bruno Lima on Unsplash",
     });
-    assert.equal(fallbackCalls[1].url, "https://api.openai.com/v1/images/generations");
-    assert.deepEqual(JSON.parse(fallbackCalls[1].init.body), {
-      model: "gpt-image-2",
-      size: "1536x1024",
-      quality: "low",
-      output_format: "webp",
-      output_compression: 75,
-      n: 1,
-      prompt: "Editorial landscape image for workflow automation. No text or logos.",
-    });
+    assert.equal(fallbackCalls[1].url, "https://api.unsplash.com/photos/desk/download");
+
+    // Busca vazia não tem plano B nenhum: falha fechado.
+    await assert.rejects(
+      () => pickImage("nothing", async () => jsonResponse({ results: [] })),
+      /unsplash-output/
+    );
   });
 });
 

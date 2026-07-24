@@ -27,7 +27,7 @@ const KNOWN_STATUSES = new Set([
 
 function stableReason(reason) {
   if (typeof reason !== "string") return null;
-  return /^(?:global-disabled|project-disabled|decision:(?:duplicate|unsafe)|draft:[a-z,-]+|openai-(?:auth|rate|output)|unsplash-(?:auth|rate|output)|github-(?:auth|rate|output|conflict)|render:[a-z:-]+|verification:[a-z-]+|request-failed|invalid-response|invalid-result|verification-timeout|http-\d{3}|unexpected)$/.test(reason)
+  return /^(?:global-disabled|project-disabled|decision:(?:duplicate|unsafe)|draft:[a-z,-]+|gsc-unavailable|llm-(?:auth|rate|output)|unsplash-(?:auth|rate|output)|github-(?:auth|rate|output|conflict)|render:[a-z:-]+|verification:[a-z-]+|request-failed|invalid-response|invalid-result|verification-timeout|http-\d{3}|unexpected)$/.test(reason)
     ? reason
     : null;
 }
