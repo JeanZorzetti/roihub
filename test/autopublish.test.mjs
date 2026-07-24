@@ -1680,7 +1680,38 @@ test("imagem usa hotlink Unsplash com crédito e cai no 1o resultado sem match",
     });
     assert.equal(fallbackCalls[1].url, "https://api.unsplash.com/photos/desk/download");
 
-    // Busca vazia não tem plano B nenhum: falha fechado.
+    // Caso real: "windsurf ai explained" devolve zero no Unsplash e travava a publicação.
+    // A busca degrada até um termo genérico antes de desistir.
+    const queried = [];
+    const degrading = async (url) => {
+      const query = new URL(String(url)).searchParams.get("query");
+      if (query === null) return new Response(null, { status: 200 });
+      queried.push(query);
+      return jsonResponse({
+        results: query === "workspace desk"
+          ? [{
+            description: "Desk",
+            alt_description: "Desk",
+            urls: { regular: "https://images.unsplash.com/fallback" },
+            links: { download_location: "https://api.unsplash.com/photos/fallback/download" },
+            user: { name: "Carla" },
+          }]
+          : [],
+      });
+    };
+    const rescued = await pickImage(
+      { primaryKeyword: "windsurf ai explained", cluster: "engineering-workflows" },
+      degrading
+    );
+    assert.equal(rescued.src, "https://images.unsplash.com/fallback");
+    assert.deepEqual(queried, [
+      "windsurf ai explained",
+      "engineering workflows",
+      "windsurf ai",
+      "workspace desk",
+    ]);
+
+    // Se nem o termo genérico devolver nada, aí sim falha fechado.
     await assert.rejects(
       () => pickImage("nothing", async () => jsonResponse({ results: [] })),
       /unsplash-output/

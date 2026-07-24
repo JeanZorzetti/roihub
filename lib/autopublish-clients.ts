@@ -430,6 +430,17 @@ function imageIntent(value: unknown) {
   return String(record?.primaryKeyword ?? record?.title ?? "").trim();
 }
 
+// A pauta é long-tail de propósito, e o Unsplash não tem foto para termo de nicho:
+// "windsurf ai explained" devolve zero resultados e bloqueava a publicação inteira.
+// Degrada até um termo que sempre existe, em vez de desistir na primeira busca.
+export function imageQueries(intentValue: unknown) {
+  const intent = imageIntent(intentValue);
+  const record = typeof intentValue === "object" ? intentValue as JsonRecord | null : null;
+  const cluster = String(record?.cluster ?? "").replace(/[-_]+/g, " ").trim();
+  const head = intent.split(/\s+/).filter(Boolean).slice(0, 2).join(" ");
+  return [...new Set([intent, cluster, head, "workspace desk"].map((q) => q.trim()).filter(Boolean))];
+}
+
 async function unsplashJson(url: string, fetchImpl: FetchImpl) {
   const key = process.env.UNSPLASH_ACCESS_KEY;
   if (!key) throw new Error("unsplash-auth");
@@ -467,20 +478,24 @@ export async function pickImage(
   { embed = false } = {}
 ) {
   const intent = imageIntent(intentValue);
-  const searchUrl = new URL("https://api.unsplash.com/search/photos");
-  searchUrl.searchParams.set("query", intent);
-  searchUrl.searchParams.set("orientation", "landscape");
-  searchUrl.searchParams.set("content_filter", "high");
-  searchUrl.searchParams.set("per_page", "10");
-  const search = await unsplashJson(searchUrl.toString(), fetchImpl);
   const tokens = normalizeIntent(intent).split(" ").filter(Boolean);
-  const results = (Array.isArray(search.results) ? search.results : []) as JsonRecord[];
-  // Sem OpenAI não há geração de fallback: o melhor esforço é o 1º resultado da busca,
-  // que já vem filtrado por orientação e content_filter=high.
-  const match = results.find((photo) => {
-    const words = new Set(normalizeIntent(`${photo.description ?? ""} ${photo.alt_description ?? ""}`).split(" "));
-    return tokens.some((token) => words.has(token));
-  }) ?? results[0];
+  let match: JsonRecord | undefined;
+  for (const query of imageQueries(intentValue)) {
+    const searchUrl = new URL("https://api.unsplash.com/search/photos");
+    searchUrl.searchParams.set("query", query);
+    searchUrl.searchParams.set("orientation", "landscape");
+    searchUrl.searchParams.set("content_filter", "high");
+    searchUrl.searchParams.set("per_page", "10");
+    const search = await unsplashJson(searchUrl.toString(), fetchImpl);
+    const results = (Array.isArray(search.results) ? search.results : []) as JsonRecord[];
+    // Sem OpenAI não há geração de fallback: o melhor esforço é o 1º resultado da busca,
+    // que já vem filtrado por orientação e content_filter=high.
+    match = results.find((photo) => {
+      const words = new Set(normalizeIntent(`${photo.description ?? ""} ${photo.alt_description ?? ""}`).split(" "));
+      return tokens.some((token) => words.has(token));
+    }) ?? results[0];
+    if (match) break;
+  }
 
   if (match) {
     const links = match.links as JsonRecord | undefined;

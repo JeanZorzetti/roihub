@@ -87,8 +87,9 @@ trigger de download da API continuam. Os demais seguem a regra abaixo.
 A capa vem só do Unsplash — não há geração de imagem de fallback. Mantenha a URL
 retornada para hotlink, exiba a atribuição do fotógrafo e do Unsplash e acione o
 endpoint de download informado pela API quando a imagem for usada; não copie o
-arquivo para o repositório. Busca sem nenhum resultado bloqueia a publicação
-(`unsplash-output`) em vez de publicar sem capa.
+arquivo para o repositório. A busca **degrada** quando o termo é específico demais: intenção → cluster → duas primeiras
+palavras → termo genérico. Pauta long-tail ("windsurf ai explained") devolve zero no Unsplash
+e travava a publicação inteira. Só quando nem o genérico acha é que bloqueia (`unsplash-output`).
 
 ### Gates e dry-run
 
