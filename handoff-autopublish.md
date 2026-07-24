@@ -65,7 +65,7 @@ Daí `maxDuration = 600` na rota e timeout de spawn de 240s (`CLAUDE_TIMEOUT_MS`
 | `DATABASE_URL` | já existe em produção |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | já existe em produção (GSC conectado) |
 | `CRON_SECRET` | **colar** o valor que já gravei no GitHub Actions como `HUB_CRON_SECRET` |
-| `CLAUDE_CODE_OAUTH_TOKEN` | rodar `claude setup-token` e colar |
+| `CLAUDE_CODE_OAUTH_TOKENS` | uma ou mais contas separadas por vírgula (`claude setup-token`) |
 | `GITHUB_TOKEN` | criar fine-grained token, **Contents: read and write**, só nos 9 repos listados no README |
 | `UNSPLASH_ACCESS_KEY` | criar app em unsplash.com/developers (free) |
 
@@ -89,6 +89,21 @@ publicação fecha — sem erro no código.
 3. Ligar o global temporariamente, `dry_run=false`, desligar ao terminar.
 4. Para cada canário validar: build, HTTP 200, canonical, schema, sitemap, atribuição da imagem.
 5. Só depois habilitar os 10 e deixar o global ligado para o cron diário (08:00 BRT).
+
+## ⚠️ Bloqueios abertos em 2026-07-24
+
+1. **`hub.roilabs.com.br` está devolvendo 500 em toda rota.** Causa achada e corrigida em `5c5811d`
+   (middleware importava módulo que referenciava `process.getBuiltinModule`, proibido no Edge Runtime —
+   ver `nextjs_middleware_edge_forbidden_node_api` na memória). **Falta redeployar o EasyPanel**: o hub
+   segue 500 até o rebuild. Como o `Dockerfile` mudou (instala `@anthropic-ai/claude-code`), tem que ser
+   **rebuild de imagem**, não só restart.
+2. **`JeanZorzetti/nimblabs` está fora do escopo do `GITHUB_TOKEN`** (a API devolve 404; o repo existe).
+   Ele é um dos 4 canários. Editar o fine-grained token e incluir o repo. Os outros 8 responderam 200 com
+   `push: true`.
+3. **1 das 3 contas Claude não serve:** o 2º token responde `403` com *"Your organization has disabled
+   Claude subscription access for Claude Code"*. A rotação pula a conta automaticamente, então o robô roda
+   com 2 contas — mas o rate limit somado é menor do que você planejou.
+4. **Rotacionar os secrets** depois do rollout: os valores foram colados em conversa.
 
 ## Pendências conhecidas
 
