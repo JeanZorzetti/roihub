@@ -186,6 +186,11 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 }
 .wk-range { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 2px; }
 .seo-empty { color: var(--muted); font-size: 14px; margin: 10px 0 4px; }
+.pub-controls { display:grid; gap:8px; margin:16px 0; }
+.pub-control { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.pub-status { font-weight:700; }
+.pub-status.failed, .pub-status.reverted { color:var(--red, var(--crit-ink)); }
+.pub-status.published, .pub-status.updated { color:var(--green, var(--good-ink)); }
 
 /* aba Infra */
 .pill-ok { color: var(--good-ink); border-color: var(--good-ink); }

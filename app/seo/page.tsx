@@ -1,9 +1,11 @@
 import { Fragment } from "react";
 import projects from "@/data/projects.json";
+import { dbOn, listProjectStates, listPublications } from "@/lib/db";
 import { gscSeries, gscStatus, isoDaysAgo } from "@/lib/gsc";
 import { bucketWeeks, totals28 } from "@/lib/series.mjs";
 import { Tabs, GscFoot } from "../tabs";
 import { WeekChart, Stat, Delta, InvDelta, num, compact, fmtDay, sinceGsc } from "../viz";
+import { Publications } from "./publications";
 
 // GSC roda a cada request (16 meses de histórico na API — sem DB, sem cache de build).
 export const dynamic = "force-dynamic";
@@ -18,7 +20,8 @@ const fmtCtr = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(
 
 export default async function SeoPage() {
   const end = isoDaysAgo(3);
-  const [gsc, rows] = await Promise.all([
+  const databaseOn = dbOn();
+  const [gsc, rows, publications, projectStates] = await Promise.all([
     gscStatus(),
     Promise.all(
       projects.map(async (p): Promise<Row> => {
@@ -27,6 +30,8 @@ export default async function SeoPage() {
         return { ...p, weeks: bucketWeeks(s.days, end), t: totals28(s.days, end) };
       })
     ),
+    databaseOn ? listPublications(50) : Promise.resolve([]),
+    databaseOn ? listProjectStates() : Promise.resolve([]),
   ]);
   rows.sort((a, b) => (b.t?.current.impressions ?? -1) - (a.t?.current.impressions ?? -1));
   const withData = rows.filter((r) => r.t !== null);
@@ -107,6 +112,8 @@ export default async function SeoPage() {
           </article>
         ))}
       </section>
+
+      <Publications publications={publications} states={projectStates} databaseOn={databaseOn} />
 
       {withData.length > 0 && (
         <details className="card table-details">

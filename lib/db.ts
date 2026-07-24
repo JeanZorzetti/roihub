@@ -38,6 +38,13 @@ export type Publication = {
   finishedAt: string | null;
 };
 
+export type ProjectState = {
+  projectSlug: string;
+  enabled: boolean;
+  pausedReason: string | null;
+  updatedAt: string;
+};
+
 export type BeginPublicationInput = {
   projectSlug: string;
   runDate: string;
@@ -90,6 +97,13 @@ type PublicationRow = {
   metadata: Record<string, unknown>;
   created_at: Date | string;
   finished_at: Date | string | null;
+};
+
+type ProjectStateRow = {
+  project_slug: string;
+  enabled: boolean;
+  paused_reason: string | null;
+  updated_at: Date | string;
 };
 
 const g = globalThis as unknown as { hubPool?: Pool; hubSchema?: Promise<unknown> };
@@ -244,7 +258,7 @@ export async function getPublication(id: number): Promise<Publication | null> {
 
 export async function listPublications(limit = 50): Promise<Publication[]> {
   await ensure();
-  const safeLimit = Math.min(200, Math.max(1, Math.trunc(limit) || 50));
+  const safeLimit = Math.min(200, Math.max(1, Number.isFinite(limit) ? Math.trunc(limit) : 50));
   const result = await pool().query<PublicationRow>(
     `SELECT * FROM seo_publications ORDER BY created_at DESC, id DESC LIMIT $1`,
     [safeLimit]
@@ -324,6 +338,21 @@ export async function projectEnabled(slug: string): Promise<boolean> {
     [slug]
   );
   return result.rows[0]?.enabled === true;
+}
+
+export async function listProjectStates(): Promise<ProjectState[]> {
+  await ensure();
+  const result = await pool().query<ProjectStateRow>(
+    `SELECT project_slug, enabled, paused_reason, updated_at
+     FROM seo_projects
+     ORDER BY CASE WHEN project_slug = '*' THEN 0 ELSE 1 END, project_slug`
+  );
+  return result.rows.map((row) => ({
+    projectSlug: row.project_slug,
+    enabled: row.enabled,
+    pausedReason: row.paused_reason,
+    updatedAt: iso(row.updated_at),
+  }));
 }
 
 export async function setProjectEnabled(slug: string, enabled: boolean, reason: string | null): Promise<void> {

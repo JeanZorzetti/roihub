@@ -17,6 +17,7 @@ import {
   revertCommit,
 } from "../lib/autopublish-clients.ts";
 import { publishProject, verifyPublication } from "../lib/autopublish.ts";
+import { parseProjectStateFields } from "../app/seo/action-fields.mjs";
 
 const draft = {
   slug: "daily-guide",
@@ -2162,4 +2163,51 @@ test("quinta tentativa pending reverte por commit novo e marca reverted", async 
   assert.equal(result.status, "reverted");
   assert.equal(result.reason, "verification:deployment-timeout");
   assert.equal(result.metadata.revertCommitSha, "revert1");
+});
+
+test("controles SEO aceitam somente slug e estado explícitos", () => {
+  const allowed = new Set(["context"]);
+  const valid = new FormData();
+  valid.set("slug", "context");
+  valid.set("enabled", "false");
+  valid.set("reason", "  Pausa editorial  ");
+
+  assert.deepEqual(parseProjectStateFields(valid, allowed), {
+    slug: "context",
+    enabled: false,
+    reason: "Pausa editorial",
+  });
+
+  for (const [slug, enabled] of [["unknown", "true"], ["context", "1"], ["context", "TRUE"]]) {
+    const invalid = new FormData();
+    invalid.set("slug", slug);
+    invalid.set("enabled", enabled);
+    assert.equal(parseProjectStateFields(invalid, allowed), null);
+  }
+});
+
+test("controles SEO aceitam o kill switch e limitam o motivo", () => {
+  const form = new FormData();
+  form.set("slug", "*");
+  form.set("enabled", "false");
+  form.set("reason", "x".repeat(301));
+
+  assert.deepEqual(parseProjectStateFields(form, new Set()), {
+    slug: "*",
+    enabled: false,
+    reason: "x".repeat(300),
+  });
+});
+
+test("ativar publicação limpa o motivo de pausa", () => {
+  const form = new FormData();
+  form.set("slug", "context");
+  form.set("enabled", "true");
+  form.set("reason", "não deve persistir");
+
+  assert.deepEqual(parseProjectStateFields(form, new Set(["context"])), {
+    slug: "context",
+    enabled: true,
+    reason: null,
+  });
 });
