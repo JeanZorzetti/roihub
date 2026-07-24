@@ -142,6 +142,25 @@ renderizar e `typescript-catalog` nem leu o repo — os dois seguem sem validaç
 | Astro content pt-BR | tapepro | ❌ não rodado (rate limit) |
 | Markdown | roilabs | ✅ `dry-run` |
 
+## Primeira publicação real — 2026-07-24 (canários ligados)
+
+Kill switch global **ON** e canários `goiania`, `tapepro`, `context` ligados no banco. Duas tentativas de
+publicar o `context` com `dry_run=false`; **nenhuma escreveu nada** e as linhas de teste foram removidas
+(`seo_publications` está em 0).
+
+1. `unsplash-output` — a pauta era *"windsurf ai explained"* e o Unsplash devolve **zero resultados** para
+   esse termo. Corrigido: a busca degrada (intenção → cluster → 2 primeiras palavras → genérico).
+   Sem isso, os artigos long-tail — que são o objetivo do SEO — seriam justamente os que nunca publicam.
+2. `github-auth` com `commitState: "prepared"` — passou por tudo (pesquisa, imagem, renderização) e parou
+   no commit. **O `GITHUB_TOKEN` tem `Contents: Read`, falta `Read and write`.**
+
+⚠️ Cuidado de diagnóstico: `permissions.push: true` no `GET /repos` é a permissão do **usuário**, não do
+token. O teste honesto é `POST /git/blobs`, que cria objeto solto sem tocar em branch — responde 201 ou
+403.
+
+**Com o global ligado, o cron das 08:00 BRT vai tentar os 3 canários sozinho.** Se o token for corrigido
+até lá, publica; se não, falha sem escrever nada.
+
 ## ⚠️ Bloqueios abertos em 2026-07-24
 
 1. ~~Hub com 500 em toda rota~~ — **RESOLVIDO** em `5c5811d` + redeploy. O middleware importava módulo
