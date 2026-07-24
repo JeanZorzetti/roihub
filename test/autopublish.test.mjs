@@ -74,7 +74,13 @@ function fakeDb({
     },
     async finish(id, status, updates = {}) {
       onFinish?.(id, status, updates);
-      row = { ...row, ...updates, id, status };
+      row = {
+        ...row,
+        ...updates,
+        id,
+        status,
+        metadata: { ...row?.metadata, ...(updates.metadata ?? {}) },
+      };
       return row;
     },
     async get(id) {
@@ -96,6 +102,8 @@ function fakeDb({
 const validContextDraft = () => ({
   action: "new",
   targetPath: null,
+  overlap: "none",
+  reason: "No existing entry covers this intent.",
   draft: {
     slug: "context-guide",
     title: "Context Guide",
@@ -165,6 +173,38 @@ test("guardrail bloqueia fonte ausente, placeholder e YMYL clínico", () => {
   assert.ok(validateDraft({ ...base, title: "FILL_ME" }, projectBySlug("aftercare")).includes("placeholder"));
   assert.ok(validateDraft({ ...base, title: "Botox dosage guide" }, projectBySlug("aftercare")).includes("ymyl"));
   assert.ok(validateDraft({ ...base, sections: [{ heading: "Care steps", paragraphs: ["Use this Botox dosage after treatment."] }] }, projectBySlug("aftercare")).includes("ymyl"));
+  assert.ok(validateDraft({
+    ...base,
+    slug: "lip-filler-swelling",
+    title: "Swelling after lip fillers",
+    description: "How to reduce swelling after lip fillers with a cold compress.",
+    primaryKeyword: "lip filler swelling",
+    cluster: "lip-filler-aftercare",
+    bluf: "Apply a cold compress after lip fillers to reduce swelling.",
+    sections: [{
+      heading: "Cold compress",
+      paragraphs: ["Use a cold compress for swelling after lip fillers."],
+    }],
+    faqs: [{
+      q: "How long does swelling last?",
+      a: "Continue using a cold compress while the swelling improves.",
+    }],
+  }, projectBySlug("aftercare")).includes("ymyl"));
+  assert.ok(validateDraft({
+    ...base,
+    title: "Modern spa interior design",
+    description: "A visual tour of modern spa interior design.",
+    primaryKeyword: "spa interior design",
+  }, projectBySlug("aftercare")).includes("ymyl"));
+  assert.deepEqual(validateDraft({
+    ...base,
+    sources: [{
+      url: "https://example.org/botox-dosage-treatment",
+      title: "Botox dosage and treatment",
+      publisher: "Example",
+      publishedAt: "2026-01-01",
+    }],
+  }, projectBySlug("aftercare")), []);
   assert.ok(validateDraft({ ...base, sources: [] }, projectBySlug("aftercare")).includes("sources"));
 });
 
@@ -458,8 +498,9 @@ test("GSC consulta as janelas exatas e reduz URL Inspection", async () => {
   });
 });
 
-test("OpenAI pesquisa e gera draft estruturado com payloads estáveis", async () => {
+test("OpenAI pesquisa e decide update sem copiar a heurística do candidato", async () => {
   const { image, ...normalizedDraft } = draft;
+  const targetPath = "apps/web/content/blog/daily-guide.mdx";
   const calls = [];
   const fetchImpl = async (url, init) => {
     calls.push({ url, init, body: JSON.parse(init.body) });
@@ -473,7 +514,15 @@ test("OpenAI pesquisa e gera draft estruturado com payloads estáveis", async ()
         usage: { input_tokens: 3, output_tokens: 4 },
       })
       : jsonResponse({
-        output_text: JSON.stringify(normalizedDraft),
+        output_text: JSON.stringify({
+          decision: {
+            action: "update",
+            targetPath,
+            overlap: "same",
+            reason: "The inventory already covers the same search intent.",
+          },
+          draft: normalizedDraft,
+        }),
         usage: { input_tokens: 5, output_tokens: 6 },
       });
   };
@@ -481,13 +530,21 @@ test("OpenAI pesquisa e gera draft estruturado com payloads estáveis", async ()
   const result = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () => researchAndDraft({
     project: projectBySlug("context"),
     candidate: { action: "new", targetPath: null, query: "daily guide" },
-    inventory: [],
+    inventory: [{
+      slug: "daily-guide",
+      title: "Daily Guide",
+      primaryKeyword: "daily guide",
+      path: targetPath,
+      headings: ["How it works"],
+    }],
     runDate: "2026-07-24",
   }, fetchImpl));
 
   assert.deepEqual(result, {
-    action: "new",
-    targetPath: null,
+    action: "update",
+    targetPath,
+    overlap: "same",
+    reason: "The inventory already covers the same search intent.",
     draft: normalizedDraft,
     usage: { inputTokens: 8, outputTokens: 10, webSearchCalls: 1, generatedImage: false },
   });
@@ -503,6 +560,81 @@ test("OpenAI pesquisa e gera draft estruturado com payloads estáveis", async ()
   assert.equal("tools" in calls[1].body, false);
   assert.equal(calls[1].body.text.format.type, "json_schema");
   assert.equal(calls[1].body.text.format.strict, true);
+  assert.deepEqual(calls[1].body.text.format.schema.properties.decision.required, [
+    "action",
+    "targetPath",
+    "overlap",
+    "reason",
+  ]);
+  assert.equal(
+    JSON.parse(calls[1].body.input[1].content).context.inventory[0].path,
+    targetPath
+  );
+});
+
+test("OpenAI falha fechado para decisão semântica incerta ou malformada", async () => {
+  const { image, ...normalizedDraft } = draft;
+  const context = {
+    project: projectBySlug("context"),
+    candidate: { action: "new", targetPath: null, query: "daily guide" },
+    inventory: [],
+    runDate: "2026-07-24",
+  };
+  const responses = (decision) => {
+    let call = 0;
+    return async () => {
+      call += 1;
+      return call === 1
+        ? jsonResponse({ output_text: "Research with cited evidence." })
+        : jsonResponse({ output_text: JSON.stringify({ decision, draft: normalizedDraft }) });
+    };
+  };
+
+  const uncertain = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+    researchAndDraft(context, responses({
+      action: "new",
+      targetPath: null,
+      overlap: "uncertain",
+      reason: "The inventory is not conclusive.",
+    }))
+  );
+  assert.equal(uncertain.action, "block");
+  assert.equal(uncertain.overlap, "uncertain");
+  assert.equal(uncertain.reason, "semantic:uncertain");
+
+  const sameAsNew = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+    researchAndDraft(context, responses({
+      action: "new",
+      targetPath: null,
+      overlap: "same",
+      reason: "The intent is the same as an inventory entry.",
+    }))
+  );
+  assert.equal(sameAsNew.action, "block");
+  assert.equal(sameAsNew.reason, "semantic:same");
+
+  const missingUpdateTarget = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+    researchAndDraft(context, responses({
+      action: "update",
+      targetPath: "apps/web/content/blog/missing.mdx",
+      overlap: "same",
+      reason: "The intent should update an existing entry.",
+    }))
+  );
+  assert.equal(missingUpdateTarget.action, "block");
+  assert.equal(missingUpdateTarget.reason, "semantic:update-target");
+
+  await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+    assert.rejects(
+      () => researchAndDraft(context, responses({
+        action: "publish",
+        targetPath: null,
+        overlap: "none",
+        reason: "Invalid action.",
+      })),
+      /openai-output/
+    )
+  );
 });
 
 test("OpenAI não vaza body em erros de auth ou rate limit", async () => {
@@ -780,6 +912,9 @@ test("publishProject bloqueia antes da imagem e do GitHub quando draft falha", a
     readRepository: async () => ({ headSha: "a", files: [] }),
     researchAndDraft: async () => ({
       action: "new",
+      targetPath: null,
+      overlap: "none",
+      reason: "No existing entry covers this intent.",
       draft: { title: "Botox dosage guide", sources: [] },
       usage: {},
     }),
@@ -794,6 +929,35 @@ test("publishProject bloqueia antes da imagem e do GitHub quando draft falha", a
 
   assert.equal(result.status, "blocked");
   assert.equal(result.reason, "draft:sources,bluf,ymyl,structure");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
+test("publishProject bloqueia decisão semântica incerta antes da imagem e do GitHub", async () => {
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({ headSha: "head0", files: [] }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "new",
+      overlap: "uncertain",
+      reason: "The inventory does not establish whether this intent is new.",
+    }),
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "decision:unsafe");
   assert.equal(picked, false);
   assert.equal(committed, false);
 });
@@ -997,6 +1161,45 @@ test("publica commit atômico no head lido com artigo e imagem renderizados", as
   assert.equal(result.targetUrl, "https://context.nimblabs.com/blog/context-guide");
 });
 
+test("update válido exclui apenas o próprio alvo e preserva slug, path e URL", async () => {
+  const targetPath = "apps/web/content/blog/context-guide.mdx";
+  let committed;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [{
+        path: targetPath,
+        content: `---
+title: "Context Guide"
+slug: "context-guide"
+primaryKeyword: "context guide"
+---
+Old content.`,
+      }],
+    }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "update",
+      targetPath,
+      overlap: "same",
+      reason: "The inventory entry covers the same intent.",
+    }),
+    pickImage: async () => null,
+    commitFiles: async (...args) => {
+      committed = args;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "updated");
+  assert.equal(result.targetUrl, "https://context.nimblabs.com/blog/context-guide");
+  assert.equal(result.metadata.slug, "context-guide");
+  assert.equal(result.metadata.targetPath, targetPath);
+  assert.equal(committed[2][0].path, targetPath);
+});
+
 test("post novo do nimblabs atualiza o catálogo existente sem falsa duplicação", async () => {
   let committed;
   const result = await publishProject("nimblabs", "2026-07-24", {
@@ -1093,6 +1296,45 @@ test("verifyPublication retorna pending antes da quinta tentativa sem buscar a p
   assert.equal(reverted, false);
   assert.equal((await db.get(8)).status, "published");
   assert.equal((await db.get(8)).metadata.verificationAttempts, 4);
+});
+
+test("failure de deployment é terminal, reverte imediatamente e preserva metadata", async () => {
+  const targetUrl = "https://context.nimblabs.com/blog/context-guide";
+  let fetched = false;
+  let revertArgs;
+  const db = fakeDb({
+    existing: {
+      id: 12,
+      projectSlug: "context",
+      status: "published",
+      targetUrl,
+      commitSha: "commit1",
+      previousSha: "head0",
+      metadata: { title: "Context Guide", retained: true, verificationAttempts: 1 },
+    },
+  });
+  const result = await verifyPublication(12, {
+    db,
+    deploymentState: async () => "failure",
+    fetch: async () => {
+      fetched = true;
+      throw new Error("unexpected-fetch");
+    },
+    revertCommit: async (...args) => {
+      revertArgs = args;
+      return "revert1";
+    },
+  });
+
+  assert.equal(fetched, false);
+  assert.equal(revertArgs[1], "commit1");
+  assert.equal(revertArgs[2], "head0");
+  assert.equal(result.status, "reverted");
+  assert.equal(result.reason, "verification:deployment-failed");
+  assert.equal(result.metadata.title, "Context Guide");
+  assert.equal(result.metadata.retained, true);
+  assert.equal(result.metadata.verification.deployment, "failure");
+  assert.equal(result.metadata.revertCommitSha, "revert1");
 });
 
 test("verifyPublication mantém status e mescla metadata quando HTML e sitemap são válidos", async () => {

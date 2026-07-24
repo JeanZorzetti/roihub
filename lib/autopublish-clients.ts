@@ -40,7 +40,7 @@ type Project = {
 const OPENAI_URL = "https://api.openai.com/v1";
 const GITHUB_URL = "https://api.github.com";
 
-const DRAFT_SCHEMA = {
+const EDITORIAL_DRAFT_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -101,6 +101,26 @@ const DRAFT_SCHEMA = {
     "sources",
     "publishedAt",
   ],
+} as const;
+
+const DRAFT_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    decision: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        action: { type: "string", enum: ["new", "update", "block"] },
+        targetPath: { type: ["string", "null"] },
+        overlap: { type: "string", enum: ["none", "same", "uncertain"] },
+        reason: { type: "string" },
+      },
+      required: ["action", "targetPath", "overlap", "reason"],
+    },
+    draft: EDITORIAL_DRAFT_SCHEMA,
+  },
+  required: ["decision", "draft"],
 } as const;
 
 function openaiError(status: number) {
@@ -176,7 +196,7 @@ export async function researchAndDraft(
     input: [
       {
         role: "system",
-        content: "Create the normalized editorial draft from the supplied context and research. Do not invent sources.",
+        content: "Use the complete inventory to decide whether the intent is new, the same as an existing entry to update, or uncertain and therefore blocked. A same intent must never be new, an update must target an inventory path, and uncertainty must block. Return the decision and normalized editorial draft. Do not invent sources.",
       },
       {
         role: "user",
@@ -195,18 +215,80 @@ export async function researchAndDraft(
   const draftedText = responseText(drafted);
   if (!draftedText) throw new Error("openai-output");
 
-  let draft: JsonRecord;
+  let output: JsonRecord;
   try {
-    draft = JSON.parse(draftedText) as JsonRecord;
-    if (!draft || typeof draft !== "object" || Array.isArray(draft)) throw new Error();
+    output = JSON.parse(draftedText) as JsonRecord;
+    if (!output || typeof output !== "object" || Array.isArray(output)) throw new Error();
   } catch {
     throw new Error("openai-output");
   }
+  const decision = output.decision as JsonRecord | null;
+  const draft = output.draft as JsonRecord | null;
+  const action = decision?.action;
+  const targetPath = decision?.targetPath;
+  const overlap = decision?.overlap;
+  const reason = decision?.reason;
+  if (!decision
+    || typeof decision !== "object"
+    || Array.isArray(decision)
+    || !["new", "update", "block"].includes(String(action))
+    || !(targetPath === null || typeof targetPath === "string")
+    || !["none", "same", "uncertain"].includes(String(overlap))
+    || typeof reason !== "string"
+    || !reason.trim()
+    || !draft
+    || typeof draft !== "object"
+    || Array.isArray(draft)) {
+    throw new Error("openai-output");
+  }
+
+  const normalizePath = (value: unknown) => String(value ?? "")
+    .replaceAll("\\", "/")
+    .replace(/^\.\/+|\/+$/g, "");
+  const inventoryPaths = new Map(
+    (Array.isArray(context.inventory) ? context.inventory : [])
+      .flatMap((entry) => {
+        const path = (entry as JsonRecord | null)?.path;
+        return typeof path === "string" && normalizePath(path)
+          ? [[normalizePath(path), path] as const]
+          : [];
+      })
+  );
+  const matchingTarget = typeof targetPath === "string"
+    ? inventoryPaths.get(normalizePath(targetPath)) ?? null
+    : null;
+  let safeAction = action as "new" | "update" | "block";
+  let safeTarget = targetPath as string | null;
+  let safeReason = reason.trim();
+  if (overlap === "uncertain") {
+    safeAction = "block";
+    safeTarget = null;
+    safeReason = "semantic:uncertain";
+  } else if (overlap === "same" && action === "new") {
+    safeAction = "block";
+    safeTarget = null;
+    safeReason = "semantic:same";
+  } else if (action === "update" && !matchingTarget) {
+    safeAction = "block";
+    safeTarget = null;
+    safeReason = "semantic:update-target";
+  } else if (action === "update") {
+    safeTarget = matchingTarget;
+  } else if (action === "new" && targetPath !== null) {
+    safeAction = "block";
+    safeTarget = null;
+    safeReason = "semantic:new-target";
+  } else if (action === "block") {
+    safeTarget = null;
+  }
+
   const researchUsage = usageOf(research);
   const draftUsage = usageOf(drafted);
   return {
-    action: context.candidate?.action ?? "new",
-    targetPath: context.candidate?.targetPath ?? null,
+    action: safeAction,
+    targetPath: safeTarget,
+    overlap,
+    reason: safeReason,
     draft,
     usage: {
       inputTokens: researchUsage.inputTokens + draftUsage.inputTokens,

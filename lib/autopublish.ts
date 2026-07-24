@@ -84,9 +84,15 @@ function safeContentPath(path: unknown, root: string) {
     && (normalized === contentRoot || normalized.startsWith(`${contentRoot}/`));
 }
 
-function decisionBlock(action: unknown, reason: unknown) {
-  if (action === "duplicate") return "decision:duplicate";
-  if (action === "unsafe") return "decision:unsafe";
+function decisionBlock(action: unknown, overlap: unknown, reason: unknown) {
+  if (action === "duplicate" || (action === "new" && overlap === "same")) {
+    return "decision:duplicate";
+  }
+  if (action === "unsafe" || overlap === "uncertain") return "decision:unsafe";
+  if (!["new", "update", "block"].includes(String(action))
+    || !["none", "same"].includes(String(overlap))) {
+    return "decision:unsafe";
+  }
   if (action !== "block") return null;
   return typeof reason === "string" && reason.toLowerCase().includes("duplicate")
     ? "decision:duplicate"
@@ -205,7 +211,11 @@ export async function publishProject(
       inventory,
     });
 
-    const blockedDecision = decisionBlock(researched?.action, researched?.reason);
+    const blockedDecision = decisionBlock(
+      researched?.action,
+      researched?.overlap,
+      researched?.reason
+    );
     if (blockedDecision) {
       if (dryRun) {
         return {
@@ -222,7 +232,7 @@ export async function publishProject(
       });
     }
 
-    const action = researched?.action ?? candidate.action;
+    const action = researched?.action;
     if (action !== "new" && action !== "update") {
       const reason = "decision:unsafe";
       if (dryRun) {
@@ -252,20 +262,16 @@ export async function publishProject(
     const draftSlug = String(draft.slug);
     const requestedTarget = typeof researched?.targetPath === "string"
       ? normalizedPath(researched.targetPath)
-      : typeof candidate.targetPath === "string"
-        ? normalizedPath(candidate.targetPath)
-        : null;
+      : null;
     const existingTarget = action === "update"
       ? repository.files.find((file: { path: string }) => normalizedPath(file.path) === requestedTarget)
       : project.renderer === "typescript-catalog"
         ? repository.files.find((file: { path: string }) => normalizedPath(file.path) === normalizedPath(project.contentPath))
         : null;
-    const candidateIntent = normalizedIntent(candidate.query);
     const selectedEntry = action === "update"
       ? inventory.find((entry: { path: string; slug: string; title?: string; primaryKeyword?: string }) =>
         normalizedPath(entry.path) === requestedTarget
-        && (project.renderer !== "typescript-catalog"
-          || [entry.title, entry.primaryKeyword].some((value) => normalizedIntent(value) === candidateIntent))
+        && entry.slug === draftSlug
       )
       : null;
     const competingEntries = selectedEntry
@@ -284,7 +290,7 @@ export async function publishProject(
       || (action === "update" && (!requestedTarget || !existingTarget))
       || updateTargetMismatch;
     if (duplicate || unsafe) {
-      const reason = duplicate ? "decision:duplicate" : "decision:unsafe";
+      const reason = unsafe ? "decision:unsafe" : "decision:duplicate";
       if (dryRun) {
         return { status: "dry-run", action: "block", targetPath: requestedTarget, validation: [reason] };
       }
