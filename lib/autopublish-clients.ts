@@ -295,8 +295,12 @@ export async function researchAndDraft(
 ) {
   // Uma chamada só: o claude-cli pesquisa e devolve a decisão no mesmo turno, e duas
   // chamadas com WebSearch não cabem no maxDuration de 300s da rota.
+  const editorialFocus = (context.project as JsonRecord | undefined)?.editorialFocus;
   const drafted = await run([
     "You are the editorial engine of ROI Labs. Research the search intent with web search and current primary sources, then decide.",
+    ...(typeof editorialFocus === "string" && editorialFocus.trim()
+      ? [`EDITORIAL FOCUS for this project: ${editorialFocus.trim()}`]
+      : []),
     "Use the complete inventory to decide whether the intent is new, the same as an existing entry to update, or uncertain and therefore blocked. A same intent must never be new, an update must target an existing inventory path, and uncertainty must block.",
     "Never invent a source: every entry in sources must be a page you actually retrieved, with an https URL and an ISO publication date. The bluf must have between 40 and 60 words.",
     "Do not copy the candidate heuristic: decide from the inventory itself.",

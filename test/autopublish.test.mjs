@@ -37,6 +37,21 @@ const draft = {
   publishedAt: "2026-07-24",
 };
 
+const catalogFixture = Object.freeze({
+  slug: "catalog-fixture",
+  repository: "JeanZorzetti/fixture",
+  branch: "main",
+  siteUrl: "https://fixture.example",
+  contentPath: "lib/blog.ts",
+  imagePath: "public/blog",
+  renderer: "typescript-catalog",
+  schema: "nimblabs",
+  language: "en-US",
+  author: "fixture editorial",
+  conversionUrl: "https://fixture.example/",
+  risk: "standard",
+});
+
 const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
   headers: { "content-type": "application/json" },
@@ -140,7 +155,7 @@ const githubTransport = (project, handler) => async (url, init = {}) => {
 };
 
 test("configura exatamente os dez projetos e remotes", () => {
-  assert.equal(PROJECTS.length, 10);
+  assert.equal(PROJECTS.length, 9);
   assert.equal(projectBySlug("goiania").repository, "JeanZorzetti/roilabs");
   assert.equal(projectBySlug("reviewshield").conversionUrl, "https://reviewshield.nimblabs.com/checker");
   assert.equal(projectBySlug("missing"), null);
@@ -564,7 +579,7 @@ jobs:
 `);
 });
 
-test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
+test("runner exporta os nove slugs e calcula a data de São Paulo", async () => {
   const runner = await import("../scripts/run-autopublish.mjs");
   assert.deepEqual(runner.PROJECT_SLUGS, [
     "goiania",
@@ -576,7 +591,6 @@ test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
     "reviewshield",
     "context",
     "aftercare",
-    "nimblabs",
   ]);
   assert.equal(typeof runner.runAutopublish, "function");
   assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T02:59:59.000Z")), "2026-07-23");
@@ -609,7 +623,7 @@ test("runner rejeita configuração ausente ou DRY_RUN inválido sem chamar nem 
   }
 });
 
-test("runner dry-run publica dez resumos sem verificar nem esperar", async () => {
+test("runner dry-run publica nove resumos sem verificar nem esperar", async () => {
   const { PROJECT_SLUGS, runAutopublish } = await import("../scripts/run-autopublish.mjs");
   const requests = [];
   const sleeps = [];
@@ -634,7 +648,7 @@ test("runner dry-run publica dez resumos sem verificar nem esperar", async () =>
   });
 
   assert.equal(exitCode, 0);
-  assert.equal(requests.length, 10);
+  assert.equal(requests.length, PROJECT_SLUGS.length);
   assert.deepEqual(requests.map(({ body }) => body.project), PROJECT_SLUGS);
   for (const { url, init, body } of requests) {
     assert.equal(url, "https://hub.example/api/seo/autopublish");
@@ -645,13 +659,13 @@ test("runner dry-run publica dez resumos sem verificar nem esperar", async () =>
     assert.equal(body.dryRun, true);
   }
   assert.deepEqual(sleeps, []);
-  assert.equal(logs.length, 10);
+  assert.equal(logs.length, PROJECT_SLUGS.length);
   assert.ok(logs.every((line) => /^slug=[a-z0-9-]+ status=dry-run$/.test(line)));
   assert.ok(logs.every((line) => !line.includes("runner-secret") && !line.includes("arbitrary")));
 });
 
 test("runner real verifica commits em no máximo cinco rounds", async () => {
-  const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  const { PROJECT_SLUGS, runAutopublish } = await import("../scripts/run-autopublish.mjs");
   const requests = [];
   const sleeps = [];
   const logs = [];
@@ -685,7 +699,7 @@ test("runner real verifica commits em no máximo cinco rounds", async () => {
   });
 
   assert.equal(exitCode, 1);
-  assert.equal(requests.filter(({ phase }) => phase === "publish").length, 10);
+  assert.equal(requests.filter(({ phase }) => phase === "publish").length, PROJECT_SLUGS.length);
   const verifies = requests.filter(({ phase }) => phase === "verify");
   assert.equal(verifies.length, 6);
   assert.equal(verifies.filter(({ publicationId }) => publicationId === 1).length, 5);
@@ -993,7 +1007,7 @@ test("inventário extrai frontmatter, Astro e múltiplos posts TypeScript no con
     projectBySlug("goiania")
   )[0].headings, ["Astro Guide", "Details"]);
   assert.deepEqual(
-    extractInventory([{ path: "lib/blog.ts", content: catalog }], projectBySlug("nimblabs")).map(({ slug, title, primaryKeyword }) => ({ slug, title, primaryKeyword })),
+    extractInventory([{ path: "lib/blog.ts", content: catalog }], catalogFixture).map(({ slug, title, primaryKeyword }) => ({ slug, title, primaryKeyword })),
     [
       { slug: "title", title: "Title", primaryKeyword: "first" },
       { slug: "two", title: "Two", primaryKeyword: "second" },
@@ -1035,7 +1049,7 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
   assert.doesNotMatch(mdxBody, /(?<!\\)[{}]/);
   assert.match(mdxBody, /\\`code\\`/);
 
-  const catalog = renderDraft(hostile, projectBySlug("nimblabs"), "export const posts = [];");
+  const catalog = renderDraft(hostile, catalogFixture, "export const posts = [];");
   assert.ok(!catalog.content.includes("<script"));
 });
 
@@ -2395,72 +2409,9 @@ Old content.`,
   assert.equal(committed[2][0].path, targetPath);
 });
 
-test("post novo do nimblabs atualiza o catálogo existente sem falsa duplicação", async () => {
-  let committed;
-  const result = await publishProject("nimblabs", "2026-07-24", {
-    db: fakeDb(),
-    gscQueryPages: async () => [],
-    readRepository: async () => ({
-      headSha: "head0",
-      files: [{ path: "lib/blog.ts", content: "export const posts = [];" }],
-    }),
-    researchAndDraft: async () => validContextDraft(),
-    pickImage: async () => ({
-      src: "https://images.unsplash.com/context",
-      alt: "Engineering context handoff",
-      credit: "Photo by A on Unsplash",
-    }),
-    commitFiles: async (...args) => {
-      committed = args;
-      return { sha: "commit1", previousSha: "head0" };
-    },
-  });
-
-  assert.equal(result.status, "published");
-  assert.equal(committed[2].length, 1);
-  assert.equal(committed[2][0].path, "lib/blog.ts");
-  assert.match(committed[2][0].content, /slug: "context-guide"/);
-});
-
-test("update no catálogo bloqueia slug diferente do post selecionado", async () => {
-  let picked = false;
-  let committed = false;
-  const result = await publishProject("nimblabs", "2026-07-24", {
-    db: fakeDb(),
-    gscQueryPages: async () => [{
-      query: "context guide",
-      current: { impressions: 20, position: 8 },
-      previous: { impressions: 10, position: 12 },
-    }],
-    readRepository: async () => ({
-      headSha: "head0",
-      files: [{
-        path: "lib/blog.ts",
-        content: 'export const posts = [{ slug: "existing-guide", title: "Context Guide", keyword: "context guide" }];',
-      }],
-    }),
-    researchAndDraft: async () => ({
-      ...validContextDraft(),
-      action: "update",
-      targetPath: "lib/blog.ts",
-      overlap: "same",
-      reason: "The catalog entry covers the same intent.",
-    }),
-    pickImage: async () => {
-      picked = true;
-      return null;
-    },
-    commitFiles: async () => {
-      committed = true;
-      return { sha: "commit1", previousSha: "head0" };
-    },
-  });
-
-  assert.equal(result.status, "blocked");
-  assert.equal(result.reason, "decision:unsafe");
-  assert.equal(picked, false);
-  assert.equal(committed, false);
-});
+// Os dois testes end-to-end do typescript-catalog saíram junto com o nimblabs: publishProject
+// resolve o slug na lista fechada de PROJECTS e o renderizador ficou sem projeto real. A
+// cobertura unitária continua acima, via catalogFixture (extractInventory e renderDraft).
 
 test("verifyPublication retorna pending antes da quinta tentativa sem buscar a página", async () => {
   let fetched = false;

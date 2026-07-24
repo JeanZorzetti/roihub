@@ -66,7 +66,7 @@ para chamar essa rota. Configure também `HUB_URL` no GitHub Actions. Nunca regi
 os valores desses três campos.
 
 Crie um GitHub fine-grained token com acesso somente a **Contents: read and write**
-nos dez alvos abaixo (nove repositórios únicos, pois dois alvos compartilham o
+nos nove alvos abaixo (oito repositórios únicos, pois dois alvos compartilham o
 monorepo):
 
 - `goiania` — `JeanZorzetti/roilabs`
@@ -78,7 +78,6 @@ monorepo):
 - `reviewshield` — `JeanZorzetti/review-dispute`
 - `context` — `JeanZorzetti/context-keeper`
 - `aftercare` — `JeanZorzetti/aftercare-nimblabs`
-- `nimblabs` — `JeanZorzetti/nimblabs`
 
 A capa vem só do Unsplash — não há geração de imagem de fallback. Mantenha a URL
 retornada para hotlink, exiba a atribuição do fotógrafo e do Unsplash e acione o
@@ -117,12 +116,12 @@ Antes do rollout, confirme que os seis campos do hub e os secrets `HUB_URL` e
 `dry_run=true` e confirme dez resumos transitórios, sem linha em
 `seo_publications`, imagem ou escrita GitHub.
 
-Somente depois, mantenha o global desligado e habilite estes canários, nesta ordem:
+Somente depois, mantenha o global desligado e habilite estes canários, nesta ordem
+(um por renderizador em uso):
 
 1. `goiania` — Astro
 2. `sirius` — TypeScript post
 3. `context` — MDX
-4. `nimblabs` — TypeScript catalog
 
 Habilite o global temporariamente, rode `dry_run=false` e desligue-o ao terminar os
 quatro. Para cada canário, valide build, HTTP 200, canonical, schema, sitemap e

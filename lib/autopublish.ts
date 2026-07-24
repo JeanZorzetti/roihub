@@ -85,13 +85,26 @@ function safeContentPath(path: unknown, root: string) {
     && (normalized === contentRoot || normalized.startsWith(`${contentRoot}/`));
 }
 
+// researchAndDraft já apura POR QUE bloqueou, mas tudo colapsava em "decision:unsafe" —
+// foi o que deixou o bloqueio do sirius indiagnosticável. Só os casos que caíam nesse
+// balde genérico ganham o motivo; "duplicate" já era um nome preciso. Os códigos são
+// gerados aqui dentro, não pelo modelo, então a lista é fechada e segura de repassar.
+const SEMANTIC_BLOCKS = new Set(["uncertain", "update-target", "update-overlap"]);
+
+function unsafeBlock(reason: unknown) {
+  const suffix = typeof reason === "string" && reason.startsWith("semantic:")
+    ? reason.slice("semantic:".length)
+    : "";
+  return SEMANTIC_BLOCKS.has(suffix) ? `decision:${suffix}` : "decision:unsafe";
+}
+
 function decisionBlock(action: unknown, overlap: unknown, reason: unknown) {
   if (action === "duplicate"
     || (overlap === "same" && (action === "new" || action === "block"))) {
     return "decision:duplicate";
   }
-  if (action === "unsafe" || overlap === "uncertain") return "decision:unsafe";
-  if (action === "update" && overlap !== "same") return "decision:unsafe";
+  if (action === "unsafe" || overlap === "uncertain") return unsafeBlock(reason);
+  if (action === "update" && overlap !== "same") return unsafeBlock(reason);
   if (!["new", "update", "block"].includes(String(action))
     || !["none", "same"].includes(String(overlap))) {
     return "decision:unsafe";
