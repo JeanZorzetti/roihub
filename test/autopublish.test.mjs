@@ -96,7 +96,7 @@ test("inventário extrai frontmatter, Astro e múltiplos posts TypeScript no con
   const markdown = '---\r\ntitle: "Daily Guide"\r\nprimaryKeyword: "daily guide"\r\n---\r\n## First heading\r\n';
   const astro = '<Base title="Astro Guide"><h1>Astro Guide</h1><h2>Details</h2></Base>';
   const catalog = `export const posts = [
-    { slug: "one", title: "One", keyword: "first", sections: [{ heading: "Overview", body: [] }] },
+    { title: "Title", slug: "title", keyword: "first", sections: [{ heading: "Overview", body: [] }] },
     { slug: "two", title: "Two", keyword: "second", sections: [{ heading: "Details", body: [] }] },
   ];`;
   assert.deepEqual(
@@ -120,7 +120,7 @@ test("inventário extrai frontmatter, Astro e múltiplos posts TypeScript no con
   assert.deepEqual(
     extractInventory([{ path: "lib/blog.ts", content: catalog }], projectBySlug("nimblabs")).map(({ slug, title, primaryKeyword }) => ({ slug, title, primaryKeyword })),
     [
-      { slug: "one", title: "One", primaryKeyword: "first" },
+      { slug: "title", title: "Title", primaryKeyword: "first" },
       { slug: "two", title: "Two", primaryKeyword: "second" },
     ]
   );
@@ -130,7 +130,7 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
   const hostile = {
     ...draft,
     title: "Daily --- `Guide` <script>",
-    bluf: "Avoid <script>alert(`${oops}`)</script>.",
+    bluf: "Avoid `code` <script>alert(`${oops}`)</script>.",
     image: { src: "generated", alt: "Generated <script image", credit: "Generated", base64: "d2VicA==" },
   };
   const markdown = renderDraft(hostile, projectBySlug("roilabs"), null);
@@ -153,8 +153,21 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
   assert.match(fabrica.content, /imageAlt:/);
   assert.match(fabrica.content, /faqs:/);
 
+  const mdx = renderDraft(hostile, projectBySlug("context"), null);
+  const mdxBody = mdx.content.replace(/^---\n[\s\S]*?\n---\n/, "");
+  assert.ok(!mdx.content.includes("<script"));
+  assert.ok(!mdxBody.includes("${"));
+  assert.doesNotMatch(mdxBody, /(?<!\\)[{}]/);
+  assert.match(mdxBody, /\\`code\\`/);
+
   const catalog = renderDraft(hostile, projectBySlug("nimblabs"), "export const posts = [];");
   assert.ok(!catalog.content.includes("<script"));
+});
+
+test("Aftercare usa apenas a autoria configurada como credencial", () => {
+  const aftercare = renderDraft(draft, projectBySlug("aftercare"), null);
+  assert.ok(!aftercare.content.includes("Reviewed editorial guidance"));
+  assert.match(aftercare.content, /credentials: "AftercareGen Editorial"/);
 });
 
 test("catálogo ignora colchetes e slug aninhado em strings e falha sem limites comprovados", () => {
@@ -164,6 +177,13 @@ test("catálogo ignora colchetes e slug aninhado em strings e falha sem limites 
   const updated = catalogUpsert(source, '{ slug: "new", title: "New" }', "new");
   assert.match(updated, /title: "Old \] \}"/);
   assert.match(updated, /export const untouched = "yes"/);
+  const trailing = catalogUpsert(
+    'export const posts = [{ slug: "old", title: "Old" },];\nexport const untouched = true;',
+    '{ slug: "new", title: "New" }',
+    "new"
+  );
+  assert.doesNotMatch(trailing, /,\s*,/);
+  assert.match(trailing, /title: "Old" \},\s*\{ slug: "new"/);
   assert.throws(() => catalogUpsert("export const posts = [", "{}", "new"), /catalog-format/);
   assert.throws(() => catalogUpsert("const posts = []", "{}", "new"), /catalog-format/);
   assert.throws(() => catalogUpsert("export const posts = makePosts([])", "{}", "new"), /catalog-format/);
