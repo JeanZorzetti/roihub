@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { validTransition } from "./autopublish-core.mjs";
+import { PROJECTS } from "./autopublish-projects.mjs";
 
 // Postgres da agenda (tabelas hub_*). Sem DATABASE_URL → aba mostra estado de setup.
 
@@ -170,16 +171,7 @@ function ensure(): Promise<unknown> {
       INSERT INTO seo_projects (project_slug, enabled, paused_reason)
       VALUES
         ('*', FALSE, 'Aguardando canários'),
-        ('goiania', FALSE, 'Aguardando ativação'),
-        ('sirius', FALSE, 'Aguardando ativação'),
-        ('fabrica', FALSE, 'Aguardando ativação'),
-        ('roilabs', FALSE, 'Aguardando ativação'),
-        ('polarisia', FALSE, 'Aguardando ativação'),
-        ('estetiacrm', FALSE, 'Aguardando ativação'),
-        ('reviewshield', FALSE, 'Aguardando ativação'),
-        ('context', FALSE, 'Aguardando ativação'),
-        ('aftercare', FALSE, 'Aguardando ativação'),
-        ('nimblabs', FALSE, 'Aguardando ativação')
+        ${PROJECTS.map(({ slug }) => `('${slug}', FALSE, 'Aguardando ativação')`).join(",\n        ")}
       ON CONFLICT (project_slug) DO NOTHING;
     `);
   return g.hubSchema;

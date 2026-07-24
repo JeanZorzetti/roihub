@@ -1054,6 +1054,17 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
   assert.ok(!catalog.content.includes("<script"));
 });
 
+// A lista de seed era hardcoded e ficou dessincronizada de PROJECTS quando o tapepro
+// entrou: sem linha em seo_projects, db.enabled() devolve false e o projeto fica
+// "project-disabled" para sempre, sem erro nenhum.
+test("seed de seo_projects cobre todo projeto configurado", () => {
+  const source = readFileSync(new URL("../lib/db.ts", import.meta.url), "utf8");
+  assert.match(source, /PROJECTS\.map\(/, "o seed precisa derivar de PROJECTS, não de uma lista fixa");
+  for (const { slug } of PROJECTS) {
+    assert.ok(!new RegExp(`\\('${slug}', FALSE`).test(source), `${slug} hardcoded no seed`);
+  }
+});
+
 test("Tapepro gera frontmatter pt-BR válido com imagem como asset local relativo", () => {
   const project = projectBySlug("tapepro");
   const withBytes = { ...draft, image: { ...draft.image, base64: "d2VicA==" } };
