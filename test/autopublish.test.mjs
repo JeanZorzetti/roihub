@@ -3,6 +3,17 @@ import assert from "node:assert/strict";
 import { PROJECTS, projectBySlug } from "../lib/autopublish-projects.mjs";
 import { authorized, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
 import { extractInventory, renderDraft, catalogUpsert } from "../lib/autopublish-render.mjs";
+import { gscQueryPages, inspectUrl, mergeGscWindows } from "../lib/gsc.ts";
+import {
+  commitFiles,
+  deploymentState,
+  githubTreeFiles,
+  pickImage,
+  readRepository,
+  researchAndDraft,
+  responseText,
+  revertCommit,
+} from "../lib/autopublish-clients.ts";
 
 const draft = {
   slug: "daily-guide",
@@ -18,6 +29,24 @@ const draft = {
   image: { src: "https://images.unsplash.com/photo-x", alt: "Team reviewing a workflow", credit: "Photo by A on Unsplash" },
   publishedAt: "2026-07-24",
 };
+
+const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), {
+  status,
+  headers: { "content-type": "application/json" },
+});
+
+async function withEnv(values, operation) {
+  const previous = Object.fromEntries(Object.keys(values).map((key) => [key, process.env[key]]));
+  Object.assign(process.env, values);
+  try {
+    return await operation();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
 
 test("configura exatamente os dez projetos e remotes", () => {
   assert.equal(PROJECTS.length, 10);
@@ -175,6 +204,392 @@ test("Aftercare usa apenas a autoria configurada como credencial", () => {
   const aftercare = renderDraft(draft, projectBySlug("aftercare"), null);
   assert.ok(!aftercare.content.includes("Reviewed editorial guidance"));
   assert.match(aftercare.content, /credentials: "AftercareGen Editorial"/);
+});
+
+test("mergeGscWindows une query+page e preserva janela ausente", () => {
+  const current = [
+    { keys: ["crm", "https://x.test/blog/crm"], clicks: 2, impressions: 20, position: 8 },
+    { keys: ["pipeline", "https://x.test/blog/pipeline"], clicks: 3, impressions: 30, position: 7 },
+  ];
+  const previous = [
+    { keys: ["crm", "https://x.test/blog/crm"], clicks: 1, impressions: 10, position: 12 },
+  ];
+  assert.deepEqual(mergeGscWindows(current, previous), [
+    {
+      query: "crm",
+      page: "https://x.test/blog/crm",
+      current: { clicks: 2, impressions: 20, position: 8 },
+      previous: { clicks: 1, impressions: 10, position: 12 },
+    },
+    {
+      query: "pipeline",
+      page: "https://x.test/blog/pipeline",
+      current: { clicks: 3, impressions: 30, position: 7 },
+      previous: null,
+    },
+  ]);
+});
+
+test("responseText lê o formato aninhado atual de Responses", () => {
+  const response = {
+    id: "resp_123",
+    object: "response",
+    status: "completed",
+    output: [{
+      id: "msg_123",
+      type: "message",
+      status: "completed",
+      role: "assistant",
+      content: [{
+        type: "output_text",
+        annotations: [],
+        logprobs: [],
+        text: "{\"title\":\"CRM\"}",
+      }],
+    }],
+  };
+  assert.equal(responseText(response), "{\"title\":\"CRM\"}");
+});
+
+test("GitHub tree aceita apenas blobs do contentPath", () => {
+  const tree = [
+    { type: "blob", path: "content/blog/a.mdx", sha: "1" },
+    { type: "tree", path: "content/blog/nested", sha: "2" },
+    { type: "blob", path: ".env", sha: "3" },
+  ];
+  assert.deepEqual(githubTreeFiles(tree, projectBySlug("aftercare")), [
+    { path: "content/blog/a.mdx", sha: "1" },
+  ]);
+});
+
+test("GSC consulta as janelas exatas e reduz URL Inspection", async () => {
+  const requests = [];
+  const client = {
+    request: async (request) => {
+      requests.push(request);
+      if (request.url.endsWith("/webmasters/v3/sites")) {
+        return { data: { siteEntry: [{ siteUrl: "sc-domain:x.test", permissionLevel: "siteOwner" }] } };
+      }
+      if (request.url.endsWith("/urlInspection/index:inspect")) {
+        return {
+          data: {
+            inspectionResult: {
+              indexStatusResult: {
+                verdict: "PASS",
+                coverageState: "Submitted and indexed",
+                robotsTxtState: "ALLOWED",
+                indexingState: "INDEXING_ALLOWED",
+                lastCrawlTime: "2026-07-23T12:00:00Z",
+                crawledAs: "DESKTOP",
+              },
+            },
+          },
+        };
+      }
+      const current = request.data.startDate === "2026-06-23";
+      return {
+        data: {
+          rows: [{
+            keys: ["crm", "https://x.test/blog/crm"],
+            clicks: current ? 2 : 1,
+            impressions: current ? 20 : 10,
+            position: current ? 8 : 12,
+          }],
+        },
+      };
+    },
+  };
+
+  const rows = await gscQueryPages("https://x.test", {
+    client,
+    now: new Date("2026-07-24T12:00:00Z"),
+  });
+  assert.deepEqual(rows[0], {
+    query: "crm",
+    page: "https://x.test/blog/crm",
+    current: { clicks: 2, impressions: 20, position: 8 },
+    previous: { clicks: 1, impressions: 10, position: 12 },
+  });
+  assert.deepEqual(
+    requests.slice(1, 3).map(({ data }) => data),
+    [
+      {
+        startDate: "2026-06-23",
+        endDate: "2026-07-21",
+        dimensions: ["query", "page"],
+        rowLimit: 25000,
+        dimensionFilterGroups: [{
+          filters: [{
+            dimension: "page",
+            operator: "contains",
+            expression: "https://x.test/",
+          }],
+        }],
+      },
+      {
+        startDate: "2026-05-26",
+        endDate: "2026-06-22",
+        dimensions: ["query", "page"],
+        rowLimit: 25000,
+        dimensionFilterGroups: [{
+          filters: [{
+            dimension: "page",
+            operator: "contains",
+            expression: "https://x.test/",
+          }],
+        }],
+      },
+    ]
+  );
+
+  assert.deepEqual(
+    await inspectUrl("https://x.test", "https://x.test/blog/crm", { client }),
+    {
+      verdict: "PASS",
+      coverageState: "Submitted and indexed",
+      robotsTxtState: "ALLOWED",
+      indexingState: "INDEXING_ALLOWED",
+      lastCrawlTime: "2026-07-23T12:00:00Z",
+    }
+  );
+  assert.deepEqual(requests.at(-1).data, {
+    inspectionUrl: "https://x.test/blog/crm",
+    siteUrl: "sc-domain:x.test",
+  });
+});
+
+test("OpenAI pesquisa e gera draft estruturado com payloads estáveis", async () => {
+  const { image, ...normalizedDraft } = draft;
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init, body: JSON.parse(init.body) });
+    return calls.length === 1
+      ? jsonResponse({
+        output: [{
+          type: "message",
+          role: "assistant",
+          content: [{ type: "output_text", text: "Research with cited evidence.", annotations: [] }],
+        }],
+        usage: { input_tokens: 3, output_tokens: 4 },
+      })
+      : jsonResponse({
+        output_text: JSON.stringify(normalizedDraft),
+        usage: { input_tokens: 5, output_tokens: 6 },
+      });
+  };
+
+  const result = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () => researchAndDraft({
+    project: projectBySlug("context"),
+    candidate: { action: "new", targetPath: null, query: "daily guide" },
+    inventory: [],
+    runDate: "2026-07-24",
+  }, fetchImpl));
+
+  assert.deepEqual(result, {
+    action: "new",
+    targetPath: null,
+    draft: normalizedDraft,
+    usage: { inputTokens: 8, outputTokens: 10, webSearchCalls: 1, generatedImage: false },
+  });
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(({ url, init, body }) =>
+    url === "https://api.openai.com/v1/responses"
+    && init.method === "POST"
+    && body.model === "gpt-5.6-terra"
+    && body.reasoning.effort === "medium"
+    && body.store === false
+  ));
+  assert.deepEqual(calls[0].body.tools, [{ type: "web_search" }]);
+  assert.equal("tools" in calls[1].body, false);
+  assert.equal(calls[1].body.text.format.type, "json_schema");
+  assert.equal(calls[1].body.text.format.strict, true);
+});
+
+test("OpenAI não vaza body em erros de auth ou rate limit", async () => {
+  await withEnv({ OPENAI_API_KEY: "test-openai-key" }, async () => {
+    for (const [status, code] of [[401, "openai-auth"], [429, "openai-rate"]]) {
+      await assert.rejects(
+        () => researchAndDraft({}, async () => new Response("secret response body", { status })),
+        (error) => error instanceof Error
+          && error.message === code
+          && !error.message.includes("secret response body")
+      );
+    }
+    await assert.rejects(
+      () => researchAndDraft({}, async () => {
+        throw new Error("secret network details");
+      }),
+      (error) => error instanceof Error
+        && error.message === "openai-output"
+        && !error.message.includes("secret network details")
+    );
+  });
+});
+
+test("imagem usa hotlink Unsplash com crédito e recorre ao GPT Image 2", async () => {
+  await withEnv({
+    UNSPLASH_ACCESS_KEY: "test-unsplash-key",
+    OPENAI_API_KEY: "test-openai-key",
+  }, async () => {
+    const calls = [];
+    const unsplashFetch = async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      if (calls.length === 1) {
+        return jsonResponse({
+          results: [
+            {
+              description: "Mountain",
+              alt_description: "Mountain landscape",
+              urls: { regular: "https://images.unsplash.com/unrelated" },
+              links: { download_location: "https://api.unsplash.com/photos/unrelated/download" },
+              user: { name: "Unrelated" },
+            },
+            {
+              description: "Sales operations",
+              alt_description: "AI dashboard",
+              urls: { regular: "https://images.unsplash.com/crm" },
+              links: { download_location: "https://api.unsplash.com/photos/crm/download" },
+              user: { name: "Ana Silva" },
+            },
+          ],
+        });
+      }
+      return new Response(null, { status: 200 });
+    };
+    assert.deepEqual(await pickImage("ai", unsplashFetch), {
+      src: "https://images.unsplash.com/crm",
+      alt: "AI dashboard",
+      credit: "Photo by Ana Silva on Unsplash",
+    });
+    const searchUrl = new URL(calls[0].url);
+    assert.equal(searchUrl.searchParams.get("query"), "ai");
+    assert.equal(searchUrl.searchParams.get("orientation"), "landscape");
+    assert.equal(searchUrl.searchParams.get("content_filter"), "high");
+    assert.equal(searchUrl.searchParams.get("per_page"), "10");
+    assert.equal(calls[1].url, "https://api.unsplash.com/photos/crm/download");
+
+    const fallbackCalls = [];
+    const fallbackFetch = async (url, init = {}) => {
+      fallbackCalls.push({ url: String(url), init });
+      return fallbackCalls.length === 1
+        ? jsonResponse({ results: [] })
+        : jsonResponse({ data: [{ b64_json: "d2VicA==" }] });
+    };
+    assert.deepEqual(await pickImage("workflow automation", fallbackFetch), {
+      src: "generated",
+      alt: "workflow automation",
+      credit: "Generated by OpenAI",
+      base64: "d2VicA==",
+    });
+    assert.equal(fallbackCalls[1].url, "https://api.openai.com/v1/images/generations");
+    assert.deepEqual(JSON.parse(fallbackCalls[1].init.body), {
+      model: "gpt-image-2",
+      size: "1536x1024",
+      quality: "low",
+      output_format: "webp",
+      output_compression: 75,
+      n: 1,
+      prompt: "Editorial landscape image for workflow automation. No text or logos.",
+    });
+  });
+});
+
+test("GitHub lê, commita, reverte por novo commit e consulta deployment", async () => {
+  const project = { ...projectBySlug("aftercare"), branch: "release/v1" };
+  await withEnv({ GITHUB_TOKEN: "test-github-token" }, async () => {
+    let invalidPathCalls = 0;
+    await assert.rejects(
+      () => commitFiles(project, "head0", [{ path: "../.env", content: "secret" }], "Invalid", async () => {
+        invalidPathCalls += 1;
+        return jsonResponse({ sha: "unused" });
+      }),
+      /github-path/
+    );
+    assert.equal(invalidPathCalls, 0);
+
+    const readCalls = [];
+    const readReplies = [
+      { object: { sha: "head0" } },
+      {
+        tree: [
+          { type: "blob", path: "content/blog/a.mdx", sha: "blob0" },
+          { type: "blob", path: ".env", sha: "secret0" },
+        ],
+      },
+      { content: Buffer.from("old").toString("base64"), encoding: "base64" },
+    ];
+    const repository = await readRepository(project, async (url, init = {}) => {
+      readCalls.push({ url: String(url), init });
+      return jsonResponse(readReplies.shift());
+    });
+    assert.deepEqual(repository, {
+      headSha: "head0",
+      files: [{ path: "content/blog/a.mdx", sha: "blob0", content: "old" }],
+    });
+    assert.match(readCalls[0].url, /git\/ref\/heads\/release%2Fv1$/);
+
+    const commitCalls = [];
+    const commitReplies = [
+      { sha: "blob1" },
+      { sha: "tree1" },
+      { sha: "commit1" },
+      { object: { sha: "head0" } },
+      { object: { sha: "commit1" } },
+    ];
+    assert.deepEqual(
+      await commitFiles(project, "head0", [{ path: "content/blog/a.mdx", content: "new" }], "Publish guide", async (url, init = {}) => {
+        commitCalls.push({ url: String(url), init });
+        return jsonResponse(commitReplies.shift());
+      }),
+      { sha: "commit1", previousSha: "head0" }
+    );
+    assert.deepEqual(JSON.parse(commitCalls.at(-1).init.body), { sha: "commit1", force: false });
+    assert.equal(commitCalls.at(-2).init.method, "GET");
+    assert.equal(commitCalls.at(-1).init.method, "PATCH");
+
+    const conflictReplies = [
+      { sha: "blob2" },
+      { sha: "tree2" },
+      { sha: "commit2" },
+      { object: { sha: "other-head" } },
+    ];
+    let conflictCalls = 0;
+    await assert.rejects(
+      () => commitFiles(project, "head0", [{ path: "content/blog/b.mdx", content: "new" }], "Publish guide", async () => {
+        conflictCalls += 1;
+        return jsonResponse(conflictReplies.shift());
+      }),
+      /github-conflict/
+    );
+    assert.equal(conflictCalls, 4);
+
+    const revertCalls = [];
+    const revertReplies = [
+      { sha: "revert-tree" },
+      { sha: "revert-commit" },
+      { object: { sha: "commit1" } },
+      { object: { sha: "revert-commit" } },
+    ];
+    assert.equal(
+      await revertCommit(project, "commit1", "head0", async (url, init = {}) => {
+        revertCalls.push({ url: String(url), init });
+        return jsonResponse(revertReplies.shift());
+      }),
+      "revert-commit"
+    );
+    assert.deepEqual(JSON.parse(revertCalls[0].init.body), { base_tree: "head0", tree: [] });
+    assert.deepEqual(JSON.parse(revertCalls[1].init.body), {
+      message: "Revert automated publication",
+      tree: "revert-tree",
+      parents: ["commit1"],
+    });
+    assert.deepEqual(JSON.parse(revertCalls.at(-1).init.body), { sha: "revert-commit", force: false });
+
+    assert.equal(
+      await deploymentState(project, "revert-commit", async () => jsonResponse({ state: "success" })),
+      "success"
+    );
+  });
 });
 
 test("catálogo ignora colchetes e slug aninhado em strings e falha sem limites comprovados", () => {

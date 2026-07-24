@@ -4,6 +4,28 @@ export type GscTrend = { current: number; previous: number; property: string } |
 
 type Site = { siteUrl: string; permissionLevel: string };
 type Client = Awaited<ReturnType<GoogleAuth["getClient"]>>;
+type RequestClient = Pick<Client, "request">;
+type GscPageRow = {
+  keys: string[];
+  clicks: number;
+  impressions: number;
+  position: number;
+};
+type GscPageMetrics = Omit<GscPageRow, "keys">;
+
+export function mergeGscWindows(current: GscPageRow[], previous: GscPageRow[]) {
+  const keyed = new Map<string, { query: string; page: string; current: GscPageMetrics | null; previous: GscPageMetrics | null }>();
+  for (const [window, rows] of [["current", current], ["previous", previous]] as const) {
+    for (const { keys: [query, page], ...metrics } of rows) {
+      if (!query || !page) continue;
+      const key = `${query}\0${page}`;
+      const entry = keyed.get(key) ?? { query, page, current: null, previous: null };
+      entry[window] = metrics;
+      keyed.set(key, entry);
+    }
+  }
+  return [...keyed.values()];
+}
 
 let clientPromise: Promise<Client> | null = null;
 let sitesCache: { at: number; sites: Site[] } | null = null;
@@ -19,7 +41,7 @@ function getClient(): Promise<Client> | null {
 }
 
 // TTL 10 min: propriedade adicionada no Search Console aparece sem redeploy.
-async function listSites(client: Client): Promise<Site[]> {
+async function listSites(client: RequestClient): Promise<Site[]> {
   if (sitesCache && Date.now() - sitesCache.at < 600_000) return sitesCache.sites;
   const res = await client.request<{ siteEntry?: Site[] }>({
     url: "https://searchconsole.googleapis.com/webmasters/v3/sites",
@@ -40,8 +62,8 @@ function resolveProperty(host: string, sites: Site[]): string | null {
   return [...names].find((n) => n.startsWith(`https://${host}/`)) ?? null;
 }
 
-export function isoDaysAgo(n: number): string {
-  return new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+export function isoDaysAgo(n: number, now = Date.now()): string {
+  return new Date(now - n * 864e5).toISOString().slice(0, 10);
 }
 
 async function queryClicks(
@@ -104,6 +126,90 @@ async function queryTimeseries(
     impressions: r.impressions,
     position: r.position,
   }));
+}
+
+async function queryPageWindow(
+  client: RequestClient,
+  property: string,
+  host: string,
+  startDate: string,
+  endDate: string
+): Promise<GscPageRow[]> {
+  const res = await client.request<{ rows?: GscPageRow[] }>({
+    url: `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
+      property
+    )}/searchAnalytics/query`,
+    method: "POST",
+    data: {
+      startDate,
+      endDate,
+      dimensions: ["query", "page"],
+      rowLimit: 25000,
+      dimensionFilterGroups: [
+        { filters: [{ dimension: "page", operator: "contains", expression: `https://${host}/` }] },
+      ],
+    },
+  });
+  return res.data.rows ?? [];
+}
+
+type GscClientOptions = { client?: RequestClient; now?: Date };
+
+async function gscConnection(siteUrl: string, clientOverride?: RequestClient) {
+  const clientP = clientOverride ? Promise.resolve(clientOverride) : getClient();
+  if (!clientP) return null;
+  const client = await clientP;
+  const host = new URL(siteUrl).hostname;
+  const property = resolveProperty(host, await listSites(client));
+  return property ? { client, host, property } : null;
+}
+
+export async function gscQueryPages(siteUrl: string, options: GscClientOptions = {}) {
+  try {
+    const connection = await gscConnection(siteUrl, options.client);
+    if (!connection) return [];
+    const now = options.now?.getTime() ?? Date.now();
+    const { client, host, property } = connection;
+    const [current, previous] = await Promise.all([
+      queryPageWindow(client, property, host, isoDaysAgo(31, now), isoDaysAgo(3, now)),
+      queryPageWindow(client, property, host, isoDaysAgo(59, now), isoDaysAgo(32, now)),
+    ]);
+    return mergeGscWindows(current, previous);
+  } catch {
+    return [];
+  }
+}
+
+export async function inspectUrl(
+  siteUrl: string,
+  inspectedUrl: string,
+  options: GscClientOptions = {}
+) {
+  try {
+    const connection = await gscConnection(siteUrl, options.client);
+    if (!connection) return null;
+    const res = await connection.client.request<{
+      inspectionResult?: {
+        indexStatusResult?: {
+          verdict?: string;
+          coverageState?: string;
+          robotsTxtState?: string;
+          indexingState?: string;
+          lastCrawlTime?: string;
+        };
+      };
+    }>({
+      url: "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+      method: "POST",
+      data: { inspectionUrl: inspectedUrl, siteUrl: connection.property },
+    });
+    const result = res.data.inspectionResult?.indexStatusResult;
+    if (!result) return null;
+    const { verdict, coverageState, robotsTxtState, indexingState, lastCrawlTime } = result;
+    return { verdict, coverageState, robotsTxtState, indexingState, lastCrawlTime };
+  } catch {
+    return null;
+  }
 }
 
 // Série diária dos últimos 84 dias (12 semanas fechando em D-3, GSC atrasa).
