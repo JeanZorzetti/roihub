@@ -422,10 +422,13 @@ export async function publishProject(
       targetUrl,
       commitSha: committed.sha,
       previousSha: committed.previousSha,
-      model: "gpt-5.6-terra",
+      // Sobrou da era OpenAI e gravou "gpt-5.6-terra" no 1o artigo publicado de verdade.
+      // O motor é o claude-cli, que decide o modelo pela assinatura.
+      model: "claude-cli",
       inputTokens: Number(usage.inputTokens) || 0,
       outputTokens: Number(usage.outputTokens) || 0,
-      imageSource: image?.base64 ? "openai" : image?.src ?? null,
+      imageSource: image?.base64 ? "unsplash-embedded" : image?.src ?? null,
+      // Custo nominal: com claude-cli o gasto marginal é zero e o limite é rate limit.
       estimatedCostUsd: estimateCost(usage),
       reason: null,
       metadata: {
