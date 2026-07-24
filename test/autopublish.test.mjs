@@ -45,6 +45,7 @@ test("guardrail bloqueia fonte ausente, placeholder e YMYL clínico", () => {
   assert.deepEqual(validateDraft(base, projectBySlug("aftercare")), []);
   assert.ok(validateDraft({ ...base, title: "FILL_ME" }, projectBySlug("aftercare")).includes("placeholder"));
   assert.ok(validateDraft({ ...base, title: "Botox dosage guide" }, projectBySlug("aftercare")).includes("ymyl"));
+  assert.ok(validateDraft({ ...base, sections: [{ heading: "Care steps", paragraphs: ["Use this Botox dosage after treatment."] }] }, projectBySlug("aftercare")).includes("ymyl"));
   assert.ok(validateDraft({ ...base, sources: [] }, projectBySlug("aftercare")).includes("sources"));
 });
 
