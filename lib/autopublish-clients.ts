@@ -139,23 +139,39 @@ const RISK_SCHEMA = {
 } as const;
 
 // Classifica pela mensagem, nunca a repassa: o corpo pode conter o prompt inteiro.
-export function claudeError(message: string) {
+// O status do CLI (api_error_status) manda, porque a mensagem varia: uma conta com
+// Claude Code desabilitado pela organização responde 403 sem nenhuma palavra de auth.
+export function claudeError(message: string, status?: unknown) {
+  const code = Number(status);
+  if (code === 429) return new Error("llm-rate");
+  if (code === 401 || code === 403) return new Error("llm-auth");
   const text = message.toLowerCase();
   if (/usage limit|rate limit|too many requests|429/.test(text)) return new Error("llm-rate");
-  if (/unauthor|authentication|not logged in|invalid token|oauth|forbidden/.test(text)) {
+  if (/unauthor|authentication|not logged in|invalid token|oauth|forbidden|subscription access|disabled/.test(text)) {
     return new Error("llm-auth");
   }
   return new Error("llm-output");
 }
 
+// Contas somadas: o limite do autopublishing é rate limit de assinatura, não crédito.
+// Aceita o singular para não quebrar quem já configurou uma conta só.
+export function claudeTokens(env: NodeJS.ProcessEnv = process.env) {
+  return String(env.CLAUDE_CODE_OAUTH_TOKENS ?? env.CLAUDE_CODE_OAUTH_TOKEN ?? "")
+    .split(",")
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
 // Prompt vai por stdin: o inventário de um monorepo estoura o limite de argv.
-function spawnClaude(prompt: string, args: string[], timeoutMs: number) {
+function spawnClaude(prompt: string, args: string[], timeoutMs: number, token: string) {
   return new Promise<string>((resolve, reject) => {
     const child = spawn(process.env.CLAUDE_BIN || "claude", args, {
       stdio: ["pipe", "pipe", "pipe"],
       // No Windows o binário é um shim .cmd e só é encontrado via shell. Os args são
       // fixos e o prompt vai por stdin, então nada do modelo chega à linha de comando.
       shell: process.platform === "win32",
+      // Só o token da vez chega ao filho: o plural nunca vaza para o CLI.
+      env: { ...process.env, CLAUDE_CODE_OAUTH_TOKEN: token, CLAUDE_CODE_OAUTH_TOKENS: "" },
     });
     let stdout = "";
     let stderr = "";
@@ -183,35 +199,63 @@ function spawnClaude(prompt: string, args: string[], timeoutMs: number) {
 
 export type ClaudeRun = (
   prompt: string,
-  options?: { webSearch?: boolean; timeoutMs?: number }
+  options?: {
+    webSearch?: boolean;
+    timeoutMs?: number;
+    spawnImpl?: (prompt: string, args: string[], timeoutMs: number, token: string) => Promise<string>;
+  }
 ) => Promise<JsonRecord>;
 
 // Formato de retorno idêntico ao da Responses API para manter responseText/usageOf.
 // Knob real: pesquisa + artigo completo varia muito com a quantidade de buscas.
 const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_TIMEOUT_MS) || 240_000;
 
-export const claudeRun: ClaudeRun = async (prompt, { webSearch = false, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) => {
-  if (!process.env.CLAUDE_CODE_OAUTH_TOKEN?.trim()) throw new Error("llm-auth");
+export const claudeRun: ClaudeRun = async (prompt, {
+  webSearch = false,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  spawnImpl = spawnClaude,
+} = {}) => {
+  const tokens = claudeTokens();
+  if (!tokens.length) throw new Error("llm-auth");
   const args = ["-p", "--output-format", "json", "--max-turns", webSearch ? "12" : "1"];
   if (webSearch) args.push("--allowedTools", "WebSearch");
-  const raw = await spawnClaude(prompt, args, timeoutMs);
-  let payload: JsonRecord;
-  try {
-    payload = JSON.parse(raw) as JsonRecord;
-  } catch {
-    throw new Error("llm-output");
+
+  let lastError = new Error("llm-auth");
+  for (const token of tokens) {
+    let raw: string;
+    try {
+      raw = await spawnImpl(prompt, args, timeoutMs, token);
+    } catch (error) {
+      lastError = error as Error;
+      // Conta esgotada ou expirada: tenta a próxima. llm-output é da resposta,
+      // não da conta, então trocar de token não ajudaria.
+      if (["llm-rate", "llm-auth"].includes(lastError.message)) continue;
+      throw lastError;
+    }
+    let payload: JsonRecord;
+    try {
+      payload = JSON.parse(raw) as JsonRecord;
+    } catch {
+      throw new Error("llm-output");
+    }
+    if (payload?.is_error || typeof payload?.result !== "string") {
+      lastError = claudeError(
+        typeof payload?.result === "string" ? payload.result : "",
+        payload?.api_error_status
+      );
+      if (["llm-rate", "llm-auth"].includes(lastError.message)) continue;
+      throw lastError;
+    }
+    const usage = payload.usage as JsonRecord | undefined;
+    return {
+      output_text: payload.result,
+      usage: {
+        input_tokens: Number(usage?.input_tokens) || 0,
+        output_tokens: Number(usage?.output_tokens) || 0,
+      },
+    };
   }
-  if (payload?.is_error || typeof payload?.result !== "string") {
-    throw claudeError(typeof payload?.result === "string" ? payload.result : "");
-  }
-  const usage = payload.usage as JsonRecord | undefined;
-  return {
-    output_text: payload.result,
-    usage: {
-      input_tokens: Number(usage?.input_tokens) || 0,
-      output_tokens: Number(usage?.output_tokens) || 0,
-    },
-  };
+  throw lastError;
 };
 
 // claude-cli não tem json_schema strict: o JSON vem no texto, às vezes cercado de fences.

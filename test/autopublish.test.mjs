@@ -9,6 +9,7 @@ import { gscQueryPages, inspectUrl, mergeGscWindows } from "../lib/gsc.ts";
 import {
   claudeError,
   claudeRun,
+  claudeTokens,
   commitFiles,
   deploymentState,
   githubTreeFiles,
@@ -171,7 +172,7 @@ test("produção lista somente nomes das envs ausentes em ordem estável", () =>
       CLAUDE_CODE_OAUTH_TOKEN: "",
       UNSPLASH_ACCESS_KEY: undefined,
     }),
-    ["CLAUDE_CODE_OAUTH_TOKEN", "CRON_SECRET", "GITHUB_TOKEN", "UNSPLASH_ACCESS_KEY"]
+    ["CLAUDE_CODE_OAUTH_TOKENS", "CRON_SECRET", "GITHUB_TOKEN", "UNSPLASH_ACCESS_KEY"]
   );
 });
 
@@ -266,7 +267,7 @@ test("route lista somente envs ausentes antes de publicar", async () => {
     assert.deepEqual(await response.json(), {
       error: "missing-env",
       fields: [
-        "CLAUDE_CODE_OAUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKENS",
         "DATABASE_URL",
         "GITHUB_TOKEN",
         "GOOGLE_SERVICE_ACCOUNT_JSON",
@@ -424,7 +425,7 @@ test("handler HTTP retorna 503 para env ausente e banco indisponível", async ()
   assert.deepEqual(await missing.json(), {
     error: "missing-env",
     fields: [
-      "CLAUDE_CODE_OAUTH_TOKEN",
+      "CLAUDE_CODE_OAUTH_TOKENS",
       "DATABASE_URL",
       "GITHUB_TOKEN",
       "GOOGLE_SERVICE_ACCOUNT_JSON",
@@ -476,7 +477,7 @@ test("handler HTTP expõe só nomes de envs ausentes, nunca valores", async () =
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), {
     error: "missing-env",
-    fields: ["CLAUDE_CODE_OAUTH_TOKEN", "GITHUB_TOKEN"],
+    fields: ["CLAUDE_CODE_OAUTH_TOKENS", "GITHUB_TOKEN"],
   });
 });
 
@@ -1414,9 +1415,78 @@ test("claude-cli falha fechado para decisão semântica incerta ou malformada", 
   );
 });
 
+test("claude-cli soma contas e reporta a env oficial quando falta", () => {
+  assert.deepEqual(claudeTokens({ CLAUDE_CODE_OAUTH_TOKENS: " a , b ,, c " }), ["a", "b", "c"]);
+  assert.deepEqual(claudeTokens({ CLAUDE_CODE_OAUTH_TOKEN: "single" }), ["single"]);
+  assert.deepEqual(claudeTokens({ CLAUDE_CODE_OAUTH_TOKENS: " , " }), []);
+  assert.deepEqual(claudeTokens({}), []);
+
+  // O singular sozinho continua satisfazendo o contrato de ambiente.
+  const base = {
+    CRON_SECRET: "x",
+    DATABASE_URL: "x",
+    GITHUB_TOKEN: "x",
+    GOOGLE_SERVICE_ACCOUNT_JSON: "x",
+    UNSPLASH_ACCESS_KEY: "x",
+  };
+  assert.deepEqual(missingEnv({ ...base, CLAUDE_CODE_OAUTH_TOKEN: "single" }), []);
+  assert.deepEqual(missingEnv({ ...base, CLAUDE_CODE_OAUTH_TOKENS: "a,b" }), []);
+  assert.deepEqual(missingEnv(base), ["CLAUDE_CODE_OAUTH_TOKENS"]);
+});
+
+test("claude-cli rotaciona conta esgotada e desiste quando todas falham", async () => {
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKENS: "a,b,c" }, async () => {
+    const used = [];
+    const ok = await claudeRun("prompt", {
+      spawnImpl: async (_prompt, _args, _timeout, token) => {
+        used.push(token);
+        if (token === "a") throw new Error("llm-rate");
+        if (token === "b") throw new Error("llm-auth");
+        return JSON.stringify({ result: "done", usage: { input_tokens: 1, output_tokens: 2 } });
+      },
+    });
+    assert.deepEqual(used, ["a", "b", "c"]);
+    assert.equal(ok.output_text, "done");
+
+    // is_error com mensagem de limite também troca de conta.
+    const usedOnPayload = [];
+    const recovered = await claudeRun("prompt", {
+      spawnImpl: async (_prompt, _args, _timeout, token) => {
+        usedOnPayload.push(token);
+        return token === "a"
+          ? JSON.stringify({ is_error: true, result: "Claude usage limit reached" })
+          : JSON.stringify({ result: "second", usage: { input_tokens: 0, output_tokens: 0 } });
+      },
+    });
+    assert.deepEqual(usedOnPayload, ["a", "b"]);
+    assert.equal(recovered.output_text, "second");
+
+    // Todas esgotadas: falha fechado com o último código.
+    await assert.rejects(
+      () => claudeRun("prompt", {
+        spawnImpl: async () => { throw new Error("llm-rate"); },
+      }),
+      /llm-rate/
+    );
+
+    // llm-output é da resposta, não da conta: não desperdiça as outras contas.
+    const usedOnOutput = [];
+    await assert.rejects(
+      () => claudeRun("prompt", {
+        spawnImpl: async (_prompt, _args, _timeout, token) => {
+          usedOnOutput.push(token);
+          throw new Error("llm-output");
+        },
+      }),
+      /llm-output/
+    );
+    assert.deepEqual(usedOnOutput, ["a"]);
+  });
+});
+
 test("claude-cli exige token e classifica a falha sem repassar a mensagem", async () => {
   await assert.rejects(
-    () => withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "   " }, () => claudeRun("prompt")),
+    () => withEnv({ CLAUDE_CODE_OAUTH_TOKENS: "   " }, () => claudeRun("prompt")),
     /llm-auth/
   );
 
@@ -1426,11 +1496,20 @@ test("claude-cli exige token e classifica a falha sem repassar a mensagem", asyn
     ["Unauthorized: run claude setup-token", "llm-auth"],
     ["Invalid token for secret-account@example.com", "llm-auth"],
     ["ENOENT spawn claude at /secret/path", "llm-output"],
+    // Conta real: organização com Claude Code desabilitado, sem palavra de auth.
+    ["Your organization has disabled Claude subscription access for Claude Code", "llm-auth"],
   ]) {
     const error = claudeError(message);
     assert.equal(error.message, code);
     assert.ok(!error.message.includes("secret"));
   }
+
+  // O status do CLI decide sozinho, mesmo com mensagem irreconhecível.
+  assert.equal(claudeError("whatever", 403).message, "llm-auth");
+  assert.equal(claudeError("whatever", 401).message, "llm-auth");
+  assert.equal(claudeError("whatever", 429).message, "llm-rate");
+  assert.equal(claudeError("whatever", 500).message, "llm-output");
+  assert.equal(claudeError("whatever", null).message, "llm-output");
 });
 
 test("imagem usa hotlink Unsplash com crédito e cai no 1o resultado sem match", async () => {

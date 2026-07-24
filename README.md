@@ -41,17 +41,24 @@ nesse arquivo.
 
 ### Contrato de ambiente
 
-O deploy do hub exige `CLAUDE_CODE_OAUTH_TOKEN`, `CRON_SECRET`, `DATABASE_URL`,
+O deploy do hub exige `CLAUDE_CODE_OAUTH_TOKENS`, `CRON_SECRET`, `DATABASE_URL`,
 `GITHUB_TOKEN`, `GOOGLE_SERVICE_ACCOUNT_JSON` e `UNSPLASH_ACCESS_KEY`.
 Ausência, valor vazio ou somente espaços interrompe a rota com `503`; a resposta
 contém apenas os nomes ausentes.
 
 O motor editorial é o **claude-cli**, não uma API paga: a imagem Docker instala
-`@anthropic-ai/claude-code` e autentica por `CLAUDE_CODE_OAUTH_TOKEN`, gerado com
+`@anthropic-ai/claude-code` e autentica por `CLAUDE_CODE_OAUTH_TOKENS`, gerado com
 `claude setup-token` na sua máquina. Uma chamada por projeto pesquisa (WebSearch) e
 decide no mesmo turno; projetos `ymyl-restricted` levam uma segunda chamada só para
 classificar risco. O custo marginal por artigo é zero — o limite é o rate limit da
 assinatura, não crédito.
+
+`CLAUDE_CODE_OAUTH_TOKENS` aceita **várias contas separadas por vírgula**, para somar
+rate limit. A execução usa a primeira e passa para a próxima quando a conta responde
+`429` (esgotada) ou `401`/`403` (token inválido, ou organização com Claude Code
+desabilitado na assinatura). Só o token da vez entra no ambiente do processo filho.
+Uma falha de conteúdo (`llm-output`) **não** rotaciona: o problema é da resposta, não
+da conta. `CLAUDE_CODE_OAUTH_TOKEN` no singular continua aceito.
 
 `CRON_SECRET` fica no ambiente do hub e protege `/api/seo/autopublish`.
 `HUB_CRON_SECRET` fica nos secrets do GitHub Actions e deve conter o mesmo segredo
