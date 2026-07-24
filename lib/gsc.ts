@@ -154,6 +154,12 @@ async function queryPageWindow(
 }
 
 type GscClientOptions = { client?: RequestClient; now?: Date };
+type GscStrictOptions = GscClientOptions & {
+  strict?: boolean;
+  sleep?: (ms: number) => Promise<unknown>;
+};
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function gscConnection(siteUrl: string, clientOverride?: RequestClient) {
   const clientP = clientOverride ? Promise.resolve(clientOverride) : getClient();
@@ -164,19 +170,25 @@ async function gscConnection(siteUrl: string, clientOverride?: RequestClient) {
   return property ? { client, host, property } : null;
 }
 
-export async function gscQueryPages(siteUrl: string, options: GscClientOptions = {}) {
-  try {
-    const connection = await gscConnection(siteUrl, options.client);
-    if (!connection) return [];
-    const now = options.now?.getTime() ?? Date.now();
-    const { client, host, property } = connection;
-    const [current, previous] = await Promise.all([
-      queryPageWindow(client, property, host, isoDaysAgo(31, now), isoDaysAgo(3, now)),
-      queryPageWindow(client, property, host, isoDaysAgo(59, now), isoDaysAgo(32, now)),
-    ]);
-    return mergeGscWindows(current, previous);
-  } catch {
-    return [];
+// strict: pro autopublishing, GSC indisponível NÃO pode virar [] — sem linhas toda pauta
+// vira "new" e o robô duplica URL já ranqueada. 3 tentativas e falha fechado.
+// Janelas em série: na falha a segunda chamada não é gasta.
+export async function gscQueryPages(siteUrl: string, options: GscStrictOptions = {}) {
+  const { strict = false, sleep = wait } = options;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const connection = await gscConnection(siteUrl, options.client);
+      if (!connection) return [];
+      const now = options.now?.getTime() ?? Date.now();
+      const { client, host, property } = connection;
+      const current = await queryPageWindow(client, property, host, isoDaysAgo(31, now), isoDaysAgo(3, now));
+      const previous = await queryPageWindow(client, property, host, isoDaysAgo(59, now), isoDaysAgo(32, now));
+      return mergeGscWindows(current, previous);
+    } catch {
+      if (!strict) return [];
+      if (attempt === 2) throw new Error("gsc-unavailable");
+      await sleep(250 * 2 ** attempt);
+    }
   }
 }
 

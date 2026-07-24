@@ -125,6 +125,18 @@ const DRAFT_SCHEMA = {
   required: ["decision", "draft"],
 } as const;
 
+const RISK_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    classification: {
+      type: "string",
+      enum: ["operational", "clinical", "uncertain"],
+    },
+  },
+  required: ["classification"],
+} as const;
+
 function openaiError(status: number) {
   if (status === 401 || status === 403) return new Error("openai-auth");
   if (status === 429) return new Error("openai-rate");
@@ -288,6 +300,40 @@ export async function researchAndDraft(
     safeTarget = null;
   }
 
+  let riskClassification: "operational" | "clinical" | "uncertain" | undefined;
+  let classifierUsage = { inputTokens: 0, outputTokens: 0 };
+  if ((context.project as JsonRecord | undefined)?.risk === "ymyl-restricted") {
+    const classified = await openaiJson("/responses", {
+      ...base,
+      input: [
+        {
+          role: "system",
+          content: "Classify the draft independently. Operational means software, administration, scheduling, communication, analytics, billing, marketing, or other non-clinical business workflow only. Clinical includes any instruction, recommendation, diagnosis, treatment, preparation, recovery, patient conduct, symptom, medication, procedure, or health claim. If any part is ambiguous, return uncertain.",
+        },
+        { role: "user", content: JSON.stringify(draft) },
+      ],
+      text: {
+        format: {
+          type: "json_schema",
+          name: "editorial_risk",
+          strict: true,
+          schema: RISK_SCHEMA,
+        },
+      },
+    }, fetchImpl);
+    const classifiedText = responseText(classified);
+    try {
+      const parsed = classifiedText ? JSON.parse(classifiedText) as JsonRecord : null;
+      if (!parsed || !["operational", "clinical", "uncertain"].includes(String(parsed.classification))) {
+        throw new Error();
+      }
+      riskClassification = parsed.classification as typeof riskClassification;
+    } catch {
+      throw new Error("openai-output");
+    }
+    classifierUsage = usageOf(classified);
+  }
+
   const researchUsage = usageOf(research);
   const draftUsage = usageOf(drafted);
   return {
@@ -296,9 +342,10 @@ export async function researchAndDraft(
     overlap,
     reason: safeReason,
     draft,
+    ...(riskClassification ? { riskClassification } : {}),
     usage: {
-      inputTokens: researchUsage.inputTokens + draftUsage.inputTokens,
-      outputTokens: researchUsage.outputTokens + draftUsage.outputTokens,
+      inputTokens: researchUsage.inputTokens + draftUsage.inputTokens + classifierUsage.inputTokens,
+      outputTokens: researchUsage.outputTokens + draftUsage.outputTokens + classifierUsage.outputTokens,
       webSearchCalls: 1,
       generatedImage: false,
     },
@@ -339,6 +386,16 @@ async function unsplashJson(url: string, fetchImpl: FetchImpl) {
   }
 }
 
+function trustedHttpsUrl(value: unknown, origin: string) {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.origin === origin ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fetch) {
   const intent = imageIntent(intentValue);
   const searchUrl = new URL("https://api.unsplash.com/search/photos");
@@ -359,10 +416,12 @@ export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fet
     const downloadUrl = links?.download_location;
     const urls = match.urls as JsonRecord | undefined;
     const user = match.user as JsonRecord | undefined;
-    if (typeof downloadUrl !== "string" || typeof urls?.regular !== "string") {
+    const trustedDownload = trustedHttpsUrl(downloadUrl, "https://api.unsplash.com");
+    const trustedImage = trustedHttpsUrl(urls?.regular, "https://images.unsplash.com");
+    if (!trustedDownload || !trustedImage) {
       throw new Error("unsplash-output");
     }
-    const downloaded = await fetchImpl(downloadUrl, {
+    const downloaded = await fetchImpl(trustedDownload, {
       headers: {
         authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
         "accept-version": "v1",
@@ -370,7 +429,7 @@ export async function pickImage(intentValue: unknown, fetchImpl: FetchImpl = fet
     });
     if (!downloaded.ok) throw new Error("unsplash-output");
     return {
-      src: urls.regular,
+      src: trustedImage.href,
       alt: String(match.alt_description ?? match.description ?? intent),
       credit: `Photo by ${String(user?.name ?? "Unsplash contributor")} on Unsplash`,
     };

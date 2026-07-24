@@ -38,6 +38,7 @@ type PublishDependencies = {
   researchAndDraft?: Dependency;
   pickImage?: Dependency;
   commitFiles?: Dependency;
+  revertCommit?: Dependency;
 };
 type VerifyDependencies = {
   db?: PublicationDb;
@@ -108,6 +109,7 @@ function failure(error: unknown) {
     return { status: "blocked" as const, reason: `render:${code}` };
   }
   if ([
+    "gsc-unavailable",
     "openai-auth",
     "openai-rate",
     "openai-output",
@@ -161,6 +163,7 @@ export async function publishProject(
     researchAndDraft = createDraft,
     pickImage = selectImage,
     commitFiles = commitRepositoryFiles,
+    revertCommit = createRevertCommit,
   } = dependencies;
 
   let publication: Awaited<ReturnType<typeof beginPublication>>["publication"] | null = null;
@@ -197,7 +200,7 @@ export async function publishProject(
 
   try {
     const [gscRows, repository] = await Promise.all([
-      gscQueryPages(project.siteUrl),
+      gscQueryPages(project.siteUrl, { strict: true }),
       readRepository(project),
     ]);
     const registry = project.renderer === "typescript-post"
@@ -257,7 +260,7 @@ export async function publishProject(
     }
 
     const draft = researched?.draft ?? {};
-    const validation = validateDraft(draft, project);
+    const validation = validateDraft(draft, project, researched?.riskClassification);
     if (validation.length) {
       const reason = `draft:${validation.join(",")}`;
       if (dryRun) {
@@ -359,6 +362,24 @@ export async function publishProject(
       files.push(finalRendered.imageFile);
     }
 
+    let globallyEnabled: boolean;
+    let locallyEnabled: boolean;
+    try {
+      globallyEnabled = await db.enabled("*");
+      locallyEnabled = globallyEnabled ? await db.enabled(slug) : false;
+    } catch {
+      throw new Error("database");
+    }
+    if (!globallyEnabled || !locallyEnabled) {
+      const reason = globallyEnabled ? "project-disabled" : "global-disabled";
+      return finish(db, publication!.id, "blocked", { action: "block", reason });
+    }
+
+    await update(db, publication!.id, {
+      commitState: "prepared",
+      previousSha: repository.headSha,
+      targetPath: finalRendered.path,
+    });
     const committed = await commitFiles(
       project,
       repository.headSha,
@@ -377,7 +398,7 @@ export async function publishProject(
           credit: image.credit,
         }
       : null;
-    return finish(db, publication!.id, action === "new" ? "published" : "updated", {
+    const completed = {
       action,
       query: candidate.query ?? null,
       intent: draft.primaryKeyword,
@@ -398,7 +419,38 @@ export async function publishProject(
         image: imageMetadata,
         validation,
       },
-    });
+    };
+    try {
+      await update(db, publication!.id, {
+        commitState: "committed",
+        commitSha: committed.sha,
+        previousSha: committed.previousSha,
+      });
+      return await finish(
+        db,
+        publication!.id,
+        action === "new" ? "published" : "updated",
+        completed
+      );
+    } catch (error) {
+      if (!(error instanceof Error) || error.message !== "database") throw error;
+      let revertCommitSha: string;
+      try {
+        revertCommitSha = await revertCommit(project, committed.sha, committed.previousSha);
+      } catch (revertError) {
+        throw revertError;
+      }
+      try {
+        await finish(db, publication!.id, "failed", {
+          action: "block",
+          reason: "database-after-commit",
+          metadata: { commitState: "reverted", revertCommitSha },
+        });
+      } catch {
+        // The prepared/committed metadata remains available for recovery when the database returns.
+      }
+      throw error;
+    }
   } catch (error) {
     if (error instanceof Error && error.message === "database") throw error;
     const result = failure(error);

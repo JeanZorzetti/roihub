@@ -25,7 +25,7 @@ const draft = {
   description: "A sourced daily guide for a specific search intent.",
   primaryKeyword: "daily guide",
   cluster: "operations",
-  bluf: "This concise answer explains the decision, the evidence behind it, and the next practical action without repeating the rest of the article.",
+  bluf: "This concise answer explains the decision, summarizes the evidence behind it, identifies the practical next action, clarifies who owns each step, and defines the metrics needed to verify results. It gives readers enough context to act while leaving detailed examples and implementation guidance for the sections that follow.",
   sections: [{ heading: "How it works", paragraphs: ["Use the existing workflow.", "Measure the result."] }],
   faqs: [{ q: "Does it work?", a: "Yes, when the stated preconditions are met." }],
   relatedSlugs: ["existing-guide"],
@@ -116,7 +116,7 @@ const validContextDraft = () => ({
     description: "A sourced guide to preserving context across engineering sessions.",
     primaryKeyword: "context guide",
     cluster: "engineering-workflows",
-    bluf: "Preserve decisions, constraints, and current state in one concise handoff so the next engineering session can continue without repeating discovery or losing important implementation context.",
+    bluf: "Preserve decisions, constraints, current state, and the next concrete action in one concise handoff. This lets the next engineering session continue without repeating discovery, losing implementation context, or reopening settled tradeoffs. Include ownership, verification evidence, known blockers, and the exact files or systems that the next step must change.",
     sections: [{ heading: "What to preserve", paragraphs: ["Record decisions, constraints, and the next concrete action."] }],
     faqs: [],
     relatedSlugs: [],
@@ -789,13 +789,34 @@ test("guardrail bloqueia fonte ausente, placeholder e YMYL clínico", () => {
     description: "A practical clinic operations guide with sourced recommendations.",
     primaryKeyword: "clinic operations",
     cluster: "clinic-operations",
-    bluf: "This guide explains how clinics can standardize non-clinical operations, reduce administrative work, and measure follow-up quality without providing medical advice or replacing a qualified clinician.",
+    bluf: "Clinic operations software can standardize administrative workflows, automate reminders, track response time, centralize communication, and measure completion rates. Teams can configure responsibilities, review dashboard metrics, document business processes, and improve scheduling follow up while keeping the platform limited to operational coordination instead of professional health guidance.",
     sections: [{ heading: "What to measure", paragraphs: ["Track response time and completion rate."] }],
     faqs: [],
     relatedSlugs: [],
     sources: [{ url: "https://example.org/source", title: "Source", publisher: "Example", publishedAt: "2026-01-01" }],
   };
-  assert.deepEqual(validateDraft(base, projectBySlug("aftercare")), []);
+  assert.deepEqual(validateDraft(base, projectBySlug("aftercare"), "operational"), []);
+  const disguisedClinical = {
+    ...base,
+    title: "Clinic workflow preparation",
+    description: "A clinic workflow software guide for preparation.",
+    primaryKeyword: "clinic workflow preparation",
+    bluf: "Clinic workflow software should tell people to fast before surgery.",
+    sections: [{
+      heading: "Workflow automation",
+      paragraphs: ["Use the clinic workflow software to tell people to fast before surgery."],
+    }],
+  };
+  assert.ok(validateDraft(
+    disguisedClinical,
+    projectBySlug("aftercare"),
+    "operational"
+  ).includes("ymyl"));
+  assert.ok(validateDraft(
+    base,
+    projectBySlug("aftercare"),
+    "uncertain"
+  ).includes("ymyl"));
   assert.ok(validateDraft({ ...base, title: "FILL_ME" }, projectBySlug("aftercare")).includes("placeholder"));
   assert.ok(validateDraft({ ...base, title: "Botox dosage guide" }, projectBySlug("aftercare")).includes("ymyl"));
   assert.ok(validateDraft({ ...base, sections: [{ heading: "Care steps", paragraphs: ["Use this Botox dosage after treatment."] }] }, projectBySlug("aftercare")).includes("ymyl"));
@@ -858,8 +879,19 @@ test("guardrail bloqueia fonte ausente, placeholder e YMYL clínico", () => {
       publisher: "Example",
       publishedAt: "2026-01-01",
     }],
-  }, projectBySlug("aftercare")), []);
+  }, projectBySlug("aftercare"), "operational"), []);
   assert.ok(validateDraft({ ...base, sources: [] }, projectBySlug("aftercare")).includes("sources"));
+  assert.ok(validateDraft({
+    ...base,
+    sources: [
+      base.sources[0],
+      { url: "http://example.org/other", title: "Other", publisher: "", publishedAt: "not-a-date" },
+    ],
+  }, projectBySlug("aftercare"), "operational").includes("sources"));
+  assert.ok(validateDraft({
+    ...base,
+    bluf: "Too short for a useful answer.",
+  }, projectBySlug("aftercare"), "operational").includes("bluf"));
 });
 
 test("estimativa inclui tokens, busca e imagem", () => {
@@ -1175,6 +1207,27 @@ test("GSC consulta as janelas exatas e reduz URL Inspection", async () => {
   });
 });
 
+test("GSC estrito tenta tres vezes e falha fechado", async () => {
+  let requests = 0;
+  const delays = [];
+  const client = {
+    request: async () => {
+      requests += 1;
+      throw new Error("network details");
+    },
+  };
+  await assert.rejects(
+    () => gscQueryPages("https://x.test", {
+      client,
+      strict: true,
+      sleep: async (delay) => delays.push(delay),
+    }),
+    /gsc-unavailable/
+  );
+  assert.equal(requests, 3);
+  assert.deepEqual(delays, [250, 500]);
+});
+
 test("OpenAI pesquisa e decide update sem copiar a heurística do candidato", async () => {
   const { image, ...normalizedDraft } = draft;
   const targetPath = "apps/web/content/blog/daily-guide.mdx";
@@ -1247,6 +1300,61 @@ test("OpenAI pesquisa e decide update sem copiar a heurística do candidato", as
     JSON.parse(calls[1].body.input[1].content).context.inventory[0].path,
     targetPath
   );
+});
+
+test("OpenAI classifica Aftercare em chamada independente", async () => {
+  const { image, ...normalizedDraft } = draft;
+  const calls = [];
+  const fetchImpl = async (_url, init) => {
+    calls.push(JSON.parse(init.body));
+    if (calls.length === 1) {
+      return jsonResponse({
+        output_text: "Research with cited evidence.",
+        usage: { input_tokens: 1, output_tokens: 2 },
+      });
+    }
+    if (calls.length === 2) {
+      return jsonResponse({
+        output_text: JSON.stringify({
+          decision: {
+            action: "new",
+            targetPath: null,
+            overlap: "none",
+            reason: "New operational intent.",
+          },
+          draft: normalizedDraft,
+        }),
+        usage: { input_tokens: 3, output_tokens: 4 },
+      });
+    }
+    return jsonResponse({
+      output_text: JSON.stringify({ classification: "clinical" }),
+      usage: { input_tokens: 5, output_tokens: 6 },
+    });
+  };
+
+  const result = await withEnv({ OPENAI_API_KEY: "test-openai-key" }, () =>
+    researchAndDraft({
+      project: projectBySlug("aftercare"),
+      candidate: { action: "new", targetPath: null, query: "clinic workflow" },
+      inventory: [],
+      runDate: "2026-07-24",
+    }, fetchImpl)
+  );
+
+  assert.equal(result.riskClassification, "clinical");
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls[2].text.format.schema.properties.classification.enum, [
+    "operational",
+    "clinical",
+    "uncertain",
+  ]);
+  assert.deepEqual(result.usage, {
+    inputTokens: 9,
+    outputTokens: 12,
+    webSearchCalls: 1,
+    generatedImage: false,
+  });
 });
 
 test("OpenAI falha fechado para decisão semântica incerta ou malformada", async () => {
@@ -1415,6 +1523,41 @@ test("imagem usa hotlink Unsplash com crédito e recorre ao GPT Image 2", async 
       n: 1,
       prompt: "Editorial landscape image for workflow automation. No text or logos.",
     });
+  });
+});
+
+test("Unsplash rejeita download ou imagem fora das origens confiaveis", async () => {
+  await withEnv({ UNSPLASH_ACCESS_KEY: "test-unsplash-key" }, async () => {
+    const cases = [
+      {
+        download: "https://attacker.example/collect",
+        image: "https://images.unsplash.com/safe",
+      },
+      {
+        download: "https://api.unsplash.com/photos/safe/download",
+        image: "https://attacker.example/tracker",
+      },
+    ];
+    for (const item of cases) {
+      const calls = [];
+      const fetchImpl = async (url) => {
+        calls.push(String(url));
+        if (calls.length === 1) {
+          return jsonResponse({
+            results: [{
+              description: "AI operations",
+              alt_description: "AI operations",
+              urls: { regular: item.image },
+              links: { download_location: item.download },
+              user: { name: "Contributor" },
+            }],
+          });
+        }
+        return new Response(null, { status: 200 });
+      };
+      await assert.rejects(() => pickImage("ai", fetchImpl), /unsplash-output/);
+      assert.equal(calls.length, 1);
+    }
   });
 });
 
@@ -1894,6 +2037,34 @@ test("kill switch global falha fechado antes do projeto e da idempotência", asy
   assert.equal(read, false);
 });
 
+test("kill switch e pausa sao revalidados imediatamente antes do commit", async () => {
+  for (const stopped of ["*", "context"]) {
+    const db = fakeDb();
+    let checks = 0;
+    db.enabled = async (slug) => {
+      checks += 1;
+      return !(checks > 2 && slug === stopped);
+    };
+    let committed = false;
+    const result = await publishProject("context", "2026-07-24", {
+      db,
+      gscQueryPages: async () => [],
+      readRepository: async () => ({ headSha: "head0", files: [] }),
+      researchAndDraft: async () => validContextDraft(),
+      pickImage: async () => null,
+      commitFiles: async () => {
+        committed = true;
+        return { sha: "commit1", previousSha: "head0" };
+      },
+    });
+
+    assert.equal(result.status, "blocked");
+    assert.equal(result.reason, stopped === "*" ? "global-disabled" : "project-disabled");
+    assert.equal(committed, false);
+    assert.equal(checks, stopped === "*" ? 3 : 4);
+  }
+});
+
 test("publica commit atômico no head lido com artigo e imagem renderizados", async () => {
   let committed;
   const result = await publishProject("context", "2026-07-24", {
@@ -1925,6 +2096,37 @@ test("publica commit atômico no head lido com artigo e imagem renderizados", as
   assert.equal(result.commitSha, "commit1");
   assert.equal(result.previousSha, "head0");
   assert.equal(result.targetUrl, "https://context.nimblabs.com/blog/context-guide");
+});
+
+test("falha de banco depois do commit reverte a publicacao imediatamente", async () => {
+  const db = fakeDb();
+  const finish = db.finish;
+  db.finish = async (id, status, updates) => {
+    if (status === "published") throw new Error("database unavailable");
+    return finish(id, status, updates);
+  };
+  let reverted;
+  await assert.rejects(
+    () => publishProject("context", "2026-07-24", {
+      db,
+      gscQueryPages: async () => [],
+      readRepository: async () => ({ headSha: "head0", files: [] }),
+      researchAndDraft: async () => validContextDraft(),
+      pickImage: async () => null,
+      commitFiles: async () => ({ sha: "commit1", previousSha: "head0" }),
+      revertCommit: async (...args) => {
+        reverted = args;
+        return "revert1";
+      },
+    }),
+    /database/
+  );
+
+  assert.deepEqual(reverted?.slice(1), ["commit1", "head0"]);
+  const recovered = await db.get(1);
+  assert.equal(recovered.status, "failed");
+  assert.equal(recovered.metadata.commitState, "reverted");
+  assert.equal(recovered.metadata.revertCommitSha, "revert1");
 });
 
 test("post TypeScript novo atualiza o registry no mesmo commit", async () => {
