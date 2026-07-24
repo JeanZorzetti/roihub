@@ -16,14 +16,15 @@ export function responseText(response: unknown): string | null {
   return null;
 }
 
-export function githubTreeFiles(tree: unknown[], project: { contentPath: string }) {
+export function githubTreeFiles(tree: unknown[], project: { contentPath: string; registryPath?: string }) {
   const root = project.contentPath.replaceAll("\\", "/").replace(/^\.\/+|\/+$/g, "");
+  const registry = project.registryPath?.replaceAll("\\", "/").replace(/^\.\/+|\/+$/g, "");
   return tree.flatMap((item) => {
     const entry = item as { type?: unknown; path?: unknown; sha?: unknown };
     const path = typeof entry.path === "string" ? entry.path.replaceAll("\\", "/").replace(/^\.\/+/, "") : "";
     return entry.type === "blob"
       && typeof entry.sha === "string"
-      && (path === root || path.startsWith(`${root}/`))
+      && (path === root || path.startsWith(`${root}/`) || path === registry)
       ? [{ path, sha: entry.sha }]
       : [];
   });
@@ -34,6 +35,7 @@ type Project = {
   repository: string;
   branch: string;
   contentPath: string;
+  registryPath?: string;
   [key: string]: unknown;
 };
 

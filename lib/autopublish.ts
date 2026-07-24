@@ -9,7 +9,7 @@ import {
 // @ts-expect-error Node's direct TypeScript execution requires the .ts extension.
 } from "./autopublish-clients.ts";
 import { projectBySlug } from "./autopublish-projects.mjs";
-import { extractInventory, renderDraft } from "./autopublish-render.mjs";
+import { extractInventory, registryUpsert, renderDraft } from "./autopublish-render.mjs";
 import {
   beginPublication,
   finishPublication,
@@ -104,7 +104,7 @@ function decisionBlock(action: unknown, overlap: unknown, reason: unknown) {
 function failure(error: unknown) {
   const code = error instanceof Error ? error.message : "";
   if (code === "github-conflict") return { status: "blocked" as const, reason: code };
-  if (["github-path", "catalog-format", "renderer"].includes(code)) {
+  if (["github-path", "catalog-format", "registry-format", "renderer"].includes(code)) {
     return { status: "blocked" as const, reason: `render:${code}` };
   }
   if ([
@@ -200,6 +200,15 @@ export async function publishProject(
       gscQueryPages(project.siteUrl),
       readRepository(project),
     ]);
+    const registry = project.renderer === "typescript-post"
+      ? repository.files.find(
+        (file: { path: string }) => normalizedPath(file.path) === normalizedPath(project.registryPath)
+      )
+      : null;
+    if (project.renderer === "typescript-post"
+      && (typeof project.registryPath !== "string" || typeof registry?.content !== "string")) {
+      throw new Error("registry-format");
+    }
     const inventory = extractInventory(repository.files, project);
     const candidate = rankCandidates(gscRows, inventory)[0] ?? {
       action: "new",
@@ -305,6 +314,9 @@ export async function publishProject(
 
     const rendered = renderDraft(draft, project, existingTarget?.content ?? null);
     const renderedPath = normalizedPath(rendered.path);
+    const registryContent = project.renderer === "typescript-post"
+      ? registryUpsert(registry.content, draftSlug)
+      : null;
     const pathDuplicate = action === "new" && project.renderer !== "typescript-catalog"
       && repository.files.some((file: { path: string }) => normalizedPath(file.path) === renderedPath);
     const unsafeRender = !safeContentPath(renderedPath, project.contentPath)
@@ -331,6 +343,12 @@ export async function publishProject(
     const files: { path: string; content?: string; base64?: string }[] = [
       { path: finalRendered.path, content: finalRendered.content },
     ];
+    if (registry
+      && typeof project.registryPath === "string"
+      && typeof registryContent === "string"
+      && registryContent !== registry.content) {
+      files.push({ path: project.registryPath, content: registryContent });
+    }
     if (finalRendered.imageFile) {
       if (!safeContentPath(finalRendered.imageFile.path, project.imagePath)) {
         return finish(db, publication!.id, "blocked", {

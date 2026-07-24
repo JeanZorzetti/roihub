@@ -1045,14 +1045,19 @@ test("researchAndDraft converte Responses malformada em openai-output sanitizado
   });
 });
 
-test("GitHub tree aceita apenas blobs do contentPath", () => {
+test("GitHub tree aceita apenas blobs do contentPath e registry configurado", () => {
   const tree = [
-    { type: "blob", path: "content/blog/a.mdx", sha: "1" },
-    { type: "tree", path: "content/blog/nested", sha: "2" },
-    { type: "blob", path: ".env", sha: "3" },
+    { type: "blob", path: "lib/blog/posts/a.ts", sha: "1" },
+    { type: "blob", path: "lib/blog/index.ts", sha: "2" },
+    { type: "tree", path: "lib/blog/posts/nested", sha: "3" },
+    { type: "blob", path: ".env", sha: "4" },
   ];
-  assert.deepEqual(githubTreeFiles(tree, projectBySlug("aftercare")), [
-    { path: "content/blog/a.mdx", sha: "1" },
+  assert.deepEqual(githubTreeFiles(tree, {
+    contentPath: "lib/blog/posts",
+    registryPath: "lib/blog/index.ts",
+  }), [
+    { path: "lib/blog/posts/a.ts", sha: "1" },
+    { path: "lib/blog/index.ts", sha: "2" },
   ]);
 });
 
@@ -1902,6 +1907,151 @@ test("publica commit atômico no head lido com artigo e imagem renderizados", as
   assert.equal(result.commitSha, "commit1");
   assert.equal(result.previousSha, "head0");
   assert.equal(result.targetUrl, "https://context.nimblabs.com/blog/context-guide");
+});
+
+test("post TypeScript novo atualiza o registry no mesmo commit", async () => {
+  const cases = [
+    {
+      slug: "sirius",
+      contentPath: "lib/blog/posts",
+      registryPath: "lib/blog/index.ts",
+      registry: `import { BlogPost } from '../blog-types'
+import { post as existingPost } from './posts/existing-guide'
+
+export const blogPosts: BlogPost[] = [
+  existingPost,
+]
+`,
+    },
+    {
+      slug: "fabrica",
+      contentPath: "src/lib/blog/posts",
+      registryPath: "src/lib/blog/index.ts",
+      registry: `import { BlogPost } from "./types";
+
+import { post as existingPost } from "./posts/existing-guide";
+
+export const blogPosts: BlogPost[] = [
+  existingPost,
+];
+`,
+    },
+    {
+      slug: "estetiacrm",
+      contentPath: "lib/blog/posts",
+      registryPath: "lib/blog/index.ts",
+      registry: `import { BlogPost } from '../blog-types'
+
+import { post as existingPost } from './posts/existing-guide'
+
+export const blogPosts: BlogPost[] = [
+  existingPost,
+]
+`,
+    },
+  ];
+
+  for (const item of cases) {
+    let committed;
+    const result = await publishProject(item.slug, "2026-07-24", {
+      db: fakeDb(),
+      gscQueryPages: async () => [],
+      readRepository: async () => ({
+        headSha: "head0",
+        files: [{ path: item.registryPath, content: item.registry }],
+      }),
+      researchAndDraft: async () => validContextDraft(),
+      pickImage: async () => null,
+      commitFiles: async (...args) => {
+        committed = args;
+        return { sha: "commit1", previousSha: "head0" };
+      },
+    });
+
+    assert.equal(result.status, "published", item.slug);
+    assert.deepEqual(committed[2].map(({ path }) => path), [
+      `${item.contentPath}/context-guide.ts`,
+      item.registryPath,
+    ]);
+    assert.match(
+      committed[2][1].content,
+      /import \{ post as autoContextGuidePost \} from ["']\.\/posts\/context-guide["'];?/
+    );
+    assert.equal(
+      (committed[2][1].content.match(/\bautoContextGuidePost\b/g) ?? []).length,
+      2
+    );
+  }
+});
+
+test("post TypeScript bloqueia registry ausente antes de pesquisa, imagem ou commit", async () => {
+  const calls = { researched: 0, picked: 0, committed: 0 };
+  const result = await publishProject("sirius", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({ headSha: "head0", files: [] }),
+    researchAndDraft: async () => {
+      calls.researched += 1;
+      return validContextDraft();
+    },
+    pickImage: async () => {
+      calls.picked += 1;
+      return null;
+    },
+    commitFiles: async () => {
+      calls.committed += 1;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "render:registry-format");
+  assert.deepEqual(calls, { researched: 0, picked: 0, committed: 0 });
+});
+
+test("update TypeScript ja registrado nao duplica nem reescreve o registry", async () => {
+  const targetPath = "lib/blog/posts/context-guide.ts";
+  const registry = `import { BlogPost } from '../blog-types'
+import { post as manualAlias } from './posts/context-guide'
+
+export const blogPosts: BlogPost[] = [
+  manualAlias,
+]
+`;
+  let committed;
+  const result = await publishProject("sirius", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [
+        {
+          path: targetPath,
+          content: `export const post = {
+  slug: "context-guide",
+  title: "Context Guide",
+  primaryKeyword: "context guide",
+}`,
+        },
+        { path: "lib/blog/index.ts", content: registry },
+      ],
+    }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "update",
+      targetPath,
+      overlap: "same",
+      reason: "The target covers the same intent.",
+    }),
+    pickImage: async () => null,
+    commitFiles: async (...args) => {
+      committed = args;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "updated");
+  assert.deepEqual(committed[2].map(({ path }) => path), [targetPath]);
 });
 
 test("update válido exclui apenas o próprio alvo e preserva slug, path e URL", async () => {
