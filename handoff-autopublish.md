@@ -67,7 +67,7 @@ Produção depois mostrou dispersão bem maior — ver a tabela do dry-run abaix
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | já existe em produção (GSC conectado) |
 | `CRON_SECRET` | **colar** o valor que já gravei no GitHub Actions como `HUB_CRON_SECRET` |
 | `CLAUDE_CODE_OAUTH_TOKENS` | uma ou mais contas separadas por vírgula (`claude setup-token`) |
-| `GITHUB_TOKEN` | criar fine-grained token, **Contents: read and write**, só nos 9 repos listados no README |
+| `GITHUB_TOKEN` | criar fine-grained token, **Contents: read and write**, só nos repos listados no README |
 | `UNSPLASH_ACCESS_KEY` | criar app em unsplash.com/developers (free) |
 
 Faltando qualquer uma, a rota responde `503 missing-env` com **só os nomes**.
@@ -85,8 +85,9 @@ publicação fecha — sem erro no código.
 
 1. `workflow_dispatch` com `dry_run=true` → esperado: 10 resumos transitórios, **zero** linha em
    `seo_publications`, zero escrita no GitHub.
-2. Kill switch global segue **desligado**. Habilitar só os 4 canários em `/seo`, um por renderizador:
-   `goiania` (Astro) · `sirius` (TypeScript post) · `context` (MDX) · `nimblabs` (TypeScript catalog).
+2. Kill switch global segue **desligado**. Habilitar só os canários em `/seo`, um por renderizador:
+   `goiania` (Astro) · `tapepro` (Astro content pt-BR) · `sirius` (TypeScript post) · `context` (MDX) ·
+   `roilabs` (Markdown).
 3. Ligar o global temporariamente, `dry_run=false`, desligar ao terminar.
 4. Para cada canário validar: build, HTTP 200, canonical, schema, sitemap, atribuição da imagem.
 5. Só depois habilitar os 10 e deixar o global ligado para o cron diário (08:00 BRT).
