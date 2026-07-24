@@ -3,7 +3,7 @@ import {
   verifyPublication as verify,
 // @ts-expect-error Node's direct TypeScript execution requires the .ts extension.
 } from "../../../../lib/autopublish.ts";
-import { authorized } from "../../../../lib/autopublish-core.mjs";
+import { authorized, missingEnv } from "../../../../lib/autopublish-core.mjs";
 import { projectBySlug } from "../../../../lib/autopublish-projects.mjs";
 
 type Body =
@@ -15,15 +15,6 @@ type Dependencies = {
   publishProject: typeof publish;
   verifyPublication: typeof verify;
 };
-
-const REQUIRED_ENV = [
-  "CRON_SECRET",
-  "DATABASE_URL",
-  "GITHUB_TOKEN",
-  "GOOGLE_SERVICE_ACCOUNT_JSON",
-  "OPENAI_API_KEY",
-  "UNSPLASH_ACCESS_KEY",
-] as const;
 
 const jsonError = (error: string, status: number, fields?: string[]) =>
   Response.json({ error, ...(fields ? { fields } : {}) }, { status });
@@ -75,7 +66,7 @@ export async function handleAutopublish(
   }
   if (!validBody(body)) return jsonError("invalid-request", 400);
 
-  const missing = REQUIRED_ENV.filter((name) => !env[name]?.trim());
+  const missing = missingEnv(env);
   if (missing.length) return jsonError("missing-env", 503, missing);
 
   try {

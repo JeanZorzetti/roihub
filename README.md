@@ -29,10 +29,77 @@ npm run dev     # http://localhost:3000
 npm test
 ```
 
-As credenciais do GSC e a `DATABASE_URL` do Postgres da agenda são fornecidas por
-variáveis de ambiente (ver `middleware.ts` e `lib/`).
+As variáveis locais estão em [`.env.example`](.env.example). Não salve valores reais
+nesse arquivo.
 
 ## Dados
 
 - [`data/projects.json`](data/projects.json) — projetos e cards da agenda
 - [`data/insights.json`](data/insights.json) — saída da camada de ML
+
+## Autopublishing: operação
+
+### Contrato de ambiente
+
+O deploy do hub exige `CRON_SECRET`, `DATABASE_URL`, `GITHUB_TOKEN`,
+`GOOGLE_SERVICE_ACCOUNT_JSON`, `OPENAI_API_KEY` e `UNSPLASH_ACCESS_KEY`.
+Ausência, valor vazio ou somente espaços interrompe a rota com `503`; a resposta
+contém apenas os nomes ausentes.
+
+`CRON_SECRET` fica no ambiente do hub e protege `/api/seo/autopublish`.
+`HUB_CRON_SECRET` fica nos secrets do GitHub Actions e deve conter o mesmo segredo
+para chamar essa rota. Configure também `HUB_URL` no GitHub Actions. Nunca registre
+os valores desses três campos.
+
+Crie um GitHub fine-grained token com acesso somente a **Contents: read and write**
+nos dez alvos abaixo (nove repositórios únicos, pois dois alvos compartilham o
+monorepo):
+
+- `goiania` — `JeanZorzetti/roilabs`
+- `sirius` — `JeanZorzetti/sirius`
+- `fabrica` — `JeanZorzetti/estetia-demo`
+- `roilabs` — `JeanZorzetti/roilabs`
+- `polarisia` — `JeanZorzetti/sofia-ia`
+- `estetiacrm` — `JeanZorzetti/estetia`
+- `reviewshield` — `JeanZorzetti/review-dispute`
+- `context` — `JeanZorzetti/context-keeper`
+- `aftercare` — `JeanZorzetti/aftercare-nimblabs`
+- `nimblabs` — `JeanZorzetti/nimblabs`
+
+O uso de GPT Image pode exigir verificação da organização OpenAI. Para imagens do
+Unsplash, mantenha a URL retornada para hotlink, exiba a atribuição do fotógrafo e
+do Unsplash e acione o endpoint de download informado pela API quando a imagem for
+usada; não copie o arquivo para o repositório.
+
+### Gates e dry-run
+
+O kill switch global (`*`) permanece **desligado por padrão**. O cron agendado não
+publica enquanto ele estiver desligado.
+
+O dry-run executa pesquisa e geração editorial — portanto pode gerar custo de
+OpenAI — mas é transitório: não cria nem reutiliza linha no banco e não escreve
+imagem ou commit no GitHub.
+
+```powershell
+$env:HUB_URL='https://hub.roilabs.com.br'
+$env:HUB_CRON_SECRET='local-secret'
+$env:DRY_RUN='true'
+node scripts/run-autopublish.mjs
+```
+
+Antes do rollout, confirme que os seis campos do hub e os secrets `HUB_URL` e
+`HUB_CRON_SECRET` existem. Execute primeiro um `workflow_dispatch` com
+`dry_run=true` e confirme dez resumos transitórios, sem linha em
+`seo_publications`, imagem ou escrita GitHub.
+
+Somente depois, mantenha o global desligado e habilite estes canários, nesta ordem:
+
+1. `goiania` — Astro
+2. `sirius` — TypeScript post
+3. `context` — MDX
+4. `nimblabs` — TypeScript catalog
+
+Habilite o global temporariamente, rode `dry_run=false` e desligue-o ao terminar os
+quatro. Para cada canário, valide build, HTTP 200, canonical, schema, sitemap e
+atribuição da imagem. Só após os quatro passarem habilite os demais projetos e
+deixe o global ligado para o cron diário.

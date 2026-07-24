@@ -96,7 +96,8 @@ export async function runAutopublish({
 } = {}) {
   const hubUrl = typeof env.HUB_URL === "string" ? env.HUB_URL.trim() : "";
   const secret = typeof env.HUB_CRON_SECRET === "string" ? env.HUB_CRON_SECRET.trim() : "";
-  if (!hubUrl || !secret) return 1;
+  const dryRunValue = typeof env.DRY_RUN === "string" ? env.DRY_RUN.trim().toLowerCase() : "";
+  if (!hubUrl || !secret || !["true", "false"].includes(dryRunValue)) return 1;
 
   let endpoint;
   try {
@@ -105,7 +106,7 @@ export async function runAutopublish({
     return 1;
   }
 
-  const dryRun = String(env.DRY_RUN).toLowerCase() === "true";
+  const dryRun = dryRunValue === "true";
   const runDate = runDateInSaoPaulo(now);
   const published = [];
   for (const project of PROJECT_SLUGS) {

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { PROJECTS, projectBySlug } from "../lib/autopublish-projects.mjs";
-import { authorized, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
+import { authorized, missingEnv, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
 import { extractInventory, renderDraft, catalogUpsert } from "../lib/autopublish-render.mjs";
 import { gscQueryPages, inspectUrl, mergeGscWindows } from "../lib/gsc.ts";
 import {
@@ -157,6 +157,20 @@ test("cron auth falha fechado", () => {
   assert.equal(authorized("Bearer secret ", "secret"), false);
   assert.equal(authorized(`Bearer ${"x".repeat(500)}`, "secret"), false);
   assert.equal(authorized(`Bearer ${"x".repeat(500)}`, "x".repeat(500)), false);
+});
+
+test("produção lista somente nomes das envs ausentes em ordem estável", () => {
+  assert.deepEqual(
+    missingEnv({
+      CRON_SECRET: " \t",
+      DATABASE_URL: "x",
+      GITHUB_TOKEN: 7,
+      GOOGLE_SERVICE_ACCOUNT_JSON: "x",
+      OPENAI_API_KEY: "",
+      UNSPLASH_ACCESS_KEY: undefined,
+    }),
+    ["CRON_SECRET", "GITHUB_TOKEN", "OPENAI_API_KEY", "UNSPLASH_ACCESS_KEY"]
+  );
 });
 
 test("cron auth compara no fallback Edge sem node:crypto ou Buffer", () => {
@@ -430,6 +444,39 @@ test("handler HTTP retorna 503 para env ausente e banco indisponível", async ()
   assert.deepEqual(await database.json(), { error: "database-unavailable" });
 });
 
+test("handler HTTP expõe só nomes de envs ausentes, nunca valores", async () => {
+  const { handleAutopublish } = await import("../app/api/seo/autopublish/handler.ts");
+  const response = await handleAutopublish(new Request("http://localhost/api/seo/autopublish", {
+    method: "POST",
+    headers: { authorization: "Bearer route-secret" },
+    body: JSON.stringify({
+      phase: "publish",
+      project: "context",
+      runDate: "2026-07-24",
+    }),
+  }), {
+    env: {
+      CRON_SECRET: "route-secret",
+      DATABASE_URL: "postgres://must-not-leak",
+      GITHUB_TOKEN: " ",
+      GOOGLE_SERVICE_ACCOUNT_JSON: "{}",
+      OPENAI_API_KEY: "",
+      UNSPLASH_ACCESS_KEY: "unsplash-must-not-leak",
+    },
+    publishProject: async () => {
+      throw new Error("unexpected-publish");
+    },
+    verifyPublication: async () => {
+      throw new Error("unexpected-verify");
+    },
+  });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: "missing-env",
+    fields: ["GITHUB_TOKEN", "OPENAI_API_KEY"],
+  });
+});
+
 test("middleware isola Bearer do cron sem enfraquecer Basic Auth", async () => {
   const [{ middleware }, { NextRequest }] = await Promise.all([
     import("../middleware.ts"),
@@ -513,6 +560,32 @@ test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
   assert.equal(typeof runner.runAutopublish, "function");
   assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T02:59:59.000Z")), "2026-07-23");
   assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T03:00:00.000Z")), "2026-07-24");
+});
+
+test("runner rejeita configuração ausente ou DRY_RUN inválido sem chamar nem registrar", async () => {
+  const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
+  for (const env of [
+    { HUB_URL: " ", HUB_CRON_SECRET: "secret", DRY_RUN: "true" },
+    { HUB_URL: "https://hub.example", HUB_CRON_SECRET: "\t", DRY_RUN: "true" },
+    { HUB_URL: "https://hub.example", HUB_CRON_SECRET: "secret", DRY_RUN: "yes" },
+    { HUB_URL: "https://hub.example", HUB_CRON_SECRET: "secret" },
+  ]) {
+    let called = false;
+    let logged = false;
+    const exitCode = await runAutopublish({
+      env,
+      fetchImpl: async () => {
+        called = true;
+        throw new Error("unexpected-fetch");
+      },
+      log: () => {
+        logged = true;
+      },
+    });
+    assert.equal(exitCode, 1);
+    assert.equal(called, false);
+    assert.equal(logged, false);
+  }
 });
 
 test("runner dry-run publica dez resumos sem verificar nem esperar", async () => {
