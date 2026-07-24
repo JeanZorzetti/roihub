@@ -48,6 +48,16 @@ async function withEnv(values, operation) {
   }
 }
 
+const githubTransport = (project, handler) => async (url, init = {}) => {
+  const parsed = new URL(url);
+  const repositoryPath = `/repos/${project.repository}`;
+  assert.equal(parsed.origin, "https://api.github.com");
+  assert.ok(parsed.pathname.startsWith(`${repositoryPath}/`), `unexpected repository URL: ${parsed.pathname}`);
+  assert.equal(init.headers.authorization, "Bearer test-github-token");
+  const route = `${init.method ?? "GET"} ${parsed.pathname.slice(repositoryPath.length)}${parsed.search}`;
+  return handler(route, init);
+};
+
 test("configura exatamente os dez projetos e remotes", () => {
   assert.equal(PROJECTS.length, 10);
   assert.equal(projectBySlug("goiania").repository, "JeanZorzetti/roilabs");
@@ -208,11 +218,11 @@ test("Aftercare usa apenas a autoria configurada como credencial", () => {
 
 test("mergeGscWindows une query+page e preserva janela ausente", () => {
   const current = [
-    { keys: ["crm", "https://x.test/blog/crm"], clicks: 2, impressions: 20, position: 8 },
+    { keys: ["crm", "https://x.test/blog/crm"], clicks: 2, impressions: 20, position: 8, ctr: 0.1 },
     { keys: ["pipeline", "https://x.test/blog/pipeline"], clicks: 3, impressions: 30, position: 7 },
   ];
   const previous = [
-    { keys: ["crm", "https://x.test/blog/crm"], clicks: 1, impressions: 10, position: 12 },
+    { keys: ["crm", "https://x.test/blog/crm"], clicks: 1, impressions: 10, position: 12, extra: "ignored" },
   ];
   assert.deepEqual(mergeGscWindows(current, previous), [
     {
@@ -249,6 +259,32 @@ test("responseText lê o formato aninhado atual de Responses", () => {
     }],
   };
   assert.equal(responseText(response), "{\"title\":\"CRM\"}");
+});
+
+test("responseText ignora itens e contents malformados", () => {
+  assert.equal(responseText({
+    output: [
+      null,
+      7,
+      { content: null },
+      { content: [null, "invalid", { type: "output_text", text: "safe" }] },
+    ],
+  }), "safe");
+  assert.equal(responseText({ output: [null, { content: [null, 1] }] }), null);
+});
+
+test("researchAndDraft converte Responses malformada em openai-output sanitizado", async () => {
+  await withEnv({ OPENAI_API_KEY: "test-openai-key" }, async () => {
+    await assert.rejects(
+      () => researchAndDraft({}, async () => jsonResponse({
+        body: "secret response body",
+        output: [null, { content: null }, { content: [null, 1] }],
+      })),
+      (error) => error instanceof Error
+        && error.message === "openai-output"
+        && !error.message.includes("secret response body")
+    );
+  });
 });
 
 test("GitHub tree aceita apenas blobs do contentPath", () => {
@@ -494,7 +530,35 @@ test("imagem usa hotlink Unsplash com crédito e recorre ao GPT Image 2", async 
   });
 });
 
-test("GitHub lê, commita, reverte por novo commit e consulta deployment", async () => {
+test("GitHub lê somente blobs do contentPath pelas URLs codificadas", async () => {
+  const project = { ...projectBySlug("aftercare"), branch: "release/v1" };
+  await withEnv({ GITHUB_TOKEN: "test-github-token" }, async () => {
+    const fetchImpl = githubTransport(project, (route) => {
+      if (route === "GET /git/ref/heads/release%2Fv1") {
+        return jsonResponse({ object: { sha: "head0" } });
+      }
+      if (route === "GET /git/trees/head0?recursive=1") {
+        return jsonResponse({
+          tree: [
+            { type: "blob", path: "content/blog/a.mdx", sha: "blob0" },
+            { type: "blob", path: ".env", sha: "secret0" },
+          ],
+        });
+      }
+      if (route === "GET /git/blobs/blob0") {
+        return jsonResponse({ content: Buffer.from("old").toString("base64"), encoding: "base64" });
+      }
+      assert.fail(`unexpected GitHub route: ${route}`);
+    });
+
+    assert.deepEqual(await readRepository(project, fetchImpl), {
+      headSha: "head0",
+      files: [{ path: "content/blog/a.mdx", sha: "blob0", content: "old" }],
+    });
+  });
+});
+
+test("GitHub valida blobs texto/base64, árvore, commit e ref sem force", async () => {
   const project = { ...projectBySlug("aftercare"), branch: "release/v1" };
   await withEnv({ GITHUB_TOKEN: "test-github-token" }, async () => {
     let invalidPathCalls = 0;
@@ -507,88 +571,120 @@ test("GitHub lê, commita, reverte por novo commit e consulta deployment", async
     );
     assert.equal(invalidPathCalls, 0);
 
-    const readCalls = [];
-    const readReplies = [
-      { object: { sha: "head0" } },
-      {
-        tree: [
-          { type: "blob", path: "content/blog/a.mdx", sha: "blob0" },
-          { type: "blob", path: ".env", sha: "secret0" },
-        ],
-      },
-      { content: Buffer.from("old").toString("base64"), encoding: "base64" },
-    ];
-    const repository = await readRepository(project, async (url, init = {}) => {
-      readCalls.push({ url: String(url), init });
-      return jsonResponse(readReplies.shift());
+    const blobBodies = [];
+    const fetchImpl = githubTransport(project, (route, init) => {
+      const body = init.body ? JSON.parse(init.body) : null;
+      if (route === "POST /git/blobs") {
+        blobBodies.push(body);
+        return jsonResponse({ sha: `blob${blobBodies.length}` });
+      }
+      if (route === "POST /git/trees") {
+        assert.deepEqual(body, {
+          base_tree: "head0",
+          tree: [
+            { path: "content/blog/a.mdx", mode: "100644", type: "blob", sha: "blob1" },
+            { path: "public/blog/a.webp", mode: "100644", type: "blob", sha: "blob2" },
+          ],
+        });
+        return jsonResponse({ sha: "tree1" });
+      }
+      if (route === "POST /git/commits") {
+        assert.deepEqual(body, { message: "Publish guide", tree: "tree1", parents: ["head0"] });
+        return jsonResponse({ sha: "commit1" });
+      }
+      if (route === "GET /git/ref/heads/release%2Fv1") {
+        assert.equal(body, null);
+        return jsonResponse({ object: { sha: "head0" } });
+      }
+      if (route === "PATCH /git/refs/heads/release%2Fv1") {
+        assert.deepEqual(body, { sha: "commit1", force: false });
+        return jsonResponse({ object: { sha: "commit1" } });
+      }
+      assert.fail(`unexpected GitHub route: ${route}`);
     });
-    assert.deepEqual(repository, {
-      headSha: "head0",
-      files: [{ path: "content/blog/a.mdx", sha: "blob0", content: "old" }],
+
+    assert.deepEqual(await commitFiles(project, "head0", [
+      { path: "content/blog/a.mdx", content: "new" },
+      { path: "public/blog/a.webp", base64: "d2VicA==" },
+    ], "Publish guide", fetchImpl), { sha: "commit1", previousSha: "head0" });
+    assert.deepEqual(blobBodies, [
+      { content: "new", encoding: "utf-8" },
+      { content: "d2VicA==", encoding: "base64" },
+    ]);
+  });
+});
+
+test("GitHub preserva conflito do ref GET e do PATCH concorrente sem vazar body", async () => {
+  const project = { ...projectBySlug("aftercare"), branch: "release/v1" };
+  await withEnv({ GITHUB_TOKEN: "test-github-token" }, async () => {
+    const commitRoute = (patchStatus, refSha = "head0") => githubTransport(project, (route, init) => {
+      const body = init.body ? JSON.parse(init.body) : null;
+      if (route === "POST /git/blobs") return jsonResponse({ sha: "blob1" });
+      if (route === "POST /git/trees") {
+        assert.equal(body.base_tree, "head0");
+        return jsonResponse({ sha: "tree1" });
+      }
+      if (route === "POST /git/commits") {
+        assert.deepEqual(body.parents, ["head0"]);
+        return jsonResponse({ sha: "commit1" });
+      }
+      if (route === "GET /git/ref/heads/release%2Fv1") {
+        return jsonResponse({ object: { sha: refSha } });
+      }
+      if (route === "PATCH /git/refs/heads/release%2Fv1") {
+        assert.deepEqual(body, { sha: "commit1", force: false });
+        return new Response("secret concurrent body", { status: patchStatus });
+      }
+      assert.fail(`unexpected GitHub route: ${route}`);
     });
-    assert.match(readCalls[0].url, /git\/ref\/heads\/release%2Fv1$/);
 
-    const commitCalls = [];
-    const commitReplies = [
-      { sha: "blob1" },
-      { sha: "tree1" },
-      { sha: "commit1" },
-      { object: { sha: "head0" } },
-      { object: { sha: "commit1" } },
-    ];
-    assert.deepEqual(
-      await commitFiles(project, "head0", [{ path: "content/blog/a.mdx", content: "new" }], "Publish guide", async (url, init = {}) => {
-        commitCalls.push({ url: String(url), init });
-        return jsonResponse(commitReplies.shift());
-      }),
-      { sha: "commit1", previousSha: "head0" }
-    );
-    assert.deepEqual(JSON.parse(commitCalls.at(-1).init.body), { sha: "commit1", force: false });
-    assert.equal(commitCalls.at(-2).init.method, "GET");
-    assert.equal(commitCalls.at(-1).init.method, "PATCH");
-
-    const conflictReplies = [
-      { sha: "blob2" },
-      { sha: "tree2" },
-      { sha: "commit2" },
-      { object: { sha: "other-head" } },
-    ];
-    let conflictCalls = 0;
     await assert.rejects(
-      () => commitFiles(project, "head0", [{ path: "content/blog/b.mdx", content: "new" }], "Publish guide", async () => {
-        conflictCalls += 1;
-        return jsonResponse(conflictReplies.shift());
-      }),
-      /github-conflict/
+      () => commitFiles(project, "head0", [{ path: "content/blog/a.mdx", content: "new" }], "Publish", commitRoute(200, "other-head")),
+      (error) => error instanceof Error && error.message === "github-conflict"
     );
-    assert.equal(conflictCalls, 4);
+    for (const status of [409, 422]) {
+      await assert.rejects(
+        () => commitFiles(project, "head0", [{ path: "content/blog/a.mdx", content: "new" }], "Publish", commitRoute(status)),
+        (error) => error instanceof Error
+          && error.message === "github-conflict"
+          && !error.message.includes("secret concurrent body")
+      );
+    }
+  });
+});
 
-    const revertCalls = [];
-    const revertReplies = [
-      { sha: "revert-tree" },
-      { sha: "revert-commit" },
-      { object: { sha: "commit1" } },
-      { object: { sha: "revert-commit" } },
-    ];
-    assert.equal(
-      await revertCommit(project, "commit1", "head0", async (url, init = {}) => {
-        revertCalls.push({ url: String(url), init });
-        return jsonResponse(revertReplies.shift());
-      }),
-      "revert-commit"
-    );
-    assert.deepEqual(JSON.parse(revertCalls[0].init.body), { base_tree: "head0", tree: [] });
-    assert.deepEqual(JSON.parse(revertCalls[1].init.body), {
-      message: "Revert automated publication",
-      tree: "revert-tree",
-      parents: ["commit1"],
+test("GitHub reverte por novo commit e consulta deployment", async () => {
+  const project = { ...projectBySlug("aftercare"), branch: "release/v1" };
+  await withEnv({ GITHUB_TOKEN: "test-github-token" }, async () => {
+    const fetchImpl = githubTransport(project, (route, init) => {
+      const body = init.body ? JSON.parse(init.body) : null;
+      if (route === "POST /git/trees") {
+        assert.deepEqual(body, { base_tree: "head0", tree: [] });
+        return jsonResponse({ sha: "revert-tree" });
+      }
+      if (route === "POST /git/commits") {
+        assert.deepEqual(body, {
+          message: "Revert automated publication",
+          tree: "revert-tree",
+          parents: ["commit1"],
+        });
+        return jsonResponse({ sha: "revert-commit" });
+      }
+      if (route === "GET /git/ref/heads/release%2Fv1") {
+        return jsonResponse({ object: { sha: "commit1" } });
+      }
+      if (route === "PATCH /git/refs/heads/release%2Fv1") {
+        assert.deepEqual(body, { sha: "revert-commit", force: false });
+        return jsonResponse({ object: { sha: "revert-commit" } });
+      }
+      if (route === "GET /commits/revert-commit/status") {
+        return jsonResponse({ state: "success" });
+      }
+      assert.fail(`unexpected GitHub route: ${route}`);
     });
-    assert.deepEqual(JSON.parse(revertCalls.at(-1).init.body), { sha: "revert-commit", force: false });
 
-    assert.equal(
-      await deploymentState(project, "revert-commit", async () => jsonResponse({ state: "success" })),
-      "success"
-    );
+    assert.equal(await revertCommit(project, "commit1", "head0", fetchImpl), "revert-commit");
+    assert.equal(await deploymentState(project, "revert-commit", fetchImpl), "success");
   });
 });
 

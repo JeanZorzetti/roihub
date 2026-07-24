@@ -4,8 +4,12 @@ export function responseText(response: unknown): string | null {
   const value = response as JsonRecord | null;
   if (typeof value?.output_text === "string") return value.output_text;
   if (!Array.isArray(value?.output)) return null;
-  for (const item of value.output as JsonRecord[]) {
-    for (const content of Array.isArray(item.content) ? item.content as JsonRecord[] : [item]) {
+  for (const rawItem of value.output) {
+    if (!rawItem || typeof rawItem !== "object") continue;
+    const item = rawItem as JsonRecord;
+    for (const rawContent of Array.isArray(item.content) ? item.content : [item]) {
+      if (!rawContent || typeof rawContent !== "object") continue;
+      const content = rawContent as JsonRecord;
       if (content.type === "output_text" && typeof content.text === "string") return content.text;
     }
   }
@@ -327,6 +331,9 @@ async function githubJson(
     },
   });
   if (!response.ok) {
+    if (init.method === "PATCH" && path.startsWith("/git/refs/heads/") && [409, 422].includes(response.status)) {
+      throw new Error("github-conflict");
+    }
     if (response.status === 401 || response.status === 403) throw new Error("github-auth");
     if (response.status === 429) throw new Error("github-rate");
     throw new Error("github-output");

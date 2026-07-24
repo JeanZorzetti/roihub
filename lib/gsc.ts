@@ -11,16 +11,16 @@ type GscPageRow = {
   impressions: number;
   position: number;
 };
-type GscPageMetrics = Omit<GscPageRow, "keys">;
+type GscPageMetrics = { clicks: number; impressions: number; position: number };
 
 export function mergeGscWindows(current: GscPageRow[], previous: GscPageRow[]) {
   const keyed = new Map<string, { query: string; page: string; current: GscPageMetrics | null; previous: GscPageMetrics | null }>();
   for (const [window, rows] of [["current", current], ["previous", previous]] as const) {
-    for (const { keys: [query, page], ...metrics } of rows) {
+    for (const { keys: [query, page], clicks, impressions, position } of rows) {
       if (!query || !page) continue;
       const key = `${query}\0${page}`;
       const entry = keyed.get(key) ?? { query, page, current: null, previous: null };
-      entry[window] = metrics;
+      entry[window] = { clicks, impressions, position };
       keyed.set(key, entry);
     }
   }
