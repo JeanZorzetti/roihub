@@ -1,6 +1,6 @@
 # Handoff — SEO Autopublishing (1 artigo/dia × 10 projetos)
 
-Última atualização: 2026-07-24. Código **completo, verde e no `main`**. Rollout **bloqueado por secrets**.
+Última atualização: 2026-07-24. Código **completo, verde e no `main`**. Secrets configurados, hub no ar, **dry-run dos 10 executado**. Falta o gate dos canários.
 
 ## Estado
 
@@ -10,7 +10,7 @@
 | Ledger | `.superpowers/sdd/2026-07-24-seo-autopublishing/progress.md` |
 | Último commit | ver `git log` |
 | Verificação local | `npm test` 106/106 · `npx tsc --noEmit` 0 · `npm run build` 0 · `git diff --check` limpo |
-| No ar? | **Não.** Nenhum artigo foi publicado, nenhum `workflow_dispatch` rodou, nenhum commit foi escrito em repo de projeto. |
+| Publicou? | **Não.** Nenhum artigo publicado e nenhum commit escrito em repo de projeto. O `workflow_dispatch` rodou só em `dry_run=true`. |
 
 ## O que mudou depois do Codex
 
@@ -29,7 +29,7 @@ mais duas mudanças de escopo:
 ## Motor editorial: claude-cli
 
 O hub instala `@anthropic-ai/claude-code` na própria imagem (ver `Dockerfile`) e autentica por
-`CLAUDE_CODE_OAUTH_TOKEN`, gerado com `claude setup-token`. Custo marginal por artigo: **zero** — o
+`CLAUDE_CODE_OAUTH_TOKENS` (uma ou mais contas por vírgula), gerado com `claude setup-token`. Custo marginal por artigo: **zero** — o
 limite é o rate limit da assinatura.
 
 - Pesquisa e decisão viraram **uma chamada só** com `--allowedTools WebSearch`; duas não cabiam no tempo.
@@ -53,7 +53,8 @@ sources 2 URLs reais e verificáveis
 validateDraft -> []   (passou todos os guardrails)
 ```
 
-Daí `maxDuration = 600` na rota e timeout de spawn de 240s (`CLAUDE_TIMEOUT_MS`).
+Produção depois mostrou dispersão bem maior — ver a tabela do dry-run abaixo. Estado atual:
+`maxDuration = 900` na rota e spawn de 600s (`CLAUDE_TIMEOUT_MS`).
 **Os dez projetos rodam em série: ~30 min por execução.**
 
 ## O que falta para publicar — tudo depende de você
@@ -73,7 +74,7 @@ Faltando qualquer uma, a rota responde `503 missing-env` com **só os nomes**.
 
 ### 2. Timeout do proxy
 
-O proxy do EasyPanel precisa aceitar **≥ 600s**. Se cortar antes, o cron recebe `http-504` e nenhuma
+O proxy do EasyPanel precisa aceitar **≥ 900s**. Se cortar antes, o cron recebe `http-504` e nenhuma
 publicação fecha — sem erro no código.
 
 ### 3. GitHub Actions
@@ -119,8 +120,9 @@ renderizar e `typescript-catalog` nem leu o repo — os dois seguem sem validaç
    segue 500 até o rebuild. Como o `Dockerfile` mudou (instala `@anthropic-ai/claude-code`), tem que ser
    **rebuild de imagem**, não só restart.
 2. **`JeanZorzetti/nimblabs` está fora do escopo do `GITHUB_TOKEN`** (a API devolve 404; o repo existe).
-   Ele é um dos 4 canários. Editar o fine-grained token e incluir o repo. Os outros 8 responderam 200 com
-   `push: true`.
+   Ele é um dos 4 canários. **Ainda aberto após a 1a tentativa de edição:** o token enxerga 57 repos,
+   incluindo os outros 8 alvos, mas `nimblabs` não está na lista. Como o repo é privado, o GitHub responde
+   404 (não 403) — daí o código `github-missing`.
 3. **1 das 3 contas Claude não serve:** o 2º token responde `403` com *"Your organization has disabled
    Claude subscription access for Claude Code"*. A rotação pula a conta automaticamente, então o robô roda
    com 2 contas — mas o rate limit somado é menor do que você planejou.
