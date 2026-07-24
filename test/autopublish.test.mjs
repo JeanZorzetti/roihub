@@ -176,6 +176,23 @@ test("produção lista somente nomes das envs ausentes em ordem estável", () =>
   );
 });
 
+// O teste de fallback abaixo passava verde enquanto produção devolvia 500 em TODA rota:
+// deletar globais em Node não reproduz o Edge Runtime, que PROÍBE a API mesmo sob `?.`.
+// Este check olha o código-fonte, que é o que o bundler do Next enxerga.
+test("módulo importado pelo middleware não referencia API Node proibida no Edge", () => {
+  const source = readFileSync(new URL("../lib/autopublish-core.mjs", import.meta.url), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((line) => !line.trim().startsWith("//"))
+    .join("\n");
+  for (const forbidden of ["getBuiltinModule", "node:crypto", "node:fs", "require("]) {
+    assert.ok(
+      !source.includes(forbidden),
+      `${forbidden} em autopublish-core.mjs derruba o middleware inteiro no Edge Runtime`
+    );
+  }
+});
+
 test("cron auth compara no fallback Edge sem node:crypto ou Buffer", () => {
   const edge = spawnSync(process.execPath, ["--input-type=module", "-e", `
     import assert from "node:assert/strict";
