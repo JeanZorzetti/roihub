@@ -14,6 +14,7 @@ import {
   responseText,
   revertCommit,
 } from "../lib/autopublish-clients.ts";
+import { publishProject, verifyPublication } from "../lib/autopublish.ts";
 
 const draft = {
   slug: "daily-guide",
@@ -47,6 +48,69 @@ async function withEnv(values, operation) {
     }
   }
 }
+
+function fakeDb({
+  existing = null,
+  enabled = true,
+  onBegin,
+  onFinish,
+  onGet,
+  onUpdate,
+  onEnabled,
+} = {}) {
+  let row = existing ? { metadata: {}, ...existing } : null;
+  return {
+    async begin(input) {
+      onBegin?.(input);
+      if (row) return { publication: row, created: false };
+      row = {
+        id: 1,
+        status: "running",
+        action: input.action ?? "block",
+        metadata: {},
+        ...input,
+      };
+      return { publication: row, created: true };
+    },
+    async finish(id, status, updates = {}) {
+      onFinish?.(id, status, updates);
+      row = { ...row, ...updates, id, status };
+      return row;
+    },
+    async get(id) {
+      onGet?.(id);
+      return row?.id === id ? row : null;
+    },
+    async update(id, metadata) {
+      onUpdate?.(id, metadata);
+      row = { ...row, id, metadata: { ...row?.metadata, ...metadata } };
+      return row;
+    },
+    async enabled(slug) {
+      onEnabled?.(slug);
+      return typeof enabled === "object" ? enabled[slug] === true : enabled;
+    },
+  };
+}
+
+const validContextDraft = () => ({
+  action: "new",
+  targetPath: null,
+  draft: {
+    slug: "context-guide",
+    title: "Context Guide",
+    description: "A sourced guide to preserving context across engineering sessions.",
+    primaryKeyword: "context guide",
+    cluster: "engineering-workflows",
+    bluf: "Preserve decisions, constraints, and current state in one concise handoff so the next engineering session can continue without repeating discovery or losing important implementation context.",
+    sections: [{ heading: "What to preserve", paragraphs: ["Record decisions, constraints, and the next concrete action."] }],
+    faqs: [],
+    relatedSlugs: [],
+    sources: [{ url: "https://example.org/context", title: "Context source", publisher: "Example", publishedAt: "2026-01-01" }],
+    publishedAt: "2026-07-24",
+  },
+  usage: { inputTokens: 10, outputTokens: 20, webSearchCalls: 1, generatedImage: false },
+});
 
 const githubTransport = (project, handler) => async (url, init = {}) => {
   const parsed = new URL(url);
@@ -705,4 +769,484 @@ test("catálogo ignora colchetes e slug aninhado em strings e falha sem limites 
   assert.throws(() => catalogUpsert("export const posts = [", "{}", "new"), /catalog-format/);
   assert.throws(() => catalogUpsert("const posts = []", "{}", "new"), /catalog-format/);
   assert.throws(() => catalogUpsert("export const posts = makePosts([])", "{}", "new"), /catalog-format/);
+});
+
+test("publishProject bloqueia antes da imagem e do GitHub quando draft falha", async () => {
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("aftercare", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({ headSha: "a", files: [] }),
+    researchAndDraft: async () => ({
+      action: "new",
+      draft: { title: "Botox dosage guide", sources: [] },
+      usage: {},
+    }),
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "draft:sources,bluf,ymyl,structure");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
+test("publishProject bloqueia intenção duplicada mesmo com outro slug", async () => {
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [{
+        path: "apps/web/content/blog/existing-guide.mdx",
+        content: `---
+title: "Context Guide"
+slug: "existing-guide"
+primaryKeyword: "context guide"
+---
+Existing guide.`,
+      }],
+    }),
+    researchAndDraft: async () => {
+      const researched = validContextDraft();
+      return { ...researched, draft: { ...researched.draft, slug: "another-context-guide" } };
+    },
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "decision:duplicate");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
+test("update bloqueia intenção pertencente a outro post antes da imagem", async () => {
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [{
+      query: "alpha guide",
+      current: { impressions: 20, position: 8 },
+      previous: { impressions: 10, position: 12 },
+    }],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [
+        {
+          path: "apps/web/content/blog/guide-a.mdx",
+          content: '---\ntitle: "Guide A"\nslug: "guide-a"\nprimaryKeyword: "alpha guide"\n---\nA',
+        },
+        {
+          path: "apps/web/content/blog/guide-b.mdx",
+          content: '---\ntitle: "Guide B"\nslug: "guide-b"\nprimaryKeyword: "beta guide"\n---\nB',
+        },
+      ],
+    }),
+    researchAndDraft: async () => {
+      const researched = validContextDraft();
+      return {
+        ...researched,
+        action: "update",
+        targetPath: "apps/web/content/blog/guide-a.mdx",
+        draft: {
+          ...researched.draft,
+          slug: "guide-a",
+          title: "Guide B",
+          primaryKeyword: "beta guide",
+        },
+      };
+    },
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "decision:duplicate");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
+test("colisão de idempotência devolve published ou running sem chamada externa", async () => {
+  for (const status of ["published", "running"]) {
+    let reads = 0;
+    const result = await publishProject("context", "2026-07-24", {
+      db: fakeDb({ existing: { id: 7, status } }),
+      readRepository: async () => {
+        reads += 1;
+        throw new Error("unexpected-read");
+      },
+    });
+    assert.equal(result.id, 7);
+    assert.equal(result.status, status);
+    assert.equal(reads, 0);
+  }
+});
+
+test("dry-run não consulta enablement nem escreve em DB, imagem ou GitHub", async () => {
+  const calls = { enabled: 0, began: 0, finished: 0, updated: 0, picked: 0, committed: 0 };
+  const result = await publishProject("context", "2026-07-24", {
+    dryRun: true,
+    db: fakeDb({
+      enabled: false,
+      onEnabled: () => { calls.enabled += 1; },
+      onBegin: () => { calls.began += 1; },
+      onFinish: () => { calls.finished += 1; },
+      onUpdate: () => { calls.updated += 1; },
+    }),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({ headSha: "a", files: [] }),
+    researchAndDraft: async () => validContextDraft(),
+    pickImage: async () => {
+      calls.picked += 1;
+      return null;
+    },
+    commitFiles: async () => {
+      calls.committed += 1;
+    },
+  });
+
+  assert.deepEqual(result, {
+    status: "dry-run",
+    action: "new",
+    targetPath: "apps/web/content/blog/context-guide.mdx",
+    validation: [],
+  });
+  assert.deepEqual(calls, { enabled: 0, began: 0, finished: 0, updated: 0, picked: 0, committed: 0 });
+});
+
+test("kill switch global falha fechado antes do projeto e da idempotência", async () => {
+  const calls = [];
+  let began = false;
+  let read = false;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb({
+      enabled: { "*": false, context: true },
+      onEnabled: (slug) => calls.push(slug),
+      onBegin: () => { began = true; },
+    }),
+    readRepository: async () => {
+      read = true;
+      throw new Error("unexpected-read");
+    },
+  });
+
+  assert.deepEqual(result, {
+    status: "blocked",
+    reason: "global-disabled",
+    projectSlug: "context",
+    runDate: "2026-07-24",
+  });
+  assert.deepEqual(calls, ["*"]);
+  assert.equal(began, false);
+  assert.equal(read, false);
+});
+
+test("publica commit atômico no head lido com artigo e imagem renderizados", async () => {
+  let committed;
+  const result = await publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({ headSha: "head0", files: [] }),
+    researchAndDraft: async () => validContextDraft(),
+    pickImage: async () => ({
+      src: "generated",
+      alt: "Engineering context handoff",
+      credit: "Generated by OpenAI",
+      base64: "d2VicA==",
+    }),
+    commitFiles: async (...args) => {
+      committed = args;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(committed[1], "head0");
+  assert.equal(committed[2].length, 2);
+  assert.deepEqual(committed[2].map(({ path }) => path), [
+    "apps/web/content/blog/context-guide.mdx",
+    "apps/web/public/blog/context-guide.webp",
+  ]);
+  assert.match(committed[2][0].content, /\/blog\/context-guide\.webp/);
+  assert.equal(committed[2][1].base64, "d2VicA==");
+  assert.equal(result.status, "published");
+  assert.equal(result.commitSha, "commit1");
+  assert.equal(result.previousSha, "head0");
+  assert.equal(result.targetUrl, "https://context.nimblabs.com/blog/context-guide");
+});
+
+test("post novo do nimblabs atualiza o catálogo existente sem falsa duplicação", async () => {
+  let committed;
+  const result = await publishProject("nimblabs", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [{ path: "lib/blog.ts", content: "export const posts = [];" }],
+    }),
+    researchAndDraft: async () => validContextDraft(),
+    pickImage: async () => ({
+      src: "https://images.unsplash.com/context",
+      alt: "Engineering context handoff",
+      credit: "Photo by A on Unsplash",
+    }),
+    commitFiles: async (...args) => {
+      committed = args;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "published");
+  assert.equal(committed[2].length, 1);
+  assert.equal(committed[2][0].path, "lib/blog.ts");
+  assert.match(committed[2][0].content, /slug: "context-guide"/);
+});
+
+test("update no catálogo bloqueia slug diferente do post selecionado", async () => {
+  let picked = false;
+  let committed = false;
+  const result = await publishProject("nimblabs", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async () => [{
+      query: "context guide",
+      current: { impressions: 20, position: 8 },
+      previous: { impressions: 10, position: 12 },
+    }],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [{
+        path: "lib/blog.ts",
+        content: 'export const posts = [{ slug: "existing-guide", title: "Context Guide", keyword: "context guide" }];',
+      }],
+    }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "update",
+      targetPath: "lib/blog.ts",
+    }),
+    pickImage: async () => {
+      picked = true;
+      return null;
+    },
+    commitFiles: async () => {
+      committed = true;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "blocked");
+  assert.equal(result.reason, "decision:unsafe");
+  assert.equal(picked, false);
+  assert.equal(committed, false);
+});
+
+test("verifyPublication retorna pending antes da quinta tentativa sem buscar a página", async () => {
+  let fetched = false;
+  let reverted = false;
+  const db = fakeDb({
+    existing: {
+      id: 8,
+      projectSlug: "context",
+      status: "published",
+      targetUrl: "https://context.nimblabs.com/blog/context-guide",
+      commitSha: "commit1",
+      previousSha: "head0",
+      metadata: { title: "Context Guide", verificationAttempts: 3 },
+    },
+  });
+  const result = await verifyPublication(8, {
+    db,
+    deploymentState: async () => "pending",
+    fetch: async () => {
+      fetched = true;
+      throw new Error("unexpected-fetch");
+    },
+    revertCommit: async () => {
+      reverted = true;
+    },
+  });
+
+  assert.deepEqual(result, { id: 8, status: "pending", attempt: 4, deployment: "pending" });
+  assert.equal(fetched, false);
+  assert.equal(reverted, false);
+  assert.equal((await db.get(8)).status, "published");
+  assert.equal((await db.get(8)).metadata.verificationAttempts, 4);
+});
+
+test("verifyPublication mantém status e mescla metadata quando HTML e sitemap são válidos", async () => {
+  const targetUrl = "https://context.nimblabs.com/blog/context-guide";
+  let finished = false;
+  let reverted = false;
+  const db = fakeDb({
+    existing: {
+      id: 9,
+      projectSlug: "context",
+      status: "updated",
+      targetUrl,
+      commitSha: "commit1",
+      previousSha: "head0",
+      metadata: { title: "Context Guide" },
+    },
+    onFinish: () => { finished = true; },
+  });
+  const html = `<!doctype html>
+    <html><head>
+      <title>Context Guide | Context Keeper</title>
+      <link href="${targetUrl}" rel="canonical">
+      <meta content="index,follow" name="robots">
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article"}</script>
+    </head><body><h1>Context Guide</h1></body></html>`;
+  const result = await verifyPublication(9, {
+    db,
+    deploymentState: async () => "success",
+    fetch: async (url) => url === targetUrl
+      ? new Response(html, { status: 200 })
+      : new Response(`<urlset><url><loc>${targetUrl}</loc></url></urlset>`, { status: 200 }),
+    revertCommit: async () => {
+      reverted = true;
+      return "revert1";
+    },
+  });
+
+  assert.equal(result.status, "updated");
+  assert.equal(result.metadata.verification.ok, true);
+  assert.equal(result.metadata.verification.deployment, "success");
+  assert.equal(finished, false);
+  assert.equal(reverted, false);
+});
+
+test("verifyPublication reverte noindex por meta none ou X-Robots-Tag", async () => {
+  const targetUrl = "https://context.nimblabs.com/blog/context-guide";
+  const validHead = `
+    <title>Context Guide</title>
+    <link rel="canonical" href="${targetUrl}">
+    <script type="application/ld+json">{"@type":"Article"}</script>`;
+  for (const { html, headers } of [
+    { html: `<head>${validHead}<meta name="robots" content="none"></head><h1>Context Guide</h1>`, headers: {} },
+    { html: `<head>${validHead}</head><h1>Context Guide</h1>`, headers: { "x-robots-tag": "noindex, nofollow" } },
+  ]) {
+    const db = fakeDb({
+      existing: {
+        id: 11,
+        projectSlug: "context",
+        status: "published",
+        targetUrl,
+        commitSha: "commit1",
+        previousSha: "head0",
+        metadata: { title: "Context Guide" },
+      },
+    });
+    const result = await verifyPublication(11, {
+      db,
+      deploymentState: async () => "success",
+      fetch: async (url) => url === targetUrl
+        ? new Response(html, { status: 200, headers })
+        : new Response(`<urlset><url><loc>${targetUrl}</loc></url></urlset>`, { status: 200 }),
+      revertCommit: async () => "revert1",
+    });
+
+    assert.equal(result.status, "reverted");
+    assert.equal(result.reason, "verification:noindex");
+  }
+});
+
+test("verifyPublication reverte cada falha terminal de página com razão estável", async () => {
+  const targetUrl = "https://context.nimblabs.com/blog/context-guide";
+  const validHtml = `<head>
+    <title>Context Guide</title>
+    <link rel="canonical" href="${targetUrl}">
+    <script type="application/ld+json">{"@type":"Article"}</script>
+  </head><h1>Context Guide</h1>`;
+  const cases = [
+    { reason: "http", status: 503, html: validHtml, sitemap: targetUrl },
+    { reason: "content", status: 200, html: validHtml.replace("<h1>Context Guide</h1>", ""), sitemap: targetUrl },
+    { reason: "canonical", status: 200, html: validHtml.replace(targetUrl, "https://context.nimblabs.com/blog/other"), sitemap: targetUrl },
+    { reason: "jsonld", status: 200, html: validHtml.replace('{"@type":"Article"}', "{invalid"), sitemap: targetUrl },
+    { reason: "sitemap", status: 200, html: validHtml, sitemap: "https://context.nimblabs.com/blog/other" },
+  ];
+
+  for (const [index, scenario] of cases.entries()) {
+    let reverted = false;
+    const db = fakeDb({
+      existing: {
+        id: 20 + index,
+        projectSlug: "context",
+        status: "published",
+        targetUrl,
+        commitSha: "commit1",
+        previousSha: "head0",
+        metadata: { title: "Context Guide" },
+      },
+    });
+    const result = await verifyPublication(20 + index, {
+      db,
+      deploymentState: async () => "success",
+      fetch: async (url) => url === targetUrl
+        ? new Response(scenario.html, { status: scenario.status })
+        : new Response(`<urlset><url><loc>${scenario.sitemap}</loc></url></urlset>`, { status: 200 }),
+      revertCommit: async () => {
+        reverted = true;
+        return "revert1";
+      },
+    });
+
+    assert.equal(result.status, "reverted", scenario.reason);
+    assert.equal(result.reason, `verification:${scenario.reason}`, scenario.reason);
+    assert.equal(reverted, true, scenario.reason);
+  }
+});
+
+test("quinta tentativa pending reverte por commit novo e marca reverted", async () => {
+  const targetUrl = "https://context.nimblabs.com/blog/context-guide";
+  let revertArgs;
+  const db = fakeDb({
+    existing: {
+      id: 10,
+      projectSlug: "context",
+      status: "published",
+      targetUrl,
+      commitSha: "commit1",
+      previousSha: "head0",
+      metadata: { title: "Context Guide", verificationAttempts: 4 },
+    },
+  });
+  const result = await verifyPublication(10, {
+    db,
+    deploymentState: async () => "pending",
+    fetch: async () => {
+      throw new Error("unexpected-fetch");
+    },
+    revertCommit: async (...args) => {
+      revertArgs = args;
+      return "revert1";
+    },
+  });
+
+  assert.equal(revertArgs[1], "commit1");
+  assert.equal(revertArgs[2], "head0");
+  assert.equal(result.status, "reverted");
+  assert.equal(result.reason, "verification:deployment-timeout");
+  assert.equal(result.metadata.revertCommitSha, "revert1");
 });
