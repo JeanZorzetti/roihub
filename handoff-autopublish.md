@@ -112,16 +112,48 @@ passaram no reteste com o container estável.
 **Renderizadores validados:** Astro (goiania) e MDX (context). `typescript-post` bloqueou antes de
 renderizar e `typescript-catalog` nem leu o repo — os dois seguem sem validação.
 
+## Mudanças de escopo — 2026-07-24 (parte 2)
+
+- **`nimblabs` saiu do roster.** O repo nunca esteve no escopo do token. Isso deixou `typescript-catalog`
+  sem projeto: o renderizador continua no código, a cobertura unitária virou fixture inline e os dois
+  testes end-to-end saíram (`publishProject` resolve slug na lista fechada).
+- **`goiania` ganhou `editorialFocus`** apontando para fitas. Sem isso a pauta nunca migrava: o guia tem 13
+  artigos de porcelanato e o GSC só devolve query desse tema. **Validado localmente** — gerou *"Como
+  escolher fita adesiva para embalagem"*. Em produção ainda não fechou por rate limit.
+- **`tapepro` entrou** (`JeanZorzetti/tape`), 2º na fila porque o rate limit corta o fim. Exigiu o
+  renderizador `astro-content-ptbr`: o repo valida frontmatter em pt-BR com zod e tipa `imagem` pelo
+  helper `image()` do Astro, que **não aceita URL externa**. Por isso é o único projeto que baixa os bytes
+  da imagem (`pickImage(..., { embed: true })`) em vez de hotlinkar; crédito e trigger de download
+  continuam. Saída conferida contra o frontmatter de um artigo real.
+- **`decisionBlock` passou a nomear o bloqueio.** O sirius dizia `decision:unsafe` genérico; agora diz
+  `decision:uncertain`, que é a informação útil.
+- **Parser de JSON reescrito.** O modelo escreve prosa antes do objeto ("WebFetch bloqueado, datas
+  aproximadas, segue a decisão") e essa prosa pode conter chave — recortar do 1º `{` ao último `}`
+  quebrava. Agora tenta fence primeiro, depois cada `{` como início candidato.
+
+### Estado dos canários
+
+| Renderizador | Projeto | Dry-run |
+|---|---|---|
+| Astro | goiania | ✅ `new`, `validation: []` |
+| MDX | context | ✅ `new`, `validation: []` |
+| TypeScript post | sirius | ⚠️ `decision:uncertain` — bloqueio legítimo, mas nunca renderizou |
+| Astro content pt-BR | tapepro | ❌ não rodado (rate limit) |
+| Markdown | roilabs | ✅ `dry-run` |
+
 ## ⚠️ Bloqueios abertos em 2026-07-24
 
 1. ~~Hub com 500 em toda rota~~ — **RESOLVIDO** em `5c5811d` + redeploy. O middleware importava módulo
    que referenciava `process.getBuiltinModule`, proibido no Edge Runtime. Ver
    `nextjs_middleware_edge_forbidden_node_api` na memória.
-2. **`JeanZorzetti/nimblabs` está fora do escopo do `GITHUB_TOKEN`** (a API devolve 404; o repo existe).
+2. ~~nimblabs fora do escopo~~ — **RESOLVIDO retirando o projeto do roster** (decisão do Jean).
+   Registro do que era: (a API devolve 404; o repo existe).
    Ele é um dos 4 canários. **Ainda aberto após a 1a tentativa de edição:** o token enxerga 57 repos,
    incluindo os outros 8 alvos, mas `nimblabs` não está na lista. Como o repo é privado, o GitHub responde
    404 (não 403) — daí o código `github-missing`.
-3. **1 das 3 contas Claude não serve:** o 2º token responde `403` com *"Your organization has disabled
+3. **1 das 3 contas Claude não serve, e as outras 2 não bastam:** medido em 24/07 às 21h — conta 1 em
+   `429` ("session limit, resets 9:40pm"), conta 2 em `403` permanente, conta 3 OK. Uma execução dos 10
+   esgota a capacidade do dia. Detalhe da conta 2: o 2º token responde `403` com *"Your organization has disabled
    Claude subscription access for Claude Code"*. A rotação pula a conta automaticamente, então o robô roda
    com 2 contas — mas o rate limit somado é menor do que você planejou.
 4. **Rotacionar os secrets** depois do rollout: os valores foram colados em conversa.
