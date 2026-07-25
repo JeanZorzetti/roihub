@@ -95,21 +95,42 @@ https://search.google.com/search-console/settings/crawl-stats?resource_id=sc-dom
 O `&hl=en` é de propósito: trava o texto do botão em "Export" independente do idioma da conta. Os
 CSVs de dentro podem continuar em pt-BR — o `readCsv` casa os dois idiomas.
 
-### 3.2 Sessão: perfil persistente, não storageState em secret
+### 3.2 Sessão: ⚠️ o Google recusa login em browser automatizado
+
+**Tentativa que falhou (25/07):** `launchPersistentContext` + `--login`. O Google devolveu
+`accounts.google.com/v3/signin/rejected` — *"Não foi possível fazer o login / esse navegador ou app
+pode não ser seguro"*, com o próprio Chrome avisando `--no-sandbox` na barra. Não é bug de perfil
+nem de 2FA: **navegador iniciado pelo Playwright não autentica no Google**, e ficar caçando flags
+(`--disable-blink-features=AutomationControlled`, `ignoreDefaultArgs`) é gato e rato que quebra
+sozinho no próximo update.
+
+**O que funciona:** separar quem abre de quem dirige. O login acontece num Chrome **comum**, e o
+robô só se conecta depois — o Google barra o *fluxo de login* sob automação, não uma sessão que já
+existe.
 
 ```js
-const ctx = await chromium.launchPersistentContext(PROFILE_DIR, {
-  headless: !process.argv.includes("--login"),
-  acceptDownloads: true,
-  channel: "chrome",
-});
+// --login: Playwright não entra aqui. Chrome normal, spawn puro.
+spawn(CHROME, [`--user-data-dir=${PROFILE}`, "https://search.google.com/search-console"]);
+
+// run semanal: mesmo perfil, agora com porta de debug, e o robô CONECTA
+spawn(CHROME, [`--user-data-dir=${PROFILE}`, "--remote-debugging-port=0", "about:blank"]);
+const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
 ```
 
-`PROFILE_DIR` = `%LOCALAPPDATA%\roihub-gsc-profile` (**fora do repo** — é sessão Google, nunca
-versionar). Primeira execução: `node scripts/fetch-crawl-stats.mjs --login`, abre visível, o Jean
-loga uma vez (2FA incluído) e fecha. As execuções seguintes reusam o perfil headless.
+`PROFILE` = `%LOCALAPPDATA%\roihub-gsc-profile` (**fora do repo** — é sessão Google, nunca
+versionar). Porta `0` + ler `DevToolsActivePort` de dentro do perfil: porta fixa colide, e o arquivo
+é a única fonte confiável de qual porta o Chrome pegou.
 
-Não usar o perfil real do Chrome do Jean: o Chrome recusa abrir um `userDataDir` já em uso.
+A janela abre **visível** também no run semanal, de propósito: headless com sessão Google é
+justamente o que costuma disparar re-autenticação. Domingo de manhã, 3 minutos de janela aberta na
+máquina do Jean, não incomoda ninguém.
+
+Não usar o perfil pessoal do Chrome do Jean: o Chrome recusa `--user-data-dir` já em uso e o
+processo novo morre em silêncio sem escrever a porta.
+
+Verificado em 25/07 sem precisar de login: `connectOverCDP` → `waitForEvent("download")` →
+`suggestedFilename()` → `saveAs()` funciona (era o elo incerto — download por CDP não é o mesmo
+caminho de um contexto criado pelo Playwright).
 
 ### 3.3 O download nomeia a pasta
 
@@ -197,8 +218,12 @@ O script tem que `cd` para o repo (ou usar caminhos absolutos): o Task Scheduler
 3. **`force-dynamic` relê tudo a cada request.** 10 exports/semana = ~520 pastas/ano × 6 CSVs. Hoje
    é irrelevante (~60 KB/semana); passando de **~100 pastas**, o caminho é consolidar em um
    `data/crawl.json` no próprio script e o `/infra` ler um arquivo só. Não faça agora.
-4. **Sessão Google expira sem avisar** e o Playwright cai numa tela de login onde esperava o botão
-   Export. É a falha nº 1 do robô: tratar como "rodar `--login` de novo", não como bug de seletor.
+4. **Sessão Google expira sem avisar** e o robô cai numa tela de login onde esperava o botão
+   Export. É a falha nº 1: tratar como "rodar `--login` de novo", não como bug de seletor. E o
+   `--login` **tem que abrir Chrome comum** (§3.2) — se alguém "simplificar" isso de volta para
+   `chromium.launch()`, o Google recusa a autenticação e o robô nunca mais loga.
+8. **Chrome do perfil do robô aberto = run falha inteiro.** A segunda instância delega para a
+   primeira e morre sem escrever `DevToolsActivePort`; a mensagem de erro já diz qual perfil fechar.
 5. **O ZIP não vem com pasta interna.** Extrair "achatado" dentro da pasta que você cria; se
    aparecer um nível extra, o `readCsv` não acha CSV nenhum e o export passa vazio pela validação
    (por isso `validateExport` exige linha de data, não só arquivo presente).
@@ -230,10 +255,12 @@ export falhado, não site parado — confira a saída do script antes de investi
 - [x] `lib/crawl-fetch.mjs` com `destDirFor` + `validateExport`; `scripts/fetch-crawl-stats.mjs`
       com o browser e o git
 - [x] `test/crawl-fetch.test.mjs` no comando `test`: **121/121 verde**, `npx tsc --noEmit` limpo
-- [x] Run sem sessão exercitado em 25/07: lista as 10 propriedades, abre o Chrome, detecta a tela
-      de login, falha nas 10 com "sessão expirou — rode com --login", `exit 1`, **nada commitado**
-- [ ] **`node scripts/fetch-crawl-stats.mjs --login`** — só o Jean pode fazer (2FA). Abre visível;
-      logar e fechar a janela. Perfil vai para `%LOCALAPPDATA%\roihub-gsc-profile`, fora do repo
+- [x] Run sem sessão exercitado em 25/07: lista as 10 propriedades, abre o Chrome por spawn, conecta
+      por CDP, detecta a tela de login, falha nas 10 com "sessão expirou", `exit 1`, **nada commitado**
+- [x] Caminho de download provado isolado (CDP → `waitForEvent` → `saveAs`), sem depender de login
+- [ ] **`node scripts/fetch-crawl-stats.mjs --login`** — só o Jean pode fazer (2FA). Abre um Chrome
+      **comum** no Search Console: logar e **fechar a janela** (é o fechamento que devolve o
+      terminal). Perfil vai para `%LOCALAPPDATA%\roihub-gsc-profile`, fora do repo
 - [ ] Primeiro run de verdade: 9–10 pastas novas em `docs/Crawl-stats/`, commit automático,
       `/infra` com as datas da semana. **É aqui que o seletor do botão Export se prova** — se falhar,
       o screenshot no `%TEMP%\crawl-*` mostra em que tela ele parou
