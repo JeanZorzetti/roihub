@@ -1723,6 +1723,33 @@ test("imagem usa hotlink Unsplash com crédito e cai no 1o resultado sem match",
       "workspace desk",
     ]);
 
+    // Com cena visual, a keyword homônima nem chega a ser buscada.
+    const scened = [];
+    const withScene = async (url) => {
+      const query = new URL(String(url)).searchParams.get("query");
+      if (query === null) return new Response(null, { status: 200 });
+      scened.push(query);
+      return jsonResponse({
+        results: [{
+          description: "Laptop",
+          alt_description: "Laptop on a desk",
+          urls: { regular: "https://images.unsplash.com/laptop" },
+          links: { download_location: "https://api.unsplash.com/photos/laptop/download" },
+          user: { name: "Dora" },
+        }],
+      });
+    };
+    const scene = await pickImage(
+      {
+        primaryKeyword: "windsurf ai explained",
+        imageScene: "laptop screen with code editor",
+        cluster: "engineering-workflows",
+      },
+      withScene
+    );
+    assert.equal(scene.src, "https://images.unsplash.com/laptop");
+    assert.deepEqual(scened, ["laptop screen with code editor"]);
+
     // Se nem o termo genérico devolver nada, aí sim falha fechado.
     await assert.rejects(
       () => pickImage("nothing", async () => jsonResponse({ results: [] })),

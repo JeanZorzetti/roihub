@@ -1,6 +1,6 @@
 # Handoff — SEO Autopublishing (1 artigo/dia por projeto)
 
-**Atualizado: 2026-07-24, fim do dia.** Último commit: `305ed8a`.
+**Atualizado: 2026-07-24, noite.**
 
 O robô **funciona de ponta a ponta e já publicou 1 artigo real em produção**. O gate dos canários está
 1/3. O que falta não é código — é rate limit e validação.
@@ -89,14 +89,18 @@ curl -s -X POST -H "authorization: Bearer $CRON_SECRET" -H "content-type: applic
 
 ---
 
-## 5. Qualidade — problema aberto
+## 5. Qualidade — capa fora de contexto (corrigido, falta validar em produção)
 
-**A capa pode não ter relação com o artigo.** O artigo publicado é sobre o IDE Windsurf/Devin e a imagem é
-*"yellow and white sail boat on sea"* — o Unsplash entendeu windsurf como o esporte.
+**O que aconteceu:** o artigo publicado é sobre o IDE Windsurf/Devin e a capa é *"yellow and white sail
+boat on sea"* — o Unsplash entendeu windsurf como o esporte. Causa: a busca usava a keyword, e keyword não
+é descrição visual.
 
-Causa: a busca usa a keyword do artigo, e keyword não é descrição visual. O fallback progressivo (seção 6)
-salvou a publicação de travar, mas não resolve homônimo. Saída provável: o modelo passar a gerar um campo
-de cena visual separado da keyword — o Tapepro já faz isso no schema dele (`cenaImagem`).
+**Correção:** o draft agora tem um campo `imageScene` obrigatório (cena fotografável, 3–6 palavras em
+inglês, sem nome de produto), e é ele que vai para o Unsplash. A keyword só é usada se o modelo não
+devolver a cena. O fallback progressivo da seção 6 continua igual, degradando a partir da cena.
+
+**Falta:** conferir na próxima publicação real se a capa combina com o artigo. A capa do `context` já no ar
+segue errada — trocar à mão se incomodar.
 
 ---
 

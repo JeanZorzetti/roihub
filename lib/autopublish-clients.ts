@@ -52,6 +52,7 @@ const EDITORIAL_DRAFT_SCHEMA = {
     description: { type: "string" },
     primaryKeyword: { type: "string" },
     cluster: { type: "string" },
+    imageScene: { type: "string" },
     bluf: { type: "string" },
     sections: {
       type: "array",
@@ -97,6 +98,7 @@ const EDITORIAL_DRAFT_SCHEMA = {
     "description",
     "primaryKeyword",
     "cluster",
+    "imageScene",
     "bluf",
     "sections",
     "faqs",
@@ -314,6 +316,7 @@ export async function researchAndDraft(
       : []),
     "Use the complete inventory to decide whether the intent is new, the same as an existing entry to update, or uncertain and therefore blocked. A same intent must never be new, an update must target an existing inventory path, and uncertainty must block.",
     "Never invent a source: every entry in sources must be a page you actually retrieved, with an https URL and an ISO publication date. The bluf must have between 40 and 60 words.",
+    "imageScene is searched verbatim in a stock photo bank, so describe a photographable scene in 3 to 6 English words with concrete objects only: no product or brand names, no jargon, no abstractions. The keyword is not a scene, and reusing it picks the wrong homonym (\"windsurf\" returns sailboats, not an IDE).",
     "Do not copy the candidate heuristic: decide from the inventory itself.",
     schemaInstruction(DRAFT_SCHEMA),
     `CONTEXT:\n${JSON.stringify(context)}`,
@@ -424,10 +427,12 @@ const normalizeIntent = (value: unknown) => String(value ?? "")
   .replace(/[^a-z0-9]+/g, " ")
   .trim();
 
+// A keyword não é descrição visual: "windsurf ai explained" trouxe um veleiro para um
+// artigo sobre IDE. O modelo devolve a cena; a keyword só sobra como plano B.
 function imageIntent(value: unknown) {
   if (typeof value === "string") return value.trim();
   const record = value as JsonRecord | null;
-  return String(record?.primaryKeyword ?? record?.title ?? "").trim();
+  return String(record?.imageScene ?? record?.primaryKeyword ?? record?.title ?? "").trim();
 }
 
 // A pauta é long-tail de propósito, e o Unsplash não tem foto para termo de nicho:
