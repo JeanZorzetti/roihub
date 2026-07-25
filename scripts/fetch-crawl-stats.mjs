@@ -11,7 +11,11 @@
 // só se CONECTA nele por CDP depois. Sessão já autenticada o Google não derruba; o que ele barra é
 // o fluxo de login dentro de um browser com flags de automação.
 //
-// Handoff: handoff-crawl-stats-semanal.md
+// Depois dos exports, roda o ml/analyze.py no mesmo processo: o /insights lê os mesmos CSVs de
+// docs/, então só faz sentido recalcular depois que o dado novo entrou. Python via ROIHUB_PYTHON
+// (default: o venv em C:/venvs — FORA do OneDrive, que corrompe venv igual node_modules).
+//
+// Handoff: handoff-crawl-stats-semanal.md, handoff-insights-automatico.md
 
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";
@@ -37,6 +41,7 @@ const CHROME = process.env.CHROME_PATH ?? [
   "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
 ].find((p) => existsSync(p));
 const NAV_TIMEOUT = 60_000;
+const PYTHON = process.env.ROIHUB_PYTHON ?? "C:/venvs/roihub-ml/Scripts/python.exe";
 
 /**
  * Chrome de verdade, iniciado por spawn — não por Playwright. Sem `--enable-automation`, sem
@@ -194,18 +199,31 @@ async function main() {
     return 1;
   }
 
-  git("add", "docs/Crawl-stats");
-  if (git("status", "--short", "docs/Crawl-stats").trim() === "") {
+  // O analyze.py lê docs/: só faz sentido depois que os exports novos entraram.
+  let insights = false;
+  try {
+    execFileSync(PYTHON, [path.join(REPO, "ml", "analyze.py")], { cwd: REPO, stdio: "inherit" });
+    insights = true;
+  } catch (e) {
+    // Insights são derivados; crawl stats são o dado bruto. Falhar aqui não pode custar o commit
+    // dos exports (o GSC só guarda 90 dias) — mas tem que aparecer no exit code.
+    failed.push({ property: "ml/analyze.py", message: e.message });
+    console.error(`  FALHA ml/analyze.py: ${e.message}`);
+  }
+
+  git("add", "docs/Crawl-stats", "data/insights.json");
+  if (git("status", "--short", "docs/Crawl-stats", "data/insights.json").trim() === "") {
     console.log("exports idênticos aos do repo — nada a commitar");
   } else {
-    git("commit", "-m", `chore: crawl stats ${ok[0].exportDate} (${ok.length} propriedades)`);
+    const what = insights ? "crawl stats + insights" : "crawl stats";
+    git("commit", "-m", `chore: ${what} ${ok[0].exportDate} (${ok.length} propriedades)`);
     git("push", "origin", "main");
     console.log(`commitado e pushado: ${ok.length} exports`);
   }
 
   // Silêncio aqui vira dado velho de novo: quem falhou tem que aparecer no exit code.
   if (failed.length > 0) {
-    console.error(`${failed.length} propriedade(s) falharam; screenshots em ${tmp}`);
+    console.error(`${failed.length} falha(s): ${failed.map((f) => f.property).join(", ")} — screenshots em ${tmp}`);
     return 1;
   }
   return 0;
