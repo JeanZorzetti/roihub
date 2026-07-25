@@ -1,6 +1,7 @@
 # Handoff — SEO Autopublishing (1 artigo/dia por projeto)
 
-**Atualizado: 2026-07-24, noite.**
+**Atualizado: 2026-07-25.** Gate dos canários **fechado, 3/3**. A pauta agora é qualidade do artigo:
+ver `handoff-polimento-editorial.md`.
 
 O robô **funciona de ponta a ponta e já publicou 1 artigo real em produção**. O gate dos canários está
 1/3. O que falta não é código — é rate limit e validação.
@@ -13,17 +14,20 @@ O robô **funciona de ponta a ponta e já publicou 1 artigo real em produção**
 |---|---|
 | Repo | `roihub` · deploy automático a cada push em `main` (EasyPanel) |
 | Hub | `hub.roilabs.com.br` no ar, Basic Auth |
-| Verificação | `npm test` 108/108 · `npx tsc --noEmit` 0 · `npm run build` 0 |
-| **Artigos publicados** | **1** — `context`, commit `5ae9a26`, [no ar (HTTP 200)](https://context.nimblabs.com/blog/windsurf-memories-explained) |
+| Verificação | `npm test` 109/109 · `npx tsc --noEmit` 0 · `npm run build` 0 |
+| **Artigos no ar** | **3** — `context` (`41fab23`), `goiania` (`e3065e0`), `tapepro` (`0bb1e08`), todos HTTP 200 |
 | Kill switch global | **ATIVO** |
 | Projetos ligados | `goiania`, `tapepro`, `context` (os canários) |
 | Projetos pausados | `aftercare`, `estetiacrm`, `fabrica`, `nimblabs`*, `polarisia`, `reviewshield`, `roilabs`, `sirius` |
 
 \* `nimblabs` saiu do código; a linha órfã no banco é inofensiva.
 
-**Com o global ativo, o cron das 08:00 BRT tenta os 3 canários sozinho.** `context` já tem linha do dia e
-será pulado por idempotência (`slug + run_date`), então na prática ele tenta `goiania` e `tapepro` — que é
-exatamente o que falta.
+**Com o global ativo, o cron das 08:17 BRT tenta os 3 canários sozinho, todo dia.** O gate já fechou, então
+a pergunta agora é outra: enquanto o polimento editorial não sair, cada dia gera 3 artigos no padrão atual.
+Pausar ou aceitar é decisão do Jean.
+
+⚠️ O horário era 08:00 e **não rodou em 25/07**: na hora cheia o `schedule` do Actions nem chega a criar o
+run. Nunca volte para o minuto `:00`.
 
 ---
 
