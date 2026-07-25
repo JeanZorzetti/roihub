@@ -38,16 +38,23 @@ commit atômico no repo do projeto. Depois uma fase `verify` confere o deploy.
 **Motor = claude-cli**, instalado na imagem Docker do hub, autenticado por `CLAUDE_CODE_OAUTH_TOKENS`.
 Custo marginal por artigo: zero. Não há OpenAI em lugar nenhum.
 
-### ⚠️ Modelo e effort NÃO estão definidos
+### Modelo e effort (decidido 24/07)
 
 ```
-claude -p --output-format json --max-turns 12 --allowedTools WebSearch
+claude -p --output-format json --model sonnet --effort high  --max-turns 12 --allowedTools WebSearch
+claude -p --output-format json --model sonnet --effort low   --max-turns 1     # classificador YMYL
 ```
 
-Sem `--model` (usa o default da conta; num teste reportou `claude-opus-4-8`) e sem controle de effort — o
-`reasoning.effort: medium` do plano original era da OpenAI e saiu na troca de motor. O modelo pode variar
-entre as 3 contas e mudar quando o CLI atualizar. O banco grava `model: "claude-cli"` genérico, embora o
-payload traga o nome real em `modelUsage`. **Decisão pendente do Jean.**
+**Sonnet 5, effort `high` no draft e `low` no classificador.** O critério não foi custo (com assinatura o
+gasto marginal é zero) e sim **cota**: o gargalo é rate limit, e sonnet cabe em mais artigos por dia que
+opus. Escrever artigo com pesquisa não é coding agêntico de horizonte longo — `high` basta; `xhigh`/`max`
+só queimariam cota. Trocar é uma env var: `CLAUDE_MODEL=opus` (default do código = `sonnet`).
+
+Sem `--model` o CLI usava o default da conta (num teste, `claude-opus-4-8`), que difere entre as 3 contas e
+muda quando o CLI atualiza. Agora o banco grava `claude-cli:sonnet` em vez do genérico `claude-cli`.
+
+**Se a qualidade do artigo cair nos canários, subir para `CLAUDE_MODEL=opus` antes de mexer em prompt** —
+e nesse caso calibrar tamanho no prompt, porque o Opus 5 escreve deliverables mais longos por padrão.
 
 ---
 

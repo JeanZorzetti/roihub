@@ -215,6 +215,11 @@ export type ClaudeRun = (
 // timeout aqui não economiza nada, só descarta um artigo que estava quase pronto.
 const DEFAULT_TIMEOUT_MS = Number(process.env.CLAUDE_TIMEOUT_MS) || 600_000;
 
+// Sem --model o CLI usa o default da conta, que difere entre as 3 e muda quando o CLI
+// atualiza. O gargalo aqui é rate limit, não custo: sonnet cabe em mais artigos por dia
+// que opus, e escrever artigo com pesquisa não é coding agêntico de horizonte longo.
+export const CLAUDE_MODEL = process.env.CLAUDE_MODEL || "sonnet";
+
 export const claudeRun: ClaudeRun = async (prompt, {
   webSearch = false,
   timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -222,7 +227,18 @@ export const claudeRun: ClaudeRun = async (prompt, {
 } = {}) => {
   const tokens = claudeTokens();
   if (!tokens.length) throw new Error("llm-auth");
-  const args = ["-p", "--output-format", "json", "--max-turns", webSearch ? "12" : "1"];
+  const args = [
+    "-p",
+    "--output-format",
+    "json",
+    "--model",
+    CLAUDE_MODEL,
+    // O draft pesquisa e escreve; o classificador YMYL devolve 1 de 3 valores.
+    "--effort",
+    webSearch ? "high" : "low",
+    "--max-turns",
+    webSearch ? "12" : "1",
+  ];
   if (webSearch) args.push("--allowedTools", "WebSearch");
 
   let lastError = new Error("llm-auth");

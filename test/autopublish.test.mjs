@@ -1552,6 +1552,27 @@ test("claude-cli soma contas e reporta a env oficial quando falta", () => {
   assert.deepEqual(missingEnv(base), ["CLAUDE_CODE_OAUTH_TOKENS"]);
 });
 
+test("claude-cli fixa modelo e effort em vez de herdar o default da conta", async () => {
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKENS: "a" }, async () => {
+    const seen = [];
+    const spawnImpl = async (_prompt, args) => {
+      seen.push(args);
+      return JSON.stringify({ result: "ok", usage: {} });
+    };
+    await claudeRun("prompt", { spawnImpl, webSearch: true });
+    await claudeRun("prompt", { spawnImpl });
+
+    const flag = (args, name) => args[args.indexOf(name) + 1];
+    // Draft pesquisa e escreve; o classificador YMYL só devolve 1 de 3 valores.
+    assert.equal(flag(seen[0], "--model"), "sonnet");
+    assert.equal(flag(seen[0], "--effort"), "high");
+    assert.equal(flag(seen[0], "--max-turns"), "12");
+    assert.equal(flag(seen[1], "--model"), "sonnet");
+    assert.equal(flag(seen[1], "--effort"), "low");
+    assert.equal(flag(seen[1], "--max-turns"), "1");
+  });
+});
+
 test("claude-cli rotaciona conta esgotada e desiste quando todas falham", async () => {
   await withEnv({ CLAUDE_CODE_OAUTH_TOKENS: "a,b,c" }, async () => {
     const used = [];

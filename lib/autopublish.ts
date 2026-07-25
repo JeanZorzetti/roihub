@@ -1,5 +1,6 @@
 import { estimateCost, rankCandidates, validateDraft } from "./autopublish-core.mjs";
 import {
+  CLAUDE_MODEL,
   commitFiles as commitRepositoryFiles,
   deploymentState as getDeploymentState,
   pickImage as selectImage,
@@ -423,8 +424,8 @@ export async function publishProject(
       commitSha: committed.sha,
       previousSha: committed.previousSha,
       // Sobrou da era OpenAI e gravou "gpt-5.6-terra" no 1o artigo publicado de verdade.
-      // O motor é o claude-cli, que decide o modelo pela assinatura.
-      model: "claude-cli",
+      // Agora o modelo é fixo no CLI, então a linha grava qual de fato escreveu.
+      model: `claude-cli:${CLAUDE_MODEL}`,
       inputTokens: Number(usage.inputTokens) || 0,
       outputTokens: Number(usage.outputTokens) || 0,
       imageSource: image?.base64 ? "unsplash-embedded" : image?.src ?? null,
