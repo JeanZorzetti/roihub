@@ -1,8 +1,16 @@
 import projects from "@/data/projects.json";
+import { PROJECTS } from "@/lib/autopublish-projects.mjs";
 import type { ProjectState, Publication } from "@/lib/db";
 import { updatePublishingState } from "./actions";
 
+// Os controles seguem PROJECTS, não a lista da agenda: elas divergem. Quando o tapepro
+// entrou e o nimblabs saiu, a UI mostrou um projeto inexistente e escondeu um que estava
+// ativo — sem controle de pausa para ele. projects.json entra só pelo nome amigável.
 const PROJECT_NAMES = new Map(projects.map((project) => [project.slug, project.nome]));
+const PUBLISHING_PROJECTS = PROJECTS.map(({ slug }: { slug: string }) => ({
+  slug,
+  nome: PROJECT_NAMES.get(slug) ?? slug,
+}));
 const USD = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD" });
 const ACTIONS = { new: "Nova página", update: "Atualização", block: "Bloqueio" };
 const STATUSES = {
@@ -114,7 +122,7 @@ export function Publications({
             databaseOn={databaseOn}
             global
           />
-          {projects.map((project) => (
+          {PUBLISHING_PROJECTS.map((project) => (
             <Control
               key={project.slug}
               slug={project.slug}

@@ -1057,6 +1057,18 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
 // A lista de seed era hardcoded e ficou dessincronizada de PROJECTS quando o tapepro
 // entrou: sem linha em seo_projects, db.enabled() devolve false e o projeto fica
 // "project-disabled" para sempre, sem erro nenhum.
+// A UI iterava data/projects.json (lista da agenda) em vez de PROJECTS: o tapepro ficou
+// ativo e sem controle de pausa na tela, e o nimblabs removido continuou aparecendo.
+test("controles da UI cobrem exatamente os projetos do autopublishing", () => {
+  const source = readFileSync(new URL("../app/seo/publications.tsx", import.meta.url), "utf8");
+  assert.match(source, /PROJECTS\.map\(/, "os controles precisam derivar de PROJECTS");
+  assert.doesNotMatch(
+    source,
+    /\{projects\.map\(/,
+    "iterar data/projects.json deixa projeto do autopublishing sem controle"
+  );
+});
+
 test("seed de seo_projects cobre todo projeto configurado", () => {
   const source = readFileSync(new URL("../lib/db.ts", import.meta.url), "utf8");
   assert.match(source, /PROJECTS\.map\(/, "o seed precisa derivar de PROJECTS, não de uma lista fixa");
