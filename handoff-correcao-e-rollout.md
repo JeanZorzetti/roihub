@@ -98,11 +98,24 @@ Memory"`, `readingTime` real, `searchTerm` = a cena que de fato buscou a foto. O
 do artigo de referência: `<Tldr>`, 31 negritos, 3 H3, tabela Memories × Devin Local × CLAUDE.md,
 `## Key Takeaways` e linha `Related:`.
 
-**Bug de renderizador achado aqui (aberto):** o renderizador `mdx` emite hero image, bloco de FAQ e
-lista de "Related guides" **no corpo**, e o layout do context-keeper já renderiza os três a partir do
-frontmatter — o artigo saiu com tudo duplicado. Foi corrigido no arquivo, não no renderizador. Antes
-de ligar `polarisia`, `reviewshield` e `aftercare` (todos `mdx`), confira o layout de cada um: se ele
-também renderiza FAQ/hero do frontmatter, o mesmo artigo duplicado vai sair lá.
+**Bug de renderizador achado aqui — CORRIGIDO NA RAIZ.** O renderizador `mdx` emitia hero image,
+bloco de FAQ e lista de "Related guides" **no corpo**, e o layout do context-keeper já renderiza os
+três a partir do frontmatter: o artigo saiu com tudo duplicado. Como capa e FAQ vêm do mesmo
+frontmatter, isso ia se repetir em todo projeto `mdx` cujo layout faz o mesmo. Agora cada projeto
+declara o que o layout já renderiza, e `markdownBody` omite esses blocos:
+
+| projeto | renderer | layout renderiza | `layoutRenders` |
+|---|---|---|---|
+| `context` | mdx | capa, FAQ, related | `["hero","faq","related"]` |
+| `aftercare` | mdx | capa (`ArticleLayout`), `FaqAccordion`, `RelatedArticles` | `["hero","faq","related"]` |
+| `reviewshield` | mdx | FAQ e "Related articles" (capa não) | `["faq","related"]` |
+| `roilabs` | markdown | **bloco de FAQ** no `Article.astro` (capa não) | `["faq"]` |
+| `polarisia` | mdx | nenhum dos três | — (corpo continua completo) |
+
+Conferido lendo o layout de cada repo — inclusive o `roilabs`, que **ligamos hoje** e ia publicar FAQ
+duplicada amanhã. Os `typescript-post` (sirius/fabrica/estetiacrm) não precisam: o `htmlBody` deles
+nunca emitiu FAQ nem related. `## Fontes`/`## Sources` fica **sempre** no corpo: nenhum layout
+renderiza fonte.
 
 ---
 
@@ -181,7 +194,5 @@ curl -s -X POST -H "authorization: Bearer $CRON_SECRET" -H "content-type: applic
 
 1. **Rollout dias 2–4** (5 projetos) — um par por dia, com a checagem do dia seguinte.
 2. **Capa própria do post do tapepro** (pipeline Gemini, seção 1.2).
-3. **Renderizador `mdx` duplica hero/FAQ/related** quando o layout do projeto já os renderiza
-   (seção 1.3) — corrigir antes de ligar os outros três projetos `mdx`.
-4. **Fechar a tarefa 2** só quando os 10 estiverem ligados e um run inteiro terminar sem `llm-rate` —
+3. **Fechar a tarefa 2** só quando os 10 estiverem ligados e um run inteiro terminar sem `llm-rate` —
    ou com a decisão explícita de quantos por dia cabem na cota.
