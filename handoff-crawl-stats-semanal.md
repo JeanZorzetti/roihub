@@ -155,7 +155,33 @@ Destino `docs/Crawl-stats/<host>/<base>/` (CSVs na raiz da pasta, como as atuais
 reaproveitar a taxonomia `After/`, `Nimb/`, `Roi/`… — ela não significa nada para o código, que só
 lê o nome da pasta. **Não renomeie as pastas antigas**: elas são o histórico anterior a 10/07.
 
-### 3.4 Falhar ruidoso, nunca commitar lixo
+### 3.4 ⚠️ O menu do Export escorrega — clicar depressa acerta o item errado
+
+Falha que custou 3 runs: `aftercare` e `reviewshield` davam **timeout esperando o download**, sempre;
+os outros 8 passavam, sempre. Não era seletor (existe **um** `menuitem` "Download CSV") nem sessão.
+
+O menu abre e **desce ~40px** quando o resto da página chega — as duas propriedades que falhavam são
+justamente as que exibem a faixa "Host had problems in the past", que empurra o topo mais tarde. O
+clique sai durante o movimento e acerta o item de cima, **"Download Excel"**, que aqui não baixa
+nada. O Playwright não acusa: para ele o clique foi entregue.
+
+O `stable` nativo do Playwright não cobre isso — ele exige caixa igual por 2 frames (~33ms), e o
+shift é discreto, não animação. A espera tem que ser explícita:
+
+```js
+await settled(csv);          // mesma boundingBox em duas medições com 250ms de intervalo
+await csv.click();
+```
+
+Dois detalhes que custam tempo se descobertos de novo:
+
+- **`dispatchEvent("click")` não funciona** neste menu (tentado como "imune a coordenada"): o item
+  ignora click sintético e o download nunca sai. Tem que ser clique real.
+- O sintoma engana no diagnóstico: qualquer `console.log(await csv.boundingBox())` antes do clique
+  **faz o bug sumir**, porque a medição dá tempo do menu assentar. Um diagnóstico instrumentado
+  passa enquanto o script real falha.
+
+### 3.5 Falhar ruidoso, nunca commitar lixo
 
 Duas funções puras, e são elas que o teste cobre:
 
@@ -169,7 +195,7 @@ bons e sair diferente de zero com a lista dos que falharam — silêncio aqui vi
 velho outra vez. Salvar `screenshot` do erro em `%TEMP%` ajuda a diferenciar "sessão expirou" de
 "seletor mudou" (são as duas falhas prováveis, e o tratamento é oposto).
 
-### 3.5 Teste
+### 3.6 Teste
 
 `test/crawl-fetch.test.mjs`, no `npm test`. Sem browser, sem fixture pesada: `destDirFor` com nome
 bom e nome ruim, e `validateExport` num diretório temporário com um CSV de resumo válido e um vazio.
@@ -258,11 +284,11 @@ export falhado, não site parado — confira a saída do script antes de investi
 - [x] Run sem sessão exercitado em 25/07: lista as 10 propriedades, abre o Chrome por spawn, conecta
       por CDP, detecta a tela de login, falha nas 10 com "sessão expirou", `exit 1`, **nada commitado**
 - [x] Caminho de download provado isolado (CDP → `waitForEvent` → `saveAs`), sem depender de login
-- [ ] **`node scripts/fetch-crawl-stats.mjs --login`** — só o Jean pode fazer (2FA). Abre um Chrome
-      **comum** no Search Console: logar e **fechar a janela** (é o fechamento que devolve o
-      terminal). Perfil vai para `%LOCALAPPDATA%\roihub-gsc-profile`, fora do repo
-- [ ] Primeiro run de verdade: 9–10 pastas novas em `docs/Crawl-stats/`, commit automático,
-      `/infra` com as datas da semana. **É aqui que o seletor do botão Export se prova** — se falhar,
-      o screenshot no `%TEMP%\crawl-*` mostra em que tela ele parou
+- [x] `--login` feito pelo Jean em 25/07 (Chrome comum, perfil em `%LOCALAPPDATA%\roihub-gsc-profile`)
+- [x] **Primeiro run de verdade concluído: 10/10 exports de `2026-07-25` no repo**, commitados e
+      pushados pelo próprio robô (`b4c17a0` com 8, `66d5feb` com os 2 que faltavam). O `context`
+      deixou de ser a pasta vazia — a aba passa a ter as 10 propriedades
 - [ ] Task Scheduler domingo 10:00 BRT + "run if missed" marcado
+- [ ] Re-run seletivo quando uma propriedade falhar: `node scripts/fetch-crawl-stats.mjs aftercare`
+      (argumento solto filtra por substring; sem argumento roda as 10)
 - [ ] Trocar o texto "export manual semanal" no rodapé de `app/infra/page.tsx:123`

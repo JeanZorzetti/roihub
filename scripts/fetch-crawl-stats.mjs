@@ -87,20 +87,48 @@ function unzip(zip, dir) {
   ], { stdio: "pipe" });
 }
 
+/**
+ * Espera a caixa do elemento repetir entre duas medições.
+ * O "stable" nativo do Playwright olha 2 frames (~33ms) e não pega layout shift discreto: o menu
+ * do Export desce ~40px quando o resto da página chega, e o clique acerta o item de cima —
+ * "Download Excel", que não baixa nada e não devolve erro nenhum. Foi assim que aftercare e
+ * reviewshield falharam 3 runs seguidos enquanto os outros 8 passavam.
+ */
+async function settled(locator, tries = 20, gap = 250) {
+  let prev = null;
+  for (let i = 0; i < tries; i++) {
+    const box = await locator.boundingBox();
+    if (prev && box && box.y === prev.y && box.x === prev.x) return;
+    prev = box;
+    await locator.page().waitForTimeout(gap);
+  }
+}
+
 async function download(page, property, tmp) {
   // hl=en trava o texto do botão independente do idioma da conta; os CSVs de dentro podem seguir
   // em pt-BR (o readCsv da aba casa os dois).
   const url = `https://search.google.com/search-console/settings/crawl-stats?resource_id=${encodeURIComponent(property)}&hl=en`;
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT });
   if (/accounts\.google\.com/.test(page.url())) throw new Error("sessão expirou — rode com --login");
+  // Sem esperar a página assentar, o menu aberto ainda desce junto com o layout e o clique acerta o
+  // item de cima ("Download Excel", que não baixa nada aqui): foi o que derrubou aftercare e
+  // reviewshield em 25/07 — os dois têm a faixa "Host had problems in the past" empurrando o topo.
+  await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => {});
 
   const [file] = await Promise.all([
     page.waitForEvent("download", { timeout: NAV_TIMEOUT }),
     (async () => {
       await page.getByRole("button", { name: /export/i }).first().click({ timeout: NAV_TIMEOUT });
-      await page.getByRole("menuitem", { name: /csv/i }).first().click();
+      const csv = page.getByRole("menuitem", { name: /csv/i }).first();
+      await csv.waitFor({ state: "visible", timeout: 15_000 });
+      await settled(csv);
+      // Click de verdade: o item ignora click sintético (dispatchEvent não dispara o download).
+      await csv.click({ timeout: 15_000 });
     })(),
   ]);
+
+  // O export abre uma aba, que fica órfã depois do download — sem isso são 10 abas ao fim do run.
+  for (const extra of page.context().pages()) if (extra !== page) await extra.close().catch(() => {});
 
   const dest = destDirFor(file.suggestedFilename(), REPO);
   if (!dest) throw new Error(`nome fora do padrão: ${file.suggestedFilename()} — a UI mudou`);
@@ -128,8 +156,10 @@ async function main() {
     return 0;
   }
 
-  const props = await properties();
-  console.log(`${props.length} propriedades no Search Console`);
+  // Argumento solto filtra por substring: re-rodar só quem falhou não precisa repetir os 10.
+  const only = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+  const props = (await properties()).filter((p) => only.length === 0 || only.some((s) => p.includes(s)));
+  console.log(`${props.length} propriedades no Search Console${only.length ? ` (filtro: ${only.join(", ")})` : ""}`);
 
   const tmp = mkdtempSync(path.join(tmpdir(), "crawl-"));
   // Janela visível de propósito: headless com sessão Google é o que costuma pedir re-auth, e o
