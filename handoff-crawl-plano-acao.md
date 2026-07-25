@@ -182,18 +182,32 @@ problema de crawl e não se resolve nesta frente** — fica para o F3/F4 do `han
 
 ## Ordem de execução
 
-| # | ação | onde | esforço | ganho |
-|---|---|---|---|---|
-| 1 | decidir destino dos 14 subdomínios + A record/wildcard + 301 | DNS + EasyPanel | 1–2h | **+43 pp de OK no roilabs** |
-| 2 | truncar `lastmod` futuro | context-keeper (sitemap) | 15 min | destrava o crawl de um site parado |
-| 3 | `/fundadores`: página ou fora do sitemap | `crm-project` | 10 min | tira o 404 priority 0.9 |
-| 4 | `Disallow: /_next/static/chunks/` | estetiacrm | 10 min | libera ~40% do budget |
-| 5 | `href="/carrinho"` → `/carrinho/` | site-goiania | 2 min | 1 redirect a menos |
-| 6 | 404s reais do GSC → 301 | estetiacrm, sirius | 1h manual | fecha o resto |
+| # | ação | onde | esforço | ganho | status |
+|---|---|---|---|---|---|
+| 1 | decidir destino dos 14 subdomínios + A record/wildcard + 301 | DNS + EasyPanel | 1–2h | **+43 pp de OK no roilabs** | ⛔ trancado no Jean |
+| 2 | truncar `lastmod` futuro | context-keeper (sitemap) | 15 min | destrava o crawl de um site parado | ✅ `f2a13db` |
+| 3 | `/fundadores`: página ou fora do sitemap | `crm-project` | 10 min | tira o 404 priority 0.9 | ✅ `94ade14` |
+| 4 | `Disallow: /_next/static/chunks/` | estetiacrm (`Doc-CRM/`) | 10 min | libera ~40% do budget | ✅ `54b06bc` |
+| 5 | `href="/carrinho"` → `/carrinho/` | site-goiania | 2 min | 1 redirect a menos | ✅ `e6bb47c` |
+| 6 | 404s reais do GSC → 301 | estetiacrm, sirius | 1h manual | fecha o resto | ⛔ manual no GSC |
 
-Itens 2–5 são de 1 linha cada e podem sair hoje. O item 1 depende de uma decisão do Jean
-(quais subdomínios são aposentadoria e quais deveriam estar no ar) — sem essa resposta, qualquer
-DNS que eu criasse seria chute.
+**Executado em 25/07 — 2 a 5, todos em `main`.** O que mudou em relação ao previsto:
+
+- **#2 não ficou no sitemap.** As datas vazam para quatro consumidores (sitemap, JSON-LD `Article`,
+  OG meta e o cabeçalho do artigo), então o clamp foi para `lib/content.ts`, na leitura do
+  frontmatter — clampar só o sitemap deixaria três sinais de data futura no ar. Não existe fila de
+  publicação agendada no repo (só um flag `draft`), então as datas estavam simplesmente erradas:
+  clampar é o fix, não gatear o conteúdo. 4 testes em `tests/content-clamp-dates.test.ts`, verdes.
+- **#3 saiu do sitemap e do `routing.ts`.** Nada linka para a rota (`grep` em todo o `app/`), então
+  a remoção é inerte. O fork do estetiacrm não herdou a rota fantasma — conferido.
+- **#5 eram 6 ocorrências, não 1.** Além da âncora da `orcamento.astro:84`, os tokens
+  compartilháveis (`/carrinho?c=<token>` em `carrinho.astro` ×3, `favoritos.astro`, `orcamento.astro`)
+  tinham o mesmo defeito, e esses são piores: vão colados no WhatsApp e cobram o hop do visitante,
+  não só do Googlebot.
+
+O item 1 continua dependendo de uma decisão do Jean (quais subdomínios são aposentadoria e quais
+deveriam estar no ar) — sem essa resposta, qualquer DNS que eu criasse seria chute. **É o único item
+que muda o ranking, e é o único que não pode ser feito sem ele.**
 
 ---
 
