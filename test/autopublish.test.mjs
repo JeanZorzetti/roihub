@@ -547,36 +547,19 @@ test("middleware isola Bearer do cron sem enfraquecer Basic Auth", async () => {
   });
 });
 
-test("workflow agenda 08:00 BRT com dispatch dry-run seguro", () => {
+test("workflow agenda a manhã BRT fora da hora cheia, com dispatch dry-run seguro", () => {
   const workflow = readFileSync(
     new URL("../.github/workflows/seo-autopublish.yml", import.meta.url),
     "utf8"
   ).replaceAll("\r\n", "\n");
-  assert.equal(workflow, `name: SEO autopublish
-
-on:
-  schedule:
-    - cron: "0 11 * * *"
-  workflow_dispatch:
-    inputs:
-      dry_run:
-        type: boolean
-        default: true
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: node scripts/run-autopublish.mjs
-        env:
-          HUB_URL: \${{ secrets.HUB_URL }}
-          HUB_CRON_SECRET: \${{ secrets.HUB_CRON_SECRET }}
-          DRY_RUN: \${{ inputs.dry_run || 'false' }}
-`);
+  // Comparar o arquivo inteiro quebrava a cada comentário; o que precisa valer é isto.
+  const [minute, hour] = String(workflow.match(/- cron: "([^"]+)"/)?.[1]).split(" ");
+  assert.equal(hour, "11", "11 UTC = manhã em São Paulo");
+  // Na hora cheia o schedule do Actions atrasa e chega a não criar o run (25/07).
+  assert.notEqual(minute, "0");
+  assert.match(workflow, /dry_run:\n {8}type: boolean\n {8}default: true/);
+  assert.match(workflow, /DRY_RUN: \$\{\{ inputs\.dry_run \|\| 'false' \}\}/);
+  assert.match(workflow, /- run: node scripts\/run-autopublish\.mjs/);
 });
 
 test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
@@ -1634,7 +1617,10 @@ test("claude-cli exige token e classifica a falha sem repassar a mensagem", asyn
     ["429 Too Many Requests", "llm-rate"],
     ["Unauthorized: run claude setup-token", "llm-auth"],
     ["Invalid token for secret-account@example.com", "llm-auth"],
-    ["ENOENT spawn claude at /secret/path", "llm-output"],
+    // Problema de linha de comando, não do modelo: imagem com CLI velho rejeitando
+    // flag nova era indistinguível de "o modelo escreveu bobagem".
+    ["ENOENT spawn claude at /secret/path", "llm-cli"],
+    ["error: unknown option '--effort'", "llm-cli"],
     // Conta real: organização com Claude Code desabilitado, sem palavra de auth.
     ["Your organization has disabled Claude subscription access for Claude Code", "llm-auth"],
   ]) {
@@ -1642,6 +1628,14 @@ test("claude-cli exige token e classifica a falha sem repassar a mensagem", asyn
     assert.equal(error.message, code);
     assert.ok(!error.message.includes("secret"));
   }
+
+  // stdout que não é JSON é falha do processo, não da resposta do modelo.
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKENS: "a" }, async () => {
+    await assert.rejects(
+      () => claudeRun("prompt", { spawnImpl: async () => "not json at all" }),
+      /llm-parse/
+    );
+  });
 
   // O status do CLI decide sozinho, mesmo com mensagem irreconhecível.
   assert.equal(claudeError("whatever", 403).message, "llm-auth");

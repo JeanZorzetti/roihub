@@ -152,6 +152,12 @@ export function claudeError(message: string, status?: unknown) {
   if (/unauthor|authentication|not logged in|invalid token|oauth|forbidden|subscription access|disabled/.test(text)) {
     return new Error("llm-auth");
   }
+  // O CLI é instalado sem pin, então uma imagem antiga rejeita flag nova e o erro
+  // vinha indistinguível de "o modelo escreveu bobagem". A mensagem nunca é repassada:
+  // só o código, que basta para saber que o problema é a linha de comando.
+  if (/unknown option|unrecognized option|invalid option|unknown argument|command not found|enoent/.test(text)) {
+    return new Error("llm-cli");
+  }
   return new Error("llm-output");
 }
 
@@ -179,7 +185,7 @@ function spawnClaude(prompt: string, args: string[], timeoutMs: number, token: s
     let stderr = "";
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
-      reject(new Error("llm-output"));
+      reject(new Error("llm-timeout"));
     }, timeoutMs);
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
@@ -187,7 +193,7 @@ function spawnClaude(prompt: string, args: string[], timeoutMs: number, token: s
     child.stderr.on("data", (chunk) => { stderr += chunk; });
     child.on("error", () => {
       clearTimeout(timer);
-      reject(new Error("llm-output"));
+      reject(new Error("llm-cli"));
     });
     child.on("close", (code) => {
       clearTimeout(timer);
@@ -257,7 +263,8 @@ export const claudeRun: ClaudeRun = async (prompt, {
     try {
       payload = JSON.parse(raw) as JsonRecord;
     } catch {
-      throw new Error("llm-output");
+      // stdout do CLI não é JSON: falha do processo, não do modelo.
+      throw new Error("llm-parse");
     }
     if (payload?.is_error || typeof payload?.result !== "string") {
       lastError = claudeError(
