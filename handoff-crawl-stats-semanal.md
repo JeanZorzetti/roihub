@@ -8,6 +8,10 @@ manda no horário (§4).
 hoje é baixado à mão. Descartadas: parsear log do Googlebot na VPS, URL Inspection API e
 semi-manual assistido — o porquê está na §2.
 
+**Atualização 25/07:** o robô não abastece mais só o `/infra`. Depois dos downloads ele roda o
+`ml/analyze.py` e commita `data/insights.json` junto — o `/insights` lê os mesmos CSVs, então as
+duas abas andam no mesmo run e no mesmo commit. Detalhes e gotchas: `handoff-insights-automatico.md`.
+
 ---
 
 ## 1. O que existe hoje

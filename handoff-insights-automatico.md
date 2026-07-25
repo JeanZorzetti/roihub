@@ -46,7 +46,7 @@ dentro de um único processo — o robô de domingo.
 
 ---
 
-## 2. A mudança
+## 2. A mudança — FEITA em 25/07 (`dc1a2ab`)
 
 Em `scripts/fetch-crawl-stats.mjs`, **depois do loop de download e antes do `git add`**:
 
@@ -70,8 +70,9 @@ absoluto e **fora do OneDrive** de propósito (venv dentro do OneDrive corrompe,
 
 Três decisões embutidas, todas com motivo:
 
-1. **Só roda se algum export entrou** (`ok.length > 0`). Sem export novo, o insights sairia igual e
-   o commit seria vazio.
+1. **Só roda se algum export entrou.** Na implementação o `if (ok.length > 0)` acabou não existindo:
+   o `if (ok.length === 0) return 1` que já estava logo acima garante a mesma coisa, e uma segunda
+   guarda para a mesma condição só dá o que manter em dobro.
 2. **Falha do analyze não aborta o commit dos exports.** São dados de níveis diferentes: crawl stats
    é fonte, insights é derivado. Perder o derivado por uma semana custa pouco; perder o export custa
    um buraco permanente na série (o GSC só oferece os últimos 90 dias).
@@ -125,11 +126,17 @@ Se o analyze falhar sozinho, o run tem que terminar com os exports commitados, `
 ## 5. Checklist
 
 - [x] `data/insights.json` regenerado em 25/07 e commitado (10 projetos, 38s)
-- [ ] `scripts/fetch-crawl-stats.mjs` chamando o `analyze.py` e incluindo `data/insights.json` no add
-- [ ] `ROIHUB_PYTHON` documentado no topo do script (com o default do venv)
-- [ ] Mensagem de commit do robô refletindo as duas abas
-- [ ] Run filtrado de ponta a ponta: um commit com `docs/` **e** `data/insights.json`
-- [ ] `npm test` verde (o robô não tem teste de browser; o que muda aqui é orquestração)
+- [x] `scripts/fetch-crawl-stats.mjs` chamando o `analyze.py` e incluindo `data/insights.json` no add
+- [x] `ROIHUB_PYTHON` documentado no topo do script (com o default do venv)
+- [x] Mensagem de commit do robô refletindo as duas abas — `crawl stats + insights` quando o analyze
+      rodou, `crawl stats` sozinho quando ele falhou (a mensagem não pode prometer o que não entrou)
+- [x] Run filtrado de ponta a ponta (`goiania`, 25/07): download ok, analyze rodou dentro do mesmo
+      processo, `git add` com os dois caminhos. **Não gerou commit** — o export e o insights de hoje
+      já estavam no repo (rodados à mão de manhã), então o `git status` saiu vazio, que é
+      exatamente o galho "exports idênticos". O caminho de commit em si é o mesmo de antes; o que
+      mudou foi a lista de paths. Quem quiser ver os dois arquivos num commit só: domingo que vem
+- [x] `npm test` verde — 121 testes, 0 falhas (o robô não tem teste de browser; o que muda aqui é
+      orquestração)
 
 ---
 
