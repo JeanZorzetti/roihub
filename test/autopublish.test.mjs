@@ -581,6 +581,23 @@ test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
   assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T03:00:00.000Z")), "2026-07-24");
 });
 
+test("a fila gira um projeto por dia e continua sendo os mesmos dez", async () => {
+  const { PROJECT_SLUGS, projectQueue } = await import("../scripts/run-autopublish.mjs");
+  const dia1 = projectQueue("2026-07-25");
+  const dia2 = projectQueue("2026-07-26");
+
+  assert.deepEqual([...dia1].sort(), [...PROJECT_SLUGS].sort());
+  assert.notDeepEqual(dia1, dia2);
+  assert.equal(dia2[0], dia1[1]);
+  assert.equal(dia2.at(-1), dia1[0]);
+  // Em dez dias todo projeto passa por todas as dez posições — ninguém é sempre o último.
+  const ultimos = new Set(
+    Array.from({ length: 10 }, (_, i) => projectQueue(`2026-07-${String(10 + i).padStart(2, "0")}`).at(-1))
+  );
+  assert.equal(ultimos.size, PROJECT_SLUGS.length);
+  assert.deepEqual(projectQueue("nao-e-data"), PROJECT_SLUGS);
+});
+
 test("runner rejeita configuração ausente ou DRY_RUN inválido sem chamar nem registrar", async () => {
   const { runAutopublish } = await import("../scripts/run-autopublish.mjs");
   for (const env of [
@@ -632,8 +649,9 @@ test("runner dry-run publica dez resumos sem verificar nem esperar", async () =>
   });
 
   assert.equal(exitCode, 0);
+  const { projectQueue } = await import("../scripts/run-autopublish.mjs");
   assert.equal(requests.length, PROJECT_SLUGS.length);
-  assert.deepEqual(requests.map(({ body }) => body.project), PROJECT_SLUGS);
+  assert.deepEqual(requests.map(({ body }) => body.project), projectQueue("2026-07-23"));
   for (const { url, init, body } of requests) {
     assert.equal(url, "https://hub.example/api/seo/autopublish");
     assert.equal(init.method, "POST");

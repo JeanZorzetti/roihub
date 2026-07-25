@@ -15,6 +15,16 @@ export function runDateInSaoPaulo(now = new Date()) {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+// A ordem fixa fazia sempre o mesmo projeto (o último, hoje `aftercare`) esbarrar no rate
+// limit das contas. Girar a fila um passo por dia distribui o prejuízo: em 10 dias cada
+// projeto passa por todas as posições.
+export function projectQueue(runDate, slugs = PROJECT_SLUGS) {
+  const day = Date.parse(`${runDate}T00:00:00.000Z`) / 86_400_000;
+  if (!Number.isFinite(day) || !slugs.length) return [...slugs];
+  const offset = ((Math.floor(day) % slugs.length) + slugs.length) % slugs.length;
+  return [...slugs.slice(offset), ...slugs.slice(0, offset)];
+}
+
 const KNOWN_STATUSES = new Set([
   "dry-run",
   "published",
@@ -109,7 +119,7 @@ export async function runAutopublish({
   const dryRun = dryRunValue === "true";
   const runDate = runDateInSaoPaulo(now);
   const published = [];
-  for (const project of PROJECT_SLUGS) {
+  for (const project of projectQueue(runDate)) {
     const result = await requestPhase(endpoint, secret, {
       phase: "publish",
       project,

@@ -105,14 +105,17 @@ e tabela markdown em `<strong>`, `<h3>`, `<ul>` e `<table>` — senão o asteris
 
 ## 6. Bugs abertos que NÃO são polimento (continuam abertos)
 
-1. **`verify` fecha em `http-500`.** No run de 25/07 as três publicações passaram 4 rodadas em `pending` e a
-   5ª voltou `http-500` — com os três artigos **no ar respondendo 200**. O `publish` está certo e o `verify`
-   está mentindo. Investigar `phase: "verify"` em `lib/autopublish.ts` e `deploymentState`.
+1. ~~**`verify` fecha em `http-500`.**~~ **RESOLVIDO 25/07 (`ad10da1`).** A causa não era o 500: o gate lia
+   `pending` eterno (nenhum repo publica commit status) como deploy falhado e chamava `revertPublication`;
+   o 500 era o revert estourando. Agora só `failure`/`error` reverte. Ver `handoff-correcao-e-rollout.md`.
 2. **O proxy corta o cliente em ~300s.** O `context` levou 362s: o runner recebeu `request-failed` e reportou
    falha, **enquanto o hub terminou e commitou normalmente**. A rota é `maxDuration = 900` e o spawn é 600s,
    mas o proxy do EasyPanel não acompanha. Efeito: linha fica `running` órfã e o log do Actions mente.
 3. **`llm-output` foi dividido** em `llm-cli` / `llm-parse` / `llm-timeout` / `llm-output`. Nenhum apareceu
    ainda em produção.
+4. **NOVO 25/07 — o renderizador `mdx` duplica hero image, FAQ e "Related guides"** nos projetos cujo layout
+   já renderiza esses três a partir do frontmatter (foi o caso do `context`). Corrigido no artigo, não no
+   renderizador: conferir o layout de `polarisia`, `reviewshield` e `aftercare` antes de ligá-los.
 
 ---
 
