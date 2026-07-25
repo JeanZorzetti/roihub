@@ -53,6 +53,7 @@ const EDITORIAL_DRAFT_SCHEMA = {
     primaryKeyword: { type: "string" },
     cluster: { type: "string" },
     imageScene: { type: "string" },
+    imageAlt: { type: "string" },
     bluf: { type: "string" },
     sections: {
       type: "array",
@@ -99,6 +100,7 @@ const EDITORIAL_DRAFT_SCHEMA = {
     "primaryKeyword",
     "cluster",
     "imageScene",
+    "imageAlt",
     "bluf",
     "sections",
     "faqs",
@@ -338,8 +340,15 @@ export async function researchAndDraft(
       ? [`EDITORIAL FOCUS for this project: ${editorialFocus.trim()}`]
       : []),
     "Use the complete inventory to decide whether the intent is new, the same as an existing entry to update, or uncertain and therefore blocked. A same intent must never be new, an update must target an existing inventory path, and uncertainty must block.",
-    "Never invent a source: every entry in sources must be a page you actually retrieved, with an https URL and an ISO publication date. The bluf must have between 40 and 60 words.",
-    "imageScene is searched verbatim in a stock photo bank, so describe a photographable scene in 3 to 6 English words with concrete objects only: no product or brand names, no jargon, no abstractions. The keyword is not a scene, and reusing it picks the wrong homonym (\"windsurf\" returns sailboats, not an IDE).",
+    "Never invent a source: every entry in sources must be a page you actually retrieved, with an https URL and an ISO publication date. The bluf must have between 40 and 60 words. Never cite a direct competitor of the project — a company that sells the same product or service — as a source; cite standards bodies, manufacturers of inputs, trade press, research and public data instead.",
+    // O artigo é escrito em prosa corrida e sai sem nenhum elemento escaneável: nada de
+    // negrito, tabela, H3 ou seção com profundidade. As regras abaixo são o padrão
+    // medido nos artigos escritos à mão de cada repo.
+    "Write in the project language. The title must contain the primary keyword literally and say what the reader gets (\"Fita gomada ou fita BOPP: qual usar em cada caixa\"), never a poetic phrase. No section heading may repeat the title.",
+    "Structure: 4 to 6 H2 sections, each with 4 to 6 paragraphs. Inside a section, a paragraph that starts with \"### \" becomes a sub-heading — use one or two per section to break it up. Mark the decisive term of a paragraph with **bold**, once or twice per paragraph, never a whole sentence. A paragraph may also be a bullet list, one \"- \" item per line.",
+    "When the article compares two options, one paragraph must be a GitHub-flavored markdown table (header row, \"| --- |\" separator, one row per criterion) comparing them side by side. Never write the comparison only as prose.",
+    "imageScene is searched verbatim in a stock photo bank, so describe a photographable scene in 3 to 6 English words with concrete objects only: no product or brand names, no jargon, no abstractions, no generic counted nouns (\"two different types\" returned a plate of food). The keyword is not a scene, and reusing it picks the wrong homonym (\"windsurf\" returns sailboats, not an IDE).",
+    "imageAlt describes that same photo for a reader who cannot see it, in the project language, in one concrete sentence.",
     "Do not copy the candidate heuristic: decide from the inventory itself.",
     schemaInstruction(DRAFT_SCHEMA),
     `CONTEXT:\n${JSON.stringify(context)}`,
@@ -458,6 +467,15 @@ function imageIntent(value: unknown) {
   return String(record?.imageScene ?? record?.primaryKeyword ?? record?.title ?? "").trim();
 }
 
+// O alt do Unsplash vem em inglês e ia cru para site pt-BR ("person holding cardboard
+// box on table"). O modelo descreve a foto no idioma do artigo; o do banco é plano B.
+function imageAlt(value: unknown, fallback: string) {
+  const alt = typeof value === "object" && value
+    ? String((value as JsonRecord).imageAlt ?? "").trim()
+    : "";
+  return alt || fallback;
+}
+
 // A pauta é long-tail de propósito, e o Unsplash não tem foto para termo de nicho:
 // "windsurf ai explained" devolve zero resultados e bloqueava a publicação inteira.
 // Degrada até um termo que sempre existe, em vez de desistir na primeira busca.
@@ -544,7 +562,7 @@ export async function pickImage(
     if (!downloaded.ok) throw new Error("unsplash-output");
     const picked = {
       src: trustedImage.href,
-      alt: String(match.alt_description ?? match.description ?? intent),
+      alt: imageAlt(intentValue, String(match.alt_description ?? match.description ?? intent)),
       credit: `Photo by ${String(user?.name ?? "Unsplash contributor")} on Unsplash`,
     };
     // embed: schema que valida a imagem como asset local (Astro image()) não aceita

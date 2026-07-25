@@ -1,7 +1,7 @@
 # Handoff — Polimento editorial do autopublishing
 
-**Criado: 2026-07-25, 12:30 BRT.** Sessão anterior fechou o gate dos canários; esta trata de **qualidade do
-artigo**, não de encanamento.
+**Criado: 2026-07-25, 12:30 BRT. Atualizado: 2026-07-25, sessão do polimento.**
+Trata de **qualidade do artigo**, não de encanamento.
 
 Leia antes: `handoff-autopublish.md` (como o robô funciona, guardrails, operação da UI).
 
@@ -9,7 +9,7 @@ Leia antes: `handoff-autopublish.md` (como o robô funciona, guardrails, operaç
 
 ## 1. Onde paramos
 
-O robô publica de ponta a ponta. Gate dos canários **3/3 fechado hoje**:
+O robô publica de ponta a ponta. Gate dos canários **3/3 fechado em 25/07**:
 
 | Projeto | id | Status | Arquivo | Commit | No ar |
 |---|---|---|---|---|---|
@@ -19,16 +19,18 @@ O robô publica de ponta a ponta. Gate dos canários **3/3 fechado hoje**:
 
 Run: <https://github.com/JeanZorzetti/roihub/actions/runs/30157273741> · modelo `claude-cli:sonnet` nos três.
 
-**Kill switch global ATIVO e os 3 canários ligados.** O cron roda de novo amanhã às **08:17 BRT** (mudou de
-08:00 porque na hora cheia o `schedule` do Actions não criou o run). Ou seja: **sem intervenção, amanhã
-saem mais 3 artigos no padrão atual.** Decidir logo se pausa até o polimento sair.
+**Kill switch global ATIVO e os 3 canários ligados.** O cron roda às **08:17 BRT** (mudou de 08:00 porque
+na hora cheia o `schedule` do Actions não criou o run).
+
+**Os 18 itens abaixo estão corrigidos em código** (`npm test` = 114 verdes, `tsc --noEmit` limpo). Os itens
+1–11 e 3b são determinísticos e valem já no próximo run. Os 12–18 e a imagem dependem do modelo obedecer ao
+prompt: **só o run de 26/07 diz se pegou**.
 
 ---
 
-## 2. O problema
+## 2. O problema (medição original)
 
-Os artigos novos não seguem o padrão dos antigos escritos à mão. Comparei um a um contra o artigo mais
-parecido de cada repo:
+Os artigos novos não seguiam o padrão dos escritos à mão. Comparação um a um:
 
 | Projeto | Novo | Referência antiga |
 |---|---|---|
@@ -37,93 +39,93 @@ parecido de cada repo:
 | `tapepro` | `fita-hot-melt-ou-fita-acrilica.mdx` | `fita-gomada-ou-fita-bopp.mdx` |
 
 Medindo `context` novo × antigo: **1120 palavras vs 1467 · 0 negritos vs 56 · 0 tabelas vs 6 · 8 itens de
-lista vs 29 · 0 H3 vs 5**. Não é opinião de estilo: o artigo novo é prosa corrida sem hierarquia nem
-elemento escaneável.
+lista vs 29 · 0 H3 vs 5**. Prosa corrida sem hierarquia nem elemento escaneável.
 
 ---
 
-## 3. Divergências — causa no renderizador (fix determinístico)
+## 3. Divergências de renderizador — CORRIGIDAS
 
-Todas em `lib/autopublish-render.mjs`. São as mais baratas e as que mais pesam.
+Tudo em `lib/autopublish-render.mjs`, salvo indicação.
 
-| # | Sintoma | Evidência | Onde |
-|---|---|---|---|
-| 1 | **Seção em inglês num site pt-BR**: `<h2>Sources</h2>` e `<h2>Frequently asked questions</h2>` no guia do goiânia | grep no arquivo publicado | `:213` e `:242` — string fixa, ignora `project.language` (o caminho mdx pt-BR usa "Fontes"/"Perguntas frequentes" em `:196`/`:199`) |
-| 2 | **Zero structured data** no guia novo | antigo monta `jsonLdNodes` com Article + FAQPage + Breadcrumb; novo não emite nada | renderizador `astro` |
-| 3 | **`descricao` cortada no meio da frase** ("…Veja como escolher a cola certa ") | frontmatter do tapepro | `:181` — `slice(0, 160)` cru, sem cortar em palavra |
-| 4 | **`readingTime: 7` fixo** em todo artigo mdx | `:151` | literal hardcoded |
-| 5 | **`tempoLeituraMin` subestimado** (3 min para 941 palavras) | tapepro | `:174` — conta só `bluf` + seções, ignora FAQ e fontes |
-| 6 | **`keywords` poluído com slug de artigo** (`cursor-vs-windsurf`, `best-ai-coding-agents-2026`) | frontmatter do context; o antigo só tem frases de busca | `:114` e `:147` — `unique([primaryKeyword, ...relatedSlugs])` |
-| 7 | **`cluster` virou slug** (`ai-agent-memory`) onde o antigo tem título (`Context Rot & AI Agent Memory`) | context | valor vem do modelo, normalizar no render |
-| 8 | **`heroImage.searchTerm` = keyword** | context | `:158` — deveria ser o `imageScene` novo |
-| 9 | **`resumo` repetido literalmente como 1º parágrafo** do corpo | tapepro | `:183` (frontmatter) + `:190` (corpo) emitem o mesmo `bluf` |
-| 10 | **`produtosRelacionados` e `segmentosRelacionados` ausentes** → artigo sem link para produto nem segmento | tapepro antigo tem os dois | `:170-172` assume enum fechado e desiste |
-| 11 | **`cenaImagem` não é gravado** no frontmatter do tapepro | o antigo tem, com descrição visual longa | o campo `imageScene` já existe no draft desde hoje, só não é escrito |
-
-### 3b. Integração — o guia novo é uma página órfã
-
-`site-goiania/src/data/guias.ts` **não tem entrada** para `como-escolher-fita-adesiva-para-embalagem`
-(`grep -c fita-adesiva` = 0). Consequência: não aparece no índice do guia, não recebe link interno e não
-entra no breadcrumb. O renderizador `astro` não mexe em registry — só `typescript-post` tem `registryPath`.
-Sem isso o artigo nasce sem nenhuma entrada de crawl a não ser o sitemap.
-
----
-
-## 4. Divergências — causa no prompt (fix de instrução)
-
-| # | Sintoma | Evidência |
+| # | Sintoma | Fix |
 |---|---|---|
-| 12 | **Título sem a keyword.** `titulo: "Duas colas, um mesmo filme"` — bonito e invisível na busca. O padrão da casa é `"Fita gomada ou fita BOPP: qual usar em cada caixa"` | tapepro |
-| 13 | **1º H2 repete o título** (`## Duas colas, um mesmo filme` logo abaixo do h1 idêntico) | tapepro |
-| 14 | **Nenhum negrito** em nenhum dos três. Os antigos marcam o termo-chave de cada parágrafo | os 3 |
-| 15 | **Nenhuma tabela comparativa.** Em artigo "X ou Y" o antigo sempre tem uma; o novo escreve a comparação em prosa ("Acrílica: cola à base de água, custo menor, …") | tapepro, goiania |
-| 16 | **Sem H3 dentro de H2** (só no bloco de FAQ). O antigo aninha `### BOPP: velocidade e custo` sob o H2 | os 3 |
-| 17 | **Seções rasas**: 2 parágrafos por H2, contra 4–6 dos antigos | os 3 |
-| 18 | **Links externos dofollow para concorrente direto** na seção de fontes (mnplast, supplypack — vendem fita) | goiania |
+| 1 | `<h2>Sources</h2>` e `<h2>Frequently asked questions</h2>` em site pt-BR | `LABELS` por `project.language`, aplicado em `markdownBody` e `htmlBody` — pegava markdown, mdx e astro de uma vez (o roilabs e o polarisia, pt-BR, tinham o mesmo bug e ninguém tinha notado) |
+| 2 | Zero structured data no guia do goiânia | `guideJsonLd()` emite Article + FAQPage + BreadcrumbList em `jsonLdNodes`, que o `Base.astro` funde no `@graph`. O guia também passa a declarar `ogImage` |
+| 3 | `descricao` cortada no meio da frase | `clamp()` corta na última palavra inteira e fecha com reticências, sempre ≤ 160 |
+| 4 | `readingTime: 7` fixo | `readingMinutes(draft)` |
+| 5 | `tempoLeituraMin` subestimado | mesmo `readingMinutes`, agora contando FAQ e fontes |
+| 6 | `keywords` com slug de artigo | `unique([primaryKeyword, clusterLabel])` — `relatedSlugs` saiu |
+| 7 | `cluster` virou slug (`ai-agent-memory`) | `clusterLabel()` normaliza slug → título. `clusterId` do catálogo nimblabs continua cru (é id, não rótulo) |
+| 8 | `heroImage.searchTerm` = keyword | passa a ser `imageScene` |
+| 9 | `resumo` repetido como 1º parágrafo | o bluf saiu do corpo do tapepro — o layout já imprime `resumo` acima |
+| 10 | `produtosRelacionados`/`segmentosRelacionados` vazios | `mentioned()` casa o texto do artigo com a taxonomia declarada em `autopublish-projects.mjs`; sem menção, entra o catálogo inteiro |
+| 11 | `cenaImagem` não gravado | escrito quando o draft traz `imageScene` |
 
-O prompt está em `lib/autopublish-clients.ts`, função `researchAndDraft`. Hoje ele exige BLUF de 40–60
-palavras e fontes reais, e não diz **nada** sobre título, tabela, ênfase, profundidade de seção ou hierarquia.
+### 3b. Registro do guia — CORRIGIDO
 
----
+`goiania` ganhou `registryPath: "site-goiania/src/data/guias.ts"` e `guiaUpsert()` insere/atualiza a entrada
+`{ slug, titulo, descricao }`. Sem isso o guia ficava **fora do sitemap, do llms.txt, do índice `/guia`, do
+OG dinâmico e de todo link interno** — pior do que o handoff original supunha: `sitemap.xml.ts` também sai
+de `guias.ts`, então nem o sitemap tinha o artigo.
 
-## 5. Imagem — parcialmente resolvido hoje
-
-O campo `imageScene` entrou hoje e **funcionou no `context`**: a busca deixou de ser a keyword ("windsurf"
-→ veleiro) e virou `laptop and coffee cup on desk` → foto de mesa com notebook. Mas:
-
-- **`tapepro` recebeu foto de comida** — alt `"a table with two different types of food"`. A cena gerada
-  provavelmente foi genérica demais ("two different types…"), e o 1º resultado do Unsplash ganhou.
-- **O `alt` é o alt do Unsplash, em inglês, em site pt-BR** ("person holding cardboard box on table" no
-  goiânia). Os artigos antigos têm alt descritivo em português escrito pelo autor.
-  Fica em `lib/autopublish-clients.ts`, `pickImage` → `alt: match.alt_description`.
-
-Saída provável: o modelo passar a gerar também o **alt em pt-BR**, e o `imageScene` ganhar regra de
-especificidade (substantivo concreto + contexto, proibido termo abstrato ou contável genérico).
+⚠️ **`produtos`/`segmentos` do tapepro são cópia do repo** (`src/lib/produtos.ts` é enum fechado no zod:
+valor inventado quebra o build inteiro). Catálogo mudou lá? Atualizar `autopublish-projects.mjs` junto.
 
 ---
 
-## 6. Bugs abertos que NÃO são polimento
+## 4. Divergências de prompt — CORRIGIDAS, resultado a verificar
 
-1. **`verify` fecha em `http-500`.** No run de hoje as três publicações passaram 4 rodadas em `pending` e
-   a 5ª voltou `http-500` — com os três artigos **no ar respondendo 200**. O `publish` está certo e o
-   `verify` está mentindo. Investigar `phase: "verify"` em `lib/autopublish.ts` e `deploymentState`.
-2. **O proxy corta o cliente em ~300s.** O `context` levou 362s (11:43:40 → 11:49:42): o runner recebeu
-   `request-failed` e reportou falha, **enquanto o hub terminou e commitou normalmente**. A rota é
-   `maxDuration = 900` e o spawn é 600s, mas o proxy do EasyPanel não acompanha. Efeito colateral: linha
-   fica `running` órfã por alguns minutos e o log do Actions mente sobre o resultado.
-3. **`llm-output` foi dividido hoje** em `llm-cli` / `llm-parse` / `llm-timeout` / `llm-output` — se algo
-   falhar de novo, a linha do banco diz qual dos quatro. Nenhum deles apareceu ainda em produção.
+Prompt em `lib/autopublish-clients.ts`, `researchAndDraft`. Regras novas:
+
+| # | Sintoma | Regra adicionada |
+|---|---|---|
+| 12 | Título sem a keyword (`"Duas colas, um mesmo filme"`) | título contém a keyword literal e diz o que o leitor ganha; nada de frase poética |
+| 13 | 1º H2 repete o título | nenhum heading pode repetir o título |
+| 14 | Nenhum negrito | `**negrito**` no termo decisivo, 1–2 por parágrafo |
+| 15 | Nenhuma tabela comparativa | artigo que compara duas opções **precisa** de uma tabela markdown (GFM) |
+| 16 | Sem H3 dentro de H2 | parágrafo começando com `### ` vira sub-heading |
+| 17 | Seções rasas | 4–6 seções H2, 4–6 parágrafos cada |
+| 18 | Fonte dofollow para concorrente | proibido citar concorrente direto; citar norma, fabricante de insumo, imprensa setorial, pesquisa |
+
+**Como isso chega no HTML:** metade dos projetos é `.md`/`.mdx` (markdown nativo, todos com GFM), mas
+`goiania`, `sirius`, `fabrica` e `estetiacrm` renderizam HTML. `htmlBlock()` converte negrito, `### `, lista
+e tabela markdown em `<strong>`, `<h3>`, `<ul>` e `<table>` — senão o asterisco e o cano apareceriam na tela.
 
 ---
 
-## 7. Ordem sugerida
+## 5. Imagem — CORRIGIDA, resultado a verificar
 
-1. **Idioma + JSON-LD + registro no `guias.ts`** (itens 1, 2, 3b). O guia do goiânia hoje é uma página
-   órfã, sem schema e com título de seção em inglês — é o pior dos três e o de fix mais mecânico.
-2. **Frontmatter** (itens 3–11). Tudo string, tudo testável por unidade, sem depender do modelo.
-3. **Prompt** (itens 12–18). Mexer por último e num item de cada vez: cada mudança custa um run de ~4 min
-   por projeto e o resultado varia entre execuções.
-4. **Imagem** (seção 5).
+- `imageAlt` entrou no schema do draft: o modelo escreve o alt **no idioma do artigo**, e `pickImage` só cai
+  no `alt_description` do Unsplash se ele faltar. Acabou o `"person holding cardboard box on table"` em
+  site pt-BR.
+- `imageScene` ganhou regra de especificidade: proibido termo contável genérico — foi o `"two different
+  types…"` que trouxe **foto de comida** para o tapepro.
+
+---
+
+## 6. Bugs abertos que NÃO são polimento (continuam abertos)
+
+1. **`verify` fecha em `http-500`.** No run de 25/07 as três publicações passaram 4 rodadas em `pending` e a
+   5ª voltou `http-500` — com os três artigos **no ar respondendo 200**. O `publish` está certo e o `verify`
+   está mentindo. Investigar `phase: "verify"` em `lib/autopublish.ts` e `deploymentState`.
+2. **O proxy corta o cliente em ~300s.** O `context` levou 362s: o runner recebeu `request-failed` e reportou
+   falha, **enquanto o hub terminou e commitou normalmente**. A rota é `maxDuration = 900` e o spawn é 600s,
+   mas o proxy do EasyPanel não acompanha. Efeito: linha fica `running` órfã e o log do Actions mente.
+3. **`llm-output` foi dividido** em `llm-cli` / `llm-parse` / `llm-timeout` / `llm-output`. Nenhum apareceu
+   ainda em produção.
+
+---
+
+## 7. O que fazer no próximo run (26/07, 08:17 BRT)
+
+Sem intervenção, saem 3 artigos com todas as mudanças acima. **Verificar, nessa ordem:**
+
+1. `guias.ts` do roilabs recebeu a entrada do guia novo (é o fix de maior impacto e o único que mexe em
+   arquivo de outro repo — se `guiaUpsert` falhar, a linha do banco fecha em `render:catalog-format`).
+2. O artigo tem tabela, negrito e H3, e o título contém a keyword. Se o modelo ignorar, mexer **num item de
+   cada vez** (cada mudança custa ~4 min por projeto e o resultado varia entre execuções).
+3. A capa faz sentido e o alt está em português.
+4. Só então voltar aos bugs da seção 6.
 
 ---
 
@@ -131,7 +133,7 @@ especificidade (substantivo concreto + contexto, proibido termo abstrato ou cont
 
 ```bash
 # 1. o dia já tem linha? ela BLOQUEIA o retry (beginPublication faz ON CONFLICT DO NOTHING
-#    e autopublish.ts:215 devolve a linha existente sem reprocessar)
+#    e autopublish.ts devolve a linha existente sem reprocessar)
 #    apague SÓ linha sem commit_sha — com sha significa que já escreveu no repo do projeto
 delete from seo_publications where run_date='2026-07-25' and commit_sha is null;
 
@@ -154,3 +156,5 @@ gh run watch <id> --exit-status
 - Busca de capa por `imageScene` em vez da keyword.
 - Cron às 08:17 BRT (não use minuto :00 — o Actions engole o run).
 - Os quatro códigos de falha do claude-cli.
+- Idioma dos rótulos, JSON-LD do guia, registro em `guias.ts`, frontmatter (itens 1–11) — cobertos por teste
+  em `test/autopublish.test.mjs` ("Polimento editorial").

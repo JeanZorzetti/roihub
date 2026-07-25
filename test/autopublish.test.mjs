@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { PROJECTS, projectBySlug } from "../lib/autopublish-projects.mjs";
 import { authorized, missingEnv, rankCandidates, validateDraft, estimateCost, validTransition } from "../lib/autopublish-core.mjs";
-import { extractInventory, renderDraft, catalogUpsert, registryUpsert } from "../lib/autopublish-render.mjs";
+import { extractInventory, renderDraft, catalogUpsert, guiaUpsert, registryUpsert } from "../lib/autopublish-render.mjs";
 import { gscQueryPages, inspectUrl, mergeGscWindows } from "../lib/gsc.ts";
 import {
   claudeError,
@@ -1765,6 +1765,17 @@ test("imagem usa hotlink Unsplash com crédito e cai no 1o resultado sem match",
     assert.equal(scene.src, "https://images.unsplash.com/laptop");
     assert.deepEqual(scened, ["laptop screen with code editor"]);
 
+    // O alt do banco vem em inglês: em site pt-BR quem manda é o alt do artigo.
+    const alt = await pickImage(
+      {
+        primaryKeyword: "fita adesiva",
+        imageScene: "cardboard boxes on a workbench",
+        imageAlt: "Caixas de papelão lacradas sobre uma bancada de expedição",
+      },
+      withScene
+    );
+    assert.equal(alt.alt, "Caixas de papelão lacradas sobre uma bancada de expedição");
+
     // Se nem o termo genérico devolver nada, aí sim falha fechado.
     await assert.rejects(
       () => pickImage("nothing", async () => jsonResponse({ results: [] })),
@@ -2846,4 +2857,158 @@ test("ativar publicação limpa o motivo de pausa", () => {
     enabled: true,
     reason: null,
   });
+});
+
+// --- Polimento editorial (handoff-polimento-editorial.md) -------------------
+
+const guiasSource = `export const guias = [
+  {
+    slug: 'porcelanato-ou-ceramica',
+    titulo: 'Porcelanato ou cerâmica: qual escolher?',
+    descricao:
+      'Absorção, resistência e custo total.',
+  },
+] as const;
+
+export type Guia = (typeof guias)[number];
+`;
+
+const ptDraft = (overrides = {}) => ({
+  slug: "fita-hot-melt-ou-acrilica",
+  title: "Fita hot melt ou acrílica: qual usar em cada caixa",
+  description: "Duas colas diferentes para o mesmo filme de BOPP. Como cada uma segura a aba da caixa, onde cada uma falha no calor e no papelão reciclado, e o critério de escolha por operação.",
+  primaryKeyword: "fita hot melt ou acrilica",
+  cluster: "fitas-adesivas",
+  imageScene: "cardboard boxes sealed on a workbench",
+  imageAlt: "Caixas de papelão lacradas com fita transparente sobre uma bancada de expedição",
+  bluf: "Hot melt cola mais rápido e segura mais no curto prazo, enquanto a acrílica resiste melhor ao tempo, ao calor e à luz. A escolha depende do tempo que a caixa fica estocada e da temperatura do galpão, não do preço por rolo isolado do resto.",
+  sections: [
+    {
+      heading: "Como cada cola trabalha",
+      paragraphs: [
+        "A **hot melt** é resina fundida: gruda por pressão e atinge adesão máxima em segundos.",
+        "### Onde a acrílica ganha",
+        "A acrílica cura devagar e **mantém a adesão** depois de meses de estoque quente.",
+        "| Critério | Hot melt | Acrílica |\n| --- | --- | --- |\n| Adesão inicial | Alta | Média |\n| Estoque longo | Perde | Mantém |",
+        "- Giro rápido pede hot melt.\n- Estoque longo pede acrílica.",
+      ],
+    },
+  ],
+  faqs: [{ q: "Hot melt descola no calor?", a: "Acima de 50 °C a resina amolece e a aba cede." }],
+  relatedSlugs: [],
+  sources: [{ url: "https://example.org/adesivos", title: "Adesivos sensíveis à pressão", publisher: "Example", publishedAt: "2026-01-01" }],
+  image: { src: "https://images.unsplash.com/photo-y", alt: "Caixas lacradas", credit: "Photo by A on Unsplash" },
+  publishedAt: "2026-07-25",
+  ...overrides,
+});
+
+test("guia do goiânia sai em pt-BR, com structured data e registrado em guias.ts", async () => {
+  let committed;
+  const result = await publishProject("goiania", "2026-07-25", {
+    db: fakeDb(),
+    gscQueryPages: async () => [],
+    readRepository: async () => ({
+      headSha: "head0",
+      files: [{ path: "site-goiania/src/data/guias.ts", content: guiasSource }],
+    }),
+    researchAndDraft: async () => ({
+      action: "new",
+      targetPath: null,
+      overlap: "none",
+      reason: "Nenhum guia cobre essa intenção.",
+      draft: ptDraft(),
+      usage: { inputTokens: 10, outputTokens: 20, webSearchCalls: 1, generatedImage: false },
+    }),
+    pickImage: async () => ptDraft().image,
+    commitFiles: async (...args) => {
+      committed = args;
+      return { sha: "commit1", previousSha: "head0" };
+    },
+  });
+
+  assert.equal(result.status, "published");
+  assert.deepEqual(committed[2].map(({ path }) => path), [
+    "site-goiania/src/pages/guia/fita-hot-melt-ou-acrilica.astro",
+    "site-goiania/src/data/guias.ts",
+  ]);
+
+  const [guia, registro] = committed[2];
+  // 1. rótulo de seção no idioma do site
+  assert.ok(!guia.content.includes("Frequently asked questions"));
+  assert.ok(!guia.content.includes("<h2>Sources</h2>"));
+  assert.match(guia.content, /<h2>Fontes<\/h2>/);
+  assert.match(guia.content, /<h2>Perguntas frequentes<\/h2>/);
+  // 2. structured data da página, além do Organization/WebSite do Base
+  assert.match(guia.content, /jsonLdNodes=\{jsonLdNodes\}/);
+  // o OG do guia só existe porque a entrada em guias.ts alimenta open-graph/[...route].ts
+  assert.match(guia.content, /ogImage=\{"\/open-graph\/guia\/fita-hot-melt-ou-acrilica\.png"\}/);
+  for (const type of ["Article", "FAQPage", "BreadcrumbList"]) {
+    assert.match(guia.content, new RegExp(`"@type": "${type}"`), `faltou ${type}`);
+  }
+  // markdown leve do modelo vira HTML de verdade
+  assert.match(guia.content, /<strong>hot melt<\/strong>/);
+  assert.match(guia.content, /<h3>Onde a acrílica ganha<\/h3>/);
+  assert.match(guia.content, /<table><thead><tr><th scope="col">Critério<\/th>/);
+  assert.match(guia.content, /<ul><li>Giro rápido pede hot melt\.<\/li>/);
+  // 3b. registro preserva o que já existia e não vira página órfã
+  assert.match(registro.content, /slug: "fita-hot-melt-ou-acrilica"/);
+  assert.match(registro.content, /slug: 'porcelanato-ou-ceramica'/);
+  assert.match(registro.content, /\] as const;/);
+});
+
+test("guiaUpsert substitui o slug existente sem duplicar", () => {
+  const inserido = guiaUpsert(guiasSource, { slug: "novo", title: "Novo", description: "Descrição." });
+  const atualizado = guiaUpsert(inserido, { slug: "novo", title: "Novo v2", description: "Descrição." });
+  assert.equal((atualizado.match(/slug: "novo"/g) ?? []).length, 1);
+  assert.match(atualizado, /titulo: "Novo v2"/);
+});
+
+test("frontmatter do tapepro leva cena, taxonomia e descrição cortada em palavra inteira", () => {
+  const project = projectBySlug("tapepro");
+  const draft = ptDraft({
+    image: { ...ptDraft().image, base64: "d2VicA==" },
+    sections: [{
+      heading: "Fita gomada no e-commerce",
+      paragraphs: ["A fita gomada sela a caixa do e-commerce com junta estrutural."],
+    }],
+  });
+  const rendered = renderDraft(draft, project, null);
+  const frontmatter = rendered.content.split("---")[1];
+
+  assert.match(frontmatter, /^cenaImagem: "cardboard boxes sealed on a workbench"$/m);
+  assert.match(frontmatter, /^imagemAlt: "Caixas lacradas"$/m);
+  assert.match(frontmatter, /produtosRelacionados:\n {2}- "fita-gomada"\n/);
+  assert.match(frontmatter, /segmentosRelacionados:\n {2}- "e-commerce"\n/);
+
+  const descricao = frontmatter.match(/^descricao: "(.*)"$/m)[1];
+  assert.ok(descricao.length <= 160, `descricao passou de 160: ${descricao.length}`);
+  assert.ok(descricao.endsWith("…"));
+  assert.ok(draft.description.startsWith(descricao.slice(0, -1)), "cortou no meio da palavra");
+
+  // O layout já imprime `resumo` acima do corpo: repetir o bluf duplicava a dobra.
+  const body = rendered.content.split(/^---$/m)[2];
+  assert.ok(!body.includes(draft.bluf));
+  assert.match(rendered.content, /^tempoLeituraMin: [1-9]\d*$/m);
+});
+
+test("sem produto mencionado o artigo do tapepro cai no catálogo inteiro", () => {
+  const rendered = renderDraft(ptDraft({ image: { ...ptDraft().image, base64: "d2VicA==" } }), projectBySlug("tapepro"), null);
+  const produtos = rendered.content.match(/produtosRelacionados:\n((?: {2}- .*\n)+)/)[1];
+  assert.equal(produtos.trim().split("\n").length, projectBySlug("tapepro").produtos.length);
+});
+
+test("MDX deriva tempo de leitura, keywords e cluster em vez de slug e valor fixo", () => {
+  const rendered = renderDraft(
+    { ...draft, cluster: "ai-agent-memory", imageScene: "laptop and coffee cup on desk", relatedSlugs: ["cursor-vs-windsurf"] },
+    projectBySlug("context"),
+    null
+  );
+  const frontmatter = rendered.content.split("---")[1];
+
+  assert.match(frontmatter, /^cluster: "Ai Agent Memory"$/m);
+  assert.ok(!frontmatter.includes("cursor-vs-windsurf") || !/keywords:.*cursor-vs-windsurf/.test(frontmatter));
+  assert.doesNotMatch(frontmatter, /keywords: \[[^\]]*cursor-vs-windsurf/);
+  assert.match(frontmatter, /^ {2}searchTerm: "laptop and coffee cup on desk"$/m);
+  const readingTime = Number(frontmatter.match(/^readingTime: (\d+)$/m)[1]);
+  assert.ok(readingTime >= 1 && readingTime <= 3, `readingTime irreal: ${readingTime}`);
 });

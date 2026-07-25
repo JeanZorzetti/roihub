@@ -10,7 +10,7 @@ import {
 // @ts-expect-error Node's direct TypeScript execution requires the .ts extension.
 } from "./autopublish-clients.ts";
 import { projectBySlug } from "./autopublish-projects.mjs";
-import { extractInventory, registryUpsert, renderDraft } from "./autopublish-render.mjs";
+import { extractInventory, guiaUpsert, registryUpsert, renderDraft } from "./autopublish-render.mjs";
 import {
   beginPublication,
   finishPublication,
@@ -221,13 +221,12 @@ export async function publishProject(
       gscQueryPages(project.siteUrl, { strict: true }),
       readRepository(project),
     ]);
-    const registry = project.renderer === "typescript-post"
+    const registry = typeof project.registryPath === "string"
       ? repository.files.find(
         (file: { path: string }) => normalizedPath(file.path) === normalizedPath(project.registryPath)
       )
       : null;
-    if (project.renderer === "typescript-post"
-      && (typeof project.registryPath !== "string" || typeof registry?.content !== "string")) {
+    if (typeof project.registryPath === "string" && typeof registry?.content !== "string") {
       throw new Error("registry-format");
     }
     const inventory = extractInventory(repository.files, project);
@@ -335,9 +334,11 @@ export async function publishProject(
 
     const rendered = renderDraft(draft, project, existingTarget?.content ?? null);
     const renderedPath = normalizedPath(rendered.path);
-    const registryContent = project.renderer === "typescript-post"
-      ? registryUpsert(registry.content, draftSlug)
-      : null;
+    const registryContent = typeof registry?.content !== "string"
+      ? null
+      : project.renderer === "astro"
+        ? guiaUpsert(registry.content, draft)
+        : registryUpsert(registry.content, draftSlug);
     const pathDuplicate = action === "new" && project.renderer !== "typescript-catalog"
       && repository.files.some((file: { path: string }) => normalizedPath(file.path) === renderedPath);
     const unsafeRender = !safeContentPath(renderedPath, project.contentPath)
