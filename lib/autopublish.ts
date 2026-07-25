@@ -636,13 +636,18 @@ export async function verifyPublication(
     });
     return { id, status: "pending", attempt, deployment };
   }
-  if (deployment !== "success") {
-    const reason = deployment === "pending"
-      ? "verification:deployment-timeout"
-      : deployment === "unavailable"
-        ? "verification:deployment-unavailable"
-        : "verification:deployment-failed";
-    return revertPublication(db, publication, project, reason, { attempt, deployment }, revertCommit);
+  // ponytail: nenhum repo alvo publica commit status (o EasyPanel não integra com o GitHub), então
+  // `pending` eterno é ausência de sinal de deploy, não deploy falhado. Só `failure`/`error` explícito
+  // reverte; sem sinal quem decide é a verificação real abaixo (200 + canonical + JSON-LD + sitemap).
+  if (["failure", "error"].includes(deployment)) {
+    return revertPublication(
+      db,
+      publication,
+      project,
+      "verification:deployment-failed",
+      { attempt, deployment },
+      revertCommit
+    );
   }
 
   let page: Response;

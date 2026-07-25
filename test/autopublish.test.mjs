@@ -2779,9 +2779,14 @@ test("verifyPublication reverte cada falha terminal de página com razão estáv
   }
 });
 
-test("quinta tentativa pending reverte por commit novo e marca reverted", async () => {
+test("repo sem commit status não reverte: a página no ar decide na quinta tentativa", async () => {
   const targetUrl = "https://context.nimblabs.com/blog/context-guide";
-  let revertArgs;
+  let reverted = false;
+  const html = `<head>
+    <title>Context Guide</title>
+    <link rel="canonical" href="${targetUrl}">
+    <script type="application/ld+json">{"@type":"Article"}</script>
+  </head><h1>Context Guide</h1>`;
   const db = fakeDb({
     existing: {
       id: 10,
@@ -2796,20 +2801,43 @@ test("quinta tentativa pending reverte por commit novo e marca reverted", async 
   const result = await verifyPublication(10, {
     db,
     deploymentState: async () => "pending",
-    fetch: async () => {
-      throw new Error("unexpected-fetch");
-    },
-    revertCommit: async (...args) => {
-      revertArgs = args;
+    fetch: async (url) => url === targetUrl
+      ? new Response(html, { status: 200 })
+      : new Response(`<urlset><url><loc>${targetUrl}</loc></url></urlset>`, { status: 200 }),
+    revertCommit: async () => {
+      reverted = true;
       return "revert1";
     },
   });
 
-  assert.equal(revertArgs[1], "commit1");
-  assert.equal(revertArgs[2], "head0");
+  assert.equal(reverted, false);
+  assert.equal(result.status, "published");
+  assert.equal(result.metadata.verification.ok, true);
+  assert.equal(result.metadata.verification.deployment, "pending");
+});
+
+test("sem sinal de deploy, página fora do ar na quinta tentativa ainda reverte", async () => {
+  const targetUrl = "https://context.nimblabs.com/blog/context-guide";
+  const db = fakeDb({
+    existing: {
+      id: 13,
+      projectSlug: "context",
+      status: "published",
+      targetUrl,
+      commitSha: "commit1",
+      previousSha: "head0",
+      metadata: { title: "Context Guide", verificationAttempts: 4 },
+    },
+  });
+  const result = await verifyPublication(13, {
+    db,
+    deploymentState: async () => "unavailable",
+    fetch: async () => new Response("not found", { status: 404 }),
+    revertCommit: async () => "revert1",
+  });
+
   assert.equal(result.status, "reverted");
-  assert.equal(result.reason, "verification:deployment-timeout");
-  assert.equal(result.metadata.revertCommitSha, "revert1");
+  assert.equal(result.reason, "verification:http");
 });
 
 test("controles SEO aceitam somente slug e estado explícitos", () => {
