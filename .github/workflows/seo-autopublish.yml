@@ -2,7 +2,9 @@ name: SEO autopublish
 
 on:
   schedule:
-    - cron: "0 11 * * *"
+    # 08:17 BRT. Na hora cheia o schedule do Actions atrasa e às vezes nem chega a
+    # criar o run: em 25/07 o "0 11" não rodou. Fora do minuto :00 a fila é menor.
+    - cron: "17 11 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
