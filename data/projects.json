@@ -42,7 +42,7 @@
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "MANUAL (Jean, GSC UI) — repo do site: C:/dev/estetia-demo. ✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
+    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador typescript-post, pré-voo OK em 25/07 contra src/lib/blog/index.ts — se alguém mexer nesse index.ts, rodar o pré-voo de novo antes do próximo run (o registryUpsert falha fechado em render:registry-format). Run agora à 00:13 BRT: conferir /seo de manhã (a linha do fabrica, o build do site no EasyPanel e a URL do artigo em 200). MANUAL (Jean, GSC UI) — repo do site: C:/dev/estetia-demo. ✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
     "acao": "Submeter sitemap do blog no GSC e pedir indexação dos 21 artigos"
   },
   {
@@ -72,7 +72,7 @@
     "seoSeed": 4,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "Repo: ROI Labs/Imob/sofia-next (github JeanZorzetti/sofia-ia). ✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. Spec 012 da home V4 pronta desde 12/07 no sofia-next: rodar speckit-implement nas T001–T017 e reposicionar a home em 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07). É a última peça antes de pensar em billing. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
+    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx, layout conferido em 25/07 — NÃO renderiza capa/FAQ/related, o corpo sai completo. Inventário de 92 arquivos = o projeto mais lento do lote; se o Actions reportar request-failed, é o proxy do EasyPanel cortando em ~300s, não falha real: a verdade é o commit no repo alvo. Run agora à 00:13 BRT. Repo: ROI Labs/Imob/sofia-next (github JeanZorzetti/sofia-ia). ✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. Spec 012 da home V4 pronta desde 12/07 no sofia-next: rodar speckit-implement nas T001–T017 e reposicionar a home em 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07). É a última peça antes de pensar em billing. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
     "acao": "Implementar a home V4 'sites de produção' (spec 012, T001–T017)"
   },
   {
@@ -86,7 +86,7 @@
     "seoSeed": 5,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "⚠️ Repo: Doc-CRM (github JeanZorzetti/estetia) — em 13/07 esta tarefa foi executada no monorepo roilabs por engano porque o card não dizia o repo. Contagem verificada 13/07 no Doc-CRM: 1.084 console.* versionados, dos quais 791 são scripts/ CLI (stdout legível é o CERTO lá — não tocar) + seeds/e2e; o escopo real são ~222 em código de runtime: lib 76, components 74, app 52, hooks 18, instrumentation 2. NÃO usar pino: o repo builda com output standalone e o transport do pino (worker_threads/thread-stream) não é traçado no bundle — quebraria só em prod. Usar logger JSON zero-dep com a API do pino; implementação de referência pronta e testada em ROI Labs/app/src/lib/log.ts (serializer de Error, redaction LGPD, teste-guard anti-console.*). Ordem: server primeiro (app/api + lib server-side); components/hooks (~92) são client — lá é remover debug log ou manter console.error, logger não se aplica. Depois disso o card zera a dívida técnica conhecida e o próximo movimento vira SEO/distribuição.",
+    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador typescript-post, pré-voo OK em 25/07 contra lib/blog/index.ts — mexer nesse index.ts exige pré-voo novo (registryUpsert falha fechado em render:registry-format). Run agora à 00:13 BRT: conferir /seo de manhã. ⚠️ Repo: Doc-CRM (github JeanZorzetti/estetia) — em 13/07 esta tarefa foi executada no monorepo roilabs por engano porque o card não dizia o repo. Contagem verificada 13/07 no Doc-CRM: 1.084 console.* versionados, dos quais 791 são scripts/ CLI (stdout legível é o CERTO lá — não tocar) + seeds/e2e; o escopo real são ~222 em código de runtime: lib 76, components 74, app 52, hooks 18, instrumentation 2. NÃO usar pino: o repo builda com output standalone e o transport do pino (worker_threads/thread-stream) não é traçado no bundle — quebraria só em prod. Usar logger JSON zero-dep com a API do pino; implementação de referência pronta e testada em ROI Labs/app/src/lib/log.ts (serializer de Error, redaction LGPD, teste-guard anti-console.*). Ordem: server primeiro (app/api + lib server-side); components/hooks (~92) são client — lá é remover debug log ou manter console.error, logger não se aplica. Depois disso o card zera a dívida técnica conhecida e o próximo movimento vira SEO/distribuição.",
     "acao": "Logging estruturado no Doc-CRM: ~222 console.* de runtime → logger JSON (não é pino; não é o repo roilabs)"
   },
   {
@@ -100,7 +100,7 @@
     "seoSeed": 2,
     "decay": 3,
     "decayNota": "",
-    "acaoDesc": "Repo: ROI Labs/review-dispute-agent. ✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina.",
+    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx en-US, risk legal-safe; layout renderiza FAQ e Related articles (layoutRenders já declarado). Inventário de 77 arquivos → run lento, request-failed no Actions pode ser o corte de ~300s do proxy: confira o commit no repo alvo. Run agora à 00:13 BRT. Repo: ROI Labs/review-dispute-agent. ✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina.",
     "acao": "On-page + links internos pro /checker (p78 no GSC) — sair da zona de risco do kill-gate"
   },
   {
@@ -130,7 +130,7 @@
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "SEO passivo — estável parado",
-    "acaoDesc": "Puxar impressões/cliques dos 20 artigos do funil B2B clínicas (9 fundo, 8 meio, 3 topo) no GSC e aplicar o kill-gate D+90 da tese do portfólio (nimblabs/docs/PORTFOLIO-EN-STRATEGY.md): sem tração = matar ou pivotar, com tração = dobrar no que rankeia. Hoje 13/07 é D+43 — o gate cai ~29/08/2026. Revisão interina de 11/07 marcou NO RITMO (~93 imp/sem dobrando, p9 em 'aftercare cheek filler'). Até o gate: nada a fazer aqui, SEO passivo por design.",
+    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx ymyl-restricted: o gate exige classificação operational, todo bloco no escopo operacional e nenhuma palavra clínica → draft:ymyl com frequência é COMPORTAMENTO ESPERADO, não bug, não investigar. Run agora à 00:13 BRT. Tarefa do card segue sendo o gate D+90: puxar impressões/cliques dos 20 artigos do funil B2B clínicas (9 fundo, 8 meio, 3 topo) no GSC e aplicar o kill-gate D+90 da tese do portfólio (nimblabs/docs/PORTFOLIO-EN-STRATEGY.md): sem tração = matar ou pivotar, com tração = dobrar no que rankeia. Hoje 13/07 é D+43 — o gate cai ~29/08/2026. Revisão interina de 11/07 marcou NO RITMO (~93 imp/sem dobrando, p9 em 'aftercare cheek filler'). Até o gate: nada a fazer aqui, SEO passivo por design.",
     "acao": "Checar GSC dos 20 artigos e decidir no gate D+90 (~29/08)"
   },
   {

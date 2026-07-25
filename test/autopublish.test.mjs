@@ -547,14 +547,14 @@ test("middleware isola Bearer do cron sem enfraquecer Basic Auth", async () => {
   });
 });
 
-test("workflow agenda a manhã BRT fora da hora cheia, com dispatch dry-run seguro", () => {
+test("workflow agenda a meia-noite BRT fora da hora cheia, com dispatch dry-run seguro", () => {
   const workflow = readFileSync(
     new URL("../.github/workflows/seo-autopublish.yml", import.meta.url),
     "utf8"
   ).replaceAll("\r\n", "\n");
   // Comparar o arquivo inteiro quebrava a cada comentário; o que precisa valer é isto.
   const [minute, hour] = String(workflow.match(/- cron: "([^"]+)"/)?.[1]).split(" ");
-  assert.equal(hour, "11", "11 UTC = manhã em São Paulo");
+  assert.equal(hour, "3", "3 UTC = meia-noite em São Paulo");
   // Na hora cheia o schedule do Actions atrasa e chega a não criar o run (25/07).
   assert.notEqual(minute, "0");
   assert.match(workflow, /dry_run:\n {8}type: boolean\n {8}default: true/);
@@ -1106,6 +1106,31 @@ test("Tapepro gera frontmatter pt-BR válido com imagem como asset local relativ
   assert.match(frontmatter, /^tempoLeituraMin: [1-9]\d*$/m);
   assert.ok(rendered.content.includes("## Fontes"));
   assert.ok(rendered.content.includes("Photo by A on Unsplash"));
+});
+
+test("corpo mdx não repete o que o layout do projeto já renderiza do frontmatter", () => {
+  // context/aftercare renderizam capa, FAQ e related; polarisia não renderiza nenhum dos três.
+  const context = renderDraft(draft, projectBySlug("context"), null).content;
+  const [, contextFrontmatter, ...contextBody] = context.split("---");
+  const corpo = contextBody.join("---");
+
+  assert.match(contextFrontmatter, /^heroImage:$/m, "o frontmatter continua levando a capa");
+  assert.match(contextFrontmatter, /^faq:$/m);
+  assert.ok(!corpo.includes("!["), "capa duplicada no corpo");
+  assert.ok(!/^## Frequently asked questions$/m.test(corpo), "FAQ duplicada no corpo");
+  assert.ok(!/^## Related guides$/m.test(corpo), "related duplicado no corpo");
+  assert.ok(corpo.includes("## Sources"), "fontes só existem no corpo");
+
+  const polarisia = renderDraft(draft, projectBySlug("polarisia"), null).content;
+  assert.ok(polarisia.includes("!["), "polarisia não renderiza capa no layout: ela fica no corpo");
+  assert.ok(/^## Perguntas frequentes$/m.test(polarisia));
+
+  // roilabs (markdown): o Article.astro imprime o bloco de FAQ do frontmatter, a capa não.
+  const roilabs = renderDraft(draft, projectBySlug("roilabs"), null).content;
+  const corpoRoilabs = roilabs.replace(/^---\n[\s\S]*?\n---\n/, "");
+  assert.match(roilabs, /^faq:$/m);
+  assert.ok(!/^## Perguntas frequentes$/m.test(corpoRoilabs), "FAQ duplicada no corpo do roilabs");
+  assert.ok(corpoRoilabs.includes("!["), "capa do roilabs sai no corpo");
 });
 
 test("Aftercare usa apenas a autoria configurada como credencial", () => {
