@@ -184,7 +184,7 @@ problema de crawl e não se resolve nesta frente** — fica para o F3/F4 do `han
 
 | # | ação | onde | esforço | ganho | status |
 |---|---|---|---|---|---|
-| 1 | decidir destino dos 14 subdomínios + A record/wildcard + 301 | DNS + EasyPanel | 1–2h | **+43 pp de OK no roilabs** | ⛔ trancado no Jean |
+| 1 | decidir destino dos 14 subdomínios + A record + 301 | Cloudflare | ~20 min | **+43 pp de OK no roilabs** | 🔓 destravado — receita pronta |
 | 2 | truncar `lastmod` futuro | context-keeper (sitemap) | 15 min | destrava o crawl de um site parado | ✅ `f2a13db` |
 | 3 | `/fundadores`: página ou fora do sitemap | `crm-project` | 10 min | tira o 404 priority 0.9 | ✅ `94ade14` |
 | 4 | `Disallow: /_next/static/chunks/` | estetiacrm (`Doc-CRM/`) | 10 min | libera ~40% do budget | ✅ `54b06bc` |
@@ -205,9 +205,16 @@ problema de crawl e não se resolve nesta frente** — fica para o F3/F4 do `han
   tinham o mesmo defeito, e esses são piores: vão colados no WhatsApp e cobram o hop do visitante,
   não só do Googlebot.
 
-O item 1 continua dependendo de uma decisão do Jean (quais subdomínios são aposentadoria e quais
-deveriam estar no ar) — sem essa resposta, qualquer DNS que eu criasse seria chute. **É o único item
-que muda o ranking, e é o único que não pode ser feito sem ele.**
+**O item 1 destravou no mesmo dia.** Jean confirmou que o Atma não existe mais, então os 14 hosts
+são todos aposentadoria — nenhum precisa voltar ao ar. E o DNS de `roilabs.com.br` está no
+**Cloudflare**, não no EasyPanel: dá para fazer tudo com 14 A records + 4 Redirect Rules na borda,
+sem vhost catch-all e sem risco para goiania/tapepro/app. Estimativa caiu de 1–2h para ~20 min.
+
+Receita com os hostnames exatos, as expressões prontas e o porquê de 301 em vez de 410:
+`ROI Labs/Docs/Obsidian/80-dev/roilabs-subdominios-aposentados.md`. Só falta o Jean executar no
+painel do Cloudflare — não tenho acesso.
+
+Também saiu junto o P0 #3: `app.roilabs.com.br` ganhou `robots.ts` com `Disallow: /` (é painel).
 
 ---
 
