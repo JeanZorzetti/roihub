@@ -25,8 +25,9 @@ A aba `/infra` não tem banco: ela **lê o repo a cada request**.
 Só três dos seis CSVs do export são usados hoje (resumo diário, respostas, hosts). Os outros
 (`finalidades`, `tipos de Googlebot`, `tipos de arquivos`) vêm no ZIP e ficam no repo sem consumidor.
 
-**Estado:** 10 pastas, **todas de `2026-07-10`** — 15 dias paradas. O rodapé da aba já se descreve
-como "export manual semanal" e o semanal nunca aconteceu.
+**Estado:** 9 exports (54 CSVs), **todos de `2026-07-10`** — 15 dias parados, e a pasta `Context/`
+está vazia: `context.nimblabs.com` nunca teve export, então a aba mostra 9 propriedades, não 10. O
+rodapé já se descreve como "export manual semanal" e o semanal nunca aconteceu.
 
 ### Por que acumular exports vale mais que atualizar
 
@@ -56,11 +57,14 @@ estável que a API privada.
 
 ---
 
-## 3. Implementar
+## 3. Implementar — ✅ FEITO em 25/07, falta só o `--login` do Jean (§4)
 
-Um arquivo: **`scripts/fetch-crawl-stats.mjs`**. Uma dependência: `npm i -D playwright`
-(1.57 já está na máquina). A imagem final não muda — o `Dockerfile` só copia `.next/standalone`;
-devDeps existem apenas no estágio de build.
+`scripts/fetch-crawl-stats.mjs` (browser + git) e `lib/crawl-fetch.mjs` (as duas funções puras),
+com `test/crawl-fetch.test.mjs` no `npm test`. Dependência: **`playwright-core`**, não `playwright`
+— o postinstall do segundo baixa browsers e roda dentro do `npm ci` do `Dockerfile` (alpine, sem
+suporte oficial), o que derrubaria o deploy do hub. Como o robô usa o Chrome do sistema
+(`channel: "chrome"`), não há browser a baixar. A imagem final não muda: ela só copia
+`.next/standalone`.
 
 ### 3.1 Descobrir as propriedades — de graça, sem hardcode
 
@@ -122,7 +126,11 @@ const base = download.suggestedFilename().replace(/\.zip$/i, "");   // já é ho
 await download.saveAs(path.join(tmp, `${base}.zip`));
 ```
 
-Descompactar em `docs/Crawl-stats/<host>/<base>/` (CSVs na raiz da pasta, como as atuais). Não
+Descompactar com **`Expand-Archive`** (PowerShell) — é o mesmo "Extrair aqui" que gerou as pastas
+atuais. Não use `tar -xf`: o `tar` que aparece primeiro no PATH desta máquina é **GNU tar 1.35, que
+não lê ZIP**; o bsdtar do Windows leria, mas qual dos dois responde depende do PATH de quem chamou.
+
+Destino `docs/Crawl-stats/<host>/<base>/` (CSVs na raiz da pasta, como as atuais). Não
 reaproveitar a taxonomia `After/`, `Nimb/`, `Roi/`… — ela não significa nada para o código, que só
 lê o nome da pasta. **Não renomeie as pastas antigas**: elas são o histórico anterior a 10/07.
 
@@ -218,11 +226,16 @@ export falhado, não site parado — confira a saída do script antes de investi
 
 ## 7. Checklist
 
-- [ ] `npm i -D playwright` (só devDep; conferir que o `docker build` continua verde)
-- [ ] `scripts/fetch-crawl-stats.mjs` com `destDirFor` + `validateExport` exportados
-- [ ] `test/crawl-fetch.test.mjs` no comando `test` do `package.json`, verde
-- [ ] `--login` rodado uma vez; perfil em `%LOCALAPPDATA%\roihub-gsc-profile` (fora do repo)
-- [ ] Run manual completo: 10 pastas novas, `npm test` verde, `/infra` com as 10 datas novas
+- [x] `playwright-core` como devDep (não `playwright` — §3)
+- [x] `lib/crawl-fetch.mjs` com `destDirFor` + `validateExport`; `scripts/fetch-crawl-stats.mjs`
+      com o browser e o git
+- [x] `test/crawl-fetch.test.mjs` no comando `test`: **121/121 verde**, `npx tsc --noEmit` limpo
+- [x] Run sem sessão exercitado em 25/07: lista as 10 propriedades, abre o Chrome, detecta a tela
+      de login, falha nas 10 com "sessão expirou — rode com --login", `exit 1`, **nada commitado**
+- [ ] **`node scripts/fetch-crawl-stats.mjs --login`** — só o Jean pode fazer (2FA). Abre visível;
+      logar e fechar a janela. Perfil vai para `%LOCALAPPDATA%\roihub-gsc-profile`, fora do repo
+- [ ] Primeiro run de verdade: 9–10 pastas novas em `docs/Crawl-stats/`, commit automático,
+      `/infra` com as datas da semana. **É aqui que o seletor do botão Export se prova** — se falhar,
+      o screenshot no `%TEMP%\crawl-*` mostra em que tela ele parou
 - [ ] Task Scheduler domingo 10:00 BRT + "run if missed" marcado
-- [ ] Registrar no `handoff.md` que o `/infra` deixou de ser manual (o rodapé da aba ainda diz
-      "export manual semanal" — trocar o texto junto)
+- [ ] Trocar o texto "export manual semanal" no rodapé de `app/infra/page.tsx:123`

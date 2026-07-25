@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test test/score.test.mjs test/series.test.mjs test/crawl.test.mjs test/agenda.test.mjs test/autopublish.test.mjs"
+    "test": "node --test test/score.test.mjs test/series.test.mjs test/crawl.test.mjs test/crawl-fetch.test.mjs test/agenda.test.mjs test/autopublish.test.mjs"
   },
   "dependencies": {
     "google-auth-library": "^10.9.0",
@@ -20,6 +20,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "playwright-core": "^1.62.0",
     "typescript": "^5.9.3"
   }
 }
