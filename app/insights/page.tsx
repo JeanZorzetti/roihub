@@ -145,6 +145,8 @@ export default async function InsightsPage() {
               {!i && <p className="seo-empty">Projeto sem análise — rode ml/analyze.py de novo.</p>}
               {i && (
                 <>
+                  {i.narrative && <p className="insight-narrative">{i.narrative}</p>}
+
                   <p className="insight-line">
                     <TrendLine label="Impressões 12sem" state={i.trend.impressions} slopePct={i.trend.slopePctWeek} />
                     {" · "}
@@ -222,8 +224,6 @@ export default async function InsightsPage() {
                     </span>
                   </p>
 
-                  {i.narrative && <p className="insight-line">{i.narrative}</p>}
-
                   <details className="wk-table">
                     <summary>por que health {i.health ?? "—"}</summary>
                     <ul className="reason-list">
@@ -275,8 +275,11 @@ export default async function InsightsPage() {
         exports de crawl stats, estatística robusta — tendência Theil-Sen por janela, degraus (changepoint PELT),
         anomalia da última semana (mediana ± 3·MAD) e diagnóstico crawl↔SEO. Health 0–100 sempre com os motivos
         listados. Nos 3 bets do nimblabs, a projeção (Holt amortecido em log, intervalo 80%) responde os
-        kill-gates D+90/180/270 da tese — ✔ cruza, ✖ não cruza, ◷ ainda sem veredito. Cards ordenados do pior pro
-        melhor. Pra atualizar: <code>python ml/analyze.py</code> + commit+push.
+        kill-gates D+90/180/270 da tese — ✔ cruza, ✖ não cruza, ◷ ainda sem veredito. O parágrafo em prosa de cada
+        card é escrito pelo <code>ml/narrate.py</code> (claude-cli, 1 chamada por run) em cima desses mesmos números
+        — o <code>analyze.py</code> zera as narrativas, então nunca sobra texto velho sobre número novo. Cards
+        ordenados do pior pro melhor. Pra atualizar: <code>python ml/analyze.py</code> + <code>python ml/narrate.py</code>{" "}
+        + commit+push.
       </p>
     </main>
   );

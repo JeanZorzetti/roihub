@@ -10,7 +10,7 @@
 - **F0 validado**: `--dump` bate 100% com os totais 28d do hub (script node descartável na sessão de 10/07, todas as 10 propriedades idênticas).
 - **Achado real do 1º run**: 4 projetos (sirius, polarisia, estetiacrm, nimblabs) com changepoint de impressões PRA CIMA na mesma semana de 13/05/2026 — padrão de algo update; cruzar manualmente com deploys/updates.
 - Gotchas novos: `.env` do repo tem BOM UTF-8 (ler com `utf-8-sig`); console Windows é cp1252 (prints do analyze.py só ASCII).
-- **Falta**: F4 (narrativa via claude-cli) — brief abaixo continua válido. Conferir `/insights` em prod.
+- **F4 SHIPPED 28/07** (ver bloco abaixo). Falta só conferir `/insights` em prod.
 
 ## ✅ STATUS 28/07: F3 SHIPPED (forecast + kill-gates)
 
@@ -45,6 +45,40 @@ Decisões de modelagem, pra não reabrir:
   primeiros signups/leads" sem número — está isolado numa constante em `GATE_SPECS`, com comentário.
 - Relógios (`GATES` em `forecast.py`) saem de `nimblabs/docs/PORTFOLIO-EN-STRATEGY.md` §6 — a data é
   a da **submissão do sitemap**, não a do deploy. Bet novo = uma linha lá.
+
+## ✅ STATUS 28/07 (noite): F4 SHIPPED — o ML fechou (F0–F4)
+
+`ml/narrate.py` → cada card do `/insights` abre com 2–3 frases em pt-BR. Primeiro run: 11/11
+projetos narrados, e as frases já saíram acionáveis (sirius: impressões subindo com cliques
+caindo 14%/sem = problema de CTR → revisar title/meta; nimblabs: posição média piorando de 64,8
+pra 69,1 com impressões crescendo = conteúdo novo indexando fundo).
+
+Decisões, pra não reabrir:
+
+- **Uma chamada por run, todos os projetos no mesmo prompt.** O gargalo do claude-cli é rate limit
+  de assinatura, não token: 11 prompts pequenos custam 11 vezes mais chances de tomar 429 que um
+  prompt de 7 KB. Resposta = `{"slug": "frases"}`.
+- **Fatos, não o JSON cru** (`project_facts`): o prompt leva uma linha por sinal (health+motivos,
+  janelas 4/12/26, degraus, anomalias, crawl, projeção 3 semanas, frase do gate). Jogar o
+  `insights.json` inteiro gastaria contexto com `slopePctWeek: null` e a estrutura de `windows`.
+- **`narrate.py` roda DEPOIS do `analyze.py`, sempre.** O analyze reescreve o arquivo inteiro com
+  `narrative: None` — narrativa velha nunca sobrevive a número novo, e por isso o `/insights` não
+  precisa de nenhuma checagem de staleness. O preço é que sem o narrate o card fica sem prosa: por
+  isso o robô de crawl (`scripts/fetch-crawl-stats.mjs`) chama os dois em sequência.
+- **Falha do narrate NÃO entra no exit code do robô** (o do analyze entra). Narrativa é enfeite em
+  cima do número; rate limit da assinatura não pode marcar o robô de crawl como quebrado.
+- **Parse do JSON no meio da prosa** é o mesmo problema já resolvido em
+  `lib/autopublish-clients.ts` (o CLI não tem json_schema strict): bloco cercado primeiro, depois
+  cada `{` como início candidato, com `raw_decode` pra prosa DEPOIS do objeto. Slug desconhecido e
+  valor não-string são descartados; nenhuma narrativa → sai 1 e **não escreve nada**.
+- **Regras duras no prompt**: só números do JSON, nunca mídia paga (regra global), banda larga é
+  incerteza do modelo e `insufficient-data` é série curta — não queda. Sem isso o modelo lê "sem
+  dados" como notícia ruim.
+- Gotcha novo: `sys.stdout.reconfigure(encoding="utf-8")` no `main()` — o prompt carrega as frases
+  dos gates (acentos, `→`) e o console do Windows é cp1252; sem isso o `--dry-run` morre em
+  `UnicodeEncodeError` antes de imprimir.
+- Testes: 6 novos em `ml/test_ml.py` (24/24) — todos em cima das funções puras (`build_prompt`,
+  `project_facts`, `parse_narratives`), nenhum spawna o CLI.
 
 ## Decisão de linguagem: Python, SOZINHO
 
@@ -90,7 +124,7 @@ data/insights.json    ← OUTPUT versionado; commit+push = deploy (padrão proje
 
 **F3 — forecast + kill-gates (✅ SHIPPED 28/07, ver bloco de status):** Holt-Winters/ETS nas impressões semanais → projeção 4–8 semanas com intervalo. Uso direto: **kill-gates D+90/180/270 dos bets nimblabs** (tese do portfólio) — "no ritmo atual, aftercare NÃO cruza o gate D+180". É o insight de maior valor de negócio do sistema.
 
-**F4 (opcional) — narrativa:** prompt com o JSON pro `claude-cli -p` gerar 2–3 frases pt-BR por projeto ("Impressões 3× em 6 sem mas posição média piorou: conteúdo novo rankeando fundo; reforce internal links de X"). Batch, 1×/semana, custo assinatura.
+**F4 — narrativa (✅ SHIPPED 28/07, ver bloco de status):** prompt com o JSON pro `claude-cli -p` gerar 2–3 frases pt-BR por projeto ("Impressões 3× em 6 sem mas posição média piorou: conteúdo novo rankeando fundo; reforce internal links de X"). Batch, 1×/semana, custo assinatura.
 
 ## Schema proposto do insights.json (F1)
 

@@ -1,13 +1,14 @@
 # Handoff — próximo passo do ROI Hub (comece por aqui)
 
-Atualizado em **2026-07-28, noite**. Das 4 frentes do handoff anterior, **3 fecharam nesta sessão**
-(A2, A3 e F3). Sobrou **A1** — que é ops de infra, não código — e **F4**, que é enfeite.
+Atualizado em **2026-07-28, noite (2ª sessão)**. **F4 fechou** — o ML acabou (F0–F4) e não há mais
+nenhuma frente de código aberta no hub. Sobrou **A1**, que é ops de infra e nenhuma sessão de
+código resolve.
 
 O hub em produção lista todos os projetos vivos do GitHub, não os 10 curados.
 Como isso funciona por dentro: `handoff-hub-github.md`. Histórico geral: `../handoff.md`.
 
-**Resumo em uma linha:** o hub agora responde sozinho "esse bet cruza o gate?"; o que falta é
-**3 sites fora do ar** (ops) e nada urgente de código.
+**Resumo em uma linha:** o hub responde sozinho "esse bet cruza o gate?" e agora **explica em
+português** o que está acontecendo em cada projeto; o que falta é **3 sites fora do ar** (ops).
 
 ---
 
@@ -21,6 +22,13 @@ Como isso funciona por dentro: `handoff-hub-github.md`. Histórico geral: `../ha
   hub e o histórico continua lá — **é a forma canônica de aposentar um projeto daqui pra frente**.
 - **B1/F3 — forecast + kill-gates.** `ml/forecast.py` + render no `/insights`. Detalhes de
   modelagem e o que não reabrir: `handoff-ml.md` (bloco "STATUS 28/07").
+- **F4 — narrativa** (2ª sessão de 28/07). `ml/narrate.py`: 1 chamada de `claude-cli` por run,
+  todos os projetos no mesmo prompt, `{"slug": "2-3 frases"}` de volta. 11/11 no 1º run. Roda
+  **depois** do `analyze.py` (que zera as narrativas) e já está encadeado no robô de crawl — sem
+  entrar no exit code dele, porque narrativa é enfeite e rate limit não é robô quebrado.
+  Decisões em `handoff-ml.md` (bloco "STATUS 28/07 (noite)").
+- **Os handoffs temáticos mudaram de pasta**: agora em `handoff/`, com índice no `../handoff.md`.
+  O nome de cada arquivo continua igual.
 
 ### O que os gates disseram no primeiro run real
 
@@ -61,9 +69,6 @@ Os três aparecem `✕ FORA DO AR` no ranking, como deviam.
 
 ## 🟢 Frentes de código abertas (nenhuma urgente)
 
-- **F4 — narrativa via `claude-cli`** (`handoff-ml.md`): 2–3 frases em pt-BR por projeto em cima do
-  `insights.json`. Sempre foi "enfeite em cima do F3", e agora que a frase do gate já sai pronta do
-  Python, é menos necessário ainda. Orçamento: `claude-cli` apenas, **nunca API paga**.
 - **Threshold do D+180.** É o único número inventado do sistema (10 cliques/sem, em `GATE_SPECS`).
   A tese não fixa valor. Quando o primeiro D+180 chegar perto (28/11), calibrar — é uma constante.
 - **A home ficou cara.** 38 projetos × (1 health check + 2 queries GSC). Em dev deu 2,2–3,0 s;
@@ -93,8 +98,9 @@ npm test                 # 128/128
 npx tsc --noEmit         # limpo
 npm run build            # 5 rotas ƒ (dynamic)
 
-C:\venvs\roihub-ml\Scripts\python -m pytest ml/test_ml.py -q   # 18/18 (7 são do forecast)
+C:\venvs\roihub-ml\Scripts\python -m pytest ml/test_ml.py -q   # 24/24 (7 do forecast, 6 do narrate)
 C:\venvs\roihub-ml\Scripts\python ml/analyze.py                # regenera data/insights.json
+C:\venvs\roihub-ml\Scripts\python ml/narrate.py                # narrativa; --dry-run mostra o prompt sem chamar o CLI
 
 # hub real, com dados de verdade (o token vem do gh, não precisa mexer no .env):
 GITHUB_TOKEN="$(gh auth token)" HUB_USER=roi HUB_PASS=devcheck npx next dev -p 3199

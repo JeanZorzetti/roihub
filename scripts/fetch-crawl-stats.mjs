@@ -12,7 +12,8 @@
 // o fluxo de login dentro de um browser com flags de automação.
 //
 // Depois dos exports, roda o ml/analyze.py no mesmo processo: o /insights lê os mesmos CSVs de
-// docs/, então só faz sentido recalcular depois que o dado novo entrou. Python via ROIHUB_PYTHON
+// docs/, então só faz sentido recalcular depois que o dado novo entrou; e o ml/narrate.py logo
+// atrás, porque o analyze zera as narrativas. Python via ROIHUB_PYTHON
 // (default: o venv em C:/venvs — FORA do OneDrive, que corrompe venv igual node_modules).
 //
 // Handoff: handoff/handoff-crawl-stats-semanal.md, handoff/handoff-insights-automatico.md
@@ -209,6 +210,17 @@ async function main() {
     // dos exports (o GSC só guarda 90 dias) — mas tem que aparecer no exit code.
     failed.push({ property: "ml/analyze.py", message: e.message });
     console.error(`  FALHA ml/analyze.py: ${e.message}`);
+  }
+
+  // O analyze.py zera as narrativas a cada run: sem este passo o /insights perderia a prosa
+  // toda semana. Falha aqui NÃO entra no exit code — narrativa é enfeite em cima do número,
+  // e rate limit da assinatura não pode marcar o robô de crawl como quebrado.
+  if (insights) {
+    try {
+      execFileSync(PYTHON, [path.join(REPO, "ml", "narrate.py")], { cwd: REPO, stdio: "inherit" });
+    } catch (e) {
+      console.error(`  aviso: ml/narrate.py falhou (segue sem narrativa): ${e.message}`);
+    }
   }
 
   git("add", "docs/Crawl-stats", "data/insights.json");

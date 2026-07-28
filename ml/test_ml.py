@@ -2,6 +2,7 @@
 import crawl
 import diagnostics as dx
 import forecast as fc
+import narrate as nr
 
 
 def day(d, requests, ms=100):
@@ -176,3 +177,49 @@ def test_gate_far_and_revenue_gates_have_no_forecast_verdict():
 def test_gates_only_for_bets_with_a_clock():
     assert fc.evaluate_gates("goiania", series([500] * 12)) == []
     assert fc.evaluate_gates("aftercare", []) == []
+
+
+# --- F4 narrativa (narrate.py) ---------------------------------------------
+
+INSIGHT = {
+    "health": 75,
+    "reasons": ["impressões 12sem subindo (+25,5%/sem): +15"],
+    "trend": {"windows": {"impressions": {"12w": {"state": "improving", "slopePctWeek": 25.5}}, "clicks": {}}},
+    "changepoints": [{"date": "2026-05-13", "metric": "impressions", "direction": "up", "changePct": 120}],
+    "anomalies": [],
+    "crawl": {"diagnosis": "ok", "detail": "96,6% OK"},
+    "forecast": {"metric": "impressions", "lastWeek": 25, "weeks": [{"date": "2026-08-01", "value": 29, "lo": 12, "hi": 67}]},
+    "gates": [{"gate": "D+90", "status": "nao-cruza", "sentence": "NÃO cruza o gate D+90"}],
+    "flags": ["kill-gate"],
+}
+
+
+def test_prompt_carries_the_signals_and_no_raw_json():
+    p = nr.build_prompt({"windowEnd": "2026-07-25", "projects": {"reviewshield": INSIGHT}}, ["reviewshield"])
+    assert "## reviewshield" in p and "health: 75/100" in p
+    assert "12w improving +25.5%/sem" in p and "NÃO cruza o gate D+90" in p
+    assert "degrau: impressions pra up na semana de 2026-05-13" in p
+    assert "slopePctWeek" not in p  # facts, não o JSON cru
+
+
+def test_prompt_survives_missing_windows_and_forecast():
+    facts = nr.project_facts("a", {"health": 0})
+    assert "sem janelas" in facts and "projecao" not in facts and "gate" not in facts
+
+
+def test_parse_narratives_from_fenced_block_ignoring_prose():
+    text = 'Segue a análise {não é json}\n```json\n{"goiania": "Subiu.  Reforce links."}\n```'
+    assert nr.parse_narratives(text, {"goiania"}) == {"goiania": "Subiu. Reforce links."}
+
+
+def test_parse_narratives_drops_unknown_slugs_and_non_strings():
+    text = '{"goiania": "ok", "outro": "x", "sirius": 3, "context": "  "}'
+    assert nr.parse_narratives(text, {"goiania", "sirius", "context"}) == {"goiania": "ok"}
+
+
+def test_parse_narratives_handles_prose_after_the_object():
+    assert nr.parse_narratives('{"a": "b"} espero que ajude', {"a"}) == {"a": "b"}
+
+
+def test_parse_narratives_empty_when_no_object():
+    assert nr.parse_narratives("não consegui ler os dados", {"a"}) == {} and nr.parse_narratives(None, {"a"}) == {}

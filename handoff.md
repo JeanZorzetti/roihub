@@ -2,11 +2,10 @@
 
 > **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, noite).
 >
-> **Resumo do próximo passo:** não há frente de código urgente. O que sobrou é **A1 — três sites
-> de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`, `compass.polarisia.com.br`),
-> que é **ops de DNS/vhost, não commit**: nenhuma sessão de código resolve isso, só acesso ao host.
-> Se a próxima sessão for de código, o alvo é **F4** (narrativa via `claude-cli`, `handoff/handoff-ml.md`)
-> — e ele ficou menos necessário agora que a frase do kill-gate já sai pronta do Python.
+> **Resumo do próximo passo:** **não há mais frente de código aberta** — o ML fechou em F4. O que
+> sobrou é **A1 — três sites de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`,
+> `compass.polarisia.com.br`), que é **ops de DNS/vhost, não commit**: nenhuma sessão de código
+> resolve isso, só acesso ao host.
 >
 > **Antes de pegar qualquer card do ranking, leia a armadilha nº 1 do handoff/handoff-proximo-passo:** o
 > card do `aftercare` ("checar GSC e decidir no gate D+90") **acabou de apodrecer** — o hub já
@@ -23,7 +22,7 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 | arquivo | assunto | estado |
 |---|---|---|
 | [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | **comece por aqui**: o que fazer na próxima sessão | 🟢 vivo (28/07) |
-| [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F4 aberto |
+| [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |
 | [`handoff-hub-github.md`](handoff/handoff-hub-github.md) | projetos vêm do GitHub (repo com `homepage`), não de lista fixa | 🟢 vivo (28/07) |
 | [`handoff-crawl-stats-semanal.md`](handoff/handoff-crawl-stats-semanal.md) | robô Playwright que abastece `/infra` + `/insights` toda semana | 🟢 vivo — agendado dom. 10:00 |
 | [`handoff-autopublish.md`](handoff/handoff-autopublish.md) | como o robô de 1 artigo/dia funciona (guardrails, operação) | 📘 referência |
@@ -34,6 +33,29 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 | [`handoff-correcao-e-rollout.md`](handoff/handoff-correcao-e-rollout.md) | correção dos 3 primeiros artigos + rollout | ✅ executado 25/07 |
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
+
+## 28/07 (2ª sessão) — F4: o hub passou a explicar em português; handoffs organizados em `handoff/`
+
+- **Organização dos handoffs.** Os 10 temáticos saíram da raiz pra [`handoff/`](handoff/) (nome de
+  arquivo preservado — as referências cruzadas entre eles continuam válidas de graça) e este
+  arquivo ganhou o índice no topo, com o estado de cada um (vivo / referência / executado).
+- **F4 — narrativa (`ml/narrate.py`)**: cada card do `/insights` abre com 2–3 frases em pt-BR
+  escritas pelo `claude-cli` em cima do próprio `insights.json`. **Uma chamada por run** com todos
+  os projetos no mesmo prompt — o gargalo é rate limit de assinatura, não token, então 11 prompts
+  pequenos só multiplicariam a chance de 429. 11/11 no primeiro run.
+- **O prompt leva fatos, não o JSON cru** (`project_facts`): uma linha por sinal. E leva as regras
+  duras do portfólio (só os números do JSON, nunca mídia paga, `insufficient-data` é série curta e
+  não queda, banda larga é incerteza do modelo) — sem elas o modelo lê "sem dados" como notícia ruim.
+- **A ordem importa e é por design:** o `analyze.py` reescreve o arquivo inteiro com
+  `narrative: None`, então narrativa velha nunca sobrevive a número novo — e por isso o `/insights`
+  não precisa de checagem de staleness nenhuma. O preço: sem rodar o narrate depois, o card fica
+  sem prosa. Por isso o robô de crawl encadeia os dois — mas a falha do narrate **não** entra no
+  exit code dele (enfeite em cima do número; rate limit não é robô quebrado).
+- Já saiu insight de negócio do primeiro run: **sirius** com impressões subindo e cliques caindo
+  14%/sem = problema de CTR (title/meta), não de ranking; **nimblabs** com posição média piorando
+  de 64,8 → 69,1 enquanto impressões crescem = conteúdo novo indexando fundo.
+- Verificado: 24/24 pytest (6 novos, todos em função pura — nenhum spawna o CLI), 128/128 npm test,
+  tsc limpo, build 5 rotas ƒ, e a página renderizada em dev com as 11 narrativas reais.
 
 ## 28/07 (noite) — F3: o hub passou a responder o kill-gate sozinho (+ as 2 tarefas de ops)
 
@@ -188,8 +210,10 @@ Sessão fechou 3 das 4 frentes do handoff anterior (`7d2ec87`). O que ficou de a
 - `data/projects.json` — critérios manuais; editar + push = redeploy.
 - `ml/forecast.py` — Holt amortecido + kill-gates da tese nimblabs (relógios vêm de
   `nimblabs/docs/PORTFOLIO-EN-STRATEGY.md` §6: data da **submissão do sitemap**, não do deploy).
+- `ml/narrate.py` — F4: 1 chamada de claude-cli por run escreve o `narrative` de cada projeto. Roda
+  DEPOIS do analyze.py (que zera as narrativas); `--dry-run` mostra o prompt sem chamar o CLI.
 - `npm test` — 128/128 (score + series + crawl + agenda + autopublish + projects). Node 22: listar
-  arquivos explícitos no script (dir não resolve). ML: `C:\venvs\roihub-ml\Scripts\python -m pytest ml/test_ml.py -q` (18/18).
+  arquivos explícitos no script (dir não resolve). ML: `C:\venvs\roihub-ml\Scripts\python -m pytest ml/test_ml.py -q` (24/24).
 - Dockerfile copia `docs/` pra imagem (a /infra lê via fs em runtime).
 
 ## Commits (todos na main, deploy automático)
@@ -218,7 +242,6 @@ Sessão fechou 3 das 4 frentes do handoff anterior (`7d2ec87`). O que ficou de a
 
 - **A1 (ops, não código): 3 sites de produção fora do ar** — detalhe e diagnóstico já feito em
   `handoff/handoff-proximo-passo.md`. É o item de maior impacto e nenhuma sessão de código o resolve.
-- F4 (narrativa claude-cli) do `handoff/handoff-ml.md` — última fase do ML, e agora opcional.
 - Calibrar o threshold do gate D+180 (10 cliques/sem, constante em `GATE_SPECS`) quando 28/11 se
   aproximar: é o único número do sistema que não sai de um documento.
 - **Medir o custo da home em prod** (38 projetos × 1 health check + 2 queries GSC; 2,2–3,0 s em

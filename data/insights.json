@@ -62,7 +62,7 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "As impressões aceleram (+38,6%/sem em 4 semanas, +17,2%/sem em 12) mas cliques ainda não têm dado suficiente, sinal de conteúdo novo ganhando visibilidade sem converter clique ainda. Com 24,1% do crawl em redirect, parte desse volume pode estar sendo desperdiçado em URLs que não deveriam ser rastreadas. Ação: revisar e limpar as regras de redirect para consolidar o crawl budget."
     },
     "tapepro": {
       "property": "sc-domain:tapepro.roilabs.com.br",
@@ -117,7 +117,7 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Não há dados suficientes de impressões nem cliques em nenhuma janela, então ainda é cedo para falar em queda ou estagnação. O crawl é o ponto crítico: só 33,6% das URLs voltam OK, com 56,3% caindo em outros erros. Ação: auditar o sitemap e os status HTTP retornados para entender por que a maior parte do crawl não está OK antes de esperar tração orgânica."
     },
     "sirius": {
       "property": "sc-domain:siriuscrm.com.br",
@@ -232,7 +232,7 @@
       },
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões sobem de forma consistente nas três janelas e a posição média melhorou de 14,1 para 12,3, mas cliques caem 14%/sem em 12 semanas mesmo com mais visibilidade, indicando um problema de CTR nos snippets exibidos. O crawl está saudável (92,2% OK). Ação: revisar títulos e meta descriptions das páginas que mais ganharam impressão para melhorar a taxa de clique."
     },
     "fabrica": {
       "property": "sc-domain:estetia.estetiacrm.com.br",
@@ -338,7 +338,7 @@
       },
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões saltam 27,4%/sem em 12 semanas, mas a base ainda é pequena (a projeção sai de 10 para só 16 impressões/semana) e cliques seguem sem dado suficiente. O crawl está saudável (95,6% OK), então o gargalo não é técnico. Ação: ampliar a produção de conteúdo nesse tema para consolidar o crescimento antes que ele estagne como aconteceu na janela de 26 semanas."
     },
     "roilabs": {
       "property": "sc-domain:roilabs.com.br",
@@ -462,7 +462,7 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "A última semana teve um pico anômalo de impressões (32 contra um esperado de 7, 3,1 sigma) sobre uma tendência de alta de 15,7%/sem em 12 semanas, mas a projeção já mostra estabilização em torno de 26. O crawl é crítico, com só 33,6% OK e 56,3% em outros erros. Ação: priorizar a correção dos erros de crawl antes de investir em novo conteúdo."
     },
     "polarisia": {
       "property": "sc-domain:polarisia.com.br",
@@ -579,7 +579,7 @@
       "flags": [
         "declining"
       ],
-      "narrative": null
+      "narrative": "Impressões caem 5,6%/sem em 12 semanas e a posição média piorou de 8,5 para 10,4, mas cliques sobem 7,5%/sem no mesmo período, ou seja, menos gente vê a página, porém quem vê clica mais, sugerindo perda de rankings em termos de baixo CTR e ganho nos de intenção forte. O crawl está saudável. Ação: revisar o conteúdo das páginas que perderam posição para recuperar cobertura de palavras-chave."
     },
     "estetiacrm": {
       "property": "sc-domain:estetiacrm.com.br",
@@ -695,7 +695,7 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Impressões sobem de forma constante nas três janelas (até +14%/sem em 12 semanas) e a posição média melhorou de 21,2 para 17,2, mostrando ganho real de relevância. O crawl tem desperdício, com 8,3% em redirect e 6,9% em 404. Ação: corrigir os links quebrados (404) para não perder autoridade justamente enquanto o ranking está subindo."
     },
     "reviewshield": {
       "property": "sc-domain:reviewshield.nimblabs.com",
@@ -835,7 +835,7 @@
         }
       ],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões aceleram 25,5%/sem em 12 semanas com crawl saudável, mas a projeção indica que o produto não deve cruzar o gate D+90 de 100 impressões/semana até 02/09, ficando perto de 84. Cliques seguem zerados, longe do gate D+180. Ação: publicar mais conteúdo indexável agora para tentar puxar a curva antes da data do gate."
     },
     "context": {
       "property": "sc-domain:context.nimblabs.com",
@@ -922,7 +922,7 @@
         }
       ],
       "flags": [],
-      "narrative": null
+      "narrative": "As impressões deram um salto de +76,3%/sem nas últimas 4 semanas, mas nas janelas de 12 e 26 semanas o quadro é de estabilidade, então ainda não dá para confirmar tendência, é dado curto demais. O crawl está saudável (91,4% OK). Ação: manter publicação de conteúdo por mais algumas semanas até a série ter tamanho suficiente para confirmar a virada."
     },
     "aftercare": {
       "property": "sc-domain:aftercare.nimblabs.com",
@@ -1070,7 +1070,7 @@
         }
       ],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões sobem em todas as janelas, com destaque para os 68,4%/sem nas últimas 4 semanas, e a posição média melhorou bastante (66,2 para 58,2); o crawl está saudável. A projeção tem banda muito larga (de 71 a mais de 25 mil), refletindo a incerteza do modelo diante do degrau de crescimento recente, não uma previsão de explosão real. Ação: já cruzou o gate D+90, então o próximo passo é reforçar conteúdo para sustentar cliques até o gate D+180."
     },
     "nimblabs": {
       "property": "sc-domain:nimblabs.com",
@@ -1184,7 +1184,8 @@
       },
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões crescem 30,6%/sem em 12 semanas, mas a posição média piorou de 64,8 para 69,1, sinal clássico de conteúdo novo indexando e ganhando impressão em posições ainda muito baixas no ranking. O crawl está saudável (96,6% OK). Ação: trabalhar link building interno e otimização on-page nas páginas novas para empurrar essas posições para cima."
     }
-  }
+  },
+  "narratedAt": "2026-07-28"
 }
