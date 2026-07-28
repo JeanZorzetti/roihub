@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 import crawl as crawl_mod
 import diagnostics as dx
+import forecast as fc
 import gsc
 
 WEEKS = 68  # 68 whole weeks ≈ 16 months, the API's history ceiling
@@ -67,7 +68,12 @@ def main():
             {"impressions": imp12, "clicks": clk12}, an, crawl_diag, t28
         )
 
+        dx_forecast = fc.project(weeks)
+        gates = fc.evaluate_gates(p["slug"], weeks)
+
         flags = []
+        if any(g["status"] in ("nao-cruza", "falhou") for g in gates):
+            flags.append("kill-gate")
         if crawl_diag["diagnosis"] in ("crawl-waste", "slow-crawl"):
             flags.append(crawl_diag["diagnosis"])
         if imp12["state"] == "declining":
@@ -88,10 +94,14 @@ def main():
             "changepoints": cps,
             "anomalies": an,
             "crawl": {"diagnosis": crawl_diag["diagnosis"], "detail": crawl_diag["detail"]},
+            "forecast": dx_forecast,
+            "gates": gates,
             "flags": flags,
             "narrative": None,
         }
         print(f"{p['slug']:<12} health {health:>3} · {', '.join(flags) or 'sem flags'}")
+        for g in gates:
+            print(f"  {g['gate']}: {g['status']}")  # ASCII only: console is cp1252
 
     if dump:
         return
@@ -112,6 +122,8 @@ def _empty(p, reason, crawl_entry):
         "changepoints": [],
         "anomalies": [],
         "crawl": {"diagnosis": crawl_diag["diagnosis"], "detail": crawl_diag["detail"]},
+        "forecast": None,
+        "gates": [],
         "flags": [],
         "narrative": None,
     }

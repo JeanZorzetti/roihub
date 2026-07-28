@@ -1,6 +1,7 @@
-# Same asserts as test/crawl.test.mjs (parse parity) + diagnostics checks.
+# Same asserts as test/crawl.test.mjs (parse parity) + diagnostics/forecast checks.
 import crawl
 import diagnostics as dx
+import forecast as fc
 
 
 def day(d, requests, ms=100):
@@ -115,3 +116,63 @@ def test_health_score_clamped_with_reasons():
     score, reasons = dx.health_score(trend12, anomalies, crawl_diag, t28)
     assert 0 <= score <= 100 and score < 50
     assert len(reasons) >= 4
+
+
+# --- F3: forecast + kill-gates ---------------------------------------------------------
+# LAST_END fixo: os gates são datas absolutas da tese, então o veredito só é determinístico
+# com a ponta da série fixa. 2026-07-25 → D+90 do aftercare (30/08) cai em 6 semanas.
+LAST_END = "2026-07-25"
+
+
+def series(values, metric="impressions", last_end=LAST_END):
+    out = []
+    for i, v in enumerate(values):
+        end = dx.add_days(last_end, -7 * (len(values) - 1 - i))
+        out.append({"start": dx.add_days(end, -6), "end": end, "clicks": 0, "impressions": 0, metric: v})
+    return out
+
+
+def test_project_none_on_dead_or_sparse_series():
+    assert fc.project(series([0] * 12)) is None
+    assert fc.project(series([1] * 12)) is None  # viva, mas total abaixo do mínimo
+    assert fc.project(series([50, 60, 70])) is None  # histórico curto demais
+
+
+def test_project_trims_dead_prefix_and_projects_growth():
+    proj = fc.project(series([0] * 30 + [3, 1, 11, 10, 20, 45, 93]))
+    assert proj["lastWeek"] == 93  # zeros antigos não entram na série ajustada
+    assert len(proj["weeks"]) == fc.HORIZON
+    assert proj["weeks"][0]["date"] == "2026-08-01" and proj["weeks"][-1]["date"] == "2026-09-19"
+    assert proj["weeks"][-1]["value"] > 93  # curva subindo → projeção acima da última semana
+    for w in proj["weeks"]:
+        assert 0 <= w["lo"] <= w["value"] <= w["hi"]
+
+
+def test_interval_widens_with_horizon():
+    proj = fc.project(series([40, 55, 48, 70, 66, 90, 85, 110]))
+    spreads = [w["hi"] - w["lo"] for w in proj["weeks"]]
+    assert spreads == sorted(spreads) and spreads[-1] > spreads[0]
+
+
+def test_gate_d90_kill_when_flat_below_threshold():
+    g = fc.evaluate_gates("aftercare", series([10] * 12))[0]
+    assert (g["gate"], g["date"], g["threshold"]) == ("D+90", "2026-08-30", 100)
+    assert g["status"] == "nao-cruza"
+    assert "NÃO cruza" in g["sentence"]
+
+
+def test_gate_d90_passed_when_already_above_threshold():
+    g = fc.evaluate_gates("reviewshield", series([300] * 12))[0]
+    assert g["status"] == "passou" and g["projected"] == 300
+
+
+def test_gate_far_and_revenue_gates_have_no_forecast_verdict():
+    gates = fc.evaluate_gates("aftercare", series([10] * 12))
+    assert [g["gate"] for g in gates] == ["D+90", "D+180", "D+270"]
+    assert gates[1]["status"] == "distante"  # 28/11 está a 18 semanas: além do alcance
+    assert gates[2]["status"] == "nao-mensuravel" and gates[2]["projected"] is None
+
+
+def test_gates_only_for_bets_with_a_clock():
+    assert fc.evaluate_gates("goiania", series([500] * 12)) == []
+    assert fc.evaluate_gates("aftercare", []) == []

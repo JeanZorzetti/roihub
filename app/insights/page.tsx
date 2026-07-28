@@ -22,9 +22,22 @@ type Insight = {
   changepoints: { date: string; metric: string; direction: "up" | "down"; changePct: number }[];
   anomalies: { metric: string; direction: "above" | "below"; value: number; expected: number; z: number }[];
   crawl: { diagnosis: string; detail: string };
+  forecast?: { metric: string; lastWeek: number; weeks: Projected[] } | null;
+  gates?: Gate[];
   flags: string[];
   narrative: string | null;
 };
+type Projected = { date: string; value: number; lo: number; hi: number };
+type GateStatus =
+  | "passou"
+  | "no-ritmo"
+  | "em-risco"
+  | "nao-cruza"
+  | "falhou"
+  | "distante"
+  | "sem-dados"
+  | "nao-mensuravel";
+type Gate = { gate: string; date: string; status: GateStatus; sentence: string };
 type Insights = { generatedAt: string; windowEnd: string; projects: Record<string, Insight> };
 
 const PT_STATE: Record<TrendState, string> = {
@@ -34,6 +47,17 @@ const PT_STATE: Record<TrendState, string> = {
   "insufficient-data": "sem dados",
 };
 const PT_METRIC: Record<string, string> = { impressions: "impressões", clicks: "cliques" };
+// Kill-gates da tese nimblabs: ✔ cruza, ✖ não cruza, ⚠ decidido pelo intervalo, ◷ ainda não dá pra dizer.
+const GATE_MARK: Record<GateStatus, { icon: string; cls: string }> = {
+  passou: { icon: "✔", cls: "delta-up" },
+  "no-ritmo": { icon: "✔", cls: "delta-up" },
+  "em-risco": { icon: "⚠", cls: "" },
+  "nao-cruza": { icon: "✖", cls: "delta-down" },
+  falhou: { icon: "✖", cls: "delta-down" },
+  distante: { icon: "◷", cls: "" },
+  "sem-dados": { icon: "◷", cls: "" },
+  "nao-mensuravel": { icon: "◷", cls: "" },
+};
 const stateClass = (s: TrendState) =>
   s === "improving" ? "delta-up" : s === "declining" ? "delta-down" : "";
 const slope = (v: number | null) =>
@@ -131,6 +155,45 @@ export default async function InsightsPage() {
                     />
                   </p>
 
+                  {i.gates?.map((g) => (
+                    <p className="insight-line" key={g.gate}>
+                      <b className={GATE_MARK[g.status].cls}>{GATE_MARK[g.status].icon}</b> {g.sentence}
+                    </p>
+                  ))}
+
+                  {i.forecast && (
+                    <details className="wk-table">
+                      <summary>
+                        projeção {i.forecast.weeks.length} semanas de{" "}
+                        {PT_METRIC[i.forecast.metric] ?? i.forecast.metric} (Holt amortecido, intervalo 80%)
+                      </summary>
+                      <p className="seo-empty">
+                        Intervalo largo não é bug: em série jovem e volátil o modelo está dizendo que não sabe
+                        prever tão longe. Julgue pelas primeiras semanas.
+                      </p>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Semana de</th>
+                            <th>Projeção</th>
+                            <th>Intervalo 80%</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {i.forecast.weeks.map((w) => (
+                            <tr key={w.date}>
+                              <td>{fmtDay(w.date)}</td>
+                              <td>{num.format(w.value)}</td>
+                              <td>
+                                {num.format(w.lo)}–{num.format(w.hi)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </details>
+                  )}
+
                   {i.changepoints.map((c) => (
                     <p className="insight-line" key={c.date + c.metric}>
                       <b className={c.direction === "up" ? "delta-up" : "delta-down"}>
@@ -211,7 +274,9 @@ export default async function InsightsPage() {
         Gerado pelo <code>ml/analyze.py</code> (batch local, rotina de sexta): 16 meses de série diária do GSC +
         exports de crawl stats, estatística robusta — tendência Theil-Sen por janela, degraus (changepoint PELT),
         anomalia da última semana (mediana ± 3·MAD) e diagnóstico crawl↔SEO. Health 0–100 sempre com os motivos
-        listados. Cards ordenados do pior pro melhor. Pra atualizar: <code>python ml/analyze.py</code> + commit+push.
+        listados. Nos 3 bets do nimblabs, a projeção (Holt amortecido em log, intervalo 80%) responde os
+        kill-gates D+90/180/270 da tese — ✔ cruza, ✖ não cruza, ◷ ainda sem veredito. Cards ordenados do pior pro
+        melhor. Pra atualizar: <code>python ml/analyze.py</code> + commit+push.
       </p>
     </main>
   );

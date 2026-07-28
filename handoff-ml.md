@@ -10,7 +10,41 @@
 - **F0 validado**: `--dump` bate 100% com os totais 28d do hub (script node descartável na sessão de 10/07, todas as 10 propriedades idênticas).
 - **Achado real do 1º run**: 4 projetos (sirius, polarisia, estetiacrm, nimblabs) com changepoint de impressões PRA CIMA na mesma semana de 13/05/2026 — padrão de algo update; cruzar manualmente com deploys/updates.
 - Gotchas novos: `.env` do repo tem BOM UTF-8 (ler com `utf-8-sig`); console Windows é cp1252 (prints do analyze.py só ASCII).
-- **Falta**: F3 (forecast Holt-Winters + kill-gates nimblabs) e F4 (narrativa via claude-cli) — briefs abaixo continuam válidos. Conferir `/insights` em prod.
+- **Falta**: F4 (narrativa via claude-cli) — brief abaixo continua válido. Conferir `/insights` em prod.
+
+## ✅ STATUS 28/07: F3 SHIPPED (forecast + kill-gates)
+
+`ml/forecast.py` (+7 testes, 18/18 pytest) → `insights.json` ganha `forecast` e `gates` por projeto;
+`/insights` renderiza a frase do gate e a tabela da projeção. **Primeiros vereditos reais:**
+
+| bet | gate D+90 | veredito automático |
+|---|---|---|
+| Aftercare | 30/08 | ✔ **PASSOU** — 540 imp na última semana contra o gate de 100. Um mês antes da data |
+| ReviewShield | 02/09 | ✖ **NÃO cruza** — projeção ~84 imp/sem (35–200) contra 100. Confirma "em risco" de 11/07 |
+| Context Keeper | 10/09 | ◷ série curta demais pra projetar — mas **49 imp na última semana**: saiu do zero absoluto da revisão de 11/07 (o Request Indexing pegou) |
+
+Decisões de modelagem, pra não reabrir:
+
+- **Holt amortecido (ETS(A,Ad,N)) em `log1p`, sem statsmodels.** 68 pontos semanais não sustentam
+  sazonalidade nenhuma, e impressão de site novo cresce multiplicativamente (1 → 11 → 540 em 9
+  semanas): tendência aditiva na escala crua subestima a curva e projeta negativo. O modelo inteiro
+  é a recursão de `_fit` — statsmodels só entra se algum dia houver sazonalidade real.
+- **Intervalo de 80%, não 95%** — com 8 pontos o de 95% sai largo demais pra decidir qualquer coisa.
+  A variância h passos à frente é a fórmula exata de ETS(A,Ad,N) (Hyndman, tabela 7.8): a
+  aproximação `σ√(1+α²(h-1))` ignora o trend e dá intervalo estreito = falsa confiança no gate.
+- **Banda gigante em bet novo não é bug** (aftercare: 7–821.088 em 8 semanas). É o modelo dizendo
+  "não sei prever tão longe" numa série que multiplicou por 500 em 9 semanas. O veredito só usa `hi`
+  pra separar "em risco" de "não cruza", e errar pro lado largo é o lado conservador certo.
+- **Prefixo morto é cortado**: bet novo tem ~60 semanas de zero antes do sitemap entrar no índice, e
+  zero antigo puxaria o nível pra baixo como se fosse queda.
+- **Gate longe = "distante", nunca "sem dados"** (a ordem dos ramos em `evaluate_gates` é de
+  propósito): D+180 a 18 semanas não é problema de dado, é o calendário que não andou. Rotular de
+  "sem dados" mandaria caçar bug onde não há.
+- **D+270 nunca recebe veredito**: mede receita, e o GSC não vê receita. Fica no card só com a data.
+- **O único número inventado é o threshold do D+180** (10 cliques/sem). A tese diz "cliques +
+  primeiros signups/leads" sem número — está isolado numa constante em `GATE_SPECS`, com comentário.
+- Relógios (`GATES` em `forecast.py`) saem de `nimblabs/docs/PORTFOLIO-EN-STRATEGY.md` §6 — a data é
+  a da **submissão do sitemap**, não a do deploy. Bet novo = uma linha lá.
 
 ## Decisão de linguagem: Python, SOZINHO
 
@@ -54,7 +88,7 @@ data/insights.json    ← OUTPUT versionado; commit+push = deploy (padrão proje
 
 **F2 — render no hub:** seção "Insights" por card (ou 4ª aba "Insights") lendo `data/insights.json` + data de geração ("gerado em 11/07 — rode ml/analyze.py pra atualizar" se velho > 10 dias). Estado vazio honesto se o JSON não existir.
 
-**F3 — forecast + kill-gates:** Holt-Winters/ETS nas impressões semanais → projeção 4–8 semanas com intervalo. Uso direto: **kill-gates D+90/180/270 dos bets nimblabs** (tese do portfólio) — "no ritmo atual, aftercare NÃO cruza o gate D+180". É o insight de maior valor de negócio do sistema.
+**F3 — forecast + kill-gates (✅ SHIPPED 28/07, ver bloco de status):** Holt-Winters/ETS nas impressões semanais → projeção 4–8 semanas com intervalo. Uso direto: **kill-gates D+90/180/270 dos bets nimblabs** (tese do portfólio) — "no ritmo atual, aftercare NÃO cruza o gate D+180". É o insight de maior valor de negócio do sistema.
 
 **F4 (opcional) — narrativa:** prompt com o JSON pro `claude-cli -p` gerar 2–3 frases pt-BR por projeto ("Impressões 3× em 6 sem mas posição média piorou: conteúdo novo rankeando fundo; reforce internal links de X"). Batch, 1×/semana, custo assinatura.
 

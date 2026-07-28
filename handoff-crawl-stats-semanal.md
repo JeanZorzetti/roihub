@@ -222,12 +222,22 @@ hub troca e o autopublish **em andamento volta `request-failed` nos projetos em 
 projetos ligados a janela proibida é **00:00–01:00 BRT** (o cron é `13 3 * * *` = 00:13 BRT). Domingo
 10:00 está a 9 horas de distância dos dois lados.
 
-Task Scheduler chamando PowerShell direto (sem `.bat` intermediário):
+✅ **Agendado em 28/07.** Não com `schtasks`: o CLI **não expõe "run if missed"** (`StartWhenAvailable`),
+que é justamente o requisito acima. O cmdlet expõe, e ainda resolve o `cd` do §4 sem wrapper:
 
 ```powershell
-schtasks /create /tn "roihub crawl stats" /sc weekly /d SUN /st 10:00 ^
-  /tr "node \"C:\Users\jeanz\OneDrive\Desktop\ROI Labs\roihub\scripts\fetch-crawl-stats.mjs\""
+$a = New-ScheduledTaskAction -Execute "C:\Program Files\nodejs\node.exe" `
+     -Argument '"C:\Users\jeanz\OneDrive\Desktop\ROI Labs\roihub\scripts\fetch-crawl-stats.mjs"' `
+     -WorkingDirectory "C:\Users\jeanz\OneDrive\Desktop\ROI Labs\roihub"
+$t = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At 10:00
+$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+Register-ScheduledTask -TaskName "roihub crawl stats" -Action $a -Trigger $t -Settings $s
 ```
+
+`-WorkingDirectory` é o repo (o Task Scheduler inicia em `C:\Windows\System32` e `git add` cairia no
+lugar errado); `node` por caminho absoluto porque o PATH da tarefa não é o do seu shell.
+Conferir: `(Get-ScheduledTask -TaskName "roihub crawl stats").Settings.StartWhenAvailable` → `True`.
+Primeiro disparo: **domingo 02/08/2026 10:00**.
 
 O script tem que `cd` para o repo (ou usar caminhos absolutos): o Task Scheduler inicia em
 `C:\Windows\System32`, e `process.cwd()` errado faz o `git add` cair no lugar errado.
@@ -292,7 +302,8 @@ export falhado, não site parado — confira a saída do script antes de investi
 - [x] **Primeiro run de verdade concluído: 10/10 exports de `2026-07-25` no repo**, commitados e
       pushados pelo próprio robô (`b4c17a0` com 8, `66d5feb` com os 2 que faltavam). O `context`
       deixou de ser a pasta vazia — a aba passa a ter as 10 propriedades
-- [ ] Task Scheduler domingo 10:00 BRT + "run if missed" marcado
+- [x] **Task Scheduler domingo 10:00 BRT + "run if missed" — feito em 28/07** (§4; primeiro
+      disparo 02/08). Até aqui o `/infra` congelava em 25/07
 - [ ] Re-run seletivo quando uma propriedade falhar: `node scripts/fetch-crawl-stats.mjs aftercare`
       (argumento solto filtra por substring; sem argumento roda as 10)
 - [ ] Trocar o texto "export manual semanal" no rodapé de `app/infra/page.tsx:123`
