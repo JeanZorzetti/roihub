@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { GscStatus } from "@/lib/gsc";
+import type { GithubStatus } from "@/lib/github";
 
 // Chrome compartilhado entre as páginas (ranking e SEO).
 
@@ -17,6 +18,17 @@ export function Tabs({ active }: { active: "home" | "seo" | "infra" | "insights"
       {tab("insights", "/insights", "Insights")}
       {tab("agenda", "/agenda", "Agenda")}
     </nav>
+  );
+}
+
+export function GithubFoot({ gh }: { gh: GithubStatus }) {
+  return (
+    <p className={gh.state === "error" ? "foot gsc-err" : "foot"}>
+      {gh.state === "off" &&
+        "GitHub: desligado — a env GITHUB_TOKEN não está configurada neste ambiente; a lista cai só na curadoria do data/projects.json."}
+      {gh.state === "error" && `GitHub: ERRO — ${gh.message}`}
+      {gh.state === "ok" && `GitHub: conectado — ${gh.total} repositórios lidos (cache de 10 min).`}
+    </p>
   );
 }
 

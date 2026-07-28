@@ -1,13 +1,22 @@
 "use client";
 
 import { useRef } from "react";
-import projects from "@/data/projects.json";
 import { WD_LABELS } from "@/lib/agenda.mjs";
 import type { Task } from "@/lib/db";
 import { update, promote } from "./actions";
 
 /** Com acaoKey (ação do ranking): salvar cria tarefa no banco e risca a ação original. */
-export function EditTask({ task, done, acaoKey }: { task: Task; done: boolean; acaoKey?: string }) {
+export function EditTask({
+  task,
+  done,
+  acaoKey,
+  slugs,
+}: {
+  task: Task;
+  done: boolean;
+  acaoKey?: string;
+  slugs: string[];
+}) {
   const ref = useRef<HTMLDialogElement>(null);
   return (
     <>
@@ -47,9 +56,9 @@ export function EditTask({ task, done, acaoKey }: { task: Task; done: boolean; a
           </select>
           <select name="projeto" defaultValue={task.projeto ?? ""} className="ag-in" title="Projeto">
             <option value="">— projeto —</option>
-            {projects.map((p) => (
-              <option key={p.slug} value={p.slug}>
-                {p.slug}
+            {slugs.map((slug) => (
+              <option key={slug} value={slug}>
+                {slug}
               </option>
             ))}
           </select>

@@ -1,11 +1,12 @@
-import projects from "@/data/projects.json";
 import { type Health } from "@/lib/health";
 import { gscStatus, type GscTrend } from "@/lib/gsc";
+import { githubStatus } from "@/lib/github";
+import { listReposSemSite } from "@/lib/projects";
 import { WEIGHTS } from "@/lib/score.mjs";
 import { evaluateAll, type Project, type Evaluated } from "@/lib/evaluate";
 import { dbOn, listDone } from "@/lib/db";
 import { hash8, NO_DATE } from "@/lib/agenda.mjs";
-import { Tabs, GscFoot } from "./tabs";
+import { Tabs, GscFoot, GithubFoot } from "./tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -57,15 +58,18 @@ function TrendCell({ p }: { p: Evaluated }) {
 }
 
 export default async function Page() {
-  const [gsc, evaluated, doneSet] = await Promise.all([
+  const [gsc, gh, evaluated, semSite, doneSet] = await Promise.all([
     gscStatus(),
+    githubStatus(),
     evaluateAll(),
+    listReposSemSite(),
     // falha de DB nunca derruba o hub — sem agenda, nada é riscado
     dbOn() ? listDone().catch(() => new Set<string>()) : new Set<string>(),
   ]);
   const acaoDone = (p: Project) => doneSet.has(`acao:${p.slug}:${hash8(p.acao)}@${NO_DATE}`);
   const foco = evaluated[0];
   const down = evaluated.filter((p) => !p.health.ok);
+  const curados = evaluated.filter((p) => p.curated).length;
   const atualizado = new Date().toLocaleString("pt-BR", {
     timeZone: "America/Sao_Paulo",
     day: "2-digit",
@@ -91,7 +95,7 @@ export default async function Page() {
           <Tabs active="home" />
         </div>
         <div className="topbar-meta">
-          {projects.length} projetos · 1 foco · atualizado {atualizado}
+          {evaluated.length} projetos ({curados} curados) · 1 foco · atualizado {atualizado}
         </div>
       </div>
 
@@ -100,6 +104,25 @@ export default async function Page() {
           ⚠ {down.length} site{down.length > 1 ? "s" : ""} fora do ar:{" "}
           {down.map((p) => p.nome).join(", ")}
         </div>
+      )}
+
+      {semSite.length > 0 && (
+        <details className="sem-site">
+          <summary>
+            {semSite.length} repos ainda sem site — sem <code>homepage</code> no GitHub, ficam
+            fora do ranking
+          </summary>
+          <ul>
+            {semSite.map((r) => (
+              <li key={r.name}>
+                <a href={r.url} target="_blank" rel="noreferrer">
+                  {r.name}
+                </a>
+                <code>gh repo edit JeanZorzetti/{r.name} --homepage https://…</code>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
 
       <section className="hero">
@@ -166,11 +189,22 @@ export default async function Page() {
               <tr key={p.slug}>
                 <td className="rank">{i + 1}</td>
                 <td>
-                  <div className="proj-name">{p.nome}</div>
+                  <div className="proj-name">
+                    {p.nome}
+                    {!p.curated && <span className="pill">SEM CURADORIA</span>}
+                  </div>
                   <div className="proj-url">
                     <a href={p.url} target="_blank" rel="noreferrer">
                       {p.url.replace("https://", "").replace(/\/$/, "")}
                     </a>
+                    {p.repoUrl && (
+                      <>
+                        {" · "}
+                        <a href={p.repoUrl} target="_blank" rel="noreferrer">
+                          {p.repo}
+                        </a>
+                      </>
+                    )}
                   </div>
                 </td>
                 <td>
@@ -196,6 +230,15 @@ export default async function Page() {
       </div>
 
       <GscFoot gsc={gsc} />
+      <GithubFoot gh={gh} />
+      <p className="foot">
+        A lista vem do GitHub: todo repo vivo com <code>homepage</code> preenchida é um projeto.
+        A chave é a <b>URL do site</b>, não o repo — um repo pode servir vários sites (o monorepo{" "}
+        <code>roilabs</code> serve roilabs.com.br, goiania e tapepro), então cada entrada de{" "}
+        <code>data/projects.json</code> aponta o seu repo pelo campo <code>repo</code> e a URL
+        curada sempre vence a <code>homepage</code>. Repo sem curadoria entra com todos os
+        critérios em 0 e fica no fim do ranking até ganhar receita/blockers/ação.
+      </p>
       <p className="foot">
         Score = receita×{WEIGHTS.receita} + blockers×{WEIGHTS.blockers} + SEO×{WEIGHTS.seo} +
         decay×{WEIGHTS.decay}, cada critério 0–10. Site fora do ar força decay 10. SEO vem do

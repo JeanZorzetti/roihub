@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import projects from "@/data/projects.json";
+import { listProjects } from "@/lib/projects";
 import { Tabs } from "../tabs";
 import { fmtDay, num } from "../viz";
 
@@ -65,10 +65,13 @@ function TrendLine({ label, state, slopePct }: { label: string; state: TrendStat
   );
 }
 
-export default function InsightsPage() {
+export default async function InsightsPage() {
+  const projects = await listProjects();
   const data = loadInsights();
   const ageDays = data ? Math.floor((Date.now() - Date.parse(data.generatedAt)) / 864e5) : 0;
   const rows = projects
+    // repo sem curadoria e sem insight não tem o que diagnosticar — fica fora da aba
+    .filter((p) => p.curated || data?.projects[p.slug])
     .map((p) => ({ p, i: data?.projects[p.slug] ?? null }))
     .sort((a, b) => (a.i?.health ?? 101) - (b.i?.health ?? 101)); // pior primeiro: aba de diagnóstico
 

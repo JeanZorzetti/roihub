@@ -1,16 +1,11 @@
-import projects from "@/data/projects.json";
+import { listProjects } from "@/lib/projects";
 import { PROJECTS } from "@/lib/autopublish-projects.mjs";
 import type { ProjectState, Publication } from "@/lib/db";
 import { updatePublishingState } from "./actions";
 
-// Os controles seguem PROJECTS, não a lista da agenda: elas divergem. Quando o tapepro
+// Os controles seguem PROJECTS, não a lista do hub: elas divergem. Quando o tapepro
 // entrou e o nimblabs saiu, a UI mostrou um projeto inexistente e escondeu um que estava
-// ativo — sem controle de pausa para ele. projects.json entra só pelo nome amigável.
-const PROJECT_NAMES = new Map(projects.map((project) => [project.slug, project.nome]));
-const PUBLISHING_PROJECTS = PROJECTS.map(({ slug }: { slug: string }) => ({
-  slug,
-  nome: PROJECT_NAMES.get(slug) ?? slug,
-}));
+// ativo — sem controle de pausa para ele. A lista do hub entra só pelo nome amigável.
 const USD = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD" });
 const ACTIONS = { new: "Nova página", update: "Atualização", block: "Bloqueio" };
 const STATUSES = {
@@ -90,7 +85,7 @@ function Control({
   );
 }
 
-export function Publications({
+export async function Publications({
   publications,
   states,
   databaseOn,
@@ -100,6 +95,11 @@ export function Publications({
   databaseOn: boolean;
 }) {
   const bySlug = new Map(states.map((state) => [state.projectSlug, state]));
+  const names = new Map((await listProjects()).map((p) => [p.slug, p.nome]));
+  const publishingProjects = PROJECTS.map(({ slug }: { slug: string }) => ({
+    slug,
+    nome: names.get(slug) ?? slug,
+  }));
 
   return (
     <section aria-labelledby="publishing-title">
@@ -122,7 +122,7 @@ export function Publications({
             databaseOn={databaseOn}
             global
           />
-          {PUBLISHING_PROJECTS.map((project) => (
+          {publishingProjects.map((project) => (
             <Control
               key={project.slug}
               slug={project.slug}
@@ -159,7 +159,7 @@ export function Publications({
                 const commit = commitUrl(publication);
                 return (
                   <tr key={publication.id}>
-                    <td className="proj-name">{PROJECT_NAMES.get(publication.projectSlug) ?? publication.projectSlug}</td>
+                    <td className="proj-name">{names.get(publication.projectSlug) ?? publication.projectSlug}</td>
                     <td>{publication.runDate || "—"}</td>
                     <td>{ACTIONS[publication.action] ?? publication.action}</td>
                     <td>

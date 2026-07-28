@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import projects from "@/data/projects.json";
+import { listProjects, type Project } from "@/lib/projects";
 import { dbOn, listProjectStates, listPublications } from "@/lib/db";
 import { gscSeries, gscStatus, isoDaysAgo } from "@/lib/gsc";
 import { bucketWeeks, totals28 } from "@/lib/series.mjs";
@@ -10,7 +10,6 @@ import { Publications } from "./publications";
 // GSC roda a cada request (16 meses de histórico na API — sem DB, sem cache de build).
 export const dynamic = "force-dynamic";
 
-type Project = (typeof projects)[number];
 type Week = { start: string; end: string; clicks: number; impressions: number; position: number | null; ctr: number | null };
 type Window28 = { clicks: number; impressions: number; position: number | null; ctr: number | null };
 type Row = Project & { weeks: Week[]; t: { current: Window28; previous: Window28 } | null };
@@ -21,6 +20,7 @@ const fmtCtr = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(
 export default async function SeoPage() {
   const end = isoDaysAgo(3);
   const databaseOn = dbOn();
+  const projects = await listProjects();
   const [gsc, rows, publications, projectStates] = await Promise.all([
     gscStatus(),
     Promise.all(

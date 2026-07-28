@@ -1,4 +1,3 @@
-import projects from "@/data/projects.json";
 import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listTasks, listDone, type Task } from "@/lib/db";
 import { todaySP, addDaysISO, nextOccurrence, hash8, brShort, WD_LABELS, NO_DATE } from "@/lib/agenda.mjs";
@@ -50,19 +49,20 @@ function Check({ item, done }: { item: Item; done: boolean }) {
   );
 }
 
-function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: boolean }) {
+function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWrite: boolean; slugs: string[] }) {
   const desc = item.task?.descricao ?? item.desc;
   return (
     <li className="ag-item">
       {canWrite && <Check item={item} done={done} />}
       <div className="ag-body">
         {canWrite && item.task ? (
-          <EditTask task={item.task} done={done} />
+          <EditTask task={item.task} done={done} slugs={slugs} />
         ) : canWrite && item.taskId === null ? (
           <EditTask
             task={{ id: 0, titulo: item.titulo, descricao: item.desc ?? null, projeto: item.projeto, due: null, weekday: null }}
             done={done}
             acaoKey={item.key}
+            slugs={slugs}
           />
         ) : (
           <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
@@ -86,14 +86,14 @@ function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: bo
   );
 }
 
-function Section({ title, items, doneSet, canWrite, alert }: { title: string; items: Item[]; doneSet: Set<string>; canWrite: boolean; alert?: boolean }) {
+function Section({ title, items, doneSet, canWrite, slugs, alert }: { title: string; items: Item[]; doneSet: Set<string>; canWrite: boolean; slugs: string[]; alert?: boolean }) {
   if (items.length === 0) return null;
   return (
     <section className="card ag-section">
       <h2 className={alert ? "ag-h alert" : "ag-h"}>{title}</h2>
       <ul className="ag-list">
         {items.map((it) => (
-          <Row key={it.key + it.occ} item={it} done={doneSet.has(`${it.key}@${it.occ}`)} canWrite={canWrite} />
+          <Row key={it.key + it.occ} item={it} done={doneSet.has(`${it.key}@${it.occ}`)} canWrite={canWrite} slugs={slugs} />
         ))}
       </ul>
     </section>
@@ -113,7 +113,10 @@ export default async function Page() {
     const { item, bucket } = itemFromTask(t, today);
     buckets[bucket].push(item);
   }
-  const acoes: Item[] = ranked.map((p, i) => ({
+  const slugs = ranked.map((p) => p.slug);
+  // só o que tem curadoria vira ação da agenda: repo novo sem receita/ação definidas entra
+  // no ranking da home marcado SEM CURADORIA, mas não afoga a lista do dia.
+  const acoes: Item[] = ranked.filter((p) => p.curated).map((p, i) => ({
     key: `acao:${p.slug}:${hash8(p.acao)}`,
     occ: NO_DATE,
     titulo: p.acao,
@@ -161,9 +164,9 @@ export default async function Page() {
           </select>
           <select name="projeto" className="ag-in" title="Projeto">
             <option value="">— projeto —</option>
-            {projects.map((p) => (
-              <option key={p.slug} value={p.slug}>
-                {p.slug}
+            {slugs.map((slug) => (
+              <option key={slug} value={slug}>
+                {slug}
               </option>
             ))}
           </select>
@@ -171,19 +174,19 @@ export default async function Page() {
         </form>
       )}
 
-      <Section title="⚠ Atrasadas" items={pend(buckets.atrasadas)} doneSet={doneSet} canWrite={on} alert />
-      <Section title="Hoje" items={pend(buckets.hoje)} doneSet={doneSet} canWrite={on} />
-      <Section title="Próximos 7 dias" items={pend(buckets.semana)} doneSet={doneSet} canWrite={on} />
-      <Section title="Mais tarde" items={pend(buckets.depois)} doneSet={doneSet} canWrite={on} />
-      <Section title="Sem data" items={pend(buckets.semdata)} doneSet={doneSet} canWrite={on} />
-      <Section title="Ações dos projetos (do ranking)" items={pend(acoes)} doneSet={doneSet} canWrite={on} />
+      <Section title="⚠ Atrasadas" items={pend(buckets.atrasadas)} doneSet={doneSet} canWrite={on} slugs={slugs} alert />
+      <Section title="Hoje" items={pend(buckets.hoje)} doneSet={doneSet} canWrite={on} slugs={slugs} />
+      <Section title="Próximos 7 dias" items={pend(buckets.semana)} doneSet={doneSet} canWrite={on} slugs={slugs} />
+      <Section title="Mais tarde" items={pend(buckets.depois)} doneSet={doneSet} canWrite={on} slugs={slugs} />
+      <Section title="Sem data" items={pend(buckets.semdata)} doneSet={doneSet} canWrite={on} slugs={slugs} />
+      <Section title="Ações dos projetos (do ranking)" items={pend(acoes)} doneSet={doneSet} canWrite={on} slugs={slugs} />
 
       {feitas.length > 0 && (
         <details className="card table-details">
           <summary>✓ Feitas ({feitas.length})</summary>
           <ul className="ag-list">
             {feitas.map((it) => (
-              <Row key={it.key + it.occ} item={it} done canWrite={on} />
+              <Row key={it.key + it.occ} item={it} done canWrite={on} slugs={slugs} />
             ))}
           </ul>
         </details>

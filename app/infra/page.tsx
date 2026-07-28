@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, type Dirent } from "node:fs";
 import path from "node:path";
-import projects from "@/data/projects.json";
+import { listProjects, type Project } from "@/lib/projects";
 import {
   parseDailyChart,
   parseRatios,
@@ -63,7 +63,7 @@ function readCsv(dir: string, pattern: RegExp): string | null {
   }
 }
 
-function loadProperties(): Property[] {
+function loadProperties(projects: Project[]): Property[] {
   const byHost = new Map<string, { host: string; exportDate: string; dir: string }[]>();
   for (const e of findExports()) byHost.set(e.host, [...(byHost.get(e.host) ?? []), e]);
 
@@ -105,10 +105,13 @@ function respAlert(r: Resp): boolean {
   return r.ok < 0.85 || r.serverError >= 0.01;
 }
 
-export default function InfraPage() {
-  const props = loadProperties();
+export default async function InfraPage() {
+  const projects = await listProjects();
+  const props = loadProperties(projects);
   const covered = new Set(props.flatMap((p) => p.covered));
-  const uncovered = projects.filter((p) => !covered.has(p.nome));
+  // só cobra export de crawl dos curados: repo recém-descoberto no GitHub ainda não tem
+  // propriedade no GSC, listar os 20 como "sem export" enterra os que realmente faltam.
+  const uncovered = projects.filter((p) => p.curated && !covered.has(p.nome));
 
   return (
     <main className="page">

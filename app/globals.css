@@ -55,6 +55,28 @@ a:hover { text-decoration: underline; }
 .tab:hover { background: #f0f0ec; text-decoration: none; }
 .tab.active { color: var(--accent); background: #eaf1fd; }
 
+/* repos do GitHub que ainda não têm site — pendência, não alerta */
+.sem-site {
+  border: 1px solid var(--grid);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sem-site summary { cursor: pointer; font-weight: 600; }
+.sem-site ul { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.sem-site li { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sem-site li a { font-weight: 600; min-width: 180px; }
+.sem-site code {
+  background: var(--bg);
+  border: 1px solid var(--grid);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
 /* banner de alerta */
 .banner {
   border: 1px solid var(--crit);
