@@ -1,10 +1,49 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff-proximo-passo.md`](handoff-proximo-passo.md)** (28/07).
+> **Próxima sessão começa em [`handoff-proximo-passo.md`](handoff-proximo-passo.md)** (28/07, noite).
+>
+> **Resumo do próximo passo:** não há frente de código urgente. O que sobrou é **A1 — três sites
+> de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`, `compass.polarisia.com.br`),
+> que é **ops de DNS/vhost, não commit**: nenhuma sessão de código resolve isso, só acesso ao host.
+> Se a próxima sessão for de código, o alvo é **F4** (narrativa via `claude-cli`, `handoff-ml.md`)
+> — e ele ficou menos necessário agora que a frase do kill-gate já sai pronta do Python.
+>
+> **Antes de pegar qualquer card do ranking, leia a armadilha nº 1 do handoff-proximo-passo:** o
+> card do `aftercare` ("checar GSC e decidir no gate D+90") **acabou de apodrecer** — o hub já
+> respondeu esse gate sozinho em 28/07, e o veredito é passar.
+>
 > O hub deixou de ter lista fixa de 10 projetos: agora todo repo do GitHub com `homepage`
 > preenchida é um projeto — detalhe técnico em [`handoff-hub-github.md`](handoff-hub-github.md).
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
+
+## 28/07 (noite) — F3: o hub passou a responder o kill-gate sozinho (+ as 2 tarefas de ops)
+
+Sessão fechou 3 das 4 frentes do handoff anterior (`7d2ec87`). O que ficou de aprendizado:
+
+- **F3 — forecast + kill-gates** (`ml/forecast.py`, render em `/insights`). Holt amortecido
+  (ETS(A,Ad,N)) em `log1p` da série semanal do GSC, **sem statsmodels**: 68 pontos semanais não
+  sustentam sazonalidade nenhuma, e impressão de site novo cresce multiplicativamente (1 → 540 em
+  9 semanas), onde tendência aditiva na escala crua subestima a curva e projeta negativo. Intervalo
+  de **80%** com a variância h-passos exata (Hyndman tab. 7.8) — a aproximação sem trend dá banda
+  estreita, e banda estreita numa decisão de **matar um bet** é falsa confiança. Decisões que não
+  devem ser reabertas estão em `handoff-ml.md` (bloco "STATUS 28/07").
+- **O primeiro run já mudou uma decisão de negócio, não só a tela:** Aftercare **passou** o D+90
+  (540 imp/sem contra o gate de 100) **um mês antes** de 30/08; ReviewShield **não cruza** (~84,
+  banda 35–200) até 02/09; Context Keeper saiu do zero absoluto (49 imp/sem, era 0 em 11/07 — o
+  Request Indexing pegou) mas ainda é curto demais pra projetar.
+- **Nova instância da armadilha dos cards podres:** o `acao` do aftercare manda fazer à mão a
+  leitura que o hub agora faz sozinho. **Toda automação nova candidata um card a apodrecer** —
+  quem ligar a automação atualiza o card no mesmo commit.
+- **A2 — robô de crawl stats agendado** (domingo 10:00 BRT, primeiro disparo 02/08). `schtasks`
+  **não serve**: o CLI não expõe `StartWhenAvailable` ("run if missed"), que era exatamente o
+  requisito. `Register-ScheduledTask` expõe, e o `-WorkingDirectory` ainda resolve o gotcha do
+  Task Scheduler iniciar em `System32` (o `git add` cairia no lugar errado). Até aqui o `/infra`
+  congelava em 25/07.
+- **A3 — `Atma` arquivado.** Repo arquivado é ignorado pelo hub e o histórico continua lá: **é a
+  forma canônica de aposentar um projeto**, melhor que limpar a `homepage` (paliativo de 28/07).
+- Verificado: 18/18 pytest (7 novos), 128/128 npm test, tsc limpo, build 5 rotas ƒ, e a página
+  renderizada em dev com os dados reais das 3 apostas.
 
 ## 13/07 — auditoria dos 10 cards de ação: 3 estavam improcedentes/errados; convenção "Repo:" adotada
 
@@ -129,7 +168,10 @@
 - `app/viz.tsx` — WeekChart/Stat/Delta/InvDelta compartilhados entre /seo e /infra (100% server, tooltip `<title>` SVG).
 - `app/seo/page.tsx` e `app/infra/page.tsx` — as abas.
 - `data/projects.json` — critérios manuais; editar + push = redeploy.
-- `npm test` — 16/16 (score + series + crawl). Node 22: listar arquivos explícitos no script (dir não resolve).
+- `ml/forecast.py` — Holt amortecido + kill-gates da tese nimblabs (relógios vêm de
+  `nimblabs/docs/PORTFOLIO-EN-STRATEGY.md` §6: data da **submissão do sitemap**, não do deploy).
+- `npm test` — 128/128 (score + series + crawl + agenda + autopublish + projects). Node 22: listar
+  arquivos explícitos no script (dir não resolve). ML: `C:\venvs\roihub-ml\Scripts\python -m pytest ml/test_ml.py -q` (18/18).
 - Dockerfile copia `docs/` pra imagem (a /infra lê via fs em runtime).
 
 ## Commits (todos na main, deploy automático)
@@ -156,7 +198,13 @@
 
 ## Próximos candidatos
 
-- F3 (forecast + kill-gates nimblabs) e F4 (narrativa claude-cli) do `handoff-ml.md`.
+- **A1 (ops, não código): 3 sites de produção fora do ar** — detalhe e diagnóstico já feito em
+  `handoff-proximo-passo.md`. É o item de maior impacto e nenhuma sessão de código o resolve.
+- F4 (narrativa claude-cli) do `handoff-ml.md` — última fase do ML, e agora opcional.
+- Calibrar o threshold do gate D+180 (10 cliques/sem, constante em `GATE_SPECS`) quando 28/11 se
+  aproximar: é o único número do sistema que não sai de um documento.
+- **Medir o custo da home em prod** (38 projetos × 1 health check + 2 queries GSC; 2,2–3,0 s em
+  dev). Medir antes de otimizar; se doer, cachear o health check por minutos resolve.
 - Conferir `/seo`, `/infra` e `/insights` em prod depois do deploy (deploy é automático no push).
 - `.env` local com a credencial agora existe (gitignorado) — dev local mostra dados reais.
 - Se a aba SEO pedir interação real (crosshair, filtro de janela), aí sim entra client JS — hoje é 100% server.
