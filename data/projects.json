@@ -19,6 +19,21 @@
     "acao": "Verificar goiania.roilabs.com.br no Bing Webmaster Tools — destrava o IndexNow 403 (manual)"
   },
   {
+    "slug": "tapepro",
+    "nome": "Tapepro (fitas adesivas — 1ª cadeira)",
+    "url": "https://tapepro.roilabs.com.br/",
+    "repo": "roilabs",
+    "receita": 6,
+    "receitaNota": "1ª cadeira ocupada do Growth Partner (15% aquisição / 10% recorrência); sem venda registrada",
+    "blockers": 1,
+    "blockersLista": [],
+    "seoSeed": 3,
+    "decay": 3,
+    "decayNota": "",
+    "acaoDesc": "",
+    "acao": ""
+  },
+  {
     "slug": "sirius",
     "nome": "Sirius CRM",
     "url": "https://siriuscrm.com.br/",
