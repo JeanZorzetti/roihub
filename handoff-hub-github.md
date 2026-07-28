@@ -28,7 +28,7 @@ Foi verificado antes de escrever código, e contraria a premissa inicial de "1 r
 - **Health check, GSC, crawl stats e autopublishing só sabem trabalhar com domínio de
   produção.** `gsc.ts` faz `new URL(p.url).hostname` e resolve a propriedade do Search Console
   por host.
-- **A `homepage` que já estava no GitHub está errada para o hub.** Os 24 repos que tinham o
+- **A `homepage` que já estava no GitHub está errada para o hub.** Os 29 repos que tinham o
   campo preenchido apontavam todos para `*.vercel.app` (`sirius` → `sirius-ebon.vercel.app`,
   não `siriuscrm.com.br`). Ler o campo cru teria quebrado os 10 projetos que funcionavam.
 
@@ -117,7 +117,7 @@ campo `repo` apontando o repositório dela.
    `.env.example` e é usada pelo autopublishing; confirmar que está no ambiente do *site*, não
    só no do cron. Sem ela o hub roda igual a antes (só os 10 curados) e o rodapé diz
    "GitHub: desligado". Escopo necessário: `repo` (para enxergar os privados).
-2. **Os 24 `homepage` que apontam pra `*.vercel.app`.** Não quebram nada hoje (a URL curada
+2. **Os 29 `homepage` que apontam pra `*.vercel.app`.** Não quebram nada hoje (a URL curada
    vence nos 10, e os outros 27 não têm domínio próprio mesmo), mas enquanto apontarem pra
    preview o health check e o GSC medem o host errado. Corrigir com
    `gh repo edit JeanZorzetti/<repo> --homepage https://<domínio-real>/`.

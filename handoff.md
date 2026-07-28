@@ -1,5 +1,9 @@
 # ROI Hub — handoff
 
+> **Próxima sessão começa em [`handoff-proximo-passo.md`](handoff-proximo-passo.md)** (28/07).
+> O hub deixou de ter lista fixa de 10 projetos: agora todo repo do GitHub com `homepage`
+> preenchida é um projeto — detalhe técnico em [`handoff-hub-github.md`](handoff-hub-github.md).
+
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
 ## 13/07 — auditoria dos 10 cards de ação: 3 estavam improcedentes/errados; convenção "Repo:" adotada
