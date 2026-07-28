@@ -1,7 +1,7 @@
 # Handoff — correção dos 3 artigos e rollout dos 10 projetos
 
 **Criado 2026-07-25. Executado no mesmo dia** — este arquivo agora registra o que foi feito e o que
-sobrou. Nome não é `handoff.md` porque esse já existe no roihub (histórico do hub inteiro).
+sobrou. Nome não é `../handoff.md` porque esse já existe no roihub (histórico do hub inteiro).
 
 Leia antes: `handoff-autopublish.md` (como o robô funciona) e `handoff-polimento-editorial.md`.
 

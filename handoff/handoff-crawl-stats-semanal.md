@@ -1,6 +1,6 @@
 # Handoff — abastecer o /infra com crawl stats toda semana, sem ninguém clicar
 
-**Criado: 2026-07-25.** Não é `handoff.md` porque esse já existe (histórico do hub inteiro).
+**Criado: 2026-07-25.** Não é `../handoff.md` porque esse já existe (histórico do hub inteiro).
 Tarefa única, independente do autopublishing — mas **compartilha o repo com ele**, e é isso que
 manda no horário (§4).
 

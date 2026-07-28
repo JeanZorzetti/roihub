@@ -123,6 +123,6 @@ data/insights.json    ← OUTPUT versionado; commit+push = deploy (padrão proje
 
 ## Primeiro passo concreto da sessão nova
 
-1. Ler este arquivo + `handoff.md` + `lib/crawl.mjs` + `lib/gsc.ts`.
+1. Ler este arquivo + `../handoff.md` + `lib/crawl.mjs` + `lib/gsc.ts`.
 2. F0: `ml/` com extração GSC (16 meses, 10 propriedades) e parse dos CSVs — validar contra os números que o hub mostra (mesmos totais 28d).
 3. F1 na sequência; F2 fecha o loop no hub. F3/F4 só depois de F1–F2 verificados.

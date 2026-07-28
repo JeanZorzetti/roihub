@@ -5,7 +5,7 @@
 > dia 26/07 na §1.3 e a contagem de `llm-rate` — é ela que decide se 10/dia cabe na cota.
 
 **Criado: 2026-07-25.** Duas tarefas independentes: a 2 pode ser feita antes da 1.
-O nome não é `handoff.md` porque esse já existe no roihub (histórico do hub inteiro).
+O nome não é `../handoff.md` porque esse já existe no roihub (histórico do hub inteiro).
 
 Leia antes: `handoff-autopublish.md` (como o robô funciona) · `handoff-correcao-e-rollout.md`
 (o que foi corrigido em 25/07 e por que o rollout estava em 2 projetos/dia).

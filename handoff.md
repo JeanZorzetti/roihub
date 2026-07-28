@@ -1,19 +1,37 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff-proximo-passo.md`](handoff-proximo-passo.md)** (28/07, noite).
+> **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, noite).
 >
 > **Resumo do próximo passo:** não há frente de código urgente. O que sobrou é **A1 — três sites
 > de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`, `compass.polarisia.com.br`),
 > que é **ops de DNS/vhost, não commit**: nenhuma sessão de código resolve isso, só acesso ao host.
-> Se a próxima sessão for de código, o alvo é **F4** (narrativa via `claude-cli`, `handoff-ml.md`)
+> Se a próxima sessão for de código, o alvo é **F4** (narrativa via `claude-cli`, `handoff/handoff-ml.md`)
 > — e ele ficou menos necessário agora que a frase do kill-gate já sai pronta do Python.
 >
-> **Antes de pegar qualquer card do ranking, leia a armadilha nº 1 do handoff-proximo-passo:** o
+> **Antes de pegar qualquer card do ranking, leia a armadilha nº 1 do handoff/handoff-proximo-passo:** o
 > card do `aftercare` ("checar GSC e decidir no gate D+90") **acabou de apodrecer** — o hub já
 > respondeu esse gate sozinho em 28/07, e o veredito é passar.
 >
 > O hub deixou de ter lista fixa de 10 projetos: agora todo repo do GitHub com `homepage`
-> preenchida é um projeto — detalhe técnico em [`handoff-hub-github.md`](handoff-hub-github.md).
+> preenchida é um projeto — detalhe técnico em [`handoff/handoff-hub-github.md`](handoff/handoff-hub-github.md).
+
+## Índice dos handoffs (`handoff/`)
+
+Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos vivem em
+[`handoff/`](handoff/) — **nome do arquivo preservado**, só mudou a pasta (28/07).
+
+| arquivo | assunto | estado |
+|---|---|---|
+| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | **comece por aqui**: o que fazer na próxima sessão | 🟢 vivo (28/07) |
+| [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F4 aberto |
+| [`handoff-hub-github.md`](handoff/handoff-hub-github.md) | projetos vêm do GitHub (repo com `homepage`), não de lista fixa | 🟢 vivo (28/07) |
+| [`handoff-crawl-stats-semanal.md`](handoff/handoff-crawl-stats-semanal.md) | robô Playwright que abastece `/infra` + `/insights` toda semana | 🟢 vivo — agendado dom. 10:00 |
+| [`handoff-autopublish.md`](handoff/handoff-autopublish.md) | como o robô de 1 artigo/dia funciona (guardrails, operação) | 📘 referência |
+| [`handoff-polimento-editorial.md`](handoff/handoff-polimento-editorial.md) | qualidade do artigo gerado (não encanamento) | 📘 referência |
+| [`handoff-insights-automatico.md`](handoff/handoff-insights-automatico.md) | o `/insights` parar de envelhecer (acoplado ao robô de crawl) | ✅ executado 25/07 |
+| [`handoff-crawl-plano-acao.md`](handoff/handoff-crawl-plano-acao.md) | plano de ação de crawl por projeto (datado no CSV) | ✅ executado 25/07 |
+| [`handoff-ativacao-total.md`](handoff/handoff-ativacao-total.md) | ligar os 10 projetos do autopublishing + horário do cron | ✅ executado 25/07 |
+| [`handoff-correcao-e-rollout.md`](handoff/handoff-correcao-e-rollout.md) | correção dos 3 primeiros artigos + rollout | ✅ executado 25/07 |
 
 **O que é:** hub administrativo dos 10 projetos full-SEO em `hub.roilabs.com.br` (EasyPanel, repo privado `JeanZorzetti/roihub`, deploy por push). Rankeia por score de prioridade 0–100 e responde: **em qual projeto trabalhar hoje**. SplitJud fica de fora por decisão do Jean (10/07/2026) — projeto dividido com o Aldo.
 
@@ -27,7 +45,7 @@ Sessão fechou 3 das 4 frentes do handoff anterior (`7d2ec87`). O que ficou de a
   9 semanas), onde tendência aditiva na escala crua subestima a curva e projeta negativo. Intervalo
   de **80%** com a variância h-passos exata (Hyndman tab. 7.8) — a aproximação sem trend dá banda
   estreita, e banda estreita numa decisão de **matar um bet** é falsa confiança. Decisões que não
-  devem ser reabertas estão em `handoff-ml.md` (bloco "STATUS 28/07").
+  devem ser reabertas estão em `handoff/handoff-ml.md` (bloco "STATUS 28/07").
 - **O primeiro run já mudou uma decisão de negócio, não só a tela:** Aftercare **passou** o D+90
   (540 imp/sem contra o gate de 100) **um mês antes** de 30/08; ReviewShield **não cruza** (~84,
   banda 35–200) até 02/09; Context Keeper saiu do zero absoluto (49 imp/sem, era 0 em 11/07 — o
@@ -192,15 +210,15 @@ Sessão fechou 3 das 4 frentes do handoff anterior (`7d2ec87`). O que ficou de a
 
 ## Aba Insights (ML) — SHIPPED 10/07 (noite)
 
-- **F0–F2 do `handoff-ml.md` implementados**: `ml/` (Python 3.13, venv em `C:\venvs\roihub-ml`) gera `data/insights.json` (versionado) e a aba `/insights` renderiza — health 0–100 explicável, tendência Theil-Sen 4/12/26 sem, changepoints PELT, anomalias MAD, diagnóstico crawl↔SEO. Detalhes/gotchas/pendências (F3 forecast, F4 narrativa) em `handoff-ml.md`.
+- **F0–F2 do `handoff/handoff-ml.md` implementados**: `ml/` (Python 3.13, venv em `C:\venvs\roihub-ml`) gera `data/insights.json` (versionado) e a aba `/insights` renderiza — health 0–100 explicável, tendência Theil-Sen 4/12/26 sem, changepoints PELT, anomalias MAD, diagnóstico crawl↔SEO. Detalhes/gotchas/pendências (F3 forecast, F4 narrativa) em `handoff/handoff-ml.md`.
 - **Rotina de sexta agora**: export de crawl em `docs/` → `C:\venvs\roihub-ml\Scripts\python ml\analyze.py` → commit+push.
 - pytest 11/11 em `ml/test_ml.py`; extração validada 100% contra os totais 28d do hub.
 
 ## Próximos candidatos
 
 - **A1 (ops, não código): 3 sites de produção fora do ar** — detalhe e diagnóstico já feito em
-  `handoff-proximo-passo.md`. É o item de maior impacto e nenhuma sessão de código o resolve.
-- F4 (narrativa claude-cli) do `handoff-ml.md` — última fase do ML, e agora opcional.
+  `handoff/handoff-proximo-passo.md`. É o item de maior impacto e nenhuma sessão de código o resolve.
+- F4 (narrativa claude-cli) do `handoff/handoff-ml.md` — última fase do ML, e agora opcional.
 - Calibrar o threshold do gate D+180 (10 cliques/sem, constante em `GATE_SPECS`) quando 28/11 se
   aproximar: é o único número do sistema que não sai de um documento.
 - **Medir o custo da home em prod** (38 projetos × 1 health check + 2 queries GSC; 2,2–3,0 s em

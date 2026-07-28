@@ -1,6 +1,6 @@
 # Handoff — o /insights se atualiza sozinho, junto com o /infra
 
-**Criado: 2026-07-25.** Não é `handoff.md` (esse é o histórico do hub inteiro) nem substitui
+**Criado: 2026-07-25.** Não é `../handoff.md` (esse é o histórico do hub inteiro) nem substitui
 `handoff-ml.md` — aquele continua sendo o doc do motor (F0–F4, decisões, schema). Este trata de
 **uma coisa só: o dado parar de envelhecer**.
 

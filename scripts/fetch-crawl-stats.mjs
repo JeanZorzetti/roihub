@@ -15,7 +15,7 @@
 // docs/, então só faz sentido recalcular depois que o dado novo entrou. Python via ROIHUB_PYTHON
 // (default: o venv em C:/venvs — FORA do OneDrive, que corrompe venv igual node_modules).
 //
-// Handoff: handoff-crawl-stats-semanal.md, handoff-insights-automatico.md
+// Handoff: handoff/handoff-crawl-stats-semanal.md, handoff/handoff-insights-automatico.md
 
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync } from "node:fs";

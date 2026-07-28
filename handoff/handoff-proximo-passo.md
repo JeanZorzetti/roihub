@@ -4,7 +4,7 @@ Atualizado em **2026-07-28, noite**. Das 4 frentes do handoff anterior, **3 fech
 (A2, A3 e F3). Sobrou **A1** — que é ops de infra, não código — e **F4**, que é enfeite.
 
 O hub em produção lista todos os projetos vivos do GitHub, não os 10 curados.
-Como isso funciona por dentro: `handoff-hub-github.md`. Histórico geral: `handoff.md`.
+Como isso funciona por dentro: `handoff-hub-github.md`. Histórico geral: `../handoff.md`.
 
 **Resumo em uma linha:** o hub agora responde sozinho "esse bet cruza o gate?"; o que falta é
 **3 sites fora do ar** (ops) e nada urgente de código.
