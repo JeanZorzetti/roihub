@@ -13,8 +13,8 @@ O hub saiu de **5 no ar / 23 fora** para **18 no ar / 4 fora**.
 
 | resultado | quantos | quais |
 |---|---|---|
-| **200** | **19** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `eg` `housingpro` `matchfios-textile-connector` `monolith-muse` `orion-nova-ui` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `roi-zenith` `sirius` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` |
-| 404 | 3 | `compass` `sofia-ia` `vertice` — ver §3 |
+| **200** | **21** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `eg` `housingpro` `matchfios-textile-connector` `monolith-muse` `orion-nova-ui` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `roi-zenith` `sirius` `sofia-ia` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` `vertice` |
+| 404 | 1 | `compass` — o A1, segue em [`handoff-proximo-passo.md`](handoff-proximo-passo.md) |
 
 **Repos excluídos pelo Jean** (somem do hub sozinhos, a lista vem do GitHub): `amaze`,
 `secure-business-architect`, `andorinha-digital`, `pulse-tronic-install-pro`, `sofia-ai-lux-dash`,
@@ -66,17 +66,25 @@ Root directory de cada um (confirmado abrindo o `package.json`, não chutado):
 
 ---
 
-## 3. O que ainda está fora (3)
+## 3. O que ainda está fora (1)
 
-- **`sofia-ia` (Polaris)** — único de produção ativa. Projeto Vercel **já criado e conectado ao
-  GitHub**, sem envs. Falta: (a) preencher `DATABASE_URL`, `JWT_SECRET`, `GROQ_API_KEY`, `CRON_SECRET`,
-  `NEXT_PUBLIC_APP_URL` + chaves Evolution/OpenRouter/Threads/Sirius; (b) recriar o registro DNS no
-  **Cloudflare** — `sofiaia.roilabs.com.br` é **NXDOMAIN**, caiu junto com os 14 subdomínios
-  aposentados ([[roilabs_dns_cloudflare_retired_subdomains]]). Segredos de produção não foram copiados
-  sem autorização explícita.
-- **`vertice`** → `X-Vercel-Error: NOT_FOUND`, não `DEPLOYMENT_NOT_FOUND`. O projeto existe, a rota `/`
-  é que não casa. **É config de rota, não deploy.**
 - **`compass`** → o A1, 404 na EasyPanel. Segue em [`handoff-proximo-passo.md`](handoff-proximo-passo.md).
+
+### `sofia-ia` (Polaris) — no ar, mas o DNS ainda falta
+`https://sofia-ia-rosy.vercel.app` responde 200 com as 18 envs de produção gravadas na Vercel.
+
+⚠️ **O `DATABASE_URL` do `.env` do repo está morto.** Ele aponta pro proxy `bot@31.97.23.166:5499`,
+que dá **timeout**. O banco real é **`sofia_db@2.24.207.200:5435`** (64 tabelas, medido) — foi esse que
+entrou na Vercel. Ver [[project_polaris_teams]] / o `.env` do repo continua errado.
+
+**Pendente:** recriar `sofiaia.roilabs.com.br` no **Cloudflare** — é **NXDOMAIN**, caiu junto com os 14
+subdomínios aposentados ([[roilabs_dns_cloudflare_retired_subdomains]]). Quando o DNS voltar, trocar
+`NEXT_PUBLIC_APP_URL` (hoje aponta pro alias `.vercel.app` e é **baked no build**, exige redeploy).
+
+### `vertice` — não era config de rota
+O `NOT_FOUND` (em vez de `DEPLOYMENT_NOT_FOUND`) sugeria projeto existente com rota quebrada. **Errado:**
+não havia projeto `vertice` na conta — o alias `vertice-ten.vercel.app` foi **tomado por outra conta**.
+Tratamento igual ao dos outros: projeto novo, deploy de `app/`, `homepage` → `vertice-weld.vercel.app`.
 
 ### `prolifemed` — resolvido por exclusão
 O handoff de 28/07 dizia que precisava de vhost na EasyPanel; depois se descobriu que o app estava na
@@ -125,7 +133,12 @@ vercel project ls        # a lista de quem REALMENTE existe — é a fonte da ve
   **Mas:** se o projeto Vercel nascer com o mesmo nome do alias antigo, o alias volta e o PATCH é
   desnecessário — foi o caso de 8 dos 13. Confira antes de PATCHar.
 - **`gh repo edit --homepage` não funciona no PowerShell** — usar `gh api -X PATCH --input -`.
-- **`vercel project rm` é interativo e `--yes` não existe nele** — `yes |` não resolve, trava. Se o
-  projeto ficar com setting ruim, **sobrescreva pelo `vercel.json`** em vez de recriar.
+- 🚨 **NUNCA `yes | vercel project rm`.** O comando é interativo e **não tem `--yes`**. O `yes` alimenta
+  confirmação atrás de confirmação e **apaga projetos vizinhos**: nesta sessão levou `eg`, `eg-site` e
+  `roi-zenith` junto (os dois com repo foram recriados; `eg-site` não tem repo e **foi perdido**).
+  Sintoma: projetos que estavam 200 viram `DEPLOYMENT_NOT_FOUND` do nada. Se um projeto ficar com
+  setting ruim, **sobrescreva pelo `vercel.json`** (`"framework": "vite"`) em vez de recriar.
+- **`vercel project ls` pagina em 20** — um projeto "sumido" pode estar só na página 2
+  (`--next <timestamp>`). Confirme antes de concluir que foi apagado.
 - **Alias de preview ≠ URL de produção.** Foi a causa-raiz dos 21. Sempre a Latest Production URL.
 - ⚠️ **Janela de não-push: 00:00–01:00 BRT** (o cron do autopublishing roda 00:13).
