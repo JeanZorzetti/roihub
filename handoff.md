@@ -1,5 +1,15 @@
 # ROI Hub — handoff
 
+> 🎯 **PRÓXIMA SESSÃO: o Compass.** O handoff está **no repo do compass**, co-localizado com o
+> código: [`C:\dev\compass\handoff.md`](https://github.com/JeanZorzetti/compass/blob/main/handoff.md).
+> Medido em 29/07 e **corrige o que estava escrito aqui embaixo**: (1) não faltam "9 segredos" para o
+> 500 — falta **uma**, `DATABASE_URL`, porque `/pricing` conta usuários no banco; (2) não falta "um A
+> record" — o A record de `compass.polarisia.com.br` **existe e aponta para o EasyPanel**
+> (`2.24.207.200`), onde o vhost sumiu. 🚨 E a Vercel manda apontar o **ápice** `polarisia.com.br`
+> para ela — **não faça**: o ápice serve o site do **Polaris IA** e responde 200 hoje.
+> Ordem: **banco → login/Stripe → DNS do subdomínio**. Uma decisão sua trava o começo: **qual
+> Postgres** (recomendado: Neon novo — o Compass tem 0 usuário, não há dado a perder).
+>
 > ✅ **[`handoff/handoff-quatro-sites.md`](handoff/handoff-quatro-sites.md) foi EXECUTADO** na 4ª
 > sessão de 29/07: **4 de 4 no ar**, `homepage` gravada e confirmada com 200 —
 > `roi-labs-links.vercel.app`, `lumina-demo-beryl.vercel.app` (rotulada **demo**),
@@ -11,19 +21,18 @@
 > **estava quebrada** (gradiente Tailwind copiado à mão sem os `--tw-gradient-*-position` → texto
 > branco sobre fundo branco) e ninguém sabia, porque nunca tinha sido aberta.
 >
-> **Próxima sessão: não há frente de código.** O que sobrou dos sites é **painel/DNS** — domínio
-> próprio (`links.roilabs.com.br` na Cloudflare, `cannibalscan.nimblabs.com` na Hostinger, e a
-> `homepage` tem de mudar **junto**) e submeter o CannibalScan ao GSC. Some-se a isso o item aberto
-> do `compass` (logo abaixo).
+> **O que sobrou dos sites é painel/DNS**, não código — domínio próprio (`links.roilabs.com.br` na
+> Cloudflare, `cannibalscan.nimblabs.com` na Hostinger, e a `homepage` tem de mudar **junto**) e
+> submeter o CannibalScan ao GSC. Fica atrás do Compass na fila.
 >
 > ✅ **Feito na 3ª sessão:** `roihub` e `repo-de-teste` saíram da lista "repos sem site" — a
 > `homepage` vazia deles é decisão, não pendência (`semSitePorDecisao` em `lib/projects.mjs`, teste
 > 7/7).
 >
 > **Estado anterior** em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)
-> (29/07). Dos três itens que ele listava, **sobrou um**: 🟠 **`compass`** precisa de **um A record**
-> (`compass → 76.76.21.21`, na **Hostinger**; domínio já `verified`) e **9 segredos**, sem os quais
-> `/pricing` fica em 500 — remedido em 29/07, só 4 env vars existem no projeto. ⛔ **SplitJud foi
+> (29/07). Dos três itens que ele listava, **sobrou um**: 🟠 **`compass`** — ⚠️ o diagnóstico dele
+> ("um A record + 9 segredos") está **desatualizado**, use o `handoff.md` do repo do compass.
+> ⛔ **SplitJud foi
 > ENCERRADO** (repo deletado pelo Jean → sem repo não há projeto; não reanexar vhost, não apontar
 > DNS), e os 6 boilerplate Lovable foram excluídos. **47 → 41 repos ativos, 12 → 6 sem `homepage`.**
 >
