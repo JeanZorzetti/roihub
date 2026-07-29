@@ -54,7 +54,7 @@ silêncio" (ver `handoff-proximo-passo.md`).
 | `sirius` | `sirius-ebon.vercel.app` → `DEPLOYMENT_NOT_FOUND` | **`siriuscrm.com.br` responde 200.** O projeto nunca saiu do ar |
 | `sofia-ia` | `sofia-ia-dashboard.vercel.app` → `DEPLOYMENT_NOT_FOUND` | **`sofiaia.roilabs.com.br` é NXDOMAIN** e não há projeto Vercel. Sem URL viva |
 
-- **`sirius` — só editar a `homepage`.** Zero deploy:
+- ✅ **`sirius` — FEITO em 29/07.** `homepage` = `https://siriuscrm.com.br`, mede 200. Zero deploy:
   ```bash
   echo '{"homepage":"https://siriuscrm.com.br"}' | gh api repos/JeanZorzetti/sirius -X PATCH --input -
   ```
@@ -215,6 +215,10 @@ vercel project ls        # a lista de quem REALMENTE existe — é a fonte da ve
 
 ## Armadilhas (desta investigação)
 
+- ⛔ **`vercel --prod` da pasta local NÃO funciona sob o OneDrive** (medido 29/07 no `sofia-next`):
+  morre com `UNKNOWN: unknown error, read` — o CLI tenta ler um arquivo que o OneDrive não hidratou
+  (`--archive=tgz` também). O `vercel link` conecta o repo do GitHub; **o deploy tem que vir do git**
+  (push/redeploy), não do upload local. A receita do §3 só vale a parte do `link`.
 - **Status 404 não classifica nada.** Os 23 sites fora do ar dão o mesmo 404 por **três** causas
   diferentes (projeto apagado, rota não casada, vhost ausente). Sem o header `x-vercel-error` você
   trata os três igual e conserta o errado.
