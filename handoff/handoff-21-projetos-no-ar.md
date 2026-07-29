@@ -13,8 +13,8 @@ O hub saiu de **5 no ar / 23 fora** para **18 no ar / 4 fora**.
 
 | resultado | quantos | quais |
 |---|---|---|
-| **200** | **18** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `eg` `housingpro` `matchfios-textile-connector` `monolith-muse` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `roi-zenith` `sirius` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` |
-| 404 | 4 | `compass` `orion-nova-ui` `sofia-ia` `vertice` — ver §3 |
+| **200** | **19** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `eg` `housingpro` `matchfios-textile-connector` `monolith-muse` `orion-nova-ui` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `roi-zenith` `sirius` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` |
+| 404 | 3 | `compass` `sofia-ia` `vertice` — ver §3 |
 
 **Repos excluídos pelo Jean** (somem do hub sozinhos, a lista vem do GitHub): `amaze`,
 `secure-business-architect`, `andorinha-digital`, `pulse-tronic-install-pro`, `sofia-ai-lux-dash`,
@@ -66,12 +66,8 @@ Root directory de cada um (confirmado abrindo o `package.json`, não chutado):
 
 ---
 
-## 3. O que ainda está fora (4)
+## 3. O que ainda está fora (3)
 
-- **`orion-nova-ui`** — ERP Next 16. O build é `prisma generate && prisma migrate deploy && next build`:
-  falha com `P1012 Environment variable not found: DATABASE_URL`. **`migrate deploy` precisa de banco
-  real e alcançável** — URL falsa não resolve. Decisão pendente do Jean: dar um Postgres ao protótipo
-  ou tirá-lo do hub.
 - **`sofia-ia` (Polaris)** — único de produção ativa. Projeto Vercel **já criado e conectado ao
   GitHub**, sem envs. Falta: (a) preencher `DATABASE_URL`, `JWT_SECRET`, `GROQ_API_KEY`, `CRON_SECRET`,
   `NEXT_PUBLIC_APP_URL` + chaves Evolution/OpenRouter/Threads/Sirius; (b) recriar o registro DNS no
@@ -97,6 +93,9 @@ Vercel (`prolife-next-js`, segundo ambiente com Supabase **vazio**). **O Jean ex
 | `cardioqwen3code` | `tailwindcss` como plugin PostCSS direto | `package.json` pedia v4 mas o CSS usa `@tailwind base` (v3) → pinado `^3.4.17` |
 | `potencial-arquitetado` | `experimentalServices` não existe mais na plataforma | removido do `vercel.json` |
 | `potencial-arquitetado` | depois disso: `framework is set to "services", but no services are declared` | **`"framework": "vite"` no `vercel.json`** — a 1ª tentativa falhada gravou `services` nas settings do projeto e ele fica travado lá |
+| `orion-nova-ui` | `P1012 Environment variable not found: DATABASE_URL` | `DATABASE_URL` (banco `orion_db`, porta 5449) na env `production` da Vercel |
+| `orion-nova-ui` | `P3018 / 42P01 relation "notifications" does not exist` | **o model `Notification` e o enum `NotificationType` entraram no schema sem migration** — `add_notification_metadata` fazia `ALTER TABLE` numa tabela que nunca foi criada. Criada a `20260124000000_add_notifications` + `prisma migrate resolve --rolled-back` pra destravar o registro falho |
+| `orion-nova-ui` | `Missing API key. Pass it to the constructor new Resend(...)` | `new Resend()` no topo do módulo em 2 arquivos → lazy. As guardas de "não configurado" já existiam no envio; só a **construção** era ansiosa |
 
 ---
 
