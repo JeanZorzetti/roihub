@@ -1,15 +1,14 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, noite).
+> **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, 2ª sessão).
 >
-> **Resumo do próximo passo:** **não há mais frente de código aberta** — o ML fechou em F4. O que
-> sobrou é **A1 — três sites de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`,
+> **Resumo do próximo passo:** **o ML fechou (F0–F4) e não há mais frente de código aberta.** O que
+> sobrou é (1) **reescrever o card do `aftercare`**, que manda checar à mão o gate D+90 que o hub já
+> respondeu sozinho em 28/07 — e o veredito é **passou**; (2) duas verificações que só o Jean faz
+> (`/insights` em prod e o run automático de 02/08, o primeiro com o `narrate.py` encadeado); e
+> (3) **A1 — três sites de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`,
 > `compass.polarisia.com.br`), que é **ops de DNS/vhost, não commit**: nenhuma sessão de código
 > resolve isso, só acesso ao host.
->
-> **Antes de pegar qualquer card do ranking, leia a armadilha nº 1 do handoff/handoff-proximo-passo:** o
-> card do `aftercare` ("checar GSC e decidir no gate D+90") **acabou de apodrecer** — o hub já
-> respondeu esse gate sozinho em 28/07, e o veredito é passar.
 >
 > O hub deixou de ter lista fixa de 10 projetos: agora todo repo do GitHub com `homepage`
 > preenchida é um projeto — detalhe técnico em [`handoff/handoff-hub-github.md`](handoff/handoff-hub-github.md).
