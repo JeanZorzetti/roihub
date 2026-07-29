@@ -36,29 +36,54 @@ residencial brasileira. Ou o A record aponta pro lugar errado, ou o host morreu.
 (o `prolifemed` é o mesmo A1 que arrasta desde 28/07 — agora com a causa medida). Enquanto não
 responderem, **não** preencher `homepage` neles: entrariam no hub vermelhos.
 
-### O que ficou pendente e por quê
+### Decisões do Jean (29/07) e o que já foi feito com elas
 
-| item | estado |
-|---|---|
-| §1 `compass` | ⛔ **inalterado** — re-medido hoje: ainda o 404 do proxy do EasyPanel. É painel, não commit. |
-| `roihub` (401) | ⏸️ **decisão do Jean** — a régua `res.ok` ainda trata 401 como fora do ar. Não preenchi. |
-| arquivar mortos | ⏸️ **lista abaixo, esperando o Jean** (Passo 2 do §2: mandar a lista, não decidir sozinho). |
-| `splitjud` / `mhedicos` | ⛔ bloqueados pelo achado de infra acima. |
+| item | decisão | estado |
+|---|---|---|
+| `cannibal-scan`, `jizreel` | excluir | ✅ **repos deletados pelo Jean** (404 na API, confirmado) |
+| `repo-de-teste` | manter, **não entra no hub** | ✅ nada a fazer — `homepage` fica vazia de propósito |
+| `meridian` | está no ar no EasyPanel | ✅ `homepage` = `https://sirius-crm-meridian.7c17iw.easypanel.host/` (200 medido). **Domínio próprio depois.** |
+| `compass` | **jogar pra Vercel** | ✅ deployado — falta 1 registro de DNS, ver abaixo |
+| `roihub` (401) | — | ⏸️ ainda sem decisão sobre `res.ok` tratar 401 como no ar |
+| 6 repos "não é site" | **virar site** | 🟢 frente nova, ver `handoff-seis-sites.md` |
 
-**Candidatos a arquivar (medidos hoje, `gh api repos/… --jq .size`):**
+Repos com `homepage`: **20 → 29**. Sem `homepage`: **31 → 20**.
 
-- `cannibal-scan` — **`size=0`, repo VAZIO**. O código está em `cannibal_scan` (`size=170`). Duplicata órfã.
-- `jizreel` — **`size=0`, repo VAZIO**, último push 2025-08-24.
-- `repo-de-teste` — descartável, e ainda tem projeto na Vercel (`repo-de-teste.vercel.app`).
+### `compass` na Vercel — feito, e o que trava
 
-**Confirmado "não é site"** (deixar `homepage` vazia de propósito): `sem-swarm`, `claude-loop-runner`,
-`seo-forecaster`, `whatsmeow-gateway`, `housing-pro-api`, `moderador` (bot anti-spam, `index.js` + Dockerfile).
+`vercel project ls` → **`compass` → https://compass-ten-plum.vercel.app** (`/` e `/login` 200).
+Clonado em `C:\dev\compass` (**fora do OneDrive** — `vercel --prod` não roda de dentro dele).
 
-**Ainda sem resposta** (7 repos Lovable/Vite+Supabase — `perfil360`, `loginsplit`, `obeflow`,
-`agattasemijoias`, `medlly`, `financeiromedlly`, `aesthetic-perfection-page` — mais `meridian`,
-`aprovai`, `roi-labs-links`): **nenhum deles tem projeto na Vercel.** Conferido nas duas páginas de
-`vercel project ls` (20 projetos no total, a página 2 volta vazia). Se estão no ar, é EasyPanel — e aí
-a lista de domínios do painel resolve os 10 de uma vez, que é a mesma visita que o §1 já exige.
+- **O build passa com ZERO env var** e isso não é sorte: `web/src/lib/prisma.ts` exporta um `Proxy`
+  que só instancia o `PrismaClient` no primeiro acesso real. Sem ele, "Collecting page data" quebraria
+  no `throw new Error("DATABASE_URL não definido")`. **Padrão pra copiar em qualquer app Prisma+Vercel.**
+- **1 commit foi necessário** (`2473b35`): `postinstall: prisma generate` no `web/package.json`.
+  O `prisma generate` só existia como `RUN` do Dockerfile e `src/generated/prisma` é gitignored —
+  na Vercel não há Dockerfile, então o módulo simplesmente não existia.
+- **Env já setadas** (produção): `AUTH_SECRET` e `CRON_SECRET` **gerados novos** (é a rotação de
+  [[secrets_to_rotate]] acontecendo de graça — não recolar os antigos), `ADMIN_EMAIL`, `APP_URL`.
+- ⛔ **`/pricing` devolve 500** e vai continuar: faltam os segredos que só o Jean tem —
+  `DATABASE_URL`, `AUTH_RESEND_KEY`, `AUTH_GITHUB_ID`/`AUTH_GITHUB_SECRET`, `STRIPE_SECRET_KEY`,
+  `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_LIFETIME`, `ANTHROPIC_API_KEY`.
+  Opcionais com default no código: `TRIAL_DAYS` (7), `LIFETIME_SLOTS` (50), `EMAIL_FROM`.
+- 🔴 **DNS é o último metro.** `compass.polarisia.com.br` já está anexado ao projeto na Vercel, mas
+  o A record ainda aponta pro EasyPanel. Trocar no provedor (**nameservers são
+  `aster/helios.dns-parking.com` = Hostinger, não Cloudflare**):
+
+  ```
+  A  compass  76.76.21.21
+  ```
+
+  A `homepage` do repo **NÃO foi mexida** de propósito — segue `https://compass.polarisia.com.br/`,
+  que é a URL final. Trocar por uma `*.vercel.app` temporária mudaria a chave do projeto no hub duas
+  vezes. Quando o DNS propagar, o hub fica verde sozinho e o `APP_URL` na Vercel deve virar o domínio.
+
+### Ainda sem resposta
+
+7 repos Lovable/Vite+Supabase (`perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`, `medlly`,
+`financeiromedlly`, `aesthetic-perfection-page`) + `aprovai` e `roi-labs-links`: **nenhum tem projeto
+na Vercel** (conferido nas 2 páginas do `project ls`). Se estão no ar é EasyPanel — a lista de
+domínios do painel resolve os 9 numa visita só.
 
 ---
 
