@@ -9,45 +9,80 @@ Criado em **2026-07-29**, ao fim da sessão que executou
 
 ## Leia isto antes de abrir qualquer arquivo
 
-**Não há frente de código aberta no roihub.** O que sobrou são **cinco itens de painel e DNS**, e
-quatro deles se resolvem na mesma visita ao EasyPanel + provedor de DNS. Uma sessão de código não
-move nenhum.
+**Não há frente de código aberta no roihub.** Sobraram **quatro itens de painel e DNS** — o item 3
+foi encerrado em 29/07 por decisão de produto, sem código. Uma sessão de código não move nenhum
+dos outros.
 
 O erro a não repetir: nas duas últimas sessões, tempo foi gasto procurando bug em coisa que era
-registro de DNS apontando para o lugar errado. **Meça o DNS antes de abrir o repo.**
+registro de DNS apontando para o lugar errado. **Meça o DNS antes de abrir o repo** — e meça do jeito
+descrito nas armadilhas, porque a primeira medição do item 1 estava errada.
 
-Tudo abaixo foi medido em **29/07, fim da sessão** — os números estão datados de propósito.
+Tudo abaixo foi medido em **29/07** — os itens 1, 2 e 4 foram **remedidos às ~10h BRT** e estão
+datados de propósito.
 
 ---
 
-## 🔴 1 · Dois sites de produção mortos no mesmo IP
+## 🔴 1 · SplitJud caiu de verdade — e o `www` está servindo o site ZUMBI
 
-**Maior impacto da lista, e a causa já está isolada.**
+> **Remedido em 29/07 ~10h BRT.** Duas armadilhas aqui, nesta ordem:
+> a versão anterior deste item dizia "compare o A record com o IP do host onde a app roda" — não é
+> uma tarefa só. E **o IP que responde 200 é o servidor velho**, não o certo. Confirmar conteúdo
+> antes de apagar registro.
+
+### 1a · Qual IP é qual (medido, não inferido)
 
 ```
-splitjud.com.br      →  187.127.2.204    porta 443: timeout · porta 80: timeout
-app.splitjud.com.br  →  187.127.2.204    idem
-prolifemed.com.br    →  187.127.2.204    idem
+187.127.2.204   timeout, 0 portas abertas   ← era AQUI o site Astro correto. HOST MORTO.
+185.158.133.1   200 OK                      ← é o ZUMBI Vite/Lovable pré-split. Ainda no ar.
 ```
 
-**O que isso já prova, para não redescobrir:**
+`185.158.133.1` está confirmado como o zumbi de [[splitjud_www_dns_orphan]] pela fingerprint:
+title `Split Jud - Automatize a Divisão de Honorários Advocatícios`, shell de **1917 bytes**, bundle
+**`/assets/index-BYI09l9g.js` (Vite)** sem nenhum `/_astro/`, e `/sitemap-index.xml`,
+`/sitemap-0.xml`, `/sitemap.xml` todos **404**.
 
-- **Resolvem de verdade.** Confirmado em `8.8.8.8` e no DoH da Cloudflare (`Status: 0`). **Não é
-  sequestro de NXDOMAIN do provedor** — um domínio inexistente devolve `Non-existent domain` normal
-  no mesmo resolvedor.
-- **Não é o VPS do EasyPanel.** O EasyPanel é `2.24.207.200` e responde. `187.127.2.204` é faixa
-  residencial brasileira e **não responde em porta nenhuma**.
-- Ou seja: **o A record aponta para o lugar errado, ou o host que estava ali morreu.**
+**Estado real dos três nomes:**
 
-**O que fazer:** abrir o DNS dos dois domínios e comparar o A record com o IP do host onde a aplicação
-realmente roda hoje. Se for o EasyPanel, é `2.24.207.200`. Isso encerra o **A1** que arrasta desde
-28/07 (`prolifemed` é um dos "3 sites fora do ar" de lá).
+| nome | A records | o que o usuário vê |
+|---|---|---|
+| `splitjud.com.br` | só `187.127.2.204` | **fora do ar** |
+| `app.splitjud.com.br` | só `187.127.2.204` | **fora do ar** |
+| `www.splitjud.com.br` | os **dois** | round-robin: metade timeout, metade **conteúdo de 2 anos atrás** |
 
-⚠️ `splitjud` também tem um **`www` com A record zumbi** anotado em [[splitjud_www_dns_orphan]] —
-conferir os dois nomes na mesma passada.
+O `www` é o pior dos três: não está "fora do ar", está **servindo conteúdo velho para usuário e para
+o Googlebot**, com sitemap 404. É dano de SEO acontecendo agora, não indisponibilidade.
 
-**Só depois que responderem 200**, preencher a `homepage` do repo `splitjud` (hoje vazia). Preencher
-antes só coloca um card vermelho no ranking.
+### 1b · O que fazer, na ordem
+
+1. **Achar onde o site Astro roda hoje.** Não é o EasyPanel: `2.24.207.200` devolve **404** para os
+   Hosts `splitjud.com.br`, `app.splitjud.com.br` e `prolifemed.com.br` — **o vhost sumiu de lá.**
+   Esta é a única tarefa que exige painel, e é o gargalo do item inteiro.
+2. **Apontar os três nomes** para esse host, no **Registro.br** — os NS de `splitjud.com.br` são
+   `e.sec.dns.br` / `f.sec.dns.br`, **não Cloudflare**. Procurar essa zona no Cloudflare é perder a sessão.
+3. **Deletar o A `185.158.133.1` do `www` e desligar aquele servidor.** Enquanto ele existir, qualquer
+   conserto continua sendo sorteado contra o conteúdo velho.
+
+⚠️ **Não deletar o `185.158.133.1` sozinho como "conserto rápido"**: sem o passo 1, isso deixa o `www`
+só com o IP morto e derruba os 50% que ainda respondiam. O passo 3 vem **depois** do 2.
+
+⚠️ `185.158.133.1` é edge **Cloudflare-for-SaaS** (cert Google Trust Services com SAN único
+`www.splitjud.com.br`; devolve **409** para apex e `app`) — ou seja, o zumbi está atrás de um
+Cloudflare de **outra conta/plataforma**, não do Cloudflare do `roilabs`. Desligá-lo pode exigir achar
+onde aquele deploy Lovable/Vite ainda vive.
+
+### 1c · prolifemed: nenhum host vivo
+
+Apex e `www` → `187.127.2.204` (morto). `app.prolifemed.com.br` **não tem A record**. NS =
+**`dale/jo.ns.cloudflare.com` = Cloudflare** (aqui sim). O EasyPanel (`2.24.207.200`) devolve **404**
+para os Hosts `prolifemed.com.br`, `splitjud.com.br` e `app.splitjud.com.br` — **o vhost sumiu de lá.**
+Descobrir onde o ProLife roda hoje é trabalho de painel, não de DNS.
+
+> 🚨 **`prolife-next-js.vercel.app` responde 200 — NÃO aponte `prolifemed.com.br` para ele.** É o
+> segundo ambiente de 23/07, Supabase com **banco vazio** ([[prolife_supabase_vercel_env]]). Apontar
+> o domínio de produção para lá é exatamente o erro do `sofia-ia` listado nas armadilhas abaixo.
+
+**A `homepage` do repo `splitjud` segue vazia** até 1a estar feito e o `www` responder 200 de forma
+estável. Preencher antes só coloca um card vermelho no ranking.
 
 ---
 
@@ -63,6 +98,9 @@ record ainda aponta para o EasyPanel (por isso o 404 de proxy continua). Os name
 ```
 A  compass  76.76.21.21
 ```
+
+> Reconferido em 29/07 ~10h: `compass.polarisia.com.br` **ainda resolve `2.24.207.200`** (EasyPanel) e
+> devolve 404. O registro **não foi trocado** — nada aqui avançou.
 
 A `homepage` do repo **não foi mexida** de propósito: segue `https://compass.polarisia.com.br/`, que é
 a URL final. Quando o DNS propagar, **o card fica verde sozinho** — e o `APP_URL` na Vercel deve
@@ -83,29 +121,30 @@ o Postgres do Compass ainda existe lá é o primeiro passo — se não existir, 
 
 ---
 
-## 🟡 3 · Decisão sua: o hub devolve 401 e se mostraria vermelho
+## ✅ 3 · DECIDIDO em 29/07 — o hub fica fora do próprio ranking, para sempre
 
-`https://hub.roilabs.com.br` → **401** (basic auth). A checagem de saúde usa `res.ok`, então **401 e
-403 contam como "fora do ar"**. O repo `roihub` está sem `homepage` por causa disso — se preencher
-hoje, o hub aparece no próprio ranking marcado como caído.
+`https://hub.roilabs.com.br` → **401** (basic auth), e a checagem de saúde usa `res.ok`, então 401
+contaria como "fora do ar".
 
-Duas saídas, e é decisão de produto, não de código:
+**Decisão do Jean: o `roihub` é 100% admin e nunca terá site público.** Logo ele não é um dos
+projetos que se rankeia, e a `homepage` do repo **fica vazia de propósito**.
 
-- **Tratar 401/403 como no ar** (o host respondeu, logo está de pé) — mexe em `lib/projects.mjs` /
-  na função de health, e vale para qualquer projeto futuro atrás de auth.
-- **Deixar o hub fora do próprio ranking** — preço zero, e é defensável: o hub não é um dos projetos
-  que ele rankeia.
+**Não mexer na função de health** para acomodar 401/403 — não há caso de uso. Se um dia entrar um
+projeto público atrás de auth, aí sim reabrir. **Item encerrado; não reabrir como bug de "repo sem
+homepage".**
 
 ---
 
-## 🟡 4 · 13 repos ainda sem `homepage` — 9 saem numa visita só
+## 🟡 4 · 14 repos ainda sem `homepage` — 9 saem numa visita só
 
-Situação em 29/07: **35 repos com `homepage`, 13 sem** (eram 20/31 no começo do dia).
+Situação recontada em 29/07 ~10h: **são 14 sem `homepage`, não 13** — a contagem anterior perdeu o
+**`Atma`** (público, 75 MB, o maior repo da conta).
 
 | repo | por que ainda está aqui |
 |---|---|
-| `roihub` | item 3 acima, decisão sua |
-| `splitjud` | item 1 acima, o site está morto |
+| `roihub` | **item 3: encerrado.** Admin-only, fica vazio de propósito — não é pendência |
+| `splitjud` | item 1a acima: um A record zumbi a deletar no Registro.br |
+| `Atma` | tem projeto Vercel `atma` → `atma.roilabs.com.br`, mas esse subdomínio é **NXDOMAIN** (um dos 14 aposentados de [[roilabs_dns_cloudflare_retired_subdomains]]). Criar o registro no Cloudflare **ou** usar a URL `*.vercel.app` |
 | `repo-de-teste` | **decidido: fica de fora**, é descartável |
 | `perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`, `aprovai`, `financeiromedlly` (priv), `aesthetic-perfection-page` (priv), `mhedicos` (priv) | **não têm projeto na Vercel** — conferido nas 2 páginas do `project ls`. Se estão no ar, é EasyPanel. |
 | `cannibal_scan` | é o repo com código de verdade (`size=170`); o vazio `cannibal-scan` você já deletou |
@@ -134,6 +173,20 @@ projeto duplicado no ranking em vez de mover o existente.
 ---
 
 ## Armadilhas herdadas (custaram tempo, não repetir)
+
+- ✅ **Como o item 1 foi corrigido — repetir esta medição antes de tocar em DNS.** `Resolve-DnsName`
+  para ver **todos** os A records (um nome pode ter dois, e o cliente escolhe), e depois
+  `curl --resolve host:443:IP` para perguntar a cada IP candidato se ele serve aquele Host.
+  **404 = vhost não existe** (EasyPanel), **409 = Cloudflare-for-SaaS sem custom hostname**,
+  **timeout = host morto**. Os três parecem "fora do ar" pelo browser e têm consertos diferentes.
+  Conferir o SAN do cert (`openssl s_client -servername`) diz para quais nomes aquele host aceita servir.
+- ⚠️ **`res.ok`/`fetch` não reconsulta A records como o curl.** `www.splitjud.com.br` deu 10/10 no curl
+  e timeout no `Invoke-WebRequest` no mesmo minuto. **Um "fora do ar" no ranking pode ser round-robin
+  com um IP morto** — medir com os dois clientes antes de caçar bug.
+- 🚨 **200 não prova que é o servidor CERTO.** No `www.splitjud.com.br` o IP que responde 200 é o
+  servidor zumbi, e o que dá timeout é o que tinha o site bom. Com dois A records, **conferir o
+  conteúdo** (title, tamanho do HTML, `/_astro/` vs `/assets/index-*.js`, sitemap) antes de decidir
+  qual registro apagar. Um "conserto de DNS" feito só pelo status code teria apagado o site certo.
 
 - 🚫 **"Fora do ar" pode estar rodando em outra plataforma.** `vercel project ls` responde "não existe
   **na Vercel**", não "não existe". Em 29/07 o `sofia-ia` foi deployado por engano na Vercel — o
