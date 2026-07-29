@@ -4,6 +4,65 @@ Escrito na 3ª sessão de 29/07, a partir da decisão do Jean.
 Precedente direto e **método a reusar**: [`handoff-seis-sites.md`](handoff-seis-sites.md) (6/6 no ar).
 Índice: [`../handoff.md`](../handoff.md).
 
+## ✅ Estado: 4 de 4 no ar (executado em 29/07, 4ª sessão)
+
+| # | repo | URL | o que foi feito |
+|---|---|---|---|
+| 1 | `roi-labs-links` | https://roi-labs-links.vercel.app | **a página estava quebrada e ninguém sabia** — ver abaixo. Corrigida, logo morta trocada, Babel removido, deploy |
+| 2 | `aesthetic-perfection-page` | https://lumina-demo-beryl.vercel.app | publicada **como demonstração explícita**: barra fixa, contatos fictícios, WhatsApp → ROI Labs, form que admite não enviar nada |
+| 3 | `cannibal_scan` | https://cannibalscan.vercel.app | landing nova (inglês, como os irmãos nimblabs) + `robots.txt` + `llms.txt` + `sitemap.xml` + `@graph` com `FAQPage` |
+| 4 | `aprovai` | https://aprovai-locacao.vercel.app | landing nova; projeto Vercel `aprovai-locacao` para **não** encostar no `aprovai.vercel.app` de terceiro |
+
+`homepage` gravada nos 4 repos e confirmada com 200 antes de gravar. **Repos sem `homepage`: 6 → 2**,
+e os 2 que sobram são os de decisão (`roihub`, `repo-de-teste`), que já estão em `semSitePorDecisao` —
+ou seja, **o `<details>` da home fica vazio e some sozinho**. Nenhuma mudança foi necessária no roihub.
+
+### O que se aprendeu, por site
+
+**1 · `roi-labs-links` — "site estático pronto" não quer dizer "site que funciona".**
+A página nunca tinha sido aberta num browser. O CSS copia à mão as classes de gradiente do Tailwind,
+mas copiou também os `var(--tw-gradient-*-position)` — que **nunca foram definidos**. Um `var()` sem
+fallback dentro de uma custom property a invalida inteira, o gradiente do fundo sumia, e a página
+renderizava **texto branco sobre fundo branco**: os quatro cards eram invisíveis. Conserto: três
+variáveis no `:root`. Também: a logo apontava para `wp-content/uploads/2025/06/Black.png`, que dá
+**404** desde que o `roilabs.com.br` deixou de ser WordPress (agora `/roilabs-icon.png`), e o
+`@babel/standalone` era carregado à toa — o JS é `React.createElement` puro, sem JSX.
+✅ Os links não estavam podres: os quatro são `wa.me` para o mesmo número, nenhum domínio morto.
+
+**2 · `aesthetic-perfection-page` — o formulário mentia, não só o endereço.**
+Além do WhatsApp placeholder e do `og:image` do Lovable, o form de contato **não tem backend** e
+mostrava "Mensagem enviada! Entraremos em contato". Agora diz o que é. Endereço (Faria Lima 3477),
+telefone e e-mail inventados saíram — o telefone era um número plausível de terceiro. O mapa era um
+embed do Google com `pb` inválido; virou um painel explicando que mapa é coisa de site real.
+Bônus: um `overflow-x` de 32 px vinha do carrossel e dos blobs do hero — clipado **por seção**
+(`main > section { overflow-x: clip }`), não no `body`, porque `overflow` no ancestral mataria a barra
+`sticky` de demonstração (ver [[overflow_x_hidden_kills_sticky]]).
+
+**3 · `cannibal_scan` — landing, como recomendado; o app real segue bloqueado.**
+Nada de toolchain Rust nem de OpenRouter: a decisão de escopo foi a barata. O hero é o scan rodando
+(pares de URLs pontuando contra o limiar `0.70` e virando o veredito `keep`/`301` do agente) e o
+conteúdo saiu do crate: pesos de campo `title ×3 · h1 ×2 · meta ×1 · texto ×1`, `n*(n-1)/2`
+comparações, `compare_sites` com IDF compartilhado. Cor de sinal: **azul-petróleo `#12606E`**.
+
+**4 · `aprovai` — a landing é a função de score.**
+O hero anima `scoring.ts` de verdade: 100 pontos caindo regra a regra, com **as mesmas frases de
+motivo** que o corretor recebe no WhatsApp, até as faixas 70 / 40. A página **diz** que é MVP de um
+dia e que não está em produção — sem isso, seria mais um site vendendo um produto que não existe.
+Cor de sinal: **oliva `#5A6E2A`**.
+
+### O que sobrou (e é de painel, não de código)
+
+- **Domínio próprio.** Os 4 estão em `*.vercel.app`. `links.roilabs.com.br` precisa de CNAME na
+  **Cloudflare** (o domínio já está na conta da Vercel); `cannibalscan.nimblabs.com` precisa de A
+  record na **Hostinger** (`nimblabs.com` usa `dns-parking.com` e os irmãos rodam no EasyPanel
+  `2.24.207.200`, não na Vercel). ⚠️ Trocar o domínio **exige** trocar a `homepage` no mesmo passo —
+  senão o hub cria um projeto duplicado. No `cannibal_scan` mude junto: `canonical`, `og:url`,
+  `sitemap.xml`, `robots.txt`, `llms.txt` e os `@id` do `@graph`.
+- **Indexação do CannibalScan.** A página existe, mas ainda não foi submetida ao GSC — é o que
+  fechava o "NÃO INDEXADO" da revisão de 11/07.
+- **Lumina como 2ª demo da Estética Fábrica.** Está no ar como demo autônoma; ninguém a linkou ainda
+  a partir de `estetia.estetiacrm.com.br`.
+
 ---
 
 ## O estado, e por que a lista agora tem 4 e não 6

@@ -1,25 +1,24 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-quatro-sites.md`](handoff/handoff-quatro-sites.md)**
-> (escrito na 3ª sessão de 29/07). **Agora HÁ frente de código:** criar o site dos **4 repos** que
-> seguem sem `homepage`, nesta ordem (barato → caro):
-> (1) **`roi-labs-links`** — link page já pronta, só deployar (⚠️ conferir links de junho/2025);
-> (2) **`aesthetic-perfection-page`** — landing "Lumina" pronta, `npm run build` + deploy, mas
-> 🚨 **a clínica não existe**: publicar rotulada como **demo** da Estética Fábrica, e trocar o
-> WhatsApp e o `og:image` do Lovable antes;
-> (3) **`cannibal_scan`** — decidir escopo **antes** de codar: landing estática (recomendado, resolve
-> o "NÃO INDEXADO" — `nimblabs.com/cannibalscan` dá 404 hoje) vs. o app real, que exige toolchain
-> Rust GNU + `wasm-pack` e uma chave OpenRouter que **conflita com "claude-cli é a única opção"**;
-> (4) **`aprovai`** — análise cadastral de locação com IA; landing estática, porque o app é
-> Docker/EasyPanel com Postgres + Redis + Evolution API + 3 chaves externas.
-> **Método a reusar:** [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md) (uma página, um
-> arquivo, zero build; hero = a ferramenta rodando; `--signal` por projeto).
-> 🚨 **`aprovai.vercel.app` é de TERCEIRO** (plataforma de estudos ≠ locação) — não gravar como
-> `homepage`.
+> ✅ **[`handoff/handoff-quatro-sites.md`](handoff/handoff-quatro-sites.md) foi EXECUTADO** na 4ª
+> sessão de 29/07: **4 de 4 no ar**, `homepage` gravada e confirmada com 200 —
+> `roi-labs-links.vercel.app`, `lumina-demo-beryl.vercel.app` (rotulada **demo**),
+> `cannibalscan.vercel.app` (com `robots`/`llms`/`sitemap`/`FAQPage`) e `aprovai-locacao.vercel.app`
+> (nome próprio, para não encostar no `aprovai.vercel.app` de terceiro).
+> **Sem `homepage`: 6 → 2**, e os 2 são os de decisão (`roihub`, `repo-de-teste`) — o `<details>` da
+> home fica vazio e some sozinho, sem mexer no código do hub.
+> ⚠️ Achado que vale para qualquer repo "site pronto, é só deployar": a página do `roi-labs-links`
+> **estava quebrada** (gradiente Tailwind copiado à mão sem os `--tw-gradient-*-position` → texto
+> branco sobre fundo branco) e ninguém sabia, porque nunca tinha sido aberta.
 >
-> ✅ **Feito na mesma sessão:** `roihub` e `repo-de-teste` saíram da lista "repos sem site" — a
+> **Próxima sessão: não há frente de código.** O que sobrou dos sites é **painel/DNS** — domínio
+> próprio (`links.roilabs.com.br` na Cloudflare, `cannibalscan.nimblabs.com` na Hostinger, e a
+> `homepage` tem de mudar **junto**) e submeter o CannibalScan ao GSC. Some-se a isso o item aberto
+> do `compass` (logo abaixo).
+>
+> ✅ **Feito na 3ª sessão:** `roihub` e `repo-de-teste` saíram da lista "repos sem site" — a
 > `homepage` vazia deles é decisão, não pendência (`semSitePorDecisao` em `lib/projects.mjs`, teste
-> 7/7). O `<details>` da home mostra **4**, não 6.
+> 7/7).
 >
 > **Estado anterior** em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)
 > (29/07). Dos três itens que ele listava, **sobrou um**: 🟠 **`compass`** precisa de **um A record**
