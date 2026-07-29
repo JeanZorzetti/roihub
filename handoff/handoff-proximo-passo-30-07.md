@@ -1,4 +1,9 @@
-# Handoff — próximo passo (escrito 29/07, para a sessão seguinte)
+# Handoff — próximo passo (escrito 29/07, remedido 30/07)
+
+> **Estado em 30/07:** os três itens seguem abertos e **continuam sendo trabalho de painel/DNS**.
+> O que mudou: o **passo bloqueante do item 1 caiu** — o host do SplitJud é o EasyPanel e ele está
+> vivo, só perdeu o vhost. Item 2 e item 3 remedidos e idênticos, com dois falsos-positivos
+> descartados (`aprovai.vercel.app` é de terceiro; CannibalScan não tem página no nimblabs).
 
 Substitui [`handoff-proximo-passo.md`](handoff-proximo-passo.md) (28/07), cujo A1 encolheu.
 Medição detalhada: [`handoff-dns-e-paineis.md`](handoff-dns-e-paineis.md).
@@ -38,13 +43,30 @@ Estado medido em 29/07:
 404 **para o Googlebot**. Confirmado por fingerprint: shell de 1917 bytes, bundle
 `/assets/index-BYI09l9g.js`, zero `/_astro/`.
 
+**✅ O passo 1 (bloqueante) foi resolvido em 30/07 — o host é o EasyPanel e ele está VIVO.**
+
+O handoff de 29/07 leu o 404 como "o host não é o EasyPanel". Estava invertido: **404 é o EasyPanel
+respondendo** que não tem vhost para aquele Host. Medido em 30/07:
+
+- `2.24.207.200` = `srv1594350.hstgr.cloud` (VPS Hostinger) → **200 no IP raw**, servidor de pé.
+- Ele ainda serve `siriuscrm.com.br` e `estetiacrm.com.br` (200), então o painel está operando.
+- Para `splitjud.com.br` e `app.splitjud.com.br`: **404 no 443, 301→https no 80** — nginx vivo,
+  vhost ausente. **Sumiu a configuração de domínio, não o servidor.**
+- O repo confirma que é ali: dois serviços EasyPanel (`site` e `app`), Dockerfiles
+  `apps/site/Dockerfile` e `apps/app/Dockerfile`, build context = raiz do monorepo
+  ([`handoff.md:103`](../../splitjud/handoff.md), [`docs/GEO-HANDOFF.md:42`](../../splitjud/docs/GEO-HANDOFF.md)).
+- **Não está na Vercel**: 27 projetos nas duas páginas do `project ls`, nenhum `splitjud`.
+- `187.127.2.204` (para onde os três nomes apontam) é bloco **LACNIC/BR sem rDNS e sem portas** —
+  IP legado que nunca mais respondeu. Não é o destino de nada.
+
 **Passos, nesta ordem — a ordem importa:**
 
-1. **Achar onde o site Astro roda hoje.** **Não é o EasyPanel**: `2.24.207.200` devolve 404 para os
-   Hosts `splitjud.com.br` e `app.splitjud.com.br`, ou seja, o vhost sumiu de lá. **Este é o passo
-   bloqueante** — sem um host vivo, nenhum dos outros dois pode ser feito.
-2. **Apontar os três nomes** para esse host. **A zona fica no Registro.br** (NS = `e.sec.dns.br` /
-   `f.sec.dns.br`), **não no Cloudflare** — procurar essa zona no Cloudflare queima a sessão.
+1. **No EasyPanel, reanexar os domínios** aos serviços `site` e `app`: `splitjud.com.br` +
+   `www.splitjud.com.br` → `site`; `app.splitjud.com.br` → `app`. Se os serviços tiverem sido
+   removidos, recriar com os Dockerfiles acima (build context = raiz). Emitir o certificado.
+2. **Apontar os três nomes para `2.24.207.200`** e **remover o A `187.127.2.204` dos três**.
+   **A zona fica no Registro.br** (NS = `e.sec.dns.br` / `f.sec.dns.br`), **não no Cloudflare** —
+   procurar essa zona no Cloudflare queima a sessão.
 3. **Só então** deletar o A `185.158.133.1` do `www` e desligar aquele servidor.
 
 ⛔ **Não faça o passo 3 primeiro como "conserto rápido".** Sem o passo 1, isso deixa o `www` com zero
@@ -68,12 +90,19 @@ A  compass  76.76.21.21
 A `homepage` do repo já aponta para `https://compass.polarisia.com.br/`, então **o card fica verde
 sozinho** quando propagar.
 
+Medido em 30/07: o domínio consta no projeto com **`verified: true`** — não falta verificação,
+falta mesmo só o A record.
+
 **b)** `/pricing` devolve **500** até estes entrarem na Vercel: `DATABASE_URL`, `AUTH_RESEND_KEY`,
 `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
 `STRIPE_PRICE_PRO_MONTHLY`, `STRIPE_PRICE_LIFETIME`, `ANTHROPIC_API_KEY`.
 
 ⚠️ `AUTH_SECRET` e `CRON_SECRET` já foram setados **com valores novos** — é a rotação de
 [[secrets_to_rotate]] acontecendo. **Não recolar os antigos.**
+
+Inventário exato em 30/07 (`GET /v9/projects/compass/env`): existem **4** vars, todas em
+`production` — `ADMIN_EMAIL`, `APP_URL`, `AUTH_SECRET`, `CRON_SECRET`. As 9 da lista acima
+**não existem em nenhum target**. `/` e `/login` = 200, `/pricing` = 500, confirmados hoje.
 
 **O `DATABASE_URL` é a pergunta de verdade:** o serviço sumiu do EasyPanel. Descobrir se o Postgres
 do Compass ainda existe é o primeiro passo; se não existir, é banco novo + `migrate deploy`.
@@ -91,6 +120,16 @@ Recontado em 29/07 **com `--no-archived`**: 47 repos ativos, 12 sem `homepage`. 
   excluir.** É a mesma classe dos 9 que ele já deletou nas sessões anteriores.
 - **1 merece URL:** `cannibal_scan` — é o repo com o código real do CannibalScan, bet do portfólio.
 - **2 só o painel resolve:** `cannibal_scan` e `aprovai` (sem README, sem URL declarada).
+
+  Confirmado em 30/07 que **não dá para resolver esses dois por fora**:
+  - `cannibal_scan` — o `sitemap.xml` do `nimblabs.com` tem **só** `/` e `/blog/*`. Não existe
+    página do CannibalScan no portfólio hoje, e `nimblabs.com/cannibalscan` dá 404. Sem site, não
+    há `homepage` para gravar (bate com "NÃO INDEXADO" da revisão de 11/07).
+  - `aprovai` — ⚠️ **`aprovai.vercel.app` responde 200 e NÃO é do Jean.** É um Next.js pt-BR,
+    title "AprovAI - Sua Plataforma de Estudos Inteligente". O único scope da conta
+    (`jean-zorzettis-projects`) devolve 404 para o projeto `aprovai` na API da Vercel. **Gravar
+    essa URL como `homepage` colocaria um site de terceiro no ranking** — é a armadilha "200 não
+    prova" de novo, agora em subdomínio `.vercel.app`.
 - `roi-labs-links` é página de links em PHP, nunca deployada.
 
 **Arquivar é melhor que limpar a `homepage`** para aposentar projeto: repo arquivado é ignorado pelo
@@ -116,6 +155,14 @@ hub e o histórico continua lá (decisão de 28/07).
   zumbi e o que dá timeout é o do site bom. Com dois A records, **conferir o conteúdo** (title,
   bytes, `/_astro/` vs `/assets/index-*.js`, sitemap) antes de decidir qual apagar. Decidir pelo
   status code teria apagado o registro certo.
+- 🚨 **404 não é "o host não é esse" — é "o host é esse e perdeu o vhost".** Foi o erro de 29/07:
+  o EasyPanel deu 404 e o handoff concluiu "não é o EasyPanel", virando um passo bloqueante de
+  caçada. Um 404 **prova que existe um nginx vivo ali**; host errado dá timeout/connection refused.
+  Confirmar com `curl -k https://<IP>/` direto no IP (200) e com outro domínio conhecido do mesmo
+  servidor antes de sair procurando plataforma.
+- ⚠️ **`--resolve` sem `-k` devolve 000 e parece "morto".** O mesmo `2.24.207.200` deu 000 em
+  todos os Hosts e, com `-k`, 404 nos mesmos Hosts no minuto seguinte. Falha de certificado ≠ host
+  fora do ar. Sempre `-k` ao sondar por IP.
 - 🚨 **`gh repo list` sem `--no-archived` infla a contagem.** Uma medição intermediária reportou "14
   repos, achei o `Atma`" — o `Atma` está arquivado desde 28/07 e é ignorado pelo hub de propósito.
 - ⚠️ **`fetch`/`Invoke-WebRequest` não reconsulta A records como o `curl` faz.** O mesmo host deu
