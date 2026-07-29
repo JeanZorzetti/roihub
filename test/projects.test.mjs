@@ -95,6 +95,8 @@ test("reposSemSite lista só repo vivo, não curado e sem homepage", () => {
       repo("qprime"),
       repo("morto", { archived: true }),
       repo("tem-site", { homepage: "x.com" }),
+      repo("roihub"),
+      repo("repo-de-teste"),
     ]
   );
   assert.deepEqual(out.map((r) => r.name), ["qprime"]);

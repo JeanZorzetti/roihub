@@ -1,6 +1,35 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)** (escrito 29/07, remedido na 2ª sessão de 29/07).
+> **Próxima sessão começa em [`handoff/handoff-quatro-sites.md`](handoff/handoff-quatro-sites.md)**
+> (escrito na 3ª sessão de 29/07). **Agora HÁ frente de código:** criar o site dos **4 repos** que
+> seguem sem `homepage`, nesta ordem (barato → caro):
+> (1) **`roi-labs-links`** — link page já pronta, só deployar (⚠️ conferir links de junho/2025);
+> (2) **`aesthetic-perfection-page`** — landing "Lumina" pronta, `npm run build` + deploy, mas
+> 🚨 **a clínica não existe**: publicar rotulada como **demo** da Estética Fábrica, e trocar o
+> WhatsApp e o `og:image` do Lovable antes;
+> (3) **`cannibal_scan`** — decidir escopo **antes** de codar: landing estática (recomendado, resolve
+> o "NÃO INDEXADO" — `nimblabs.com/cannibalscan` dá 404 hoje) vs. o app real, que exige toolchain
+> Rust GNU + `wasm-pack` e uma chave OpenRouter que **conflita com "claude-cli é a única opção"**;
+> (4) **`aprovai`** — análise cadastral de locação com IA; landing estática, porque o app é
+> Docker/EasyPanel com Postgres + Redis + Evolution API + 3 chaves externas.
+> **Método a reusar:** [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md) (uma página, um
+> arquivo, zero build; hero = a ferramenta rodando; `--signal` por projeto).
+> 🚨 **`aprovai.vercel.app` é de TERCEIRO** (plataforma de estudos ≠ locação) — não gravar como
+> `homepage`.
+>
+> ✅ **Feito na mesma sessão:** `roihub` e `repo-de-teste` saíram da lista "repos sem site" — a
+> `homepage` vazia deles é decisão, não pendência (`semSitePorDecisao` em `lib/projects.mjs`, teste
+> 7/7). O `<details>` da home mostra **4**, não 6.
+>
+> **Estado anterior** em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)
+> (29/07). Dos três itens que ele listava, **sobrou um**: 🟠 **`compass`** precisa de **um A record**
+> (`compass → 76.76.21.21`, na **Hostinger**; domínio já `verified`) e **9 segredos**, sem os quais
+> `/pricing` fica em 500 — remedido em 29/07, só 4 env vars existem no projeto. ⛔ **SplitJud foi
+> ENCERRADO** (repo deletado pelo Jean → sem repo não há projeto; não reanexar vhost, não apontar
+> DNS), e os 6 boilerplate Lovable foram excluídos. **47 → 41 repos ativos, 12 → 6 sem `homepage`.**
+>
+> <details>
+> <summary>Resumo do handoff de 30/07 como estava escrito (histórico)</summary>
 >
 > **Resumo: não há frente de código aberta — não abra o repo.** Sobraram **três** itens, todos de
 > **painel e DNS**. Por ordem:
@@ -30,6 +59,8 @@
 > `medlly` deletados pelo Jean; `repo-de-teste` fica mas não entra no hub.
 > **Repos com `homepage`: 20 → 35. Sem: 31 → 13.** Medição completa em
 > [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md).
+>
+> </details>
 >
 > **Frente anterior** em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md):
 > executada em 29/07 — 12 protótipos deployados com os builds consertados, `sirius` e `sofia-ia`
