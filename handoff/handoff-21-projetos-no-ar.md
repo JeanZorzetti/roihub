@@ -13,12 +13,12 @@ O hub saiu de **5 no ar / 23 fora** para **18 no ar / 4 fora**.
 
 | resultado | quantos | quais |
 |---|---|---|
-| **200** | **21** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `eg` `housingpro` `matchfios-textile-connector` `monolith-muse` `orion-nova-ui` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `roi-zenith` `sirius` `sofia-ia` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` `vertice` |
+| **200** | **19** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `housingpro` `matchfios-textile-connector` `monolith-muse` `orion-nova-ui` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `sirius` `sofia-ia` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` `vertice` |
 | 404 | 1 | `compass` — o A1, segue em [`handoff-proximo-passo.md`](handoff-proximo-passo.md) |
 
 **Repos excluídos pelo Jean** (somem do hub sozinhos, a lista vem do GitHub): `amaze`,
 `secure-business-architect`, `andorinha-digital`, `pulse-tronic-install-pro`, `sofia-ai-lux-dash`,
-`mk6`, `prolife`.
+`mk6`, `prolife`, `eg`, `roi-zenith`.
 
 `sirius` era só `homepage` errada — apontava pro alias morto `sirius-ebon.vercel.app` enquanto
 `siriuscrm.com.br` respondia 200 o tempo todo. **Use a apex**, `www.siriuscrm.com.br` dá 404.
@@ -70,16 +70,19 @@ Root directory de cada um (confirmado abrindo o `package.json`, não chutado):
 
 - **`compass`** → o A1, 404 na EasyPanel. Segue em [`handoff-proximo-passo.md`](handoff-proximo-passo.md).
 
-### `sofia-ia` (Polaris) — no ar, mas o DNS ainda falta
-`https://sofia-ia-rosy.vercel.app` responde 200 com as 18 envs de produção gravadas na Vercel.
+### 🚫 `sofia-ia` — NÃO deployar. O Polaris já roda no EasyPanel
+**`https://polarisia.com.br`** (200) é o Polaris de produção, servido do **EasyPanel** usando este mesmo
+repo. O `sofia-ia` só aparecia vermelho no hub porque a `homepage` apontava pro alias morto
+`sofia-ia-dashboard.vercel.app` — era **caso do §1 (homepage errada), não de deploy**.
 
-⚠️ **O `DATABASE_URL` do `.env` do repo está morto.** Ele aponta pro proxy `bot@31.97.23.166:5499`,
-que dá **timeout**. O banco real é **`sofia_db@2.24.207.200:5435`** (64 tabelas, medido) — foi esse que
-entrou na Vercel. Ver [[project_polaris_teams]] / o `.env` do repo continua errado.
+Em 29/07 o repo foi deployado na Vercel por engano, criando um **segundo ambiente de produção contra o
+banco real**. Projeto deletado, `homepage` corrigida pra `polarisia.com.br`. **Não repita:** antes de
+concluir "fora do ar", procure o app em **outras plataformas** (EasyPanel/VPS), não só na Vercel —
+`vercel project ls` responde "não existe na Vercel", não "não existe".
 
-**Pendente:** recriar `sofiaia.roilabs.com.br` no **Cloudflare** — é **NXDOMAIN**, caiu junto com os 14
-subdomínios aposentados ([[roilabs_dns_cloudflare_retired_subdomains]]). Quando o DNS voltar, trocar
-`NEXT_PUBLIC_APP_URL` (hoje aponta pro alias `.vercel.app` e é **baked no build**, exige redeploy).
+⚠️ Achado que continua válido: **o `DATABASE_URL` do `.env` do repo está morto** — aponta pro proxy
+`bot@31.97.23.166:5499`, que dá **timeout**. O banco real é `sofia_db@2.24.207.200:5435` (64 tabelas,
+medido). Ver [[project_polaris_teams]].
 
 ### `vertice` — não era config de rota
 O `NOT_FOUND` (em vez de `DEPLOYMENT_NOT_FOUND`) sugeria projeto existente com rota quebrada. **Errado:**
