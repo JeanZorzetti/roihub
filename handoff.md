@@ -9,8 +9,12 @@
 > ou domínio não atribuído, **ops de painel**; (2) 🚨 **`splitjud.com.br`, `app.splitjud.com.br` e
 > `prolifemed.com.br` apontam pro mesmo IP `187.127.2.204`, que não responde em 80 nem 443** — dois
 > sites de produção mortos, causa medida (não é NXDOMAIN como dizia a versão anterior); (3) o hub
-> devolve **401** e a régua `res.ok` o mostraria vermelho — decisão do Jean; (4) **3 repos a arquivar**
-> (`cannibal-scan` e `jizreel` estão VAZIOS, `repo-de-teste`) — lista mandada, Jean decide.
+> devolve **401** e a régua `res.ok` o mostraria vermelho — decisão do Jean.
+>
+> **Decisões do Jean, já executadas (29/07):** `cannibal-scan` e `jizreel` deletados por ele;
+> `repo-de-teste` fica mas não entra no hub; `meridian` ganhou `homepage` (está no EasyPanel);
+> `compass` foi pra Vercel; e os **6 repos "não é site" viraram site** —
+> [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md), 6/6 no ar. Repos com `homepage`: 20 → **35**.
 >
 > **Frente anterior** em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md):
 > executada em 29/07 — 12 protótipos deployados com os builds consertados, `sirius` e `sofia-ia`
@@ -39,6 +43,7 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 | arquivo | assunto | estado |
 |---|---|---|
 | [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | **comece por aqui**: `compass` fora do ar + repos sem `homepage` + 2 sites mortos em `187.127.2.204` | 🟡 executado 29/07 (8 `homepage` preenchidas) — sobrou só ops/decisão do Jean |
+| [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md) | as 6 landing pages novas (lib/CLI/API que viraram site) e o padrão que as gerou | ✅ executado 29/07 — 6/6 no ar |
 | [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | recolocar no ar os projetos apagados da Vercel + armadilhas de deploy | ✅ executado 29/07 — 19/20 no ar |
 | [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | 🟢 vivo (28/07, 3ª sessão) |
 | [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |
