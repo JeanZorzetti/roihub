@@ -2,14 +2,15 @@
 
 > **Próxima sessão começa em [`handoff/handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md)** (29/07).
 >
-> **Resumo:** a frente dos 21 fora do ar **fechou** — o hub está em **19 no ar, 1 fora**. Sobraram duas
-> perguntas, ambas já com diagnóstico medido: (1) **`compass`** — o DNS está certo e chega no VPS
-> `2.24.207.200` (o mesmo que serve o Polaris com 200); o 404 vem do **proxy do EasyPanel**, que não
-> conhece o domínio. É serviço parado ou domínio não atribuído: **ops de painel, não commit**.
-> (2) **31 repos "sem site"** — a maioria **TEM site no ar**, o que falta é o campo `homepage` do
-> GitHub (8 de 10 amostrados respondem 200). Repo sem `homepage` não é "fora do ar", ele **não
-> aparece**. Separar em três baldes (tem site → PATCH · não é site → deixar vazio · morto → arquivar)
-> e **mandar a lista pro Jean antes de arquivar**.
+> **Resumo (atualizado 29/07, executado):** o §2 rodou — **`homepage` preenchida em 8 repos** já
+> medidos com 200 (`context-keeper`, `estetia`, `estetia-demo`, `review-dispute`, `nimblabs`,
+> `roilabs`, `tape`, `aftercare-nimblabs`); repos com `homepage` 20 → **28**, "sem site" 31 → **23**.
+> O que sobrou **não é código**: (1) **`compass`** segue no 404 do proxy do EasyPanel — serviço parado
+> ou domínio não atribuído, **ops de painel**; (2) 🚨 **`splitjud.com.br`, `app.splitjud.com.br` e
+> `prolifemed.com.br` apontam pro mesmo IP `187.127.2.204`, que não responde em 80 nem 443** — dois
+> sites de produção mortos, causa medida (não é NXDOMAIN como dizia a versão anterior); (3) o hub
+> devolve **401** e a régua `res.ok` o mostraria vermelho — decisão do Jean; (4) **3 repos a arquivar**
+> (`cannibal-scan` e `jizreel` estão VAZIOS, `repo-de-teste`) — lista mandada, Jean decide.
 >
 > **Frente anterior** em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md):
 > executada em 29/07 — 12 protótipos deployados com os builds consertados, `sirius` e `sofia-ia`
@@ -37,7 +38,7 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | **comece por aqui**: por que o `compass` está fora do ar + os 31 repos sem `homepage` | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | **comece por aqui**: `compass` fora do ar + repos sem `homepage` + 2 sites mortos em `187.127.2.204` | 🟡 executado 29/07 (8 `homepage` preenchidas) — sobrou só ops/decisão do Jean |
 | [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | recolocar no ar os projetos apagados da Vercel + armadilhas de deploy | ✅ executado 29/07 — 19/20 no ar |
 | [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | 🟢 vivo (28/07, 3ª sessão) |
 | [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |

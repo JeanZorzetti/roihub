@@ -3,6 +3,65 @@
 Criado em **2026-07-29**, depois da execução do [`handoff-21-projetos-no-ar.md`](handoff-21-projetos-no-ar.md).
 Índice de todos os handoffs: [`../handoff.md`](../handoff.md).
 
+---
+
+## ⚑ EXECUTADO 29/07 (mesmo dia) — leia isto antes do resto
+
+O §2 (repos sem `homepage`) foi executado no que não dependia do Jean. **`homepage` preenchida em 8
+repos**, todos com 200 medido na hora — `context-keeper`, `estetia`, `estetia-demo`, `review-dispute`,
+`nimblabs`, `roilabs`, `tape` e **`aftercare-nimblabs`**. Repos com `homepage`: **20 → 28**. Os "31 sem
+site" viraram **23**.
+
+**A URL do `aftercare` não foi chutada — foi lida.** `aftercaregen.com` (o chute do §2) é NXDOMAIN; a
+certa é `https://aftercare.nimblabs.com`, e ela saiu de `curl https://nimblabs.com | grep -o 'https\?://…'`.
+**O portfólio linka os próprios bets** — é a fonte barata pra achar URL de qualquer projeto nimblabs,
+melhor que README (os READMEs de `aftercare-nimblabs`, `meridian` e `cannibal-scan` não têm URL nenhuma).
+
+### 🚨 Achado novo e maior que esta frente: `splitjud` e `prolifemed` estão MORTOS no mesmo IP
+
+Não é `homepage` faltando — é infra caída, e a medição do §2 (`NXDOMAIN`) estava **errada**:
+
+```
+splitjud.com.br      -> 187.127.2.204   port 443: timeout · port 80: timeout
+app.splitjud.com.br  -> 187.127.2.204   idem
+prolifemed.com.br    -> 187.127.2.204   idem
+```
+
+Resolvem (confirmado em 8.8.8.8 **e** no DoH da Cloudflare, `Status: 0` — não é hijack de NXDOMAIN do
+provedor: domínio inexistente devolve `Non-existent domain` normalmente). O IP simplesmente **não
+responde em porta nenhuma**. `187.127.2.204` não é o VPS do EasyPanel (`2.24.207.200`) — é faixa
+residencial brasileira. Ou o A record aponta pro lugar errado, ou o host morreu.
+
+**Isso é ops de DNS e vale mais que o resto deste handoff: são dois sites de produção fora do ar**
+(o `prolifemed` é o mesmo A1 que arrasta desde 28/07 — agora com a causa medida). Enquanto não
+responderem, **não** preencher `homepage` neles: entrariam no hub vermelhos.
+
+### O que ficou pendente e por quê
+
+| item | estado |
+|---|---|
+| §1 `compass` | ⛔ **inalterado** — re-medido hoje: ainda o 404 do proxy do EasyPanel. É painel, não commit. |
+| `roihub` (401) | ⏸️ **decisão do Jean** — a régua `res.ok` ainda trata 401 como fora do ar. Não preenchi. |
+| arquivar mortos | ⏸️ **lista abaixo, esperando o Jean** (Passo 2 do §2: mandar a lista, não decidir sozinho). |
+| `splitjud` / `mhedicos` | ⛔ bloqueados pelo achado de infra acima. |
+
+**Candidatos a arquivar (medidos hoje, `gh api repos/… --jq .size`):**
+
+- `cannibal-scan` — **`size=0`, repo VAZIO**. O código está em `cannibal_scan` (`size=170`). Duplicata órfã.
+- `jizreel` — **`size=0`, repo VAZIO**, último push 2025-08-24.
+- `repo-de-teste` — descartável, e ainda tem projeto na Vercel (`repo-de-teste.vercel.app`).
+
+**Confirmado "não é site"** (deixar `homepage` vazia de propósito): `sem-swarm`, `claude-loop-runner`,
+`seo-forecaster`, `whatsmeow-gateway`, `housing-pro-api`, `moderador` (bot anti-spam, `index.js` + Dockerfile).
+
+**Ainda sem resposta** (7 repos Lovable/Vite+Supabase — `perfil360`, `loginsplit`, `obeflow`,
+`agattasemijoias`, `medlly`, `financeiromedlly`, `aesthetic-perfection-page` — mais `meridian`,
+`aprovai`, `roi-labs-links`): **nenhum deles tem projeto na Vercel.** Conferido nas duas páginas de
+`vercel project ls` (20 projetos no total, a página 2 volta vazia). Se estão no ar, é EasyPanel — e aí
+a lista de domínios do painel resolve os 10 de uma vez, que é a mesma visita que o §1 já exige.
+
+---
+
 **Estado do hub ao abrir esta frente:** 19 projetos no ar, **1 fora** (`compass`). A frente dos 21
 está fechada. Sobraram duas perguntas, e **as duas já têm diagnóstico parcial medido aqui** — a
 próxima sessão não precisa redescobrir, precisa executar.
