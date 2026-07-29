@@ -1,20 +1,25 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md)** (29/07).
+> **Próxima sessão começa em [`handoff/handoff-dns-e-paineis.md`](handoff/handoff-dns-e-paineis.md)** (29/07).
 >
-> **Resumo (atualizado 29/07, executado):** o §2 rodou — **`homepage` preenchida em 8 repos** já
-> medidos com 200 (`context-keeper`, `estetia`, `estetia-demo`, `review-dispute`, `nimblabs`,
-> `roilabs`, `tape`, `aftercare-nimblabs`); repos com `homepage` 20 → **28**, "sem site" 31 → **23**.
-> O que sobrou **não é código**: (1) **`compass`** segue no 404 do proxy do EasyPanel — serviço parado
-> ou domínio não atribuído, **ops de painel**; (2) 🚨 **`splitjud.com.br`, `app.splitjud.com.br` e
-> `prolifemed.com.br` apontam pro mesmo IP `187.127.2.204`, que não responde em 80 nem 443** — dois
-> sites de produção mortos, causa medida (não é NXDOMAIN como dizia a versão anterior); (3) o hub
-> devolve **401** e a régua `res.ok` o mostraria vermelho — decisão do Jean.
+> **Resumo: não há frente de código aberta.** Os cinco itens que sobraram são **painel e DNS**, e
+> quatro deles saem na mesma visita ao EasyPanel + provedor de DNS. Por ordem de impacto:
+> (1) 🔴 **`splitjud.com.br`, `app.splitjud.com.br` e `prolifemed.com.br` apontam para
+> `187.127.2.204`, que não responde em 80 nem 443** — dois sites de produção mortos, e a causa já está
+> isolada (resolvem de verdade, não é sequestro de NXDOMAIN, e não é o VPS do EasyPanel);
+> (2) 🟠 **`compass` já está no ar na Vercel** (`compass-ten-plum.vercel.app`) — falta **um A record**
+> (`compass → 76.76.21.21`, na Hostinger) e **8 segredos**, sem os quais `/pricing` fica em 500;
+> (3) 🟡 o hub devolve **401** e a régua `res.ok` o mostraria vermelho — decisão sua;
+> (4) 🟡 **13 repos sem `homepage`**, dos quais 9 saem da lista de domínios do EasyPanel;
+> (5) 🟢 domínio próprio para os 6 sites novos, quando quiser.
 >
-> **Decisões do Jean, já executadas (29/07):** `cannibal-scan` e `jizreel` deletados por ele;
-> `repo-de-teste` fica mas não entra no hub; `meridian` ganhou `homepage` (está no EasyPanel);
-> `compass` foi pra Vercel; e os **6 repos "não é site" viraram site** —
-> [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md), 6/6 no ar. Repos com `homepage`: 20 → **35**.
+> **Executado em 29/07:** `homepage` preenchida em 8 repos medidos com 200 (`context-keeper`,
+> `estetia`, `estetia-demo`, `review-dispute`, `nimblabs`, `roilabs`, `tape`, `aftercare-nimblabs`) +
+> `meridian` (EasyPanel) + os **6 repos "não é site" que viraram site**
+> ([`handoff-seis-sites.md`](handoff/handoff-seis-sites.md), 6/6 no ar). `cannibal-scan`, `jizreel` e
+> `medlly` deletados pelo Jean; `repo-de-teste` fica mas não entra no hub.
+> **Repos com `homepage`: 20 → 35. Sem: 31 → 13.** Medição completa em
+> [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md).
 >
 > **Frente anterior** em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md):
 > executada em 29/07 — 12 protótipos deployados com os builds consertados, `sirius` e `sofia-ia`
@@ -42,7 +47,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | **comece por aqui**: `compass` fora do ar + repos sem `homepage` + 2 sites mortos em `187.127.2.204` | 🟡 executado 29/07 (8 `homepage` preenchidas) — sobrou só ops/decisão do Jean |
+| [`handoff-dns-e-paineis.md`](handoff/handoff-dns-e-paineis.md) | **comece por aqui**: os 5 itens abertos, todos de painel/DNS — 2 sites mortos, o A record do `compass`, o 401 do hub, 13 repos sem `homepage` | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | a medição que gerou a frente acima: `compass`, repos sem `homepage`, os 2 sites mortos em `187.127.2.204` | ✅ executado 29/07 — 9 `homepage` preenchidas |
 | [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md) | as 6 landing pages novas (lib/CLI/API que viraram site) e o padrão que as gerou | ✅ executado 29/07 — 6/6 no ar |
 | [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | recolocar no ar os projetos apagados da Vercel + armadilhas de deploy | ✅ executado 29/07 — 19/20 no ar |
 | [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | 🟢 vivo (28/07, 3ª sessão) |
