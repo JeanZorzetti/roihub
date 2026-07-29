@@ -1,14 +1,21 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md)** (29/07).
+> **Próxima sessão começa em [`handoff/handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md)** (29/07).
 >
-> **Resumo:** **21 dos 28 projetos do ranking estão fora do ar** e a causa é uma só — os projetos
-> **não existem mais na Vercel** (`X-Vercel-Error: DEPLOYMENT_NOT_FOUND`; a conta tem 9 projetos, não
-> 30). Não é bug do hub nem DNS. **2 dos 21 nem precisam de deploy** (`sirius` está no ar em
-> `siriuscrm.com.br`, só a `homepage` está velha); 1 é projeto vivo de verdade (`sofia-ia`, com o
-> subdomínio em NXDOMAIN); os outros 19 são protótipos parados — **decidir quais valem deploy e quais
-> viram repo arquivado antes de deployar**. Também corrige o A1: `prolifemed` está no ar na Vercel
-> (`prolife-next-js`), não é caso de vhost na EasyPanel.
+> **Resumo:** a frente dos 21 fora do ar **fechou** — o hub está em **19 no ar, 1 fora**. Sobraram duas
+> perguntas, ambas já com diagnóstico medido: (1) **`compass`** — o DNS está certo e chega no VPS
+> `2.24.207.200` (o mesmo que serve o Polaris com 200); o 404 vem do **proxy do EasyPanel**, que não
+> conhece o domínio. É serviço parado ou domínio não atribuído: **ops de painel, não commit**.
+> (2) **31 repos "sem site"** — a maioria **TEM site no ar**, o que falta é o campo `homepage` do
+> GitHub (8 de 10 amostrados respondem 200). Repo sem `homepage` não é "fora do ar", ele **não
+> aparece**. Separar em três baldes (tem site → PATCH · não é site → deixar vazio · morto → arquivar)
+> e **mandar a lista pro Jean antes de arquivar**.
+>
+> **Frente anterior** em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md):
+> executada em 29/07 — 12 protótipos deployados com os builds consertados, `sirius` e `sofia-ia`
+> resolvidos por `homepage` errada, `orion-nova-ui` com a migration que faltava, 9 repos excluídos pelo
+> Jean. Guarda as armadilhas caras da sessão (OneDrive quebra `vercel --prod`; `yes | vercel project
+> rm` apaga projetos vizinhos; app "fora do ar" pode estar rodando no EasyPanel).
 >
 > **Estado anterior** (28/07, 3ª sessão) em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md):
 > **o ML fechou (F0–F4) e não há frente de código aberta** — o último
@@ -30,7 +37,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | **comece por aqui**: recolocar no ar os 21 projetos apagados da Vercel | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | **comece por aqui**: por que o `compass` está fora do ar + os 31 repos sem `homepage` | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | recolocar no ar os projetos apagados da Vercel + armadilhas de deploy | ✅ executado 29/07 — 19/20 no ar |
 | [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | 🟢 vivo (28/07, 3ª sessão) |
 | [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |
 | [`handoff-hub-github.md`](handoff/handoff-hub-github.md) | projetos vêm do GitHub (repo com `homepage`), não de lista fixa | 🟢 vivo (28/07) |
