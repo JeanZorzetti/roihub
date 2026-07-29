@@ -1,15 +1,16 @@
 # Handoff — próximo passo do ROI Hub (comece por aqui)
 
-Atualizado em **2026-07-28, 2ª sessão da noite**. **O ML fechou (F0–F4)** e com ele acabou a
-última frente de código do hub. O que sobrou não é implementação: é **um card podre pra reescrever**,
-**duas verificações que só o Jean pode fazer** e **A1**, que é ops de DNS/vhost.
+Atualizado em **2026-07-28, 3ª sessão da noite** (card do `aftercare` reescrito). **O ML fechou
+(F0–F4)** e com ele acabou a última frente de código do hub. O que sobrou: **uma feature pequena
+com uma premissa pra checar antes** (filtro de cluster no autopublish), **duas verificações que só o
+Jean pode fazer** e **A1**, que é ops de DNS/vhost.
 
 Índice de todos os handoffs e histórico do hub: [`../handoff.md`](../handoff.md).
 Como a lista de projetos vem do GitHub: `handoff-hub-github.md`.
 
 **Resumo em uma linha:** o hub projeta os kill-gates e explica em português o que está acontecendo
-em cada projeto; falta ele **parar de mandar fazer à mão o que já faz sozinho** (card do aftercare)
-e **3 sites voltarem ao ar**.
+em cada projeto; falta ele **publicar no cluster que dá dinheiro, não no que dá impressão**
+(aftercare, gate de cliques em 28/11) e **3 sites voltarem ao ar**.
 
 ---
 
@@ -25,6 +26,13 @@ e **3 sites voltarem ao ar**.
   prompt, `{"slug": "2–3 frases"}` de volta; 11/11 no primeiro run. Já encadeado no robô de crawl.
 - **Handoffs organizados**: os temáticos vivem em `handoff/` (nome de arquivo preservado), índice
   no `../handoff.md`.
+- **Card do `aftercare` reescrito** (28/07, noite). O card mandava checar GSC à mão pro D+90 que o
+  `/insights` já tinha decidido. Novo card = aposta dobrada, e a aposta tem um número só: **D+180 em
+  28/11 mede CLIQUES (10/sem) e hoje são 0**, com 540 imp/sem e posição média 58,2 em 68 artigos.
+  Volume já é automático, então o dev é **escolher onde o robô dobra**: os 68 posts estão partidos
+  entre ~31 `Clinic Resources` (B2B, converte pra `/pricing`) e ~37 aftercare consumer (paciente de
+  botox/filler, nunca compra software de clínica). `receitaNota` (dizia 20 artigos), `blockersLista`
+  e `decayNota` ("estável parado", com impressão subindo 68%/sem em 4 semanas) foram junto.
 
 Decisões de modelagem e de prompt que **não devem ser reabertas**: `handoff-ml.md`, blocos
 "STATUS 28/07".
@@ -41,24 +49,25 @@ Decisões de modelagem e de prompt que **não devem ser reabertas**: `handoff-ml
 
 ## 🟡 O que fazer na próxima sessão de código (é curto)
 
-### 1. Reescrever o card do `aftercare` — ele manda fazer à mão o que o hub já faz sozinho
+### 1. ~~Reescrever o card do `aftercare`~~ ✅ feito 28/07 — o que sobrou dele é uma feature
 
-`data/projects.json`, campo `acao` do slug `aftercare`, hoje:
+O card novo pede **um passo manual de 2 minutos e depois uma feature do hub**:
 
-> "Checar GSC dos 20 artigos e decidir no gate D+90 (~29/08)"
+1. **Abrir `/seo` e ler a coluna `query` das publicações do `aftercare`.** É o registro de quais
+   queries o `rankCandidates` escolheu. **Não pule** — a premissa "as impressões vêm do cluster
+   consumer" é dedução da divisão dos 68 posts, não medição.
+2. **Se as queries estiverem no consumer:** limitar a seleção de tema desse projeto ao cluster B2B.
+   Hoje **não existe campo de filtro** em `lib/autopublish-projects.mjs` e `rankCandidates`
+   (`lib/autopublish-core.mjs`) pontua só por impressão + bônus de posição 4–20 — ele vai continuar
+   alimentando o cluster que tem mais impressão, que é justamente o que não converte. A feature
+   serve pra qualquer projeto com dois públicos, não só o aftercare.
 
-**Essa leitura já foi feita** — pelo próprio `/insights`, em 28/07, e o veredito é **passou**
-(540 imp/sem contra 100). Pela tese do portfólio (regra 4), bet que passa no D+90 **recebe dobrada
-no que rankeia**, não espera 30/08 parado. O card novo tem que ser a aposta dobrada (mais conteúdo
-no cluster que já rankeia, medido semana a semana no `/insights`), com `Repo:` no começo, como manda
-a convenção de 13/07.
+> Esta foi a segunda vez que uma automação nova apodreceu um card. **Quem liga a automação atualiza
+> o card no mesmo commit** — vale pra qualquer sessão futura.
 
-> Esta é a segunda vez que uma automação nova apodrece um card. **Quem liga a automação atualiza o
-> card no mesmo commit** — vale pra qualquer sessão futura.
-
-Vale conferir na mesma passada se `reviewshield` continua honesto: o card dele (on-page do
-`/checker` + links internos) **é** a última chance antes de 02/09 e segue válido — só não deixe
-virar texto de enfeite: o efeito agora dá pra medir toda semana.
+`reviewshield` foi conferido na mesma passada e **segue honesto**: o card dele (on-page do
+`/checker` + links internos) é a última chance antes de 02/09 — só não deixe virar texto de
+enfeite, o efeito agora dá pra medir toda semana.
 
 ### 2. Verificações que sobraram (nenhuma é código)
 
