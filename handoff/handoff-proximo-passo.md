@@ -57,18 +57,33 @@ fecha o buraco daquela semana.
 ## 🔴 A1 — Três sites de produção continuam FORA DO AR (ops, não código)
 
 Intocado desde 28/07 (manhã) — é acesso a host/DNS, não commit.
-Confirmado do host Windows com `Resolve-DnsName` + `Invoke-WebRequest`:
+Confirmado do host Windows com `Resolve-DnsName` + `curl`:
 
-| site | DNS resolve para | resposta |
-|---|---|---|
-| `prolifemed.com.br` | 187.127.2.204 | **timeout** (20 s, sem resposta) |
-| `seven-md.com.br` | 187.127.2.204 | **timeout** (20 s, sem resposta) |
-| `compass.polarisia.com.br` | 2.24.207.200 (VPS EasyPanel) | **404** — vhost não roteado |
+| site | DNS resolve para | resposta no IP do DNS | resposta **no VPS** (`--resolve` p/ 2.24.207.200) |
+|---|---|---|---|
+| `prolifemed.com.br` | 187.127.2.204 | **timeout** | **404** |
+| `seven-md.com.br` | 187.127.2.204 | **timeout** | **404** |
+| `compass.polarisia.com.br` | 2.24.207.200 (VPS EasyPanel) | **404** | **404** |
 
-Os dois primeiros apontam pro **mesmo IP**, que **não é** o VPS do EasyPanel: provavelmente é **um
-host caído derrubando dois sites**, não dois problemas independentes. Comece por aí. O `compass` é
-outra coisa: o DNS chega no VPS certo, mas o EasyPanel não tem o domínio configurado pra esse
-subdomínio — config de proxy, não de código.
+**Os três são o MESMO problema** (revisado 28/07, 4ª sessão): nenhum dos três domínios tem vhost no
+EasyPanel — forçando o Host header contra o VPS, todos dão 404, inclusive `www.prolifemed.com.br`.
+Não é "um host caído derrubando dois sites".
+
+- **187.127.2.204 está morto de verdade**: sem ICMP, sem 80, sem 443. Não adianta investigar o host —
+  é IP velho no DNS (mesmo padrão do [[splitjud_www_dns_orphan]]).
+- **Conserto, na ordem:** (1) adicionar os 3 domínios no EasyPanel e emitir cert; (2) só então apontar
+  o A record de `prolifemed.com.br` e `seven-md.com.br` (e o `www`) pro 2.24.207.200 e **remover** o
+  187.127.2.204. Inverter a ordem deixa os sites em 404 público em vez de timeout.
+- Se algum dos dois apps **não estiver deployado** no VPS, o passo (1) já revela — o EasyPanel não
+  tem serviço pra rotear.
+
+Comando que reproduz o diagnóstico:
+
+```bash
+for h in prolifemed.com.br seven-md.com.br compass.polarisia.com.br; do
+  curl -sk -o /dev/null -w "$h -> %{http_code}\n" --resolve "$h:443:2.24.207.200" "https://$h/"
+done
+```
 
 Os três aparecem `✕ FORA DO AR` no ranking, como deviam.
 
