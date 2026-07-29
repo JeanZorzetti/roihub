@@ -1,5 +1,24 @@
 # Handoff — próximo passo (para a sessão de 30/07)
 
+> ## ⚡ Atualização da 3ª sessão de 29/07 — leia só isto e pule o resto
+>
+> O Jean **excluiu 6 repos**: `splitjud`, `perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`,
+> `financeiromedlly`. Medido depois da exclusão: **47 → 41 repos ativos, 12 → 6 sem `homepage`**.
+>
+> - **Item 1 (SplitJud) está ENCERRADO como pendência do hub.** Sem repo não há projeto — mesma
+>   regra que aposentou o ProLife. **Não reanexe vhost no EasyPanel, não recrie serviço.** Todo o
+>   item 1 abaixo virou histórico; fica só como registro do diagnóstico.
+>   ⚠️ **Mas o zumbi não morreu:** `www.splitjud.com.br` segue 200 servindo o site de 2 anos
+>   (`185.158.133.1`) para o Googlebot. Se o projeto acabou de vez, o fecho é **derrubar os registros
+>   DNS no Registro.br** — não reanexar nada.
+> - **Item 3 encolheu para 6**, e `aesthetic-perfection-page` foi identificado: é a landing
+>   **"Lumina Estética & Bem-Estar"**, protótipo Lovable criado e abandonado em 08–09/01/2026,
+>   nunca deployado. A demo que vingou foi a **Aurora** (`estetia.estetiacrm.com.br`) — "Lumina" não
+>   aparece em lugar nenhum do `estetia-demo`. **Mesma classe dos 5 já excluídos: excluir.**
+> - **Item 2 (Compass) é o único que sobrou de verdade**, e está idêntico — remedido nesta sessão:
+>   `compass.polarisia.com.br` ainda resolve `2.24.207.200` e dá 404; a API devolve as mesmas **4**
+>   env vars; `/pricing` segue **500**; `compass-ten-plum.vercel.app` segue **200**.
+
 Escrito 29/07 e **remedido na 2ª sessão de 29/07**, que não executou nada em painel — só mediu.
 Substitui [`handoff-proximo-passo.md`](handoff-proximo-passo.md) (28/07).
 Medição detalhada anterior: [`handoff-dns-e-paineis.md`](handoff-dns-e-paineis.md).
@@ -26,7 +45,14 @@ idênticos, com dois falsos-positivos descartados.
 
 ## A ordem: 1 → 2 → 3
 
-### 🔴 1 · SplitJud — único site de produção fora do ar que ainda é do hub
+### ~~🔴 1 · SplitJud~~ — ✅ ENCERRADO (repo excluído em 29/07)
+
+**Não execute nada desta seção.** O repo `splitjud` foi deletado; sem repo não há projeto no hub.
+Fica abaixo só como registro do diagnóstico (o padrão "404 = vhost perdido" é reutilizável).
+Único resíduo real: o zumbi do `www` — ver o box no topo.
+
+<details>
+<summary>Diagnóstico original (histórico)</summary>
 
 É o item de maior impacto **e o único que ainda perde tráfego a cada dia**.
 
@@ -80,6 +106,8 @@ zero IPs vivos e derruba os 50% que ainda respondiam. Piora.
 Depois que os três responderem 200, aí sim preencher a `homepage` do repo `splitjud` (hoje vazia de
 propósito — preencher antes só põe um card vermelho no ranking).
 
+</details>
+
 ### 🟠 2 · Compass — 1 registro de DNS + 9 segredos
 
 O deploy **já está verde**: `compass-ten-plum.vercel.app` responde 200 em `/` e `/login`.
@@ -110,20 +138,30 @@ target nenhum.**
 **O `DATABASE_URL` é a pergunta de verdade:** o serviço sumiu do EasyPanel. Descobrir se o Postgres
 do Compass ainda existe é o primeiro passo; se não existir, é banco novo + `migrate deploy`.
 
-### 🟡 3 · 12 repos sem `homepage` — mas só 2 dependem de painel
+### 🟡 3 · 6 repos sem `homepage` — e só 2 são pendência de verdade
 
-Recontado em 29/07 **com `--no-archived`**: **47 repos ativos, 12 sem `homepage`** (número idêntico
-ao da 1ª sessão). Destes:
+Recontado na 3ª sessão de 29/07, depois das exclusões, **com `--no-archived`**: **41 repos ativos,
+6 sem `homepage`**. A lista completa:
 
-- **2 são decisão fechada, não pendência:** `roihub` (admin-only, fica vazio de propósito) e
-  `repo-de-teste` (descartável).
-- **1 é o item 1:** `splitjud`.
-- **6 são boilerplate Lovable intocado** — README ainda com o literal `REPLACE_WITH_PROJECT_ID`, ou
-  seja, nunca tiveram domínio: `perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`,
-  `financeiromedlly` (priv), `aesthetic-perfection-page` (priv). **Decisão do Jean: arquivar ou
-  excluir.** É a mesma classe dos 9 que ele já deletou nas sessões anteriores.
-- **2 só o painel resolve:** `cannibal_scan` e `aprovai`. Confirmado em 29/07 que **não dá para
-  resolver esses dois por fora** — não insista por CLI:
+| repo | o que é | ação |
+|---|---|---|
+| `roihub` | admin-only, nunca terá site público | ✅ vazio de propósito, decisão fechada |
+| `repo-de-teste` | descartável | excluir |
+| `aesthetic-perfection-page` (priv) | landing **"Lumina Estética & Bem-Estar"**, protótipo Lovable de 08–09/01/2026, nunca deployado; a demo que vingou foi a **Aurora** | excluir |
+| `roi-labs-links` | página de links em PHP, nunca deployada | excluir ou arquivar |
+| `cannibal_scan` | **a página não existe** no portfólio | publicar antes — ver abaixo |
+| `aprovai` | ⚠️ URL parecida **é de terceiro** | não gravar — ver abaixo |
+
+**Arquivar é melhor que limpar a `homepage`** para aposentar projeto: repo arquivado é ignorado pelo
+hub e o histórico continua lá (decisão de 28/07).
+
+Os **6 boilerplate Lovable** (`perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`,
+`financeiromedlly`, e o `splitjud` do item 1) **foram excluídos pelo Jean em 29/07** — item fechado.
+O atalho que os identificou: `gh api repos/OWNER/REPO/readme` e procurar o literal
+`REPLACE_WITH_PROJECT_ID`.
+
+Sobre os **2 que só o painel resolve** — confirmado em 29/07 que **não dá para resolver esses dois
+por fora**, não insista por CLI:
   - `cannibal_scan` — o `sitemap.xml` do `nimblabs.com` tem **só** `/` e `/blog/*`, e
     `nimblabs.com/cannibalscan` dá 404. **Não existe página do CannibalScan no portfólio hoje**, então
     não há `homepage` para gravar (bate com o "NÃO INDEXADO" da revisão de 11/07). Publicar a página
@@ -132,14 +170,15 @@ ao da 1ª sessão). Destes:
     "AprovAI - Sua Plataforma de Estudos Inteligente", mas a API da Vercel devolve 404 para o projeto
     `aprovai` no **único** scope da conta (`jean-zorzettis-projects`). **Gravar essa URL como
     `homepage` colocaria o site de um terceiro no ranking.**
-- `roi-labs-links` é página de links em PHP, nunca deployada.
-
-**Arquivar é melhor que limpar a `homepage`** para aposentar projeto: repo arquivado é ignorado pelo
-hub e o histórico continua lá (decisão de 28/07).
 
 ---
 
 ## O que saiu da lista (não reabrir)
+
+- ✅ **SplitJud saiu do hub (29/07).** Repo deletado pelo Jean. Sem repo não há projeto. Resíduo
+  fora do hub: o zumbi do `www` ainda serve site velho ao Googlebot — fecho é DNS no Registro.br.
+- ✅ **Os 6 boilerplate Lovable — deletados (29/07).** `perfil360`, `loginsplit`, `obeflow`,
+  `agattasemijoias`, `financeiromedlly`, `splitjud`.
 
 - ✅ **Item do hub no ranking — encerrado por decisão de produto.** "O roihub é 100% admin, não terá
   site público" (Jean). Logo ele não é um projeto ranqueado, a `homepage` do repo fica vazia de
