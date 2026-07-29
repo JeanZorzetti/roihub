@@ -184,7 +184,7 @@ problema de crawl e não se resolve nesta frente** — fica para o F3/F4 do `han
 
 | # | ação | onde | esforço | ganho | status |
 |---|---|---|---|---|---|
-| 1 | decidir destino dos 14 subdomínios + A record + 301 | Cloudflare | ~20 min | **+43 pp de OK no roilabs** | 🔓 destravado — receita pronta |
+| 1 | decidir destino dos 14 subdomínios + A record + 301 | Cloudflare | ~20 min | **+43 pp de OK no roilabs** | ✅ **aplicado 29/07** via `scripts/cloudflare-redirects.mjs` — 12/14 em 301 (https), `www.sirius`/`www.goiania` só em http |
 | 2 | truncar `lastmod` futuro | context-keeper (sitemap) | 15 min | destrava o crawl de um site parado | ✅ `f2a13db` |
 | 3 | `/fundadores`: página ou fora do sitemap | `crm-project` | 10 min | tira o 404 priority 0.9 | ✅ `94ade14` |
 | 4 | `Disallow: /_next/static/chunks/` | estetiacrm (`Doc-CRM/`) | 10 min | libera ~40% do budget | ✅ `54b06bc` |

@@ -72,6 +72,25 @@ Fonte: `roihub/docs/Crawl-stats/roilabs.com.br/roilabs.com.br-Crawl-stats-2026-0
 
 ---
 
+## ✅ APLICADO em 29/07/2026 — o que está no ar agora
+
+Rodado por `scripts/cloudflare-redirects.mjs` com token de zona (DNS + Dynamic URL Redirects, Edit).
+14 registros A proxied criados, 4 Redirect Rules no phase `http_request_dynamic_redirect`
+(ruleset `13d7deb171a04a8e909b4812347b168a`, nenhuma regra de terceiro existia).
+
+| host | https | destino |
+|---|---|---|
+| `sirius` | 301 | `siriuscrm.com.br` + path |
+| `sofiaia` | 301 | `polarisia.com.br` + path |
+| `atma` `atmaadmin` `atmaapi` `clerk.atma` `jbadvocacia` `andorinha` `alibi` `pathfinder` `orion` `vertice` | 301 | `roilabs.com.br/` |
+| `www.sirius` `www.goiania` | ⚠️ falha TLS | 301 só em `http://` (ver nota 2 abaixo) |
+| `goiania` `tapepro` | **200** | intactos, grey cloud, nada encostou em produção |
+
+**Não olhe o OK% do GSC** para validar — leia a seção "Como saber se funcionou" no fim.
+O que sobrou de manual: **nada**. Próximo toque neste doc = checklist de ressurreição.
+
+---
+
 ## Execução — o caminho curto (29/07)
 
 **`node scripts/cloudflare-redirects.mjs` faz os 18 passos abaixo por API.** Os 14 registros + as 4
@@ -95,13 +114,13 @@ Se preferir clicar, os passos manuais abaixo continuam válidos e idênticos.
 1. **Hoje nada na zona é proxied.** `roilabs`, `goiania` e `tapepro` resolvem direto para
    `2.24.207.200` (nuvem cinza). Ou seja: nenhuma Redirect Rule dispara hoje, e a **nuvem laranja
    nos 14 novos não é detalhe — é o que faz a solução existir.**
-2. **`www.sirius` e `clerk.atma` só ficam curados no `http://`.** O certificado Universal do
-   Cloudflare cobre `roilabs.com.br` + `*.roilabs.com.br` — **um label só**. Host de dois níveis
-   atrás do proxy dá erro de TLS antes de chegar na regra. Os outros 12 ficam 100%; esses dois
-   exigiriam Total TLS/ACM (pago, ~US$10/mês) — **não vale por uma faxina de índice**, mas saiba que
-   os 698 req do `www.sirius` não somem inteiros. Confirme depois de aplicar:
-   `curl -sI https://www.sirius.roilabs.com.br/` (erro de cert = esperado) contra
-   `curl -sI http://www.sirius.roilabs.com.br/` (301 = a regra está viva).
+2. **`www.sirius` e `www.goiania` só ficam curados no `http://`** (medido depois de aplicar, não
+   teórico). O certificado Universal do Cloudflare cobre `roilabs.com.br` + `*.roilabs.com.br` — um
+   label — então esses dois dão `SEC_E_ILLEGAL_MESSAGE` no handshake, antes de a regra rodar; no
+   `http://` redirecionam normal. **`clerk.atma` também tem 3 labels e funciona em https** (tem
+   certificado de algum pack antigo da época do Atma; o token não tem permissão de ler
+   `ssl/certificate_packs` para confirmar). Curar os dois exigiria Total TLS/ACM (~US$10/mês) —
+   **não vale por uma faxina de índice**, mas os 698 req do `www.sirius` não somem inteiros.
 
 ### Onde tudo mora
 
