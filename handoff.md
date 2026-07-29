@@ -1,17 +1,21 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)** (escrito 29/07).
+> **Próxima sessão começa em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)** (escrito 29/07, remedido na 2ª sessão de 29/07).
 >
 > **Resumo: não há frente de código aberta — não abra o repo.** Sobraram **três** itens, todos de
 > **painel e DNS**. Por ordem:
 > (1) 🔴 **SplitJud fora do ar, e o `www` está servindo o site ZUMBI** (`185.158.133.1`, build Vite
-> pré-split) para usuário e Googlebot enquanto o IP do site bom (`187.127.2.204`) está morto — o passo
-> bloqueante é **achar onde o Astro roda hoje** (não é o EasyPanel: 404), e a zona fica no
-> **Registro.br**, não no Cloudflare. ⛔ Não apagar o zumbi antes disso;
+> pré-split) para usuário e Googlebot enquanto o IP do site bom (`187.127.2.204`) está morto.
+> ✅ **O passo bloqueante caiu:** o Astro roda no **EasyPanel `2.24.207.200`, que está VIVO** e só
+> perdeu o vhost (o 404 de 28/07 foi lido ao contrário — 404 prova que o servidor é aquele). Agora é
+> tarefa de painel: **reanexar os domínios aos serviços `site`/`app`**, depois apontar os três nomes
+> para `2.24.207.200` no **Registro.br** (não Cloudflare). ⛔ Só então apagar o zumbi;
 > (2) 🟠 **`compass` já está verde na Vercel** (`compass-ten-plum.vercel.app`) — falta **um A record**
-> (`compass → 76.76.21.21`, na **Hostinger**) e **8 segredos**, sem os quais `/pricing` fica em 500;
+> (`compass → 76.76.21.21`, na **Hostinger**; o domínio já está `verified`) e **9 segredos** (não 8),
+> sem os quais `/pricing` fica em 500. Hoje só existem 4 env vars no projeto;
 > (3) 🟡 **12 repos sem `homepage`** — mas só **2** dependem de painel: **6 são boilerplate Lovable**
-> a arquivar/excluir, 2 são decisão fechada e 1 é o splitjud.
+> a arquivar/excluir, 2 são decisão fechada e 1 é o splitjud. ⚠️ Os 2 do painel **não têm atalho por
+> CLI**: o CannibalScan não tem página publicada e `aprovai.vercel.app` **é de terceiro**.
 > 🟢 Domínio próprio para os 6 sites novos segue opcional.
 >
 > **Encerrados em 29/07, não reabrir:** o **hub fica fora do próprio ranking** ("roihub é 100% admin,
