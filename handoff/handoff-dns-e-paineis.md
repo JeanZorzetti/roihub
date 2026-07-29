@@ -9,9 +9,12 @@ Criado em **2026-07-29**, ao fim da sessão que executou
 
 ## Leia isto antes de abrir qualquer arquivo
 
-**Não há frente de código aberta no roihub.** Sobraram **quatro itens de painel e DNS** — o item 3
-foi encerrado em 29/07 por decisão de produto, sem código. Uma sessão de código não move nenhum
-dos outros.
+> 📍 **Este arquivo é a medição detalhada. O briefing curto da próxima sessão está em
+> [`handoff-proximo-passo-30-07.md`](handoff-proximo-passo-30-07.md).**
+
+**Não há frente de código aberta no roihub.** Sobraram **três itens de painel e DNS** — o item 3 foi
+encerrado em 29/07 por decisão de produto (sem código) e o item 1c saiu com a exclusão do repo do
+ProLife. Uma sessão de código não move nenhum dos outros.
 
 O erro a não repetir: nas duas últimas sessões, tempo foi gasto procurando bug em coisa que era
 registro de DNS apontando para o lugar errado. **Meça o DNS antes de abrir o repo** — e meça do jeito
@@ -70,16 +73,24 @@ só com o IP morto e derruba os 50% que ainda respondiam. O passo 3 vem **depois
 Cloudflare de **outra conta/plataforma**, não do Cloudflare do `roilabs`. Desligá-lo pode exigir achar
 onde aquele deploy Lovable/Vite ainda vive.
 
-### 1c · prolifemed: nenhum host vivo
+### 1c · ~~prolifemed~~ — ENCERRADO: o ProLife saiu do hub em 29/07
 
-Apex e `www` → `187.127.2.204` (morto). `app.prolifemed.com.br` **não tem A record**. NS =
-**`dale/jo.ns.cloudflare.com` = Cloudflare** (aqui sim). O EasyPanel (`2.24.207.200`) devolve **404**
-para os Hosts `prolifemed.com.br`, `splitjud.com.br` e `app.splitjud.com.br` — **o vhost sumiu de lá.**
-Descobrir onde o ProLife roda hoje é trabalho de painel, não de DNS.
+**O Jean deletou os repos `ProLife` e `mhedicos` em 29/07.** Sem repo, não há projeto no hub (a lista
+vem do GitHub, [[roihub_github_sourced_projects]]) — **`prolifemed.com.br` deixou de ser pendência
+deste handoff.** Isso reduz o A1 herdado de 28/07: dos "3 sites fora do ar", `prolifemed` sai da conta
+e `compass` é o item 2 abaixo.
 
-> 🚨 **`prolife-next-js.vercel.app` responde 200 — NÃO aponte `prolifemed.com.br` para ele.** É o
-> segundo ambiente de 23/07, Supabase com **banco vazio** ([[prolife_supabase_vercel_env]]). Apontar
-> o domínio de produção para lá é exatamente o erro do `sofia-ia` listado nas armadilhas abaixo.
+Fica só o registro do que foi medido, caso o ProLife volte: apex e `www` → `187.127.2.204` (morto),
+`app.prolifemed.com.br` sem A record, NS = Cloudflare, e o vhost **sumiu do EasyPanel** (404).
+
+> 🚨 Se um dia voltar: **`prolife-next-js.vercel.app` responde 200 e NÃO serve como destino do
+> `prolifemed.com.br`.** É o segundo ambiente de 23/07, Supabase com **banco vazio**
+> ([[prolife_supabase_vercel_env]]) — apontar o domínio de produção para lá é o erro do `sofia-ia`
+> listado nas armadilhas abaixo.
+
+ℹ️ O `mhedicos` **não era** o repo do ProLife, como o handoff anterior supôs pelo README: era o
+**Mhédicos** (`mhedicos.com`), produto próprio que só *consumia* a API do ProLife (`PROLIFE_API_KEY`).
+Supor parentesco de projeto por menção no README erra.
 
 **A `homepage` do repo `splitjud` segue vazia** até 1a estar feito e o `www` responder 200 de forma
 estável. Preencher antes só coloca um card vermelho no ranking.
@@ -135,27 +146,41 @@ homepage".**
 
 ---
 
-## 🟡 4 · 14 repos ainda sem `homepage` — 9 saem numa visita só
+## 🟡 4 · 12 repos sem `homepage` — e a maioria NÃO espera o EasyPanel
 
-Situação recontada em 29/07 ~10h: **são 14 sem `homepage`, não 13** — a contagem anterior perdeu o
-**`Atma`** (público, 75 MB, o maior repo da conta).
+Recontado em 29/07 fim da tarde, **com `--no-archived`**: **47 repos ativos, 12 sem `homepage`.**
+
+> ⚠️ **Contar sem filtrar arquivado dá número errado.** Uma medição intermediária desta sessão
+> reportou "14, achei o `Atma`" — `Atma` está **arquivado desde 28/07** e repo arquivado é ignorado
+> pelo hub de propósito (é a forma canônica de aposentar um projeto). **Sempre `gh repo list
+> --no-archived`.** `ProLife` e `mhedicos` foram **deletados pelo Jean em 29/07**, o que tirou o
+> `prolifemed.com.br` da conta do hub de vez.
+
+**A premissa "9 saem da lista de domínios do EasyPanel" não se sustentou.** Lendo os READMEs, **6 dos
+12 são boilerplate Lovable intocado** — o README ainda tem o literal `REPLACE_WITH_PROJECT_ID`, ou
+seja, nunca receberam domínio próprio em lugar nenhum. São a mesma classe dos 9 repos que o Jean já
+deletou nas sessões anteriores: **candidatos a arquivar/excluir, não a procurar URL.**
 
 | repo | por que ainda está aqui |
 |---|---|
-| `roihub` | **item 3: encerrado.** Admin-only, fica vazio de propósito — não é pendência |
-| `splitjud` | item 1a acima: um A record zumbi a deletar no Registro.br |
-| `Atma` | tem projeto Vercel `atma` → `atma.roilabs.com.br`, mas esse subdomínio é **NXDOMAIN** (um dos 14 aposentados de [[roilabs_dns_cloudflare_retired_subdomains]]). Criar o registro no Cloudflare **ou** usar a URL `*.vercel.app` |
+| `roihub` | **item 3: encerrado.** Admin-only, fica vazio de propósito — **não é pendência** |
+| `repo-de-teste` | **decidido: fica de fora**, é descartável |
+| `splitjud` | item 1 acima: o site está fora do ar |
+| `perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`, `financeiromedlly` (priv), `aesthetic-perfection-page` (priv) | **boilerplate Lovable** (`REPLACE_WITH_PROJECT_ID` no README) — decidir arquivar ou excluir |
+| `aprovai` | sem README e sem URL declarada — só o painel diz se está no ar |
+| `cannibal_scan` | repo com código de verdade do CannibalScan (bet do portfólio nimblabs) — merece URL |
+| `roi-labs-links` | página de links em PHP, nunca deployada |
 | `repo-de-teste` | **decidido: fica de fora**, é descartável |
 | `perfil360`, `loginsplit`, `obeflow`, `agattasemijoias`, `aprovai`, `financeiromedlly` (priv), `aesthetic-perfection-page` (priv), `mhedicos` (priv) | **não têm projeto na Vercel** — conferido nas 2 páginas do `project ls`. Se estão no ar, é EasyPanel. |
 | `cannibal_scan` | é o repo com código de verdade (`size=170`); o vazio `cannibal-scan` você já deletou |
 | `roi-labs-links` | página de links em PHP, nunca deployada |
 
-**O atalho:** a lista de domínios do painel do EasyPanel resolve os **9 de uma vez** — e é a mesma
-visita que os itens 1 e 2 já exigem. Não chutar subdomínio: foi o que produziu os NXDOMAIN falsos de
-`splitjud` e `aftercaregen.com` na primeira medição.
+**O atalho que funcionou:** ler o README pela API (`gh api repos/OWNER/REPO/readme`) e procurar URL
+**declarada** — isso separou os 6 Lovable dos que merecem investigação, sem abrir painel nenhum e sem
+chutar subdomínio. Chutar foi o que produziu os NXDOMAIN falsos de `splitjud` e `aftercaregen.com` na
+primeira medição.
 
-`mhedicos` referencia `prolifemed.com.br` no README, então provavelmente é o repo do ProLife —
-depende do item 1 para ter URL viva.
+Sobra para o painel do EasyPanel: **`aprovai` e `cannibal_scan`** — dois, não nove.
 
 ---
 

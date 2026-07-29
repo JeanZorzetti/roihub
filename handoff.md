@@ -1,17 +1,23 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-dns-e-paineis.md`](handoff/handoff-dns-e-paineis.md)** (29/07).
+> **Próxima sessão começa em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)** (escrito 29/07).
 >
-> **Resumo: não há frente de código aberta.** Os cinco itens que sobraram são **painel e DNS**, e
-> quatro deles saem na mesma visita ao EasyPanel + provedor de DNS. Por ordem de impacto:
-> (1) 🔴 **`splitjud.com.br`, `app.splitjud.com.br` e `prolifemed.com.br` apontam para
-> `187.127.2.204`, que não responde em 80 nem 443** — dois sites de produção mortos, e a causa já está
-> isolada (resolvem de verdade, não é sequestro de NXDOMAIN, e não é o VPS do EasyPanel);
-> (2) 🟠 **`compass` já está no ar na Vercel** (`compass-ten-plum.vercel.app`) — falta **um A record**
-> (`compass → 76.76.21.21`, na Hostinger) e **8 segredos**, sem os quais `/pricing` fica em 500;
-> (3) 🟡 o hub devolve **401** e a régua `res.ok` o mostraria vermelho — decisão sua;
-> (4) 🟡 **13 repos sem `homepage`**, dos quais 9 saem da lista de domínios do EasyPanel;
-> (5) 🟢 domínio próprio para os 6 sites novos, quando quiser.
+> **Resumo: não há frente de código aberta — não abra o repo.** Sobraram **três** itens, todos de
+> **painel e DNS**. Por ordem:
+> (1) 🔴 **SplitJud fora do ar, e o `www` está servindo o site ZUMBI** (`185.158.133.1`, build Vite
+> pré-split) para usuário e Googlebot enquanto o IP do site bom (`187.127.2.204`) está morto — o passo
+> bloqueante é **achar onde o Astro roda hoje** (não é o EasyPanel: 404), e a zona fica no
+> **Registro.br**, não no Cloudflare. ⛔ Não apagar o zumbi antes disso;
+> (2) 🟠 **`compass` já está verde na Vercel** (`compass-ten-plum.vercel.app`) — falta **um A record**
+> (`compass → 76.76.21.21`, na **Hostinger**) e **8 segredos**, sem os quais `/pricing` fica em 500;
+> (3) 🟡 **12 repos sem `homepage`** — mas só **2** dependem de painel: **6 são boilerplate Lovable**
+> a arquivar/excluir, 2 são decisão fechada e 1 é o splitjud.
+> 🟢 Domínio próprio para os 6 sites novos segue opcional.
+>
+> **Encerrados em 29/07, não reabrir:** o **hub fica fora do próprio ranking** ("roihub é 100% admin,
+> não terá site público" — Jean), então a `homepage` vazia do repo é intencional e a checagem de saúde
+> **não** deve tratar 401/403 como "no ar"; e o **ProLife saiu do hub** (repos `ProLife` e `mhedicos`
+> deletados pelo Jean), o que tira `prolifemed.com.br` do A1.
 >
 > **Executado em 29/07:** `homepage` preenchida em 8 repos medidos com 200 (`context-keeper`,
 > `estetia`, `estetia-demo`, `review-dispute`, `nimblabs`, `roilabs`, `tape`, `aftercare-nimblabs`) +
@@ -47,11 +53,12 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-dns-e-paineis.md`](handoff/handoff-dns-e-paineis.md) | **comece por aqui**: os 5 itens abertos, todos de painel/DNS — 2 sites mortos, o A record do `compass`, o 401 do hub, 13 repos sem `homepage` | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md) | **comece por aqui**: briefing curto da próxima sessão — os 3 itens de painel/DNS na ordem, o que foi encerrado, e como medir DNS sem errar | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-dns-e-paineis.md`](handoff/handoff-dns-e-paineis.md) | a medição detalhada por trás do briefing acima: IPs, NS, fingerprint do zumbi do splitjud, os 12 repos sem `homepage` | 🟢 vivo (29/07) — referência do item ativo |
 | [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | a medição que gerou a frente acima: `compass`, repos sem `homepage`, os 2 sites mortos em `187.127.2.204` | ✅ executado 29/07 — 9 `homepage` preenchidas |
 | [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md) | as 6 landing pages novas (lib/CLI/API que viraram site) e o padrão que as gerou | ✅ executado 29/07 — 6/6 no ar |
 | [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | recolocar no ar os projetos apagados da Vercel + armadilhas de deploy | ✅ executado 29/07 — 19/20 no ar |
-| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | 🟢 vivo (28/07, 3ª sessão) |
+| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | ⚠️ superado 29/07 por `handoff-proximo-passo-30-07.md` — o A1 encolheu (`prolifemed` saiu com a exclusão do repo); a **espera medida do ML segue válida** |
 | [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |
 | [`handoff-hub-github.md`](handoff/handoff-hub-github.md) | projetos vêm do GitHub (repo com `homepage`), não de lista fixa | 🟢 vivo (28/07) |
 | [`handoff-crawl-stats-semanal.md`](handoff/handoff-crawl-stats-semanal.md) | robô Playwright que abastece `/infra` + `/insights` toda semana | 🟢 vivo — agendado dom. 10:00 |
