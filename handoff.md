@@ -1,14 +1,23 @@
 # ROI Hub — handoff
 
-> 🎯 **PRÓXIMA SESSÃO: o Compass.** O handoff está **no repo do compass**, co-localizado com o
-> código: [`C:\dev\compass\handoff.md`](https://github.com/JeanZorzetti/compass/blob/main/handoff.md).
-> Medido em 29/07 e **corrige o que estava escrito aqui embaixo**: (1) não faltam "9 segredos" para o
-> 500 — falta **uma**, `DATABASE_URL`, porque `/pricing` conta usuários no banco; (2) não falta "um A
-> record" — o A record de `compass.polarisia.com.br` **existe e aponta para o EasyPanel**
-> (`2.24.207.200`), onde o vhost sumiu. 🚨 E a Vercel manda apontar o **ápice** `polarisia.com.br`
-> para ela — **não faça**: o ápice serve o site do **Polaris IA** e responde 200 hoje.
-> Ordem: **banco → login/Stripe → DNS do subdomínio**. Uma decisão sua trava o começo: **qual
-> Postgres** (recomendado: Neon novo — o Compass tem 0 usuário, não há dado a perder).
+> ✅ **Compass NO AR** em `https://compass.polarisia.com.br` (29/07, 14h) — banco ligado, DNS
+> corrigido, `/pricing` 200 e o ápice do Polaris intacto. O item "compass" **sai da fila de ops**.
+>
+> 🎯 **PENDÊNCIA que sobrou — Etapas 2 e 3 do
+> [`C:\dev\compass\handoff.md`](https://github.com/JeanZorzetti/compass/blob/main/handoff.md):**
+> o app está de pé mas **não é usável nem cobrável**.
+> - **Etapa 2 · login** — `AUTH_GITHUB_ID` + `AUTH_GITHUB_SECRET` (callback
+>   `https://compass.polarisia.com.br/api/auth/callback/github`) e `AUTH_RESEND_KEY`. `/login`
+>   responde 200, mas **sem provider ninguém entra**.
+> - **Etapa 3 · cobrança** — `STRIPE_SECRET_KEY`, os dois `price_…` e o `STRIPE_WEBHOOK_SECRET`.
+>   Crie o webhook **já no domínio final** (webhook morto = cliente paga e não vira assinante).
+>
+> As duas são **painel de terceiro, com o Jean** (GitHub, Resend, Stripe) — não há código a escrever.
+> Enquanto elas não saem, "distribuição" continua sem sentido: não há como o usuário logar.
+>
+> 🔴 **Dívida aberta:** o Postgres escolhido foi o do **VPS EasyPanel** (`2.24.207.200:5451`), e o
+> servidor **não suporta TLS** — senha e dados trafegam em texto puro até a Vercel, com a senha de
+> `secrets_to_rotate`. Resolver **antes do primeiro pagante**, não antes do primeiro login.
 >
 > ✅ **[`handoff/handoff-quatro-sites.md`](handoff/handoff-quatro-sites.md) foi EXECUTADO** na 4ª
 > sessão de 29/07: **4 de 4 no ar**, `homepage` gravada e confirmada com 200 —
@@ -30,8 +39,8 @@
 > 7/7).
 >
 > **Estado anterior** em [`handoff/handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md)
-> (29/07). Dos três itens que ele listava, **sobrou um**: 🟠 **`compass`** — ⚠️ o diagnóstico dele
-> ("um A record + 9 segredos") está **desatualizado**, use o `handoff.md` do repo do compass.
+> (29/07). Dos três itens que ele listava, **nenhum sobrou**: o `compass` foi resolvido acima —
+> ⚠️ o diagnóstico dele ("um A record + 9 segredos") estava **errado nas duas metades**.
 > ⛔ **SplitJud foi
 > ENCERRADO** (repo deletado pelo Jean → sem repo não há projeto; não reanexar vhost, não apontar
 > DNS), e os 6 boilerplate Lovable foram excluídos. **47 → 41 repos ativos, 12 → 6 sem `homepage`.**
