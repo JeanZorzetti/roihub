@@ -1196,6 +1196,24 @@ test("responseText ignora itens e contents malformados", () => {
   assert.equal(responseText({ output: [null, { content: [null, 1] }] }), null);
 });
 
+test("researchAndDraft leva o editorialFocus do projeto pro prompt", async () => {
+  // Sem essa linha o modelo escolhe a pauta pela impressão do GSC, que é justamente o
+  // cluster errado nos projetos com dois públicos (aftercare: paciente vs clínica).
+  const prompts = [];
+  const capture = async (prompt) => {
+    prompts.push(prompt);
+    return { output_text: "no json here" };
+  };
+  await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "claude" }, async () => {
+    for (const slug of ["aftercare", "context"]) {
+      await assert.rejects(() => researchAndDraft({ project: projectBySlug(slug) }, capture), /llm-output/);
+    }
+  });
+  assert.match(prompts[0], /EDITORIAL FOCUS for this project: B2B clinic operations/);
+  // `context` não tem foco declarado: nada de linha vazia no prompt.
+  assert.doesNotMatch(prompts[1], /EDITORIAL FOCUS/);
+});
+
 test("researchAndDraft converte saída malformada em llm-output sanitizado", async () => {
   await withEnv({ CLAUDE_CODE_OAUTH_TOKEN: "claude" }, async () => {
     for (const response of [

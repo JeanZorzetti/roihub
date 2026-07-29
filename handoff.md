@@ -1,14 +1,15 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, 2ª sessão).
+> **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, 3ª sessão).
 >
-> **Resumo do próximo passo:** **o ML fechou (F0–F4) e não há mais frente de código aberta.** O que
-> sobrou é (1) **reescrever o card do `aftercare`**, que manda checar à mão o gate D+90 que o hub já
-> respondeu sozinho em 28/07 — e o veredito é **passou**; (2) duas verificações que só o Jean faz
-> (`/insights` em prod e o run automático de 02/08, o primeiro com o `narrate.py` encadeado); e
-> (3) **A1 — três sites de produção fora do ar** (`prolifemed.com.br`, `seven-md.com.br`,
-> `compass.polarisia.com.br`), que é **ops de DNS/vhost, não commit**: nenhuma sessão de código
-> resolve isso, só acesso ao host.
+> **Resumo do próximo passo:** **o ML fechou (F0–F4) e não há frente de código aberta** — o último
+> card podre (`aftercare`) foi reescrito em 28/07 e o que ele pedia já foi ligado no mesmo dia
+> (`editorialFocus` B2B, uma linha, não uma feature). O que sobrou é **espera medida**: (1) ver em
+> `/seo` se a pauta do robô migrou pro cluster B2B e no `/insights` se **cliques saem do 0** antes do
+> D+180 (28/11); (2) duas verificações que só o Jean faz (`/insights` em prod e o run automático de
+> 02/08, o primeiro com o `narrate.py` encadeado); e (3) **A1 — três sites de produção fora do ar**
+> (`prolifemed.com.br`, `seven-md.com.br`, `compass.polarisia.com.br`), que é **ops de DNS/vhost, não
+> commit**: nenhuma sessão de código resolve isso, só acesso ao host.
 >
 > O hub deixou de ter lista fixa de 10 projetos: agora todo repo do GitHub com `homepage`
 > preenchida é um projeto — detalhe técnico em [`handoff/handoff-hub-github.md`](handoff/handoff-hub-github.md).
@@ -20,7 +21,7 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | **comece por aqui**: o que fazer na próxima sessão | 🟢 vivo (28/07) |
+| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | **comece por aqui**: o que fazer na próxima sessão | 🟢 vivo (28/07, 3ª sessão) |
 | [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |
 | [`handoff-hub-github.md`](handoff/handoff-hub-github.md) | projetos vêm do GitHub (repo com `homepage`), não de lista fixa | 🟢 vivo (28/07) |
 | [`handoff-crawl-stats-semanal.md`](handoff/handoff-crawl-stats-semanal.md) | robô Playwright que abastece `/infra` + `/insights` toda semana | 🟢 vivo — agendado dom. 10:00 |
