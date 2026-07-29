@@ -1,4 +1,9 @@
-# Handoff — próximo passo do ROI Hub (comece por aqui)
+# Handoff — espera medida do ML + A1
+
+> ⚠️ **Este não é mais o ponto de entrada.** A frente ativa desde 29/07 é
+> [`handoff-21-projetos-no-ar.md`](handoff-21-projetos-no-ar.md) — 21 projetos do ranking foram
+> **apagados da Vercel**. Ele também **corrige o A1 abaixo**: `prolifemed.com.br` está no ar na
+> Vercel (projeto `prolife-next-js`), então **não** é caso de vhost na EasyPanel.
 
 Atualizado em **2026-07-28, 3ª sessão da noite**. **Não há frente de código aberta no hub.** O ML
 fechou (F0–F4), o robô de crawl stats está agendado e o último card podre foi reescrito — e o que
@@ -64,6 +69,12 @@ Confirmado do host Windows com `Resolve-DnsName` + `curl`:
 | `prolifemed.com.br` | 187.127.2.204 | **timeout** | **404** |
 | `seven-md.com.br` | 187.127.2.204 | **timeout** | **404** |
 | `compass.polarisia.com.br` | 2.24.207.200 (VPS EasyPanel) | **404** | **404** |
+
+> 🔴 **Revisado de novo em 29/07 — o bloco abaixo vale só pra `seven-md` e `compass`.**
+> `prolifemed.com.br` **não** é caso de EasyPanel: o app está no ar na Vercel
+> (`prolife-next-js.vercel.app`, 200), só sem domínio atribuído. Detalhe e a pergunta que precisa ir
+> pro Jean (o deploy Vercel é o 2º ambiente, de banco vazio) em
+> [`handoff-21-projetos-no-ar.md`](handoff-21-projetos-no-ar.md) §5.
 
 **Os três são o MESMO problema** (revisado 28/07, 4ª sessão): nenhum dos três domínios tem vhost no
 EasyPanel — forçando o Host header contra o VPS, todos dão 404, inclusive `www.prolifemed.com.br`.

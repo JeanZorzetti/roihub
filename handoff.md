@@ -1,8 +1,17 @@
 # ROI Hub — handoff
 
-> **Próxima sessão começa em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md)** (28/07, 3ª sessão).
+> **Próxima sessão começa em [`handoff/handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md)** (29/07).
 >
-> **Resumo do próximo passo:** **o ML fechou (F0–F4) e não há frente de código aberta** — o último
+> **Resumo:** **21 dos 28 projetos do ranking estão fora do ar** e a causa é uma só — os projetos
+> **não existem mais na Vercel** (`X-Vercel-Error: DEPLOYMENT_NOT_FOUND`; a conta tem 9 projetos, não
+> 30). Não é bug do hub nem DNS. **2 dos 21 nem precisam de deploy** (`sirius` está no ar em
+> `siriuscrm.com.br`, só a `homepage` está velha); 1 é projeto vivo de verdade (`sofia-ia`, com o
+> subdomínio em NXDOMAIN); os outros 19 são protótipos parados — **decidir quais valem deploy e quais
+> viram repo arquivado antes de deployar**. Também corrige o A1: `prolifemed` está no ar na Vercel
+> (`prolife-next-js`), não é caso de vhost na EasyPanel.
+>
+> **Estado anterior** (28/07, 3ª sessão) em [`handoff/handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md):
+> **o ML fechou (F0–F4) e não há frente de código aberta** — o último
 > card podre (`aftercare`) foi reescrito em 28/07 e o que ele pedia já foi ligado no mesmo dia
 > (`editorialFocus` B2B, uma linha, não uma feature). O que sobrou é **espera medida**: (1) ver em
 > `/seo` se a pauta do robô migrou pro cluster B2B e no `/insights` se **cliques saem do 0** antes do
@@ -21,7 +30,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | **comece por aqui**: o que fazer na próxima sessão | 🟢 vivo (28/07, 3ª sessão) |
+| [`handoff-21-projetos-no-ar.md`](handoff/handoff-21-projetos-no-ar.md) | **comece por aqui**: recolocar no ar os 21 projetos apagados da Vercel | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-proximo-passo.md`](handoff/handoff-proximo-passo.md) | espera medida do ML + A1 (ops de DNS/vhost) | 🟢 vivo (28/07, 3ª sessão) |
 | [`handoff-ml.md`](handoff/handoff-ml.md) | motor de ML (`ml/`), F0–F4, decisões de modelagem | 🟢 vivo — F0–F4 completos |
 | [`handoff-hub-github.md`](handoff/handoff-hub-github.md) | projetos vêm do GitHub (repo com `homepage`), não de lista fixa | 🟢 vivo (28/07) |
 | [`handoff-crawl-stats-semanal.md`](handoff/handoff-crawl-stats-semanal.md) | robô Playwright que abastece `/infra` + `/insights` toda semana | 🟢 vivo — agendado dom. 10:00 |
