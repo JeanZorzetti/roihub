@@ -40,14 +40,16 @@ const PROMOVIDOS = {
   orion: VERCEL, //      projeto Vercel `orion-nova-ui`
   vertice: VERCEL, //    projeto Vercel `vertice`
   atma: VERCEL, //       projeto Vercel `atma` — o domínio nunca saiu de lá, só o DNS sumiu
+  atmaadmin: VERCEL, //  projeto Vercel `admin` (30/07) — Prisma migrado p/ o Postgres do VPS
 };
 
 // Ainda em 301: têm repo e site no ar, mas o Jean não pediu de volta (29/07).
 const RESSUSCITAR = ["alibi"];
-// `atmaadmin` e `atmaapi` NÃO são morte — o Jean quer os dois de volta (29/07), mas o admin não tem
-// projeto na Vercel e a API depende do container + MySQL no EasyPanel. Ficam em 301 até existir
-// destino; no dia em que existir, viram linha em PROMOVIDOS.
-const MORTOS = ["atmaadmin", "atmaapi", "clerk.atma", "jbadvocacia", "andorinha"];
+// `atmaapi` NÃO é morte — o Jean quer de volta (29/07), mas depende do container no EasyPanel.
+// Fica em 301 até existir destino; no dia em que existir, vira linha em PROMOVIDOS (apontando para
+// o IP do VPS, e aí proxied faz sentido de novo — a restrição de nuvem cinza é da Vercel).
+// `atmaadmin` saiu daqui em 30/07: subiu na Vercel no projeto `admin`.
+const MORTOS = ["atmaapi", "clerk.atma", "jbadvocacia", "andorinha"];
 const COM_SUCESSOR = ["sirius", "www.sirius", "sofiaia", "www.goiania"];
 
 const HOSTS = [...COM_SUCESSOR, ...MORTOS, ...RESSUSCITAR];
