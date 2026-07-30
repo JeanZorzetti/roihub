@@ -13,6 +13,12 @@ O que sobrou é **uma data**: **domingo 02/08, 10:00 BRT.**
 > problema não era Request Indexing nem sitemap, era **não ter domínio próprio**. O `alibi_ai` foi
 > apagado: **40 repos ativos, 39 projetos**. **O próximo passo segue sendo a data.**
 
+> ➡️ **A frente de trabalho seguinte já tem handoff próprio:**
+> [`handoff-proximo-passo-dominios.md`](handoff-proximo-passo-dominios.md) — **todo projeto com
+> domínio próprio**. Nasceu da lição do CannibalScan: 21 dos 38 sites estão em `*.vercel.app` /
+> `*.easypanel.host` e, por isso, **fora de qualquer propriedade do Search Console**. Este arquivo
+> aqui continua sendo a **data**; aquele é o que fazer quando houver sessão.
+
 Substitui [`handoff-proximo-passo-30-07.md`](handoff-proximo-passo-30-07.md) (29/07).
 Índice: [`../handoff.md`](../handoff.md).
 

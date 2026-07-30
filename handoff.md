@@ -1,7 +1,19 @@
 # ROI Hub — handoff
 
-> 🎯 **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md)
-> (30/07): o item de painel acabou; o que sobrou é uma data — domingo 02/08, 10:00 BRT.**
+> 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
+>
+> 1️⃣ **Se a sessão for de trabalho:**
+> [`handoff/handoff-proximo-passo-dominios.md`](handoff/handoff-proximo-passo-dominios.md) (30/07) —
+> **todo projeto com domínio próprio**. Medido: **21 dos 38 sites vivem em `*.vercel.app` /
+> `*.easypanel.host`, todos respondendo 200 e TODOS fora de qualquer propriedade do Search Console.**
+> O CannibalScan provou hoje que domínio de fornecedor = projeto invisível para a medição. 🚨 **Mas
+> "todos com domínio" NÃO é criar 21 subdomínios** — subdomínio abandonado vira NXDOMAIN e já custou
+> 76% do crawl budget do `roilabs.com.br` uma vez. Triagem primeiro: promover o que busca tráfego,
+> **arquivar** o resto.
+>
+> 2️⃣ **A data, que não depende de sessão:**
+> [`handoff/handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md)
+> (30/07): domingo **02/08, 10:00 BRT**.
 > É o **primeiro run do robô de crawl stats** (`LastTaskResult 267011` = nunca rodou), e ele é as
 > duas coisas ao mesmo tempo: o **único instrumento de medição** do conserto do NXDOMAIN — existe
 > **um só** export do `roilabs.com.br` no repo, o de 25/07, que é o baseline de *antes* — e **código
@@ -134,6 +146,7 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
+| [`handoff-proximo-passo-dominios.md`](handoff/handoff-proximo-passo-dominios.md) | **comece por aqui numa sessão de trabalho**: os 21 projetos em domínio de fornecedor, por que isso os deixa fora do GSC (a prova do CannibalScan), o critério de triagem promover-ou-arquivar e a receita de 6 passos já validada | 🟢 vivo (30/07) — frente ativa |
 | [`handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md) | **comece por aqui**: o próximo passo é uma data (02/08, 1º run do robô de crawl), como medir o NXDOMAIN sem cair na janela de 90 dias, e o que sobra fora do roihub. Inclui a medição dos 3 cards podres da agenda (30/07): branded do Sirius passou, `repo` do tapepro estava errado, sitemap do CannibalScan nunca submetido | 🟢 vivo (30/07) — frente ativa |
 | [`handoff-nxdomain-subdominios.md`](handoff/handoff-nxdomain-subdominios.md) | os 14 subdomínios em NXDOMAIN do `roilabs.com.br`: receita, script e as 6 promoções | ✅ executado 29–30/07 — falta só medir com export novo |
 | [`handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md) | briefing anterior: os 3 itens de painel/DNS, o que foi encerrado, e como medir DNS sem errar | ⚠️ superado 30/07 — os 3 itens saíram; guarda as armadilhas de DNS |
