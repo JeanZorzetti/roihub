@@ -270,7 +270,7 @@ canonical apontando para o próprio host. Todos os 15 sitemaps aceitos no GSC.
 | `cardio-risk-insight-hub` | `cardio-risk-insight-hub.roilabs.com.br` | git push (depois do fix) |
 | `cyberspace` | `cyberspace.roilabs.com.br` | git push |
 | `aesthetic-perfection-page` | `lumina.estetiacrm.com.br` | git push |
-| `tape-vision-ai-92` | `tape-vision-ai-92.roilabs.com.br` | ⚠️ repo VAZIO |
+| `tape-vision-ai-92` | `tape-vision-ai-92.roilabs.com.br` | manual (`Frontend/`) |
 
 DNS: 14 registros A novos na `roilabs.com.br` (Cloudflare, `76.76.21.21`, `proxied:false`) e
 `lumina` na `estetiacrm.com.br` (Hostinger — zona 9 → 10 registros, nada perdido; o
@@ -344,12 +344,34 @@ não só no layout.**
 - **`vertex-landing-craft` ficou com o nome do repo**: `vertice.roilabs.com.br` já é do repo
   `vertice`.
 
-### ⚠️ Pendência real que sobrou — uma só
+### ✅ Nenhuma pendência — os 15 fecharam
 
-**`tape-vision-ai-92` é um repo VAZIO** (`git log` → *branch appears to be broken*). O host novo
-responde 200 servindo um deploy antigo, mas **não há código para repontar**: canonical é `/`,
-`/sitemap.xml` e `/robots.txt` devolvem HTML de fallback. **O sitemap dele NÃO foi submetido** ao GSC
-de propósito — seria rejeitado. Decidir se o fonte volta ou se o projeto sai do hub.
+> 🚨 **Correção: `tape-vision-ai-92` NÃO era um repo vazio.** Eu afirmei isso e estava errado — o repo
+> tem **44 commits** e `Frontend/` (Vite) completo. O que estava quebrado era **o meu clone**, e a
+> assinatura disso vale guardar (próxima seção). Depois de re-clonar, o projeto fechou como os outros:
+> canonical, `sitemap.xml`, `robots.txt` e sitemap aceito no GSC.
+
+### 🚨 Clone interrompido finge ser repo vazio — e o retry pula ele
+
+`gh repo clone` morto no meio (o meu loop de 9 clones estourou o timeout de 7 min) deixa a pasta com
+o `.git` **cheio** (37 MB de objetos baixados) mas sem checkout, e grava:
+
+```
+$ cat .git/HEAD
+ref: refs/heads/.invalid
+```
+
+`git log` responde *"your current branch appears to be broken"* — que **lê como repo vazio** e não
+como clone corrompido. Pior: o retry seguinte usava `[ -d "$repo/.git" ] || gh repo clone …`, então
+**pulou justamente o repo quebrado**, porque `.git` existia.
+
+**Detectar assim** (o `HEAD` é o teste barato e definitivo):
+
+```bash
+grep -q '\.invalid' .git/HEAD && echo "CLONE QUEBRADO — apagar e reclonar"
+```
+
+E não use a existência de `.git` como prova de clone bom: `git rev-parse HEAD` é o teste honesto.
 
 ### 🗑️ Fechadas por exclusão de repo (30/07, decisão do Jean)
 
