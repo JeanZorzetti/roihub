@@ -222,7 +222,62 @@ o Jean pode ter arquivado ou apagado coisas no meio ([[roihub_github_sourced_pro
 
 ---
 
-## 📌 Estado em 30/07 (sessão de execução) — PARADO NO DNS
+## ✅ 1ª leva EXECUTADA em 30/07 — 3 de 4 no ar
+
+Com os tokens de Cloudflare e Hostinger em mãos, a receita rodou inteira nos 3 projetos da Vercel.
+**`links.roilabs.com.br`, `sem-swarm.nimblabs.com` e `seoforecaster.nimblabs.com` estão no ar, com
+canonical próprio, sitemap 200, `homepage` trocada e sitemap aceito no GSC como `siteFullUser`.**
+
+Contagem do ranking: **40 projetos, zero hosts duplicados** (`mergeProjects` rodado contra o GitHub
+ao vivo). Os promovidos moveram de host em vez de duplicar.
+
+| projeto | host novo | DNS | deploy | homepage | sitemap GSC |
+|---|---|---|---|---|---|
+| `roi-labs-links` | `links.roilabs.com.br` | ✅ CF `A 76.76.21.21` | ✅ pelo push | ✅ | ✅ |
+| `sem-swarm` | `sem-swarm.nimblabs.com` | ✅ Hostinger `A` | ✅ **CLI** | ✅ | ✅ |
+| `seo-forecaster` | `seoforecaster.nimblabs.com` | ✅ Hostinger `A` | ✅ **CLI** | ✅ | ✅ |
+| `meridian` | `meridian.roilabs.com.br` | ✅ CF `A 2.24.207.200` | ⛔ **bloqueado** | ⛔ | ⛔ |
+
+### O passo 3 se confirmou — e só em 2 dos 3
+
+`roi-labs-links` publicou pelo `git push`. **`sem-swarm` e `seo-forecaster` NÃO** — sitemap devolvia
+404 e o canonical não subia, exatamente como o CannibalScan. Ambos tinham `.vercel/project.json`
+local (`vercel link` via CLI) e precisaram de `vercel deploy --prod` de dentro de `site/`.
+**O `.vercel/project.json` local é o sinal antecipado**: se existe, presuma que o push não publica.
+
+Nota: `vercel --prod --yes` devolve `missing_arguments` nesta versão do CLI. O comando é
+`vercel deploy --prod`.
+
+### ⛔ Meridian — falta o vhost no EasyPanel (fora do meu alcance)
+
+DNS já aponta. `http://meridian.roilabs.com.br` devolve **301** para https, mas o https falha com
+`SEC_E_UNTRUSTED_ROOT`: o EasyPanel está servindo o certificado default porque o vhost
+`meridian.roilabs.com.br` não foi cadastrado no app. **Ação manual do Jean, no painel do EasyPanel.**
+
+O patch do `astro.config.mjs` está **commitado localmente e NÃO pushado** (`60b7593`, branch
+`feat/cinematic-interactions`) de propósito: subir o `site:` antes de o host servir faria o Astro
+gerar canonical absoluto para um host com cert quebrado. Ordem: cadastrar vhost → push → rebuild.
+
+### Ferramenta nova, reutilizável nas próximas 18
+
+`scripts/submit-sitemap.mjs` — deriva a propriedade do host do próprio sitemap, então promover
+projeto novo não exige editar o arquivo:
+
+```bash
+node scripts/submit-sitemap.mjs https://<host>/sitemap.xml [...]
+```
+
+Coberto por `test/submit-sitemap.test.mjs` (o parser `.com` vs `.com.br` tem branch: sem os 3
+rótulos, `roilabs.com.br` viraria o inexistente `sc-domain:com.br`).
+
+### 🔑 Rotacionar
+
+Os tokens de **Cloudflare** e **Hostinger** foram colados no chat desta sessão. Rotacionar quando a
+frente fechar — ver [[secrets_to_rotate]].
+
+---
+
+## 📌 Medição de 30/07 (antes da execução)
 
 Medição refeita ao vivo: **39 repos com `homepage`** (não 38), **17 domínio próprio**, **22 fornecedor**
 (não 21), **22/22 respondem 200**. O repo a mais é `EGTelemedicina` — o Jean informou que já apagou.
@@ -240,7 +295,7 @@ os indefinidos **não** viram arquivamento; todos terão domínio eventualmente.
 | `seo-forecaster` | `seoforecaster.nimblabs.com` | Hostinger |
 | `meridian` | `meridian.roilabs.com.br` | Cloudflare |
 
-### O que já está feito (passo 2 completo, **não pushado**)
+### O que já está feito (passo 2 — CONCLUÍDO e pushado, ver seção acima)
 
 Os 4 repos estão em `C:\dev` (fora do OneDrive → `vercel --prod` funciona). Alterações locais:
 
@@ -262,7 +317,7 @@ NXDOMAIN — pior que o estado atual. Push só depois do passo 1.
    Apontar o domínio novo sem adicioná-lo lá mata **todo POST** — login, `/admin`, `/api/*` — com o
    site respondendo 200. Sintoma idêntico ao do Clerk na Atma ([[clerk_subdomain_killed_by_nxdomain_cleanup]]).
 
-### ⛔ O bloqueio: não há credencial de DNS na máquina
+### ~~O bloqueio: não há credencial de DNS na máquina~~ — RESOLVIDO, o Jean forneceu os tokens
 
 `env`, `~/.wrangler`, `~/.cloudflared` e todos os `.env` do workspace: **nenhum token de Cloudflare ou
 Hostinger** (só um `.env.example` em `open-seo`, sem valor). `vercel domains ls` confirma os 5 domínios
