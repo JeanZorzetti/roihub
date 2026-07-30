@@ -236,7 +236,127 @@ node --env-file=.env scripts/submit-sitemap.mjs https://www.housingpro.com.br/si
 Detalhe do `--env-file=.env`: o `GOOGLE_SERVICE_ACCOUNT_JSON` é um JSON de uma linha e o Node lê sem
 dotenv. Não precisa exportar nada à mão.
 
-### 🚧 Bloqueador único dos 16 restantes: o token do Cloudflare
+### ✅ 2ª LEVA EXECUTADA — a frente fechou
+
+Token do Cloudflare recebido no fim da sessão e **os 15 projetos restantes foram promovidos**.
+
+| | 30/07 manhã | 30/07 fim (1ª leva) | **agora** |
+|---|---|---|---|
+| domínio próprio | 17 | 21 | **37** |
+| domínio de fornecedor | 22 | 17 | **2** |
+| hosts duplicados | — | zero | **zero** |
+
+Os 2 que sobram não são pendência: `eg-telemedicina.vercel.app` (repo apagado, some da listagem
+quando o cache do GitHub virar) e `portfolio` (**exceção pedida pelo Jean** — vai comprar domínio
+próprio para o CV depois).
+
+**15/15 verdes** na verificação final — `/` em 200, `/sitemap.xml` servindo XML de verdade e
+canonical apontando para o próprio host. Todos os 15 sitemaps aceitos no GSC.
+
+| repo | host novo | como publicou |
+|---|---|---|
+| `claude-loop-runner` | `claude-loop-runner.roilabs.com.br` | manual |
+| `housing-pro-api` | `housing-pro-api.roilabs.com.br` | manual |
+| `whatsmeow-gateway` | `whatsmeow-gateway.roilabs.com.br` | manual |
+| `aprovai` | `aprovai.roilabs.com.br` | manual |
+| `moderador` | `moderador.roilabs.com.br` | manual |
+| `reforma-maestro` | **`financeiro-obras.roilabs.com.br`** | manual (`frontend-next/`) |
+| `potencial-arquitetado` | `potencial-arquitetado.roilabs.com.br` | git push |
+| `cardioqwen3code` | `cardioqwen3code.roilabs.com.br` | manual (`frontend/`) |
+| `vertex-landing-craft` | `vertex-landing-craft.roilabs.com.br` | manual |
+| `synth-bot-buddy` | `synth-bot-buddy.roilabs.com.br` | manual (`frontend/`) |
+| `matchfios-textile-connector` | `matchfios-textile-connector.roilabs.com.br` | git push |
+| `cardio-risk-insight-hub` | `cardio-risk-insight-hub.roilabs.com.br` | git push (depois do fix) |
+| `cyberspace` | `cyberspace.roilabs.com.br` | git push |
+| `aesthetic-perfection-page` | `lumina.estetiacrm.com.br` | git push |
+| `tape-vision-ai-92` | `tape-vision-ai-92.roilabs.com.br` | ⚠️ repo VAZIO |
+
+DNS: 14 registros A novos na `roilabs.com.br` (Cloudflare, `76.76.21.21`, `proxied:false`) e
+`lumina` na `estetiacrm.com.br` (Hostinger — zona 9 → 10 registros, nada perdido; o
+`{"overwrite": false}` do handoff se confirmou). Backup da zona Cloudflare tirado antes de escrever.
+
+### 🔧 As cinco correções desta leva (todas descobertas rodando)
+
+#### 1. Título igual não prova qual pasta é deployada
+
+`reforma-maestro` tem `frontend/` (Vite) **e** `frontend-next/` (Next) com **exatamente o mesmo
+`<title>`**. Casar título do ar com título local apontou para a pasta errada, e o deploy só falhou no
+build (`No Next.js version detected`). **Confirme pelo preset do projeto**, que não mente:
+
+```bash
+vercel project inspect <projeto> | grep -iE "Root Directory|Framework Preset"
+```
+
+#### 2. `robots.txt` em 200 não prova que seu deploy subiu
+
+`synth-bot-buddy` já tinha um `public/robots.txt` antigo (`User-agent: Googlebot`). O teste "responde
+200 e começa com User-agent" deu verde num deploy que **nunca aconteceu**. O sinal honesto é
+`/sitemap.xml` **começar com `<?xml`** — numa SPA o fallback devolve o `index.html` com status 200,
+então status sozinho nunca serve:
+
+```bash
+curl -s https://<host>/sitemap.xml | head -c 5   # tem que ser <?xml
+```
+
+#### 3. `vercel.json` com catch-all engole `/sitemap.xml` e `/robots.txt`
+
+`cardio-risk-insight-hub` tinha `"routes": [{"src": "/(.*)", "dest": "/"}]`. Toda URL servia a home —
+inclusive o sitemap, que voltava HTML. 🚨 **Mas remover só o `routes` derrubou o site inteiro para
+404:** com o bloco legado `builds`, o roteamento automático está desligado e `routes` é a única coisa
+que roteia. O conserto certo é **matar o `builds`** e deixar a Vercel detectar:
+
+```json
+{ "framework": "nextjs", "regions": ["gru1"] }
+```
+
+#### 4. Deploy manual verde + `git push` depois = o push desfaz o manual
+
+Mesmo projeto: o deploy manual de dentro de `frontend/` ficou 200, e o `git push` seguinte derrubou
+para 404 de novo. O projeto **era** git-connected, com Root Directory `.`, onde havia um
+`vercel.json` mandando `@vercel/static-build` num `package.json` **que não existe**. Os dois caminhos
+publicavam coisas diferentes. Conserto = alinhar o projeto à pasta real, via API (a CLI não expõe):
+
+```python
+PATCH https://api.vercel.com/v9/projects/{id}?teamId={org}
+{"rootDirectory": "frontend", "framework": "nextjs"}
+# token em %APPDATA%\com.vercel.cli\Data\auth.json ; ids em <pasta>/.vercel/project.json
+```
+
+**Regra que sai daí:** depois de deploy manual, ou não pushe, ou verifique de novo **depois** do
+push. Verificar antes do push é verificar o deploy errado.
+
+#### 5. Canonical cruzado entre dois projetos homônimos
+
+`vertex-landing-craft` (Vértice **Marketing**, agência) tinha `metadataBase`, `openGraph.url`,
+`alternates.canonical`, `robots.ts`, `sitemap.ts` e o `@graph` inteiro apontando para
+`vertice.roilabs.com.br` — que é o **outro** produto (Vértice Onboarding, repo `vertice`). Isso
+declara ao Google que a agência é duplicata do SaaS, e deindexaria a agência inteira. Trocado em 5
+arquivos. **Repo gerado por Lovable/clonado herda URL de irmão: grepe o domínio antigo no repo todo,
+não só no layout.**
+
+### 📌 Escolhas de nome que fugiram da regra mecânica
+
+- **`reforma-maestro` → `financeiro-obras.roilabs.com.br`**, não `reforma-maestro.…`: o
+  `sitemap.ts`/`robots.ts` do próprio repo já apontavam para `financeiro-obras`. Seguir o código
+  custou 1 registro DNS e evitou reescrever dois arquivos. O registro `reforma-maestro` criado por
+  engano foi **deletado** e o alias removido da Vercel.
+- **`vertex-landing-craft` ficou com o nome do repo**: `vertice.roilabs.com.br` já é do repo
+  `vertice`.
+
+### ⚠️ Pendências reais que sobraram
+
+1. **`tape-vision-ai-92` é um repo VAZIO** (`git log` → *branch appears to be broken*). O host novo
+   responde 200 servindo um deploy antigo, mas **não há código para repontar**: canonical é `/`,
+   `/sitemap.xml` e `/robots.txt` devolvem HTML de fallback. **O sitemap dele NÃO foi submetido** ao
+   GSC de propósito — seria rejeitado. Decidir se o fonte volta ou se o projeto sai do hub.
+2. **`housingpro.com.br` ainda não tem propriedade no Search Console** — ver a seção acima; é a única
+   ação da leva que depende da UI.
+3. **`egtelemedicina24h.com` → 301 não foi feito.** A zona está no Cloudflare
+   (`shubhi`/`arch.ns.cloudflare.com`) mas **fora do alcance do token desta sessão** — `zones?name=`
+   devolve 0 sem erro, e a conta listada só tem `roilabs.com.br`. Precisa de token com acesso a essa
+   zona (ou outra conta Cloudflare).
+
+### 🚧 O bloqueador que existia: o token do Cloudflare
 
 O passo 1 (DNS) é o primeiro da receita e **não há token de Cloudflare nem de Hostinger em nenhum
 `.env` da máquina** — varredura feita em `ROI Labs/` e `C:\dev`. O `.env` do roihub tem só
