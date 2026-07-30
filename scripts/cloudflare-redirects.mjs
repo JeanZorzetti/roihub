@@ -41,15 +41,16 @@ const PROMOVIDOS = {
   vertice: VERCEL, //    projeto Vercel `vertice`
   atma: VERCEL, //       projeto Vercel `atma` — o domínio nunca saiu de lá, só o DNS sumiu
   atmaadmin: VERCEL, //  projeto Vercel `admin` (30/07) — Prisma migrado p/ o Postgres do VPS
+  atmaapi: ORIGIN, //    app `atma` do EasyPanel (projeto doc_crm), porta 3001 — mesmo VPS
 };
 
 // Ainda em 301: têm repo e site no ar, mas o Jean não pediu de volta (29/07).
 const RESSUSCITAR = ["alibi"];
-// `atmaapi` NÃO é morte — o Jean quer de volta (29/07), mas depende do container no EasyPanel.
-// Fica em 301 até existir destino; no dia em que existir, vira linha em PROMOVIDOS (apontando para
-// o IP do VPS, e aí proxied faz sentido de novo — a restrição de nuvem cinza é da Vercel).
+// `atmaapi` saiu daqui em 30/07: o container subiu no EasyPanel, então virou PROMOVIDO. DNS only
+// não é detalhe — Redirect Rule só roda em tráfego proxied; com nuvem laranja a Regra 4 continua
+// engolindo o host mesmo depois de ele sair desta lista.
 // `atmaadmin` saiu daqui em 30/07: subiu na Vercel no projeto `admin`.
-const MORTOS = ["atmaapi", "clerk.atma", "jbadvocacia", "andorinha"];
+const MORTOS = ["clerk.atma", "jbadvocacia", "andorinha"];
 const COM_SUCESSOR = ["sirius", "www.sirius", "sofiaia", "www.goiania"];
 
 const HOSTS = [...COM_SUCESSOR, ...MORTOS, ...RESSUSCITAR];
