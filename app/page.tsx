@@ -234,7 +234,7 @@ export default async function Page() {
       <p className="foot">
         A lista vem do GitHub: todo repo vivo com <code>homepage</code> preenchida é um projeto.
         A chave é a <b>URL do site</b>, não o repo — um repo pode servir vários sites (o monorepo{" "}
-        <code>roilabs</code> serve roilabs.com.br, goiania e tapepro), então cada entrada de{" "}
+        <code>roilabs</code> serve roilabs.com.br e goiania), então cada entrada de{" "}
         <code>data/projects.json</code> aponta o seu repo pelo campo <code>repo</code> e a URL
         curada sempre vence a <code>homepage</code>. Repo sem curadoria entra com todos os
         critérios em 0 e fica no fim do ranking até ganhar receita/blockers/ação.

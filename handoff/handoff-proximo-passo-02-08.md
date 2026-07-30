@@ -6,6 +6,12 @@ Cloudflare.
 
 O que sobrou é **uma data**: **domingo 02/08, 10:00 BRT.**
 
+> **Atualizado ainda em 30/07:** os três cards podres da agenda foram **medidos e reescritos** — ver
+> [a seção 2](#2--os-três-cards-podres-foram-medidos-e-reescritos-3007). O saldo: o gate branded do
+> Sirius **passou** (pos 1,0 no BR; a média global era ruído de Bangladesh), o `repo` do `tapepro`
+> apontava para o **monorepo errado**, e o CannibalScan está invisível porque o **sitemap nunca foi
+> submetido** — não por falta de Request Indexing. **O próximo passo segue sendo a data.**
+
 Substitui [`handoff-proximo-passo-30-07.md`](handoff-proximo-passo-30-07.md) (29/07).
 Índice: [`../handoff.md`](../handoff.md).
 
@@ -112,6 +118,12 @@ mesmo commit deste handoff.
 > respondia** — repo público, não arquivado, `homepage: https://alibi-ai.vercel.app`. Se ele voltar a
 > aparecer no ranking do hub, a exclusão não saiu; a lista vem do GitHub ao vivo, e o hub se corrige
 > sozinho quando o repo for embora. **41 repos ativos → 40** quando isso acontecer.
+>
+> 🔁 **Remedido horas depois, ainda em 30/07: continua 41.** `gh repo list --no-archived` traz 41
+> repos, 39 com `homepage`, e `alibi_ai` está entre eles (`archived: false`, homepage
+> `alibi-ai.vercel.app`) — o hub roda o `mergeProjects` e devolve **40 projetos** (39 com site, menos
+> o `roilabs` que goiania e institucional dividem). **A exclusão do repo ainda não saiu**; nada a
+> fazer no código, só apagar/arquivar o repo.
 
 ### Atma voltou inteiro — e agora tem handoff próprio
 
@@ -148,27 +160,46 @@ O app está **no ar** em `compass.polarisia.com.br` mas **não é usável nem co
 suporta TLS** ([[vps_postgres_no_tls_sslrequest_probe]]) — senha e dados em texto puro até a Vercel.
 Resolver **antes do primeiro pagante**, não antes do primeiro login.
 
-### 2. 🟡 Dois cards da agenda venceram — e card vencido manda executar o que já morreu
+### 2. ✅ Os três cards podres foram medidos e reescritos (30/07)
 
-Este é o padrão que já custou 4 tarefas improcedentes ([[roihub_agenda_task_premises_unverified]]).
-Conferido em `data/projects.json` hoje, 30/07:
+Feito no mesmo dia, contra a API do GSC — nenhum texto novo é palpite. O que a medição achou:
 
-| projeto | card | por que está podre |
-|---|---|---|
-| `sirius` | "**Gate 28/07**: medir posição branded 'sirius crm' no GSC" | a data **passou há 2 dias**. Ou a medição saiu e o card devia ter sido reescrito, ou não saiu e o card devia ter data nova |
-| `nimblabs` | "Backlink npm → context.nimblabs.com e conferir indexação do CK (**~20/07**)" | 10 dias vencido |
-| `tapepro` | `acao` **vazia** | é a 1ª cadeira do Growth Partner e não tem próxima ação nenhuma |
+**`sirius` — o gate 28/07 passou, e a métrica agregada mentia.** "sirius crm" agregado dá pos 5,2 com
+CTR de 1,7% (5 cliques / 295 imp), o que parecia piora. Quebrando por país: **264 das 295 impressões
+são de Bangladesh** (0 clique). **No Brasil o Sirius está em posição 1,0**, 4 cliques em 6 impressões.
+Entity SEO está resolvido; a home já serve Organization + SoftwareApplication + WebSite com `sameAs`
+canônico — **não refazer schema**. 🚨 **Nunca medir branded sem quebrar por país** — a média global
+quase gerou a 5ª tarefa improcedente. Card novo aponta o gargalo real (não-branded: 716 imp, 7
+cliques): `agaas`, 81 imp em **pos 8,1 com zero clique**, é o clique mais barato do site.
 
-**Medir antes de reescrever.** Os dois primeiros são leitura de GSC — 10 minutos, e o resultado
-decide o texto novo. Fechar isso **é** atualizar o card e pushar; deixar o card velho no ar é o que
-gera a próxima tarefa improcedente.
+**`nimblabs` — as duas pontas do card já estavam fechadas, e apareceu uma terceira que não estava.**
+Indexação do CK: `verdict=PASS`, "Submitted and indexed", crawl 11/07 — fechado. Backlink npm: o
+README publicado **já linka** `context.nimblabs.com` (sobra só `homepage`/`repository` ausentes no
+`package.json` do 1.2.0 → patch 1.2.1). 🚨 **O achado novo:** a API de sitemaps mostra 4 sitemaps na
+propriedade `nimblabs.com` — `nimblabs.com`, `reviewshield`, `aftercare`, `context` — e **nenhum é o
+CannibalScan**, que segue `URL is unknown to Google`. O "CannibalScan não indexado" nunca foi caso de
+Request Indexing manual: **o sitemap jamais foi submetido.** Virou a ação do card.
+
+**`tapepro` — o card não estava só vazio, estava apontando pro repo errado.** `"repo": "roilabs"`
+estava errado desde a criação: o site é `github.com/JeanZorzetti/tape`. Corrigido no
+`data/projects.json` e nos dois lugares que repetiam a lenda do monorepo (`lib/projects.mjs`,
+`app/page.tsx`). O resto é idade: a propriedade GSC **nasceu 21/07** (`gscInicio` agora registrado),
+tem **8 dias** e 21 impressões, e o `analyze.py` devolve `insufficient-data` nas três janelas. Não há
+trabalho de SEO — o autopublishing já publica 1/dia. Gate datado: **19/10** (D+90), ≥ 300 imp/28d.
+
+⚠️ Descartado com medição, para ninguém reabrir: o blog do tapepro aparece no GSC com e **sem** barra
+final, mas os dois formatos devolvem **200 e o mesmo canonical** — é consolidação atrasada do Google,
+**não** o bug de trailing slash do goiania ([[astro_nginx_trailing_slash_301]]).
 
 ### 3. 🟢 Domínio próprio dos sites novos — opcional, sem prazo
 
 `links.roilabs.com.br` (Cloudflare) e `cannibalscan.nimblabs.com` (Hostinger), **com a `homepage` do
 repo mudando junto** — a chave de um projeto no hub é a URL, não o repo: trocar domínio sem trocar a
-`homepage` **duplica** o projeto no ranking em vez de mover o existente. Mais submeter o CannibalScan
-ao GSC (segue **não indexado**).
+`homepage` **duplica** o projeto no ranking em vez de mover o existente.
+
+⚠️ O CannibalScan tem uma parte que **não** é opcional e subiu para o card do `nimblabs`: **submeter o
+sitemap no GSC**. Medido em 30/07 — nunca foi submetido, e a URL responde `URL is unknown to Google`.
+São 2 minutos no GSC UI e valem mais que qualquer Request Indexing avulso.
 
 ---
 

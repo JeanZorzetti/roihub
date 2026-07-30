@@ -22,16 +22,17 @@
     "slug": "tapepro",
     "nome": "Tapepro (fitas adesivas — 1ª cadeira)",
     "url": "https://tapepro.roilabs.com.br/",
-    "repo": "roilabs",
+    "repo": "tape",
+    "gscInicio": "2026-07-21",
     "receita": 6,
     "receitaNota": "1ª cadeira ocupada do Growth Partner (15% aquisição / 10% recorrência); sem venda registrada",
     "blockers": 1,
     "blockersLista": [],
     "seoSeed": 3,
     "decay": 3,
-    "decayNota": "",
-    "acaoDesc": "",
-    "acao": ""
+    "decayNota": "Propriedade GSC nasceu 21/07 — 8 dias de dados em 30/07",
+    "acaoDesc": "⚠️ O repo NÃO é o monorepo roilabs — é github.com/JeanZorzetti/tape (homepage tapepro.roilabs.com.br, push 29/07). O campo estava errado desde a criação do card e mandava o trabalho pro repo errado. Medido em 30/07 (GSC API): propriedade sc-domain:tapepro.roilabs.com.br tem dados desde 21/07 — OITO dias. Sitemap-index submetido em 21/07, 23 URLs, 0 erros, baixado hoje; home indexada (PASS, 'Submitted and indexed', crawl 27/07, canonical do Google = canonical declarado). 28d: 21 impressões, 1 clique, 10 páginas aparecendo. O ml/analyze.py devolve 'insufficient-data' nas três janelas e a health 30 vem quase toda de 'crawl crítico (33,6% OK)' — que é o crawl stats do roilabs.com.br já consertado, dentro da janela morta de 90 dias ([[gsc_crawl_stats_stale_90d_window]]): NÃO é sinal do tapepro. Autopublishing ligado (lib/autopublish-projects.mjs, renderizador astro-content-ptbr, 1 artigo/dia), então volume já é automático e não precisa de trabalho manual. Conferido e descartado hoje: o blog aparece no GSC com e sem barra final (aviso-de-seguranca... pos 8,0 e pos 2,0), mas os dois formatos devolvem 200 e declaram o MESMO canonical com barra — é consolidação atrasada do Google, não o bug de trailing slash do goiania ([[astro_nginx_trailing_slash_301]]). Não abrir tarefa por causa disso. Conclusão: não há trabalho de SEO aqui — o site tem 8 dias. O que decide o projeto é a 1ª venda pela cadeira (success fee), não tráfego.",
+    "acao": "Nada de SEO até 19/10 (D+90 do GSC, que começou 21/07) — o robô publica 1/dia. Gate 19/10: ≥ 300 imp/28d (hoje 21)"
   },
   {
     "slug": "sirius",
@@ -44,9 +45,9 @@
     "blockersLista": [],
     "seoSeed": 6,
     "decay": 4,
-    "decayNota": "",
-    "acaoDesc": "AUTOPUBLISH 25/07: ligado no rollout (dia 1, junto com roilabs) — estreia o renderizador typescript-post, nunca rodado em produção. No dia 26/07 conferir em /seo a linha do sirius, o build do site e a URL do artigo respondendo 200; se der llm-rate, parar de ligar projeto novo antes de resolver cota. ✅ Entity SEO no ar e validado em prod (Rich Results Test) — fechado até 13/07. Agora é dar tempo pro Google reprocessar a entidade: em ~28/07 medir no GSC a posição branded ('sirius crm', era 2,0 → ~5) e os cliques branded (21 → 7/sem). Recuperou = caso encerrado. Não recuperou = reforçar entity SEO on-site (brand signals, alternateName em mais superfícies, conteúdo de marca). SEM Google Ads (decisão 11/07, portfólio 100% SEO).",
-    "acao": "Gate 28/07: medir posição branded 'sirius crm' no GSC (recuperação entity SEO)"
+    "decayNota": "Branded resolvido: pos 1,0 no BR (medido 30/07); média global poluída por bgd",
+    "acaoDesc": "✅ GATE 28/07 EXECUTADO (medido 30/07 pela API do GSC, sc-domain:siriuscrm.com.br, 28d D-31→D-3 contra os 28d anteriores). O resultado inverte a leitura anterior: a posição branded AGREGADA de 'sirius crm' é 5,2 (era 4,9) e o CTR desabou (5 cliques em 295 impressões, era 5 em 34) — mas abrindo por país, 264 dessas 295 impressões são de BANGLADESH (bgd, 0 clique, pos 4,4–5,4), tráfego de homônimo que nunca vai comprar. No BRASIL o Sirius está em POSIÇÃO 1,0 com 4 cliques em 6 impressões (CTR 67%), mais 1 clique em gbr. Ou seja: a recuperação de entity SEO ESTÁ FEITA no mercado que importa, e o 'branded piorou' era artefato de média global. 🚨 Nunca mais medir branded sem quebrar por país — foi o que quase gerou uma tarefa improcedente de entity SEO. Conferido em prod hoje: a home já serve Organization + SoftwareApplication + WebSite + AggregateRating + Offer, com sameAs canônico ([[roilabs_canonical_social_profiles]]) — NÃO refazer schema, só está em 2 blocos ld+json em vez de @graph único, o que não é o gargalo. O gargalo real é não-branded: 716 imp/28d (era 256) e 7 cliques. Onde o clique está mais perto: 'agaas' = 81 imp em pos 8,1 com ZERO clique (página 1, fim) — subir 8→3 é mais barato que puxar 'crm solar' (70 imp) de pos 41,8, 'crm roi' (78 imp) de pos 37,1 ou 'crm energia solar' de 27,5. O cluster energia solar soma ~130 imp/28d mas vive na página 3–5: é o alvo seguinte, não o primeiro. SEM Google Ads (decisão 11/07, portfólio 100% SEO). Sitemap OK: 115 URLs, submetido 09/05, rebaixado 28/07, 1 warning.",
+    "acao": "Puxar 'agaas' de pos 8,1 → top-3 (81 imp/28d, 0 clique). Gate 31/08: ≥ 5 cliques não-branded/28d (hoje 2)"
   },
   {
     "slug": "fabrica",
@@ -166,12 +167,13 @@
     "receitaNota": "Hub dos micro-SaaS; receita vem dos bets, não dele",
     "blockers": 4,
     "blockersLista": [
-      "Context Keeper: Request Indexing enviado — aguardando entrar no índice (checar ~20/07)"
+      "CannibalScan: sitemap nunca submetido ao GSC — 'URL is unknown to Google' em 30/07",
+      "npm @jeanzorzetti/context-keeper 1.2.0 sem `homepage`/`repository` no package.json"
     ],
     "seoSeed": 4,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "Repo: ROI Labs/context-keeper (README npm) + ROI Labs/nimblabs (site). ✅ Request Indexing do Context Keeper enviado no GSC UI (home + posts) — fechado até 13/07. Duas pontas dev restantes da revisão de 11/07: (1) backlink da página npm do daemon (@jeanzorzetti/context-keeper — link no README + republish patch) → context.nimblabs.com, o backlink mais barato que existe pra destravar o crawl; (2) conferir em ~20/07 (7–10 dias) se home/posts do CK saíram de 'unknown to Google'. ⚠️ Sobre o '60,3% OK' do crawl de nimblabs.com: ANTES de investigar, datar as falhas — Crawl Stats do GSC é média de 90 dias e o caso idêntico do roilabs (40,6%) era 100% pré-fix, zero bug vivo. Só abrir investigação se houver falha em DIAS NOVOS.",
-    "acao": "Backlink npm → context.nimblabs.com e conferir indexação do CK (~20/07)"
+    "acaoDesc": "Repo: ROI Labs/context-keeper (README npm) + ROI Labs/nimblabs (site). ✅ INDEXAÇÃO DO CK FECHADA — URL Inspection em 30/07: context.nimblabs.com/ verdict=PASS, 'Submitted and indexed', último crawl 11/07. O CK já tem 6 páginas com dados e 21 queries em 28d (blog em pos 10,9; 'claude skills progressive disclosure' pos 17), impressões +76,3%/sem na janela de 4 semanas. Cliques ainda 0 — normal em pos 10–77. ✅ BACKLINK NPM JÁ EXISTE: o README publicado do @jeanzorzetti/context-keeper (1.2.0, 10/06) linka https://context.nimblabs.com. O que FALTA nessa ponta é menor do que o card dizia: o package.json publicado não tem os campos `homepage` nem `repository`, então a página do npm não mostra os links laterais — resolver num patch 1.2.1. 🚨 ACHADO NOVO (30/07, API sitemaps do GSC): o CannibalScan NUNCA teve sitemap submetido. A propriedade sc-domain:nimblabs.com tem 4 sitemaps (nimblabs.com, reviewshield, aftercare, context) e NENHUM é cannibalscan.nimblabs.com — e o URL Inspection devolve 'URL is unknown to Google', verdict NEUTRAL, sem lastCrawlTime. Isso explica causalmente o 'CannibalScan não indexado' que vinha sendo tratado como pendência de Request Indexing manual: sem sitemap, pedir indexação de 1 URL por vez não escala. Submeter o sitemap é ação de 2 min no GSC UI e cobre o site inteiro. ⚠️ Sobre o '60,3% OK' do crawl de nimblabs.com: ANTES de investigar, datar as falhas — Crawl Stats é média de 90 dias e o caso idêntico do roilabs (40,6%) era 100% pré-fix, zero bug vivo. Só abrir investigação se houver falha em DIAS NOVOS.",
+    "acao": "Submeter o sitemap do CannibalScan no GSC — nunca foi submetido e a URL segue 'unknown to Google' (medido 30/07)"
   }
 ]
