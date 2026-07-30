@@ -82,12 +82,46 @@ Rodado por `scripts/cloudflare-redirects.mjs` com token de zona (DNS + Dynamic U
 |---|---|---|
 | `sirius` | 301 | `siriuscrm.com.br` + path |
 | `sofiaia` | 301 | `polarisia.com.br` + path |
-| `atma` `atmaadmin` `atmaapi` `clerk.atma` `jbadvocacia` `andorinha` `alibi` `pathfinder` `orion` `vertice` | 301 | `roilabs.com.br/` |
+| `atmaadmin` `atmaapi` `clerk.atma` `jbadvocacia` `andorinha` `alibi` | 301 | `roilabs.com.br/` |
+| `atma` `pathfinder` `orion` `vertice` | **200** | promovidos horas depois — ver abaixo |
 | `www.sirius` `www.goiania` | ⚠️ falha TLS | 301 só em `http://` (ver nota 2 abaixo) |
 | `goiania` `tapepro` | **200** | intactos, grey cloud, nada encostou em produção |
 
 **Não olhe o OK% do GSC** para validar — leia a seção "Como saber se funcionou" no fim.
-O que sobrou de manual: **nada**. Próximo toque neste doc = checklist de ressurreição.
+
+## ✅ Ressurreição executada no mesmo dia — `atma`, `pathfinder`, `orion`, `vertice`
+
+O Jean pediu esses quatro de volta poucas horas depois (e dispensou o `alibi`, que segue em 301).
+Os quatro saíram da Regra 4 e viraram `A 76.76.21.21` **DNS only** — a nuvem laranja impede a Vercel
+de emitir o certificado do domínio. No script isso é uma linha em `PROMOVIDOS`: mover o sub de
+`RESSUSCITAR` para lá e rodar faz os passos 1 e 2 do checklist **num ato só, na ordem certa**.
+
+| host | projeto Vercel | repo (homepage já apontada) |
+|---|---|---|
+| `atma` | `atma` — o domínio **nunca saiu do projeto**, só o DNS tinha sumido | `Atma` (estava **arquivado**, desarquivado em 29/07) |
+| `pathfinder` | `pathfinder` | `pathfinder` |
+| `orion` | `orion-nova-ui` | `orion-nova-ui` |
+| `vertice` | `vertice` | `vertice` |
+
+O `vercel domains add <host> <projeto>` **já estava feito** para os quatro — o CLI responde
+`alias_conflict` quando o domínio já está no projeto, e a primeira execução (que parece falhar,
+porque imprime as instruções de nameserver) na verdade adiciona. `vercel domains inspect <host>` é
+quem diz a verdade. Depois do DNS a Vercel leva alguns minutos para emitir o cert: nesse meio-tempo
+o host dá `CERT_HAS_EXPIRED` ou 404, e isso **não é erro de configuração**.
+
+### O Atma ficou pela metade — de propósito
+
+O Jean quer **app + admin + api** (dispensou o `clerk`). Só o app voltou:
+
+| host | estado | o que falta |
+|---|---|---|
+| `atma` | ✅ 200 | — |
+| `atmaadmin` | 🔴 301 para o apex | **não existe projeto na Vercel.** O admin é `Atma/Site/admin`; precisa de projeto novo + as env (`NEXT_PUBLIC_API_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` — ver `Site/DEPLOY_PRODUCAO.md`). ⚠️ o repo está no OneDrive, e `vercel --prod` quebra lá ([[vercel_deploy_fails_under_onedrive]]) — clonar fora antes |
+| `atmaapi` | 🔴 301 para o apex | **container + MySQL no EasyPanel** (`DB_HOST=atma-mysql`, `atma_aligner`). Painel de terceiro, sem credencial nesta sessão. O `Site/Backend` tem Dockerfile pronto |
+
+Os dois ficam em `MORTOS` no script (301) **enquanto não existir destino** — não é engano, é a mesma
+armadilha de ordem: apontar o A antes de o serviço existir troca um 301 por um 404, que é pior.
+Quando subirem, viram linha em `PROMOVIDOS`.
 
 ---
 

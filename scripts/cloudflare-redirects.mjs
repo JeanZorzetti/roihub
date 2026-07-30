@@ -29,12 +29,25 @@ const VERIFY_ONLY = process.argv.includes("--verify");
 
 const h = (s) => `${s}.${ZONE}`;
 
-// Os 4 hosts a RESSUSCITAR. Redirect Rule ganha do origin: no dia em que um destes ganhar site
-// próprio, apague a linha AQUI e rode de novo ANTES de apontar o A para a Vercel — senão o site
-// fica invisível atrás de um 301 e o sintoma parece deploy quebrado.
-// Checklist completo: handoff/handoff-nxdomain-subdominios.md §"Checklist de ressurreição".
-const RESSUSCITAR = ["alibi", "pathfinder", "orion", "vertice"];
-const MORTOS = ["atma", "atmaadmin", "atmaapi", "clerk.atma", "jbadvocacia", "andorinha"];
+// PROMOVIDO = host que voltou a ter site próprio. Mover um sub de RESSUSCITAR para cá e rodar o
+// script É o passo 1+2 do checklist, na ordem certa e num ato só: o hostname sai da Regra 4 e o A
+// passa a apontar para o destino real. **DNS only, sem proxy** — a nuvem laranja impede a Vercel de
+// emitir o certificado do domínio.
+// Antes de promover, o domínio precisa estar no projeto: `vercel domains add <host> <projeto>`.
+const VERCEL = "76.76.21.21";
+const PROMOVIDOS = {
+  pathfinder: VERCEL, // projeto Vercel `pathfinder`
+  orion: VERCEL, //      projeto Vercel `orion-nova-ui`
+  vertice: VERCEL, //    projeto Vercel `vertice`
+  atma: VERCEL, //       projeto Vercel `atma` — o domínio nunca saiu de lá, só o DNS sumiu
+};
+
+// Ainda em 301: têm repo e site no ar, mas o Jean não pediu de volta (29/07).
+const RESSUSCITAR = ["alibi"];
+// `atmaadmin` e `atmaapi` NÃO são morte — o Jean quer os dois de volta (29/07), mas o admin não tem
+// projeto na Vercel e a API depende do container + MySQL no EasyPanel. Ficam em 301 até existir
+// destino; no dia em que existir, viram linha em PROMOVIDOS.
+const MORTOS = ["atmaadmin", "atmaapi", "clerk.atma", "jbadvocacia", "andorinha"];
 const COM_SUCESSOR = ["sirius", "www.sirius", "sofiaia", "www.goiania"];
 
 const HOSTS = [...COM_SUCESSOR, ...MORTOS, ...RESSUSCITAR];
@@ -95,17 +108,26 @@ async function apply() {
   const [zone] = await cf(`/zones?name=${ZONE}`);
   if (!zone) throw new Error(`zona ${ZONE} não está nesta conta Cloudflare`);
 
-  const existentes = new Set((await cf(`/zones/${zone.id}/dns_records?per_page=500`)).map((r) => r.name));
-  for (const sub of HOSTS) {
-    if (existentes.has(h(sub))) {
-      console.log(`  = ${h(sub)} já existe, não toco`);
-      continue;
+  const existentes = new Map(
+    (await cf(`/zones/${zone.id}/dns_records?per_page=500`)).map((r) => [r.name, r]),
+  );
+  const alvo = [
+    // Quem vai levar 301 fica proxied: é o proxy que faz a Redirect Rule existir.
+    ...HOSTS.map((sub) => ({ sub, content: ORIGIN, proxied: true })),
+    ...Object.entries(PROMOVIDOS).map(([sub, content]) => ({ sub, content, proxied: false })),
+  ];
+
+  for (const { sub, content, proxied } of alvo) {
+    const atual = existentes.get(h(sub));
+    const body = JSON.stringify({ type: "A", name: h(sub), content, proxied, ttl: 1 });
+    if (!atual) {
+      await cf(`/zones/${zone.id}/dns_records`, { method: "POST", body });
+      console.log(`  + ${h(sub).padEnd(30)} → ${content} ${proxied ? "(proxied)" : "(DNS only)"}`);
+    } else if (atual.content !== content || atual.proxied !== proxied) {
+      // PATCH e não delete+create: nunca existe uma janela em que o host volta a ser NXDOMAIN.
+      await cf(`/zones/${zone.id}/dns_records/${atual.id}`, { method: "PATCH", body });
+      console.log(`  ~ ${h(sub).padEnd(30)} ${atual.content} → ${content} ${proxied ? "(proxied)" : "(DNS only)"}`);
     }
-    await cf(`/zones/${zone.id}/dns_records`, {
-      method: "POST",
-      body: JSON.stringify({ type: "A", name: h(sub), content: ORIGIN, proxied: true, ttl: 1 }),
-    });
-    console.log(`  + ${h(sub)} → ${ORIGIN} (proxied)`);
   }
 
   // O PUT no entrypoint substitui o ruleset INTEIRO do phase. Lemos o que existe e só descartamos
@@ -126,7 +148,7 @@ async function resolve(fqdn) {
 }
 
 async function verify() {
-  for (const sub of [...HOSTS, ...PRODUCAO]) {
+  for (const sub of [...HOSTS, ...Object.keys(PROMOVIDOS), ...PRODUCAO]) {
     const fqdn = h(sub);
     const dns = await resolve(fqdn);
     let http = "—";
@@ -139,7 +161,11 @@ async function verify() {
       // dois redireciona; https continua quebrado sem Total TLS/ACM (pago).
       http = `ERRO ${e.cause?.code ?? e.message}`;
     }
-    const alvo = PRODUCAO.includes(sub) ? "  ← PRODUÇÃO, tem que ser 200" : "";
+    const alvo = PRODUCAO.includes(sub)
+      ? "  ← PRODUÇÃO, tem que ser 200"
+      : sub in PROMOVIDOS
+        ? "  ← PROMOVIDO, tem que ser 200 (301 = ficou preso na Regra 4)"
+        : "";
     console.log(`  ${fqdn.padEnd(30)} ${dns.padEnd(16)} ${http}${alvo}`);
   }
 }
