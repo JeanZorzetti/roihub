@@ -3,13 +3,20 @@
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
 > 1️⃣ **Se a sessão for de trabalho:**
-> [`handoff/handoff-proximo-passo-dominios.md`](handoff/handoff-proximo-passo-dominios.md) (30/07) —
-> **todo projeto com domínio próprio**. Medido: **21 dos 38 sites vivem em `*.vercel.app` /
-> `*.easypanel.host`, todos respondendo 200 e TODOS fora de qualquer propriedade do Search Console.**
-> O CannibalScan provou hoje que domínio de fornecedor = projeto invisível para a medição. 🚨 **Mas
-> "todos com domínio" NÃO é criar 21 subdomínios** — subdomínio abandonado vira NXDOMAIN e já custou
-> 76% do crawl budget do `roilabs.com.br` uma vez. Triagem primeiro: promover o que busca tráfego,
-> **arquivar** o resto.
+> [`handoff/handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md) (30/07) —
+> **2ª leva de domínios próprios, 17 projetos restantes**.
+> ✅ **1ª leva EXECUTADA e fechada:** `links.roilabs.com.br`, `sem-swarm.nimblabs.com`,
+> `seoforecaster.nimblabs.com` e `meridian.roilabs.com.br` estão no ar, com canonical próprio,
+> sitemap 200 e **sitemap aceito no GSC** (`siteFullUser`). Placar: **domínio próprio 17 → 21**,
+> **fornecedor 22 → 17**, 40 projetos no ranking, **zero hosts duplicados**.
+> ⚠️ **Decisão do Jean, já tomada e reafirmada: ZERO arquivamentos** — *"quero todos ativos, vou
+> monetizar/produtizar todos"*. Contraria a recomendação original (que previa ~8 arquivamentos); não
+> relitigar, mas o custo aceito é NXDOMAIN futuro em quem for abandonado.
+> 🎁 `housingpro.com.br` e `egtelemedicina24h.com` já são **domínios seus, pagos, parados em
+> NXDOMAIN** há ~135 dias — a promoção mais barata da lista está aí.
+> A receita está validada de ponta a ponta, com 3 correções que só apareceram rodando (o
+> `.vercel/project.json` que denuncia deploy desligado do git; `site:` do Astro não gera canonical
+> nem sitemap; barra final do prerender).
 >
 > 2️⃣ **A data, que não depende de sessão:**
 > [`handoff/handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md)
