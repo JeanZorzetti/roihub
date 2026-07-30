@@ -44,13 +44,15 @@ const PROMOVIDOS = {
   atmaapi: ORIGIN, //    app `atma` do EasyPanel (projeto doc_crm), porta 3001 — mesmo VPS
 };
 
-// Ainda em 301: têm repo e site no ar, mas o Jean não pediu de volta (29/07).
-const RESSUSCITAR = ["alibi"];
+// Vazia desde 30/07. Host que volta a ter site entra direto em PROMOVIDOS.
+const RESSUSCITAR = [];
 // `atmaapi` saiu daqui em 30/07: o container subiu no EasyPanel, então virou PROMOVIDO. DNS only
 // não é detalhe — Redirect Rule só roda em tráfego proxied; com nuvem laranja a Regra 4 continua
 // engolindo o host mesmo depois de ele sair desta lista.
 // `atmaadmin` saiu daqui em 30/07: subiu na Vercel no projeto `admin`.
-const MORTOS = ["clerk.atma", "jbadvocacia", "andorinha"];
+// `alibi` virou morto permanente em 30/07: o repo `alibi_ai` foi excluído, então não há site para
+// esperar. A expressão da Regra 4 não muda (é [...MORTOS, ...RESSUSCITAR]) — não precisa rodar.
+const MORTOS = ["clerk.atma", "jbadvocacia", "andorinha", "alibi"];
 const COM_SUCESSOR = ["sirius", "www.sirius", "sofiaia", "www.goiania"];
 
 const HOSTS = [...COM_SUCESSOR, ...MORTOS, ...RESSUSCITAR];

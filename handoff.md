@@ -1,5 +1,34 @@
 # ROI Hub — handoff
 
+> 🎯 **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md)
+> (30/07): o item de painel acabou; o que sobrou é uma data — domingo 02/08, 10:00 BRT.**
+> É o **primeiro run do robô de crawl stats** (`LastTaskResult 267011` = nunca rodou), e ele é as
+> duas coisas ao mesmo tempo: o **único instrumento de medição** do conserto do NXDOMAIN — existe
+> **um só** export do `roilabs.com.br` no repo, o de 25/07, que é o baseline de *antes* — e **código
+> que nunca executou de ponta a ponta** (Chrome + 10 exports + `analyze.py` + `narrate.py` +
+> `git push`, sozinho).
+> 🚨 **O sinal certo é `Crawl requests` dos hosts mortos CAINDO, não o OK%** — janela de 90 dias.
+>
+> ✅ **NXDOMAIN dos 14 subdomínios: APLICADO e verificado.** Medido em 30/07 com
+> `cloudflare-redirects.mjs --verify`: `pathfinder`/`orion`/`vertice`/`atma` em **200**, `atmaadmin`
+> 307→`/admin`, `atmaapi` **200**, `sirius`/`sofiaia` em 301 com path preservado, e
+> **`goiania`/`tapepro` intactos em 200** — o teste de segurança passou. Só `www.sirius` e
+> `www.goiania` ficaram em `http://` (Universal SSL cobre 1 label; curar exige ACM pago — **decidido
+> não fazer**). Receita e execução em
+> [`handoff/handoff-nxdomain-subdominios.md`](handoff/handoff-nxdomain-subdominios.md).
+>
+> ⛔ **`alibi_ai` excluído (Jean, 30/07)** — era o último host em `RESSUSCITAR`, agora é morto
+> permanente (`MORTOS` no script). **Mudança semântica, não operacional:** a Regra 4 é montada com
+> `[...MORTOS, ...RESSUSCITAR]`, a expressão publicada é idêntica e o host já responde 301.
+> **Não rode o script por causa disso.**
+>
+> ✅ **41 repos ativos, 2 sem `homepage`** (`roihub`, `repo-de-teste`) — e os 2 são decisão fechada.
+> A frente "repos sem site" está **encerrada**.
+>
+> **O que sobra não é código do roihub:** Compass (Etapas 2 e 3 — GitHub OAuth, Resend, Stripe),
+> 2 cards da agenda vencidos (`sirius` gate 28/07, `nimblabs` ~20/07) + `tapepro` sem ação, e
+> domínio próprio dos sites novos. Backlog de código real está **nos projetos rankeados**.
+
 > ✅ **Compass NO AR** em `https://compass.polarisia.com.br` (29/07, 14h) — banco ligado, DNS
 > corrigido, `/pricing` 200 e o ápice do Polaris intacto. O item "compass" **sai da fila de ops**.
 >
@@ -105,7 +134,9 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md) | **comece por aqui**: briefing curto da próxima sessão — os 3 itens de painel/DNS na ordem, o que foi encerrado, e como medir DNS sem errar | 🟢 vivo (29/07) — frente ativa |
+| [`handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md) | **comece por aqui**: o próximo passo é uma data (02/08, 1º run do robô de crawl), como medir o NXDOMAIN sem cair na janela de 90 dias, e o que sobra fora do roihub | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-nxdomain-subdominios.md`](handoff/handoff-nxdomain-subdominios.md) | os 14 subdomínios em NXDOMAIN do `roilabs.com.br`: receita, script e as 6 promoções | ✅ executado 29–30/07 — falta só medir com export novo |
+| [`handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md) | briefing anterior: os 3 itens de painel/DNS, o que foi encerrado, e como medir DNS sem errar | ⚠️ superado 30/07 — os 3 itens saíram; guarda as armadilhas de DNS |
 | [`handoff-dns-e-paineis.md`](handoff/handoff-dns-e-paineis.md) | a medição detalhada por trás do briefing acima: IPs, NS, fingerprint do zumbi do splitjud, os 12 repos sem `homepage` | 🟢 vivo (29/07) — referência do item ativo |
 | [`handoff-compass-e-repos-sem-site.md`](handoff/handoff-compass-e-repos-sem-site.md) | a medição que gerou a frente acima: `compass`, repos sem `homepage`, os 2 sites mortos em `187.127.2.204` | ✅ executado 29/07 — 9 `homepage` preenchidas |
 | [`handoff-seis-sites.md`](handoff/handoff-seis-sites.md) | as 6 landing pages novas (lib/CLI/API que viraram site) e o padrão que as gerou | ✅ executado 29/07 — 6/6 no ar |
