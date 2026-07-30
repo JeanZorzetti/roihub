@@ -148,7 +148,12 @@ que consumiu 76% do crawl budget do `roilabs.com.br`
 | `cardio-risk-insight-hub` | `cardio-risk-insight-hub.vercel.app` | decidir |
 | `cyberspace` | `cyberspace-sigma.vercel.app` | decidir |
 
-### 🎁 Dois domínios pagos já na conta, parados em NXDOMAIN
+### 🎁 Dois domínios pagos já na conta ~~parados em NXDOMAIN~~
+
+> 🛑 **SUPERADO — as duas premissas caíram.** `housingpro.com.br` **não** estava em NXDOMAIN (já
+> resolvia e servia o projeto), e no fim da sessão **os dois repos foram apagados** pelo Jean. Os
+> domínios seguem pagos e sem produto: são custo recorrente, não oportunidade. Ver a seção de
+> exclusões no fim do documento. Mantido aqui só para explicar por que a leva foi planejada assim.
 
 `vercel domains ls` mostra dois domínios **próprios, comprados, sem apontar para nada**:
 
@@ -206,7 +211,7 @@ em `your-token-here`. Se forem preenchidos, use já o token novo.
 
 ---
 
-## 🔄 Sessão 30/07 (2ª) — housingpro fechado, resto travado no token
+## 🔄 Sessão 30/07 (2ª) — a leva inteira saiu; housingpro depois foi apagado
 
 ### `housingpro` promovido — mas a premissa deste handoff estava errada
 
@@ -224,17 +229,13 @@ O que faltava e foi feito:
 - Contagem: **22 domínio próprio / 16 fornecedor** (o 17º é `EGTelemedicina`, repo apagado que ainda
   aparece na listagem). Zero hosts duplicados, `node --test test/projects.test.mjs` 7/7.
 
-⛔ **Sitemap NÃO submetido.** `sc-domain:housingpro.com.br` não existe no Search Console — a service
-account só enxerga 12 propriedades e nenhuma é essa. **Ação do Jean, na UI:** criar a propriedade de
-domínio, verificar por TXT no Registro.br (a zona é `d.sec.dns.br`/`e.sec.dns.br`, DNS do próprio
-Registro.br — não é Cloudflare) e adicionar a service account como proprietária. Só depois:
+⛔ **Sitemap NÃO submetido**, e agora não será: `sc-domain:housingpro.com.br` não existia no Search
+Console, e no fim da sessão **o Jean apagou o repo `housingpro`**. Ficou sem efeito — inclusive o
+`robots.ts` commitado acima. Ver a seção de exclusões no fim do documento.
 
-```bash
-node --env-file=.env scripts/submit-sitemap.mjs https://www.housingpro.com.br/sitemap.xml
-```
-
-Detalhe do `--env-file=.env`: o `GOOGLE_SERVICE_ACCOUNT_JSON` é um JSON de uma linha e o Node lê sem
-dotenv. Não precisa exportar nada à mão.
+Detalhe que **continua valendo** para qualquer submissão futura: `node --env-file=.env
+scripts/submit-sitemap.mjs …` — o `GOOGLE_SERVICE_ACCOUNT_JSON` é um JSON de uma linha e o Node lê
+direto, sem dotenv e sem exportar nada à mão.
 
 ### ✅ 2ª LEVA EXECUTADA — a frente fechou
 
@@ -242,13 +243,13 @@ Token do Cloudflare recebido no fim da sessão e **os 15 projetos restantes fora
 
 | | 30/07 manhã | 30/07 fim (1ª leva) | **agora** |
 |---|---|---|---|
-| domínio próprio | 17 | 21 | **37** |
-| domínio de fornecedor | 22 | 17 | **2** |
+| domínio próprio | 17 | 21 | **35** |
+| domínio de fornecedor | 22 | 17 | **1** |
 | hosts duplicados | — | zero | **zero** |
 
-Os 2 que sobram não são pendência: `eg-telemedicina.vercel.app` (repo apagado, some da listagem
-quando o cache do GitHub virar) e `portfolio` (**exceção pedida pelo Jean** — vai comprar domínio
-próprio para o CV depois).
+**Todo projeto vivo está em domínio próprio.** O único em host de fornecedor é o `portfolio`, que é
+**exceção pedida pelo Jean** (vai comprar domínio para o CV depois) — não pendência. `housingpro` e
+`EGTelemedicina` saíram da conta porque os repos foram apagados; ver a seção de exclusões abaixo.
 
 **15/15 verdes** na verificação final — `/` em 200, `/sitemap.xml` servindo XML de verdade e
 canonical apontando para o próprio host. Todos os 15 sitemaps aceitos no GSC.
@@ -343,18 +344,25 @@ não só no layout.**
 - **`vertex-landing-craft` ficou com o nome do repo**: `vertice.roilabs.com.br` já é do repo
   `vertice`.
 
-### ⚠️ Pendências reais que sobraram
+### ⚠️ Pendência real que sobrou — uma só
 
-1. **`tape-vision-ai-92` é um repo VAZIO** (`git log` → *branch appears to be broken*). O host novo
-   responde 200 servindo um deploy antigo, mas **não há código para repontar**: canonical é `/`,
-   `/sitemap.xml` e `/robots.txt` devolvem HTML de fallback. **O sitemap dele NÃO foi submetido** ao
-   GSC de propósito — seria rejeitado. Decidir se o fonte volta ou se o projeto sai do hub.
-2. **`housingpro.com.br` ainda não tem propriedade no Search Console** — ver a seção acima; é a única
-   ação da leva que depende da UI.
-3. **`egtelemedicina24h.com` → 301 não foi feito.** A zona está no Cloudflare
-   (`shubhi`/`arch.ns.cloudflare.com`) mas **fora do alcance do token desta sessão** — `zones?name=`
-   devolve 0 sem erro, e a conta listada só tem `roilabs.com.br`. Precisa de token com acesso a essa
-   zona (ou outra conta Cloudflare).
+**`tape-vision-ai-92` é um repo VAZIO** (`git log` → *branch appears to be broken*). O host novo
+responde 200 servindo um deploy antigo, mas **não há código para repontar**: canonical é `/`,
+`/sitemap.xml` e `/robots.txt` devolvem HTML de fallback. **O sitemap dele NÃO foi submetido** ao GSC
+de propósito — seria rejeitado. Decidir se o fonte volta ou se o projeto sai do hub.
+
+### 🗑️ Fechadas por exclusão de repo (30/07, decisão do Jean)
+
+- **`housingpro` — repo APAGADO.** Some do hub sozinho (a lista vem do GitHub). Cai junto a pendência
+  da propriedade no Search Console: não há mais o que medir. ⚠️ Mas **`www.housingpro.com.br` segue
+  em 200** — projeto vivo na Vercel + domínio pago (135 dias), agora **sem repo**. Mesmo formato da
+  EG. Se não for reusado, é custo recorrente: cancelar o domínio e apagar o projeto na Vercel.
+- **`egtelemedicina24h.com` → 301: CANCELADO.** O Jean mandou esquecer; o repo já estava apagado. Não
+  reabrir — nem o redirect, nem o domínio.
+
+⚠️ `eg-telemedicina.vercel.app` **ainda aparece** em `gh api user/repos` (cache da listagem) com o
+repo em 404. Ao recontar, confie no GET direto — senão a conta de "domínio de fornecedor" sai com 1 a
+mais do que a realidade.
 
 ### 🚧 O bloqueador que existia: o token do Cloudflare
 
@@ -377,8 +385,9 @@ export CLOUDFLARE_API_TOKEN=...   # zona roilabs.com.br = e55dc82f456e8af7ac7641
 2. **`portfolio` é exceção — não promover.** Jean vai comprar um domínio próprio para o CV pessoal
    depois. Confirmado que o repo é o CV ("Jean Zorzetti — Full-Stack Engineer, AI-augmented", Astro
    em `C:\dev\portfolio`), distinto do `nimblabs.com`. Segue no host aleatório até o domínio existir.
-3. **`egtelemedicina24h.com` → 301 para `roilabs.com.br`.** Domínio pago aproveitado como redirect em
-   vez de cancelado. Hoje em 404.
+3. ~~**`egtelemedicina24h.com` → 301 para `roilabs.com.br`.**~~ **REVOGADA no fim da sessão** — "esqueça
+   a EG, já exclui o repo dela". Não implementar o redirect.
+4. **`housingpro`: repo apagado** no fim da sessão, depois de promovido. Sai do hub sozinho.
 
 ### 🔎 Recon já feito — os 15 repos da fila
 
