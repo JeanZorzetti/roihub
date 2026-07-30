@@ -9,8 +9,9 @@ O que sobrou é **uma data**: **domingo 02/08, 10:00 BRT.**
 > **Atualizado ainda em 30/07:** os três cards podres da agenda foram **medidos e reescritos** — ver
 > [a seção 2](#2--os-três-cards-podres-foram-medidos-e-reescritos-3007). O saldo: o gate branded do
 > Sirius **passou** (pos 1,0 no BR; a média global era ruído de Bangladesh), o `repo` do `tapepro`
-> apontava para o **monorepo errado**, e o CannibalScan está invisível porque o **sitemap nunca foi
-> submetido** — não por falta de Request Indexing. **O próximo passo segue sendo a data.**
+> apontava para o **monorepo errado**, e o CannibalScan foi **destravado de ponta a ponta** — o
+> problema não era Request Indexing nem sitemap, era **não ter domínio próprio**. O `alibi_ai` foi
+> apagado: **40 repos ativos, 39 projetos**. **O próximo passo segue sendo a data.**
 
 Substitui [`handoff-proximo-passo-30-07.md`](handoff-proximo-passo-30-07.md) (29/07).
 Índice: [`../handoff.md`](../handoff.md).
@@ -173,14 +174,29 @@ cliques): `agaas`, 81 imp em **pos 8,1 com zero clique**, é o clique mais barat
 **`nimblabs` — as duas pontas do card já estavam fechadas, e apareceu uma terceira que não estava.**
 Indexação do CK: `verdict=PASS`, "Submitted and indexed", crawl 11/07 — fechado. Backlink npm: o
 README publicado **já linka** `context.nimblabs.com` (sobra só `homepage`/`repository` ausentes no
-`package.json` do 1.2.0 → patch 1.2.1). 🚨 **O achado novo, já corrigido uma vez:** a primeira leitura foi "o
-sitemap do CannibalScan nunca foi submetido" — a API de sitemaps mostra 4 na propriedade
-`nimblabs.com` e nenhum é o dele. **Mas a causa é anterior a isso:** `cannibalscan.nimblabs.com`
-**não existe** (`nslookup` → *Non-existent domain*). O site vive em `cannibalscan.vercel.app`, e o
-sitemap dele existe (200, **uma URL só**) mas **não pode ser submetido** na propriedade
-`sc-domain:nimblabs.com`, porque `vercel.app` é outro domínio. Ordem obrigatória: **DNS → `homepage`
-do repo no mesmo ato → sitemap**. O "domínio próprio", que a seção 3 marcava como opcional e sem
-prazo, **é pré-requisito da indexação**.
+`package.json` do 1.2.0 → patch 1.2.1). ✅ **O achado novo virou entrega no mesmo dia.** A primeira leitura foi "o
+sitemap do CannibalScan nunca foi submetido"; a causa era **anterior**: `cannibalscan.nimblabs.com`
+não existia, o site vivia em `cannibalscan.vercel.app` e por isso ficava **fora** da propriedade
+`sc-domain:nimblabs.com` — não havia onde submeter sitemap nenhum. O "domínio próprio" que a seção 3
+marcava como opcional e sem prazo era, na verdade, **pré-requisito da indexação**. Executado em 30/07,
+na ordem obrigatória:
+
+1. **Jean criou o subdomínio** — `cannibalscan.nimblabs.com` responde 200.
+2. **O site ainda se declarava `.vercel.app`** em 12 lugares (canonical, `og:url`, os 4 `@id` do
+   `@graph`, o `<loc>` do sitemap, a linha `Sitemap:` do robots). Trocados no repo `cannibal_scan`
+   (`bb13bd4`). Submeter antes disso teria entregado ao Google um sitemap apontando para fora da
+   propriedade.
+3. 🚨 **O projeto da Vercel NÃO está ligado ao git** — o último deploy era por CLI, do dia anterior,
+   e o push não publicou nada. Foi preciso `vercel link --project cannibalscan` + `vercel --prod` de
+   dentro de `site/`. **Quem mexer nesse repo de novo precisa saber disso**: commitar ≠ publicar.
+4. **`homepage` do repo trocada no mesmo ato** — o hub segue com **39 projetos** e uma única entrada
+   `cannibal_scan`, sem duplicata ([[roihub_github_sourced_projects]]).
+5. **Sitemap submetido pela API** (`PUT .../sitemaps/{feed}`): a service account é `siteFullUser`, então
+   basta trocar o escopo `webmasters.readonly` por `webmasters` — **não precisa da UI**. Propriedade
+   agora com 5 sitemaps, o do CannibalScan `submitted=2026-07-30`, 0 erro, `downloaded` ainda vazio.
+
+⏭️ Ler de novo em **~06/08**: saiu de `URL is unknown to Google`? E não confundir com vitória — o
+sitemap tem **uma URL só** (a landing). Indexar a home é o começo, não o fim.
 
 **`tapepro` — o card não estava só vazio, estava apontando pro repo errado.** `"repo": "roilabs"`
 estava errado desde a criação: o site é `github.com/JeanZorzetti/tape`. Corrigido no
@@ -199,11 +215,10 @@ final, mas os dois formatos devolvem **200 e o mesmo canonical** — é consolid
 repo mudando junto** — a chave de um projeto no hub é a URL, não o repo: trocar domínio sem trocar a
 `homepage` **duplica** o projeto no ranking em vez de mover o existente.
 
-🚨 **Reclassificado em 30/07: o domínio do CannibalScan NÃO é opcional.** `cannibalscan.nimblabs.com`
-não resolve, o site está em `cannibalscan.vercel.app` e por isso fica **fora da propriedade GSC**
-`sc-domain:nimblabs.com` — não há onde submeter o sitemap dele (que existe, com uma URL só). Sem o
-subdomínio, o projeto continua invisível para o Google independentemente de quantos Request Indexing
-forem enviados. Subiu para a ação do card `nimblabs`. O `links.roilabs.com.br` segue opcional.
+✅ **O CannibalScan saiu daqui em 30/07** — domínio criado, site repontado, `homepage` trocada e
+sitemap submetido; detalhe na [seção 2](#2--os-três-cards-podres-foram-medidos-e-reescritos-3007).
+Ele nunca foi opcional: sem subdomínio próprio o projeto ficava fora da propriedade do GSC.
+**O `links.roilabs.com.br` segue opcional e sem prazo.**
 
 ---
 
