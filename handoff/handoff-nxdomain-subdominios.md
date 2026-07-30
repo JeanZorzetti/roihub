@@ -116,7 +116,7 @@ O Jean quer **app + admin + api** (dispensou o `clerk`). Só o app voltou:
 | host | estado | o que falta |
 |---|---|---|
 | `atma` | ✅ 200 | — |
-| `atmaadmin` | 🔴 301 para o apex | **handoff próprio: `ROI Labs/Atma/Site/handoff.md`.** Não existe projeto na Vercel. O admin é `Atma/Site/admin`; precisa de projeto novo + as env (`NEXT_PUBLIC_API_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET` — ver `Site/DEPLOY_PRODUCAO.md`). ⚠️ o repo está no OneDrive, e `vercel --prod` quebra lá ([[vercel_deploy_fails_under_onedrive]]) — clonar fora antes |
+| `atmaadmin` | 🔴 301 para o apex | **handoff próprio: `ROI Labs/Atma/Site/handoff.md`.** O projeto Vercel existe e se chama **`admin`** (não aparece procurando por "atma"), último deploy 71d. O bloqueio não é o deploy: o código de hoje usa Prisma/MySQL e **não existe `DATABASE_URL` de produção** em lugar nenhum. ⚠️ o repo está no OneDrive, e `vercel --prod` quebra lá ([[vercel_deploy_fails_under_onedrive]]) — clonar fora antes |
 | `atmaapi` | 🔴 301 para o apex | **container + MySQL no EasyPanel** (`DB_HOST=atma-mysql`, `atma_aligner`). Painel de terceiro, sem credencial nesta sessão. O `Site/Backend` tem Dockerfile pronto |
 
 Os dois ficam em `MORTOS` no script (301) **enquanto não existir destino** — não é engano, é a mesma
