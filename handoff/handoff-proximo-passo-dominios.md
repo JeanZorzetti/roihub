@@ -222,6 +222,76 @@ o Jean pode ter arquivado ou apagado coisas no meio ([[roihub_github_sourced_pro
 
 ---
 
+## 📌 Estado em 30/07 (sessão de execução) — PARADO NO DNS
+
+Medição refeita ao vivo: **39 repos com `homepage`** (não 38), **17 domínio próprio**, **22 fornecedor**
+(não 21), **22/22 respondem 200**. O repo a mais é `EGTelemedicina` — o Jean informou que já apagou.
+O `portfolio` mudou para URL de deploy aleatória (`portfolio-three-mu-lfixsylpsz.vercel.app`).
+
+### Triagem — decidida pelo Jean, contraria a recomendação do handoff
+
+**Zero arquivamentos.** "Quero todos ativos, vou monetizar/produtizar todos." Ou seja, os grupos B e
+os indefinidos **não** viram arquivamento; todos terão domínio eventualmente. Aprovados para a 1ª leva:
+
+| repo | alvo | DNS em |
+|---|---|---|
+| `roi-labs-links` | `links.roilabs.com.br` | Cloudflare |
+| `sem-swarm` | `sem-swarm.nimblabs.com` | Hostinger |
+| `seo-forecaster` | `seoforecaster.nimblabs.com` | Hostinger |
+| `meridian` | `meridian.roilabs.com.br` | Cloudflare |
+
+### O que já está feito (passo 2 completo, **não pushado**)
+
+Os 4 repos estão em `C:\dev` (fora do OneDrive → `vercel --prod` funciona). Alterações locais:
+
+- `roi-labs-links`: `og:url` repontada + `canonical` novo + `sitemap.xml` + `robots.txt`
+- `sem-swarm`: `canonical` corrigido + `og:url` + `site/sitemap.xml` + `site/robots.txt`
+- `seo-forecaster`: `canonical` + `og:url` (não tinha nenhum) + `site/sitemap.xml` + `site/robots.txt`
+- `meridian`: `site:` no `astro.config.mjs` + host novo no `allowedDomains`
+
+**Não pushado de propósito:** com o DNS ainda inexistente, publicar o canonical novo apontaria para
+NXDOMAIN — pior que o estado atual. Push só depois do passo 1.
+
+### 🚨 Dois achados que a receita não cobria
+
+1. **`sem-swarm.vercel.app` já servia `canonical` para `sem-swarm.roilabs.com.br`, que é NXDOMAIN.**
+   Não era só "fora da medição": o site declarava ao Google que sua versão oficial é um host morto.
+   Auto-desindexação ativa. Vale varrer os outros 18 antes de promovê-los — o canonical órfão pode
+   estar em mais de um.
+2. **O `allowedDomains` do Astro no `meridian` é assado no build** (o comentário no arquivo já avisa).
+   Apontar o domínio novo sem adicioná-lo lá mata **todo POST** — login, `/admin`, `/api/*` — com o
+   site respondendo 200. Sintoma idêntico ao do Clerk na Atma ([[clerk_subdomain_killed_by_nxdomain_cleanup]]).
+
+### ⛔ O bloqueio: não há credencial de DNS na máquina
+
+`env`, `~/.wrangler`, `~/.cloudflared` e todos os `.env` do workspace: **nenhum token de Cloudflare ou
+Hostinger** (só um `.env.example` em `open-seo`, sem valor). `vercel domains ls` confirma os 5 domínios
+como `Nameservers: Third Party` — a Vercel não gere o DNS. **Passo 1 é manual pelo Jean, ou ele fornece
+um token de Cloudflare** (que cobre 2 dos 4; `nimblabs.com` é Hostinger de qualquer jeito).
+
+Registros a criar — todos de **1 label**, cobertos pelo Universal SSL:
+
+```
+Cloudflare / roilabs.com.br    links        CNAME  cname.vercel-dns.com   DNS only (cinza)
+Cloudflare / roilabs.com.br    meridian     CNAME  <host da EasyPanel>    DNS only (cinza)
+Hostinger  / nimblabs.com      sem-swarm    CNAME  cname.vercel-dns.com
+Hostinger  / nimblabs.com      seoforecaster CNAME cname.vercel-dns.com
+```
+
+### Suspeita a confirmar no passo 3
+
+Os 3 projetos da Vercel têm `.vercel/project.json` local (`vercel link` rodado via CLI) — **mesmo
+padrão do CannibalScan, que não estava ligado ao git**. Tratar o deploy como manual: `vercel --prod`
+de dentro da pasta, e conferir a idade antes de comemorar.
+
+### Achado lateral: 2 domínios pagos em NXDOMAIN
+
+`vercel domains ls` mostra `housingpro.com.br` (135d) e `egtelemedicina24h.com` (134d) na conta — ambos
+**NXDOMAIN**, sem apontar para nada. O `housingpro` roda hoje em `housingpro-tau.vercel.app` tendo o
+domínio próprio parado há 4 meses. Promoção barata quando a frente chegar nele.
+
+---
+
 ## Contexto herdado
 
 - Estado atual e a data de 02/08: [`handoff-proximo-passo-02-08.md`](handoff-proximo-passo-02-08.md)
