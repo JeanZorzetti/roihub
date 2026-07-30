@@ -206,6 +206,85 @@ em `your-token-here`. Se forem preenchidos, use já o token novo.
 
 ---
 
+## 🔄 Sessão 30/07 (2ª) — housingpro fechado, resto travado no token
+
+### `housingpro` promovido — mas a premissa deste handoff estava errada
+
+🚨 **`housingpro.com.br` NÃO estava em NXDOMAIN.** Já resolvia para `216.198.79.1` (o A record novo
+da Vercel, não o `76.76.21.21` da receita), apex em **307 → `www`**, `www` em **200**, servindo o
+projeto certo, canonical e sitemap já corretos. A frase "dois domínios pagos parados em NXDOMAIN"
+era estado velho. Confirma [[roihub_agenda_task_premises_unverified]]: **medir antes de executar** —
+a promoção "mais barata da lista" já estava 80% pronta.
+
+O que faltava e foi feito:
+
+- `src/app/robots.ts` (rota nativa do Next, não arquivo em `public/`) — commit `05cf658`, robots.txt
+  em 200 apontando o sitemap. ⏱️ Levou ~1 min de deploy; as 3 primeiras leituras deram 404.
+- `homepage` do repo → `https://www.housingpro.com.br` via `gh api -X PATCH`.
+- Contagem: **22 domínio próprio / 16 fornecedor** (o 17º é `EGTelemedicina`, repo apagado que ainda
+  aparece na listagem). Zero hosts duplicados, `node --test test/projects.test.mjs` 7/7.
+
+⛔ **Sitemap NÃO submetido.** `sc-domain:housingpro.com.br` não existe no Search Console — a service
+account só enxerga 12 propriedades e nenhuma é essa. **Ação do Jean, na UI:** criar a propriedade de
+domínio, verificar por TXT no Registro.br (a zona é `d.sec.dns.br`/`e.sec.dns.br`, DNS do próprio
+Registro.br — não é Cloudflare) e adicionar a service account como proprietária. Só depois:
+
+```bash
+node --env-file=.env scripts/submit-sitemap.mjs https://www.housingpro.com.br/sitemap.xml
+```
+
+Detalhe do `--env-file=.env`: o `GOOGLE_SERVICE_ACCOUNT_JSON` é um JSON de uma linha e o Node lê sem
+dotenv. Não precisa exportar nada à mão.
+
+### 🚧 Bloqueador único dos 16 restantes: o token do Cloudflare
+
+O passo 1 (DNS) é o primeiro da receita e **não há token de Cloudflare nem de Hostinger em nenhum
+`.env` da máquina** — varredura feita em `ROI Labs/` e `C:\dev`. O `.env` do roihub tem só
+`DATABASE_URL` e `GOOGLE_SERVICE_ACCOUNT_JSON`. Os tokens de 30/07 existiram só no chat.
+
+**Para retomar, exportar antes de qualquer coisa:**
+
+```bash
+export CLOUDFLARE_API_TOKEN=...   # zona roilabs.com.br = e55dc82f456e8af7ac764133b4442f19
+```
+
+(A Hostinger só é necessária se algum projeto for para `nimblabs.com` — pela decisão abaixo, nenhum vai.)
+
+### 📌 Decisões do Jean nesta sessão
+
+1. **Guarda-chuva em lote: `<repo>.roilabs.com.br` para os 12 "decidir".** Uma zona só, um token só.
+   Mantida a exceção do handoff: `aesthetic-perfection-page` → `estetiacrm.com.br` (2ª demo Lumina).
+2. **`portfolio` é exceção — não promover.** Jean vai comprar um domínio próprio para o CV pessoal
+   depois. Confirmado que o repo é o CV ("Jean Zorzetti — Full-Stack Engineer, AI-augmented", Astro
+   em `C:\dev\portfolio`), distinto do `nimblabs.com`. Segue no host aleatório até o domínio existir.
+3. **`egtelemedicina24h.com` → 301 para `roilabs.com.br`.** Domínio pago aproveitado como redirect em
+   vez de cancelado. Hoje em 404.
+
+### 🔎 Recon já feito — os 15 repos da fila
+
+**Todos os 6 clonados localmente têm `.vercel/project.json`.** Ou seja, a correção 1 vale para
+**100%** da leva: nenhum publica por `git push`, todos exigem `vercel deploy --prod` rodado de dentro
+da pasta linkada. Planejar deploy manual desde o começo, não descobrir no passo 4.
+
+| repo | clone | root do deploy |
+|---|---|---|
+| `claude-loop-runner` | `C:\dev\claude-loop-runner` | `site/` |
+| `housing-pro-api` | `C:\dev\housing-pro-api` | `site/` |
+| `whatsmeow-gateway` | `C:\dev\whatsmeow-gateway` | `site/` |
+| `aprovai` | `C:\dev\aprovai` | `site/` |
+| `moderador` | `C:\dev\moderador` | `site/` |
+| `aesthetic-perfection-page` | `C:\dev\aesthetic-perfection-page` | raiz |
+
+Os 9 restantes (`reforma-maestro`, `potencial-arquitetado`, `cardioqwen3code`, `vertex-landing-craft`,
+`synth-bot-buddy`, `matchfios-textile-connector`, `tape-vision-ai-92`, `cardio-risk-insight-hub`,
+`cyberspace`) **não têm clone local** — `gh repo clone` **em `C:\dev`**, nunca no OneDrive
+([[vercel_deploy_fails_under_onedrive]]).
+
+⚠️ Achado solto: `housing-pro-next` estava com `next.config.ts` **deletado** na working tree, sem
+commit. Restaurado com `git checkout --`. Se reaparecer, alguém está apagando de propósito.
+
+---
+
 ## Contexto herdado
 
 - A 1ª leva, medição e receita original: [`handoff-proximo-passo-dominios.md`](handoff-proximo-passo-dominios.md)
