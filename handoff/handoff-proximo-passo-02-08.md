@@ -119,11 +119,9 @@ mesmo commit deste handoff.
 > aparecer no ranking do hub, a exclusão não saiu; a lista vem do GitHub ao vivo, e o hub se corrige
 > sozinho quando o repo for embora. **41 repos ativos → 40** quando isso acontecer.
 >
-> 🔁 **Remedido horas depois, ainda em 30/07: continua 41.** `gh repo list --no-archived` traz 41
-> repos, 39 com `homepage`, e `alibi_ai` está entre eles (`archived: false`, homepage
-> `alibi-ai.vercel.app`) — o hub roda o `mergeProjects` e devolve **40 projetos** (39 com site, menos
-> o `roilabs` que goiania e institucional dividem). **A exclusão do repo ainda não saiu**; nada a
-> fazer no código, só apagar/arquivar o repo.
+> ✅ **FECHADO em 30/07: o Jean apagou o repo.** `gh api repos/JeanZorzetti/alibi_ai` devolve **404**.
+> O hub se corrige sozinho no próximo carregamento — **40 repos ativos, 39 projetos no ranking**.
+> Nada a fazer no código.
 
 ### Atma voltou inteiro — e agora tem handoff próprio
 
@@ -175,10 +173,14 @@ cliques): `agaas`, 81 imp em **pos 8,1 com zero clique**, é o clique mais barat
 **`nimblabs` — as duas pontas do card já estavam fechadas, e apareceu uma terceira que não estava.**
 Indexação do CK: `verdict=PASS`, "Submitted and indexed", crawl 11/07 — fechado. Backlink npm: o
 README publicado **já linka** `context.nimblabs.com` (sobra só `homepage`/`repository` ausentes no
-`package.json` do 1.2.0 → patch 1.2.1). 🚨 **O achado novo:** a API de sitemaps mostra 4 sitemaps na
-propriedade `nimblabs.com` — `nimblabs.com`, `reviewshield`, `aftercare`, `context` — e **nenhum é o
-CannibalScan**, que segue `URL is unknown to Google`. O "CannibalScan não indexado" nunca foi caso de
-Request Indexing manual: **o sitemap jamais foi submetido.** Virou a ação do card.
+`package.json` do 1.2.0 → patch 1.2.1). 🚨 **O achado novo, já corrigido uma vez:** a primeira leitura foi "o
+sitemap do CannibalScan nunca foi submetido" — a API de sitemaps mostra 4 na propriedade
+`nimblabs.com` e nenhum é o dele. **Mas a causa é anterior a isso:** `cannibalscan.nimblabs.com`
+**não existe** (`nslookup` → *Non-existent domain*). O site vive em `cannibalscan.vercel.app`, e o
+sitemap dele existe (200, **uma URL só**) mas **não pode ser submetido** na propriedade
+`sc-domain:nimblabs.com`, porque `vercel.app` é outro domínio. Ordem obrigatória: **DNS → `homepage`
+do repo no mesmo ato → sitemap**. O "domínio próprio", que a seção 3 marcava como opcional e sem
+prazo, **é pré-requisito da indexação**.
 
 **`tapepro` — o card não estava só vazio, estava apontando pro repo errado.** `"repo": "roilabs"`
 estava errado desde a criação: o site é `github.com/JeanZorzetti/tape`. Corrigido no
@@ -197,9 +199,11 @@ final, mas os dois formatos devolvem **200 e o mesmo canonical** — é consolid
 repo mudando junto** — a chave de um projeto no hub é a URL, não o repo: trocar domínio sem trocar a
 `homepage` **duplica** o projeto no ranking em vez de mover o existente.
 
-⚠️ O CannibalScan tem uma parte que **não** é opcional e subiu para o card do `nimblabs`: **submeter o
-sitemap no GSC**. Medido em 30/07 — nunca foi submetido, e a URL responde `URL is unknown to Google`.
-São 2 minutos no GSC UI e valem mais que qualquer Request Indexing avulso.
+🚨 **Reclassificado em 30/07: o domínio do CannibalScan NÃO é opcional.** `cannibalscan.nimblabs.com`
+não resolve, o site está em `cannibalscan.vercel.app` e por isso fica **fora da propriedade GSC**
+`sc-domain:nimblabs.com` — não há onde submeter o sitemap dele (que existe, com uma URL só). Sem o
+subdomínio, o projeto continua invisível para o Google independentemente de quantos Request Indexing
+forem enviados. Subiu para a ação do card `nimblabs`. O `links.roilabs.com.br` segue opcional.
 
 ---
 
