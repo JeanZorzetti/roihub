@@ -24,6 +24,11 @@
 > tem a env **e** alcança `sofia_ollama`, 0,9 s por busca. Fase 3 fechada sem pendência.
 > ▶️ Para reconferir: **BUSCAR alguma coisa**, não só abrir — sem `?q=` o rodapé não chama o
 > Ollama. A aba pede basic auth (`HUB_USER`/`HUB_PASS` só na EasyPanel, pedir ao Jean).
+> ✅ **RERANKER NO AR (31/07 19h) — recall@10 82,4% → 88,0%, @3 65,4% → 70,5%.** claude-cli
+> sobre o top-50, **1 chamada por busca** (mesmo pool do autopublishing), busca de 0,3 s → 6,5 s,
+> `?rerank=0` no rodapé desliga. **A lição que custou duas medições: o ranking do reranker é
+> para FUNDIR (`rrf c=10`), não para obedecer** — obedecido ele derruba o @1 de 32,0% para
+> 19,5%, porque acerta o conjunto e erra a ordem. Detalhes e a tabela das 5 políticas no handoff.
 > ⚠️ **O piso `--min 0.83` foi aposentado (31/07 18h)**: os **mesmos 259 docs** da fase 3 rendem
 > **82,4%** hoje, não 83,0%, **sem mudança de código** — handoff e memória são reescritos toda
 > sessão e isso mexe em vetor e IDF. (Testada e **descartada por medição** a hipótese óbvia de

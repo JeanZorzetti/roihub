@@ -8,9 +8,10 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { carregarCorpus, MEMORIA_PADRAO } from "../lib/corpus.mjs";
-import { indexar, buscar } from "../lib/bm25.mjs";
+import { indexar, buscar, tokenizar } from "../lib/bm25.mjs";
 import { indexarDenso, buscarDenso, MODELO } from "../lib/denso.mjs";
 import { rrf } from "../lib/busca.mjs";
+import { rerank, trechoRelevante, MODELO_RERANK } from "../lib/reranker.mjs";
 
 const KS = [1, 3, 5, 10, 20, 50];
 const K_MAX = Math.max(...KS);
@@ -22,8 +23,12 @@ const opt = (nome, padrao) => {
 const minArg = opt("--min", null);
 const piores = Number(opt("--piores", 10));
 const quais = opt("--motor", "todos");
+// O rerank gasta 1 chamada de claude-cli por pergunta: 78 perguntas são ~15 min de pool. Poder
+// medir 5 antes de gastar as 78 é a diferença entre iterar e esperar.
+const limite = Number(opt("--limite", 0));
 
-const dourado = JSON.parse(readFileSync(fileURLToPath(new URL("../data/dourado.json", import.meta.url)), "utf8"));
+const dourado = JSON.parse(readFileSync(fileURLToPath(new URL("../data/dourado.json", import.meta.url)), "utf8"))
+  .slice(0, limite || undefined);
 const docs = carregarCorpus();
 const ids = new Set(docs.map((d) => d.id));
 const tipoDe = new Map(docs.map((d) => [d.id, d.tipo]));
@@ -41,7 +46,28 @@ if (quais !== "bm25") {
   motores.hibrido = async (q) =>
     rrf([buscar(ixBM25, q, K_MAX), await buscarDenso(ixDenso, q, K_MAX, { cache: true })], { k: K_MAX });
 }
-const escolhidos = quais === "todos" ? Object.keys(motores) : [quais];
+// O rerank custa 1 chamada de claude-cli por pergunta, então NUNCA entra no "todos" — entrar por
+// acidente queimaria o pool que o autopublishing divide. Quando pedido, roda junto com bm25 e
+// híbrido: comparar reranker com um baseline medido noutro dia não vale nada (o número absoluto
+// não reproduz entre sessões — ver o piso mais abaixo).
+const falhasRerank = [];
+if (quais === "rerank") {
+  const porId = new Map(docs.map((d) => [d.id, d]));
+  motores.rerank = async (consulta) => {
+    const base = await motores.hibrido(consulta);
+    const termos = tokenizar(consulta);
+    const candidatos = base.slice(0, 50).map((r) => {
+      const d = porId.get(r.id);
+      return { id: r.id, tipo: d.tipo, titulo: d.titulo, trecho: trechoRelevante(d.texto, termos) };
+    });
+    const { itens, ok, erro } = await rerank(consulta, candidatos, { cache: true });
+    if (!ok) falhasRerank.push(erro);
+    // A cauda além de 50 fica onde estava: o reranker só reordena o que recebeu.
+    return [...itens, ...base.slice(50)];
+  };
+  console.log(`rerank: claude-cli ${MODELO_RERANK}, 1 chamada por pergunta (${dourado.length})`);
+}
+const escolhidos = quais === "todos" ? Object.keys(motores) : quais === "rerank" ? ["bm25", "hibrido", "rerank"] : [quais];
 
 async function avaliar(buscarFn) {
   const t0 = Date.now();
@@ -92,6 +118,14 @@ for (const nome of escolhidos) {
     return `${tipo} ${pct(acertos.reduce((a, b) => a + b, 0) / (acertos.length || 1))}`;
   });
   console.log(`fonte@10  ${porTipo.join("   ")}`);
+}
+
+if (falhasRerank.length) {
+  // Reranker que falha devolve a ordem da fusão, então o número acima vira uma mistura de
+  // "reranqueado" com "híbrido puro" — sem isto impresso, uma queda por falha de CLI passaria
+  // por queda de qualidade do reranking.
+  const conta = falhasRerank.reduce((a, e) => ({ ...a, [e]: (a[e] ?? 0) + 1 }), {});
+  console.log(`\n⚠️  ${falhasRerank.length}/${dourado.length} reranks falharam e caíram para a fusão: ${JSON.stringify(conta)}`);
 }
 
 const principal = relatorios[escolhidos.at(-1)];

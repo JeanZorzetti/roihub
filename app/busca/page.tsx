@@ -1,6 +1,7 @@
 import { carregarCorpus } from "@/lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "@/lib/bm25.mjs";
 import { buscarDenso, MODELO } from "@/lib/denso.mjs";
+import { rerank, trechoRelevante } from "@/lib/reranker.mjs";
 import { lerCorpus, lerVetores } from "@/lib/corpus-db.mjs";
 import { rrf } from "@/lib/busca.mjs";
 import { Tabs } from "../tabs";
@@ -81,12 +82,17 @@ function trecho(texto: string, termos: string[]): string {
   return (ini ? "…" : "") + texto.slice(ini, ini + 260).replace(/\s+/g, " ").trim() + "…";
 }
 
-export default async function Busca({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q = "" } = await searchParams;
+// O reranker recebe 50 candidatos porque é onde o doc certo está: recall@50 do híbrido é 92,9%
+// contra 82,4% em @10. Reordenar 10 não teria de onde tirar ganho.
+const CANDIDATOS = 50;
+
+export default async function Busca({ searchParams }: { searchParams: Promise<{ q?: string; rerank?: string }> }) {
+  const { q = "", rerank: querRerank = "1" } = await searchParams;
   const { docs, indice } = await getIndice();
   const termos = tokenizar(q) as string[];
+  const porId = new Map(docs.map((d) => [d.id, d]));
 
-  let achados: Achado[] = q.trim() ? buscar(indice, q, 10) : [];
+  let achados: Achado[] = q.trim() ? buscar(indice, q, CANDIDATOS) : [];
   let motor = "BM25";
   let falha = "";
   // Consultado mesmo sem pergunta: o rodapé precisa dizer o estado do motor no primeiro
@@ -95,17 +101,32 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
   if (denso) motor = "BM25 + vetor";
   if (denso && q.trim()) {
     try {
-      // Busca 20 de cada lado e funde: a RRF precisa de cauda para ter o que reordenar.
-      achados = rrf([buscar(indice, q, 20), await buscarDenso(denso, q, 20)], { k: 10 });
+      achados = rrf([buscar(indice, q, CANDIDATOS), await buscarDenso(denso, q, CANDIDATOS)], { k: CANDIDATOS });
     } catch (err) {
       // Ollama fora do ar não derruba a aba: cai para o BM25 e o rodapé diz o que falhou.
       motor = "BM25";
       falha = `ollama em ${process.env.OLLAMA_URL}: ${(err as Error).message.slice(0, 90)}`;
     }
   }
-  const porId = new Map(docs.map((d) => [d.id, d]));
   // Vetor de doc que saiu do corpus (reindexação pendente) devolve id sem texto para renderizar.
   achados = achados.filter((r) => porId.has(r.id));
+
+  // Reranker: +5,6 pontos em recall@10 (82,4% → 88,0%) e +5,1 em @3, medido no dourado. Custa
+  // uma chamada de claude-cli por busca — ~8 s, contra ~200 ms sem ele. `?rerank=0` desliga para
+  // quem quer a resposta rápida, e falha do CLI cai na fusão sem derrubar a aba.
+  let erroRerank = "";
+  if (querRerank !== "0" && q.trim() && achados.length > 1) {
+    const candidatos = achados.map((r) => {
+      const d = porId.get(r.id)!;
+      return { id: r.id, tipo: d.tipo, titulo: d.titulo, trecho: trechoRelevante(d.texto, termos) };
+    });
+    const { itens, ok, erro } = await rerank(q, candidatos);
+    if (ok) motor += " + rerank";
+    else erroRerank = erro;
+    // score zerado: depois da fusão RRF a posição é a informação, o número não significa mais nada.
+    achados = (itens as Achado[]).map((c) => ({ id: c.id, tipo: c.tipo, score: 0 }));
+  }
+  achados = achados.slice(0, 10);
   const tipos = docs.reduce<Record<string, number>>((a, d) => ({ ...a, [d.tipo]: (a[d.tipo] ?? 0) + 1 }), {});
 
   return (
@@ -156,12 +177,19 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
       </ol>
 
       <p className="foot">
-        {/* Número remedido em 31/07 com 263 docs. Um recall absoluto no rodapé envelhece sozinho:
-            o dourado é fixo e o corpus cresce, então doc que ele não conhece só entra no top-10 como
-            falso positivo (83,0% → 82,4% sem mudança de código). Ao remedir, atualizar aqui também. */}
-        {motor} · recall@10 medido em {motor === "BM25" ? "82,3%" : "82,4%"} contra as 78 perguntas de{" "}
+        {/* Números remedidos em 31/07 com 263 docs. Um recall absoluto no rodapé envelhece sozinho:
+            o dourado é fixo e handoff/memória são reescritos toda sessão, o que mexe em vetor e
+            IDF (83,0% → 82,4% sem mudança de código). Ao remedir, atualizar aqui também. */}
+        {motor} · recall@10 medido em{" "}
+        {motor.includes("rerank") ? "88,0%" : motor === "BM25" ? "82,3%" : "82,4%"} contra as 78 perguntas de{" "}
         <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
+        {erroRerank && `⚠️ Reranker caiu para a fusão — ${erroRerank}. `}
+        {/* O formulário só manda `q`, então sem este link o `?rerank=0` existiria e ninguém
+            saberia: medido, o reranker leva a busca de 0,3 s para 6,5 s. */}
+        {motor.includes("rerank") && (
+          <a href={`/busca?q=${encodeURIComponent(q)}&rerank=0`}>sem reranker (0,3 s em vez de 6,5 s)</a>
+        )}
         {!tipos.memoria && "⚠️ Sem as memórias neste ambiente: 72 das 160 fontes do dourado não estão no índice."}
       </p>
     </main>

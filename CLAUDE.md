@@ -42,6 +42,26 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
   Regex de status em `run-autopublish.mjs:40` valida o conjunto — reason nova precisa
   entrar lá, senão vira `invalid-response`.
 
+## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
+
+`BM25 → + vetor (Ollama) → + reranker (claude-cli)`, medido em `data/dourado.json`
+(78 perguntas): **82,3% → 82,4% → 88,0%** de recall@10.
+
+- **O reranker gasta 1 chamada por BUSCA**, do mesmo pool do autopublishing. Custo medido:
+  a busca vai de **0,3 s para 6,5 s**. `?rerank=0` desliga (link no rodapé).
+- **O ranking do reranker é para FUNDIR, não para obedecer.** Obedecer foi medido com dois
+  prompts diferentes e perdeu as duas vezes (@10 76,7% contra 82,4% da fusão): o modelo
+  acerta o conjunto e erra a ordem, porque não vê o score do BM25. `rrf(…, c=10)` — o mesmo
+  `c` da fusão BM25+vetor — ganha em todos os k.
+- **Piso é relativo, nunca absoluto:** `node --env-file=.env scripts/avaliar.mjs --motor
+  rerank --min bm25`. O número absoluto não reproduz entre sessões porque handoff e memória
+  são reescritos, o que mexe em vetor e IDF (83,0% → 82,4% sem mudança de código).
+- **`--motor todos` NÃO inclui o rerank** de propósito: 78 chamadas por acidente queimariam
+  o pool. O `.cache/rerank.json` faz corrida morta retomar de onde parou — uma foi morta no
+  meio e o pool virou pó.
+- **Reindexar depois de escrever handoff/memória**: `node --env-file=.env scripts/indexar.mjs`.
+  Memória mora em `~/.claude`, fora do repo — sem reindexar ela some da aba em silêncio.
+
 ## Ambiente
 
 `.env` (não versionado) tem o pool de tokens, `GITHUB_TOKEN`, `DATABASE_URL`,

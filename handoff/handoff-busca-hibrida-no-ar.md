@@ -132,13 +132,53 @@ E o número que ele revela é desconfortável: **o híbrido ganha do BM25 por 0,
 × 82,3%). Eram 0,7 na fase 3. Em 78 perguntas, 0,1 ponto é **fração de uma pergunta** — o
 lado vetorial hoje não paga o Ollama, o `hub_embeddings` e os 19 s de reindexação.
 
-## ▶️ Próximo passo de verdade: fase 4
+## ✅ O reranker existe e ganhou — mas não do jeito que a fase 3 supôs
 
-**Contextual retrieval, medido igual** — e agora com um alvo honesto: não é "subir de 83%",
-é **fazer o lado denso voltar a valer alguma coisa**. Régua: `--min bm25` (hoje o híbrido
-passa por 0,1 ponto). Teto: **93,3%** (recall@50 — acima disso o doc certo nem está entre os
-50). Custa claude-cli em lote na indexação — janela ociosa do pool, **fora das 00:00–01:00
-BRT** (cron do autopublishing às 00:13).
+Recusado na fase 3 por *"sem cross-encoder local viável"* — restrição sobre **modelo local**,
+que o claude-cli não tem. Reaberto em 31/07 e medido três vezes:
+
+| política | @1 | @3 | @5 | @10 | @20 | @50 |
+|---|---|---|---|---|---|---|
+| BM25 | 32,8% | 66,0% | 75,4% | 82,3% | 87,2% | 91,9% |
+| fusão (híbrido) | 32,0% | 65,4% | 76,5% | 82,4% | 88,7% | 92,9% |
+| rerank obedecido, recorte 400 | 17,9% | 60,6% | 72,2% | 78,8% | 91,9% | 92,9% |
+| rerank obedecido, recorte 900×3 | 19,5% | 62,1% | 71,0% | 76,7% | 91,6% | 92,9% |
+| **RRF(fusão, rerank) c=10** | **34,2%** | **70,5%** | **79,6%** | **88,0%** | **91,6%** | 92,9% |
+
+**As três lições, em ordem de quanto custaram:**
+
+1. **O ranking do reranker é para FUNDIR, não para obedecer.** Obedecer perdeu com dois
+   prompts diferentes. O modelo acerta o **conjunto** (só ele levou o @20 de 88,7% para 91,6%)
+   e erra a **ordem** (sozinho derruba o @1 de 32,0% para 19,5%), porque não enxerga o score
+   do BM25, que carrega o casamento de termo raro. É a mesma lição que o vetor já tinha dado
+   na fase 3, e o `c=10` que serve é o mesmo.
+2. **Recorte de tamanho fixo tem viés contra doc longo.** Com 400 chars, `fonte@10` de handoff
+   caiu de 80,4% para **28,3%** enquanto o de protocolo subiu — protocolo tem 780 chars e 400
+   mostram metade dele, handoff tem 9 mil e 400 mostram 4%. Agora são até 3 janelas em 900, e
+   doc que cabe no orçamento vai inteiro.
+3. **Comparar política de fusão não precisa de chamada nova.** As respostas do modelo estão em
+   `.cache/rerank.json`; as 5 políticas da tabela foram avaliadas offline, de graça. Medir o
+   caro uma vez e iterar em cima do cache é o que tornou isto barato — depois de uma corrida
+   ter sido morta no meio e ter torrado o pool sem devolver número.
+
+**Custo:** 1 chamada de claude-cli por busca, **0,3 s → 6,5 s**. Ligado por padrão, com link
+de escape (`?rerank=0`) no rodapé porque o formulário só manda `q`.
+
+## ▶️ Próximo passo de verdade
+
+**Não é mais a fase 4.** O reranker colheu 5,6 dos 10,5 pontos de folga que existiam entre
+@10 e @50; sobram **4,9** (88,0% contra o teto de 92,9%). Contextual retrieval é o único lever
+que levanta esse teto, mas custa **1331 chamadas por reindexação** contra 1 por busca do
+reranker — e é a metade densa que ela melhora, a que sozinha soma pouco.
+
+**O maior buraco agora é a camada `estado`: 51,0%** (era 42,7%; o reranker deu +8,3 sem ser
+feito para isso). E em @50 ela dá **74,0%** — **um quarto dessas respostas não está no corpus
+em k nenhum**. Nenhum reranker, embedding ou fusão alcança isso: "quantos projetos hoje",
+"qual o gate do sirius" moram no GitHub, no GSC e no banco. **É a camada 4 (manifesto/pull) do
+doc de arquitetura, e é para lá que o próximo esforço deveria ir.**
+
+Se ainda assim for a fase 4: janela ociosa do pool, **fora das 00:00–01:00 BRT** (cron do
+autopublishing às 00:13), e mede-se com `--motor rerank --min bm25`, não contra 83,0%.
 
 **Atualizar `data/dourado.json` foi cogitado e MEDIDO como inútil** — não repetir a ideia. A
 hipótese era que as memórias novas respondiam perguntas do dourado sem constar em `fontes`,
