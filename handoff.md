@@ -2,19 +2,24 @@
 
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
-> 1️⃣ ▶️ **O TRABALHO DA PRÓXIMA SESSÃO É O `sirius` —
-> [`handoff/handoff-proximo-passo-31-07.md`](handoff/handoff-proximo-passo-31-07.md) (31/07).**
-> É o mais bem colocado do ranking entre os que uma sessão resolve (45; o `atma` virou espera e o
-> `goiania` é painel do Bing), tem **gate datado em 31/08** — ≥ 5 cliques não-branded/28d, **hoje 2** —
-> e a medição por query/país/página desmonta o plano do card:
-> 🚨 **`agaas` não é query brasileira** (5 das 85 impressões são do BR; os 2 cliques vieram de AUS e
-> USA) — é trabalho de **CTR**, não de posição.
-> 🚨 **Duas canibalizações medidas**, com causa confirmada no HTML servido: `crm roi` partido entre
-> `/blog/roi-de-crm` (pos 24,3) e `/ferramentas/calculadora-roi-agencias` (pos 44,0), e `crm solar`
-> partido entre a página PT e a EN — que servem **zero `hreflang`** e são `canonical` de si mesmas.
-> 🚨 **O volume não está no `agaas`:** um cluster solar em pt-BR soma ~215 impressões numa página só,
-> toda em posição 26–41.
-> ⚠️ **`sirius` não tem clone local** (`AGI_Sirius` é outra coisa, nem repo git é) — `git clone` antes.
+> 1️⃣ ✅ **A FRENTE DO `sirius` FOI EXECUTADA (31/07, 08h30) —
+> [`handoff/handoff-sirius-agaas-ctr-31-07.md`](handoff/handoff-sirius-agaas-ctr-31-07.md)**
+> (plano original: [`handoff/handoff-proximo-passo-31-07.md`](handoff/handoff-proximo-passo-31-07.md)).
+> 🚨 **A premissa do passo 1 era FALSA:** o `hreflang` **já existia e já é servido** nos dois pares
+> (`curl` sem `-k`, 31/07) — `lib/seo/canonical.ts`. Cada página ser `canonical` de si mesma **com** o
+> par completo é o comportamento correto, não canibalização. **Zero linha de `hreflang` escrita.**
+> ✅ Feito no lugar: **CTR do `agaas`** (`titleEn` → `AgaaS Meaning: Agentic-as-a-Service vs
+> Traditional SaaS`, meta em BLUF, conteúdo abrindo com a definição, **slug intocado**) e **dono do
+> `crm roi`** (o post; link no componente compartilhado `CalculadoraROI` cobre as 5 calculadoras).
+> 🚨 **`crm roi` estava partido em QUATRO URLs, não duas** — o plano só tinha visto duas.
+> ✅ Remedição própria confirma o gate: **2 cliques não-branded**, e `agaas` (85 imp, pos 8,1) é a
+> **única** query não-branded de página 1 com volume. O gate é CTR de UMA página.
+> ⚠️ **`sirius` NÃO é Vercel** (não está em `vercel project ls`; a CSP cita `*.easypanel.host`) — o
+> `CLAUDE.md` do repo diz "Deploy: Vercel" e está desatualizado. Clone agora existe em `C:\dev\sirius`.
+> ⚠️ **CI de `main` já estava vermelho antes:** 54 erros de `tsc` pré-existentes, nenhum nos arquivos
+> alterados.
+> ▶️ **Próxima leitura: ~14/08** — cliques não-branded em 28d, por query × país. Conteúdo solar
+> (~215 imp em pos 26–41) só depois disso.
 >
 > ✅ **A FRENTE DO ATMA ENCERROU (31/07, 07h50) —
 > [`handoff/handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md).**

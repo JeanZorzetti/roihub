@@ -1,5 +1,11 @@
 # Handoff — próximo passo: o Sirius (criado 31/07/2026, 08h BRT)
 
+> ✅ **EXECUTADO em 31/07, 08h30 —
+> [`handoff-sirius-agaas-ctr-31-07.md`](handoff-sirius-agaas-ctr-31-07.md).**
+> ⚠️ **O passo 1 abaixo partia de uma premissa falsa:** o `hreflang` já existia no repo
+> (`lib/seo/canonical.ts`) e já era servido nos dois pares — conferido por `curl` sem `-k`. Nada foi
+> escrito ali. Os passos 2 e 3 foram feitos; o 4 (cluster solar) ficou de fora de propósito.
+
 **O próximo passo é UM projeto: o `sirius`.** É o mais bem colocado do ranking entre os que uma
 sessão de código resolve (score 45; o `atma`, 51, agora é espera, e o `goiania`, 44, é painel do
 Bing). Tem gate datado — **31/08** — e a agulha está a **3 cliques** de distância.
