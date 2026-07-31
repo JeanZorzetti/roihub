@@ -5,8 +5,14 @@ frentes ranqueadas). Arquitetura: [`../docs/rag-arquitetura.md`](../docs/rag-arq
 índice: [`../handoff.md`](../handoff.md).
 
 **Entregue:** a frente nº 1 daquele handoff — síntese com citação obrigatória sobre o top-10.
-`lib/resposta.mjs`, `scripts/avaliar-resposta.mjs`, **181 testes verdes**, `tsc` limpo,
-renderizado ao vivo antes do push.
+`lib/resposta.mjs`, `scripts/avaliar-resposta.mjs`, **181 testes verdes**, `tsc` limpo.
+
+⚠️ **Verificado LOCAL, não em produção.** O que foi visto ao vivo: `/busca?q=…` no dev server,
+resposta renderizada com `[1][3][4][10]` e a numeração casando com os cards (screenshot conferido,
+18,8 s em dev). O que **não** foi possível: repetir isso em `hub.roilabs.com.br` — a aba pede
+basic auth e o `HUB_PASS` não está no `.env` local (só na EasyPanel). Depois do build, **buscar
+alguma coisa** lá e conferir se o bloco `Resposta` aparece; e lembrar que o rodapé é a **última**
+`.foot` da página, porque cada card usa a mesma classe.
 
 ---
 
