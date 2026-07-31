@@ -20,9 +20,10 @@
 > `/busca` no hub, híbrida (`BM25 + vetor`), ~200 ms morno. Corpus e vetores em
 > `hub_corpus`/`hub_embeddings` — é o que põe as **123 memórias** (que moram em `~/.claude`, fora
 > do repo) dentro do container. Reindexar: `node --env-file=.env scripts/indexar.mjs`.
-> ▶️ **Comece por abrir `/busca`, BUSCAR alguma coisa e ler o rodapé** — sem consulta o rodapé
-> não chama o Ollama, então `BM25 + vetor` na primeira carga não prova a rede. Só o Jean abre
-> (basic auth, `HUB_PASS` só na EasyPanel). A tabela de diagnóstico está no handoff.
+> ✅ **CONFIRMADO NO AR EM 31/07 18h30: rodapé `BM25 + vetor` numa consulta real** — o container
+> tem a env **e** alcança `sofia_ollama`, 0,9 s por busca. Fase 3 fechada sem pendência.
+> ▶️ Para reconferir: **BUSCAR alguma coisa**, não só abrir — sem `?q=` o rodapé não chama o
+> Ollama. A aba pede basic auth (`HUB_USER`/`HUB_PASS` só na EasyPanel, pedir ao Jean).
 > ⚠️ **O piso `--min 0.83` foi aposentado (31/07 18h)**: corpus cresce, dourado é fixo, e doc
 > novo só entra como falso positivo — 4 docs novos derrubaram o híbrido para 82,4% **sem
 > mudança de código**, com o BM25 parado em 82,3%. Agora é `--min bm25`, o BM25 da mesma

@@ -156,7 +156,10 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
       </ol>
 
       <p className="foot">
-        {motor} · recall@10 medido em {motor === "BM25" ? "82,3%" : "83,0%"} contra as 78 perguntas de{" "}
+        {/* Número remedido em 31/07 com 263 docs. Um recall absoluto no rodapé envelhece sozinho:
+            o dourado é fixo e o corpus cresce, então doc que ele não conhece só entra no top-10 como
+            falso positivo (83,0% → 82,4% sem mudança de código). Ao remedir, atualizar aqui também. */}
+        {motor} · recall@10 medido em {motor === "BM25" ? "82,3%" : "82,4%"} contra as 78 perguntas de{" "}
         <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {!tipos.memoria && "⚠️ Sem as memórias neste ambiente: 72 das 160 fontes do dourado não estão no índice."}

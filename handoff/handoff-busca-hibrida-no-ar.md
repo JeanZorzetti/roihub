@@ -12,19 +12,22 @@ números, decisões e o porquê de cada uma). Arquitetura:
 > **Adendo de 31/07, 18h — leia antes do resto.** Três coisas desta página envelheceram em
 > quatro horas:
 >
-> 1. **A verificação em produção continua bloqueada:** `hub.roilabs.com.br/busca` devolve
->    **401** (basic auth; `HUB_PASS` só existe na EasyPanel). Não é a primeira vez —
->    `handoff.md:441` registra o mesmo bloqueio. **Só o Jean abre a aba.**
-> 2. **Ler o rodapé sem buscar não prova o vetor.** `page.tsx:95` põe `BM25 + vetor` assim que
+> 1. ✅ **O HÍBRIDO ESTÁ ATIVO EM PRODUÇÃO — confirmado, não inferido.** `?q=` real devolve
+>    rodapé `BM25 + vetor` com **os dois slots de aviso em `false`** (`page.tsx:161`), o que só
+>    acontece se `motor !== "BM25"`, sem `falha` e sem `porQueSemVetor`. Logo: `OLLAMA_URL`
+>    chegou ao container **e** o container alcança `sofia_ollama`. Consulta híbrida completa em
+>    **0,9 s** com a chamada ao Ollama dentro. **Encerra o único item aberto da fase 3.**
+> 2. **A aba pede senha** (basic auth, `HUB_USER`/`HUB_PASS` só na EasyPanel) — `handoff.md:441`
+>    já registrava o mesmo bloqueio. **Peça as credenciais ao Jean; sem elas é 401.**
+> 3. **Ler o rodapé sem buscar não prova o vetor.** `page.tsx:95` põe `BM25 + vetor` assim que
 >    os vetores carregam do banco; o Ollama só é chamado quando há `?q=` (`page.tsx:96`). O
 >    rodapé pode dizer `BM25 + vetor` com o Ollama inalcançável. **Buscar alguma coisa** — a
 >    linha 3 da tabela abaixo só aparece depois de uma consulta de verdade.
-> 3. **O piso de 83,0% morreu.** Ver § "A régua apodreceu" no fim.
->
-> O que deu para conferir sem a senha, direto nas fontes: `hub_corpus` e `hub_embeddings`
-> populadas, e o caminho da aba (corpus do banco + vetores + Ollama + RRF) rodado
-> ponta a ponta contra o **banco de produção** — 10 achados, ~90 ms mornos. Sobra uma
-> incógnita só: se o container enxerga `sofia_ollama`.
+> 4. ⚠️ **Ao ler o HTML, o rodapé é a ÚLTIMA `.foot` da página** — cada resultado também usa
+>    `class="foot"`. Pior: um `grep` por `Vetor desligado` casa com **o trecho desta própria
+>    página** quando ela sai como resultado. Quase virou falso diagnóstico. Ler o array
+>    `children` do último `.foot`, não o primeiro casamento.
+> 5. **O piso de 83,0% morreu.** Ver § "A régua apodreceu" no fim.
 
 ## ▶️ A primeira coisa a fazer (30 segundos)
 
@@ -39,7 +42,9 @@ do motor:
 | `⚠️ Vetor desligado — hub_embeddings vazia` | o banco de produção não é o que foi indexado | conferir `DATABASE_URL` e rodar `scripts/indexar.mjs` |
 
 Em 31/07 às 14h o rodapé dizia **`BM25`** — mas era a versão sem diagnóstico, e a env tinha
-acabado de ser posta. Por isso o primeiro passo é reler, não consertar.
+acabado de ser posta. Por isso o primeiro passo é reler, não consertar. **Às 18h30 releu:
+`BM25 + vetor`. Era isso mesmo — a env já tinha pegado, e o "BM25" das 14h era a leitura
+antiga.**
 
 ## O que existe agora
 
