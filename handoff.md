@@ -2,32 +2,31 @@
 
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
-> 1️⃣ **O trabalho de código das 3 tarefas ACABOU (30/07, 23h) —
-> [`handoff/handoff-proximo-passo-atma-executado.md`](handoff/handoff-proximo-passo-atma-executado.md).**
-> **As tarefas 2 e 3 fecharam e foram VERIFICADAS NO AR** (não só commitadas): `orion` serve zero
-> `aggregateRating`/endereço/telefone/depoimento/selo falso (`94a6bdb`, e a prova de build novo é o
-> `AggregateOffer` em `99.90/999.90`); `pathfinder` serve `/sitemap.xml` em **200 com corpo `<?xml` e
-> 36 `<loc>`** (`aee6e09`), já submetido ao GSC. Sitemap do Atma também resubmetido.
-> **Sobrou UMA coisa, e ela não é código:**
-> 🚨 **MANUAL, do Jean — "Solicitar indexação" das 5 URLs do Atma no Search Console.** Não existe
-> endpoint (a `urlInspection` é só leitura e a Indexing API só aceita `JobPosting`/`BroadcastEvent`)
-> — confirmado na prática, não só na teoria.
-> ⚠️ **Armadilha nova, cara:** o push do `pathfinder` **não publicou** — a Vercel dele não escuta o
-> git (`vercel ls` mostrava 1 deployment de 2 dias). Deploy é `npx vercel deploy --prod --yes` de
-> dentro de `frontend/`. O `orion`, esse sim, publica sozinho no push (EasyPanel, ~10 min).
+> 1️⃣ ✅ **A FRENTE DO ATMA ENCERROU (31/07, 07h50) —
+> [`handoff/handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md).**
+> O Jean pediu a reindexação na UI e a URL Inspection confirma: **as 5 URLs voltaram para
+> `Submitted and indexed`**, `verdict: PASS`, com **`lastCrawlTime` do próprio 31/07** — contra os
+> 04–06/06 congelados de antes. É o desfecho bom da tabela, não o "crawl novo mas segue not indexed".
+> **O maior ativo orgânico da ROI Labs (era ~1.600 imp/dia, caiu para 10–20) está de volta ao índice.**
+> ⚠️ **Agora é TEMPO, não trabalho:** tráfego é indicador atrasado. **Reconferir a série em ~14 dias**
+> — e **não baixar o `decay 10`** do card antes de a série reagir.
+> 🔧 Ler o estado sem abrir a UI: `node --env-file=.env scripts/inspect-url.mjs <url> [...]` (novo).
+> 💡 **O que o horário do crawl entregou:** a home e o artigo campeão foram rastreados às 22h55 BRT,
+> o minuto exato do **resubmit do sitemap pela API** — o "empurrão secundário" reindexou 2 das 5
+> sozinho. Da próxima vez, submeter o sitemap primeiro.
+> As tarefas 2 e 3 já haviam fechado, verificadas no ar
+> ([`handoff/handoff-proximo-passo-atma-executado.md`](handoff/handoff-proximo-passo-atma-executado.md)):
+> `orion` serve zero `aggregateRating`/endereço/telefone/depoimento/selo falso (`94a6bdb`, prova de
+> build novo = `AggregateOffer` em `99.90/999.90`); `pathfinder` serve `/sitemap.xml` em **200 com
+> corpo `<?xml` e 36 `<loc>`** (`aee6e09`).
+> ⚠️ **Armadilha que continua valendo:** o push do `pathfinder` **não publica** — a Vercel dele não
+> escuta o git. Deploy é `npx vercel deploy --prod --yes` de dentro de `frontend/`. O `orion` publica
+> sozinho no push (EasyPanel, ~10 min).
 > ⚠️ **O backend do `pathfinder` continua morto** (`/api/*` → NXDOMAIN): consertamos a descoberta,
 > não o produto.
-> ▶️ Receita original: [`handoff/handoff-proximo-passo-atma.md`](handoff/handoff-proximo-passo-atma.md)
-> — ainda é onde estão **as 5 URLs na ordem de valor** e como medir o `coverageState` em ~7 dias.
-> Medição completa em
-> [`handoff/handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md).
-> 🚨 **O Atma está DESINDEXADO — o site inteiro, inclusive a home — e perdeu 98% das impressões.**
-> Era o maior ativo orgânico da ROI Labs: ~1.600 imp/dia e ~30 cliques/dia; hoje faz 10–20 imp/dia.
-> 28d: **43 cliques / 316 imp** contra **298 / 14.818** nos 28d anteriores. **Queda datada:
-> 09/06 fechou com 1.675 imp, 10/06 com 380.** Não foi deploy (zero commits entre 20/05 e 30/07):
-> a URL Inspection devolve `Crawled - currently not indexed` com **último crawl em 04–06/06**.
-> Ninguém viu porque a home responde **200** e o `checkHealth` só olha `res.ok`.
-> **Ação: pedir reindexação da home e de `/blog/quanto-custa-alinhador-invisivel` no GSC.**
+> ⚠️ **O Atma não está "pronto":** restam o MercadoPago nunca testado em produção e o resíduo de DNS
+> `clerk.`/`www.`. Ninguém viu a desindexação porque a home responde **200** e o `checkHealth` só olha
+> `res.ok` — essa cegueira do hub segue de pé.
 > ✅ **`orion`: o `aggregateRating` fabricado SAIU** (30/07, `94a6bdb`) — junto com endereço,
 > telefones, `sameAs`, depoimentos inventados e os selos "ISO 27001"/"AWS Partner". O risco era do
 > DOMÍNIO, não do projeto; falta só confirmar no HTML servido.
@@ -199,8 +198,9 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-proximo-passo-atma-executado.md`](handoff/handoff-proximo-passo-atma-executado.md) | **comece por aqui**: o que as 3 tarefas viraram em 30/07 e o que sobrou (pedido manual de indexação do Atma + verificar 2 deploys no ar). Traz os 2 achados que só apareceram abrindo o código: o `AggregateOffer` do `orion` também era inventado (4 planos de R$ 299–1.499 contra 3 planos reais) e o sitemap do `pathfinder` listava rotas inexistentes — consertar o DNS do backend teria devolvido um sitemap de 404s | 🟢 vivo (30/07) — frente ativa |
-| [`handoff-proximo-passo-atma.md`](handoff/handoff-proximo-passo-atma.md) | a receita das 3 tarefas — **ainda é onde estão as 5 URLs do Atma na ordem de valor** e como MEDIR se a reindexação pegou (`coverageState`, não tráfego). O passo manual dela segue pendente; as partes de código foram executadas no arquivo acima | 🟡 parcial (30/07) — só o passo manual do Atma continua aberto |
+| [`handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md) | **comece por aqui**: o desfecho da frente mais cara do portfólio — as 5 URLs do Atma medidas em `Submitted and indexed` com crawl de 31/07, o script novo `scripts/inspect-url.mjs`, e por que o resubmit do sitemap (22h55 BRT) reindexou 2 delas antes do pedido manual. O que NÃO concluir: tráfego ainda não reagiu, `decay` fica em 10 | ✅ encerrado 31/07 — só resta reconferir a série em ~14 dias |
+| [`handoff-proximo-passo-atma-executado.md`](handoff/handoff-proximo-passo-atma-executado.md) | o que as 3 tarefas viraram em 30/07 e o que sobrou (pedido manual de indexação do Atma + verificar 2 deploys no ar). Traz os 2 achados que só apareceram abrindo o código: o `AggregateOffer` do `orion` também era inventado (4 planos de R$ 299–1.499 contra 3 planos reais) e o sitemap do `pathfinder` listava rotas inexistentes — consertar o DNS do backend teria devolvido um sitemap de 404s | ✅ executado 30/07 — o que sobrava fechou em 31/07 |
+| [`handoff-proximo-passo-atma.md`](handoff/handoff-proximo-passo-atma.md) | a receita das 3 tarefas — **ainda é onde estão as 5 URLs do Atma na ordem de valor** e como MEDIR se a reindexação pegou (`coverageState`, não tráfego). O passo manual foi feito pelo Jean em 31/07 e medido no handoff do topo | ✅ executado 30–31/07 |
 | [`handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) | a medição por trás da frente acima: a curadoria fechou (20 → 35, zero não-curados) e destravou o achado mais caro do portfólio — **o Atma desindexado, −98% de impressões, com a queda datada em 09→10/06** — mais o `aggregateRating` fabricado do `orion` num subdomínio de `roilabs.com.br` e o sitemap em 502 `DNS_HOSTNAME_NOT_FOUND` do `pathfinder`. Traz o estado de índice dos 15 e o defeito da régua de score | 🟢 vivo (30/07) — frente ativa |
 | [`handoff-curar-os-15.md`](handoff/handoff-curar-os-15.md) | a receita e a régua que originaram a curadoria acima: o grep de host morto que funciona (por URL absoluta, não por nome de env var), a calibração de `receita` e por que `seo`/`decay` são automáticos | ✅ executado 30/07 — 15/15 curados |
 | [`handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) | encurtar 8 subdomínios para nome de produto, limpar o `synth-bot-buddy` (repo apagado, host em 200) e decidir 2 nomes. Traz a receita do **308 do host antigo** (renomear sem gerar NXDOMAIN) e o PATCH da API da Vercel, que a CLI não expõe | ✅ executado 30/07 — 9 renomeações, zero duplicados |
