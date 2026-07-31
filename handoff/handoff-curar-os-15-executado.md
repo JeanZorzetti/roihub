@@ -112,10 +112,15 @@ histórico. **Rendeu o oposto, e é mais útil:** quase nada dos 15 existe para 
   preference** — a rota grava cliente e relatório no banco de produção *antes* de chamar o MP, então
   o teste sujaria a base real. Por isso `receita 6`, não 7.
 
-- **`meridian` contradiz o próprio registro.** A memória do projeto o descreve como laboratório de
-  **beleza** para a vaga da FitNext; o site no ar é um **SaaS financeiro em inglês** ("See every
-  dollar. Own every decision."). Curei pelo que está servido. Além disso metade do nav
-  (`/signin`, `/product`, `/security`) devolve **404**.
+- **`meridian`: um erro MEU que quase virou card, e vale mais do que o card.** Escrevi primeiro que
+  havia "identidade divergente" (memória diz laboratório de beleza, site é finanças) e "nav com
+  404". **As duas coisas eram invenção minha.** "Beleza" na memória é beleza **visual**, e a própria
+  memória já diz *"site institucional Dark Swiss de app de finanças"* — bate com o que está no ar,
+  incluindo o mint `#3ECF8E` que aparece no CSS servido. E os 404 vieram de **eu chutar URLs**: o nav
+  usa **âncoras** (`#features`, `#security`, `#tour`), não rotas; as rotas reais respondem todas
+  (`/pricing` 200, `/styleguide` 200, `/admin` 302 stub). **A lição é a régua desta leva aplicada a
+  mim mesmo: testar `/signin` porque o nav escreve "Sign in" é premissa, não medição.** Card
+  corrigido: blockers 5 → 2.
 
 - **`qprime` é o mais sólido comercialmente dos 15** e é uma operação real: 25 anos, +300 contratos
   ativos, endereço e telefone verdadeiros no schema. Está indexado, sitemap com 13 URLs. O ponto
@@ -140,8 +145,8 @@ histórico. **Rendeu o oposto, e é mais útil:** quase nada dos 15 existe para 
 37  pathfinder     ← sitemap 502, unknown to Google há 9 meses
 33  orion          ← schema fabricado
 29  cyberspace     ← boilerplate; decisão pendente
-28  meridian       27  cannibal_scan   25  moderador
-25  seo-forecaster 23  qprime          20  aprovai
+27  cannibal_scan  25  moderador       25  seo-forecaster
+23  qprime         20  aprovai         19  meridian
 17  lumina         12  roi-labs-links   7  portfolio
 ```
 

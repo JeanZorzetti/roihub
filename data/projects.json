@@ -396,22 +396,21 @@
   },
   {
     "slug": "meridian",
-    "nome": "Meridian — SaaS financeiro (landing, sem produto atrás)",
+    "nome": "Meridian — peça de portfólio front-end (site de app de finanças)",
     "url": "https://meridian.roilabs.com.br/",
     "repo": "meridian",
     "receita": 1,
-    "receitaNota": "Landing com nav de Pricing mas sem produto: /signin, /signup, /product e /security todos 404",
-    "blockers": 5,
+    "receitaNota": "Peça de portfólio para a candidatura FitNext, não produto: não vende e não deveria vender",
+    "blockers": 2,
     "blockersLista": [
-      "Nav do site aponta para /signin, /product e /security — os três respondem 404",
       "'Discovered - currently not indexed': descoberto e nunca rastreado",
-      "⚠️ Identidade divergente: a memória do projeto registra Meridian como laboratório de BELEZA para a vaga FitNext, mas o site no ar é um SaaS financeiro em inglês ('See every dollar. Own every decision.')"
+      "/admin ainda é stub (302) — a pendência registrada do projeto, junto do round-trip do Figma"
     ],
     "seoSeed": 2,
-    "decay": 4,
-    "decayNota": "Home 200, mas metade do nav em 404 e nunca rastreado pelo Google",
-    "acaoDesc": "⚠️ CUIDADO COM A PREMISSA HERDADA: a memória descreve o Meridian como laboratório de BELEZA para a vaga da FitNext, e o site que está no ar em 30/07 é outra coisa — um SaaS financeiro em inglês, título 'Meridian — See every dollar. Own every decision.', nav com Features / Product / Security / Pricing / Sign in / Get started. Curei pelo que está servido, não pela memória; se o card de beleza ainda vale, ele vive em outro lugar e as duas fontes precisam ser reconciliadas antes de qualquer trabalho. Medido em 30/07: home 200, /pricing 200 (planos com 'Free' e 'trial'), sitemap XML válido com 2 URLs. Mas /signin, /signup, /product e /security devolvem 404 — ou seja, o nav promete um produto que não existe atrás da landing, e o botão de entrar não leva a lugar nenhum. URL Inspection: 'Discovered - currently not indexed', sem lastCrawl. GSC 0/0. Sem caminho de pagamento no repo. Receita 1 porque não é produto comercial hoje: é uma peça de vitrine, e o README local ainda é o 'Astro Starter Kit: Minimal'.",
-    "acao": "Decidir o que o Meridian é — o site no ar (SaaS financeiro) contradiz o registro de laboratório de beleza"
+    "decay": 3,
+    "decayNota": "Home, /pricing e /styleguide em 200; nunca rastreado pelo Google",
+    "acaoDesc": "É peça de portfólio front-end feita para fechar a lacuna 'UI/UX polido, Figma→produção' da candidatura à vaga FitNext Frontend Engineer — um site institucional de app de controle financeiro em estética Dark Swiss (near-black #08080A com mint #3ECF8E, Geist Sans+Mono, grid suíço). NÃO é produto comercial, e por isso receita 1 não é um problema a resolver. ⚠️ Registro de um erro que quase entrou neste card: na primeira passada eu marquei 'identidade divergente' (memória diz laboratório de beleza, site é finanças) e 'nav com 404'. As duas coisas eram MINHAS, não do projeto. 'Beleza' na memória é beleza VISUAL, e a própria memória já diz 'site institucional Dark Swiss de app de finanças' — bate exatamente com o que está no ar, inclusive o mint #3ECF8E que aparece no CSS servido. E os 404 vieram de eu chutar URLs: o nav usa ÂNCORAS (#features, #security, #tour, #cta), não rotas; as rotas reais respondem todas — / 200, /pricing 200, /styleguide 200, /admin 302 (stub, como documentado). Medido de fato em 30/07: home 200, sitemap XML válido com 2 URLs, URL Inspection 'Discovered - currently not indexed' sem lastCrawl, GSC 0/0, sem caminho de pagamento. Não abrir tarefa de SEO aqui: peça de portfólio não precisa ranquear.",
+    "acao": "Repo: meridian — deixar /admin funcional (hoje stub em 302), a pendência registrada da peça FitNext"
   },
   {
     "slug": "seo-forecaster",
