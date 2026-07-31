@@ -1,0 +1,282 @@
+{
+  "goiania": {
+    "oQueE": "Marketplace local de Goiânia que liga comprador a fornecedor de fita adesiva e porcelanato, com guias técnicos como isca de busca.",
+    "paraQuem": "Fornecedor local que aceita pagar por venda fechada.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0. O modelo é pago-pelo-sucesso e o gate 3 (1º fornecedor) nunca foi atingido.",
+    "oQueTrava": "Não tem fornecedor cadastrado — o tráfego que chega não encontra o que comprar.",
+    "proximaDecisao": "Prospectar fornecedor à mão ou esperar o marketplace crescer sozinho pelo conteúdo?"
+  },
+  "tapepro": {
+    "oQueE": "Catálogo e blog técnico de fitas adesivas industriais; é a 1ª cadeira ocupada do Growth Partner.",
+    "paraQuem": "Fabricante de fita adesiva que aceita comissão (15% aquisição / 10% recorrência).",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — nenhuma venda registrada pela cadeira desde a abertura em 21/07.",
+    "oQueTrava": "O site tem 8 dias de GSC: não existe audiência ainda, e o success fee só existe se houver venda.",
+    "proximaDecisao": null
+  },
+  "sirius": {
+    "oQueE": "CRM em português com camada agêntica (AgaaS) que executa tarefa de vendas, não só registra.",
+    "paraQuem": "PME brasileira que já vende e ainda controla cliente em planilha.",
+    "estado": "no-ar",
+    "dinheiro": "3 vendas orgânicas — a única receita provada do portfólio; o card não registra as datas.",
+    "oQueTrava": "Uma página só gera clique não-branded ('agaas', pos 8,1). Todo o resto vive em página 3+.",
+    "proximaDecisao": "Se o CTR do 'agaas' não subir até 14/08, o alvo vira conteúdo novo — em qual cluster?"
+  },
+  "fabrica": {
+    "oQueE": "Software house solo que vende site + CRM prontos para clínica de estética; a própria landing é a vitrine.",
+    "paraQuem": "Dono de clínica de estética que precisa de presença digital e não tem time.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 fechado. O formulário entrega lead no Sirius (E2E verificado 11/07); nenhum virou contrato.",
+    "oQueTrava": "Não tem tráfego. 24 das 26 URLs estão indexadas — o gargalo deixou de ser indexação.",
+    "proximaDecisao": "Esperar o SEO maturar ou ir buscar clínica por prospecção ativa?"
+  },
+  "roilabs": {
+    "oQueE": "Site institucional da ROI Labs mais o /app admin que opera o marketplace Growth Partner.",
+    "paraQuem": "Ninguém paga direto — alimenta o funil do Goiânia e sustenta a marca.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 direto, por design.",
+    "oQueTrava": "Não é produto: só ganha valor quando algum vertical embaixo dele faturar.",
+    "proximaDecisao": null
+  },
+  "polarisia": {
+    "oQueE": "Plataforma que põe times de agentes Claude para construir e manter sites de produção.",
+    "paraQuem": "Quem quer site de produção sem contratar dev — traz a própria assinatura Claude (BYOS).",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — não existe billing. No BYOS o usuário paga a Anthropic, não a ROI Labs.",
+    "oQueTrava": "A home ainda vende protótipo em vez de 'site de produção': a spec 012 (T001–T017) nunca foi implementada.",
+    "proximaDecisao": "Cobrar assinatura por cima do BYOS ou vender a orquestração por projeto?"
+  },
+  "estetiacrm": {
+    "oQueE": "CRM para clínica de estética — fork do Sirius com agendamento, prontuário e funil próprios.",
+    "paraQuem": "Clínica de estética que já atende e controla paciente por WhatsApp e planilha.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — nenhuma venda registrada.",
+    "oQueTrava": "Produto pronto sem canal de venda: quem traria a clínica é a Estética Fábrica, que também não fatura.",
+    "proximaDecisao": "Vender o CRM direto ou só embutido no pacote da Fábrica?"
+  },
+  "reviewshield": {
+    "oQueE": "Serviço que contesta review falsa no Google Business Profile e só cobra pela que sai.",
+    "paraQuem": "Home services nos EUA (encanador, elétrica, HVAC) com nota derrubada por review injusta.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — o OAuth do GBP funciona E2E desde 13/07 e nenhuma disputa foi paga.",
+    "oQueTrava": "O /checker, que é a página que converte, está em p78: o blog traz gente que nunca chega ao produto.",
+    "proximaDecisao": "O kill-gate marcou EM RISCO em 11/07 — dobrar a aposta ou deixar morrer no D+180?"
+  },
+  "context": {
+    "oQueE": "Daemon que lê os transcripts do Claude Code e extrai as decisões tomadas, para o contexto não se perder entre sessões.",
+    "paraQuem": "Dev que usa Claude Code o dia inteiro.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — publicado no npm (1.2.0) e no ar, sem billing ligado.",
+    "oQueTrava": "Indexado, 21 queries em 28d e 0 clique: aparece entre as posições 10 e 77, onde ninguém clica.",
+    "proximaDecisao": "Dev tool grátis para construir audiência ou produto pago? Hoje não existe preço."
+  },
+  "aftercare": {
+    "oQueE": "Gerador de instruções de pós-procedimento para clínica de estética, com blog B2B de 68 artigos como aquisição.",
+    "paraQuem": "Clínica de estética nos EUA que entrega orientação de pós-procedimento à mão.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — nenhuma assinatura. O gate D+90 que passou media impressão, não receita.",
+    "oQueTrava": "540 imp/sem e 0 clique, porque metade dos artigos fala com paciente — e paciente nunca compra software de clínica.",
+    "proximaDecisao": "Se em ~3 semanas a pauta do robô não migrar para B2B, o steer é fraco: reescrever ou aceitar o público consumer?"
+  },
+  "nimblabs": {
+    "oQueE": "Hub do portfólio de micro-SaaS em inglês — lista e liga os bets (Aftercare, ReviewShield, Context Keeper, CannibalScan, SEO Forecaster).",
+    "paraQuem": "Ninguém paga o hub; a receita viria dos bets.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — nenhum dos cinco bets faturou até hoje.",
+    "oQueTrava": "Cinco bets abertos, nenhum com receita, e a régua de kill (D+90/180/270) mede tráfego em vez de dinheiro.",
+    "proximaDecisao": "Manter os 5 bets ou fechar WIP em 3 e matar os dois piores?"
+  },
+  "orcaobra": {
+    "oQueE": "Planilha de orçamento de obra em Excel vendida como infoproduto, com blog de reforma como isca.",
+    "paraQuem": "Quem vai reformar ou construir e precisa orçar sem contratar engenheiro.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 registrado — mas é o único com checkout vivo: Kiwify em 200, R$ 47,90 (de R$ 97).",
+    "oQueTrava": "Não tem tráfego: o GSC começou em 30/07 e a primeira leitura útil só sai em ~28 dias.",
+    "proximaDecisao": null
+  },
+  "cardiorisk": {
+    "oQueE": "Landing de análise de risco cardiovascular por IA. A análise roda num backend FastAPI que existe no repo e não está hospedado.",
+    "paraQuem": "Indefinido — nem médico nem paciente foram escolhidos como cliente.",
+    "estado": "no-ar-inutilizavel",
+    "dinheiro": "R$ 0 e sem caminho: não há preço nem checkout no repo.",
+    "oQueTrava": "cardioapi.roilabs.com.br é NXDOMAIN (confirmado 31/07): o formulário promete uma análise que nada entrega.",
+    "proximaDecisao": "Sobe o backend FastAPI ou tira o formulário e assume que é vitrine?"
+  },
+  "tapevision": {
+    "oQueE": "Dashboard de trading de mini-dólar por tape reading, com interface para Nelogica.",
+    "paraQuem": "Trader de mini-índice e mini-dólar; ninguém foi cobrado até hoje.",
+    "estado": "no-ar-inutilizavel",
+    "dinheiro": "R$ 0 e sem caminho de cobrança.",
+    "oQueTrava": "aitradingapi.roilabs.com.br é NXDOMAIN (confirmado 31/07): dashboard de tempo real sem dado e sem stream.",
+    "proximaDecisao": "Hospedar Backend/ + MLEngine (ambos completos no repo) ou aposentar o projeto?"
+  },
+  "potencialarquitetado": {
+    "oQueE": "Biblioteca de frameworks de carreira e soft skills. O conteúdo é estático e funciona; a área logada e o /admin não.",
+    "paraQuem": "Profissional em transição de carreira — sem cobrança de nenhum tipo.",
+    "estado": "no-ar-inutilizavel",
+    "dinheiro": "R$ 0 e sem caminho: não existe checkout nem preço.",
+    "oQueTrava": "arquiteturaapi.roilabs.com.br é NXDOMAIN (confirmado 31/07): tudo que fica atrás de login não roda.",
+    "proximaDecisao": "O conteúdo vira produto pago (curso ou comunidade) ou fica como vitrine gratuita?"
+  },
+  "matchfios": {
+    "oQueE": "Plataforma B2B que casa fiação e tecelagem com comprador na indústria têxtil.",
+    "paraQuem": "Indústria têxtil — planos anunciados de R$ 500 e R$ 100 na própria página.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — tem preço público, mas o botão só rola a página até o formulário.",
+    "oQueTrava": "O lead não tem destino: nenhuma integração de formulário aparece no repo.",
+    "proximaDecisao": "B2B têxtil fecha por formulário mesmo — quem atende esse lead quando ele chegar?"
+  },
+  "verticemarketing": {
+    "oQueE": "Site institucional de agência de marketing digital em português (repo vertex-landing-craft). NÃO confundir com o vertice, que é SaaS de onboarding.",
+    "paraQuem": "Empresa que contrataria serviço de agência.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — a receita seria por serviço prestado; não há produto nem checkout.",
+    "oQueTrava": "Não é técnico: não existe agência operando por trás do site.",
+    "proximaDecisao": "É agência que capta cliente de verdade ou vitrine de capacidade da ROI Labs?"
+  },
+  "whatsmeow": {
+    "oQueE": "Gateway em Go que roda várias contas de WhatsApp numa API só, com pareamento por QR e webhook assinado por HMAC.",
+    "paraQuem": "Hoje só o Sirius CRM consome — é infra interna, não produto vendido.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 próprio; o valor é indireto, sustentar o WhatsApp do Sirius.",
+    "oQueTrava": "Não tem cobrança própria e nunca teve: é dependência de outro produto vestida de projeto.",
+    "proximaDecisao": "Vira produto cobrável (API de WhatsApp) ou continua peça de infra do Sirius?"
+  },
+  "claudeloop": {
+    "oQueE": "Roda a CLI do Claude Code em loop contra um plano em arquivo, sem o contexto crescer entre iterações.",
+    "paraQuem": "Dev que usa Claude Code — hoje só a própria ROI Labs.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 e sem intenção declarada de cobrar.",
+    "oQueTrava": "Ferramenta de casa com landing pública: não há tese comercial nem audiência sendo construída.",
+    "proximaDecisao": "Vale investir em audiência de dev (playbook GEO/AEO) ou é só ferramenta interna?"
+  },
+  "swarm": {
+    "oQueE": "Pesquisa em enxame de Small Language Models coordenados por memória epistêmica compartilhada, sem modelo central.",
+    "paraQuem": "Ninguém — é repo público de pesquisa.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0, por design.",
+    "oQueTrava": "Nada trava: não é produto e não deveria virar um.",
+    "proximaDecisao": null
+  },
+  "atma": {
+    "oQueE": "Site de alinhadores invisíveis (rede de ortodontia) mais um infoproduto de R$ 47, o Relatório de Viabilidade Ortodôntica.",
+    "paraQuem": "Paciente que pesquisa preço de alinhador invisível; quem fatura a ortodontia é a rede.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 confirmado. O checkout MercadoPago responde 200 e valida, mas nenhuma venda foi provada — testar sujaria o banco de produção.",
+    "oQueTrava": "Foi desindexado entre 09/06 e 10/06 e perdeu 98% das impressões. Reindexado em 31/07; tráfego é indicador atrasado.",
+    "proximaDecisao": "Quando as impressões voltarem, vale testar a preference do MercadoPago numa base separada para provar a venda?"
+  },
+  "aprovai": {
+    "oQueE": "Análise cadastral de locação — aprovação de inquilino entregue pelo WhatsApp.",
+    "paraQuem": "Imobiliária e locador que hoje analisam ficha à mão.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — a página anuncia 'grátis' e o grep de gateway no repo volta vazio.",
+    "oQueTrava": "Conquistou a parte difícil (está indexado) e não tem como faturar: nem preço existe.",
+    "proximaDecisao": "Qual o preço e o modelo — assinatura da imobiliária ou cobrança por análise?"
+  },
+  "moderador": {
+    "oQueE": "Resume o que rolou num grupo de WhatsApp quatro vezes por dia.",
+    "paraQuem": "Quem está em grupo grande e não consegue acompanhar.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — sem preço e sem caminho de pagamento; a entrada é WhatsApp.",
+    "oQueTrava": "Nunca foi rastreado pelo Google e não tem cobrança: nem audiência nem receita começaram.",
+    "proximaDecisao": "Isso é produto ou é feature de um produto maior de WhatsApp, junto do whatsmeow?"
+  },
+  "meridian": {
+    "oQueE": "Peça de portfólio front-end: site institucional de app de finanças em estética Dark Swiss, feito para a candidatura FitNext.",
+    "paraQuem": "Recrutador. Não é produto e não deve vender.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0, por design.",
+    "oQueTrava": "Nada de negócio. A pendência é técnica: /admin ainda é stub em 302 e falta o round-trip do Figma.",
+    "proximaDecisao": null
+  },
+  "seo-forecaster": {
+    "oQueE": "Prevê o termo de busca antes de o volume aparecer, cruzando Hacker News, Reddit e GDELT em pgvector com Chronos.",
+    "paraQuem": "Quem produz conteúdo e quer pegar a tendência no dia zero.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — a landing anuncia 'free' e não há caminho de pagamento no repo.",
+    "oQueTrava": "É a tese mais defensável do nimblabs e o Google nunca rastreou o site: a régua de kill nem começou a contar.",
+    "proximaDecisao": "Cobrar por isso (rodar custa caro) ou usar internamente para pautar o autopublishing?"
+  },
+  "cannibal_scan": {
+    "oQueE": "Detecta canibalização entre páginas do próprio site rodando Rust compilado para WASM direto no browser.",
+    "paraQuem": "Quem cuida de SEO de site grande.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — a landing anuncia 'free' e não há gateway no repo.",
+    "oQueTrava": "O sitemap tem uma URL só (a landing) e o Google ainda não rastreou: não há superfície para ser encontrado.",
+    "proximaDecisao": "Free tool para audiência ou produto pago? Rodar no browser custa ~zero — dá para ser grátis de propósito."
+  },
+  "roi-labs-links": {
+    "oQueE": "Página de links institucional da ROI Labs, destino de bio de rede social.",
+    "paraQuem": "Ninguém paga — é infraestrutura de marca.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0, por design.",
+    "oQueTrava": "Nada. Está indexado e cumpre a função.",
+    "proximaDecisao": null
+  },
+  "lumina": {
+    "oQueE": "Site-modelo de clínica de estética publicado como demonstração explícita — a clínica Lumina não existe.",
+    "paraQuem": "Prospect da Estética Fábrica, que vê o modelo antes de comprar.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — vende a Fábrica, não a si mesmo.",
+    "oQueTrava": "Nada. Não estar indexado é até preferível: clínica fictícia ranqueando confundiria quem busca clínica real.",
+    "proximaDecisao": null
+  },
+  "cyberspace": {
+    "oQueE": "Não existe produto: o subdomínio serve o template default do `npm create vite` (title 'Vite + React + TS', favicon /vite.svg).",
+    "paraQuem": "Ninguém.",
+    "estado": "prototipo",
+    "dinheiro": "R$ 0 — não há o que vender.",
+    "oQueTrava": "Não há projeto, só um subdomínio ocupado num domínio que hospeda mais de uma dúzia de projetos reais.",
+    "proximaDecisao": "O cyberspace ganha um produto ou o subdomínio passa a servir outra coisa?"
+  },
+  "compass": {
+    "oQueE": "Monitor de uso de IA para dev: um daemon em Go mede consumo de token e custo, e um painel em Next mostra.",
+    "paraQuem": "Dev e time que gastam com Claude e GPT sem saber quanto.",
+    "estado": "no-ar-inutilizavel",
+    "dinheiro": "R$ 0 — o Stripe está no código com as 4 chaves em branco: literalmente não há como cobrar.",
+    "oQueTrava": "Faltam três painéis de terceiro (Stripe, GitHub OAuth, Resend). Sem eles não há login, e-mail nem cobrança — e não há uma linha de código a escrever.",
+    "proximaDecisao": null
+  },
+  "orion": {
+    "oQueE": "Protótipo de ERP com IA. Três planos existem no código (R$ 99,90 a R$ 999,90), sem checkout e sem cliente.",
+    "paraQuem": "PME que compraria ERP; nunca foi validado com ninguém real.",
+    "estado": "prototipo",
+    "dinheiro": "R$ 0 — o preço só existe dentro do schema.org e do PLANS do código.",
+    "oQueTrava": "Nunca teve cliente. Até 30/07 o site inflava número e prêmio inexistentes; isso saiu, e o que sobra é ERP sem validação.",
+    "proximaDecisao": "Matar ou investir? Não existe meio-termo — ERP é caro de manter."
+  },
+  "qprime": {
+    "oQueE": "Site de outsourcing de impressão da QPrime, operação real de Goiânia com 25 anos e +300 contratos ativos.",
+    "paraQuem": "Empresa em Goiânia que terceiriza parque de impressoras. O cliente aqui é a QPrime, não o usuário final.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 para a ROI Labs — a receita da operação é da QPrime, e aqui o caminho é lead-gen, sem checkout.",
+    "oQueTrava": "O cliente mora num subdomínio de roilabs.com.br: o host não é dele e o SEO se mistura com o do portfólio.",
+    "proximaDecisao": "A QPrime vai para domínio próprio — e nesse caso quem paga o quê?"
+  },
+  "portfolio": {
+    "oQueE": "CV e portfólio do Jean Zorzetti ('Full-Stack Engineer, AI-augmented').",
+    "paraQuem": "Recrutador e cliente. Não vende e não deve vender.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0, por design.",
+    "oQueTrava": "Nada. É o único em host de fornecedor (*.vercel.app) e isso é decisão do Jean, não pendência.",
+    "proximaDecisao": null
+  },
+  "vertice": {
+    "oQueE": "SaaS que automatiza o onboarding de cliente novo em agência: portal white-label, magic link e cobrança automática de pendência. Repo vertice — NÃO é o verticemarketing, que é site de agência.",
+    "paraQuem": "Agência que perde tempo coletando material e acesso de cliente novo. Starter R$ 97/mês, Pro R$ 197/mês.",
+    "estado": "no-ar",
+    "dinheiro": "R$ 0 — tem o preço público mais claro do portfólio e nenhuma assinatura.",
+    "oQueTrava": "Ninguém sabe se o /signup cria conta de verdade: a medição que separa 'SaaS parado' de 'landing sem backend' nunca foi feita.",
+    "proximaDecisao": "Se o /signup funcionar, vale reativar um produto parado desde 03/03 ou o esforço vai para outro lugar?"
+  },
+  "pathfinder": {
+    "oQueE": "Testes de autoconhecimento (MBTI, Big Five, Eneagrama) com conteúdo sobre propósito de carreira.",
+    "paraQuem": "Quem procura teste de personalidade — anunciado como gratuito.",
+    "estado": "no-ar-inutilizavel",
+    "dinheiro": "R$ 0 e sem caminho: o produto é anunciado como gratuito.",
+    "oQueTrava": "pathback.roilabs.com.br é NXDOMAIN (confirmado 31/07): o rewrite /api/* não tem para onde ir. O sitemap foi consertado em 30/07, o produto não.",
+    "proximaDecisao": "Sobe o backend ou o app vira 100% estático (os testes já rodam com dados locais)?"
+  }
+}
