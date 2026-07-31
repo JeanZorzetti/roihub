@@ -1,5 +1,23 @@
 # ROI Hub — handoff
 
+> ▶️ **PRÓXIMO PASSO — DEEP-RESEARCH: harness de agente para o roihub —
+> [`handoff/handoff-deep-research-harness-de-agente.md`](handoff/handoff-deep-research-harness-de-agente.md)
+> (31/07, 10h45).**
+> 🚨 **A pergunta NÃO é "qual harness instalar do zero" — ele já existe e roda todo dia:**
+> `claude-code` global no `Dockerfile:19`, pool plural de tokens de assinatura
+> (`CLAUDE_CODE_OAUTH_TOKENS`), `spawn` cru em `lib/autopublish-clients.ts:176`, cron do Actions às
+> 00:13 → `/api/seo/autopublish`, fila girada 1 passo/dia contra rate limit.
+> **O buraco é outro: o roihub não tem `.claude/` nenhum** — sem `CLAUDE.md`, skill, hook ou
+> subagent, toda sessão redescobre `listProjects()`, "teste é `node --test` sem framework" e
+> "deploy é EasyPanel, não Vercel" do zero.
+> Quatro perguntas: **(A)** o Agent SDK autentica por assinatura ou exige API key paga? — decisiva,
+> **não responder de memória**; **(B)** o que vai em `.claude/` (rodar
+> `/claude-automation-recommender` ANTES da web); **(C)** alternativas, com filtro duro de ToS —
+> token de assinatura em cliente de terceiro = ban ([[claude_subscription_agents_official_vs_thirdparty]]);
+> **(D)** agente em Alpine + o corte de ~300s do proxy do EasyPanel.
+> ⚠️ **Se A der SDK, NÃO implementar na mesma sessão** — é o caminho crítico que publica 10 projetos
+> às 00:13. Deep-research é disparada pelo Jean, não pelo agente.
+>
 > ✅ **A ABA `/resumo` ESTÁ NO AR (31/07, 10h30) —
 > [`handoff/handoff-resumo-entregue-e-as-26-decisoes.md`](handoff/handoff-resumo-entregue-e-as-26-decisoes.md)**
 > (plano: [`handoff/handoff-pagina-resumo-executivo.md`](handoff/handoff-pagina-resumo-executivo.md)).
