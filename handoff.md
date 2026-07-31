@@ -2,7 +2,21 @@
 
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
-> 1️⃣ ✅ **A FRENTE DO ATMA ENCERROU (31/07, 07h50) —
+> 1️⃣ ▶️ **O TRABALHO DA PRÓXIMA SESSÃO É O `sirius` —
+> [`handoff/handoff-proximo-passo-31-07.md`](handoff/handoff-proximo-passo-31-07.md) (31/07).**
+> É o mais bem colocado do ranking entre os que uma sessão resolve (45; o `atma` virou espera e o
+> `goiania` é painel do Bing), tem **gate datado em 31/08** — ≥ 5 cliques não-branded/28d, **hoje 2** —
+> e a medição por query/país/página desmonta o plano do card:
+> 🚨 **`agaas` não é query brasileira** (5 das 85 impressões são do BR; os 2 cliques vieram de AUS e
+> USA) — é trabalho de **CTR**, não de posição.
+> 🚨 **Duas canibalizações medidas**, com causa confirmada no HTML servido: `crm roi` partido entre
+> `/blog/roi-de-crm` (pos 24,3) e `/ferramentas/calculadora-roi-agencias` (pos 44,0), e `crm solar`
+> partido entre a página PT e a EN — que servem **zero `hreflang`** e são `canonical` de si mesmas.
+> 🚨 **O volume não está no `agaas`:** um cluster solar em pt-BR soma ~215 impressões numa página só,
+> toda em posição 26–41.
+> ⚠️ **`sirius` não tem clone local** (`AGI_Sirius` é outra coisa, nem repo git é) — `git clone` antes.
+>
+> ✅ **A FRENTE DO ATMA ENCERROU (31/07, 07h50) —
 > [`handoff/handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md).**
 > O Jean pediu a reindexação na UI e a URL Inspection confirma: **as 5 URLs voltaram para
 > `Submitted and indexed`**, `verdict: PASS`, com **`lastCrawlTime` do próprio 31/07** — contra os
@@ -198,7 +212,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md) | **comece por aqui**: o desfecho da frente mais cara do portfólio — as 5 URLs do Atma medidas em `Submitted and indexed` com crawl de 31/07, o script novo `scripts/inspect-url.mjs`, e por que o resubmit do sitemap (22h55 BRT) reindexou 2 delas antes do pedido manual. O que NÃO concluir: tráfego ainda não reagiu, `decay` fica em 10 | ✅ encerrado 31/07 — só resta reconferir a série em ~14 dias |
+| [`handoff-proximo-passo-31-07.md`](handoff/handoff-proximo-passo-31-07.md) | **comece por aqui numa sessão de trabalho**: o próximo passo é o `sirius` e o gate de 31/08 (≥5 cliques não-branded/28d, hoje 2). Traz a medição por query/país/página que desmonta o plano do card — `agaas` é query internacional, `crm roi` e `crm solar` estão canibalizados, e o par PT/EN serve **zero `hreflang`** — mais a ordem de execução (hreflang → dono do `crm roi` → CTR do `agaas` → só então conteúdo solar) | 🟢 vivo (31/07) — frente ativa |
+| [`handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md) | o desfecho da frente mais cara do portfólio — as 5 URLs do Atma medidas em `Submitted and indexed` com crawl de 31/07, o script novo `scripts/inspect-url.mjs`, e por que o resubmit do sitemap (22h55 BRT) reindexou 2 delas antes do pedido manual. O que NÃO concluir: tráfego ainda não reagiu, `decay` fica em 10 | ✅ encerrado 31/07 — só resta reconferir a série em ~14 dias |
 | [`handoff-proximo-passo-atma-executado.md`](handoff/handoff-proximo-passo-atma-executado.md) | o que as 3 tarefas viraram em 30/07 e o que sobrou (pedido manual de indexação do Atma + verificar 2 deploys no ar). Traz os 2 achados que só apareceram abrindo o código: o `AggregateOffer` do `orion` também era inventado (4 planos de R$ 299–1.499 contra 3 planos reais) e o sitemap do `pathfinder` listava rotas inexistentes — consertar o DNS do backend teria devolvido um sitemap de 404s | ✅ executado 30/07 — o que sobrava fechou em 31/07 |
 | [`handoff-proximo-passo-atma.md`](handoff/handoff-proximo-passo-atma.md) | a receita das 3 tarefas — **ainda é onde estão as 5 URLs do Atma na ordem de valor** e como MEDIR se a reindexação pegou (`coverageState`, não tráfego). O passo manual foi feito pelo Jean em 31/07 e medido no handoff do topo | ✅ executado 30–31/07 |
 | [`handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) | a medição por trás da frente acima: a curadoria fechou (20 → 35, zero não-curados) e destravou o achado mais caro do portfólio — **o Atma desindexado, −98% de impressões, com a queda datada em 09→10/06** — mais o `aggregateRating` fabricado do `orion` num subdomínio de `roilabs.com.br` e o sitemap em 502 `DNS_HOSTNAME_NOT_FOUND` do `pathfinder`. Traz o estado de índice dos 15 e o defeito da régua de score | 🟢 vivo (30/07) — frente ativa |
