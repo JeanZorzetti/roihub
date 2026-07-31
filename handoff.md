@@ -1,9 +1,23 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — fase 3: híbrido + reranking, medido contra o dourado** (camada 6 de
-> [`docs/rag-arquitetura.md`](docs/rag-arquitetura.md)). **Só mantém o reranker se ele ganhar no
-> dourado.** Depois: abrir as 5 lacunas (`BKP`, `CST`, `OBS`, `PRV`, `A11Y`), **com a checagem
-> definida antes da norma**.
+> ▶️ **PRÓXIMO PASSO — fase 4: contextual retrieval, medido igual** (o piso a bater é
+> `--min 0.83`, o teto é 93,3% de recall@50). Depois: abrir as 5 lacunas (`BKP`, `CST`, `OBS`,
+> `PRV`, `A11Y`), **com a checagem definida antes da norma**.
+>
+> ✅ **A RECUPERAÇÃO VIROU NÚMERO (31/07) —
+> [`handoff/handoff-fase3-hibrido-medido.md`](handoff/handoff-fase3-hibrido-medido.md)**.
+> Fase 3 fechada: `node scripts/avaliar.mjs` mede BM25 (82,3% recall@10), denso (76,7%) e
+> **híbrido (83,0%)** sobre 258 docs, com `lib/corpus.mjs` · `lib/bm25.mjs` · `lib/denso.mjs` ·
+> `lib/busca.mjs` e `test/busca.test.mjs` no `npm test` (**153 verdes**). Zero dependência nova,
+> zero Postgres: 258 docs indexam em 40 ms na memória.
+> 🚨 **O vetor perde sozinho em tudo, menos onde o BM25 é cego** — −5,6 pontos no agregado,
+> **+18,7 na camada `estado`**. Medir por camada é o que impediu de descartar o único ganho real.
+> **`c = 60` da RRF (o valor de manual) deixava a fusão ABAIXO do BM25 sozinho**; com `c = 10`
+> passa. **Reranker recusado por falta de prova** — teto medido de 10,3 pontos, sem cross-encoder
+> local viável. E o que sobrou de buraco (camada `estado`, 42,7%) **não é índice ruim, é fonte
+> errada**: "quantos projetos hoje" mora no GitHub/GSC/banco, não em texto.
+> ⚠️ **Produção não tem Ollama** — hoje quem consome usa BM25; o híbrido é o vencedor *quando há
+> embedder*.
 >
 > ✅ **O CONJUNTO DOURADO EXISTE (31/07) — 78 perguntas —
 > [`handoff/handoff-conjunto-dourado.md`](handoff/handoff-conjunto-dourado.md)**.

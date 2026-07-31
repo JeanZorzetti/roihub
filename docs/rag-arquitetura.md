@@ -46,6 +46,31 @@ sai de circulação e continua auditável.
 Filtrar depois é o que faz RAG parecer burro: acha 10 bons, descarta 8 por data, sobram 2
 ruins.
 
+### Medido em 31/07 (`node scripts/avaliar.mjs`, 258 docs, 78 perguntas)
+
+| recall@10 | todas | protocolo (65) | estado (8) | episódio (5) |
+|---|---|---|---|---|
+| BM25 | 82,3% | **90,4%** | 21,9% | 73,3% |
+| denso (nomic-embed-text) | 76,7% | 81,0% | 40,6% | 78,3% |
+| **híbrido (RRF)** | **83,0%** | 88,3% | **42,7%** | 78,3% |
+
+Três coisas que só apareceram por medir, e que valem mais que o número agregado:
+
+1. **O denso perde sozinho em tudo, menos onde o BM25 é cego.** Ele custa 5,6 pontos no
+   agregado e ganha 18,7 na camada `estado` — a camada sem termo raro ("qual o gate do
+   sirius", "quantos projetos o hub tem hoje"). Fusão só se paga por causa dessa camada.
+2. **`c = 60` da literatura estava errado aqui.** Com o valor de manual a fusão fica *abaixo*
+   do BM25 sozinho (81,0%); com `c = 10` vai a 83,0%. Com dois rankings curtos, `c` alto
+   achata a diferença de posição, que é justamente o sinal. Está comentado em `lib/busca.mjs`.
+3. **O teto do reranker é 10,3 pontos** — a distância entre recall@50 (93,3%) e recall@10
+   (83,0%). Acima disso ele não tem o que reordenar: o doc certo não está nos 50. Reranker
+   **não foi construído**: sem cross-encoder local viável nesta máquina, não há como provar
+   que ganha, e o doc não guarda o que não mede.
+
+**O buraco não é qualidade de índice, é índice errado.** As 8 perguntas de `estado` param em
+42,7% porque a resposta ("quantos projetos hoje") não mora em texto — mora no GitHub, no GSC e
+no banco. Perseguir isso com embedding melhor é otimizar o índice que não tem a resposta.
+
 ## Camada 2 — Contextual Retrieval
 
 Técnica publicada pela Anthropic: antes de embedar, 2 linhas situando o chunk no documento.
@@ -137,7 +162,7 @@ verificar é resposta que ele vai re-derivar — e aí o índice não economizou
 
 1. Ontologia, schema, modelo bitemporal ← decide tudo que vem depois
 2. Ingestão do corpus atual + extração estruturada + conjunto dourado
-3. Híbrido + reranking, medido contra o dourado
+3. ✅ Híbrido medido contra o dourado (31/07) — reranking recusado por falta de prova
 4. Contextual retrieval, medido — mantém só se ganhar
 5. Manifesto por repo + verificação de conformidade
 6. Grafo + propagação de lição entre projetos
