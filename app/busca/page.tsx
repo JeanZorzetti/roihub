@@ -1,5 +1,8 @@
 import { carregarCorpus } from "@/lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "@/lib/bm25.mjs";
+import { buscarDenso, MODELO } from "@/lib/denso.mjs";
+import { lerCorpus, lerVetores } from "@/lib/corpus-db.mjs";
+import { rrf } from "@/lib/busca.mjs";
 import { Tabs } from "../tabs";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +15,42 @@ type Doc = { id: string; tipo: string; titulo: string; texto: string };
 type Achado = { id: string; tipo: string; score: number };
 
 // Índice em escopo de módulo: 259 docs custam ~150 ms para ler e tokenizar, e refazer isso a
-// cada requisição seria desperdício puro — o corpus só muda em deploy.
+// cada requisição seria desperdício puro — o corpus só muda em deploy ou em reindexação.
+//
+// União do disco com o banco, e não um ou outro: no dev o disco tem protocolos, handoffs E as
+// memórias (que ficam em ~/.claude); no container só existem os dois primeiros, e as memórias
+// vêm do hub_corpus. O disco ganha em caso de empate, porque é o que está mais fresco.
 let cache: { docs: Doc[]; indice: ReturnType<typeof indexar> } | null = null;
-function getIndice() {
+async function getIndice() {
   if (!cache) {
     const docs = carregarCorpus() as Doc[];
+    const noDisco = new Set(docs.map((d) => d.id));
+    if (process.env.DATABASE_URL) {
+      try {
+        for (const d of (await lerCorpus()) as Doc[]) if (!noDisco.has(d.id)) docs.push(d);
+      } catch {
+        // Banco fora: a aba ainda responde com o que está no disco.
+      }
+    }
     cache = { docs, indice: indexar(docs) };
   }
   return cache;
+}
+
+// Vetores do corpus: leitura única (~4 MB), na primeira busca. Sem DATABASE_URL, sem vetores
+// gravados ou sem OLLAMA_URL a aba cai para BM25 — 82,3% em vez de 83,0%, degrada em vez de
+// quebrar. Só o `undefined` significa "ainda não tentei"; `null` é "tentei e não tem".
+let vetores: { chunks: { id: string; tipo: string }[]; vetores: number[][] } | null | undefined;
+async function getVetores() {
+  if (vetores === undefined) {
+    try {
+      vetores = process.env.DATABASE_URL && process.env.OLLAMA_URL ? await lerVetores(MODELO) : null;
+      if (vetores && !vetores.vetores.length) vetores = null;
+    } catch {
+      vetores = null;
+    }
+  }
+  return vetores;
 }
 
 const ONDE: Record<string, (id: string) => string> = {
@@ -44,10 +75,24 @@ function trecho(texto: string, termos: string[]): string {
 
 export default async function Busca({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  const { docs, indice } = getIndice();
+  const { docs, indice } = await getIndice();
   const termos = tokenizar(q) as string[];
-  const achados: Achado[] = q.trim() ? buscar(indice, q, 10) : [];
+
+  let achados: Achado[] = q.trim() ? buscar(indice, q, 10) : [];
+  let motor = "BM25";
+  const denso = q.trim() ? await getVetores() : null;
+  if (denso) {
+    try {
+      // Busca 20 de cada lado e funde: a RRF precisa de cauda para ter o que reordenar.
+      achados = rrf([buscar(indice, q, 20), await buscarDenso(denso, q, 20)], { k: 10 });
+      motor = "BM25 + vetor";
+    } catch {
+      // Ollama fora do ar não derruba a aba: fica o BM25, e o rodapé conta qual motor respondeu.
+    }
+  }
   const porId = new Map(docs.map((d) => [d.id, d]));
+  // Vetor de doc que saiu do corpus (reindexação pendente) devolve id sem texto para renderizar.
+  achados = achados.filter((r) => porId.has(r.id));
   const tipos = docs.reduce<Record<string, number>>((a, d) => ({ ...a, [d.tipo]: (a[d.tipo] ?? 0) + 1 }), {});
 
   return (
@@ -98,8 +143,8 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
       </ol>
 
       <p className="foot">
-        BM25 · recall@10 medido em 82,3% contra as 78 perguntas de <code>data/dourado.json</code> (
-        <code>node scripts/avaliar.mjs</code>).{" "}
+        {motor} · recall@10 medido em {motor === "BM25" ? "82,3%" : "83,0%"} contra as 78 perguntas de{" "}
+        <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {!tipos.memoria && "⚠️ Sem as memórias neste ambiente: 72 das 160 fontes do dourado não estão no índice."}
       </p>
     </main>

@@ -16,8 +16,12 @@
 > passa. **Reranker recusado por falta de prova** — teto medido de 10,3 pontos, sem cross-encoder
 > local viável. E o que sobrou de buraco (camada `estado`, 42,7%) **não é índice ruim, é fonte
 > errada**: "quantos projetos hoje" mora no GitHub/GSC/banco, não em texto.
-> ⚠️ **Produção não tem Ollama** — hoje quem consome usa BM25; o híbrido é o vencedor *quando há
-> embedder*.
+> ✅ **E virou aba:** `/busca` no hub, híbrida (`BM25 + vetor`), ~200 ms morno. Corpus e vetores
+> em `hub_corpus`/`hub_embeddings` — é o que põe as **123 memórias** (que moram em `~/.claude`,
+> fora do repo) dentro do container. Reindexar: `node --env-file=.env scripts/indexar.mjs`.
+> ⚠️ **Falta `OLLAMA_URL=http://sofia_ollama:11434` na env do hub no EasyPanel** — sem ela a aba
+> roda BM25 (degrada, não quebra). 🚨 **E o Ollama da VPS está exposto na internet sem
+> autenticação.**
 >
 > ✅ **O CONJUNTO DOURADO EXISTE (31/07) — 78 perguntas —
 > [`handoff/handoff-conjunto-dourado.md`](handoff/handoff-conjunto-dourado.md)**.

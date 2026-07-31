@@ -66,11 +66,45 @@ resposta. O caminho é a camada 4 (manifesto/pull), não um vetor melhor.
 node scripts/avaliar.mjs --motor bm25            # não precisa de Ollama, 100 ms
 node scripts/avaliar.mjs                         # os três motores (precisa de Ollama)
 node scripts/avaliar.mjs --motor hibrido --min 0.83   # exit 1 se cair
+node --env-file=.env scripts/indexar.mjs         # recalcula e grava corpus + vetores no Postgres
 ```
 
-⚠️ **Produção não tem Ollama** (Docker/EasyPanel). Quem consumir isto hoje usa BM25; o híbrido é
-o vencedor medido *quando há embedder*. Decidir onde o embedder vive é assunto da fase 7
-(interfaces), não desta.
+## A aba `/busca` (fechada na mesma sessão)
+
+Sétima aba do hub, casca fina sobre `lib/busca.mjs`: formulário GET, renderizada no servidor, sem
+client component. **Híbrido em produção** (`BM25 + vetor` no rodapé), ~200 ms morno.
+
+**Onde o corpus mora, e por quê:**
+
+| | Disco | Postgres (`hub_corpus`, `hub_embeddings`) |
+|---|---|---|
+| protocolos, handoffs | ✅ (`outputFileTracingIncludes`) | ✅ |
+| **123 memórias** | só no dev (`~/.claude`) | ✅ — **é o que as põe em produção** |
+| 1.305 vetores | — | ✅ |
+
+A aba **une** as duas fontes, disco ganhando o empate. Sem isso o container teria o vetor da
+memória e não teria o texto: devolveria um id que não sabe renderizar. São 72 das 160 fontes do
+dourado — metade do valor da busca.
+
+**Reindexar é manual e de máquina com Ollama:** `node --env-file=.env scripts/indexar.mjs`
+(~11 min do zero, segundos com o cache de `.cache/`). O container **não** recalcula ao subir.
+
+**Três armadilhas que custaram sessão e estão fechadas:**
+
+1. `new URL("../data/…", import.meta.url)` é lido pelo Turbopack como asset estático — a aba cai
+   em `Module not found` (e a variante do `.cache` derruba na importação, mesmo sem uso). Use
+   `join(dirname(fileURLToPath(import.meta.url)), …)`.
+2. `output: "standalone"` **não copia arquivo lido em runtime**. Sem `outputFileTracingIncludes`
+   o container sobe com índice vazio — e a aba responde 200 mostrando nada.
+3. Ollama fora do ar não pode pendurar a aba: `fetch` do Node só desiste em 300s. Timeout de 10s
+   na consulta e `catch` que cai para BM25.
+
+⚠️ **Falta ligar em produção:** `OLLAMA_URL=http://sofia_ollama:11434` na env do serviço do hub
+no EasyPanel (o `nomic-embed-text` já foi puxado lá em 31/07). Sem a var a aba roda BM25 —
+degrada, não quebra.
+
+🚨 **O endpoint público do Ollama (`sofia-ollama.7c17iw.easypanel.host`) está sem autenticação** —
+consultei modelos e rodei embedding de fora sem credencial. Fechar para a rede interna.
 
 ## ▶️ Próximo passo
 

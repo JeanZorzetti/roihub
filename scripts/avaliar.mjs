@@ -36,9 +36,9 @@ const motores = { bm25: async (q) => buscar(ixBM25, q, K_MAX) };
 if (quais !== "bm25") {
   const ixDenso = await indexarDenso(docs);
   console.log(`denso: ${ixDenso.chunks.length} chunks, ${MODELO}`);
-  motores.denso = (q) => buscarDenso(ixDenso, q, K_MAX);
+  motores.denso = (q) => buscarDenso(ixDenso, q, K_MAX, { cache: true });
   motores.hibrido = async (q) =>
-    rrf([buscar(ixBM25, q, K_MAX), await buscarDenso(ixDenso, q, K_MAX)], { k: K_MAX });
+    rrf([buscar(ixBM25, q, K_MAX), await buscarDenso(ixDenso, q, K_MAX, { cache: true })], { k: K_MAX });
 }
 const escolhidos = quais === "todos" ? Object.keys(motores) : [quais];
 
