@@ -56,15 +56,15 @@
     "repo": "estetia-demo",
     "receita": 6,
     "receitaNota": "Leads da landing chegam no Sirius (verificado E2E 11/07); falta tráfego + fechamento",
-    "blockers": 2,
+    "blockers": 1,
     "blockersLista": [
-      "O sitemap de estetia.estetiacrm.com.br está submetido desde 10/06 mas com errors:1 e sem contents — o Google aceitou o arquivo e não processou nenhuma URL (conferido pela API do GSC em 31/07)"
+      "2 URLs de 26 seguem 'URL is unknown to Google' — /termos e /blog/como-atrair-pacientes-clinica-de-estetica (ambas 200 e linkadas internamente). Request Indexing é manual na UI do GSC"
     ],
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
-    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador typescript-post, pré-voo OK em 25/07 contra src/lib/blog/index.ts — se alguém mexer nesse index.ts, rodar o pré-voo de novo antes do próximo run (o registryUpsert falha fechado em render:registry-format). Run agora à 00:13 BRT: conferir /seo de manhã (a linha do fabrica, o build do site no EasyPanel e a URL do artigo em 200). MANUAL (Jean, GSC UI) — repo do site: C:/dev/estetia-demo. ✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
-    "acao": "Destravar o sitemap do blog no GSC: já foi submetido em 10/06 e voltou com errors:1 e ZERO conteúdo processado (hoje serve 26 <loc> em 200/XML) — resubmeter pela API e inspecionar os artigos"
+    "acaoDesc": "★ CARD ANTERIOR ERRADO — corrigido em 31/07 pela URL Inspection API nas 26 URLs do sitemap: 24 voltaram 'Submitted and indexed', incluindo 20 dos 21 artigos. O 'errors: 1' do sitemap é REAL e persiste (Google rebaixou o arquivo hoje às 00:46 e de novo às 11:50 no resubmit, ainda sem o campo 'contents'), mas NÃO está bloqueando indexação — provado URL a URL. Sitemap resubmetido em 31/07 11:50 nas duas propriedades (sc-domain:estetia.estetiacrm.com.br e sc-domain:estetiacrm.com.br); voltou isPending=true, reconferir em ~48h se o errors:1 cai. Suspeita do erro, não confirmada: o <image:image> que o Next.js emite ENTRE <loc> e <lastmod>, fora da sequência do XSD de sitemaps.org — não mexer sem o detalhe do erro na UI do GSC, porque a indexação está funcionando e o risco de regressão é maior que o ganho. Faltam só 2 Request Indexing manuais. AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador typescript-post, pré-voo OK em 25/07 contra src/lib/blog/index.ts — se alguém mexer nesse index.ts, rodar o pré-voo de novo antes do próximo run (o registryUpsert falha fechado em render:registry-format). Run agora à 00:13 BRT: conferir /seo de manhã (a linha do fabrica, o build do site no EasyPanel e a URL do artigo em 200). MANUAL (Jean, GSC UI) — repo do site: C:/dev/estetia-demo. ✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
+    "acao": "Nada de SEO técnico: 24/26 URLs estão 'Submitted and indexed' (20 dos 21 artigos). O gargalo agora é TRÁFEGO e conversão, não indexação"
   },
   {
     "slug": "roilabs",
@@ -186,16 +186,16 @@
     "gscInicio": "2026-07-30",
     "receita": 7,
     "receitaNota": "ÚNICO dos 9 que fatura hoje: checkout Kiwify vivo (200), R$ 47,90 de R$ 97, GA4 e blog no ar",
-    "blockers": 3,
+    "blockers": 1,
     "blockersLista": [
-      "og:image aponta pra imagem genérica do Lovable (lovable.dev/opengraph-image) — todo compartilhamento sai sem marca",
-      "Publica SÓ por deploy manual de frontend-next/ — build de git dá ERROR em todo commit"
+      "✅ RESOLVIDO E VERIFICADO NO AR 31/07: og:image e twitter:image agora servem /og.png próprio (1200x630); era o placeholder do lovable.dev",
+      "✅ RESOLVIDO 31/07: o build de git falhava em 5s ('no such file or directory: /vercel/path0/package.json') porque o Root Directory da Vercel era '/' e o app vive em frontend-next/. Corrigido via API — push volta a publicar sozinho, sem deploy manual"
     ],
     "seoSeed": 3,
     "decay": 3,
     "decayNota": "Site 200, checkout 200, blog e schema InStock no ar",
     "acaoDesc": "Renomeado de financeiro-obras → orcaobra em 30/07 (nome escolhido pelo Jean; host antigo em 308). Curadoria medida em 30/07: é o único dos 9 renomeados com caminho de receita REAL e verificado — checkout Kiwify pay.kiwify.com.br/r85uk0S responde 200, preço R$ 47,90 (de R$ 97,00), GA4 G-94LVZJ1VPS instalado, schema.org com InStock e Instagram @reforma.maestro ligado. Produto é entregável (planilha Excel), não SaaS: não depende de backend, então não tem o problema dos irmãos. GSC zerado porque o sitemap entrou em 30/07 — a série começa agora, primeira leitura útil em ~28 dias. Duas coisas custam dinheiro hoje: a og:image genérica do Lovable (todo share sai sem marca) e o fato de publicar só manualmente. Repo: reforma-maestro, app em frontend-next/.",
-    "acao": "Trocar a og:image genérica do Lovable por uma da planilha — é o único com checkout vivo"
+    "acao": "Sem blocker técnico: OG card próprio no ar e o deploy por git consertado. É o único com checkout vivo — próximo passo é tráfego"
   },
   {
     "slug": "cardiorisk",
@@ -205,16 +205,16 @@
     "gscInicio": "2026-07-30",
     "receita": 2,
     "receitaNota": "Landing no ar, mas o produto NÃO funciona: a API que ele chama não existe",
-    "blockers": 7,
+    "blockers": 6,
     "blockersLista": [
       "cardioapi.roilabs.com.br é NXDOMAIN e é o default de API_BASE_URL em frontend/app/utils/api.ts — toda análise falha",
-      "H1 ainda é 'Sistema IA Médica' (o <title> foi corrigido em 30/07, o H1 do componente não)"
+      "✅ RESOLVIDO E VERIFICADO NO AR 31/07: o H1 era 'Sistema IA Médica' e agora bate com o <title> ('CardioCare AI — Análise de Risco Cardiovascular')"
     ],
     "seoSeed": 2,
     "decay": 6,
     "decayNota": "Front em 200, backend inexistente — saúde aparente engana",
     "acaoDesc": "Renomeado de cardio-risk-insight-hub → cardiorisk em 30/07, e ABSORVEU o cardioqwen3code: o Jean decidiu que eram o mesmo produto, o repo do irmão já tinha sido apagado do GitHub, e o host dele agora é 308 pra cá. Os títulos estavam trocados entre os dois; o <title> foi corrigido pra 'CardioCare AI' (nome do README), mas o H1 do componente segue 'Sistema IA Médica'. O blocker que importa é outro: frontend/app/utils/api.ts tem 'https://cardioapi.roilabs.com.br' como default de API_BASE_URL e esse host é NXDOMAIN — verificado ao vivo em 30/07. A landing responde 200 e o health check vai dizer que está tudo bem, mas nenhuma análise de risco roda. Decidir vale mais que codar aqui: subir o backend (FastAPI, está no repo com datasets e dashboard_medico.py) ou assumir que é vitrine e tirar o formulário.",
-    "acao": "Decidir: sobe o backend FastAPI ou vira vitrine? Hoje a landing promete o que a API morta não entrega"
+    "acao": "Decidir: sobe o backend FastAPI ou vira vitrine? Hoje a landing promete o que a API morta não entrega. O H1 já foi corrigido (31/07)"
   },
   {
     "slug": "tapevision",
@@ -243,16 +243,16 @@
     "gscInicio": "2026-07-30",
     "receita": 2,
     "receitaNota": "Conteúdo no ar, sem cobrança de nenhum tipo; área logada depende de API morta",
-    "blockers": 6,
+    "blockers": 5,
     "blockersLista": [
       "arquiteturaapi.roilabs.com.br é NXDOMAIN e está em VITE_API_URL do .env.production",
-      "og:image aponta pra arquiteturadopotencial.com — domínio que não existe, share sai sem imagem"
+      "✅ RESOLVIDO E VERIFICADO NO AR 31/07: og:image, twitter:image e twitter:url apontavam para arquiteturadopotencial.com (NXDOMAIN); agora servem /og-image.png no domínio próprio"
     ],
     "seoSeed": 2,
     "decay": 5,
     "decayNota": "Conteúdo estático em 200; backend e /admin sem host",
     "acaoDesc": "Renomeado de potencial-arquitetado → potencialarquitetado em 30/07 (host antigo em 308). Curadoria medida: VITE_API_URL aponta pra arquiteturaapi.roilabs.com.br/api, host que não resolve — então o backend/server.js e o /admin descritos no SISTEMA_PRONTO.md não têm onde rodar. A parte de conteúdo (frameworks de soft skills e carreira) é estática e funciona sozinha. Achado de borda: a og:image no index.html aponta pra 'arquiteturadopotencial.com' (sem .roilabs), domínio inexistente — todo compartilhamento sai sem imagem. Nenhum sinal de cobrança no código: se a tese é vender curso ou comunidade, não existe caminho de checkout hoje.",
-    "acao": "Corrigir a og:image (aponta pra domínio inexistente) e decidir se o conteúdo vira produto pago"
+    "acao": "Decidir se o conteúdo vira produto pago — a og:image já foi corrigida (31/07). Sem essa decisão não vale mexer em mais nada aqui"
   },
   {
     "slug": "matchfios",
@@ -506,18 +506,19 @@
     "repo": "compass",
     "receita": 3,
     "receitaNota": "Stripe está no código mas as 4 chaves estão VAZIAS no .env — produto no ar, não cobrável",
-    "blockers": 7,
+    "blockers": 6,
     "blockersLista": [
       "🚨 As 4 chaves do Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão vazias — não há como cobrar",
       "Faltam GitHub OAuth e Resend: sem eles não há login nem e-mail transacional",
       "'URL is unknown to Google': o Google nunca sequer descobriu o host",
-      "/sitemap.xml responde 404 — nada aponta o Google para o site"
+      "✅ RESOLVIDO E VERIFICADO NO AR 31/07: /sitemap.xml e /robots.txt respondiam 404; agora servem web/src/app/sitemap.ts e robots.ts (/ e /pricing), e o sitemap foi submetido em sc-domain:polarisia.com.br",
+      "⚠️ O build por git NÃO funciona aqui e continua assim: com Root Directory '/' ele morre em 'no such file or directory: /vercel/path0/package.json'; com 'web' ele compila mas quebra em 'ENOENT .next/routes-manifest-deterministic.json' na hora de publicar (Next 16.2.6, sem cache, reproduzido 2x). Root Directory foi revertido para '/' porque o link .vercel mora DENTRO de web/ e 'web' fazia o CLI procurar web/web. Publicar aqui = 'npx vercel --prod' de dentro de web/"
     ],
     "seoSeed": 2,
     "decay": 5,
     "decayNota": "Home 200 desde o deploy, mas invisível ao Google e sem cobrança ligada",
     "acaoDesc": "Está no ar em compass.polarisia.com.br e não é usável nem cobrável — o que já estava registrado, e ficou CONFIRMADO por medição em 30/07 em vez de herdado. No repo local, web/.env existe e o grep de chaves STRIPE preenchidas devolve ZERO: STRIPE_SECRET_KEY, STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_LIFETIME e STRIPE_WEBHOOK_SECRET estão todas em branco, exatamente como no .env.example. O código do Stripe existe (web/package.json, rotas de webhook), então não é trabalho de programação: é painel de terceiro, sem uma linha de código para escrever. Faltam também GitHub OAuth e Resend. Do lado de busca o quadro é o pior possível entre os quinze junto com o pathfinder: URL Inspection devolve 'URL is unknown to Google' — o Google nem descobriu o host — e /sitemap.xml responde 404, o que explica por quê: não há nada apontando o crawler para lá. GSC 0/0 na propriedade sc-domain:polarisia.com.br. Receita 3 e não menos porque o produto tem preço definido e o caminho de pagamento está construído; falta virar a chave. Como o próprio .env.example avisa, webhook morto significa cliente paga e não recebe — então a ordem importa: chaves e webhook antes de qualquer divulgação.",
-    "acao": "Preencher as 4 chaves do Stripe na EasyPanel — é painel de terceiro, não tem código a escrever"
+    "acao": "Preencher as 4 chaves do Stripe na EasyPanel — é painel de terceiro, não tem código a escrever. O sitemap saiu do 404 em 31/07, falta submeter no GSC"
   },
   {
     "slug": "orion",
@@ -577,18 +578,18 @@
     "repo": "vertice",
     "receita": 3,
     "receitaNota": "Preço público de verdade (Starter R$ 97/mês, Pro R$ 197/mês, trial 14 dias) mas o CTA principal é href='#'",
-    "blockers": 5,
+    "blockers": 4,
     "blockersLista": [
-      "A navbar serve href=\"#\" em Funcionalidades, Integrações e Preços — o CTA da hero NÃO: os 5 botões apontam para /signup, que responde 200 (conferido por curl em 31/07; o card anterior dizia o contrário)",
-      "/sitemap.xml responde 404",
-      "'Crawled - currently not indexed', último crawl em 23/05",
-      "Sem push desde 03/03 — cinco meses"
+      "A navbar serve href=\"#\" em Funcionalidades, Integrações e Preços — o CTA da hero NÃO: os 5 botões apontam para /signup, que responde 200 (conferido por curl em 31/07)",
+      "✅ RESOLVIDO E VERIFICADO NO AR 31/07: /sitemap.xml e /robots.txt respondiam 404 nos dois; agora servem app/app/sitemap.ts e app/app/robots.ts (/ e /signup; crawler barrado em /admin, /onboarding e /api) e o sitemap foi submetido em sc-domain:roilabs.com.br",
+      "✅ RESOLVIDO 31/07: Root Directory da Vercel era '/' com o app em app/ — todo push falhava em 9s e a produção ficava congelada num deploy manual antigo. Corrigido via API",
+      "'Crawled - currently not indexed', último crawl em 23/05"
     ],
     "seoSeed": 2,
     "decay": 6,
     "decayNota": "No ar e com preço público, mas desindexado e parado desde 03/03",
     "acaoDesc": "Um dos dois dos quinze sem push recente (03/03, cinco meses), mas isso NÃO é abandono: o produto está no ar, em português, com proposta clara — automatizar onboarding de clientes para agências, com portal white-label, magic links e cobrança automática de pendências. E tem a coisa mais rara do portfólio: preço público de verdade, Starter R$ 97/mês (até 5 clientes) e Pro R$ 197/mês (até 20 clientes, com análise por IA), trial de 14 dias. Medido em 30/07: home 200, /signup e /login respondem 200 — então existe superfície de cadastro. O que quebra a cadeia é o CTA: o botão principal da hero é href='#', ou seja, quem chega pela dobra e clica em 'Começar Grátis' não vai a lugar nenhum; só quem usa o link do nav chega ao /signup. Isso é o mesmo padrão do matchfios (preço na página, botão que não leva ao dinheiro) e por isso a mesma nota de receita 3. Do lado de busca: /sitemap.xml responde 404 e a URL Inspection devolve 'Crawled - currently not indexed' com último crawl em 23/05. Ressalva medida: o 'Stripe' que aparece na home é logo da seção de integrações, não gateway de cobrança do próprio Vértice — não confundir com caminho de pagamento vivo. Não testei se o /signup cria conta de verdade; essa é a próxima medição, e ela decide se o projeto é SaaS parado ou landing sem backend.",
-    "acao": "Publicar /sitemap.xml (404 hoje) e dar destino às âncoras href=\"#\" da navbar — o CTA da hero JÁ aponta para /signup (200), o card anterior estava errado"
+    "acao": "Dar destino às âncoras href=\"#\" da navbar e submeter o sitemap novo ao GSC — o /sitemap.xml saiu do 404 em 31/07"
   },
   {
     "slug": "pathfinder",

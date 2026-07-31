@@ -1,19 +1,28 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO, SEPARADO POR QUEM EXECUTA —
-> [`handoff/handoff-proximo-passo-pos-sirius.md`](handoff/handoff-proximo-passo-pos-sirius.md)
-> (31/07, 09h).**
-> Os dois primeiros do ranking (`atma` 51 e `sirius` 45) são **espera, não trabalho** — já foram
-> consertados e falta os dados reagirem.
-> 🙋 **Jean, 5 min:** verificar `goiania.roilabs.com.br` no **Bing Webmaster Tools** — maior score
-> acionável (44) e mata o IndexNow 403 que reaparece a cada build. Depois: as 4 chaves do Stripe do
-> `compass`, o `GOOGLE_CLIENT_ID` do `reviewshield` e — o mais antigo e perigoso — **rotacionar os
-> segredos vazados** ([[secrets_to_rotate]]).
-> 🤖 **Agente, próxima sessão: `fabrica`.** 21 artigos escritos que o Google não vê, mesmo
-> instrumento que acabou de reindexar o Atma, zero dependência de credencial do Jean.
-> 🚨 **Dois cards estavam podres e foram corrigidos neste commit:** o CTA da hero do `vertice` **já**
-> aponta para `/signup` (200) — o card dizia `href="#"`; e o sitemap do `fabrica` **já estava
-> submetido** desde 10/06, com `errors: 1` e zero conteúdo processado — a tarefa não era submeter.
+> ▶️ ✅ **A LEVA DO AGENTE FOI EXECUTADA (31/07, 12h) —
+> [`handoff/handoff-fabrica-e-leva-de-um-linha-31-07.md`](handoff/handoff-fabrica-e-leva-de-um-linha-31-07.md)**
+> (plano: [`handoff/handoff-proximo-passo-pos-sirius.md`](handoff/handoff-proximo-passo-pos-sirius.md)).
+> 🚨 **A tarefa nº 1 não existia.** URL Inspection nas 26 URLs do `fabrica` antes de mexer:
+> **24 em `Submitted and indexed`, incluindo 20 dos 21 artigos.** Não havia bloqueio de indexação —
+> o `errors: 1` do sitemap é real, persiste, e **não era o que segurava os artigos**. O `fabrica`
+> sai da fila de SEO técnico: o gargalo dele é **tráfego**, não descoberta. Sobram 2 Request
+> Indexing manuais (`/termos` e `/blog/como-atrair-pacientes-clinica-de-estetica`).
+> ✅ **Entregue e verificado no ar:** OG card próprio no `orcaobra` (era placeholder do lovable.dev)
+> e no `potencialarquitetado` (apontava para domínio NXDOMAIN); H1 do `cardiorisk` alinhado ao
+> `<title>`; **`/sitemap.xml` E `/robots.txt`** criados no `vertice` e no `compass` (o card só citava
+> o sitemap — o robots também estava 404 nos dois) e submetidos ao GSC.
+> 🚨 **Segundo achado: 3 projetos publicavam quebrado.** Os pushes deram `● Error` em 5–9 s —
+> **Root Directory `/` com o app em subpasta** ([[vercel_root_dir_slash_push_kills_subfolder_site]]).
+> Corrigido via API no `reforma-maestro` (`frontend-next`) e no `vertice` (`app`): **build por git
+> voltou nos dois.** O `compass` continua só por CLI de dentro de `web/` — com `rootDirectory` ele
+> compila e quebra ao publicar (`ENOENT .next/routes-manifest-deterministic.json`, Next 16.2.6).
+> 🙋 **Jean, 5 min, inalterado:** verificar `goiania.roilabs.com.br` no **Bing Webmaster Tools** —
+> maior score acionável (44) e mata o IndexNow 403 que reaparece a cada build. Depois: as 4 chaves
+> do Stripe do `compass`, o `GOOGLE_CLIENT_ID` do `reviewshield` e — o mais antigo e perigoso —
+> **rotacionar os segredos vazados** ([[secrets_to_rotate]]).
+> 🤖 **Agente, próxima sessão: `polarisia`, spec 012 T001–T017** (home V4) — única tarefa de sessão
+> longa que sobrou sem dependência de credencial.
 >
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
