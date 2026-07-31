@@ -44,11 +44,21 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 
 ## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
 
-`BM25 → + vetor (Ollama) → + reranker (claude-cli)`, medido em `data/dourado.json`
-(78 perguntas): **82,3% → 82,4% → 88,0%** de recall@10.
+`BM25 → + vetor (Ollama) → + reranker (claude-cli) → síntese (claude-cli)`, medido em
+`data/dourado.json` (78 perguntas): **82,3% → 82,4% → 88,0%** de recall@10.
 
-- **O reranker gasta 1 chamada por BUSCA**, do mesmo pool do autopublishing. Custo medido:
-  a busca vai de **0,3 s para 6,5 s**. `?rerank=0` desliga (link no rodapé).
+- **São DUAS chamadas por busca** (rerank + resposta), do mesmo pool do autopublishing.
+  `?rerank=0` e `?resposta=0` desligam cada uma (link no rodapé desliga as duas).
+- **A síntese é um segundo prompt, depois da fusão, de propósito.** Um prompt só que
+  ordenasse e respondesse obrigaria a remedir os 88,0% a cada ajuste de redação. Separado, o
+  recall e a resposta têm réguas independentes: `scripts/avaliar.mjs` e
+  `scripts/avaliar-resposta.mjs`.
+- **Falha FECHADA na citação:** resposta sem `[n]` válido não é renderizada, vira
+  `resposta-sem-citacao` no rodapé. Prosa fluente sem procedência é o pior resultado deste
+  componente — tem a autoridade da resposta e nenhuma da fonte. Recusa (`NÃO ESTÁ NO
+  CORPUS`) não é erro e não vira aviso.
+- **`avaliar-resposta.mjs` mede ancoragem, NÃO verdade.** Citar a fonte certa e resumi-la
+  errado passa. Nada neste sistema mede verdade.
 - **O ranking do reranker é para FUNDIR, não para obedecer.** Obedecer foi medido com dois
   prompts diferentes e perdeu as duas vezes (@10 76,7% contra 82,4% da fusão): o modelo
   acerta o conjunto e erra a ordem, porque não vê o score do BM25. `rrf(…, c=10)` — o mesmo

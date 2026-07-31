@@ -2,6 +2,7 @@ import { carregarCorpus } from "@/lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "@/lib/bm25.mjs";
 import { buscarDenso, MODELO } from "@/lib/denso.mjs";
 import { rerank, trechoRelevante } from "@/lib/reranker.mjs";
+import { responder, trechosPara } from "@/lib/resposta.mjs";
 import { lerCorpus, lerVetores } from "@/lib/corpus-db.mjs";
 import { rrf } from "@/lib/busca.mjs";
 import { Tabs } from "../tabs";
@@ -86,8 +87,12 @@ function trecho(texto: string, termos: string[]): string {
 // contra 82,4% em @10. Reordenar 10 não teria de onde tirar ganho.
 const CANDIDATOS = 50;
 
-export default async function Busca({ searchParams }: { searchParams: Promise<{ q?: string; rerank?: string }> }) {
-  const { q = "", rerank: querRerank = "1" } = await searchParams;
+export default async function Busca({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; rerank?: string; resposta?: string }>;
+}) {
+  const { q = "", rerank: querRerank = "1", resposta: querResposta = "1" } = await searchParams;
   const { docs, indice } = await getIndice();
   const termos = tokenizar(q) as string[];
   const porId = new Map(docs.map((d) => [d.id, d]));
@@ -127,6 +132,15 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
     achados = (itens as Achado[]).map((c) => ({ id: c.id, tipo: c.tipo, score: 0 }));
   }
   achados = achados.slice(0, 10);
+
+  // Síntese sobre os 10 finais: recall@10 é 88,0% mas @1 é 34,2% — o material está lá e a lista
+  // não o entrega. Segunda chamada de claude-cli, DEPOIS da fusão, e não um prompt só que
+  // ordena e responde: acoplar as duas obrigaria a remedir os 88,0% a cada ajuste de redação.
+  // `?resposta=0` desliga; falha ou resposta sem citação some da tela e vira aviso no rodapé.
+  const resposta = querResposta !== "0" && q.trim() && achados.length
+    ? await responder(q, trechosPara(achados.map((r) => porId.get(r.id)!), termos))
+    : { texto: "", fontes: [] as number[], erro: "" };
+
   const tipos = docs.reduce<Record<string, number>>((a, d) => ({ ...a, [d.tipo]: (a[d.tipo] ?? 0) + 1 }), {});
 
   return (
@@ -158,12 +172,29 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
         <p className="foot">Nada casou. O BM25 casa palavra literal — tente o termo exato (slug, código de erro, nome do projeto).</p>
       )}
 
+      {/* `card ag-section` é a caixa que a Agenda e o SEO já usam — caixa nova só para a resposta
+          seria um segundo design system dentro do mesmo hub. */}
+      {resposta.texto && (
+        <section className="card ag-section">
+          <p className="ag-h">Resposta</p>
+          <p className="rsm-oque">{resposta.texto}</p>
+          <p className="foot">
+            Sintetizada pelo claude-cli a partir dos resultados {resposta.fontes.map((n) => `[${n}]`).join(" ")} abaixo.
+            Toda afirmação carrega o número do resultado que a sustenta — <strong>confira antes de agir</strong>: o
+            corpus mede recuperação, não verdade.
+          </p>
+        </section>
+      )}
+
       <ol className="busca-res">
-        {achados.map((r) => {
+        {achados.map((r, i) => {
           const doc = porId.get(r.id)!;
           return (
             <li key={r.id}>
               <div className="busca-cab">
+                {/* A numeração é o que torna a citação conferível: `[3]` na resposta é este card.
+                    A lista tem list-style: none, então sem isto o número não existe na tela. */}
+                <span className="foot">[{i + 1}]</span>
                 <span className={`pill ${r.tipo === "protocolo" ? "pill-ok" : r.tipo === "handoff" ? "pill-warn" : ""}`}>{r.tipo}</span>
                 <strong>{doc.titulo}</strong>
               </div>
@@ -185,10 +216,14 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
         <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {erroRerank && `⚠️ Reranker caiu para a fusão — ${erroRerank}. `}
+        {/* Recusa não aparece aqui de propósito: "os 10 não sustentam" é o componente
+            funcionando. O que precisa de aviso é síntese que falhou ou que veio sem citação e
+            foi suprimida — sem isto, as duas seriam indistinguíveis de "não houve resposta". */}
+        {resposta.erro && `⚠️ Resposta suprimida — ${resposta.erro}. `}
         {/* O formulário só manda `q`, então sem este link o `?rerank=0` existiria e ninguém
             saberia: medido, o reranker leva a busca de 0,3 s para 6,5 s. */}
         {motor.includes("rerank") && (
-          <a href={`/busca?q=${encodeURIComponent(q)}&rerank=0`}>sem reranker (0,3 s em vez de 6,5 s)</a>
+          <a href={`/busca?q=${encodeURIComponent(q)}&rerank=0&resposta=0`}>só a lista (0,3 s em vez de ~12 s)</a>
         )}
         {!tipos.memoria && "⚠️ Sem as memórias neste ambiente: 72 das 160 fontes do dourado não estão no índice."}
       </p>

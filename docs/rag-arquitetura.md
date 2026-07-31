@@ -156,13 +156,28 @@ agentes), **aba** (Jean).
 Toda resposta devolve **procedência + data + validade**. Resposta que o agente não consegue
 verificar é resposta que ele vai re-derivar — e aí o índice não economizou nada.
 
+**Escrito em 31/07: `lib/resposta.mjs`.** A aba deixou de só listar. O número que forçou isso:
+depois do reranker o recall@10 é 88,0% e o **@1 é 34,2%** — o material está lá e a lista não o
+entrega. Síntese com claude-cli sobre os 10 finais, **citação obrigatória** e **falha fechada**:
+resposta sem `[n]` válido não é renderizada, e `[3]` na resposta é o 3º card da lista (a
+numeração é a procedência). Régua própria, `scripts/avaliar-resposta.mjs`: respondeu 97,4%,
+citação ancorada 94,9% sobre as 78 perguntas.
+
+**A tensão, dita na cara:** sintetizar sobre um corpus com taxa de erro desconhecida transforma
+erro silencioso em erro FLUENTE. A defesa não é evitar a síntese — é que citação torna a
+incorreção **conferível em um clique**, enquanto a lista a esconde. Mas isso promove a
+corretude do corpus a problema nº 1: **a régua mede ancoragem, não verdade.**
+
 ---
 
 ## Sequência
 
 1. Ontologia, schema, modelo bitemporal ← decide tudo que vem depois
 2. Ingestão do corpus atual + extração estruturada + conjunto dourado
-3. ✅ Híbrido medido contra o dourado (31/07) — reranking recusado por falta de prova
+3. ✅ Híbrido medido contra o dourado (31/07) — reranking recusado por falta de prova, e
+   **reaberto no mesmo dia com o número que o justifica** (88,0% de recall@10). A recusa valia
+   para *cross-encoder local*; o claude-cli não é local.
+3b. ✅ Síntese com citação sobre o top-10 (31/07) — a camada 7 começou pela aba
 4. Contextual retrieval, medido — mantém só se ganhar
 5. Manifesto por repo + verificação de conformidade
 6. Grafo + propagação de lição entre projetos

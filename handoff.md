@@ -4,6 +4,20 @@
 > `--min 0.83`, o teto é 93,3% de recall@50). Depois: abrir as 5 lacunas (`BKP`, `CST`, `OBS`,
 > `PRV`, `A11Y`), **com a checagem definida antes da norma**.
 >
+> ✅ **A ABA RESPONDE, NÃO SÓ LISTA (31/07) —
+> [`handoff/handoff-resposta-com-citacao.md`](handoff/handoff-resposta-com-citacao.md)**:
+> síntese com **citação obrigatória** sobre o top-10, `lib/resposta.mjs` + `scripts/avaliar-resposta.mjs`
+> (**181 verdes**). Régua nova, 78 perguntas: **respondeu 97,4% · citação ancorada 94,9%**.
+> **Falha FECHADA** — resposta sem `[n]` não é renderizada. Segunda chamada de claude-cli, então
+> a busca vai de 4,8 s para ~12 s; `?resposta=0` desliga.
+> 🚨 **A régua mede ANCORAGEM, não verdade** — citar a fonte certa e resumi-la errado passa.
+> Isso põe a **corretude do corpus** (3ª frente do handoff anterior) em 1º: síntese amplifica o
+> que o corpus tem de errado.
+> ⚠️ **O bug que quase virou número publicado:** procurar a frase de recusa em qualquer lugar do
+> texto apagou **5 respostas completas e citadas** que só abriam com uma ressalva — 83,3% viraram
+> 97,4% ao trocar a ordem (quem decide é a citação, não a frase). Ler as respostas, não só o
+> agregado: `--ver`.
+>
 > ✅ **A RECUPERAÇÃO VIROU NÚMERO (31/07) —
 > [`handoff/handoff-fase3-hibrido-medido.md`](handoff/handoff-fase3-hibrido-medido.md)**.
 > Fase 3 fechada: `node scripts/avaliar.mjs` mede BM25 (82,3% recall@10), denso (76,7%) e
