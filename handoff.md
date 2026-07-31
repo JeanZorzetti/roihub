@@ -1,5 +1,25 @@
 # ROI Hub — handoff
 
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-juiz-de-verdade.md`](handoff/handoff-juiz-de-verdade.md)
+> (31/07): construir o JUIZ DE VERDADE.** Especificação de trabalho, não relatório: nenhuma régua
+> deste sistema mede corretude, e **citar a fonte certa e resumi-la errado passa com 100% nas
+> duas réguas de hoje**. O desenho defendido lá, com o argumento de cada decisão:
+> **(1) duas passadas** — fidelidade (juiz cego às fontes esperadas) e concordância (juiz vê o
+> dourado) — porque a célula `fiel + discorda` é o **primeiro mecanismo do sistema que aponta
+> erro DENTRO do corpus** (frente 6 nascendo de graça); **(2) quatro vereditos separados**
+> (`correta/incompleta/contradiz/recusou`), nunca um score — incompleta custa uma consulta,
+> contradiz manda a próxima sessão errar com confiança; **(3) o campo `armadilha`**, preenchido
+> nas 78 perguntas e **nunca lido por código nenhum**, vira o número mais duro do sistema;
+> **(4) calibrar contra 20 rótulos humanos (≥85%) e (5) controle adversarial (reprovar ≥9 de 10
+> respostas corrompidas) ANTES de publicar qualquer número** — juiz que aprova tudo dá 97% e não
+> vale nada; **(6) quebra por camada** (protocolo 65 · estado 8 · episodio 5 — o agregado esconde
+> tudo) e **(7) persistir toda corrida**.
+> 💰 **Franqueza sobre prazo: o juiz que produz um número cabe em 1 sessão; o juiz em que se pode
+> CONFIAR são 2.** Número não confiável sobre corretude é pior que nenhum, porque vira meta.
+> 🌉 Fica aberta a ponte que vale mais que o juiz: as **8 perguntas de camada `estado`** são as
+> únicas cuja resposta certa existe FORA do corpus (GitHub, GSC, banco, `conformidade.mjs`) — é o
+> caminho de "consistência interna" para verdade, e só ficou visível agora que a frente 1 existe.
+>
 > ✅ **AS NORMAS RODARAM (31/07, 20h) —
 > [`handoff/handoff-normas-que-rodam.md`](handoff/handoff-normas-que-rodam.md)**: frente 1
 > executada. `scripts/conformidade.mjs` roda **10 protocolos × 35 projetos** em ~40 s, sem LLM
