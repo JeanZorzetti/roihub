@@ -41,14 +41,22 @@ async function getIndice() {
 // gravados ou sem OLLAMA_URL a aba cai para BM25 — 82,3% em vez de 83,0%, degrada em vez de
 // quebrar. Só o `undefined` significa "ainda não tentei"; `null` é "tentei e não tem".
 let vetores: { chunks: { id: string; tipo: string }[]; vetores: number[][] } | null | undefined;
+// Degradar em silêncio é pior que degradar: "BM25" no rodapé não distingue env faltando de
+// Ollama fora do ar, e sem isso o diagnóstico só sai por dentro do container.
+let porQueSemVetor = "";
 async function getVetores() {
   if (vetores === undefined) {
-    try {
-      vetores = process.env.DATABASE_URL && process.env.OLLAMA_URL ? await lerVetores(MODELO) : null;
-      if (vetores && !vetores.vetores.length) vetores = null;
-    } catch {
-      vetores = null;
-    }
+    vetores = null;
+    if (!process.env.OLLAMA_URL) porQueSemVetor = "OLLAMA_URL não está no ambiente";
+    else if (!process.env.DATABASE_URL) porQueSemVetor = "DATABASE_URL não está no ambiente";
+    else
+      try {
+        const lidos = await lerVetores(MODELO);
+        if (lidos.vetores.length) vetores = lidos;
+        else porQueSemVetor = `hub_embeddings vazia para o modelo ${MODELO} — rode scripts/indexar.mjs`;
+      } catch (err) {
+        porQueSemVetor = `banco: ${(err as Error).message.slice(0, 90)}`;
+      }
   }
   return vetores;
 }
@@ -80,14 +88,16 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
 
   let achados: Achado[] = q.trim() ? buscar(indice, q, 10) : [];
   let motor = "BM25";
+  let falha = "";
   const denso = q.trim() ? await getVetores() : null;
   if (denso) {
     try {
       // Busca 20 de cada lado e funde: a RRF precisa de cauda para ter o que reordenar.
       achados = rrf([buscar(indice, q, 20), await buscarDenso(denso, q, 20)], { k: 10 });
       motor = "BM25 + vetor";
-    } catch {
-      // Ollama fora do ar não derruba a aba: fica o BM25, e o rodapé conta qual motor respondeu.
+    } catch (err) {
+      // Ollama fora do ar não derruba a aba: fica o BM25, e o rodapé diz o que falhou.
+      falha = `ollama em ${process.env.OLLAMA_URL}: ${(err as Error).message.slice(0, 90)}`;
     }
   }
   const porId = new Map(docs.map((d) => [d.id, d]));
@@ -145,6 +155,7 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
       <p className="foot">
         {motor} · recall@10 medido em {motor === "BM25" ? "82,3%" : "83,0%"} contra as 78 perguntas de{" "}
         <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
+        {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {!tipos.memoria && "⚠️ Sem as memórias neste ambiente: 72 das 160 fontes do dourado não estão no índice."}
       </p>
     </main>
