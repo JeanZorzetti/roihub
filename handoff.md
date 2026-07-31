@@ -3,20 +3,24 @@
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
 > 1️⃣ **Se a sessão for de trabalho:**
-> [`handoff/handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md) (30/07) —
-> **2ª leva de domínios próprios, 17 projetos restantes**.
-> ✅ **1ª leva EXECUTADA e fechada:** `links.roilabs.com.br`, `sem-swarm.nimblabs.com`,
-> `seoforecaster.nimblabs.com` e `meridian.roilabs.com.br` estão no ar, com canonical próprio,
-> sitemap 200 e **sitemap aceito no GSC** (`siteFullUser`). Placar: **domínio próprio 17 → 21**,
-> **fornecedor 22 → 17**, 40 projetos no ranking, **zero hosts duplicados**.
+> [`handoff/handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) (30/07) —
+> **renomear 8 subdomínios + limpar 1 + decidir 2 nomes**.
+> ✅ **A frente de domínio próprio FECHOU:** 1ª e 2ª levas executadas, **35 domínio próprio × 1
+> fornecedor** — e esse 1 é o `portfolio`, **exceção pedida pelo Jean**. Todo projeto vivo está em
+> domínio próprio, com canonical, sitemap XML de verdade e sitemap aceito no GSC. Zero duplicados.
+> Histórico e as 5 correções que só apareceram rodando:
+> [`handoff/handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md).
+> 🚨 **Renomear ≠ criar.** Os 15 hosts já foram submetidos ao GSC; apagar o antigo devolve NXDOMAIN,
+> que já queimou **76% do crawl budget** do `roilabs.com.br`. **Host antigo vira 308 para o novo** —
+> a receita com o PATCH da API está no handoff.
+> 🤔 Dois nomes dependem de decisão sua: `financeiro-obras` e `cardioqwen3code` — e no segundo a
+> pergunta real é se ele e o `cardio-risk-insight-hub` **são o mesmo produto** (compartilham
+> `api_medica_final.py` e estão com os títulos trocados entre si).
 > ⚠️ **Decisão do Jean, já tomada e reafirmada: ZERO arquivamentos** — *"quero todos ativos, vou
-> monetizar/produtizar todos"*. Contraria a recomendação original (que previa ~8 arquivamentos); não
-> relitigar, mas o custo aceito é NXDOMAIN futuro em quem for abandonado.
-> 🎁 `housingpro.com.br` e `egtelemedicina24h.com` já são **domínios seus, pagos, parados em
-> NXDOMAIN** há ~135 dias — a promoção mais barata da lista está aí.
-> A receita está validada de ponta a ponta, com 3 correções que só apareceram rodando (o
-> `.vercel/project.json` que denuncia deploy desligado do git; `site:` do Astro não gera canonical
-> nem sitemap; barra final do prerender).
+> monetizar/produtizar todos"*. Não relitigar; o custo aceito é NXDOMAIN futuro em quem for abandonado.
+> 🗑️ `housingpro`, `EGTelemedicina` e `synth-bot-buddy` tiveram os **repos apagados** — saem do hub
+> sozinhos, mas os hosts **não** somem sozinhos (`synth-bot-buddy.roilabs.com.br` e
+> `www.housingpro.com.br` seguem em 200, com domínio pago).
 >
 > 2️⃣ **A data, que não depende de sessão:**
 > [`handoff/handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md)
@@ -153,7 +157,9 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-proximo-passo-dominios.md`](handoff/handoff-proximo-passo-dominios.md) | **comece por aqui numa sessão de trabalho**: os 21 projetos em domínio de fornecedor, por que isso os deixa fora do GSC (a prova do CannibalScan), o critério de triagem promover-ou-arquivar e a receita de 6 passos já validada | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) | **comece por aqui numa sessão de trabalho**: encurtar 8 subdomínios para nome de produto, limpar o `synth-bot-buddy` (repo apagado, host em 200) e decidir 2 nomes. Traz a receita do **308 do host antigo** (renomear sem gerar NXDOMAIN) e o PATCH da API da Vercel, que a CLI não expõe | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md) | a 2ª leva de domínios executada de ponta a ponta (15 projetos) e as **5 correções que só apareceram rodando**: título igual não diz qual pasta é deployada, sitemap em 200 não prova deploy, `builds` legado exige `routes`, `git push` desfaz deploy manual, canonical cruzado entre projetos homônimos | ✅ executado 30/07 — **35 próprio × 1 fornecedor** |
+| [`handoff-proximo-passo-dominios.md`](handoff/handoff-proximo-passo-dominios.md) | a 1ª leva e a receita de 6 passos que originou tudo: por que host de fornecedor deixa o projeto fora do GSC (a prova do CannibalScan) e o critério de triagem | ✅ executado 30/07 — superado pelos dois acima |
 | [`handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md) | **comece por aqui**: o próximo passo é uma data (02/08, 1º run do robô de crawl), como medir o NXDOMAIN sem cair na janela de 90 dias, e o que sobra fora do roihub. Inclui a medição dos 3 cards podres da agenda (30/07): branded do Sirius passou, `repo` do tapepro estava errado, sitemap do CannibalScan nunca submetido | 🟢 vivo (30/07) — frente ativa |
 | [`handoff-nxdomain-subdominios.md`](handoff/handoff-nxdomain-subdominios.md) | os 14 subdomínios em NXDOMAIN do `roilabs.com.br`: receita, script e as 6 promoções | ✅ executado 29–30/07 — falta só medir com export novo |
 | [`handoff-proximo-passo-30-07.md`](handoff/handoff-proximo-passo-30-07.md) | briefing anterior: os 3 itens de painel/DNS, o que foi encerrado, e como medir DNS sem errar | ⚠️ superado 30/07 — os 3 itens saíram; guarda as armadilhas de DNS |
