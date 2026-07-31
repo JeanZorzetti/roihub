@@ -1,22 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — DEEP-RESEARCH: harness de agente para o roihub —
-> [`handoff/handoff-deep-research-harness-de-agente.md`](handoff/handoff-deep-research-harness-de-agente.md)
-> (31/07, 10h45).**
-> 🚨 **A pergunta NÃO é "qual harness instalar do zero" — ele já existe e roda todo dia:**
-> `claude-code` global no `Dockerfile:19`, pool plural de tokens de assinatura
-> (`CLAUDE_CODE_OAUTH_TOKENS`), `spawn` cru em `lib/autopublish-clients.ts:176`, cron do Actions às
-> 00:13 → `/api/seo/autopublish`, fila girada 1 passo/dia contra rate limit.
-> **O buraco é outro: o roihub não tem `.claude/` nenhum** — sem `CLAUDE.md`, skill, hook ou
-> subagent, toda sessão redescobre `listProjects()`, "teste é `node --test` sem framework" e
-> "deploy é EasyPanel, não Vercel" do zero.
-> Quatro perguntas: **(A)** o Agent SDK autentica por assinatura ou exige API key paga? — decisiva,
-> **não responder de memória**; **(B)** o que vai em `.claude/` (rodar
-> `/claude-automation-recommender` ANTES da web); **(C)** alternativas, com filtro duro de ToS —
-> token de assinatura em cliente de terceiro = ban ([[claude_subscription_agents_official_vs_thirdparty]]);
-> **(D)** agente em Alpine + o corte de ~300s do proxy do EasyPanel.
-> ⚠️ **Se A der SDK, NÃO implementar na mesma sessão** — é o caminho crítico que publica 10 projetos
-> às 00:13. Deep-research é disparada pelo Jean, não pelo agente.
+> ▶️ **PRÓXIMO PASSO — confirmar o timeout de 300s do cliente do autopublishing —
+> [`handoff/handoff-harness-decidido.md`](handoff/handoff-harness-decidido.md) (31/07).**
+> **Harness DECIDIDO: fica o `spawn("claude")`.** O Claude Agent SDK só autentica por
+> `ANTHROPIC_API_KEY`/Bedrock/Vertex/Foundry — `CLAUDE_CODE_OAUTH_TOKEN` não existe na doc dele,
+> e a Anthropic escreve que não permite claude.ai login em produto de terceiro. Fora por
+> [[budget_claude_cli_only]]. E a mesma doc diz que rodar o CLI como subprocesso com `-p
+> --output-format json` **é o padrão** — que é o que este repo já faz. OpenCode/Aider/Codex/
+> `nanocodex` saem na triagem de ToS. ✅ **`CLAUDE.md` + `.claude/settings.json` escritos** (o
+> buraco real: toda sessão redescobria `listProjects()`, `node --test` e "EasyPanel, não Vercel").
+> 🚨 **O "corte de ~300s do proxy do EasyPanel" provavelmente NÃO é o EasyPanel:** é o
+> `headersTimeout` default do undici (300 s) no `fetch()` do `run-autopublish.mjs` **rodando no
+> GitHub Actions** — servidor tem 900 s (`maxDuration`) e o CLI 600 s, mas o cliente desiste
+> primeiro e grava `request-failed`. O próprio código já mede `goiania 366s` > 300 s.
+> Falta confirmar com `UND_ERR_HEADERS_TIMEOUT` num log real; patch escrito, **não aplicado** —
+> é o caminho crítico das 00:13.
 >
 > ✅ **A ABA `/resumo` ESTÁ NO AR (31/07, 10h30) —
 > [`handoff/handoff-resumo-entregue-e-as-26-decisoes.md`](handoff/handoff-resumo-entregue-e-as-26-decisoes.md)**
