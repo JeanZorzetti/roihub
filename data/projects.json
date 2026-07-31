@@ -57,12 +57,14 @@
     "receita": 6,
     "receitaNota": "Leads da landing chegam no Sirius (verificado E2E 11/07); falta tráfego + fechamento",
     "blockers": 2,
-    "blockersLista": [],
+    "blockersLista": [
+      "O sitemap de estetia.estetiacrm.com.br está submetido desde 10/06 mas com errors:1 e sem contents — o Google aceitou o arquivo e não processou nenhuma URL (conferido pela API do GSC em 31/07)"
+    ],
     "seoSeed": 3,
     "decay": 2,
     "decayNota": "",
     "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador typescript-post, pré-voo OK em 25/07 contra src/lib/blog/index.ts — se alguém mexer nesse index.ts, rodar o pré-voo de novo antes do próximo run (o registryUpsert falha fechado em render:registry-format). Run agora à 00:13 BRT: conferir /seo de manhã (a linha do fabrica, o build do site no EasyPanel e a URL do artigo em 200). MANUAL (Jean, GSC UI) — repo do site: C:/dev/estetia-demo. ✅ Capa própria pros 21 artigos + infra de SEO de imagem (alt único por post, og:image por artigo, dimensões fixas, teste travando imagem/alt duplicados) — shipped 13/07. Pendência documentada no handoff s6-blog-cadencia-diaria: conferir/submeter o sitemap na propriedade sc-domain:estetia.estetiacrm.com.br e pedir Request Indexing dos artigos mais antigos primeiro — sem isso os 21 artigos não entram no índice e a cadência diária publica no vazio. Cadência 1 artigo/dia segue na tarefa diária da agenda. Lembrete: build local impossível (pnpm store corrompido) — validar com pnpm test:blog; build real = Docker EasyPanel.",
-    "acao": "Submeter sitemap do blog no GSC e pedir indexação dos 21 artigos"
+    "acao": "Destravar o sitemap do blog no GSC: já foi submetido em 10/06 e voltou com errors:1 e ZERO conteúdo processado (hoje serve 26 <loc> em 200/XML) — resubmeter pela API e inspecionar os artigos"
   },
   {
     "slug": "roilabs",
@@ -577,7 +579,7 @@
     "receitaNota": "Preço público de verdade (Starter R$ 97/mês, Pro R$ 197/mês, trial 14 dias) mas o CTA principal é href='#'",
     "blockers": 5,
     "blockersLista": [
-      "O CTA da hero ('Começar Grátis'/'Começar Trial') é href='#' — o botão principal da página não leva a lugar nenhum",
+      "A navbar serve href=\"#\" em Funcionalidades, Integrações e Preços — o CTA da hero NÃO: os 5 botões apontam para /signup, que responde 200 (conferido por curl em 31/07; o card anterior dizia o contrário)",
       "/sitemap.xml responde 404",
       "'Crawled - currently not indexed', último crawl em 23/05",
       "Sem push desde 03/03 — cinco meses"
@@ -586,7 +588,7 @@
     "decay": 6,
     "decayNota": "No ar e com preço público, mas desindexado e parado desde 03/03",
     "acaoDesc": "Um dos dois dos quinze sem push recente (03/03, cinco meses), mas isso NÃO é abandono: o produto está no ar, em português, com proposta clara — automatizar onboarding de clientes para agências, com portal white-label, magic links e cobrança automática de pendências. E tem a coisa mais rara do portfólio: preço público de verdade, Starter R$ 97/mês (até 5 clientes) e Pro R$ 197/mês (até 20 clientes, com análise por IA), trial de 14 dias. Medido em 30/07: home 200, /signup e /login respondem 200 — então existe superfície de cadastro. O que quebra a cadeia é o CTA: o botão principal da hero é href='#', ou seja, quem chega pela dobra e clica em 'Começar Grátis' não vai a lugar nenhum; só quem usa o link do nav chega ao /signup. Isso é o mesmo padrão do matchfios (preço na página, botão que não leva ao dinheiro) e por isso a mesma nota de receita 3. Do lado de busca: /sitemap.xml responde 404 e a URL Inspection devolve 'Crawled - currently not indexed' com último crawl em 23/05. Ressalva medida: o 'Stripe' que aparece na home é logo da seção de integrações, não gateway de cobrança do próprio Vértice — não confundir com caminho de pagamento vivo. Não testei se o /signup cria conta de verdade; essa é a próxima medição, e ela decide se o projeto é SaaS parado ou landing sem backend.",
-    "acao": "Apontar o CTA da hero para /signup — hoje o botão principal é href='#' e o preço está publicado"
+    "acao": "Publicar /sitemap.xml (404 hoje) e dar destino às âncoras href=\"#\" da navbar — o CTA da hero JÁ aponta para /signup (200), o card anterior estava errado"
   },
   {
     "slug": "pathfinder",

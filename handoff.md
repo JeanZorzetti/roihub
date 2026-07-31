@@ -1,5 +1,20 @@
 # ROI Hub — handoff
 
+> ▶️ **PRÓXIMO PASSO, SEPARADO POR QUEM EXECUTA —
+> [`handoff/handoff-proximo-passo-pos-sirius.md`](handoff/handoff-proximo-passo-pos-sirius.md)
+> (31/07, 09h).**
+> Os dois primeiros do ranking (`atma` 51 e `sirius` 45) são **espera, não trabalho** — já foram
+> consertados e falta os dados reagirem.
+> 🙋 **Jean, 5 min:** verificar `goiania.roilabs.com.br` no **Bing Webmaster Tools** — maior score
+> acionável (44) e mata o IndexNow 403 que reaparece a cada build. Depois: as 4 chaves do Stripe do
+> `compass`, o `GOOGLE_CLIENT_ID` do `reviewshield` e — o mais antigo e perigoso — **rotacionar os
+> segredos vazados** ([[secrets_to_rotate]]).
+> 🤖 **Agente, próxima sessão: `fabrica`.** 21 artigos escritos que o Google não vê, mesmo
+> instrumento que acabou de reindexar o Atma, zero dependência de credencial do Jean.
+> 🚨 **Dois cards estavam podres e foram corrigidos neste commit:** o CTA da hero do `vertice` **já**
+> aponta para `/signup` (200) — o card dizia `href="#"`; e o sitemap do `fabrica` **já estava
+> submetido** desde 10/06, com `errors: 1` e zero conteúdo processado — a tarefa não era submeter.
+>
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
 > 1️⃣ ✅ **A FRENTE DO `sirius` FOI EXECUTADA (31/07, 08h30) —
