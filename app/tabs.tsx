@@ -4,7 +4,7 @@ import type { GithubStatus } from "@/lib/github";
 
 // Chrome compartilhado entre as páginas (ranking e SEO).
 
-export function Tabs({ active }: { active: "home" | "seo" | "infra" | "insights" | "agenda" | "resumo" }) {
+export function Tabs({ active }: { active: "home" | "seo" | "infra" | "insights" | "agenda" | "resumo" | "busca" }) {
   const tab = (key: string, href: string, label: string) => (
     <Link href={href} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
       {label}
@@ -18,6 +18,7 @@ export function Tabs({ active }: { active: "home" | "seo" | "infra" | "insights"
       {tab("insights", "/insights", "Insights")}
       {tab("agenda", "/agenda", "Agenda")}
       {tab("resumo", "/resumo", "Resumo")}
+      {tab("busca", "/busca", "Busca")}
     </nav>
   );
 }

@@ -301,3 +301,12 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .foot { margin-top: 20px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .foot code { background: var(--surface); border: 1px solid var(--grid); border-radius: 4px; padding: 0 5px; font-size: 12px; }
 .gsc-err { color: var(--crit-ink); font-weight: 600; }
+
+/* busca — memória institucional consultável */
+.busca-res { list-style: none; margin: 0; padding: 0; }
+.busca-res li { padding: 12px 0; border-bottom: 1px solid var(--grid); }
+.busca-res li:last-child { border-bottom: none; }
+.busca-cab { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.busca-cab strong { font-size: 15px; letter-spacing: -0.01em; }
+.busca-trecho { margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink2); }
+.busca-res .foot { margin-top: 4px; font-size: 12px; }
