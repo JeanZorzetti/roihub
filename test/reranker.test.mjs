@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante } from "../lib/reranker.mjs";
+import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta } from "../lib/reranker.mjs";
 
 const candidatos = [
   { id: "a", tipo: "protocolo", titulo: "A", trecho: "texto a" },
@@ -145,4 +145,17 @@ test("trechoRelevante junta várias janelas em doc longo", () => {
 test("trechoRelevante respeita o orçamento em doc longo", () => {
   const texto = "palavra ".repeat(3000) + "alvo";
   assert.ok(trechoRelevante(texto, ["alvo"], 300).length <= 320, "orçamento estourado");
+});
+
+// 31/07: a busca inteira estava morta em produção porque tokens[0] tinha estourado o limite
+// mensal e rodarClaude nunca chegava ao token[1], que respondia. As duas mensagens que
+// aparecem no pool não têm palavra de rate limit nem de auth — só o status separa "a conta
+// acabou" de "o modelo escreveu bobagem", que é o erro que NÃO deve gastar a próxima conta.
+test("trocaDeConta lê o status, não a mensagem", () => {
+  const limite = { is_error: true, api_error_status: 429, result: "You've hit your monthly spend limit" };
+  const desabilitado = { is_error: true, api_error_status: 403, result: "Your organization has disabled Claude subscription access" };
+  assert.equal(trocaDeConta(limite), true);
+  assert.equal(trocaDeConta(desabilitado), true);
+  assert.equal(trocaDeConta({ is_error: true, result: "não é JSON de ordem" }), false);
+  assert.equal(trocaDeConta({ is_error: true, api_error_status: 500 }), false);
 });
