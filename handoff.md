@@ -3,7 +3,13 @@
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
 > 1️⃣ **Se a sessão for de trabalho — o trabalho é o ATMA, e ele é urgente:**
-> [`handoff/handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) (30/07).
+> ▶️ **[`handoff/handoff-proximo-passo-atma.md`](handoff/handoff-proximo-passo-atma.md) (30/07) — o
+> passo a passo.** 🚨 **O passo principal é MANUAL, do Jean:** "Solicitar indexação" **não existe na
+> API** (a `urlInspection` é só leitura e a Indexing API só aceita `JobPosting`/`BroadcastEvent`),
+> então nenhuma sessão de código substitui isso. A sessão faz o empurrão secundário
+> (`node scripts/submit-sitemap.mjs …`) e mede o `coverageState` em ~7 dias.
+> Medição completa em
+> [`handoff/handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md).
 > 🚨 **O Atma está DESINDEXADO — o site inteiro, inclusive a home — e perdeu 98% das impressões.**
 > Era o maior ativo orgânico da ROI Labs: ~1.600 imp/dia e ~30 cliques/dia; hoje faz 10–20 imp/dia.
 > 28d: **43 cliques / 316 imp** contra **298 / 14.818** nos 28d anteriores. **Queda datada:
@@ -182,7 +188,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) | **comece por aqui numa sessão de trabalho**: a curadoria fechou (20 → 35, zero não-curados) e destravou o achado mais caro do portfólio — **o Atma desindexado, −98% de impressões, com a queda datada em 09→10/06** — mais o `aggregateRating` fabricado do `orion` num subdomínio de `roilabs.com.br` e o sitemap em 502 `DNS_HOSTNAME_NOT_FOUND` do `pathfinder`. Traz o estado de índice dos 15 e o defeito da régua de score | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-proximo-passo-atma.md`](handoff/handoff-proximo-passo-atma.md) | **comece por aqui numa sessão de trabalho**: as 3 tarefas na ordem — reindexar o Atma (🚨 passo principal é MANUAL, não há "Solicitar indexação" na API), arrancar o `aggregateRating` falso do `orion` e consertar o proxy do sitemap do `pathfinder`. Traz como MEDIR se a reindexação pegou (`coverageState`, não tráfego) e os 2 repos que precisam de `git clone` antes | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) | a medição por trás da frente acima: a curadoria fechou (20 → 35, zero não-curados) e destravou o achado mais caro do portfólio — **o Atma desindexado, −98% de impressões, com a queda datada em 09→10/06** — mais o `aggregateRating` fabricado do `orion` num subdomínio de `roilabs.com.br` e o sitemap em 502 `DNS_HOSTNAME_NOT_FOUND` do `pathfinder`. Traz o estado de índice dos 15 e o defeito da régua de score | 🟢 vivo (30/07) — frente ativa |
 | [`handoff-curar-os-15.md`](handoff/handoff-curar-os-15.md) | a receita e a régua que originaram a curadoria acima: o grep de host morto que funciona (por URL absoluta, não por nome de env var), a calibração de `receita` e por que `seo`/`decay` são automáticos | ✅ executado 30/07 — 15/15 curados |
 | [`handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) | encurtar 8 subdomínios para nome de produto, limpar o `synth-bot-buddy` (repo apagado, host em 200) e decidir 2 nomes. Traz a receita do **308 do host antigo** (renomear sem gerar NXDOMAIN) e o PATCH da API da Vercel, que a CLI não expõe | ✅ executado 30/07 — 9 renomeações, zero duplicados |
 | [`handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md) | a 2ª leva de domínios executada de ponta a ponta (15 projetos) e as **5 correções que só apareceram rodando**: título igual não diz qual pasta é deployada, sitemap em 200 não prova deploy, `builds` legado exige `routes`, `git push` desfaz deploy manual, canonical cruzado entre projetos homônimos | ✅ executado 30/07 — **35 próprio × 1 fornecedor** |
