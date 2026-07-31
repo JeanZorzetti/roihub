@@ -24,11 +24,12 @@
 > tem a env **e** alcança `sofia_ollama`, 0,9 s por busca. Fase 3 fechada sem pendência.
 > ▶️ Para reconferir: **BUSCAR alguma coisa**, não só abrir — sem `?q=` o rodapé não chama o
 > Ollama. A aba pede basic auth (`HUB_USER`/`HUB_PASS` só na EasyPanel, pedir ao Jean).
-> ⚠️ **O piso `--min 0.83` foi aposentado (31/07 18h)**: corpus cresce, dourado é fixo, e doc
-> novo só entra como falso positivo — 4 docs novos derrubaram o híbrido para 82,4% **sem
-> mudança de código**, com o BM25 parado em 82,3%. Agora é `--min bm25`, o BM25 da mesma
-> execução. Ele expõe o problema real: **o vetor ganha do BM25 por 0,1 ponto**, fração de uma
-> pergunta em 78.
+> ⚠️ **O piso `--min 0.83` foi aposentado (31/07 18h)**: os **mesmos 259 docs** da fase 3 rendem
+> **82,4%** hoje, não 83,0%, **sem mudança de código** — handoff e memória são reescritos toda
+> sessão e isso mexe em vetor e IDF. (Testada e **descartada por medição** a hipótese óbvia de
+> que os 4 docs novos é que sujavam: custo real deles = **0,0 ponto**.) Agora é `--min bm25`,
+> o BM25 da mesma execução. Ele expõe o problema real: **o vetor ganha do BM25 por 0,1 ponto**,
+> fração de uma pergunta em 78.
 >
 > ✅ **O CONJUNTO DOURADO EXISTE (31/07) — 78 perguntas —
 > [`handoff/handoff-conjunto-dourado.md`](handoff/handoff-conjunto-dourado.md)**.

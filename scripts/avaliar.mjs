@@ -105,11 +105,11 @@ for (const r of ruins) {
 
 if (minArg) {
   const m = media(principal, 10);
-  // Piso absoluto apodrece: o dourado é fixo (78 perguntas, 160 fontes) e o corpus cresce a cada
-  // handoff/memória nova — doc que o dourado não conhece só pode entrar no top-10 como falso
-  // positivo. Em 31/07, quatro docs novos derrubaram o híbrido de 83,0% para 82,4% sem uma linha
-  // de código mudar, enquanto o BM25 ficou igual. `--min bm25` compara com o BM25 da MESMA
-  // execução, mesmo corpus: mede o que o vetor acrescenta, e não quanto o corpus cresceu.
+  // Piso absoluto não reproduz entre sessões: em 31/07 o híbrido deu 82,4% contra os 83,0% da
+  // fase 3 nos MESMOS 259 docs, sem uma linha de código mudar (medido com e sem os 4 docs novos:
+  // idêntico, 0 pergunta afetada — não é o corpus crescer, é handoff e memória serem reescritos
+  // toda sessão, o que mexe em vetor e IDF). `--min bm25` compara com o BM25 da mesma execução e
+  // mesmo corpus: as duas metades sofrem a mesma deriva, então a diferença sobrevive a ela.
   const min =
     minArg === "bm25" ? media(relatorios.bm25 ?? (await avaliar(motores.bm25)).resultados, 10) : Number(minArg);
   if (m < min) {

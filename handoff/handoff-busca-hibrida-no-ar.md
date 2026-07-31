@@ -104,13 +104,29 @@ Reindexado o corpus (259 → 263 docs), remedido, mesmo código:
 | denso | 76,7% | 75,7% (−1,0) |
 | híbrido | 83,0% | **82,4%** (−0,6) |
 
-**Nenhuma linha de código mudou.** O dourado é fixo (78 perguntas, 160 fontes) e o corpus
-cresce; doc que o dourado não conhece **só pode entrar no top-10 como falso positivo**. E o
-custo cai inteiro no lado denso — o BM25 não se mexeu. Ou seja: **`--min 0.83` ia falhar em
-toda sessão que escrevesse memória, medindo crescimento do corpus e chamando de regressão.**
+**Nenhuma linha de código mudou.** A primeira explicação foi "o corpus cresceu e doc que o
+dourado não conhece só entra no top-10 como falso positivo". **Errada — e vale registrar
+porque é a hipótese que qualquer um levanta primeiro.**
+
+Rodado o dourado com e sem os 4 docs novos, mesmo pipeline:
+
+```
+COM os 4 novos: 263 docs -> recall@10 82.4%
+SEM os 4 novos: 259 docs -> recall@10 82.4%      # exatamente os 259 da fase 3
+0 pergunta(s) pioraram por causa dos docs novos.
+```
+
+Eles entram no top-10 em 6 perguntas e **não deslocam nada**: as afetadas ou já estavam em
+100%, ou já estavam em 0% por outro motivo. **Custo medido dos docs novos: 0,0 ponto.**
+
+Então o achado é **pior** que "o corpus cresceu": **os mesmos 259 docs da fase 3 rendem 82,4%
+hoje, não 83,0%.** O que muda entre sessões não é só a contagem — é o *conteúdo*: handoff e
+memória são reescritos toda sessão, e reescrever doc que já está no índice mexe nos vetores e
+no IDF. **O número absoluto não reproduz nem a corpus constante.** Um piso absoluto ia acusar
+regressão em toda sessão que escrevesse qualquer coisa.
 
 Trocado por `--min bm25` (`avaliar.mjs:105`): o piso é o BM25 **da mesma execução, mesmo
-corpus**. Mede o que o vetor acrescenta, não quanto o corpus cresceu.
+corpus**. As duas metades sofrem a mesma deriva, então a diferença sobrevive a ela.
 
 E o número que ele revela é desconfortável: **o híbrido ganha do BM25 por 0,1 ponto** (82,4%
 × 82,3%). Eram 0,7 na fase 3. Em 78 perguntas, 0,1 ponto é **fração de uma pergunta** — o
@@ -124,11 +140,17 @@ passa por 0,1 ponto). Teto: **93,3%** (recall@50 — acima disso o doc certo nem
 50). Custa claude-cli em lote na indexação — janela ociosa do pool, **fora das 00:00–01:00
 BRT** (cron do autopublishing às 00:13).
 
-**Antes de gastar claude-cli, considerar o mais barato:** o dourado envelheceu junto com o
-corpus. Duas das quatro memórias novas (`turbopack_new_url_import_meta_breaks`,
-`vps_ollama_sofia_models`) respondem perguntas que já estão no dourado, e como não constam em
-`fontes` contam como **erro quando o motor acerta**. Atualizar `data/dourado.json` é minutos e
-pode explicar parte do −0,6 — medir isso primeiro evita otimizar contra um alvo torto.
+**Atualizar `data/dourado.json` foi cogitado e MEDIDO como inútil** — não repetir a ideia. A
+hipótese era que as memórias novas respondiam perguntas do dourado sem constar em `fontes`,
+contando como erro quando o motor acerta. Os números acima mostram que não: elas entram no
+top-10 e não mudam recall nenhum. Creditar as fontes renderia ~0.
+
+**A dúvida honesta antes de gastar claude-cli:** a fase 4 melhora o **lado denso** — que hoje
+soma **+0,1 ponto** sobre o BM25. A justificativa histórica do vetor nunca foi o agregado, foi
+a camada `estado` (+18,7 pontos). E esta mesma página diz, logo abaixo, que a camada `estado`
+**não é problema de recuperação, é fonte errada**. Ou seja: a fase 4 gasta o pool escasso para
+melhorar a metade que não mede nada, a serviço da camada que embedding nenhum resolve. **Ver
+"o que não perseguir" antes de começar.**
 
 O que **não** perseguir: a camada `estado` parou em 42,7% com qualquer motor porque a resposta
 ("quantos projetos hoje", "qual o gate do sirius") **não mora em texto** — mora no GitHub, no GSC
