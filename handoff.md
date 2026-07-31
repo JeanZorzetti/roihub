@@ -1,8 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — fase 4: contextual retrieval, medido igual** (o piso a bater é
-> `--min 0.83`, o teto é 93,3% de recall@50). Depois: abrir as 5 lacunas (`BKP`, `CST`, `OBS`,
-> `PRV`, `A11Y`), **com a checagem definida antes da norma**.
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-corpus-verdade.md`](handoff/handoff-proximo-passo-corpus-verdade.md)
+> (31/07 18h): fazer o sistema MEDIR VERDADE.** A recuperação está resolvida o suficiente
+> (88,0% @10, teto da síntese em 100%); o que não existe é qualquer medida de **corretude do
+> corpus** — e a síntese acabou de transformar erro silencioso em erro fluente e citado.
+> Ranqueado e argumentado lá: **(1) executar os 97 protocolos** (`verificacao.como` × 35
+> projetos — a única operação do sistema que produz informação nova sobre o mundo real, 2–4
+> sessões), **(2) juiz de verdade sobre `dourado.resposta`** + quebra por camada (1 sessão),
+> **(3) MCP + `/api/busca`** (o único item cujo retorno compõe: a próxima sessão de Claude é a
+> maior usuária do corpus e a única sem acesso), (4) camada `estado` roteada para fonte viva,
+> (5) o pool que a busca divide com o autopublishing, (6) detecção de contradição.
+> ⚠️ **NÃO é a fase 4** (contextual retrieval) — despriorizada pela 2ª vez, com número.
+> 🧾 O handoff também lista **a dívida contraída hoje**, item por item.
+>
+> ⏸️ Adiado, não cancelado: abrir as 5 lacunas de protocolo (`BKP`, `CST`, `OBS`, `PRV`,
+> `A11Y`), **com a checagem definida antes da norma**.
 >
 > ✅ **A ABA RESPONDE, NÃO SÓ LISTA (31/07) —
 > [`handoff/handoff-resposta-com-citacao.md`](handoff/handoff-resposta-com-citacao.md)**:
