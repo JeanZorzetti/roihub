@@ -1,6 +1,18 @@
 # ROI Hub — handoff
 
-> ▶️ ✅ **A LEVA DO AGENTE FOI EXECUTADA (31/07, 12h) —
+> ▶️ **PRÓXIMO PASSO — PÁGINA NOVA: `/resumo`, um resumo executivo por projeto —
+> [`handoff/handoff-pagina-resumo-executivo.md`](handoff/handoff-pagina-resumo-executivo.md)
+> (31/07, 12h30).**
+> O hub responde "o que eu faço hoje?" em cinco abas e **nenhuma responde "o que eu tenho?"**.
+> Custo já medido disso nesta semana: confundi `vertice` com `verticemarketing` (dois produtos
+> diferentes) e o card do `fabrica` afirmou por seis semanas uma desindexação que não existia.
+> Sexta aba, os **35 de `data/projects.json`**, conteúdo em `data/resumos.json` chaveado por slug,
+> **seis campos fixos** por projeto (o que é / para quem / estado / dinheiro / o que trava / próxima
+> decisão). `estado` é enum — inclui `no-ar-inutilizavel`, o padrão mais comum do portfólio.
+> ⚠️ `estado` e `dinheiro` **não saem de card**: `curl` sem `-k` e `receitaNota` com data, senão é
+> zero. Lotes de ~7 com commit por lote; um teste `node --test` travando enum e slug órfão.
+>
+> ✅ **A LEVA DO AGENTE FOI EXECUTADA (31/07, 12h) —
 > [`handoff/handoff-fabrica-e-leva-de-um-linha-31-07.md`](handoff/handoff-fabrica-e-leva-de-um-linha-31-07.md)**
 > (plano: [`handoff/handoff-proximo-passo-pos-sirius.md`](handoff/handoff-proximo-passo-pos-sirius.md)).
 > 🚨 **A tarefa nº 1 não existia.** URL Inspection nas 26 URLs do `fabrica` antes de mexer:
