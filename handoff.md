@@ -2,7 +2,19 @@
 
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
-> 1️⃣ **Se a sessão for de trabalho:** ✅ **A frente de nomenclatura FECHOU (30/07, 22h BRT).**
+> 1️⃣ **Se a sessão for de trabalho:**
+> [`handoff/handoff-curar-os-15.md`](handoff/handoff-curar-os-15.md) (30/07) —
+> **curar os 15 projetos que ainda entram no ranking sem receita, blockers nem ação.**
+> Curados hoje: **11 → 20**. Os 15 restantes já estão medidos no handoff (todos em 200, título e
+> último push conferidos), com o método e a régua de calibragem.
+> 🚨 **Não curar pelo status da home:** 3 dos 9 curados hoje respondiam **200** com o produto
+> quebrado — o front chama API que é NXDOMAIN e o `checkHealth` dá verde.
+> ⚠️ **Grep por nome de env var dá falso negativo** (comprovado no `atma`) — o handoff traz o grep
+> que funciona.
+> 🤔 Antes de escrever 15 cards, uma pergunta: `cyberspace` é boilerplate Vite puro, e `vertice`
+> (03/03) e `pathfinder` (23/10/25) estão parados há meses. Entram todos com receita honesta 1–2?
+>
+> ✅ **A frente de nomenclatura FECHOU (30/07, 22h BRT).**
 > [`handoff/handoff-renomear-subdominios-executado.md`](handoff/handoff-renomear-subdominios-executado.md)
 > — **9 renomeações + 2 limpezas**, todas verificadas pelo corpo. **Zero duplicados.**
 > A frente de domínio próprio já havia fechado na 2ª leva; agora todo host vivo também tem **nome de
