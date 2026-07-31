@@ -1,20 +1,27 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — confirmar o timeout de 300s do cliente do autopublishing —
-> [`handoff/handoff-harness-decidido.md`](handoff/handoff-harness-decidido.md) (31/07).**
-> **Harness DECIDIDO: fica o `spawn("claude")`.** O Claude Agent SDK só autentica por
-> `ANTHROPIC_API_KEY`/Bedrock/Vertex/Foundry — `CLAUDE_CODE_OAUTH_TOKEN` não existe na doc dele,
-> e a Anthropic escreve que não permite claude.ai login em produto de terceiro. Fora por
-> [[budget_claude_cli_only]]. E a mesma doc diz que rodar o CLI como subprocesso com `-p
-> --output-format json` **é o padrão** — que é o que este repo já faz. OpenCode/Aider/Codex/
-> `nanocodex` saem na triagem de ToS. ✅ **`CLAUDE.md` + `.claude/settings.json` escritos** (o
-> buraco real: toda sessão redescobria `listProjects()`, `node --test` e "EasyPanel, não Vercel").
-> 🚨 **O "corte de ~300s do proxy do EasyPanel" provavelmente NÃO é o EasyPanel:** é o
-> `headersTimeout` default do undici (300 s) no `fetch()` do `run-autopublish.mjs` **rodando no
-> GitHub Actions** — servidor tem 900 s (`maxDuration`) e o CLI 600 s, mas o cliente desiste
-> primeiro e grava `request-failed`. O próprio código já mede `goiania 366s` > 300 s.
-> Falta confirmar com `UND_ERR_HEADERS_TIMEOUT` num log real; patch escrito, **não aplicado** —
-> é o caminho crítico das 00:13.
+> ▶️ **PRÓXIMO PASSO — tipar os ~85 protocolos que já existem —
+> [`handoff/handoff-tipar-protocolos.md`](handoff/handoff-tipar-protocolos.md) (31/07).**
+> Fase 2 de [`docs/rag-arquitetura.md`](docs/rag-arquitetura.md): extrair memórias, handoffs e
+> as regras editoriais do `autopublish-clients.ts` para `data/protocolos/<AREA>-<NN>.json`,
+> **em JSON** (Node 22 não tem YAML nativo e o repo não ganha dependência para isso).
+> **Não precisa de vetor, reranker, grafo nem MCP** — e já entrega sozinho "quais dos 35 nunca
+> foram checados contra a lição X". 🚨 A mina está **fora do repo**: 123 arquivos em
+> `~/.claude/projects/…/memory/` (79 candidatos diretos; os 38 `project_*` são estado, não
+> protocolo). Taxonomia **fechada** em [`docs/protocolos-areas.md`](docs/protocolos-areas.md)
+> — 13 áreas com lastro + 5 lacunas (`BKP`, `CST`, `OBS`, `PRV`, `A11Y`), que **não** se abrem
+> nesta sessão. Fecha com `test/protocolos.test.mjs` na lista do `npm test`.
+> ⏸️ **Continua aberto e adiado por decisão:** o `UND_ERR_HEADERS_TIMEOUT` do
+> [`handoff/handoff-harness-decidido.md`](handoff/handoff-harness-decidido.md) § D — pode estar
+> custando artigo toda noite no `polarisia` e no `reviewshield`; confirmar custa ~10 min.
+>
+> ✅ **HARNESS DECIDIDO (31/07) — fica o `spawn("claude")`.** O Claude Agent SDK só autentica
+> por `ANTHROPIC_API_KEY`/Bedrock/Vertex/Foundry; `CLAUDE_CODE_OAUTH_TOKEN` não existe na doc
+> dele. Fora por [[budget_claude_cli_only]] — e a mesma doc diz que rodar o CLI como
+> subprocesso com `-p --output-format json` **é o padrão**, que é o que este repo já faz.
+> OpenCode/Aider/Codex/`nanocodex` saem na triagem de ToS. `CLAUDE.md` +
+> `.claude/settings.json` escritos. Detalhe e fontes em
+> [`handoff/handoff-harness-decidido.md`](handoff/handoff-harness-decidido.md).
 >
 > ✅ **A ABA `/resumo` ESTÁ NO AR (31/07, 10h30) —
 > [`handoff/handoff-resumo-entregue-e-as-26-decisoes.md`](handoff/handoff-resumo-entregue-e-as-26-decisoes.md)**
