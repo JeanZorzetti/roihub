@@ -1,16 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — PÁGINA NOVA: `/resumo`, um resumo executivo por projeto —
-> [`handoff/handoff-pagina-resumo-executivo.md`](handoff/handoff-pagina-resumo-executivo.md)
-> (31/07, 12h30).**
-> O hub responde "o que eu faço hoje?" em cinco abas e **nenhuma responde "o que eu tenho?"**.
-> Custo já medido disso nesta semana: confundi `vertice` com `verticemarketing` (dois produtos
-> diferentes) e o card do `fabrica` afirmou por seis semanas uma desindexação que não existia.
-> Sexta aba, os **35 de `data/projects.json`**, conteúdo em `data/resumos.json` chaveado por slug,
-> **seis campos fixos** por projeto (o que é / para quem / estado / dinheiro / o que trava / próxima
-> decisão). `estado` é enum — inclui `no-ar-inutilizavel`, o padrão mais comum do portfólio.
-> ⚠️ `estado` e `dinheiro` **não saem de card**: `curl` sem `-k` e `receitaNota` com data, senão é
-> zero. Lotes de ~7 com commit por lote; um teste `node --test` travando enum e slug órfão.
+> ✅ **A ABA `/resumo` ESTÁ NO AR (31/07, 10h30) —
+> [`handoff/handoff-resumo-entregue-e-as-26-decisoes.md`](handoff/handoff-resumo-entregue-e-as-26-decisoes.md)**
+> (plano: [`handoff/handoff-pagina-resumo-executivo.md`](handoff/handoff-pagina-resumo-executivo.md)).
+> Sexta aba, **35 resumos executivos**, seis campos fixos, `npm test` verde (132) e push.
+> `estado` e `dinheiro` **não vieram de card**: os 35 hosts curlados **sem `-k`** (todos 200) e os
+> quatro backends mortos re-resolvidos — `cardioapi`, `aitradingapi`, `arquiteturaapi` e `pathback`
+> seguem **NXDOMAIN em 31/07**.
+> 🚨 **O achado é o agregado, não a página: 26 dos 35 estão parados numa DECISÃO, não numa tarefa.**
+> **1 de 35** tem receita provada (`sirius`, e o card não registra as datas das 3 vendas); **2** têm
+> checkout vivo (`orcaobra`, e o `atma` nunca testado em produção); **5** estão em
+> `no-ar-inutilizavel`. As 26 decisões são três famílias — *não tem como cobrar* (9), *não tem quem
+> venda* (5), *não tem tráfego* (o resto) — e **só a terceira** é tratada pelas abas que já existem.
+> ⚠️ **A agenda não guarda decisão** (ela quer data e checkbox; "matar ou investir o `orion`?" não
+> tem nenhum dos dois). Nada foi construído para isso — pergunta aberta pro Jean: **as 26 viram uma
+> triagem ou o `/resumo` é só onde elas moram?**
 >
 > ✅ **A LEVA DO AGENTE FOI EXECUTADA (31/07, 12h) —
 > [`handoff/handoff-fabrica-e-leva-de-um-linha-31-07.md`](handoff/handoff-fabrica-e-leva-de-um-linha-31-07.md)**
