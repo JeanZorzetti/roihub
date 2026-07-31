@@ -2,25 +2,24 @@
 
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
-> 1️⃣ **Se a sessão for de trabalho:**
-> [`handoff/handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) (30/07) —
-> **renomear 8 subdomínios + limpar 1 + decidir 2 nomes**.
-> ✅ **A frente de domínio próprio FECHOU:** 1ª e 2ª levas executadas, **35 domínio próprio × 1
-> fornecedor** — e esse 1 é o `portfolio`, **exceção pedida pelo Jean**. Todo projeto vivo está em
-> domínio próprio, com canonical, sitemap XML de verdade e sitemap aceito no GSC. Zero duplicados.
-> Histórico e as 5 correções que só apareceram rodando:
-> [`handoff/handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md).
-> 🚨 **Renomear ≠ criar.** Os 15 hosts já foram submetidos ao GSC; apagar o antigo devolve NXDOMAIN,
-> que já queimou **76% do crawl budget** do `roilabs.com.br`. **Host antigo vira 308 para o novo** —
-> a receita com o PATCH da API está no handoff.
-> 🤔 Dois nomes dependem de decisão sua: `financeiro-obras` e `cardioqwen3code` — e no segundo a
-> pergunta real é se ele e o `cardio-risk-insight-hub` **são o mesmo produto** (compartilham
-> `api_medica_final.py` e estão com os títulos trocados entre si).
+> 1️⃣ **Se a sessão for de trabalho:** ✅ **A frente de nomenclatura FECHOU (30/07, 22h BRT).**
+> [`handoff/handoff-renomear-subdominios-executado.md`](handoff/handoff-renomear-subdominios-executado.md)
+> — **9 renomeações + 2 limpezas**, todas verificadas pelo corpo. **Zero duplicados.**
+> A frente de domínio próprio já havia fechado na 2ª leva; agora todo host vivo também tem **nome de
+> produto**. Os 10 hosts antigos ficam em **308** por semanas — não apagar antes de o `Crawl requests`
+> deles cair. Receita original em
+> [`handoff/handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md); histórico das
+> levas em [`handoff/handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md).
+> 🚨 **A ordem é literal: push → deploy manual → verificação.** Os 3 estáticos que publicam de
+> `site/` têm `Root Directory = /`, então o push serve a raiz do repo e derruba o host novo para
+> **404**. Verificar antes do push dá verde no deploy errado.
+> 🚨 **`redirect` da API da Vercel só aceita destino no MESMO projeto** — cross-project dá
+> `400 bad_request`. Saída: `DELETE` no projeto velho + `POST` no novo já com o `redirect`.
 > ⚠️ **Decisão do Jean, já tomada e reafirmada: ZERO arquivamentos** — *"quero todos ativos, vou
 > monetizar/produtizar todos"*. Não relitigar; o custo aceito é NXDOMAIN futuro em quem for abandonado.
-> 🗑️ `housingpro`, `EGTelemedicina` e `synth-bot-buddy` tiveram os **repos apagados** — saem do hub
-> sozinhos, mas os hosts **não** somem sozinhos (`synth-bot-buddy.roilabs.com.br` e
-> `www.housingpro.com.br` seguem em 200, com domínio pago).
+> 🗑️ Único resíduo aberto: **`housingpro.com.br` usa o DNS do Registro.br** (`d/e.sec.dns.br`), não
+> Cloudflare nem Hostinger — limpeza é à mão, no painel. Já responde 404 e não está em propriedade
+> nenhuma do GSC, então **impacto zero**: é higiene, não pendência.
 >
 > 2️⃣ **A data, que não depende de sessão:**
 > [`handoff/handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md)
@@ -45,7 +44,9 @@
 > `[...MORTOS, ...RESSUSCITAR]`, a expressão publicada é idêntica e o host já responde 301.
 > **Não rode o script por causa disso.**
 >
-> ✅ **41 repos ativos, 2 sem `homepage`** (`roihub`, `repo-de-teste`) — e os 2 são decisão fechada.
+> ✅ **36 repos ativos, 34 com site**, 2 sem `homepage` (`roihub`, `repo-de-teste`) — decisão fechada.
+> Caiu de 41 porque `cardioqwen3code`, `synth-bot-buddy` e `housingpro` foram **apagados**, não
+> porque algo saiu do ar.
 > A frente "repos sem site" está **encerrada**.
 >
 > **O que sobra não é código do roihub:** Compass (Etapas 2 e 3 — GitHub OAuth, Resend, Stripe),
