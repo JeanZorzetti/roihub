@@ -1,0 +1,32 @@
+{
+  "id": "SEC-05",
+  "area": "SEC",
+  "titulo": "Postgres do VPS 2.24.207.200 nao oferece TLS: provar com o probe antes de prometer",
+  "norma": "Antes de dizer que 'e so ligar TLS', rodar o probe do handshake SSLRequest. S = servidor aceita TLS (o sslmode do cliente e a causa, e um .env resolve). N = servidor nao oferece (ssl=off no postgresql.conf) e trocar sslmode=disable por require nao liga TLS, so faz a conexao falhar - ligar exige acesso ao VPS.",
+  "motivo": "Confirmado em 30/07/2026 na porta 5452 (banco do Atma) e ja conhecido no 5451 (Compass). As duas causas de 'conexao sem TLS' levam a trabalhos opostos: uma e editar env, a outra e infra que nao esta na mao de quem edita o repo.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node -e \"const s=require('net').connect(PORTA,'HOST',()=>{const b=Buffer.alloc(8);b.writeInt32BE(8,0);b.writeInt32BE(80877103,4);s.write(b)});s.once('data',d=>{console.log(d.toString());s.destroy()})\"",
+    "frequencia": "sob suspeita",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "postgres"
+    ],
+    "infra": [
+      "vps",
+      "easypanel"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "vps_postgres_no_tls_sslrequest_probe"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

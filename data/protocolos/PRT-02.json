@@ -1,0 +1,31 @@
+{
+  "id": "PRT-02",
+  "area": "PRT",
+  "titulo": "Nenhum projeto do portfolio usa Google Ads ou midia paga",
+  "norma": "SEO e canal unico em todo o portfolio, inclusive para defesa de brand. Nunca propor Ads ou paid como acao, blocker ou proximo passo - em projects.json, handoff, plano de loop-runner ou qualquer lugar. Alternativa para problema de brand ou demanda: entity SEO, conteudo e brand signals.",
+  "motivo": "Diretriz do Jean em 11/07/2026: 'Nao vamos usar Google Ads, todos os projetos sao full SEO'. Reverte planos antigos que previam Ads pos-PMF.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rniE 'google ads|midia paga|paid media' data/projects.json handoff/  # tem que dar zero como acao proposta",
+    "frequencia": "por curadoria",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "feedback_full_seo_no_ads"
+  ],
+  "valid_from": "2026-07-11",
+  "valid_to": null,
+  "supersede": null
+}

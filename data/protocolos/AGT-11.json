@@ -1,0 +1,33 @@
+{
+  "id": "AGT-11",
+  "area": "AGT",
+  "titulo": "Robo escrevendo em registro validado por guard que lanca derruba o build inteiro",
+  "norma": "Ao automatizar escrita num registro que so humano editava, procurar o guard que valida esse registro e trocar throw por fallback. Robo nao le stack trace, e a falha nao fica na propria pagina: derruba o build do site inteiro.",
+  "motivo": "O /guia/index.astro fazia throw quando um guia do registro nao estava classificado numa etapa - guard sensato enquanto so humano editava.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn 'throw' no arquivo de indice/registro que o robo alimenta; build do site com uma entrada nova sintetica",
+    "frequencia": "por projeto novo no autopublish",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro",
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog",
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

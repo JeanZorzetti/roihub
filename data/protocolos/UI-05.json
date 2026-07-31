@@ -1,0 +1,32 @@
+{
+  "id": "UI-05",
+  "area": "UI",
+  "titulo": "Lenis com GSAP ScrollTrigger integra por gsap.ticker, nunca por scrollerProxy",
+  "norma": "A integracao atual e lenis.on('scroll', ScrollTrigger.update) + gsap.ticker.add(t => lenis.raf(t*1000)) + gsap.ticker.lagSmoothing(0). scrollerProxy e legado (de quando o Lenis nao atualizava o scrollTop nativo), mente sobre o scroll e quebra o pin. Nunca manter raf loop manual em paralelo ao ticker.",
+  "motivo": "Estetia, 26/05/2026: pin: true nao travava o scroll - a pagina rolava enquanto a animacao avancava pelo TEMPO. Causa: scrollerProxy com pinType fixed mais raf duplicado.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn 'scrollerProxy' src  # tem que dar zero em projeto com Lenis",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "gsap",
+      "react"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "lenis_gsap_scrolltrigger_integration"
+  ],
+  "valid_from": "2026-05-26",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,34 @@
+{
+  "id": "AGT-01",
+  "area": "AGT",
+  "titulo": "claude-cli e o unico acesso LLM custeado: nao propor solucao que dependa de API paga",
+  "norma": "O uso interno nao tem orcamento para API LLM paga - nem Anthropic por token, nem OpenRouter pago, nem chat pago. Toda solucao que rode LLM internamente assume claude-cli (assinatura, CLAUDE_CODE_OAUTH_TOKEN). :free tambem esta descartado: rate-limit curtissimo quebra runs. Onde a vazao for gargalo, a resposta e somar contas ao pool, nao migrar para pago.",
+  "motivo": "Restricao de custo declarada pelo Jean em 23/06/2026 (conta admin@roilabs.com.br).",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn 'ANTHROPIC_API_KEY\\|OPENAI_API_KEY\\|openrouter' --include='*.ts' --include='*.mjs' src lib scripts  # nenhuma dependencia de chave paga em codigo de producao",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [
+    "Groq free segue em uso onde ja esta implantado (Context Keeper, SEO Forecaster), com a ressalva do rate limit diario."
+  ],
+  "origem": [
+    "budget_claude_cli_only",
+    "polaris_teams_use_claude_cli"
+  ],
+  "valid_from": "2026-06-23",
+  "valid_to": null,
+  "supersede": null
+}

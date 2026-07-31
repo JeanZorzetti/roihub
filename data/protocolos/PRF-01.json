@@ -1,0 +1,31 @@
+{
+  "id": "PRF-01",
+  "area": "PRF",
+  "titulo": "Medir qual e o elemento do LCP antes de otimizar qualquer coisa",
+  "norma": "Nao otimizar por palpite: capturar o elemento de LCP com PerformanceObserver e buffered: true. Depois de consertar, o LCP MUDA de elemento - remedir. getEntriesByType('largest-contentful-paint') nao devolve nada retroativamente.",
+  "motivo": "goiania, 13/07/2026: o card do hub dizia 'hero image sem preload' e o elemento de LCP era TEXTO (paragrafo do hero). So depois de consertar o texto o LCP virou a foto do produto. LCP 5,9s para 2,5s, score 68 para 92.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "new PerformanceObserver(list => console.log(list.getEntries().at(-1).element)).observe({type:'largest-contentful-paint', buffered:true})",
+    "frequencia": "por entrega de performance",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "goiania_lcp_root_causes"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

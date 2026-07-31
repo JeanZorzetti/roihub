@@ -1,0 +1,35 @@
+{
+  "id": "PRT-04",
+  "area": "PRT",
+  "titulo": "Dominio proprio se da a quem vai buscar trafego de busca; o resto arquiva",
+  "norma": "Criterio por projeto: vai buscar trafego de busca? SIM = promover a subdominio proprio. NAO (demo, experimento, ferramenta interna) = arquivar o repo, nao dar dominio - repo arquivado sai do ranking sozinho, sem DNS orfao. NAO SEI = deixar em *.vercel.app, que e a resposta certa.",
+  "motivo": "Host de fornecedor e descartavel de graca; host seu, nao: subdominio criado e abandonado vira NXDOMAIN e consumiu 76% do crawl budget do roilabs.com.br.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "para cada projeto sem dominio proprio, responder a pergunta antes de criar qualquer registro de DNS",
+    "frequencia": "por projeto novo",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel",
+      "cloudflare"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [
+    "O portfolio nimblabs e excecao declarada do Jean e segue em dominio de fornecedor."
+  ],
+  "origem": [
+    "vendor_domain_hides_project_from_gsc",
+    "roilabs_dns_cloudflare_retired_subdomains"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

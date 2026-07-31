@@ -1,0 +1,31 @@
+{
+  "id": "SEO-03",
+  "area": "SEO",
+  "titulo": "Medicao branded do GSC exige corte por pais",
+  "norma": "Toda medicao de posicao/CTR branded leva dimensionFilterGroups com query equals E dimensions:['country']. Sem o corte por pais o numero nao fecha entrega. Impressoes subindo muito com cliques parados = suspeitar de mercado estrangeiro ANTES de suspeitar de CTR, titulo ou schema.",
+  "motivo": "sirius crm, 30/07/2026: o agregado dava pos 5,2 com 295 impressoes e mandava 'refazer entity SEO'. Quebrado por pais: Bangladesh (empresa homonima) com 264 imp e 0 clique, e o Brasil em pos 1,0 com CTR 67%. A posicao media e ponderada por impressao.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "searchanalytics/query com dimensions:['country','device'] + dimensionFilterGroups query equals '<marca>'; ler a linha bra",
+    "frequencia": "mensal",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "gsc_branded_position_polluted_by_country"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

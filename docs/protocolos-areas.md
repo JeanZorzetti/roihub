@@ -24,24 +24,32 @@ acerta o filtro da consulta. Com 13, o roteamento é trivial e a granularidade v
 
 ## As 13 áreas com lastro no histórico
 
-Contagem = memórias e handoffs que já existem e viram protocolo na primeira ingestão. É a
-prova de que a área é real: cada uma custou incidente.
+Contagem = protocolos **tipados e verificáveis** em `data/protocolos/`, escritos na primeira
+ingestão (31/07/2026). É a prova de que a área é real: cada uma custou incidente. A coluna
+"estimado" é o chute de 31/07 antes da tipagem, mantido porque a diferença é informação:
+onde ela cresceu, a área estava subdimensionada.
 
-| Cód. | Área | Pergunta que ela responde | Lastro |
-|---|---|---|---|
-| **DEP** | Deploy e publicação | "O que eu preciso conferir para dizer que subiu?" | ~9 |
-| **SEO** | Indexação e busca | "O Google está vendo, rastreando e indexando?" | ~8 |
-| **UI** | Frontend e design | "Isso tem cara de produto ou de template?" | ~8 |
-| **VER** | Evidência e verificação | "Isso que eu acabei de medir prova o quê?" | ~7 |
-| **AGT** | Automação e agentes | "Posso automatizar isso, com o quê, e sem risco de ban?" | ~7 |
-| **INT** | Integração e APIs de terceiro | "Por que a credencial/API do fornecedor falhou?" | ~6 |
-| **DNS** | Domínio e DNS | "O nome resolve, tem cert, e aponta para o lugar certo?" | ~5 |
-| **SEC** | Segurança e segredos | "O que está exposto que eu acho que está fechado?" | ~5 |
-| **DAT** | Dados e migração | "A migração/consulta faz o que eu acho que faz?" | ~4 |
-| **PRF** | Performance | "Está lento por quê, e essa medição é confiável?" | ~4 |
-| **CNT** | Conteúdo e editorial | "O que publica sozinho pode publicar isso?" | ~4 |
-| **PRT** | Portfólio e ciclo de vida | "Esse projeto continua ou morre, e por qual número?" | ~4 |
-| **GEO** | Presença em IA | "ChatGPT/Perplexity/Gemini me citam?" | 1 |
+| Cód. | Área | Pergunta que ela responde | Estimado | Tipado |
+|---|---|---|---|---|
+| **DEP** | Deploy e publicação | "O que eu preciso conferir para dizer que subiu?" | ~9 | **16** |
+| **SEO** | Indexação e busca | "O Google está vendo, rastreando e indexando?" | ~8 | **6** |
+| **UI** | Frontend e design | "Isso tem cara de produto ou de template?" | ~8 | **11** |
+| **VER** | Evidência e verificação | "Isso que eu acabei de medir prova o quê?" | ~7 | **7** |
+| **AGT** | Automação e agentes | "Posso automatizar isso, com o quê, e sem risco de ban?" | ~7 | **12** |
+| **INT** | Integração e APIs de terceiro | "Por que a credencial/API do fornecedor falhou?" | ~6 | **7** |
+| **DNS** | Domínio e DNS | "O nome resolve, tem cert, e aponta para o lugar certo?" | ~5 | **6** |
+| **SEC** | Segurança e segredos | "O que está exposto que eu acho que está fechado?" | ~5 | **6** |
+| **DAT** | Dados e migração | "A migração/consulta faz o que eu acho que faz?" | ~4 | **4** |
+| **PRF** | Performance | "Está lento por quê, e essa medição é confiável?" | ~4 | **4** |
+| **CNT** | Conteúdo e editorial | "O que publica sozinho pode publicar isso?" | ~4 | **10** |
+| **PRT** | Portfólio e ciclo de vida | "Esse projeto continua ou morre, e por qual número?" | ~4 | **6** |
+| **GEO** | Presença em IA | "ChatGPT/Perplexity/Gemini me citam?" | 1 | **2** |
+
+**Total: 97 protocolos** — não os "~65" estimados na abertura deste doc nem os "~85" do
+handoff. As duas áreas que mais cresceram explicam a diferença: **CNT** (o protocolo editorial
+estava **em código**, no prompt de `lib/autopublish-clients.ts`, e nunca tinha sido escrito
+como norma) e **DEP** (a operação da Vercel sozinha rende 6 protocolos). Triagem completa e o
+que ficou de fora: [`protocolos-triagem.md`](protocolos-triagem.md).
 
 ### Notas sobre as escolhas menos óbvias
 
@@ -88,7 +96,13 @@ com nome é uma pergunta aberta visível; área inexistente é um ponto cego.
 
 ## O registro de protocolo (unidade granular)
 
-Um protocolo é um registro versionado, não um parágrafo. Formato proposto:
+Um protocolo é um registro versionado, não um parágrafo.
+
+⚠️ **O YAML abaixo é só legibilidade.** A implementação é **JSON**, um arquivo por protocolo
+em `data/protocolos/<AREA>-<NN>.json` — o Node 22 não tem parser de YAML nativo e este repo
+não adiciona dependência para isso. O `area` gravado é o **código em maiúsculas** (`SEO`), não
+o slug minúsculo do exemplo, para que `id`, nome de arquivo e área concordem — é o que
+`test/protocolos.test.mjs` cobra. O `SEO-04` do exemplo existe e é literalmente este.
 
 ```yaml
 id: SEO-04
@@ -134,12 +148,11 @@ Os campos que fazem o sistema funcionar, e por quê:
 
 Ordem recomendada, e o motivo:
 
-1. **Extrair os ~65 protocolos que já existem** nas memórias e handoffs. Está tudo escrito,
-   só não está tipado. Nada novo é inventado nessa fase.
-2. **Escrever `verificacao.como` para cada um.** É aqui que se descobre quais "protocolos"
-   eram só opinião — os que não têm checagem possível voltam para a fila ou viram nota.
+1. ✅ **Extrair os protocolos que já existem** nas memórias e handoffs — feito em 31/07/2026,
+   **97 registros**. Nada novo foi inventado nessa fase.
+2. ✅ **Escrever `verificacao.como` para cada um.** Feito, e é o campo que o teste cobra.
 3. **Só então abrir as 5 lacunas**, escrevendo do zero, com a checagem definida antes da
-   norma.
+   norma. ← **próximo passo desta camada**, ainda não começado.
 
 Escrever área nova antes de tipar o que já foi aprendido caro é descartar o ativo mais
 valioso do portfólio.

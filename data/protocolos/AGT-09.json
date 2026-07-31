@@ -1,0 +1,33 @@
+{
+  "id": "AGT-09",
+  "area": "AGT",
+  "titulo": ".claude.json tem duas chaves para o projeto ROI Labs: gravar MCP nas duas",
+  "norma": "Existem duas entradas de projeto para o mesmo diretorio, diferindo so na caixa da letra do drive: C:/ (usada pelo terminal) e c:/ (usada pela extensao do VSCode), cada uma com seu proprio mcpServers. Ao adicionar ou editar MCP server, gravar nas DUAS e usar caminho absoluto no command.",
+  "motivo": "claude mcp add no terminal grava so na chave C:/; a sessao do VSCode le a c:/ e nao ve o servidor - parece 'nao conectado' mesmo com o terminal mostrando connected (caso mcp-server-linkedin, 09/07/2026).",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node -e \"const j=require('C:/Users/jeanz/.claude.json');for(const k of Object.keys(j.projects).filter(k=>/ROI Labs$/i.test(k)))console.log(k, Object.keys(j.projects[k].mcpServers||{}))\"",
+    "frequencia": "por MCP novo",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "windows-onedrive"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [
+    "Servidores MCP so spawnam no inicio da sessao: depois de editar, recarregar a janela do VSCode."
+  ],
+  "origem": [
+    "claude_json_case_duplicate_project_keys"
+  ],
+  "valid_from": "2026-07-09",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,32 @@
+{
+  "id": "AGT-12",
+  "area": "AGT",
+  "titulo": "commit status pending eterno nao e deploy falhado",
+  "norma": "Deploy por webhook (EasyPanel, Coolify, Dokku) nao registra commit status no GitHub: a API responde state 'pending' com statuses: [] para sempre. So failure ou error explicito e sinal de falha; sem sinal, quem decide e a verificacao real (HTTP 200 + canonical + URL no sitemap).",
+  "motivo": "Ler pending como falha faz um verificador que reverte por timeout de deploy passar a reverter TUDO que publica. Vale para qualquer gate que consulte status de commit.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "teste do gate com resposta {state:'pending', statuses:[]} assegurando que NAO reverte (test/autopublish.test.mjs)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "easypanel",
+      "github-actions"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,31 @@
+{
+  "id": "DNS-04",
+  "area": "DNS",
+  "titulo": "A 216.198.79.1 tambem e Vercel: IP diferente da receita nao significa dominio nao configurado",
+  "norma": "O padrao registrado nos handoffs e A 76.76.21.21, mas a Vercel ja emite 216.198.79.1. Antes de tratar um dominio como nao-configurado, medir o comportamento HTTP do apex E do www.",
+  "motivo": "30/07/2026 o handoff da 2a leva afirmava que housingpro.com.br estava parado em NXDOMAIN. Resolvia para 216.198.79.1, apex em 307 para www e www em 200, servindo o projeto certo.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -sS -o /dev/null -w \"%{http_code} -> %{redirect_url}\\n\" https://<host>/ e o mesmo no www  # 307 no apex ja indica Vercel",
+    "frequencia": "por operacao de DNS",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "vercel_new_a_record_216"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

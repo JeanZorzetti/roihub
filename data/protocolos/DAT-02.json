@@ -1,0 +1,36 @@
+{
+  "id": "DAT-02",
+  "area": "DAT",
+  "titulo": "prisma db push no runner standalone nao aplica schema: migrar a mao no host real",
+  "norma": "Toda mudanca de schema precisa de arquivo de migracao commitado e migrate deploy aplicado MANUALMENTE no host real de producao. O CMD do Dockerfile faz db push com || echo, mas o runner standalone do Next nao tem o CLI do Prisma, entao a migracao falha em silencio.",
+  "motivo": "sofia-next: o next build roda prisma generate, entao o client de producao passa a esperar a coluna nova; sem ela, TODA query da tabela quebra com column does not exist. Sintoma observado: a sala mostrou nome fallback 'Time' sem membros - parecia feature que nao apareceu, era a tabela inteira ilegivel.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "DATABASE_URL=\"postgres://sofia_db:SENHA@2.24.207.200:5435/sofia_db?sslmode=disable\" node node_modules/prisma/build/index.js migrate deploy   # usar o binario, npx falha",
+    "frequencia": "por mudanca de schema",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "prisma"
+    ],
+    "infra": [
+      "easypanel",
+      "docker"
+    ],
+    "superficie": [
+      "app",
+      "dados"
+    ]
+  },
+  "excecoes": [
+    "Indice nao muda o client Prisma: aplicar a migracao depois do push nao quebra nada (so nao rende o ganho)."
+  ],
+  "origem": [
+    "sofia_next_db_push_runner_fails"
+  ],
+  "valid_from": "2026-06-16",
+  "valid_to": null,
+  "supersede": null
+}

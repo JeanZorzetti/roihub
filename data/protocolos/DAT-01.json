@@ -1,0 +1,35 @@
+{
+  "id": "DAT-01",
+  "area": "DAT",
+  "titulo": "MySQL para Postgres: os erros que passam no build e so a query real acusa",
+  "norma": "Depois de traduzir SQL, rodar cada query traduzida direto contra o banco com um script pg de 20 linhas, e os INSERTs dentro de BEGIN/ROLLBACK. Quatro classes nao dao erro de sintaxe: agregado voltando string, LIKE case-sensitive, nome de coluna divergente e valor de filtro que nao existe no enum.",
+  "motivo": "SUM/COUNT do pg vem como '1500' e a soma CONCATENA; LIKE para de achar 'ana' em 'Ana' em silencio; WHERE status = 'converted' num enum sem esse valor roda limpo e devolve 0 para sempre (achado no getWeeklyStats do Atma). 2xx de endpoint nao prova nada quando o controller tem fallback.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "script pg rodando cada query contra o banco real; conferir colunas contra information_schema.columns (nao contra o schema.sql) e valores de filtro contra as constantes do codigo",
+    "frequencia": "por migracao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "postgres",
+      "node"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "api",
+      "dados"
+    ]
+  },
+  "excecoes": [
+    "Trocar aspas com sed quebra o arquivo quando a string JS ao redor e simples: rodar node --check em todo arquivo tocado antes de commitar."
+  ],
+  "origem": [
+    "postgres_migration_silent_failures"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

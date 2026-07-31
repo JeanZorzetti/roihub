@@ -1,0 +1,32 @@
+{
+  "id": "SEC-01",
+  "area": "SEC",
+  "titulo": "Dependencia de auth instalada nao prova que o app tem login",
+  "norma": "Dependencia no package.json, env var configurada e adapter no schema sao sinais de INTENCAO, nao de implementacao. Antes de publicar qualquer painel, rodar os tres checks e depois iterar TODAS as rotas sem sessao contando quantas devolvem 200 - uma rota protegida nao fala pelas vizinhas.",
+  "motivo": "Admin da Atma, 30/07/2026: next-auth instalado com adapter, bcryptjs, NEXTAUTH_URL e NEXTAUTH_SECRET na Vercel, e 22 rotas de API respondendo sem autenticacao nenhuma, 20 delas com POST/PUT/DELETE. A biblioteca nunca tinha sido importada.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s -o /dev/null -w \"%{http_code}\\n\" https://HOST/api/auth/session (404 = nao existe login); grep -rn \"from ['\\\"]next-auth\" src | head; grep -rlc \"getServerSession\\|getToken\" src/app/api --include=route.ts",
+    "frequencia": "por publicacao de painel",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "app",
+      "api"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextauth_installed_but_never_wired"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

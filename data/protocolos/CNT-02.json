@@ -1,0 +1,33 @@
+{
+  "id": "CNT-02",
+  "area": "CNT",
+  "titulo": "Forma do artigo: BLUF de 40 a 60 palavras, 4 a 6 secoes, e tabela em toda comparacao",
+  "norma": "Titulo com a keyword primaria literal dizendo o que o leitor ganha (nunca frase poetica), nenhum heading repetindo o titulo, 4 a 6 secoes H2 com 4 a 6 paragrafos cada, uma ou duas sub-headings por secao, negrito no termo decisivo (nunca na frase inteira) e, quando o artigo compara duas opcoes, um paragrafo obrigatoriamente em tabela markdown GFM.",
+  "motivo": "Sem essas regras o artigo sai em prosa corrida, sem nenhum elemento escaneavel. O padrao foi medido nos artigos escritos a mao de cada repo.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "editorialIssues() devolve 'bluf' fora de 40-60 palavras e 'structure' quando faltam titulo, secoes ou paragrafos",
+    "frequencia": "por publicacao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "lib/autopublish-clients.ts",
+    "lib/autopublish-core.mjs",
+    "geo_aeo_playbook"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

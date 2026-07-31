@@ -1,17 +1,28 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — tipar os ~85 protocolos que já existem —
-> [`handoff/handoff-tipar-protocolos.md`](handoff/handoff-tipar-protocolos.md) (31/07).**
-> Fase 2 de [`docs/rag-arquitetura.md`](docs/rag-arquitetura.md): extrair memórias, handoffs e
-> as regras editoriais do `autopublish-clients.ts` para `data/protocolos/<AREA>-<NN>.json`,
-> **em JSON** (Node 22 não tem YAML nativo e o repo não ganha dependência para isso).
-> **Não precisa de vetor, reranker, grafo nem MCP** — e já entrega sozinho "quais dos 35 nunca
-> foram checados contra a lição X". 🚨 A mina está **fora do repo**: 123 arquivos em
-> `~/.claude/projects/…/memory/` (79 candidatos diretos; os 38 `project_*` são estado, não
-> protocolo). Taxonomia **fechada** em [`docs/protocolos-areas.md`](docs/protocolos-areas.md)
-> — 13 áreas com lastro + 5 lacunas (`BKP`, `CST`, `OBS`, `PRV`, `A11Y`), que **não** se abrem
-> nesta sessão. Fecha com `test/protocolos.test.mjs` na lista do `npm test`.
-> ⏸️ **Continua aberto e adiado por decisão:** o `UND_ERR_HEADERS_TIMEOUT` do
+> ▶️ **PRÓXIMO PASSO — fase 2b, o conjunto dourado (~50 perguntas reais com resposta conhecida,
+> extraídas dos 36 handoffs).** ⚠️ **As fases 3+ não começam antes dele existir** — sem dourado,
+> vetor/reranker/grafo melhoram no achismo (camada 6 de
+> [`docs/rag-arquitetura.md`](docs/rag-arquitetura.md)). Depois dele: abrir as 5 lacunas
+> (`BKP`, `CST`, `OBS`, `PRV`, `A11Y`), **com a checagem definida antes da norma**.
+>
+> ✅ **OS PROTOCOLOS ESTÃO TIPADOS (31/07) — 97 registros —
+> [`handoff/handoff-protocolos-tipados.md`](handoff/handoff-protocolos-tipados.md)**
+> (plano: [`handoff/handoff-tipar-protocolos.md`](handoff/handoff-tipar-protocolos.md)).
+> Fase 2 fechada: `data/protocolos/<AREA>-<NN>.json`, um arquivo por protocolo, **todos com
+> `verificacao.como`**, mais `test/protocolos.test.mjs` na lista do `npm test` (**140 verdes**).
+> DEP 16 · AGT 12 · UI 11 · CNT 10 · VER 7 · INT 7 · SEO 6 · DNS 6 · SEC 6 · PRT 6 · DAT 4 ·
+> PRF 4 · GEO 2. Triagem dos 123 arquivos de memória em
+> [`docs/protocolos-triagem.md`](docs/protocolos-triagem.md).
+> 🚨 **O achado: o protocolo mais caro do repo estava em CÓDIGO, não em memória.** As regras
+> editoriais que governam **10 sites publicando sozinhos toda noite** (fonte real, nunca
+> concorrente direto, BLUF 40–60 palavras, tabela em comparação, gate YMYL) só existiam no
+> prompt do `autopublish-clients.ts` — `CNT` era a área mais subdimensionada do portfólio
+> (estimada ~4, tipada **10**). A fase 5 não pode assumir que toda norma nasceu em `memory/`.
+> **Nenhum candidato caiu por falta de checagem** (o handoff anterior previa perder alguns): as
+> memórias já nascem com *How to apply*, então o trabalho caro foi **traduzir prosa em comando**.
+> ⏸️ **Continua aberto e adiado por decisão:** o `UND_ERR_HEADERS_TIMEOUT` (agora normatizado em
+> `INT-02`, patch **ainda não aplicado**) do
 > [`handoff/handoff-harness-decidido.md`](handoff/handoff-harness-decidido.md) § D — pode estar
 > custando artigo toda noite no `polarisia` e no `reviewshield`; confirmar custa ~10 min.
 >

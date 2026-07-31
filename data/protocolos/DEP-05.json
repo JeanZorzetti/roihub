@@ -1,0 +1,33 @@
+{
+  "id": "DEP-05",
+  "area": "DEP",
+  "titulo": "NUNCA rodar yes | vercel project rm: apaga projetos vizinhos",
+  "norma": "O comando e interativo e nao aceita --yes. Alimentar confirmacao com yes apaga projetos VIZINHOS da conta. Se um projeto ficar com setting ruim, sobrescrever pelo vercel.json em vez de recriar; se precisar mesmo apagar, pelo dashboard.",
+  "motivo": "29/07/2026 levou eg, eg-site e roi-zenith junto com o alvo. Os dois com repo no GitHub foram recriados por redeploy; eg-site nao tinha repo e foi PERDIDO. Apagar projeto na Vercel e irreversivel e leva env vars, dominios e historico.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn 'vercel project rm' scripts/ .github/  # tem que dar zero",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [
+    "vercel project ls pagina em 20: projeto 'sumido' pode estar na pagina 2 (--next <timestamp>)."
+  ],
+  "origem": [
+    "vercel_project_rm_deletes_neighbors"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

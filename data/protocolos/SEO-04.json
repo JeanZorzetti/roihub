@@ -1,0 +1,35 @@
+{
+  "id": "SEO-04",
+  "area": "SEO",
+  "titulo": "Indexacao se prova por URL Inspection, nunca por status HTTP",
+  "norma": "Antes de afirmar que uma URL esta indexada, consultar a URL Inspection API e ler coverageState. Status 200, robots liberado e sitemap aceito nao sao prova. Impressoes caindo com posicao MELHORANDO e desindexacao, nao perda de ranking. Antes de gastar cota manual de Request Indexing, resubmeter o sitemap pela API.",
+  "motivo": "Atma, 30/07/2026: perdeu 98% das impressoes (14.818 para 316 em 28d) com a home em 200 o tempo todo e zero commits no periodo. Reversivel: as 5 URLs voltaram a 'Submitted and indexed' em menos de 24h, e quem pegou primeiro foi o resubmit do sitemap (rastreio no minuto exato do PUT).",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node --env-file=.env scripts/inspect-url.mjs <url>  # ler coverageState e lastCrawlTime; para resubmeter: scripts/submit-sitemap.mjs <sitemap>",
+    "frequencia": "semanal",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "errors:1 no sitemap NAO e bloqueio de indexacao: mede o parse do arquivo, nao a descoberta das URLs (fabrica, 31/07: 24 de 26 ja indexadas, 20 dos 21 artigos entre elas).",
+    "Reindexado nao e trafego de volta: impressao e clique sao indicadores atrasados de semanas.",
+    "URL is unknown to Google em host de fornecedor nao e problema de indexacao - ver SEO-02."
+  ],
+  "origem": [
+    "site_200_is_not_indexed_url_inspection"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

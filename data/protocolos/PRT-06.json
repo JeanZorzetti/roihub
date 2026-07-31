@@ -1,0 +1,34 @@
+{
+  "id": "PRT-06",
+  "area": "PRT",
+  "titulo": "No monorepo roilabs, doc nasce no vault do Obsidian",
+  "norma": "Documentacao de ops/dev vai em Docs/Obsidian/80-dev/ (com frontmatter tipo/status/data/dono) e dado de automacao em Docs/Obsidian/90-medicao/, referenciados por wikilink. Nao criar pastas docs/ dentro dos apps do monorepo roilabs. Script que ESCREVE no vault acompanha o arquivo: mover doc = atualizar a automacao junto.",
+  "motivo": "Regra do Jean em 03/07/2026: o vault e onde ele le, navega por grafo e opera o negocio; doc em docs/ do app fica invisivel para ele.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "ls -d apps/*/docs 2>/dev/null  # tem que dar vazio no monorepo roilabs",
+    "frequencia": "por doc novo",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [
+    "Excecoes mantidas: handoff.md co-localizado, specs do Spec Kit em specs/, conteudo de site (blog/content collections) e README de codigo.",
+    "Vale para o monorepo roilabs. O roihub mantem docs/ proprio (rag-arquitetura.md, protocolos-areas.md) por decisao deste projeto."
+  ],
+  "origem": [
+    "feedback_docs_no_vault"
+  ],
+  "valid_from": "2026-07-03",
+  "valid_to": null,
+  "supersede": null
+}

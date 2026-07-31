@@ -1,0 +1,38 @@
+{
+  "id": "VER-01",
+  "area": "VER",
+  "titulo": "Entrega nao fecha com curl -k: o flag desliga justamente a validacao que costuma ser o bug",
+  "norma": "curl -k / -sk serve so para separar 'origem morta' de 'borda/TLS quebrada'. Declarar um endpoint funcionando exige um curl SEM -k, porque o navegador nao tem -k. Erro de TLS num cliente que valida e sinal, nao obstaculo: investigar, nunca trocar para -k.",
+  "motivo": "atmaapi, 30/07/2026: sessao inteira validada com -sk, tudo 200 e success:true, e o admin em atmaadmin.roilabs.com.br nao conectava. O Traefik do EasyPanel servia o cert auto-assinado CN=Easypanel em vez do Let's Encrypt, e o app so mostrava 'Failed to fetch'.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "echo | openssl s_client -connect HOST:443 -servername HOST | openssl x509 -noout -subject -issuer -dates  # issuer auto-assinado = cert nunca emitido",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "easypanel",
+      "vercel",
+      "vps"
+    ],
+    "superficie": [
+      "site",
+      "api",
+      "app"
+    ]
+  },
+  "excecoes": [
+    "Sondar por IP com --resolve exige -k: sem ele o mesmo host devolve 000 e parece morto (falha de cert nao e fora do ar)."
+  ],
+  "origem": [
+    "curl_insecure_flag_hides_cert_errors",
+    "splitjud_www_dns_orphan"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,33 @@
+{
+  "id": "SEO-05",
+  "area": "SEO",
+  "titulo": "Crawl Stats do GSC e media de 90 dias: datar as falhas antes de cacar bug",
+  "norma": "Antes de abrir codigo por causa de um numero vermelho de crawl, datar as falhas: dias com requests>0 e bytes==0 e ms==0 sao requisicoes que nunca chegaram ao servidor; se param numa data e nao voltam, o problema acabou. Depois de um fix, o % OK nao melhora ate a janela de 90 dias rolar - julgar pelo mix dos dias novos.",
+  "motivo": "roilabs.com.br, 13/07/2026: o hub abriu a tarefa 'crawl 40,6% OK'. Nao havia bug vivo - 222 das 234 requisicoes eram anteriores ao fix do trailing slash. Perseguir o numero teria queimado o dia.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "no export do GSC: grafico de resumo (requests>0 com bytes==0 e ms==0), tabela de tipos de arquivo (Desconhecido - solicitacoes com falha), tabela de hosts (status 'Problemas no passado'), e cruzar com git log --reverse -- <dir>",
+    "frequencia": "sob suspeita",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [
+    "O que so aparece sondando a producao (e nao no relatorio): www servindo 200 em vez de 301 e pagina de agradecimento no sitemap sem noindex. Sempre curl -sI no www, no apex e numa rota sem barra."
+  ],
+  "origem": [
+    "gsc_crawl_stats_stale_90d_window"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

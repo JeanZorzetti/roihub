@@ -1,0 +1,33 @@
+{
+  "id": "VER-04",
+  "area": "VER",
+  "titulo": "vercel project ls prova ausencia na Vercel, nao que o app esta fora do ar",
+  "norma": "Antes de concluir que um projeto esta fora do ar e deployar, procurar onde ele roda hoje: boa parte do portfolio mora no EasyPanel/VPS. X-Vercel-Error: DEPLOYMENT_NOT_FOUND prova que aquele alias morreu, nao que o app caiu.",
+  "motivo": "29/07/2026: sofia-ia foi deployado na Vercel como se estivesse fora do ar. O Polaris ja rodava no mesmo repo em polarisia.com.br (EasyPanel) - o deploy criou um SEGUNDO ambiente de producao contra o banco real, com os segredos copiados. O sintoma real era a homepage apontando para um alias morto.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "npx vercel project ls (pagina em 20, usar --next); curl -sI no dominio real do projeto; conferir a homepage do repo com gh api repos/JeanZorzetti/<repo> --jq .homepage",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel",
+      "easypanel"
+    ],
+    "superficie": [
+      "site",
+      "app"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "vercel_project_ls_is_not_proof_of_offline"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

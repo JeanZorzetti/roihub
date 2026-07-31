@@ -1,0 +1,35 @@
+{
+  "id": "DEP-11",
+  "area": "DEP",
+  "titulo": "Nao adicionar pino em app Next com output standalone",
+  "norma": "O transport do pino usa worker_threads via thread-stream e os arquivos de worker nao sao tracados de forma confiavel para dentro do bundle standalone - a quebra so aparece em producao. Trocar por um log.ts de ~30 linhas escrevendo JSON por linha em process.stdout.write, com a API do pino, para que o upgrade seja trocar o import.",
+  "motivo": "Um logger nao pode ser o que derruba o deploy, e o build local aqui e nao-confiavel (OneDrive corrompe node_modules), entao a falha chegaria direto na producao. Vale para roilabs /app, Sirius, Estetia, Seven-MD e sofia-next.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "teste que varre src/ e falha se achar console.* (ver app/test/log.test.mjs); e grep -n '\"pino\"' package.json",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "docker",
+      "easypanel"
+    ],
+    "superficie": [
+      "app",
+      "api"
+    ]
+  },
+  "excecoes": [
+    "JSON.stringify(new Error('x')) e '{}': sem serializer explicito (type, message, stack) o log de erro perde exatamente a informacao do erro e parece que funcionou."
+  ],
+  "origem": [
+    "nextjs_pino_breaks_standalone_output"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

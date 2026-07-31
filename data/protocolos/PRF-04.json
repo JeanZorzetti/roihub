@@ -1,0 +1,31 @@
+{
+  "id": "PRF-04",
+  "area": "PRF",
+  "titulo": "Next embute polyfills core-js incondicionalmente: aliasar, mas por ultimo",
+  "norma": "Next (>=15, confirmado no 16.1.1) embute polyfill-module no bundle client ignorando o browserslist, e o PageSpeed flagueia como JavaScript legado. Mexer no browserslist nao remove. Fix: aliasar polyfill-module para um arquivo vazio cobrindo turbopack.resolveAlias E webpack.",
+  "motivo": "Ganho real e pequeno (~14KB): e o MENOR lever de performance, fazer so depois dos grandes (JS de animacao, hidratacao).",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -r 'polyfill-module' .next/static | head  # depois do alias, zero ocorrencia com conteudo de core-js",
+    "frequencia": "por entrega de performance",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextjs_unconditional_polyfills"
+  ],
+  "valid_from": "2026-06-05",
+  "valid_to": null,
+  "supersede": null
+}

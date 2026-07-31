@@ -1,0 +1,32 @@
+{
+  "id": "CNT-04",
+  "area": "CNT",
+  "titulo": "Projeto ymyl-restricted so publica pauta operacional",
+  "norma": "Em projeto marcado risk: 'ymyl-restricted', o artigo passa por um classificador que devolve operational, clinical ou uncertain, e so operational publica: a intencao e todos os blocos narrativos tem que ficar no escopo operacional, sem orientacao clinica.",
+  "motivo": "Clinica e saude sao YMYL: conteudo com orientacao clinica publicado por robo e risco regulatorio e de marca. Bonus medido no aftercare: pauta operacional de clinica e justamente a que serve ao produto B2B - clique de paciente nunca compra software.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "editorialIssues() devolve o codigo 'ymyl' quando a classificacao nao e operational ou quando algum bloco sai do escopo",
+    "frequencia": "por publicacao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "lib/autopublish-core.mjs",
+    "project_aftercare_blog_funnel"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

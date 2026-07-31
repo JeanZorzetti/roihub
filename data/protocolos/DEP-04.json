@@ -1,0 +1,33 @@
+{
+  "id": "DEP-04",
+  "area": "DEP",
+  "titulo": "vercel --prod de dentro do OneDrive falha com UNKNOWN unknown error, read",
+  "norma": "Deploy pela CLI da Vercel se faz de uma copia do repo FORA do OneDrive (C:\\dev ou $TEMP). O erro nao menciona OneDrive nem path e parece bug da Vercel; --archive=tgz nao contorna.",
+  "motivo": "O CLI le os arquivos para upload e bate num que o OneDrive nao hidratou (cloud-only). vercel link funciona dentro do OneDrive - so o upload quebra.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "pwd nao pode conter OneDrive antes de rodar vercel deploy --prod; clone alternativo: git -c core.longpaths=true clone <repo> C:\\dev\\<nome>",
+    "frequencia": "por deploy manual",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel",
+      "windows-onedrive"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "vercel_deploy_fails_under_onedrive",
+    "onedrive_node_modules_corruption"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

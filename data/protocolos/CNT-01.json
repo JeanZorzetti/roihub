@@ -1,0 +1,32 @@
+{
+  "id": "CNT-01",
+  "area": "CNT",
+  "titulo": "Toda fonte citada e uma pagina realmente recuperada, e nunca um concorrente direto",
+  "norma": "Cada entrada de sources tem que ser pagina efetivamente recuperada, com URL https e data de publicacao ISO. Nunca citar concorrente direto do projeto (empresa que vende o mesmo produto ou servico): citar orgaos de norma, fabricantes de insumo, imprensa setorial, pesquisa e dado publico.",
+  "motivo": "Regra do motor editorial do roihub (lib/autopublish-clients.ts). Fonte inventada em artigo que publica sozinho e o risco que fecha o canal inteiro.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "editorialIssues() em lib/autopublish-core.mjs devolve o codigo 'sources' quando a lista esta vazia ou tem entrada invalida",
+    "frequencia": "por publicacao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "lib/autopublish-clients.ts",
+    "lib/autopublish-core.mjs"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

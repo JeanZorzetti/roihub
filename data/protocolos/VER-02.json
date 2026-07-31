@@ -1,0 +1,37 @@
+{
+  "id": "VER-02",
+  "area": "VER",
+  "titulo": "Status 200 de sitemap e robots nao prova deploy: validar o corpo",
+  "norma": "Em SPA e em qualquer app com catch-all, path desconhecido devolve index.html com status 200. Validacao de /sitemap.xml e /robots.txt e sempre pelo CORPO, nunca pelo codigo HTTP.",
+  "motivo": "2a leva de dominios (30/07/2026): synth-bot-buddy e cardio-risk-insight-hub passaram no check de status e nao tinham sitemap nenhum. Sitemap submetido ao GSC nesse estado e rejeitado.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s https://<host>/sitemap.xml | head -c 5   # tem que ser exatamente <?xml ; e: curl -s https://<host>/robots.txt | grep -i sitemap:",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "vite-spa",
+      "next",
+      "astro"
+    ],
+    "infra": [
+      "vercel",
+      "easypanel"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "robots.txt pre-existente no repo faz o teste 'comeca com User-agent' dar falso positivo: conferir tambem se a linha Sitemap: aponta para o host atual."
+  ],
+  "origem": [
+    "spa_sitemap_200_is_not_proof",
+    "vercel_legacy_builds_needs_routes"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

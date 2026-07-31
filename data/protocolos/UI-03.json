@@ -1,0 +1,31 @@
+{
+  "id": "UI-03",
+  "area": "UI",
+  "titulo": "CSS artesanal que imita Tailwind quebra a pagina em silencio: abrir no browser antes de deployar",
+  "norma": "Antes de publicar qualquer 'site estatico pronto' de repo antigo, abrir no browser (Playwright + screenshot resolve em 1 minuto). Gradiente do Tailwind copiado a mao exige as tres variaveis de posicao no :root, senao o var() sem fallback invalida a custom property inteira e o background some.",
+  "motivo": "roi-labs-links, 29/07/2026: fundo branco com texto branco desde junho/2025 porque ninguem nunca abriu a pagina. Nenhum erro no console - nada falha, so resolve para nada.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "Playwright: navegar + screenshot; e grep -n 'tw-gradient-from' no css conferindo que --tw-gradient-from-position/-via-/-to- estao definidas",
+    "frequencia": "por deploy de site legado",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "tailwind"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "tailwind_handwritten_gradient_vars"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

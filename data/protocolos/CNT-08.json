@@ -1,0 +1,31 @@
+{
+  "id": "CNT-08",
+  "area": "CNT",
+  "titulo": "Renderizador de HTML precisa converter o markdown que o modelo escreve",
+  "norma": "Metade dos projetos e md/mdx, entao o modelo escreve negrito, sub-heading e tabela por reflexo. Nos projetos que montam HTML, converter e mais barato que proibir markdown no prompt (que deixa o artigo sem hierarquia): escapar primeiro, injetar a marcacao depois.",
+  "motivo": "Nos projetos de HTML isso aparecia como asterisco e cano na tela.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s <url do artigo> | grep -c '\\*\\*'  # zero asterisco duplo no HTML servido",
+    "frequencia": "por publicacao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

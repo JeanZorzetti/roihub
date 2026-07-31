@@ -1,0 +1,34 @@
+{
+  "id": "PRF-02",
+  "area": "PRF",
+  "titulo": "As quatro armadilhas de LCP que valem para todo site do portfolio",
+  "norma": "1) Google Fonts sao duas conexoes em serie antes do primeiro byte de fonte: self-host mais preload da fonte do LCP. 2) Logo do header servido em tamanho de origem (170 KB) em toda pagina: re-encode. 3) loading=lazy na imagem do LCP e anti-padrao: guard no componente compartilhado, so o primeiro card em eager. 4) gtag e Clarity baixando durante o carregamento roubam banda do LCP: carregar no evento load - nada se perde, as filas do head sao drenadas quando os fornecedores chegam.",
+  "motivo": "As quatro medidas no goiania em 13/07/2026: FCP 3,4s para 1,5s so com a fonte; logo de 170 KB para 13,8 KB; gtag sozinho pesava 161 KB. O mesmo arquivo de logo de 170 KB continua no institucional.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "Playwright + performance.getEntriesByType('resource') ordenado por transferSize: fonte, logo e tags de analytics nao podem estar na cadeia critica",
+    "frequencia": "por entrega de performance",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro",
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Fonte variavel bate estatica (Archivo 600/700/800: 79,5 KB em 3 arquivos contra 26,5 KB numa variavel), MAS nao subsetar pelos caracteres literais do HTML: text-transform uppercase renderiza acentuadas a partir de texto minusculo e o subset literal quebra titulos."
+  ],
+  "origem": [
+    "goiania_lcp_root_causes"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

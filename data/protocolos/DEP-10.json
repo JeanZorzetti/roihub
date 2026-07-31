@@ -1,0 +1,33 @@
+{
+  "id": "DEP-10",
+  "area": "DEP",
+  "titulo": "next build type-checa prisma/seed.ts: import com extensao .ts quebra o build",
+  "norma": "next build roda TypeScript em todos os arquivos do include do tsconfig, inclusive o seed. Import com extensao .ts explicita (comum para rodar via tsx) quebra o build no Docker. Fix: tirar a extensao; NAO ligar allowImportingTsExtensions.",
+  "motivo": "Deploy EasyPanel do /app ROI Labs (PR #1 para #2): compilacao e prisma generate passam antes, e a falha aparece so no type-check.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "npx tsc --noEmit  (ou grep -rn \"from '.*\\.ts'\" prisma/)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "prisma"
+    ],
+    "infra": [
+      "docker",
+      "easypanel"
+    ],
+    "superficie": [
+      "app"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextjs_build_typechecks_prisma_seed"
+  ],
+  "valid_from": "2026-07-03",
+  "valid_to": null,
+  "supersede": null
+}

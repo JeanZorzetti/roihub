@@ -1,0 +1,31 @@
+{
+  "id": "AGT-02",
+  "area": "AGT",
+  "titulo": "Claude Agent SDK exige API key: o padrao da casa e spawn do CLI",
+  "norma": "O SDK autentica so por ANTHROPIC_API_KEY (ou Bedrock/Vertex/Foundry) e a propria doc diz que a Anthropic nao permite login claude.ai em produtos de terceiros. Quando a pergunta for 'trocar o spawn pelo SDK?', a resposta ja e nao, sem pesquisar de novo. spawn('claude', ['-p','--output-format','json']) e o padrao documentado, nao gambiarra.",
+  "motivo": "Decidido no roihub em 31/07/2026. O que o SDK daria de graca e o spawn nao da: carregar .claude/ (skills, comandos, memoria) automaticamente.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn '@anthropic-ai/claude-agent-sdk' package.json  # tem que dar zero",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "claude_agent_sdk_requires_api_key"
+  ],
+  "valid_from": "2026-07-31",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,34 @@
+{
+  "id": "DEP-01",
+  "area": "DEP",
+  "titulo": "Projeto da Vercel sem conexao com o git: push nao publica e nao avisa",
+  "norma": "Antes de dizer que publicou, conferir a idade da ultima deployment. Se ela e mais velha que o push, o projeto nao escuta o git e o deploy e por CLI, de dentro da pasta que e a raiz do site.",
+  "motivo": "Aconteceu em dois projetos distintos - cannibalscan e pathfinder (30/07/2026). O repo fica com o commit, o site continua servindo o build antigo e a entrega parece fechada.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "npx vercel ls <projeto>   # coluna Age = idade da ULTIMA deployment; deploy manual: npx vercel link --project <projeto> --yes && npx vercel deploy --prod --yes",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "site",
+      "app"
+    ]
+  },
+  "excecoes": [
+    "vercel --prod sozinho so imprime o help: o comando e vercel deploy --prod --yes."
+  ],
+  "origem": [
+    "vercel_project_not_linked_to_git"
+  ],
+  "valid_from": "2026-07-31",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,31 @@
+{
+  "id": "VER-06",
+  "area": "VER",
+  "titulo": "Premissa de card da agenda se reproduz antes de executar - inclusive o campo repo",
+  "norma": "As acoes do ranking sao texto curado a mao em data/projects.json e apodrecem. Ao pegar uma tarefa: ler o acaoDesc inteiro (todo card de dev comeca com 'Repo: ...'), conferir que o repo serve mesmo aquela URL, e reproduzir a premissa antes de codar. Premissa furada = reportar com evidencia e propor o escopo real.",
+  "motivo": "13/07/2026 foi a 4a tarefa improcedente; a auditoria dos 10 cards achou 3 podres. Reincidencia em 30/07: sirius mandava reforcar entity SEO ja pronto, nimblabs pedia duas coisas ja feitas, tapepro tinha o campo repo apontando para o monorepo errado.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "gh api repos/JeanZorzetti/<repo> --jq .homepage (o repo serve mesmo essa URL?) + reproduzir a contagem/afirmacao do card (git grep -c, curl, ou memoria/handoff que ja concluiu o assunto)",
+    "frequencia": "por tarefa",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_agenda_task_premises_unverified"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

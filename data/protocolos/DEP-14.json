@@ -1,0 +1,32 @@
+{
+  "id": "DEP-14",
+  "area": "DEP",
+  "titulo": "Pasta ou extensao nova em public/ exige atualizar o matcher do middleware next-intl",
+  "norma": "O matcher do next-intl e um negative lookahead que precisa listar TODA pasta e extensao estatica nova. Sem isso a request e interceptada, redirecionada para /{locale}/{path} e bate em 404 - so em producao, nunca no dev.",
+  "motivo": "26/05/2026, Estetia: public/videos/hero-placeholder.mp4 commitado, servido localmente e 404 em estetiacrm.com.br. O matcher nao listava videos nem .mp4/.webm.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "para cada pasta em public/, checar se aparece no config.matcher de middleware.ts; depois do deploy, curl -sI https://<host>/<asset-novo>",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "next-intl"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextjs_middleware_matcher_static_assets"
+  ],
+  "valid_from": "2026-05-26",
+  "valid_to": null,
+  "supersede": null
+}

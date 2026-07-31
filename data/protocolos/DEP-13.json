@@ -1,0 +1,36 @@
+{
+  "id": "DEP-13",
+  "area": "DEP",
+  "titulo": "Pagina SSG/ISR que consulta o banco roda a query no build, onde nao existe DATABASE_URL",
+  "norma": "Antes de tornar uma rota SSG/ISR, grepar prisma no page.tsx. Se toca DB no render, o fix e ISR (revalidate) MAIS try/catch com fallback: ISR sozinho ainda prerenderiza no build, e query crua aborta o build inteiro.",
+  "motivo": "Estetia: o rollout full-static levou blog/[slug] a degradar em silencio (catch devolvendo []) e /precos a QUEBRAR o deploy do EasyPanel. Local passava sempre porque local tem DATABASE_URL.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "env -u DATABASE_URL NEXT_NO_STANDALONE=1 npx next build   # remove a env e simula o builder do Docker",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "prisma"
+    ],
+    "infra": [
+      "docker",
+      "easypanel"
+    ],
+    "superficie": [
+      "site",
+      "app"
+    ]
+  },
+  "excecoes": [
+    "Rotas que ficam dynamic (auth/cookies) rodam em runtime e nao precisam do catch."
+  ],
+  "origem": [
+    "ssg_db_query_build_time_gotcha"
+  ],
+  "valid_from": "2026-06-20",
+  "valid_to": null,
+  "supersede": null
+}

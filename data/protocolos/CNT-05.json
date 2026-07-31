@@ -1,0 +1,33 @@
+{
+  "id": "CNT-05",
+  "area": "CNT",
+  "titulo": "Escrever o arquivo da pagina nao publica a pagina",
+  "norma": "Site com registro data-driven alimenta sitemap, llms.txt, indice, OG dinamico e link interno a partir do REGISTRO, nao do filesystem. Ao ligar um projeto novo ao autopublish, procurar de onde sai o sitemap ANTES de escrever o renderizador.",
+  "motivo": "O robo que so commita o .astro ou .mdx cria pagina orfa que responde 200 e nao existe para crawler nenhum, nem no sitemap.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "depois de publicar: curl -s <site>/sitemap.xml | grep -c '<url-nova>'  # tem que ser 1",
+    "frequencia": "por publicacao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro",
+      "next",
+      "mdx"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

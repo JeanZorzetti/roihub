@@ -1,0 +1,35 @@
+{
+  "id": "UI-04",
+  "area": "UI",
+  "titulo": "overflow-x hidden em qualquer ancestral mata position: sticky",
+  "norma": "Nunca por overflow-x-hidden (nem overflow-hidden) em ancestral de secao sticky: o CSS forca overflow-y: auto, o elemento vira scroll container e o sticky passa a se referenciar a ele em vez da viewport. Se precisar conter scroll horizontal, aplicar no html/body global ou na propria secao problematica.",
+  "motivo": "Estetia /experience, 27/05/2026: duas secoes com sticky+scrub corretos NUNCA pinaram em producao. Foram ~3 commits afirmando que estavam funcionando ate medir rect.top via Playwright e achar -405px a -2705px onde deveria ser 0.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "Playwright: window.scrollTo(0,X), esperar o Lenis, e Math.abs(stickyEl.getBoundingClientRect().top) < 5; e varrer os ancestrais logando getComputedStyle overflowX/overflowY diferentes de visible",
+    "frequencia": "por secao sticky",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "react",
+      "tailwind",
+      "gsap"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Outros killers do sticky no mesmo diagnostico: transform, filter, perspective, contain e will-change diferentes de none em ancestrais."
+  ],
+  "origem": [
+    "overflow_x_hidden_kills_sticky"
+  ],
+  "valid_from": "2026-05-27",
+  "valid_to": null,
+  "supersede": null
+}

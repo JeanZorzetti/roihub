@@ -1,0 +1,33 @@
+{
+  "id": "SEO-01",
+  "area": "SEO",
+  "titulo": "Astro estatico atras de proxy TLS: URL sem barra final vira 301 para http://",
+  "norma": "Em Astro no formato directory servido por nginx atras de proxy TLS, toda URL emitida termina com barra (sitemap, llms.txt, feed, JSON-LD, todos os href internos) e o nginx leva absolute_redirect off. Sem isso o Location sai absoluto em http:// e o crawl queima em redirect.",
+  "motivo": "roilabs.com.br, GSC 03/07/2026: 46% do crawl do Googlebot gasto em redirect, crawl de 261 para 6 req/dia e 50 paginas 'detectada, nao indexada'. O canonical do Astro ja saia com barra; so as URLs construidas a mao ficavam sem.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -sI <url-sem-barra> nao pode devolver Location: http://... ; e no dist: grep -c '<loc>[^<]*[^/]</loc>' = 0",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro"
+    ],
+    "infra": [
+      "easypanel",
+      "vps"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "astro_nginx_trailing_slash_301",
+    "gsc_crawl_stats_stale_90d_window"
+  ],
+  "valid_from": "2026-07-03",
+  "valid_to": null,
+  "supersede": null
+}

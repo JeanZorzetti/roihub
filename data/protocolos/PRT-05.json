@@ -1,0 +1,31 @@
+{
+  "id": "PRT-05",
+  "area": "PRT",
+  "titulo": "Toda sessao ou plano encerrado deixa um handoff.md co-localizado",
+  "norma": "Ao concluir task, sessao de trabalho ou plano, criar handoff.md co-localizado com o trabalho contendo: o que foi feito, decisoes tomadas e por que, proximos passos em ordem, pendencias em aberto e gotchas de ambiente.",
+  "motivo": "O Jean trabalha em sprints de uma feature por sessao (rate limit e contexto acumulado); handoff explicito evita re-derivar contexto do zero na sessao seguinte.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "ls handoff/*.md com data de hoje ao encerrar a sessao, e o indice handoff.md apontando para ele",
+    "frequencia": "por sessao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "feedback_handoff_md"
+  ],
+  "valid_from": "2026-06-01",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,35 @@
+{
+  "id": "PRF-03",
+  "area": "PRF",
+  "titulo": "Biblioteca de animacao e o gargalo tipico de TBT: profile do bundle real antes de mexer",
+  "norma": "Antes de otimizar landing Next, fazer profile do bundle de PRODUCAO (nao chute): framer-motion, gsap e lenis executando no boot sao peso morto quando a pagina nao tem animacao scroll-driven. Substituir por IntersectionObserver mais CSS e converter componentes sem interatividade real para Server Component.",
+  "motivo": "Estetia: ~440KB de JS de animacao no boot com PageSpeed mobile 50. Depois da fase 1, JS da home de 1006KB para 705KB e TBT de 2500 para 300ms.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "Playwright: performance.getEntriesByType('resource') com fingerprint dos chunks por regex, antes e depois",
+    "frequencia": "por entrega de performance",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "react"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "experimental.inlineCss parece bom e custou caro nesta landing: inlinava 711KB de CSS em CADA pagina (HTML de 1,9MB) e suprimia os preloads de fonte do next/font. Sempre medir o tamanho do HTML (curl | wc -c) ao usar inlineCss.",
+    "next/font nao emite preload para fonte aplicada so via CSS var - o Next nao rastreia o uso, independente de preload: true."
+  ],
+  "origem": [
+    "estetia_landing_performance"
+  ],
+  "valid_from": "2026-06-05",
+  "valid_to": null,
+  "supersede": null
+}

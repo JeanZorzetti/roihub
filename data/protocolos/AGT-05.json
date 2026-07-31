@@ -1,0 +1,34 @@
+{
+  "id": "AGT-05",
+  "area": "AGT",
+  "titulo": "Fechar o loop de feedback local ANTES de soltar agentes",
+  "norma": "Antes de soltar qualquer equipe: 'quando o agente mudar algo, como ele descobre sozinho, em segundos, localmente, se funcionou?'. Se a resposta e 'faz deploy e olha o log', ele vai debugar por deploy. Gate de build local por hook (pre-commit do Git, o mais portatil), 1 task = 1 verde verificavel escrito na propria task, e time pelo tipo de trabalho - nao paralelizar o sequencial.",
+  "motivo": "context-keeper fez ~20 deploys vermelhos seguidos no EasyPanel porque os agentes usaram o deploy de producao como loop de compilacao, com docker compose build web ja disponivel no proprio compose.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "existe .husky/pre-commit ou hook equivalente rodando build/typecheck; e cada task tem criterio binario escrito (ex.: 'tsc --noEmit passa')",
+    "frequencia": "por run de equipe",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [
+    "Quando trava: re-fatiar a task. NUNCA force-approve (a revisao nao aconteceu) nem criar equipe nova para fugir do bloqueio - perde todo o contexto."
+  ],
+  "origem": [
+    "agent_teams_operating_playbook",
+    "context_keeper_e2e_bugs"
+  ],
+  "valid_from": "2026-06-08",
+  "valid_to": null,
+  "supersede": null
+}

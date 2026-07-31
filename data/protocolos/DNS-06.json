@@ -1,0 +1,32 @@
+{
+  "id": "DNS-06",
+  "area": "DNS",
+  "titulo": "Com dois A records, 200 nao prova que e o servidor certo - e 404 prova que E aquele servidor",
+  "norma": "Antes de decidir qual registro A apagar, conferir o CONTEUDO servido (title, bytes, /_astro/ vs /assets/index-*.js, sitemap). Decidir pelo status code apaga o registro do site bom. E 404 do nginx significa que o servidor e aquele e perdeu o vhost - host errado da timeout, nao 404.",
+  "motivo": "splitjud, 28/06 a 30/07/2026: www tinha dois A records e ~50% das resolucoes caiam num servidor Vite de dois anos atras, quebrando blog, login e sitemap. Em 29/07 o 404 do 2.24.207.200 foi lido como 'nao e o EasyPanel'; estava invertido.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "curl -k --resolve <host>:443:<ip> https://<host>/ para cada A record e comparar corpo/title/assets antes de apagar qualquer registro",
+    "frequencia": "por operacao de DNS",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "easypanel",
+      "vps"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "splitjud_www_dns_orphan"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

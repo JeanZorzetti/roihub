@@ -1,0 +1,32 @@
+{
+  "id": "CNT-09",
+  "area": "CNT",
+  "titulo": "MDX sem remark-gfm renderiza tabela como texto cru, sem erro de build",
+  "norma": "next-mdx-remote e MDX v3 nao ligam GFM por padrao: sem remarkPlugins: [remarkGfm], tabela e task list saem como paragrafo com pipes. Nao quebra build nem emite warning. Em repo com blog MDX, conferir que remark-gfm esta no package.json E passado em options.mdxOptions.remarkPlugins antes de escrever tabela em artigo.",
+  "motivo": "Blog do Polaris: os componentes table/thead/th/td ja estavam estilizados no mdxComponents (alguem assumiu que GFM estava ligado) e ficou assim por 64 artigos renderizando lixo em producao, corrigido em 12/07/2026.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s <url do post> | grep -c '<table'  # zero com pipes visiveis = falta o plugin",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "mdx"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextmdxremote_missing_remark_gfm"
+  ],
+  "valid_from": "2026-07-12",
+  "valid_to": null,
+  "supersede": null
+}

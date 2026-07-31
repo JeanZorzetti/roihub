@@ -1,0 +1,32 @@
+{
+  "id": "AGT-04",
+  "area": "AGT",
+  "titulo": "spawn de CLI npm global no Windows precisa de shell, e o prompt vai por stdin",
+  "norma": "spawn('claude') falha com ENOENT no Windows porque o binario e um shim .cmd: precisa de shell: process.platform === 'win32'. Vale para qualquer CLI npm global. E o prompt vai por stdin, nunca por argv - inventario de monorepo estoura o limite de linha de comando.",
+  "motivo": "Autopublishing do roihub. Em Alpine funciona direto, entao o bug so aparece no ambiente de desenvolvimento e passa despercebido ate alguem rodar local.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "teste que roda o spawn no Windows e assere que nao volta ENOENT (test/autopublish.test.mjs)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "windows-onedrive",
+      "docker"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

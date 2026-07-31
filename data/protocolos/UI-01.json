@@ -1,0 +1,34 @@
+{
+  "id": "UI-01",
+  "area": "UI",
+  "titulo": "O /app admin do roilabs tem design system tema-claro: nada de inline-style escuro",
+  "norma": "Tela nova no /app admin ganha um bloco proprio em globals.css com classes semanticas usando os tokens existentes (--ink, --porcelain, --hivis, --green, --l-text, --l-muted, --l-line) e as classes .page/.card/.btn/.seat-row/.toggle/.col. Nunca inline-style.",
+  "motivo": "Na feature 004 a UI saiu com inline-style escuro (#111, #888, selects pretos) e virou uma ilha tema-escuro dentro do app claro: contraste pessimo e aspecto de HTML puro. O dono reclamou.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "grep -rn 'style={{' app/src/app/admin | grep -iE '#[0-9a-f]{3,6}'  # zero; e contraste real via Playwright browser_evaluate no DOM autenticado (auditoria externa cai no /login)",
+    "frequencia": "por tela nova",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "tailwind"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "app"
+    ]
+  },
+  "excecoes": [
+    "Cores de enfase em fundo claro precisam passar WCAG AA (>=4.5:1): verde forte #166534, NAO o token --green #2f9e44 (3.45)."
+  ],
+  "origem": [
+    "roilabs_app_admin_design_system"
+  ],
+  "valid_from": "2026-07-10",
+  "valid_to": null,
+  "supersede": null
+}

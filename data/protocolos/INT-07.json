@@ -1,0 +1,32 @@
+{
+  "id": "INT-07",
+  "area": "INT",
+  "titulo": "API do Reddit bloqueada: coletar por RSS Atom",
+  "norma": "A API do Reddit esta bloqueada para os projetos da casa; a coleta se faz pelo feed publico reddit.com/r/<sub>/hot/.rss.",
+  "motivo": "Levantado no SEO Forecaster, que precisa de sinal de discussao real sem credencial paga.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s https://www.reddit.com/r/<sub>/hot/.rss | head -c 5   # tem que ser <?xml",
+    "frequencia": "sob suspeita",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node",
+      "python"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "project_reddit_api_blocked"
+  ],
+  "valid_from": "2026-06-20",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,33 @@
+{
+  "id": "DNS-03",
+  "area": "DNS",
+  "titulo": "Vercel nao re-emite certificado sozinha depois de o DNS ter ficado NXDOMAIN",
+  "norma": "Restaurar o DNS nao traz o certificado de volta: o host responde servindo cert vencido. Diagnostico que decide e vercel certs ls - se o host nao aparece, nao existe cert, nao e propagacao. Conserto: vercel certs issue <host>, host a host.",
+  "motivo": "atma.roilabs.com.br: cert expirado em 22/07/2026, DNS restaurado em 29/07 e ainda quebrado em 30/07. vertice, orion e pathfinder do mesmo lote renovaram normalmente - um sucesso nao fala pelos vizinhos.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "vercel certs ls | grep <host> ; e echo | openssl s_client -connect HOST:443 -servername HOST | openssl x509 -noout -dates",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [
+    "A borda continua servindo o cert velho por alguns minutos depois de emitir - nao e erro, nao re-emitir em cima."
+  ],
+  "origem": [
+    "vercel_cert_stuck_after_nxdomain"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

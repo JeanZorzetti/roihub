@@ -1,0 +1,33 @@
+{
+  "id": "DNS-02",
+  "area": "DNS",
+  "titulo": "Antes de classificar subdominio como morto, checar se algum app vivo o chama",
+  "norma": "clerk.*, accounts.*, email.*, cdn.* costumam ser CNAME de SaaS que quebram calados: o site continua 200 e so a funcao para de existir. A triagem por 'tem site proprio?' erra essa classe inteira.",
+  "motivo": "29/07/2026 a limpeza de NXDOMAIN pos clerk.atma em MORTOS. Era o Frontend API da instancia de producao do Clerk do site da Atma: o site seguiu em 200 e TODA a autenticacao do portal do paciente quebrou, com failed_to_load_clerk_js_timeout e ~16s de retry por visita.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "grep -rn \"<host-candidato>\" nos repos + procurar o host em chave publicavel de SaaS (pk_live_<base64> decodifica para o hostname do Frontend API do Clerk)",
+    "frequencia": "por operacao de DNS",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "cloudflare"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [
+    "No caso do Clerk da Atma a decisao do Jean (30/07) foi arrancar o Clerk, entao clerk.atma fica em MORTOS de proposito."
+  ],
+  "origem": [
+    "clerk_subdomain_killed_by_nxdomain_cleanup"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

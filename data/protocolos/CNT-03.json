@@ -1,0 +1,32 @@
+{
+  "id": "CNT-03",
+  "area": "CNT",
+  "titulo": "imageScene e uma cena fotografavel, nao a keyword",
+  "norma": "imageScene e buscado literalmente num banco de fotos: descrever cena fotografavel em 3 a 6 palavras em ingles, so com objetos concretos - sem nome de produto ou marca, sem jargao, sem abstracao e sem substantivo contado generico. A keyword nao e cena, e reusa-la escolhe o homonimo errado. imageAlt descreve a MESMA foto no idioma do projeto.",
+  "motivo": "'windsurf' devolve veleiro, nao a IDE; 'two different types' devolveu um prato de comida. E busca por termo long-tail devolve zero, entao a capa precisa degradar (intencao, cluster, duas primeiras palavras, termo generico) senao justamente os artigos de nicho nunca publicam.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "conferir no registro publicado que imageScene nao contem a keyword primaria e que a capa resolveu para uma URL images.unsplash.com/photo-",
+    "frequencia": "por publicacao",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "lib/autopublish-clients.ts",
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

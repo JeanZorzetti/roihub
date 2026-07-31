@@ -1,0 +1,35 @@
+{
+  "id": "PRT-01",
+  "area": "PRT",
+  "titulo": "A chave do projeto e a URL do site, nunca o nome do repo",
+  "norma": "A lista de projetos vem do GitHub (todo repo vivo com homepage preenchida vira projeto) e a curadoria em data/projects.json vence a homepage. Um repo serve varios sites, e as homepages que ja existiam apontam para *.vercel.app - health check e GSC resolvem por host de producao. Projeto novo entra sozinho com gh repo edit --homepage; trocar de dominio EXIGE trocar a homepage no mesmo passo, senao o hub duplica o projeto.",
+  "motivo": "Medido em 28/07/2026: a premissa natural ('hub de repos, chavear por repo') esta errada nos dois sentidos - JeanZorzetti/roilabs serve roilabs.com.br, goiania E tapepro, e sirius tinha homepage sirius-ebon.vercel.app.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node --test test/projects.test.mjs (mergeProjects: curadoria vence homepage, dois sites no mesmo repo continuam dois projetos)",
+    "frequencia": "por projeto novo",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [
+    "Site atras de Basic Auth se reporta como fora do ar (res.ok trata 401 como caido): por isso o proprio roihub esta deliberadamente sem homepage.",
+    "gh repo edit --homepage \"\" nao funciona no PowerShell: usar echo '{\"homepage\":\"\"}' | gh api repos/OWNER/REPO -X PATCH --input -",
+    "Regua do ranking decidida pelo Jean em 28/07: TODOS entram, sem cutoff por atividade."
+  ],
+  "origem": [
+    "roihub_github_sourced_projects"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

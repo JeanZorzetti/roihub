@@ -1,0 +1,35 @@
+{
+  "id": "VER-03",
+  "area": "VER",
+  "titulo": "Landing em 200 nao prova produto funcionando: seguir a env var da API ate o host",
+  "norma": "Health check que olha res.ok da home nao enxerga backend morto. Ao curar ou auditar projeto, grepar a env var de API do front e bater um curl no host que sair dali. http=000 = NXDOMAIN = produto morto com vitrine viva.",
+  "motivo": "30/07/2026, curadoria dos 9 subdominios renomeados: 3 de 9 (cardiorisk, tapevision, potencialarquitetado) serviam landing em 200 chamando APIs NXDOMAIN. O checkHealth do roihub dava verde e os tres entravam no ranking como saudaveis.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn \"VITE_API_URL\\|NEXT_PUBLIC_API_URL\\|API_BASE_URL\" src app frontend 2>/dev/null | head; depois curl -s -o /dev/null -w \"%{http_code}\\n\" <host-da-api>",
+    "frequencia": "por projeto novo",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site",
+      "app"
+    ]
+  },
+  "excecoes": [
+    "Site atras de Basic Auth se reporta como fora do ar (401 nao passa em res.ok) - e o motivo de o proprio roihub estar deliberadamente sem homepage."
+  ],
+  "origem": [
+    "landing_200_backend_nxdomain",
+    "roihub_github_sourced_projects"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

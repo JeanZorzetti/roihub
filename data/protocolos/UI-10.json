@@ -1,0 +1,34 @@
+{
+  "id": "UI-10",
+  "area": "UI",
+  "titulo": "Design do Figma entra por asset baixado, nao por CSS reconstruido a mao",
+  "norma": "Reconstrucao manual de CSS a partir de export do Figma falha em forma complexa, iluminacao raster e posicionamento absoluto. Usar figma-sync (Figma REST API) baixando so o Group/Frame do FUNDO - sem texto nem botao - para que o texto continue HTML real (a11y/SEO) com a iluminacao raster por baixo.",
+  "motivo": "Validado em 22/05/2026 no hero do seven-site-next, depois de multiplas iteracoes frustradas com SVG individual e PNG completo.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "npm run figma-sync -- --url=\"<url do no>\" --name=\"<nome>\" --scale=2 --format=png ; conferir que o texto do hero e HTML, nao parte da imagem",
+    "frequencia": "por tela nova de design",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "react"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Builder.io dev-tools serve para componentes geometricos simples e exige TTY (PowerShell nativo, nao Git Bash); ele extrai paths SVG que podem nao bater com a percepcao visual."
+  ],
+  "origem": [
+    "workflow_figma_builder_io"
+  ],
+  "valid_from": "2026-05-22",
+  "valid_to": null,
+  "supersede": null
+}

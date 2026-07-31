@@ -1,0 +1,33 @@
+{
+  "id": "UI-08",
+  "area": "UI",
+  "titulo": "Style escopado do Astro nao alcanca DOM criado por JS",
+  "norma": "O Astro escopa o style adicionando data-astro-cid aos elementos no BUILD. Elemento criado client-side por innerHTML/createElement nao recebe o atributo e renderiza com estilo default do browser. Regras que miram elementos JS-criados vao para style is:global (ou :global(...)).",
+  "motivo": "Visto no e-commerce do ROI Labs (carrinho, SimuladorM2, MiniCart): linhas montadas por JS ficavam sem estilo enquanto o resto da pagina estava estilizado, com a regra visivel no DevTools e 'nao aplicada'.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "Playwright: comparar getComputedStyle e os atributos data-astro* de um elemento server-rendered contra um JS-criado",
+    "frequencia": "por componente com DOM dinamico",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Mesma armadilha do [hidden] vencido por display:grid de autor: precisa de [hidden]{display:none!important} global."
+  ],
+  "origem": [
+    "astro_scoped_styles_innerhtml_gotcha"
+  ],
+  "valid_from": "2026-07-05",
+  "valid_to": null,
+  "supersede": null
+}

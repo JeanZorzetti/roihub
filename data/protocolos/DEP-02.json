@@ -1,0 +1,35 @@
+{
+  "id": "DEP-02",
+  "area": "DEP",
+  "titulo": "Root Directory / com site em subpasta: o push derruba o host para 404",
+  "norma": "Projeto cujo site mora em subpasta (site/, Frontend/, frontend-next/) precisa de rootDirectory apontado pela API - a CLI nao expoe o campo. Enquanto isso nao acontece, a ordem e literal e nao e negociavel: push, depois deploy manual, depois verificacao.",
+  "motivo": "30/07/2026: whatsmeow, claudeloop, swarm e tapevision foram para 404 logo depois do git push, com DNS, dominio e codigo corretos. O build de git serviu a raiz do repo e sobrescreveu o deploy manual.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "GET /v6/deployments?projectId=X&limit=3 - se os deploys com meta.githubCommitSha estao em ERROR e os READY nao tem sha, o projeto so publica manualmente; conserto: PATCH /v9/projects/<nome>?teamId=<team> com {\"rootDirectory\":\"<subpasta>\"}",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Se o .vercel/ mora DENTRO da subpasta, rootDirectory tem que ser null - senao o CLI procura web/web e morre com 'The provided path does not exist' (caso compass).",
+    "compass (Next 16.2.6) nao sara: o build de git compila e quebra ao publicar com ENOENT routes-manifest-deterministic.json. Continua so por CLI de dentro de web/."
+  ],
+  "origem": [
+    "vercel_root_dir_slash_push_kills_subfolder_site",
+    "project_compass_prod_setup"
+  ],
+  "valid_from": "2026-07-31",
+  "valid_to": null,
+  "supersede": null
+}

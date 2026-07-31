@@ -1,0 +1,34 @@
+{
+  "id": "DEP-16",
+  "area": "DEP",
+  "titulo": "Em route handler atras de proxy, request.url e o bind interno do container",
+  "norma": "Dentro de um route handler, request.url tem host 0.0.0.0:3000, nao a URL publica: nunca montar redirect ou URL absoluta a partir dele - usar NEXT_PUBLIC_APP_URL. O middleware NAO tem o bug: la o redirect sai relativo e proxy-aware pelo nextUrl.",
+  "motivo": "sofia-next/Polaris, 08/07/2026: login com Google mandava o usuario para https://0.0.0.0:3000/dashboard. Quatro redirects em api/auth/google-finalize (fix 7996714).",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -rn 'new URL(.*request.url' src/app/api --include=route.ts  # tem que dar zero",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "easypanel"
+    ],
+    "superficie": [
+      "api",
+      "app"
+    ]
+  },
+  "excecoes": [
+    "middleware.ts pode usar request.url normalmente."
+  ],
+  "origem": [
+    "nextjs_route_handler_request_url_proxy"
+  ],
+  "valid_from": "2026-07-08",
+  "valid_to": null,
+  "supersede": null
+}

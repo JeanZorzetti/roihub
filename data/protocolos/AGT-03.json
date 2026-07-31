@@ -1,0 +1,31 @@
+{
+  "id": "AGT-03",
+  "area": "AGT",
+  "titulo": "Assinatura Claude so em cliente oficial: token em cliente terceiro arrisca ban",
+  "norma": "O fator de risco nao e local versus remoto, e cliente oficial versus terceiro. Baixo risco: Claude Code CLI oficial autenticado por setup-token (mecanismo oficial para headless/CI), sem ANTHROPIC_API_KEY setada junto. Risco de ban: injetar o token OAuth num cliente de terceiro que se passa por Claude Code.",
+  "motivo": "Avaliacao do Open-Inspect em 21/06/2026: ele e casado com o OpenCode, entao trazer Claude-via-assinatura cairia no vetor de cliente-terceiro. Descartado - a Polaris ja faz background agents com assinatura de forma segura.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "conferir que o binario que consome o token e @anthropic-ai/claude-code e que ANTHROPIC_API_KEY NAO esta setada no mesmo processo",
+    "frequencia": "por ferramenta nova",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "claude_subscription_agents_official_vs_thirdparty"
+  ],
+  "valid_from": "2026-06-21",
+  "valid_to": null,
+  "supersede": null
+}

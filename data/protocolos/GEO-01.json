@@ -1,0 +1,33 @@
+{
+  "id": "GEO-01",
+  "area": "GEO",
+  "titulo": "Ser citado por IA tem checklist proprio: crawlers na whitelist, llms.txt, @graph unico e BLUF",
+  "norma": "Para citacao em ChatGPT/Perplexity/Gemini: robots.txt com whitelist explicita (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Perplexity-User, GoogleOther, Google-Extended), llms.txt na raiz, UM @graph por pagina ligado por @id (Organization + WebSite + Article + FAQPage), H2/H3 como pergunta real com a primeira frase respondendo em 40 a 60 palavras, e cada paragrafo fazendo sentido fora de contexto. SSR/SSG e obrigatorio.",
+  "motivo": "Trafego de IA converte 4,4 a 23 vezes mais que organico e ~60% das buscas do Google sao zero-click. Estudo de Princeton (KDD 2024): estatisticas com numero elevam citacao 31-41%, citacoes diretas 41%, keyword stuffing derruba 8%.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s <host>/robots.txt | grep -c GPTBot ; curl -s <host>/llms.txt | head -c 40 ; curl -s <url> | grep -o '\"@type\":\"[^\"]*\"' (um unico bloco @graph, nao scripts dispersos)",
+    "frequencia": "por entrega",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro",
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site",
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "geo_aeo_playbook"
+  ],
+  "valid_from": "2026-07-11",
+  "valid_to": null,
+  "supersede": null
+}

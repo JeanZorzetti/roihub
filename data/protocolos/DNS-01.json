@@ -1,0 +1,34 @@
+{
+  "id": "DNS-01",
+  "area": "DNS",
+  "titulo": "Subdominio aposentado vira NXDOMAIN e queima crawl budget do dominio inteiro",
+  "norma": "Host aposentado nao se apaga: recebe 301 (com sucessor preservando path, ou estatico para o apex). NXDOMAIN nao converge - o bot tenta para sempre e o percentual piora sozinho conforme a janela de 90 dias rola. O conserto e Redirect Rule na borda do Cloudflare, sem vhost catch-all.",
+  "motivo": "roilabs.com.br, 25/07/2026: 14 dos 19 hosts da propriedade em NXDOMAIN consumiam 4.908 dos 6.408 requests do Googlebot (76,6%). Aplicado em 29/07 por scripts/cloudflare-redirects.mjs.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node scripts/cloudflare-redirects.mjs --verify   # mede o estado sem token; validar pelo request count dos hosts mortos CAINDO, nunca pelo OK% subindo",
+    "frequencia": "mensal",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "cloudflare"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [
+    "Wildcard DNS *.dominio casa UM label so: pega sirius mas nao www.sirius, www.goiania nem clerk.atma. A economia de 1 registro em vez de 14 e ilusoria.",
+    "A zona precisa estar em nuvem laranja para a Redirect Rule disparar; grey cloud = regra nunca executa."
+  ],
+  "origem": [
+    "roilabs_dns_cloudflare_retired_subdomains"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

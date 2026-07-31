@@ -1,0 +1,34 @@
+{
+  "id": "DEP-03",
+  "area": "DEP",
+  "titulo": "vercel.json com builds desliga o roteamento: tirar so o catch-all derruba o site",
+  "norma": "O bloco legado builds desativa o roteamento automatico da Vercel, e por isso esses arquivos trazem um catch-all que engole /sitemap.xml e /robots.txt. Remover so o routes leva o site inteiro para 404. O conserto e matar o builds e deixar a deteccao automatica.",
+  "motivo": "30/07/2026, cardio-risk-insight-hub: tirar o catch-all consertou o sitemap e quebrou a home.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "grep -n '\"builds\"' vercel.json ; depois do fix, curl -s <host>/ | head -c 200 (home viva) E curl -s <host>/sitemap.xml | head -c 5 (<?xml)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "vite-spa",
+      "next"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "vercel.json na raiz apontando @vercel/static-build para um package.json inexistente faz TODO deploy vindo do git servir 404 enquanto o deploy manual da subpasta funciona."
+  ],
+  "origem": [
+    "vercel_legacy_builds_needs_routes"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

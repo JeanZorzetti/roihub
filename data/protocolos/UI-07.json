@@ -1,0 +1,33 @@
+{
+  "id": "UI-07",
+  "area": "UI",
+  "titulo": "morphTo do Anime.js recebe elemento ou selector, nunca a string path-d",
+  "norma": "morphTo espera um elemento SVG (path, polygon, polyline) ou um selector CSS que resolva para um: internamente chama querySelectorAll quando recebe string. Renderizar paths invisiveis de referencia num svg de tamanho zero, guardar as refs e passar o ELEMENTO. Vale para todo metodo que aceita TargetsParam.",
+  "motivo": "27/05/2026, deploy de /experiencev2 quebrou em producao com 'Algo deu errado': SyntaxError de querySelectorAll com o path-d como seletor, capturado pelo error boundary do Next.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "rodar a pagina, abrir o console e scrollar ate a secao de morph: SyntaxError de querySelectorAll = esse bug",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "react"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Path-d de circulo por arco unico com endpoints quase coincidentes e instavel para interpolacao: usar dois semi-arcos."
+  ],
+  "origem": [
+    "animejs_morphto_needs_element"
+  ],
+  "valid_from": "2026-05-27",
+  "valid_to": null,
+  "supersede": null
+}

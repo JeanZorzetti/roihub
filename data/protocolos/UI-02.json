@@ -1,0 +1,31 @@
+{
+  "id": "UI-02",
+  "area": "UI",
+  "titulo": "Pagina de feature nunca sai generica",
+  "norma": "Pagina de produto/feature tem copy detalhada, hierarquia visual com secoes distintas, casos de uso com persona e cenario, FAQ e design com gradiente/animacao/hover e cor por categoria. Nao economizar output em conteudo que o usuario final le.",
+  "motivo": "O Jean apontou explicitamente uma implementacao preguicosa, com lista de beneficios chapada e layout generico. Pagina de SaaS premium exige conteudo e design premium.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "abrir a pagina no browser e conferir os 6 itens (copy, secoes, casos de uso, FAQ, design, cor por categoria) antes de fechar a entrega",
+    "frequencia": "por pagina nova",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "feedback_no_lazy_features"
+  ],
+  "valid_from": "2026-05-20",
+  "valid_to": null,
+  "supersede": null
+}

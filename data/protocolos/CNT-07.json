@@ -1,0 +1,31 @@
+{
+  "id": "CNT-07",
+  "area": "CNT",
+  "titulo": "A verificacao casa contra o titulo GRAVADO: editar o titulo a mao exige atualizar o registro",
+  "norma": "O verify procura o titulo gravado no banco dentro do title e de um h1 da pagina. Editou titulo do artigo a mao? jsonb_set(metadata,'{title}', ...) na mesma hora, senao a verificacao seguinte reverte o artigo - inclusive a correcao manual.",
+  "motivo": "Regra do verificador do autopublishing do roihub.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "SELECT metadata->>'title' FROM <tabela de artigos> comparado com o title servido pela URL",
+    "frequencia": "por edicao manual de artigo",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

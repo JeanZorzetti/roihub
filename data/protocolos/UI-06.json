@@ -1,0 +1,34 @@
+{
+  "id": "UI-06",
+  "area": "UI",
+  "titulo": "ScrollTrigger em altura dinamica precisa de refresh em multiplos delays",
+  "norma": "Quando a altura do elemento vem por style do React (ex.: 600vh), o ScrollTrigger e criado antes de o layout estabilizar e nasce com end undefined. Agendar refresh em 100, 500 e 1500ms e limpar os timers no unmount. invalidateOnRefresh ajuda mas nao basta sozinho.",
+  "motivo": "Estetia, 26/05/2026: pin-features nao respondia ao scroll e o log mostrava {start:0, end:undefined, progress:0}. Um setTimeout de 100ms nao bastou.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "expor o trigger em window.__myST e conferir start/end/progress no console: end undefined = problema de timing de refresh",
+    "frequencia": "por secao com scrub",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "gsap",
+      "react"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Sticky em CSS no inner div com ScrollTrigger so para scrub e mais robusto que pin: true quando ha Lenis."
+  ],
+  "origem": [
+    "scrolltrigger_dynamic_height_refresh"
+  ],
+  "valid_from": "2026-05-26",
+  "valid_to": null,
+  "supersede": null
+}

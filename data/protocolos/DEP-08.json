@@ -1,0 +1,32 @@
+{
+  "id": "DEP-08",
+  "area": "DEP",
+  "titulo": "next.config.js e next.config.mjs juntos: o .js vence e o .mjs e ignorado em silencio",
+  "norma": "Next resolve next.config.js primeiro e nunca le o .mjs se os dois existirem - sem erro e sem warning. Ao consertar, fazer merge no arquivo que o Next carrega (o .js), nunca renomear: um Dockerfile com COPY next.config.js quebra.",
+  "motivo": "Na Atma o .mjs era o unico com async headers(), entao a producao rodou sem X-Frame-Options, nosniff e Referrer-Policy com todo mundo achando que estavam valendo.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -sI https://<dominio>/ | grep -iE 'x-frame-options|x-content-type-options|referrer-policy'  # vazio = sem headers ou config duplicado; ls next.config.* confirma",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site",
+      "app"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextjs_duplicate_config_js_wins_over_mjs"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

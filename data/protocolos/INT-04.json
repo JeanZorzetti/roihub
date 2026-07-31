@@ -1,0 +1,33 @@
+{
+  "id": "INT-04",
+  "area": "INT",
+  "titulo": "Unsplash: premium_photo-* e assinatura paga, so images.unsplash.com/photo-* e livre",
+  "norma": "Ao pegar imagem de banco no Unsplash, filtrar urls.raw e aceitar somente as que comecam com https://images.unsplash.com/photo-. Metade dos resultados da busca vem como plus.unsplash.com/premium_photo-... (Unsplash+, licenca paga) e nada na busca sinaliza isso.",
+  "motivo": "Usar essas imagens sem assinatura e violacao de licenca. Primeiro uso no blog da fabrica (21 capas, 13/07/2026).",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "assert que toda URL de capa gravada comeca com https://images.unsplash.com/photo- (ja coberto no filtro do autopublish)",
+    "frequencia": "por publicacao",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [
+    "crop=entropy erra em ~10% dos casos e o alt_description descreve a foto ORIGINAL, nao o crop: conferir o crop no olho (contact-sheet + screenshot)."
+  ],
+  "origem": [
+    "unsplash_premium_photo_is_paid"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

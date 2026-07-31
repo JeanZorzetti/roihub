@@ -1,0 +1,34 @@
+{
+  "id": "SEC-06",
+  "area": "SEC",
+  "titulo": "Log de erro nao repassa mensagem de terceiro nem PII",
+  "norma": "O stderr de um CLI de LLM pode conter o prompt inteiro: mapear para codigos fechados (llm-auth, llm-rate, llm-output) e testar que o codigo nao contem o texto original. No log da aplicacao, redigir PII por chave (nome, whatsapp, email, cep) e rastrear por id.",
+  "motivo": "Regra do autopublishing do roihub. Cuidado com string livre: um subject de e-mail montado com o nome do cliente vaza PII mesmo com a redaction por chave ligada - e isso e LGPD, nao estetica.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "teste que injeta um erro com texto sensivel e assere que o codigo devolvido nao contem o texto original (padrao ja usado em test/autopublish.test.mjs)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node",
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "api",
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas",
+    "nextjs_pino_breaks_standalone_output"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

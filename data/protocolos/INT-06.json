@@ -1,0 +1,31 @@
+{
+  "id": "INT-06",
+  "area": "INT",
+  "titulo": "Token do GitHub: 404 nao e 403, e permissions.push nao prova escrita",
+  "norma": "Fine-grained token sem o repo no escopo devolve 404 (o GitHub nao confirma existencia de repo privado): dar codigo proprio ao 404, senao vira 'resposta malformada' e manda o diagnostico para o lado errado. E o campo permissions.push do GET /repos e a permissao do USUARIO, nao o escopo do token.",
+  "motivo": "Um fine-grained com Contents: Read devolve push:true e mesmo assim da 403 Resource not accessible em qualquer escrita.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "o unico teste honesto e tentar escrever: POST /repos/{owner}/{repo}/git/blobs cria objeto solto (nao mexe em branch) e responde 201 ou 403; para saber o que o token enxerga: GET /user/repos?per_page=100",
+    "frequencia": "por configuracao de token",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "github-actions"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

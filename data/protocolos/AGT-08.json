@@ -1,0 +1,31 @@
+{
+  "id": "AGT-08",
+  "area": "AGT",
+  "titulo": "Ferramenta de code-intelligence que nao expande tsconfig paths mente sobre callers",
+  "norma": "Nao confiar em contagem de callers vinda de ferramenta cujo resolvedor nao expande o alias @/* do tsconfig - todos os projetos da casa sao Next com @/ em tudo. gortex foi avaliado e REMOVIDO em 21/06/2026: nao reinstalar sem motivo novo.",
+  "motivo": "Prova medida: getAuthFromRequest (167 arquivos) devolvia 2 callers; startTeamRun (5 callers via @/) devolvia 0. Um '0 callers' confiantemente errado e base para refactor ou delete ruim.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "antes de confiar em qualquer indexador, pedir os callers de um simbolo importado por @/ e comparar com grep -rn '<simbolo>' src | wc -l",
+    "frequencia": "por ferramenta nova",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "tool_gortex_installed"
+  ],
+  "valid_from": "2026-06-21",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,35 @@
+{
+  "id": "UI-11",
+  "area": "UI",
+  "titulo": "next-intl estatico: setRequestLocale em CADA layout ancestral, nao so nas paginas",
+  "norma": "Qualquer layout ancestral que use useTranslations/getTranslations sem antes chamar setRequestLocale opta a subarvore INTEIRA por dynamic rendering, anulando o esforco das paginas filhas. Layout vira async, recebe params como Promise, chama setRequestLocale antes de qualquer getTranslations, e troca o hook sincrono por await getTranslations.",
+  "motivo": "Estetia (commit 84ec348): as 51 paginas de marketing saiam dynamic mesmo com setRequestLocale nas paginas, por causa de um unico layout sincrono chamando useTranslations.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "NEXT_NO_STANDALONE=1 npx next build  # o alvo tem que sair como static ou ISR, nunca dynamic",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "next-intl"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Componentes de nav 'use client' que usam useTranslations continuam OK - resolvem pelo provider do client.",
+    "Rota dinamica [slug] precisa TAMBEM de generateStaticParams cruzando locale x slug."
+  ],
+  "origem": [
+    "nextintl_static_rendering_layout_gotcha"
+  ],
+  "valid_from": "2026-06-20",
+  "valid_to": null,
+  "supersede": null
+}

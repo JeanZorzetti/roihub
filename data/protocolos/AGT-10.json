@@ -1,0 +1,33 @@
+{
+  "id": "AGT-10",
+  "area": "AGT",
+  "titulo": "claude-loop-runner publica direto em main: mes novo exige resetar plano E estado",
+  "norma": "No loop autonomo do repo roilabs cada iteracao bem-sucedida faz push direto em main, sem branch nem worktree e sem janela de revisao. O runner sai imediatamente quando current_state.md tem status: done - virar o mes exige reescrever macro_plan.md E resetar current_state.md para in_progress com iteration 0.",
+  "motivo": "Decisao informada do Jean em 04/07/2026, depois de um ciclo real revisado na branch. Os unicos resguardos que sobraram sao --disallowedTools (bloqueia push --force e reset --hard) e o --max-iterations obrigatorio.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "head -5 current_state.md (status e iteration) antes de disparar o runner; e git branch --show-current tem que ser main",
+    "frequencia": "por ciclo mensal",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "easypanel"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [
+    "Especifico do repo roilabs (sistema de pagamento vivo): nao estender para outros repos sem perguntar ao Jean."
+  ],
+  "origem": [
+    "feedback_claude_loop_runner_push_main"
+  ],
+  "valid_from": "2026-07-04",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,31 @@
+{
+  "id": "DEP-06",
+  "area": "DEP",
+  "titulo": "O redirect da API de dominios da Vercel exige destino no MESMO projeto",
+  "norma": "Aposentar host com 308 e PATCH /v9/projects/{id}/domains/{host} com redirect e redirectStatusCode - so funciona com os dois hosts no mesmo projeto. Cross-project devolve 400 bad_request; a saida e DELETE no projeto velho e POST no novo ja com o redirect no corpo.",
+  "motivo": "30/07/2026, consolidando cardioqwen3code.roilabs.com.br em cardiorisk.roilabs.com.br. A CLI nao expoe redirect - e API ou nada.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -sI https://<host-antigo>/ | grep -i '^location'  # tem que apontar para o host novo com 308",
+    "frequencia": "por renomeacao de host",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "vercel"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "vercel_redirect_requires_same_project"
+  ],
+  "valid_from": "2026-07-31",
+  "valid_to": null,
+  "supersede": null
+}

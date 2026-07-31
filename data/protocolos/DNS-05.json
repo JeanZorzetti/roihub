@@ -1,0 +1,35 @@
+{
+  "id": "DNS-05",
+  "area": "DNS",
+  "titulo": "Host promovido para dominio proprio exige nuvem cinza e cobre um label so",
+  "norma": "Cloudflare proxied (nuvem laranja) impede a Vercel de emitir o certificado do dominio: host promovido vai DNS only. E o Universal SSL cobre um label: www.sirius e www.goiania falham no handshake TLS e so redirecionam em http://.",
+  "motivo": "29/07/2026, ressurreicao de atma, pathfinder, orion e vertice: so voltaram a 200 depois de promovidos a A 76.76.21.21 DNS only e retirados da Regra 4. Medido no mesmo dia: clerk.atma tem 3 labels e funciona em https - profundidade sozinha nao prediz, teste, nao deduza.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -sI https://<host>/ e https://www.<host>/ ; e conferir no painel Cloudflare que o registro esta DNS only",
+    "frequencia": "por promocao de host",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "cloudflare",
+      "vercel"
+    ],
+    "superficie": [
+      "dominio"
+    ]
+  },
+  "excecoes": [
+    "Apontar DNS antes de o servico existir troca 301 por 404: atmaadmin e atmaapi seguem em 301 de proposito ate ter container."
+  ],
+  "origem": [
+    "roilabs_dns_cloudflare_retired_subdomains",
+    "vendor_domain_hides_project_from_gsc"
+  ],
+  "valid_from": "2026-07-29",
+  "valid_to": null,
+  "supersede": null
+}

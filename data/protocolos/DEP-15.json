@@ -1,0 +1,32 @@
+{
+  "id": "DEP-15",
+  "area": "DEP",
+  "titulo": "Build e teste locais nesta maquina nao sao gate: OneDrive corrompe node_modules",
+  "norma": "Em projeto dentro do OneDrive, jest, next build e prisma generate travam ou crasham com UNKNOWN: unknown error, read (errno -4094) sem dizer qual arquivo. O gate viavel local e npx tsc --noEmit mais scripts npx tsx com node:assert; o gate real e o build da plataforma. Prevencao de verdade: mover o codigo para C:\\dev.",
+  "motivo": "sofia-next, 13/06/2026: jest rodou 424s e crashou; next build pendurou 42min sem uma linha de output. O loader ESM do Node nao inclui o path no erro, entao reinstalar o pacote obvio nao resolve - o corrompido pode ser dependencia transitiva.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node --import ./trace-loader.mjs <entry> 2>&1 | grep 'LOAD FAIL'   # loader hook que loga a url que falhou; fix: Remove-Item -Recurse -Force node_modules\\<pacote> + npm install",
+    "frequencia": "sob suspeita",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "windows-onedrive"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "onedrive_node_modules_corruption",
+    "lighthouse_local_windows_onedrive_unreliable"
+  ],
+  "valid_from": "2026-06-13",
+  "valid_to": null,
+  "supersede": null
+}

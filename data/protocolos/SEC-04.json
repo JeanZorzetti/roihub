@@ -1,0 +1,31 @@
+{
+  "id": "SEC-04",
+  "area": "SEC",
+  "titulo": "Segredo em repo publico nao e higiene: e rotacao imediata",
+  "norma": "Credencial exposta em chat se rotaciona por higiene; credencial commitada em repo PUBLICO se rotaciona agora, e tornar o repo privado depois nao desfaz nada - pode ter sido clonada ou indexada. Ordem de urgencia: dinheiro, email transacional, senha de banco, JWT secret.",
+  "motivo": "30/07/2026: o repo publico JeanZorzetti/Atma tinha token de PRODUCAO do Mercado Pago, chave Resend e a senha PAzo18** (a mesma familia de Compass, sofia_db e siriusdb) em origin/main e em todo o historico. Agrava: essa URL roda com sslmode=disable sobre a internet publica.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "gh api repos/JeanZorzetti/<repo> --jq .private ; e git log -p --all | grep -iE 'APP_USR-|re_[A-Za-z0-9]|password|SECRET=' no historico completo",
+    "frequencia": "por auditoria",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "secrets_to_rotate"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

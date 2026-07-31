@@ -1,0 +1,33 @@
+{
+  "id": "UI-09",
+  "area": "UI",
+  "titulo": "Valor visual de CSS se calibra ao vivo no browser, nao por deploy",
+  "norma": "Para ajustar background-position, tamanhos e offsets onde o valor certo depende do resultado renderizado: abrir a prod no viewport-alvo com Playwright, mudar o valor ao vivo por browser_evaluate, tirar screenshot SEM filename (volta inline) e so depois aplicar no codigo, num commit unico.",
+  "motivo": "Hero mobile de pneumologia (seven-md): 3 commits de tentativa antes de calibrar visualmente, com o usuario esperando o build a cada iteracao.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "screenshot no viewport-alvo antes do commit",
+    "frequencia": "por ajuste visual",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "CSS inline com o shorthand background reseta o backgroundImage: usar backgroundColor."
+  ],
+  "origem": [
+    "workflow_calibrate_css_via_playwright_prod"
+  ],
+  "valid_from": "2026-06-01",
+  "valid_to": null,
+  "supersede": null
+}

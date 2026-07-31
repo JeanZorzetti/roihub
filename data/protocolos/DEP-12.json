@@ -1,0 +1,34 @@
+{
+  "id": "DEP-12",
+  "area": "DEP",
+  "titulo": "Entrega fechada e entrega commitada e pushada, sem pedir permissao",
+  "norma": "Ao fechar uma unidade de trabalho (sprint, bugfix verificado), commit e push direto e seguir para o proximo item - sem perguntar. Trabalho nao pushado nao existe em producao, porque o deploy e automatico por push.",
+  "motivo": "Instrucao do Jean (10/06/2026, sessao Sirius CRM): 'SEMPRE que concluir algo faca push e prossiga'. Pedir permissao a cada push so atrasa.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "git status --porcelain vazio e git log origin/main..HEAD vazio ao encerrar a sessao",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [
+    "Janela de nao-push 00:00-01:00 BRT no roihub (cron do autopublishing as 00:13)."
+  ],
+  "origem": [
+    "feedback_push_apos_concluir",
+    "project_roihub_autopublishing"
+  ],
+  "valid_from": "2026-06-10",
+  "valid_to": null,
+  "supersede": null
+}

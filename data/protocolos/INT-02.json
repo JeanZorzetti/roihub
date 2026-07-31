@@ -1,0 +1,33 @@
+{
+  "id": "INT-02",
+  "area": "INT",
+  "titulo": "O fetch do Node desiste em 300s e o erro parece corte de proxy",
+  "norma": "headersTimeout e bodyTimeout do undici sao 300000 ms por default. Endpoint que pode passar de 5 minutos: logar error.cause?.code ANTES de mexer em infra. UND_ERR_HEADERS_TIMEOUT significa que o bug e do CLIENTE.",
+  "motivo": "roihub, 31/07/2026: run-autopublish.mjs roda no GitHub Actions, a rota tem maxDuration 900 e o claude-cli 600s, e o cliente desistia em 300s gravando request-failed. O proprio codigo ja media goiania 366s. Um catch generico manda quem investiga cacar timeout no Traefik/nginx, que muitas vezes nem tem esse limite.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "no catch do fetch, logar error.cause?.code; saidas: setGlobalDispatcher(new Agent({headersTimeout:N, bodyTimeout:N})) ou tornar a chamada fire-and-forget com polling",
+    "frequencia": "sob suspeita",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "github-actions",
+      "easypanel"
+    ],
+    "superficie": [
+      "api",
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "undici_headers_timeout_300s"
+  ],
+  "valid_from": "2026-07-31",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,32 @@
+{
+  "id": "INT-05",
+  "area": "INT",
+  "titulo": "API de dados que falha devolvendo lista vazia e pior que falhar",
+  "norma": "Quando lista vazia e falha significam coisas opostas para quem chama, nao colapsar as duas: modo strict com retentativas e backoff que LANCA um codigo proprio em vez de retornar vazio.",
+  "motivo": "gscQueryPages engolia todo erro e retornava []. Com [] nenhum candidato casa com o inventario, entao TODA pauta vira action:'new' - um GSC fora do ar publicaria 10 artigos duplicando URLs ja ranqueadas.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "teste que simula a API fora do ar e assere que a funcao lanca gsc-unavailable em vez de devolver []",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "api",
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

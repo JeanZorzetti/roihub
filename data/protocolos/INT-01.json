@@ -1,0 +1,33 @@
+{
+  "id": "INT-01",
+  "area": "INT",
+  "titulo": "BOM no .env some com a PRIMEIRA env var e o sintoma e credencial invalida",
+  "norma": "node --env-file nao descarta BOM: um .env salvo em UTF-8-with-BOM registra a primeira chave com \\ufeff no nome e a var fica undefined. So a primeira linha sofre. Se UMA env var esta vazia e as outras do mesmo arquivo nao, checar o BOM ANTES de olhar a credencial.",
+  "motivo": "roihub, 25/07/2026: GOOGLE_SERVICE_ACCOUNT_JSON era a primeira linha e NENHUM script local jamais leu o Search Console; DATABASE_URL, na segunda linha, sempre funcionou. A caca foi para a credencial, para o escopo da service account e para o parser.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "node --env-file=.env -e \"console.log(JSON.stringify(Object.keys(process.env).filter(k=>/MINHA/.test(k))))\"   # nome com BOM aparece na saida",
+    "frequencia": "sob suspeita",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "windows-onedrive"
+    ],
+    "superficie": [
+      "dev"
+    ]
+  },
+  "excecoes": [
+    "O pacote dotenv trata BOM e nao tem o problema; producao tambem nao sofre quando as vars vem do painel do EasyPanel."
+  ],
+  "origem": [
+    "nodejs_env_file_bom_first_key"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

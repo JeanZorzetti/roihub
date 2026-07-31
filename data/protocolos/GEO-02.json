@@ -1,0 +1,31 @@
+{
+  "id": "GEO-02",
+  "area": "GEO",
+  "titulo": "sameAs so com os perfis canonicos verificados da ROI Labs",
+  "norma": "Usar em sameAs e no rodape de qualquer projeto apenas: linkedin.com/company/roi-labs-curadoria/, instagram.com/roilabs.curadoria/ e, para o fundador, linkedin.com/in/jean-zorzetti-772742239/ e github.com/JeanZorzetti. NUNCA linkedin.com/company/roilabs (deletada), /roi-labs (outra empresa), twitter.com/roilabs, github.com/roilabs ou linkedin.com/company/sirius-crm (produto homonimo).",
+  "motivo": "sameAs apontando para perfil de terceiro faz o Google fundir a entidade errada - foi uma das causas da queda de posicao do brand sirius crm. Verificado em 11/07/2026.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s <url> | grep -o '\"sameAs\":\\[[^]]*\\]'  # conferir contra a lista canonica; no Sirius, importar de lib/geo/entity.ts (fonte unica)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roilabs_canonical_social_profiles"
+  ],
+  "valid_from": "2026-07-11",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,35 @@
+{
+  "id": "DEP-07",
+  "area": "DEP",
+  "titulo": "Build-time fetch em site estatico Docker nao reflete o banco: o layer fica cacheado",
+  "norma": "Site estatico que busca dados de API no build para de refletir o banco: o Docker cacheia o layer do build e redeploy reusa o dist velho. Para refletir dado vivo, buscar no NAVEGADOR em runtime, com skeleton estatico para SEO/no-JS e Access-Control-Allow-Origin na API.",
+  "motivo": "roilabs.com.br (commit 0bef049): mudar o DB nao invalidava o cache porque a fonte nao mudava. Redeploy e restart nao resolviam.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "mudar um registro no banco e recarregar a pagina publica: se o valor nao muda sem rebuild, o fetch esta no build",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro",
+      "vite-spa"
+    ],
+    "infra": [
+      "docker",
+      "easypanel"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "Fetch de dentro do container do build para o proprio dominio publico pode falhar por hairpin NAT: o build falha e a plataforma serve a imagem velha."
+  ],
+  "origem": [
+    "easypanel_docker_build_cache_stale_dist"
+  ],
+  "valid_from": "2026-07-03",
+  "valid_to": null,
+  "supersede": null
+}

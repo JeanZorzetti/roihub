@@ -1,0 +1,31 @@
+{
+  "id": "AGT-06",
+  "area": "AGT",
+  "titulo": "Teammate falhando: medir memoria antes de culpar modelo ou runtime",
+  "norma": "Ao ver agentes falhando com spawn failed / runtime_not_active, checar commit charge e se os processos de runtime morrem junto com o renderer no log. Quando o renderer Electron sofre OOM, ele leva os runtimes filhos junto - isso E o 'spawn failed'. Aliviar carga ou usar arnes leve, nao trocar de modelo.",
+  "motivo": "07/06/2026: dias gastos trocando modelo (Haiku, OpenCode, free) achando que era capacidade. Era ambiente: 16GB com commit charge a 87%, 5 processos de runtime morrendo de 5 para 0 no mesmo instante do 'Renderer process gone: oom'.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "Get-Counter '\\Memory\\% Committed Bytes In Use' e checar no log se ha 'Renderer process gone: oom' junto com a morte dos runtimes",
+    "frequencia": "sob suspeita",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "electron"
+    ],
+    "infra": [
+      "windows-onedrive"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "agent_teams_ai_oom_root_cause"
+  ],
+  "valid_from": "2026-06-07",
+  "valid_to": null,
+  "supersede": null
+}

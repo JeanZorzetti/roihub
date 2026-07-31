@@ -1,0 +1,33 @@
+{
+  "id": "DEP-09",
+  "area": "DEP",
+  "titulo": "Middleware Next que importa API Node proibida derruba TODA rota com 500",
+  "norma": "O que o middleware importa e codigo Edge. Antes de importar um modulo compartilhado nele, verificar tudo que a cadeia de imports referencia - e preferir duplicar 5 linhas a arrastar um modulo Node. Optional chaining NAO protege: o erro e lancado na avaliacao do modulo.",
+  "motivo": "24/07/2026 derrubou hub.roilabs.com.br inteiro quando o middleware passou a importar lib/autopublish-core.mjs so para reusar o authorized(). npm run build passa; o erro e de runtime.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "ler o CODIGO-FONTE da cadeia de imports do middleware procurando process.getBuiltinModule, node:crypto, node:fs e require; reproduzir com node .next/standalone/server.js (teste que deleta globais em Node passa verde com o bug vivo)",
+    "frequencia": "por entrega",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site",
+      "app",
+      "api"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextjs_middleware_edge_forbidden_node_api"
+  ],
+  "valid_from": "2026-07-24",
+  "valid_to": null,
+  "supersede": null
+}

@@ -1,0 +1,33 @@
+{
+  "id": "DAT-03",
+  "area": "DAT",
+  "titulo": "Drop de coluna exige o deploy do codigo JUNTO ou ANTES da migracao",
+  "norma": "Inverte DAT-02. Adicionar coluna: migrar antes do push. Remover coluna de tabela viva: publicar o codigo antes ou junto, porque o client Prisma deployado faz SELECT explicito de todas as colunas escalares em reads sem select. Tabela sem consumidor: a ordem nao importa.",
+  "motivo": "sofia-next, 17/06/2026: o drop de users.workspace_id quebrou TODAS as leituras de users, e o login apareceu como 401 'Invalid credentials' porque o try/catch engolia o erro - parecia OK no probe.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "probe POST /api/auth/register com email EXISTENTE: 500 = build velho quebrado, 409 = build novo OK (email inexistente CRIARIA usuario)",
+    "frequencia": "por mudanca de schema",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "prisma"
+    ],
+    "infra": [
+      "easypanel"
+    ],
+    "superficie": [
+      "app",
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "sofia_next_refactor_roadmap"
+  ],
+  "valid_from": "2026-06-17",
+  "valid_to": null,
+  "supersede": null
+}

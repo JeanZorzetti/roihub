@@ -1,0 +1,34 @@
+{
+  "id": "AGT-07",
+  "area": "AGT",
+  "titulo": "Google recusa login em browser aberto por automacao: logar fora do robo e conectar por CDP",
+  "norma": "O Google barra o FLUXO DE LOGIN sob automacao, nao uma sessao que ja existe. Cacar flags anti-deteccao funciona as vezes e quebra no update seguinte - nao e o caminho. Separar quem abre de quem dirige: logar uma vez num Chrome comum num perfil dedicado, e depois sempre connectOverCDP naquele perfil.",
+  "motivo": "Necessario para qualquer automacao de produto Google sem API - Search Console crawl stats (que nao tem API), GA4 UI, Ads UI. O primeiro run e sempre manual e presencial.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "abrir o Chrome com --remote-debugging-port=0 no perfil dedicado, ler a 1a linha de <PROFILE>/DevToolsActivePort e chamar chromium.connectOverCDP",
+    "frequencia": "por automacao nova",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "node"
+    ],
+    "infra": [
+      "windows-onedrive"
+    ],
+    "superficie": [
+      "agente"
+    ]
+  },
+  "excecoes": [
+    "Chrome ja aberto naquele perfil delega para a instancia existente e o processo novo morre sem escrever o DevToolsActivePort - a mensagem de erro tem que mandar fechar a janela.",
+    "Usar playwright-core, nao playwright: o postinstall do playwright baixa browsers dentro do npm ci do Docker."
+  ],
+  "origem": [
+    "google_login_blocks_automated_browser"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

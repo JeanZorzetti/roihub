@@ -1,0 +1,31 @@
+{
+  "id": "INT-03",
+  "area": "INT",
+  "titulo": "Erro de checkout do Mercado Pago e env var do ambiente de producao, nunca bug do vertical",
+  "norma": "Redirect para ?erro=pagamento significa que createPreference lancou: o codigo do MP e byte a byte igual entre os verticais. Sao DUAS vars no money path - sem o ACCESS_TOKEN o checkout nem abre; sem o WEBHOOK_SECRET o cliente paga e o pedido fica pendente para sempre, sem erro visivel.",
+  "motivo": "goiania, 23/07/2026: MERCADOPAGO_ACCESS_TOKEN nao estava no env de producao do servico app no EasyPanel. Token testado contra a API real deu 201, codigo intacto. Env so aplica no restart.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "conferir MERCADOPAGO_ACCESS_TOKEN e MERCADOPAGO_WEBHOOK_SECRET no painel do EasyPanel do servico app + restart; webhook cadastrado em https://app.roilabs.com.br/api/pagamentos/webhook",
+    "frequencia": "por entrega de pagamento",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "easypanel"
+    ],
+    "superficie": [
+      "app"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roilabs_mercadopago_prod_env_vars"
+  ],
+  "valid_from": "2026-07-23",
+  "valid_to": null,
+  "supersede": null
+}

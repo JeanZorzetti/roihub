@@ -1,0 +1,32 @@
+{
+  "id": "CNT-10",
+  "area": "CNT",
+  "titulo": "Foto de fabricante: risco aceito so para marca ja vendida no catalogo",
+  "norma": "Publicar imagem minerada de site oficial do PROPRIO fabricante de um produto ja vendido no catalogo, self-hospedada, e risco aceito pelo Jean. Isso NAO e permissao geral: continuar sinalizando o risco de direito autoral, e nao generalizar para foto de terceiro sem relacao com a marca (blog de decoracao, Pinterest, Instagram alheio).",
+  "motivo": "Decisao explicita do Jean no ciclo 11 do catalogo do goiania, depois de eu oferecer a alternativa mais segura (moodboard sem publicar ate autorizacao formal).",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "para cada imagem publicada, a origem tem que ser o dominio oficial da marca que ja consta no catalogo",
+    "frequencia": "por lote de imagens",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "*"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site",
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roilabs_scraped_media_risk_accepted"
+  ],
+  "valid_from": "2026-06-25",
+  "valid_to": null,
+  "supersede": null
+}

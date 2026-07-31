@@ -1,0 +1,33 @@
+{
+  "id": "CNT-06",
+  "area": "CNT",
+  "titulo": "Bloco que o layout ja renderiza nao pode sair no corpo do artigo",
+  "norma": "Capa, FAQ e related vem do mesmo frontmatter que o layout ja le. O renderizador precisa saber, por projeto, o que o layout ja faz (campo layoutRenders) - conferir o layout do repo alvo e parte de ligar um projeto novo.",
+  "motivo": "Artigo publicado saiu com capa, FAQ e lista de relacionados duas vezes na mesma pagina.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "curl -s <url do artigo> | grep -c '<h2[^>]*>FAQ'  # tem que ser 1",
+    "frequencia": "por projeto novo no autopublish",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "astro",
+      "next",
+      "mdx"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "blog"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "roihub_autopublishing_gotchas"
+  ],
+  "valid_from": "2026-07-25",
+  "valid_to": null,
+  "supersede": null
+}

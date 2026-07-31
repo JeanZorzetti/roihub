@@ -1,0 +1,33 @@
+{
+  "id": "SEC-02",
+  "area": "SEC",
+  "titulo": "Protecao mora no middleware, e no Edge a sessao tem que ser JWT",
+  "norma": "A correcao certa para rota aberta e um middleware.ts, nao guard por rota - rota nova nasce protegida. Com middleware, strategy: 'database' desliga a protecao inteira em silencio, com o build passando, porque o Edge nao alcanca o banco.",
+  "motivo": "Mesmo caso da Atma: sem middleware, cada rota nova nasce desprotegida e ninguem nota, porque nada quebra quando falta auth - o app funciona melhor sem.",
+  "verificacao": {
+    "tipo": "automatica",
+    "como": "conferir que middleware.ts cobre o matcher das rotas privadas E que a config de sessao e jwt; depois, varrer as rotas sem cookie e contar 200",
+    "frequencia": "por publicacao de painel",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "app",
+      "api"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "nextauth_installed_but_never_wired",
+    "nextjs_middleware_edge_forbidden_node_api"
+  ],
+  "valid_from": "2026-07-30",
+  "valid_to": null,
+  "supersede": null
+}

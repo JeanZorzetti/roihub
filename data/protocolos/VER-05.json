@@ -1,0 +1,35 @@
+{
+  "id": "VER-05",
+  "area": "VER",
+  "titulo": "Uma run de medicao de performance nao decide nada",
+  "norma": "Score de Lighthouse/PSI so decide por mediana de 5 runs contra producao. Lighthouse local nesta maquina (Windows + OneDrive) tem variancia de +/-30% e nao confirma score. O que E confiavel local: bytes (deterministico), breakdown do LCP, screenshot.",
+  "motivo": "11/07/2026: o MESMO codigo deu LCP 2711ms e 5793ms para a mesma home no PSI (as primeiras paginas da fila pegam worker congestionado). Local, 3 runs identicos deram TBT 1900/2130/2510ms.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "5 runs de Lighthouse mobile contra a URL de producao e tomar a mediana; para bytes, Playwright + performance.getEntriesByType('resource')",
+    "frequencia": "por entrega de performance",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "next",
+      "astro"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "site"
+    ]
+  },
+  "excecoes": [
+    "O breakdown (elemento do LCP, fases, cadeia critica) e estrutural e confiavel mesmo local - o que nao vale e o SCORE."
+  ],
+  "origem": [
+    "lighthouse_local_windows_onedrive_unreliable",
+    "goiania_lcp_root_causes"
+  ],
+  "valid_from": "2026-07-13",
+  "valid_to": null,
+  "supersede": null
+}

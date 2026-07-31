@@ -1,0 +1,32 @@
+{
+  "id": "DAT-04",
+  "area": "DAT",
+  "titulo": "Rodar migrations do zero num banco novo nao prova paridade com producao",
+  "norma": "Migration que falha num banco limpo pode ser divida morta, nao bug: sempre cruzar o erro com o uso real no codigo antes de 'consertar'. Prod patchada a mao (psql/GUI) sem gerar migration deixa esse rastro.",
+  "motivo": "prolife: nr1_capacitacoes foi criada sem colunas que 5 migrations posteriores assumem existir. Nenhuma migration faz o ALTER TABLE - prova de patch manual em prod. O codigo que roda usa so o schema original, entao as 5 sao seeds de demonstracao mortas.",
+  "verificacao": {
+    "tipo": "semiautomatica",
+    "como": "para cada migration que falha, grep das colunas/tabelas citadas no src/ - se nenhuma rota usa, e divida morta e fica falhando",
+    "frequencia": "por ambiente novo",
+    "falha_significa": "alerta"
+  },
+  "aplica_se_a": {
+    "stack": [
+      "postgres",
+      "prisma"
+    ],
+    "infra": [
+      "*"
+    ],
+    "superficie": [
+      "dados"
+    ]
+  },
+  "excecoes": [],
+  "origem": [
+    "prolife_supabase_vercel_env"
+  ],
+  "valid_from": "2026-07-23",
+  "valid_to": null,
+  "supersede": null
+}
