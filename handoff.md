@@ -2,17 +2,29 @@
 
 > 🎯 **PRÓXIMO PASSO — DUAS COISAS, e uma delas é uma data.**
 >
-> 1️⃣ **Se a sessão for de trabalho:**
-> [`handoff/handoff-curar-os-15.md`](handoff/handoff-curar-os-15.md) (30/07) —
-> **curar os 15 projetos que ainda entram no ranking sem receita, blockers nem ação.**
-> Curados hoje: **11 → 20**. Os 15 restantes já estão medidos no handoff (todos em 200, título e
-> último push conferidos), com o método e a régua de calibragem.
-> 🚨 **Não curar pelo status da home:** 3 dos 9 curados hoje respondiam **200** com o produto
-> quebrado — o front chama API que é NXDOMAIN e o `checkHealth` dá verde.
-> ⚠️ **Grep por nome de env var dá falso negativo** (comprovado no `atma`) — o handoff traz o grep
-> que funciona.
-> 🤔 Antes de escrever 15 cards, uma pergunta: `cyberspace` é boilerplate Vite puro, e `vertice`
-> (03/03) e `pathfinder` (23/10/25) estão parados há meses. Entram todos com receita honesta 1–2?
+> 1️⃣ **Se a sessão for de trabalho — o trabalho é o ATMA, e ele é urgente:**
+> [`handoff/handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) (30/07).
+> 🚨 **O Atma está DESINDEXADO — o site inteiro, inclusive a home — e perdeu 98% das impressões.**
+> Era o maior ativo orgânico da ROI Labs: ~1.600 imp/dia e ~30 cliques/dia; hoje faz 10–20 imp/dia.
+> 28d: **43 cliques / 316 imp** contra **298 / 14.818** nos 28d anteriores. **Queda datada:
+> 09/06 fechou com 1.675 imp, 10/06 com 380.** Não foi deploy (zero commits entre 20/05 e 30/07):
+> a URL Inspection devolve `Crawled - currently not indexed` com **último crawl em 04–06/06**.
+> Ninguém viu porque a home responde **200** e o `checkHealth` só olha `res.ok`.
+> **Ação: pedir reindexação da home e de `/blog/quanto-custa-alinhador-invisivel` no GSC.**
+> 🚨 **`orion` publica `aggregateRating` FABRICADO** (4,8 de 1.250 avaliações inexistentes) mais
+> endereço e telefones falsos no schema — **em subdomínio de `roilabs.com.br`**. Risco de ação
+> manual é do DOMÍNIO, não do projeto. É o 2º item da fila.
+>
+> ✅ **A curadoria do hub FECHOU: 20 → 35.** Não sobra nenhum projeto não-curado —
+> `CURADO: 35 · NÃO-CURADO: 0 · hosts duplicados: ZERO`, 130/130 testes.
+> Só **3 dos 15** estão de fato no índice do Google (`aprovai`, `roi-labs-links`, `qprime`);
+> `compass` e `pathfinder` são `URL is unknown to Google`. Receita original em
+> [`handoff/handoff-curar-os-15.md`](handoff/handoff-curar-os-15.md).
+> ⚠️ **O Clerk do Atma já tinha sido arrancado** (`726e45f`, 30/07) — o briefing anterior mandava
+> nascer com ele como blocker e o card teria nascido mentindo. Premissa velha em 24h.
+> ⚠️ **Defeito de régua registrado e NÃO consertado:** o critério `seo` é "tração merece atenção",
+> então quem desaba tira nota BAIXA — o Atma tirou **0,7** por ter colapsado. Compensei à mão com
+> `decay 10`. Mexer nos pesos é decisão do Jean.
 >
 > ✅ **A frente de nomenclatura FECHOU (30/07, 22h BRT).**
 > [`handoff/handoff-renomear-subdominios-executado.md`](handoff/handoff-renomear-subdominios-executado.md)
@@ -170,7 +182,9 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
-| [`handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) | **comece por aqui numa sessão de trabalho**: encurtar 8 subdomínios para nome de produto, limpar o `synth-bot-buddy` (repo apagado, host em 200) e decidir 2 nomes. Traz a receita do **308 do host antigo** (renomear sem gerar NXDOMAIN) e o PATCH da API da Vercel, que a CLI não expõe | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-curar-os-15-executado.md`](handoff/handoff-curar-os-15-executado.md) | **comece por aqui numa sessão de trabalho**: a curadoria fechou (20 → 35, zero não-curados) e destravou o achado mais caro do portfólio — **o Atma desindexado, −98% de impressões, com a queda datada em 09→10/06** — mais o `aggregateRating` fabricado do `orion` num subdomínio de `roilabs.com.br` e o sitemap em 502 `DNS_HOSTNAME_NOT_FOUND` do `pathfinder`. Traz o estado de índice dos 15 e o defeito da régua de score | 🟢 vivo (30/07) — frente ativa |
+| [`handoff-curar-os-15.md`](handoff/handoff-curar-os-15.md) | a receita e a régua que originaram a curadoria acima: o grep de host morto que funciona (por URL absoluta, não por nome de env var), a calibração de `receita` e por que `seo`/`decay` são automáticos | ✅ executado 30/07 — 15/15 curados |
+| [`handoff-renomear-subdominios.md`](handoff/handoff-renomear-subdominios.md) | encurtar 8 subdomínios para nome de produto, limpar o `synth-bot-buddy` (repo apagado, host em 200) e decidir 2 nomes. Traz a receita do **308 do host antigo** (renomear sem gerar NXDOMAIN) e o PATCH da API da Vercel, que a CLI não expõe | ✅ executado 30/07 — 9 renomeações, zero duplicados |
 | [`handoff-proximo-passo-leva-2.md`](handoff/handoff-proximo-passo-leva-2.md) | a 2ª leva de domínios executada de ponta a ponta (15 projetos) e as **5 correções que só apareceram rodando**: título igual não diz qual pasta é deployada, sitemap em 200 não prova deploy, `builds` legado exige `routes`, `git push` desfaz deploy manual, canonical cruzado entre projetos homônimos | ✅ executado 30/07 — **35 próprio × 1 fornecedor** |
 | [`handoff-proximo-passo-dominios.md`](handoff/handoff-proximo-passo-dominios.md) | a 1ª leva e a receita de 6 passos que originou tudo: por que host de fornecedor deixa o projeto fora do GSC (a prova do CannibalScan) e o critério de triagem | ✅ executado 30/07 — superado pelos dois acima |
 | [`handoff-proximo-passo-02-08.md`](handoff/handoff-proximo-passo-02-08.md) | **comece por aqui**: o próximo passo é uma data (02/08, 1º run do robô de crawl), como medir o NXDOMAIN sem cair na janela de 90 dias, e o que sobra fora do roihub. Inclui a medição dos 3 cards podres da agenda (30/07): branded do Sirius passou, `repo` do tapepro estava errado, sitemap do CannibalScan nunca submetido | 🟢 vivo (30/07) — frente ativa |

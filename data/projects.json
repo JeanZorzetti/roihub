@@ -339,5 +339,277 @@
     "decayNota": "Landing 200 após deploy manual de site/",
     "acaoDesc": "Renomeado de sem-swarm → swarm em 30/07, e é o único dos 9 na zona nimblabs.com (Hostinger, não Cloudflare) — o registro foi criado com PUT overwrite:false, que preservou os outros 14. Host antigo em 308. É arquitetura de enxame heterogêneo com Small Language Models sem modelo centralizador, coordenação estigmérgica por memória epistêmica compartilhada: pesquisa, em repo PÚBLICO, não produto. Receita 1 reflete isso e não é um problema a resolver. Cuidado ao mexer no código: os loggers se chamam 'sem-swarm.filter', 'sem-swarm.scout' etc, então substituição cega de 'sem-swarm' quebra o logging — na renomeação só o FQDN sem-swarm.nimblabs.com foi trocado. Mesma armadilha de deploy dos outros dois estáticos.",
     "acao": "Nenhuma ação comercial — é pesquisa. Manter no ar e medir citação, não conversão"
+  },
+  {
+    "slug": "atma",
+    "nome": "Atma Aligner — alinhadores invisíveis + infoproduto R$ 47",
+    "url": "https://atma.roilabs.com.br/",
+    "repo": "Atma",
+    "receita": 6,
+    "receitaNota": "Infoproduto de R$ 47 com checkout PRÓPRIO (MercadoPago) vivo: /infoproduto/relatorio-viabilidade/checkout serve 200 e a API responde 400 de validação. Venda não confirmada",
+    "blockers": 8,
+    "blockersLista": [
+      "🚨 SITE INTEIRO FORA DO ÍNDICE: home, /pacientes/precos e /blog/quanto-custa-alinhador-invisivel todos em 'Crawled - currently not indexed'. Último crawl do Google: 04–05/06 (URL Inspection API, medido 30/07)",
+      "A preference do MercadoPago NUNCA foi testada em produção: a rota grava cliente e relatório no banco ANTES de chamar o MP, então testar suja a base real",
+      "clerk.atma.roilabs.com.br ainda responde 301 e www.atma.roilabs.com.br não resolve — resíduos da limpeza de NXDOMAIN"
+    ],
+    "seoSeed": 2,
+    "decay": 10,
+    "decayNota": "Colapso datado: 09/06 tinha 1.675 impressões/dia; 10/06 caiu para 380 e hoje roda em 10–20/dia",
+    "acaoDesc": "🚨 O MAIOR ATIVO ORGÂNICO DO PORTFÓLIO FOI DESINDEXADO E NINGUÉM VIU — porque a home responde 200 e o checkHealth do hub só olha res.ok. Medido em 30/07 (GSC API + URL Inspection): 28d atuais 43 cliques / 316 impressões contra 298 cliques / 14.818 impressões nos 28d anteriores — queda de 86% em cliques e 98% em impressões. A série diária data o corte com precisão: 09/06 fechou com 1.675 impressões, 10/06 com 380, e a partir daí decai até os 10–20/dia de hoje. Nenhum commit foi feito entre 20/05 e 30/07, então NÃO foi deploy. A URL Inspection explica: home, /pacientes/precos e o blog estão todos em 'Crawled - currently not indexed' com último crawl em 04–05/06 — o Google rastreou pela última vez, desindexou, e o tráfego caiu 5 dias depois. Uma única página carregava o projeto: /blog/quanto-custa-alinhador-invisivel fez 59.008 das 69.494 impressões (85%) e 791 cliques entre 01/05 e 09/06; hoje faz 227 impressões. E o diagnóstico é desindexação, não perda de ranking — a posição MELHOROU (6,4 → 2,9) enquanto as queries que a servem caíram de 500 para 53: ela ainda ranqueia, o Google só não a exibe mais. Descartado como causa: robots.txt libera tudo, meta robots é 'index, follow', sitemap.xml serve 36 URLs, o site responde 200. Descartado também o crawl budget do domínio — aprovai e links.roilabs.com.br foram rastreados HOJE e estão indexados, então o Google está rastreando roilabs.com.br normalmente; ele escolheu não voltar ao Atma. ⚠️ CORREÇÃO de premissa herdada: o handoff mandava nascer com o Clerk como blocker, mas o Clerk JÁ FOI REMOVIDO em 30/07 (commit 726e45f 'Remove Clerk and the patient portal from the site') — a decisão foi executada no mesmo dia e o card teria nascido mentindo. Sobra só o resíduo de DNS. Sobre receita: existe infoproduto real de R$ 47 (Relatório de Viabilidade Ortodôntica) com landing, formulário de 15 perguntas, checkout, geração de PDF e webhook MercadoPago; a página de checkout serve 200 com o preço, e POST na API devolve 400 'Dados incompletos', o que prova que a rota está viva e validando. Não dá para provar que fecha venda sem sujar o banco de produção — por isso receita 6 e não 7.",
+    "acao": "Pedir reindexação da home e de /blog/quanto-custa-alinhador-invisivel no Search Console — o Google não rastreia o Atma desde 04/06"
+  },
+  {
+    "slug": "aprovai",
+    "nome": "AprovAI — análise cadastral de locação no WhatsApp",
+    "url": "https://aprovai.roilabs.com.br/",
+    "repo": "aprovai",
+    "receita": 2,
+    "receitaNota": "Sem preço público e sem caminho de pagamento: a página diz 'grátis' e o único CTA é WhatsApp",
+    "blockers": 2,
+    "blockersLista": [
+      "Nenhum caminho de cobrança no repo (grep stripe|mercadopago|checkout|kiwify: vazio) — está indexado e não tem como faturar"
+    ],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "Um dos 3 dos 15 realmente no índice: 'Submitted and indexed', Google rastreou em 30/07 21:30",
+    "acaoDesc": "Medido em 30/07: home 200, sitemap.xml XML válido com 1 URL (landing de página única) e — o que separa este dos outros 14 — a URL Inspection devolve PASS, 'Submitted and indexed', com crawl do Google às 21:30 do próprio dia 30/07 e canonical do Google igual ao declarado. É um dos únicos três dos quinze que o Google de fato indexou (os outros: links e qprime). GSC ainda em 0 cliques / 0 impressões nas duas janelas de 28 dias, o que é esperado num host indexado há pouco — a série começa agora. O gargalo aqui não é técnico nem de SEO: é comercial. O grep de caminho de dinheiro (stripe|mercadopago|checkout|hotmart|kiwify) volta VAZIO no repo, a página anuncia 'grátis' e o único CTA é WhatsApp. Ou seja, o projeto conquistou a parte difícil (estar no índice) e não tem como converter isso em dinheiro. Receita 2 e não 3 porque nem preço público existe — o matchfios, que ficou com 3, ao menos exibe preço.",
+    "acao": "Definir preço e caminho de cobrança — está indexado e não tem como faturar"
+  },
+  {
+    "slug": "moderador",
+    "nome": "Moderador — resumo do grupo de WhatsApp 4×/dia",
+    "url": "https://moderador.roilabs.com.br/",
+    "repo": "moderador",
+    "receita": 2,
+    "receitaNota": "Sem preço e sem caminho de pagamento; entrada por WhatsApp",
+    "blockers": 3,
+    "blockersLista": [
+      "'Discovered - currently not indexed': o Google conhece a URL e NUNCA a rastreou (lastCrawl vazio)",
+      "Sem caminho de cobrança no repo"
+    ],
+    "seoSeed": 2,
+    "decay": 3,
+    "decayNota": "Home 200 e sitemap XML válido, mas nunca rastreado pelo Google",
+    "acaoDesc": "Medido em 30/07: home 200 com título próprio, sitemap.xml XML válido (1 URL, landing de página única). A URL Inspection devolve 'Discovered - currently not indexed' SEM lastCrawl — o Google descobriu a URL e nunca chegou a buscá-la. Isso é diferente do Atma (que foi rastreado, indexado e depois caiu) e diferente do pathfinder/compass ('URL is unknown to Google', nem descoberto). Aqui o sitemap fez o trabalho de descoberta e falta o crawl acontecer, o que costuma ser questão de tempo e de sinal — não há bug a caçar. GSC 0/0 nas duas janelas, coerente. Sem caminho de dinheiro no repo: o grep de pagamento volta vazio e a página não exibe preço; a entrada é WhatsApp. Receita 2 pela mesma régua do aprovai.",
+    "acao": "Esperar o crawl — descoberto e nunca rastreado. Não há bug a caçar aqui"
+  },
+  {
+    "slug": "meridian",
+    "nome": "Meridian — SaaS financeiro (landing, sem produto atrás)",
+    "url": "https://meridian.roilabs.com.br/",
+    "repo": "meridian",
+    "receita": 1,
+    "receitaNota": "Landing com nav de Pricing mas sem produto: /signin, /signup, /product e /security todos 404",
+    "blockers": 5,
+    "blockersLista": [
+      "Nav do site aponta para /signin, /product e /security — os três respondem 404",
+      "'Discovered - currently not indexed': descoberto e nunca rastreado",
+      "⚠️ Identidade divergente: a memória do projeto registra Meridian como laboratório de BELEZA para a vaga FitNext, mas o site no ar é um SaaS financeiro em inglês ('See every dollar. Own every decision.')"
+    ],
+    "seoSeed": 2,
+    "decay": 4,
+    "decayNota": "Home 200, mas metade do nav em 404 e nunca rastreado pelo Google",
+    "acaoDesc": "⚠️ CUIDADO COM A PREMISSA HERDADA: a memória descreve o Meridian como laboratório de BELEZA para a vaga da FitNext, e o site que está no ar em 30/07 é outra coisa — um SaaS financeiro em inglês, título 'Meridian — See every dollar. Own every decision.', nav com Features / Product / Security / Pricing / Sign in / Get started. Curei pelo que está servido, não pela memória; se o card de beleza ainda vale, ele vive em outro lugar e as duas fontes precisam ser reconciliadas antes de qualquer trabalho. Medido em 30/07: home 200, /pricing 200 (planos com 'Free' e 'trial'), sitemap XML válido com 2 URLs. Mas /signin, /signup, /product e /security devolvem 404 — ou seja, o nav promete um produto que não existe atrás da landing, e o botão de entrar não leva a lugar nenhum. URL Inspection: 'Discovered - currently not indexed', sem lastCrawl. GSC 0/0. Sem caminho de pagamento no repo. Receita 1 porque não é produto comercial hoje: é uma peça de vitrine, e o README local ainda é o 'Astro Starter Kit: Minimal'.",
+    "acao": "Decidir o que o Meridian é — o site no ar (SaaS financeiro) contradiz o registro de laboratório de beleza"
+  },
+  {
+    "slug": "seo-forecaster",
+    "nome": "SEO Forecaster — o termo antes do volume de busca",
+    "url": "https://seoforecaster.nimblabs.com/",
+    "repo": "seo-forecaster",
+    "receita": 2,
+    "receitaNota": "Landing anuncia 'free' e não há caminho de pagamento no repo",
+    "blockers": 3,
+    "blockersLista": [
+      "'Discovered - currently not indexed': descoberto e nunca rastreado",
+      "Sem caminho de cobrança — a landing oferece o produto como free"
+    ],
+    "seoSeed": 2,
+    "decay": 3,
+    "decayNota": "Home 200 e sitemap XML válido; nunca rastreado pelo Google",
+    "acaoDesc": "Medido em 30/07: home 200 com título próprio, sitemap.xml XML válido (1 URL). URL Inspection na propriedade sc-domain:nimblabs.com devolve 'Discovered - currently not indexed' sem lastCrawl — mesmo estado do cannibalscan, o irmão de zona. GSC 0/0 nas duas janelas de 28 dias. O produto prevê tendências de SEO no dia zero cruzando HN + Reddit RSS + GDELT em pgvector com Chronos e Groq, o que é a tese mais defensável do portfólio nimblabs; mas a landing anuncia 'free' e o grep de pagamento volta vazio, então não existe caminho de dinheiro. Receita 2. Como está no nimblabs.com, vale a régua de kill do portfólio (D+90/180/270 medidos pelo GSC) — e o relógio dessa régua só começa quando o Google rastrear, o que ainda não aconteceu.",
+    "acao": "Esperar o crawl — descoberto e nunca rastreado; a régua de kill D+90 só começa depois disso"
+  },
+  {
+    "slug": "cannibal_scan",
+    "nome": "CannibalScan — canibalização de páginas no browser (Rust/WASM)",
+    "url": "https://cannibalscan.nimblabs.com/",
+    "repo": "cannibal_scan",
+    "receita": 2,
+    "receitaNota": "Landing anuncia 'free'; sem caminho de pagamento no repo",
+    "blockers": 4,
+    "blockersLista": [
+      "🚨 Vercel NÃO está ligada ao git: git push não publica. Deploy só por CLI de dentro de site/ — e um push pode servir a raiz e derrubar o host",
+      "'Discovered - currently not indexed': descoberto e nunca rastreado"
+    ],
+    "seoSeed": 2,
+    "decay": 3,
+    "decayNota": "No ar desde 30/07, home 200 e sitemap XML válido; nunca rastreado",
+    "acaoDesc": "Destravado em 30/07 e no ar em cannibalscan.nimblabs.com. Medido no mesmo dia: home 200 com título próprio, sitemap.xml XML válido (1 URL). URL Inspection: 'Discovered - currently not indexed', sem lastCrawl. GSC 0/0. A armadilha operacional deste projeto é conhecida e continua valendo: o projeto na Vercel NÃO está conectado ao repositório git, então push não publica nada — o deploy é feito por CLI de dentro de site/. Isso significa que a verificação de qualquer entrega aqui é 'curl no host', nunca 'o push passou'. A tese técnica ('Rust é o motor, Mastra é a orquestração — eles empilham, não competem') está resolvida. Sem caminho de pagamento: a landing anuncia free e o grep volta vazio. Receita 2.",
+    "acao": "Lembrar que push não publica — qualquer entrega aqui fecha com deploy CLI de site/ e curl no host"
+  },
+  {
+    "slug": "roi-labs-links",
+    "nome": "ROI Labs Links — página de links institucional",
+    "url": "https://links.roilabs.com.br/",
+    "repo": "roi-labs-links",
+    "receita": 1,
+    "receitaNota": "Vitrine institucional: não vende nada e não deveria vender",
+    "blockers": 1,
+    "blockersLista": [],
+    "seoSeed": 2,
+    "decay": 1,
+    "decayNota": "'Submitted and indexed', Google rastreou em 30/07 20:51 — saudável",
+    "acaoDesc": "Medido em 30/07: home 200, sitemap.xml XML válido (1 URL) e URL Inspection PASS — 'Submitted and indexed', crawl do Google às 20:51 do próprio dia, canonical do Google igual ao declarado. É um dos três dos quinze efetivamente indexados. GSC 0/0, esperado para uma página de links que ninguém busca por termo genérico. Não tem e não deve ter caminho de pagamento: é a página de links institucional da ROI Labs, existe para concentrar destino de bio de rede social. Receita 1 pela mesma régua do claudeloop e do swarm — é infraestrutura de marca, não produto. Serve também como prova viva de que o crawl de roilabs.com.br está funcionando hoje, o que foi usado para descartar 'crawl budget do domínio' como causa do colapso do Atma.",
+    "acao": ""
+  },
+  {
+    "slug": "lumina",
+    "nome": "Lumina — site-modelo de clínica (demonstração)",
+    "url": "https://lumina.estetiacrm.com.br/",
+    "repo": "aesthetic-perfection-page",
+    "receita": 1,
+    "receitaNota": "Demonstração explícita: a clínica não existe. Receita não se aplica — vende a Estética Fábrica, não a si mesmo",
+    "blockers": 2,
+    "blockersLista": [
+      "'Discovered - currently not indexed': descoberto e nunca rastreado"
+    ],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "Home 200 e sitemap XML válido; nunca rastreado pelo Google",
+    "acaoDesc": "Publicado como DEMONSTRAÇÃO explícita — a clínica Lumina não existe, e o título servido admite isso ('Lumina (demonstração) | Site-modelo ROI Labs para clínicas de estética'). Isso muda a régua: não faz sentido cobrar receita, checkout ou tráfego de uma peça cuja função é ser mostrada a um prospect da Estética Fábrica. Medido em 30/07: home 200, sitemap XML válido (1 URL), URL Inspection 'Discovered - currently not indexed' sem lastCrawl, GSC 0/0 na propriedade sc-domain:estetiacrm.com.br. Não estar indexado é quase indiferente aqui, e há um argumento para que seja até preferível: uma clínica fictícia ranqueando em busca de estética confundiria quem procura clínica de verdade. Receita 1 e blockers baixo de propósito. Não abrir tarefa de SEO neste card.",
+    "acao": ""
+  },
+  {
+    "slug": "cyberspace",
+    "nome": "Cyberspace — boilerplate Vite servido em subdomínio próprio",
+    "url": "https://cyberspace.roilabs.com.br/",
+    "repo": "cyberspace",
+    "receita": 0,
+    "receitaNota": "Não existe produto: o site é o template default do Vite",
+    "blockers": 5,
+    "blockersLista": [
+      "🚨 Serve <title>Vite + React + TS</title> e favicon /vite.svg — é o boilerplate default do Vite, publicado em subdomínio próprio de roilabs.com.br",
+      "'Discovered - currently not indexed': descoberto e nunca rastreado"
+    ],
+    "seoSeed": 2,
+    "decay": 6,
+    "decayNota": "Está 200 e com sitemap válido, mas o que serve é template — nunca teve conteúdo",
+    "acaoDesc": "É o corte mais óbvio dos quinze e o único que não tem tese nenhuma. Medido em 30/07: responde 200, o sitemap.xml é XML válido com 1 URL e o canonical está declarado — tecnicamente tudo certo. O problema é o conteúdo: o HTML servido tem <title>Vite + React + TS</title>, <link rel='icon' href='/vite.svg'> e lang='en'. É o template que o `npm create vite` gera, publicado num subdomínio próprio de roilabs.com.br. Os chunks carregados incluem three-base, então houve alguma experiência 3D, mas nada disso chegou ao HTML servido. URL Inspection: 'Discovered - currently not indexed'. GSC 0/0. A régua vigente é zero arquivamentos, então o card entra — mas entra dizendo a verdade, e a decisão que falta é do Jean, não uma tarefa de execução: ou o cyberspace ganha um produto, ou o subdomínio passa a servir outra coisa. Escrever uma ação de SEO ou de receita aqui seria inventar trabalho para um projeto que ainda não existe, que é exatamente como card apodrece.",
+    "acao": "DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite"
+  },
+  {
+    "slug": "compass",
+    "nome": "Compass — monitor de uso de IA para devs",
+    "url": "https://compass.polarisia.com.br/",
+    "repo": "compass",
+    "receita": 3,
+    "receitaNota": "Stripe está no código mas as 4 chaves estão VAZIAS no .env — produto no ar, não cobrável",
+    "blockers": 7,
+    "blockersLista": [
+      "🚨 As 4 chaves do Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão vazias — não há como cobrar",
+      "Faltam GitHub OAuth e Resend: sem eles não há login nem e-mail transacional",
+      "'URL is unknown to Google': o Google nunca sequer descobriu o host",
+      "/sitemap.xml responde 404 — nada aponta o Google para o site"
+    ],
+    "seoSeed": 2,
+    "decay": 5,
+    "decayNota": "Home 200 desde o deploy, mas invisível ao Google e sem cobrança ligada",
+    "acaoDesc": "Está no ar em compass.polarisia.com.br e não é usável nem cobrável — o que já estava registrado, e ficou CONFIRMADO por medição em 30/07 em vez de herdado. No repo local, web/.env existe e o grep de chaves STRIPE preenchidas devolve ZERO: STRIPE_SECRET_KEY, STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_LIFETIME e STRIPE_WEBHOOK_SECRET estão todas em branco, exatamente como no .env.example. O código do Stripe existe (web/package.json, rotas de webhook), então não é trabalho de programação: é painel de terceiro, sem uma linha de código para escrever. Faltam também GitHub OAuth e Resend. Do lado de busca o quadro é o pior possível entre os quinze junto com o pathfinder: URL Inspection devolve 'URL is unknown to Google' — o Google nem descobriu o host — e /sitemap.xml responde 404, o que explica por quê: não há nada apontando o crawler para lá. GSC 0/0 na propriedade sc-domain:polarisia.com.br. Receita 3 e não menos porque o produto tem preço definido e o caminho de pagamento está construído; falta virar a chave. Como o próprio .env.example avisa, webhook morto significa cliente paga e não recebe — então a ordem importa: chaves e webhook antes de qualquer divulgação.",
+    "acao": "Preencher as 4 chaves do Stripe na EasyPanel — é painel de terceiro, não tem código a escrever"
+  },
+  {
+    "slug": "orion",
+    "nome": "Orion Nova — ERP com IA (protótipo com dados fabricados)",
+    "url": "https://orion.roilabs.com.br/",
+    "repo": "orion-nova-ui",
+    "receita": 1,
+    "receitaNota": "Protótipo de vitrine: preços de R$ 299 a R$ 1.499 só no schema.org, sem checkout e sem cliente",
+    "blockers": 7,
+    "blockersLista": [
+      "🚨 schema.org com aggregateRating FABRICADO: 4.8 de 1.250 avaliações que não existem — review falsa é violação de spam policy do Google, num subdomínio de roilabs.com.br",
+      "Schema declara endereço falso (Av. Paulista, 1000) e telefones placeholder (+55-11-1234-5678/5679)",
+      "sameAs aponta para facebook/twitter/linkedin/instagram '/orionnova', perfis que não existem — contraria a regra de perfis canônicos da ROI Labs",
+      "Página exibe métricas inventadas: '+2.500 empresas usando', '+127% produtividade', logos de clientes fictícios (TechCorp, Innovate.io, DataFlow, NexusAI)",
+      "'Crawled - currently not indexed' com último crawl em 07/03 — quase 5 meses sem o Google voltar"
+    ],
+    "seoSeed": 2,
+    "decay": 6,
+    "decayNota": "GSC caindo: 3 impressões nos últimos 28d contra 60 impressões e 1 clique nos 28d anteriores",
+    "acaoDesc": "🚨 O RISCO AQUI NÃO É O ORION, É O DOMÍNIO. Medido em 30/07 lendo o HTML servido: o site publica um bloco schema.org SoftwareApplication com aggregateRating de 4,8 sobre 1.250 avaliações — avaliações que não existem. Structured data de review fabricada é violação explícita de spam policy do Google e é punível com ação manual; e isto está num subdomínio de roilabs.com.br, o mesmo domínio do site institucional, do goiania, do orcaobra e de mais uma dúzia de projetos. O resto do schema acompanha: endereço 'Av. Paulista, 1000' em São Paulo (que não é endereço da ROI Labs), telefones '+55-11-1234-5678' e '5679' que são placeholders óbvios, e sameAs apontando para facebook/twitter/linkedin/instagram '/orionnova' — perfis inexistentes, o que também contraria a regra de só listar perfis canônicos reais. Na página visível há '+2.500 empresas usando', '+127% produtividade' e uma fileira de logos de clientes fictícios. Do lado de busca: URL Inspection devolve 'Crawled - currently not indexed' com último crawl em 07/03/2026 — quase cinco meses — e o GSC mostra 3 impressões nos últimos 28 dias contra 60 impressões e 1 clique nos 28 anteriores. Não afirmo que uma coisa causou a outra; afirmo que as duas foram medidas e que o custo do risco é do domínio inteiro, não deste projeto. Receita 1: os preços de R$ 299 a R$ 1.499 existem só dentro do AggregateOffer do schema, não há checkout e não há cliente. O sitemap tem 64 URLs, o maior dos quinze — ou seja, há bastante superfície publicada com esses dados dentro.",
+    "acao": "Arrancar o aggregateRating falso e os dados placeholder do schema — review fabricada arrisca o domínio roilabs.com.br inteiro"
+  },
+  {
+    "slug": "qprime",
+    "nome": "QPrime — outsourcing de impressão para empresas (Goiânia)",
+    "url": "https://qprime.roilabs.com.br/",
+    "repo": "qprime",
+    "receita": 3,
+    "receitaNota": "Operação real (25 anos, +300 contratos ativos): receita por serviço via diagnóstico e WhatsApp, sem checkout",
+    "blockers": 2,
+    "blockersLista": [
+      "Site em subdomínio de roilabs.com.br, não em domínio da própria QPrime — o cliente não é dono do host"
+    ],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "'Submitted and indexed', crawl do Google em 29/07; sitemap com 13 URLs",
+    "acaoDesc": "É o mais sólido dos quinze do ponto de vista comercial e o único que descreve uma operação de verdade: QPrime, outsourcing de impressão em Goiânia, fundada em 2001, endereço e telefone reais no schema.org (Rua 255, Setor Coimbra; (62) 3235-9800), com números de operação declarados — +300 contratos ativos, +6.000 equipamentos em campo, +1 milhão de páginas/ano. Medido em 30/07: home 200, sitemap.xml XML válido com 13 URLs e URL Inspection PASS — 'Submitted and indexed', crawl do Google em 29/07, canonical do Google igual ao declarado. É um dos três dos quinze efetivamente no índice, e tem propriedade GSC própria (sc-domain:qprime.roilabs.com.br), embora ainda em 0/0 nas duas janelas de 28 dias. O caminho de dinheiro é lead-gen, não checkout: o CTA é 'Pedir diagnóstico da frota' mais WhatsApp e telefone, e o grep de pagamento no repo só encontra menções em docs de kiosk-film, nada de gateway. Isso é adequado ao modelo — contrato de outsourcing não se fecha em checkout — e coloca a nota na mesma faixa do verticemarketing, que também fatura por serviço. O ponto estrutural a decidir é o host: um cliente com 25 anos de operação está servido em subdomínio de roilabs.com.br, o que é frágil para ele e mistura o SEO dele com o do portfólio.",
+    "acao": "Decidir se a QPrime vai para domínio próprio — hoje o cliente mora em subdomínio da ROI Labs"
+  },
+  {
+    "slug": "portfolio",
+    "nome": "Jean Zorzetti — portfólio / CV",
+    "url": "https://portfolio-three-mu-lfixsylpsz.vercel.app/",
+    "repo": "portfolio",
+    "receita": 0,
+    "receitaNota": "É CV, não produto: não vende e não deve vender",
+    "blockers": 1,
+    "blockersLista": [],
+    "seoSeed": 1,
+    "decay": 1,
+    "decayNota": "Home 200. Fora de qualquer propriedade GSC POR DECISÃO — não é pendência",
+    "acaoDesc": "⚠️ NÃO SINALIZAR COMO PROBLEMA. Este é o único projeto vivo em host de fornecedor (*.vercel.app) e isso é DECISÃO DO JEAN, não esquecimento: o domínio próprio do CV será comprado depois. Como o host é de fornecedor, ele fica fora de toda propriedade do Search Console — a consulta de 30/07 confirma que não existe propriedade que o cubra, então gscTrend devolve null e este é o ÚNICO dos quinze em que o seoSeed do JSON é realmente lido, em vez de ser sobrescrito pelo cálculo automático. Por isso o seed está em 1: é a nota honesta de um CV, não um placeholder. Medido em 30/07: home 200, título 'Jean Zorzetti — Full-Stack Engineer, AI-augmented', último push em 26/07. Não tem caminho de pagamento e não deve ter. Receita 0 e blockers 1 mantêm o card no fim do ranking de propósito — ele existe para constar na lista de todos os projetos, não para disputar o dia do Jean.",
+    "acao": ""
+  },
+  {
+    "slug": "vertice",
+    "nome": "Vértice — onboarding de clientes para agências (R$ 97–197/mês)",
+    "url": "https://vertice.roilabs.com.br/",
+    "repo": "vertice",
+    "receita": 3,
+    "receitaNota": "Preço público de verdade (Starter R$ 97/mês, Pro R$ 197/mês, trial 14 dias) mas o CTA principal é href='#'",
+    "blockers": 5,
+    "blockersLista": [
+      "O CTA da hero ('Começar Grátis'/'Começar Trial') é href='#' — o botão principal da página não leva a lugar nenhum",
+      "/sitemap.xml responde 404",
+      "'Crawled - currently not indexed', último crawl em 23/05",
+      "Sem push desde 03/03 — cinco meses"
+    ],
+    "seoSeed": 2,
+    "decay": 6,
+    "decayNota": "No ar e com preço público, mas desindexado e parado desde 03/03",
+    "acaoDesc": "Um dos dois dos quinze sem push recente (03/03, cinco meses), mas isso NÃO é abandono: o produto está no ar, em português, com proposta clara — automatizar onboarding de clientes para agências, com portal white-label, magic links e cobrança automática de pendências. E tem a coisa mais rara do portfólio: preço público de verdade, Starter R$ 97/mês (até 5 clientes) e Pro R$ 197/mês (até 20 clientes, com análise por IA), trial de 14 dias. Medido em 30/07: home 200, /signup e /login respondem 200 — então existe superfície de cadastro. O que quebra a cadeia é o CTA: o botão principal da hero é href='#', ou seja, quem chega pela dobra e clica em 'Começar Grátis' não vai a lugar nenhum; só quem usa o link do nav chega ao /signup. Isso é o mesmo padrão do matchfios (preço na página, botão que não leva ao dinheiro) e por isso a mesma nota de receita 3. Do lado de busca: /sitemap.xml responde 404 e a URL Inspection devolve 'Crawled - currently not indexed' com último crawl em 23/05. Ressalva medida: o 'Stripe' que aparece na home é logo da seção de integrações, não gateway de cobrança do próprio Vértice — não confundir com caminho de pagamento vivo. Não testei se o /signup cria conta de verdade; essa é a próxima medição, e ela decide se o projeto é SaaS parado ou landing sem backend.",
+    "acao": "Apontar o CTA da hero para /signup — hoje o botão principal é href='#' e o preço está publicado"
+  },
+  {
+    "slug": "pathfinder",
+    "nome": "Pathfinder — autoconhecimento e propósito",
+    "url": "https://pathfinder.roilabs.com.br/",
+    "repo": "pathfinder",
+    "receita": 1,
+    "receitaNota": "Anunciado como gratuito; sem preço e sem caminho de pagamento",
+    "blockers": 6,
+    "blockersLista": [
+      "🚨 /sitemap.xml responde 502 com DNS_HOSTNAME_NOT_FOUND — o proxy do sitemap aponta para um host que não resolve, e o robots.txt manda o Google exatamente para lá",
+      "'URL is unknown to Google': o Google nunca descobriu o host",
+      "Soft-404: /rota-que-nao-existe devolve 200 (fallback de SPA), então toda URL inventada vira página válida aos olhos do crawler",
+      "Sem push desde 23/10/2025 — nove meses"
+    ],
+    "seoSeed": 2,
+    "decay": 7,
+    "decayNota": "Home 200, mas o sitemap está 502 e o Google nunca descobriu o site",
+    "acaoDesc": "Aqui a cadeia inteira foi medida e fecha sozinha em 30/07. O robots.txt está no ar (200) e é caprichado — permite tudo, bloqueia /admin, /api, /dashboard, /journal, /profile, declara crawl-delay para Googlebot e Bingbot — e termina apontando 'Sitemap: https://pathfinder.roilabs.com.br/sitemap.xml', com o comentário honesto '(served via frontend proxy)'. Só que esse proxy está quebrado: /sitemap.xml devolve 502 com o corpo 'An error occurred with this application. DNS_HOSTNAME_NOT_FOUND'. Ou seja, o robots manda o Google buscar o sitemap, o sitemap responde erro de DNS, e o resultado é o que a URL Inspection mostra: 'URL is unknown to Google' — em nove meses no ar, o Google nunca descobriu o site. É o mesmo padrão de vitrine viva sobre backend morto que derrubou o cardiorisk, o tapevision e o potencialarquitetado, só que manifestado na rota do sitemap em vez de na API do produto — e por isso o grep de host NXDOMAIN nos repositórios não o pegaria. Segundo problema medido: /rota-que-nao-existe devolve 200, fallback de SPA, então qualquer URL inventada é página válida para o crawler (soft-404). Sem push desde 23/10/2025. O produto é anunciado como gratuito e não tem caminho de pagamento — receita 1, sem fingir tese comercial.",
+    "acao": "Consertar o proxy do /sitemap.xml — devolve 502 DNS_HOSTNAME_NOT_FOUND e o robots.txt aponta para ele"
   }
 ]
