@@ -1,5 +1,24 @@
 # ROI Hub — handoff
 
+> ✅ **AS NORMAS RODARAM (31/07, 20h) —
+> [`handoff/handoff-normas-que-rodam.md`](handoff/handoff-normas-que-rodam.md)**: frente 1
+> executada. `scripts/conformidade.mjs` roda **10 protocolos × 35 projetos** em ~40 s, sem LLM
+> (**193 verdes**). Placar: **41 violações**; `VER-01` e `DEP-03` passam em **35/35** (nenhum
+> cert quebrado, nenhum site fora do ar).
+> 🚨 **O achado veio ANTES do código, no passo "verificar produção": a busca estava morta e
+> reportando o erro errado.** `rodarClaude` usava sempre `tokens[0]`, e 2 das 3 contas do pool
+> estavam mortas (429 "monthly spend limit" e 403 "subscription access disabled"). Nenhuma das
+> duas mensagens tem palavra de rate limit ou auth — **só `api_error_status` separa "a conta
+> acabou" de "a resposta é ruim"**. O autopublishing nunca esteve sujeito a isso (rotaciona desde
+> sempre); a busca copiou o `spawn` e não o loop.
+> ⚠️ **3 das normas estavam mal escritas, e o runner reescreveu as três**: `SEC-01` supunha
+> next-auth (o `context` usa Auth0) — 3 falsos positivos viraram **0 falhas em 10 apps**;
+> `VER-02` adivinhava `/sitemap.xml` (o `tapepro` serve `sitemap-index.xml` e anuncia certo);
+> `GEO-02` acusava os perfis da marca Atma. **A primeira corrida de um check novo mede o check.**
+> 💸 Achado caro em aberto: o **`estetiacrm` serve `twitter.com/roilabs` e
+> `linkedin.com/company/roilabs`** no JSON-LD — os dois perfis que a norma lista como queimados
+> (um deletado, outro de terceiro), em dois blocos `sameAs` na mesma página.
+>
 > ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-corpus-verdade.md`](handoff/handoff-proximo-passo-corpus-verdade.md)
 > (31/07 18h): fazer o sistema MEDIR VERDADE.** A recuperação está resolvida o suficiente
 > (88,0% @10, teto da síntese em 100%); o que não existe é qualquer medida de **corretude do

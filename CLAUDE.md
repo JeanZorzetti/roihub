@@ -49,6 +49,12 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 
 - **São DUAS chamadas por busca** (rerank + resposta), do mesmo pool do autopublishing.
   `?rerank=0` e `?resposta=0` desligam cada uma (link no rodapé desliga as duas).
+- **Quem chama o claude-cli percorre o pool inteiro, nunca só `tokens[0]`.** Em 31/07 a busca
+  ficou morta em produção porque `rodarClaude` parava na primeira conta e ela tinha estourado o
+  limite mensal — reportado como `rerank-output`/`resposta-output`, o código de "o modelo
+  escreveu bobagem". **Só `api_error_status` (429/401/403) separa "a conta acabou" de "a resposta
+  é ruim"**: "You've hit your monthly spend limit" e "organization has disabled Claude
+  subscription access" não têm uma palavra de rate limit nem de auth.
 - **A síntese é um segundo prompt, depois da fusão, de propósito.** Um prompt só que
   ordenasse e respondesse obrigaria a remedir os 88,0% a cada ajuste de redação. Separado, o
   recall e a resposta têm réguas independentes: `scripts/avaliar.mjs` e
@@ -71,6 +77,19 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
   meio e o pool virou pó.
 - **Reindexar depois de escrever handoff/memória**: `node --env-file=.env scripts/indexar.mjs`.
   Memória mora em `~/.claude`, fora do repo — sem reindexar ela some da aba em silêncio.
+
+## Conformidade (`scripts/conformidade.mjs`) — a norma que RODA
+
+10 dos 97 protocolos viraram função e rodam contra os 35 projetos de `data/projects.json`
+(~40 s, rede pura, **zero LLM** — não divide pool com o autopublishing).
+
+- **Stack e infra são DETECTADOS do header/HTML**, não declarados: `projects.json` não tem esses
+  campos e um campo manual descreveria o que o projeto era quando alguém digitou.
+- **A primeira corrida de um check novo mede o CHECK.** Das 46 violações iniciais, 5 eram o check
+  errado — `SEC-01` supunha next-auth num app com Auth0, `VER-02` adivinhava `/sitemap.xml` num
+  projeto Astro que serve `sitemap-index.xml`. Ler as violações uma a uma antes do agregado.
+- **`n/a` não é aprovação**, é "não olhei". O placar imprime os três estados de propósito.
+- **Fora do `npm test` de propósito:** teste não faz 140 requisições contra produção.
 
 ## Ambiente
 
