@@ -89,14 +89,17 @@ export default async function Busca({ searchParams }: { searchParams: Promise<{ 
   let achados: Achado[] = q.trim() ? buscar(indice, q, 10) : [];
   let motor = "BM25";
   let falha = "";
-  const denso = q.trim() ? await getVetores() : null;
-  if (denso) {
+  // Consultado mesmo sem pergunta: o rodapé precisa dizer o estado do motor no primeiro
+  // carregamento, senão "BM25" antes da primeira busca é palpite, não diagnóstico.
+  const denso = await getVetores();
+  if (denso) motor = "BM25 + vetor";
+  if (denso && q.trim()) {
     try {
       // Busca 20 de cada lado e funde: a RRF precisa de cauda para ter o que reordenar.
       achados = rrf([buscar(indice, q, 20), await buscarDenso(denso, q, 20)], { k: 10 });
-      motor = "BM25 + vetor";
     } catch (err) {
-      // Ollama fora do ar não derruba a aba: fica o BM25, e o rodapé diz o que falhou.
+      // Ollama fora do ar não derruba a aba: cai para o BM25 e o rodapé diz o que falhou.
+      motor = "BM25";
       falha = `ollama em ${process.env.OLLAMA_URL}: ${(err as Error).message.slice(0, 90)}`;
     }
   }
