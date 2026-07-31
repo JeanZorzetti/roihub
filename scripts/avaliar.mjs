@@ -3,7 +3,8 @@
 //
 //   node scripts/avaliar.mjs                      # os três motores
 //   node scripts/avaliar.mjs --motor bm25         # só o BM25 (não precisa de Ollama)
-//   node scripts/avaliar.mjs --motor hibrido --min 0.85   # exit 1 se recall@10 cair
+//   node scripts/avaliar.mjs --motor hibrido --min bm25   # exit 1 se o vetor não pagar o custo
+//   node scripts/avaliar.mjs --motor hibrido --min 0.85   # piso absoluto (decai: veja o § no fim)
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { carregarCorpus, MEMORIA_PADRAO } from "../lib/corpus.mjs";
@@ -18,7 +19,7 @@ const opt = (nome, padrao) => {
   const i = process.argv.indexOf(nome);
   return i === -1 ? padrao : process.argv[i + 1];
 };
-const min = opt("--min", null) && Number(opt("--min"));
+const minArg = opt("--min", null);
 const piores = Number(opt("--piores", 10));
 const quais = opt("--motor", "todos");
 
@@ -102,8 +103,15 @@ for (const r of ruins) {
   if (r.recall[10] === 0) console.log(`      "${r.pergunta.slice(0, 90)}"  →  ${r.achados.slice(0, 3).join(", ")}`);
 }
 
-if (min) {
+if (minArg) {
   const m = media(principal, 10);
+  // Piso absoluto apodrece: o dourado é fixo (78 perguntas, 160 fontes) e o corpus cresce a cada
+  // handoff/memória nova — doc que o dourado não conhece só pode entrar no top-10 como falso
+  // positivo. Em 31/07, quatro docs novos derrubaram o híbrido de 83,0% para 82,4% sem uma linha
+  // de código mudar, enquanto o BM25 ficou igual. `--min bm25` compara com o BM25 da MESMA
+  // execução, mesmo corpus: mede o que o vetor acrescenta, e não quanto o corpus cresceu.
+  const min =
+    minArg === "bm25" ? media(relatorios.bm25 ?? (await avaliar(motores.bm25)).resultados, 10) : Number(minArg);
   if (m < min) {
     console.error(`\n✗ recall@10 ${pct(m)} abaixo do piso ${pct(min)}`);
     process.exit(1);

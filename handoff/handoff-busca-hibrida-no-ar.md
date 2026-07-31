@@ -9,10 +9,27 @@ números, decisões e o porquê de cada uma). Arquitetura:
 
 ---
 
+> **Adendo de 31/07, 18h — leia antes do resto.** Três coisas desta página envelheceram em
+> quatro horas:
+>
+> 1. **A verificação em produção continua bloqueada:** `hub.roilabs.com.br/busca` devolve
+>    **401** (basic auth; `HUB_PASS` só existe na EasyPanel). Não é a primeira vez —
+>    `handoff.md:441` registra o mesmo bloqueio. **Só o Jean abre a aba.**
+> 2. **Ler o rodapé sem buscar não prova o vetor.** `page.tsx:95` põe `BM25 + vetor` assim que
+>    os vetores carregam do banco; o Ollama só é chamado quando há `?q=` (`page.tsx:96`). O
+>    rodapé pode dizer `BM25 + vetor` com o Ollama inalcançável. **Buscar alguma coisa** — a
+>    linha 3 da tabela abaixo só aparece depois de uma consulta de verdade.
+> 3. **O piso de 83,0% morreu.** Ver § "A régua apodreceu" no fim.
+>
+> O que deu para conferir sem a senha, direto nas fontes: `hub_corpus` e `hub_embeddings`
+> populadas, e o caminho da aba (corpus do banco + vetores + Ollama + RRF) rodado
+> ponta a ponta contra o **banco de produção** — 10 achados, ~90 ms mornos. Sobra uma
+> incógnita só: se o container enxerga `sofia_ollama`.
+
 ## ▶️ A primeira coisa a fazer (30 segundos)
 
-**Abrir `hub.roilabs.com.br/busca` e ler o rodapé.** Ele diz o estado do motor sem precisar
-buscar:
+**Abrir `hub.roilabs.com.br/busca`, buscar qualquer coisa e ler o rodapé.** Ele diz o estado
+do motor:
 
 | Rodapé | Significa | O que fazer |
 |---|---|---|
@@ -43,9 +60,14 @@ renderizar. São 72 das 160 fontes do dourado.
 **Reindexar** (depois de escrever handoff/protocolo/memória nova):
 
 ```bash
-node --env-file=.env scripts/indexar.mjs     # ~11 min do zero, segundos com .cache/
-node scripts/avaliar.mjs --motor hibrido --min 0.83   # a régua não pode cair
+node --env-file=.env scripts/indexar.mjs     # ~11 min do zero, 19 s com .cache/
+node --env-file=.env scripts/avaliar.mjs --motor hibrido --min bm25   # a régua que não apodrece
 ```
+
+**Isto é fácil de esquecer e some em silêncio.** Em 31/07 às 18h o banco ainda estava em 259
+docs e a sessão anterior tinha escrito 4 — dois deles memórias, que **só existem no banco**
+(não estão no repo). Um dos não indexados era **este handoff**: a busca não achava o handoff
+sobre a busca. Agora: **263 docs, 1323 chunks.**
 
 ## Três armadilhas fechadas — não reabrir
 
@@ -67,11 +89,41 @@ node scripts/avaliar.mjs --motor hibrido --min 0.83   # a régua não pode cair
 - 🔓 **O endpoint está exposto na internet sem autenticação** — puxei um modelo de fora só com
   `curl`. **O Jean decidiu tratar depois; não repropor a cada sessão.**
 
+## A régua apodreceu — e o que ela revelou
+
+Reindexado o corpus (259 → 263 docs), remedido, mesmo código:
+
+| motor | fase 3 (259 docs) | 31/07 18h (263 docs) |
+|---|---|---|
+| BM25 | 82,3% | **82,3%** — idêntico |
+| denso | 76,7% | 75,7% (−1,0) |
+| híbrido | 83,0% | **82,4%** (−0,6) |
+
+**Nenhuma linha de código mudou.** O dourado é fixo (78 perguntas, 160 fontes) e o corpus
+cresce; doc que o dourado não conhece **só pode entrar no top-10 como falso positivo**. E o
+custo cai inteiro no lado denso — o BM25 não se mexeu. Ou seja: **`--min 0.83` ia falhar em
+toda sessão que escrevesse memória, medindo crescimento do corpus e chamando de regressão.**
+
+Trocado por `--min bm25` (`avaliar.mjs:105`): o piso é o BM25 **da mesma execução, mesmo
+corpus**. Mede o que o vetor acrescenta, não quanto o corpus cresceu.
+
+E o número que ele revela é desconfortável: **o híbrido ganha do BM25 por 0,1 ponto** (82,4%
+× 82,3%). Eram 0,7 na fase 3. Em 78 perguntas, 0,1 ponto é **fração de uma pergunta** — o
+lado vetorial hoje não paga o Ollama, o `hub_embeddings` e os 19 s de reindexação.
+
 ## ▶️ Próximo passo de verdade: fase 4
 
-**Contextual retrieval, medido igual.** Piso a bater: **83,0%** (`--min 0.83`). Teto: **93,3%**
-(recall@50 — acima disso o doc certo nem está entre os 50). Custa claude-cli em lote na
-indexação — janela ociosa do pool, **fora das 00:00–01:00 BRT** (cron do autopublishing às 00:13).
+**Contextual retrieval, medido igual** — e agora com um alvo honesto: não é "subir de 83%",
+é **fazer o lado denso voltar a valer alguma coisa**. Régua: `--min bm25` (hoje o híbrido
+passa por 0,1 ponto). Teto: **93,3%** (recall@50 — acima disso o doc certo nem está entre os
+50). Custa claude-cli em lote na indexação — janela ociosa do pool, **fora das 00:00–01:00
+BRT** (cron do autopublishing às 00:13).
+
+**Antes de gastar claude-cli, considerar o mais barato:** o dourado envelheceu junto com o
+corpus. Duas das quatro memórias novas (`turbopack_new_url_import_meta_breaks`,
+`vps_ollama_sofia_models`) respondem perguntas que já estão no dourado, e como não constam em
+`fontes` contam como **erro quando o motor acerta**. Atualizar `data/dourado.json` é minutos e
+pode explicar parte do −0,6 — medir isso primeiro evita otimizar contra um alvo torto.
 
 O que **não** perseguir: a camada `estado` parou em 42,7% com qualquer motor porque a resposta
 ("quantos projetos hoje", "qual o gate do sirius") **não mora em texto** — mora no GitHub, no GSC

@@ -20,8 +20,14 @@
 > `/busca` no hub, híbrida (`BM25 + vetor`), ~200 ms morno. Corpus e vetores em
 > `hub_corpus`/`hub_embeddings` — é o que põe as **123 memórias** (que moram em `~/.claude`, fora
 > do repo) dentro do container. Reindexar: `node --env-file=.env scripts/indexar.mjs`.
-> ▶️ **Comece por abrir `/busca` e ler o rodapé** — ele diz se o vetor está ligado e, se não,
-> por quê (env, rede ou tabela vazia). A tabela de diagnóstico está no handoff.
+> ▶️ **Comece por abrir `/busca`, BUSCAR alguma coisa e ler o rodapé** — sem consulta o rodapé
+> não chama o Ollama, então `BM25 + vetor` na primeira carga não prova a rede. Só o Jean abre
+> (basic auth, `HUB_PASS` só na EasyPanel). A tabela de diagnóstico está no handoff.
+> ⚠️ **O piso `--min 0.83` foi aposentado (31/07 18h)**: corpus cresce, dourado é fixo, e doc
+> novo só entra como falso positivo — 4 docs novos derrubaram o híbrido para 82,4% **sem
+> mudança de código**, com o BM25 parado em 82,3%. Agora é `--min bm25`, o BM25 da mesma
+> execução. Ele expõe o problema real: **o vetor ganha do BM25 por 0,1 ponto**, fração de uma
+> pergunta em 78.
 >
 > ✅ **O CONJUNTO DOURADO EXISTE (31/07) — 78 perguntas —
 > [`handoff/handoff-conjunto-dourado.md`](handoff/handoff-conjunto-dourado.md)**.
