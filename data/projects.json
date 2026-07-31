@@ -175,5 +175,169 @@
     "decayNota": "",
     "acaoDesc": "Repo: ROI Labs/context-keeper (README npm) + ROI Labs/nimblabs (site). ✅ INDEXAÇÃO DO CK FECHADA — URL Inspection em 30/07: context.nimblabs.com/ verdict=PASS, 'Submitted and indexed', último crawl 11/07. O CK já tem 6 páginas com dados e 21 queries em 28d (blog em pos 10,9; 'claude skills progressive disclosure' pos 17), impressões +76,3%/sem na janela de 4 semanas. Cliques ainda 0 — normal em pos 10–77. ✅ BACKLINK NPM JÁ EXISTE: o README publicado do @jeanzorzetti/context-keeper (1.2.0, 10/06) linka https://context.nimblabs.com. O que FALTA nessa ponta é menor do que o card dizia: o package.json publicado não tem os campos `homepage` nem `repository`, então a página do npm não mostra os links laterais — resolver num patch 1.2.1. ✅ CANNIBALSCAN DESTRAVADO EM 30/07, na ordem certa e no mesmo dia. O diagnóstico começou errado ('sitemap nunca submetido') e a causa era anterior: cannibalscan.nimblabs.com não existia, o site vivia em cannibalscan.vercel.app e por isso ficava FORA da propriedade sc-domain:nimblabs.com — não havia onde submeter sitemap nenhum. Executado: (1) Jean criou o subdomínio; (2) o site inteiro ainda se declarava .vercel.app (canonical, og:url, os 4 @id do @graph, o <loc> do sitemap e a linha Sitemap: do robots) — 12 ocorrências trocadas no repo cannibal_scan, commit bb13bd4; (3) ⚠️ o projeto da Vercel NÃO está ligado ao git (último deploy era CLI, de 1 dia antes), então o push não publicava nada: foi preciso `vercel link --project cannibalscan` + `vercel --prod` de dentro de site/ — quem mexer nesse repo de novo precisa saber disso; (4) `homepage` do repo trocada no MESMO ato (o hub reconhece 39 projetos, uma única entrada cannibal_scan, sem duplicata); (5) sitemap submetido pela API (a service account é siteFullUser, então PUT funciona com o escopo webmasters — não precisa de UI). Estado: 5 sitemaps na propriedade, o do CannibalScan com submitted=2026-07-30, 0 erro, downloaded ainda vazio. Próxima leitura: em ~7 dias conferir se saiu de 'URL is unknown to Google' — e o sitemap tem UMA url só (a landing), então indexar não é o fim, é o começo. ⚠️ Sobre o '60,3% OK' do crawl de nimblabs.com: ANTES de investigar, datar as falhas — Crawl Stats é média de 90 dias e o caso idêntico do roilabs (40,6%) era 100% pré-fix, zero bug vivo. Só abrir investigação se houver falha em DIAS NOVOS.",
     "acao": "Em ~06/08 conferir se o CannibalScan saiu de 'unknown to Google' (sitemap submetido 30/07) — e publicar o npm 1.2.1 do CK com `homepage`/`repository`"
+  },
+  {
+    "slug": "orcaobra",
+    "nome": "OrçaObra — Planilha de Orçamento de Obras",
+    "url": "https://orcaobra.roilabs.com.br/",
+    "repo": "reforma-maestro",
+    "gscInicio": "2026-07-30",
+    "receita": 7,
+    "receitaNota": "ÚNICO dos 9 que fatura hoje: checkout Kiwify vivo (200), R$ 47,90 de R$ 97, GA4 e blog no ar",
+    "blockers": 3,
+    "blockersLista": [
+      "og:image aponta pra imagem genérica do Lovable (lovable.dev/opengraph-image) — todo compartilhamento sai sem marca",
+      "Publica SÓ por deploy manual de frontend-next/ — build de git dá ERROR em todo commit"
+    ],
+    "seoSeed": 3,
+    "decay": 3,
+    "decayNota": "Site 200, checkout 200, blog e schema InStock no ar",
+    "acaoDesc": "Renomeado de financeiro-obras → orcaobra em 30/07 (nome escolhido pelo Jean; host antigo em 308). Curadoria medida em 30/07: é o único dos 9 renomeados com caminho de receita REAL e verificado — checkout Kiwify pay.kiwify.com.br/r85uk0S responde 200, preço R$ 47,90 (de R$ 97,00), GA4 G-94LVZJ1VPS instalado, schema.org com InStock e Instagram @reforma.maestro ligado. Produto é entregável (planilha Excel), não SaaS: não depende de backend, então não tem o problema dos irmãos. GSC zerado porque o sitemap entrou em 30/07 — a série começa agora, primeira leitura útil em ~28 dias. Duas coisas custam dinheiro hoje: a og:image genérica do Lovable (todo share sai sem marca) e o fato de publicar só manualmente. Repo: reforma-maestro, app em frontend-next/.",
+    "acao": "Trocar a og:image genérica do Lovable por uma da planilha — é o único com checkout vivo"
+  },
+  {
+    "slug": "cardiorisk",
+    "nome": "CardioCare AI — Análise de Risco Cardiovascular",
+    "url": "https://cardiorisk.roilabs.com.br/",
+    "repo": "cardio-risk-insight-hub",
+    "gscInicio": "2026-07-30",
+    "receita": 2,
+    "receitaNota": "Landing no ar, mas o produto NÃO funciona: a API que ele chama não existe",
+    "blockers": 7,
+    "blockersLista": [
+      "cardioapi.roilabs.com.br é NXDOMAIN e é o default de API_BASE_URL em frontend/app/utils/api.ts — toda análise falha",
+      "H1 ainda é 'Sistema IA Médica' (o <title> foi corrigido em 30/07, o H1 do componente não)"
+    ],
+    "seoSeed": 2,
+    "decay": 6,
+    "decayNota": "Front em 200, backend inexistente — saúde aparente engana",
+    "acaoDesc": "Renomeado de cardio-risk-insight-hub → cardiorisk em 30/07, e ABSORVEU o cardioqwen3code: o Jean decidiu que eram o mesmo produto, o repo do irmão já tinha sido apagado do GitHub, e o host dele agora é 308 pra cá. Os títulos estavam trocados entre os dois; o <title> foi corrigido pra 'CardioCare AI' (nome do README), mas o H1 do componente segue 'Sistema IA Médica'. O blocker que importa é outro: frontend/app/utils/api.ts tem 'https://cardioapi.roilabs.com.br' como default de API_BASE_URL e esse host é NXDOMAIN — verificado ao vivo em 30/07. A landing responde 200 e o health check vai dizer que está tudo bem, mas nenhuma análise de risco roda. Decidir vale mais que codar aqui: subir o backend (FastAPI, está no repo com datasets e dashboard_medico.py) ou assumir que é vitrine e tirar o formulário.",
+    "acao": "Decidir: sobe o backend FastAPI ou vira vitrine? Hoje a landing promete o que a API morta não entrega"
+  },
+  {
+    "slug": "tapevision",
+    "nome": "Tape Vision — AI Trading Bot (interface Nelogica)",
+    "url": "https://tapevision.roilabs.com.br/",
+    "repo": "tape-vision-ai-92",
+    "gscInicio": "2026-07-30",
+    "receita": 2,
+    "receitaNota": "Dashboard no ar sem backend: API e WebSocket apontam pra host inexistente",
+    "blockers": 7,
+    "blockersLista": [
+      "aitradingapi.roilabs.com.br é NXDOMAIN e está em VITE_API_URL e VITE_WS_URL do .env.production — dashboard sem dado e sem stream",
+      "Publica SÓ por deploy manual de Frontend/ — build de git dá ERROR em todo commit"
+    ],
+    "seoSeed": 2,
+    "decay": 6,
+    "decayNota": "Front em 200, API e WS mortos",
+    "acaoDesc": "Renomeado de tape-vision-ai-92 → tapevision em 30/07 (host antigo em 308). Curadoria medida: o Frontend aponta VITE_API_URL e VITE_WS_URL pra aitradingapi.roilabs.com.br, que não resolve — confirmado ao vivo em 30/07, junto com aitrading.roilabs.com.br. É um dashboard de trading em tempo real sem fonte de dado nem stream: o que está no ar é a casca. Mesmo padrão do cardiorisk e do potencialarquitetado — três landings cujo backend foi aposentado e ninguém repontou o front. O repo tem Backend/ e MLEngine/ completos, então a decisão é de hospedagem, não de código. Atenção ao publicar: build de git sempre dá ERROR aqui, só publica com deploy manual de dentro de Frontend/.",
+    "acao": "Decidir o destino do Backend/ + MLEngine (hospedar ou aposentar) — o dashboard no ar não tem de onde ler"
+  },
+  {
+    "slug": "potencialarquitetado",
+    "nome": "Arquitetura do Potencial — frameworks de carreira",
+    "url": "https://potencialarquitetado.roilabs.com.br/",
+    "repo": "potencial-arquitetado",
+    "gscInicio": "2026-07-30",
+    "receita": 2,
+    "receitaNota": "Conteúdo no ar, sem cobrança de nenhum tipo; área logada depende de API morta",
+    "blockers": 6,
+    "blockersLista": [
+      "arquiteturaapi.roilabs.com.br é NXDOMAIN e está em VITE_API_URL do .env.production",
+      "og:image aponta pra arquiteturadopotencial.com — domínio que não existe, share sai sem imagem"
+    ],
+    "seoSeed": 2,
+    "decay": 5,
+    "decayNota": "Conteúdo estático em 200; backend e /admin sem host",
+    "acaoDesc": "Renomeado de potencial-arquitetado → potencialarquitetado em 30/07 (host antigo em 308). Curadoria medida: VITE_API_URL aponta pra arquiteturaapi.roilabs.com.br/api, host que não resolve — então o backend/server.js e o /admin descritos no SISTEMA_PRONTO.md não têm onde rodar. A parte de conteúdo (frameworks de soft skills e carreira) é estática e funciona sozinha. Achado de borda: a og:image no index.html aponta pra 'arquiteturadopotencial.com' (sem .roilabs), domínio inexistente — todo compartilhamento sai sem imagem. Nenhum sinal de cobrança no código: se a tese é vender curso ou comunidade, não existe caminho de checkout hoje.",
+    "acao": "Corrigir a og:image (aponta pra domínio inexistente) e decidir se o conteúdo vira produto pago"
+  },
+  {
+    "slug": "matchfios",
+    "nome": "Matchfios — plataforma B2B para indústria têxtil",
+    "url": "https://matchfios.roilabs.com.br/",
+    "repo": "matchfios-textile-connector",
+    "gscInicio": "2026-07-30",
+    "receita": 3,
+    "receitaNota": "Preço definido na página (R$ 500 e R$ 100), mas o CTA só rola pro formulário — não há checkout",
+    "blockers": 3,
+    "blockersLista": [
+      "PricingSection tem preço mas o botão faz scrollToSignup: nenhum caminho de pagamento existe"
+    ],
+    "seoSeed": 2,
+    "decay": 3,
+    "decayNota": "Site 200, estático, sem dependência de backend",
+    "acaoDesc": "Renomeado de matchfios-textile-connector → matchfios em 30/07 (host antigo em 308). Curadoria medida: é o único dos 9 além do orcaobra com preço público — R$ 500 e R$ 100 em src/components/PricingSection.tsx — mas o botão chama scrollToSignup, ou seja, o funil termina num formulário, não numa cobrança. Diferente dos três irmãos quebrados, este não depende de API nenhuma: é estático e publica por git push normalmente. B2B têxtil não se vende por checkout de impulso, então formulário pode ser a escolha certa — mas aí o gargalo é para onde o lead VAI. Não há integração de lead visível no código. Decidir isso vale mais que qualquer trabalho de SEO aqui, porque o GSC começa do zero em 30/07.",
+    "acao": "Ligar o formulário a um destino real (CRM/e-mail) — hoje o lead do B2B não vai pra lugar nenhum"
+  },
+  {
+    "slug": "verticemarketing",
+    "nome": "Vértice Marketing — agência de marketing digital",
+    "url": "https://verticemarketing.roilabs.com.br/",
+    "repo": "vertex-landing-craft",
+    "gscInicio": "2026-07-30",
+    "receita": 3,
+    "receitaNota": "Site institucional completo de agência; receita seria por serviço, sem produto nem checkout",
+    "blockers": 2,
+    "blockersLista": [],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "Next em 200, publica por git push, StructuredData e sitemap corretos",
+    "acaoDesc": "Renomeado de vertex-landing-craft → verticemarketing em 30/07 (host antigo em 308). Foi o repo com mais arquivos a repontar (6) por causa do StructuredData.tsx, e o grep do host antigo voltou 0 — o canonical cruzado que existia na 2ª leva não voltou. É o mais saudável dos 9: Next, publica por git push sem drama, tem meta description, H1 e schema completos. Confirmado por título que NÃO canibaliza o vertice.roilabs.com.br: aquele é 'Vértice – Automated Client Onboarding', este é 'Vértice Marketing'. Produtos diferentes com nomes parecidos, não duplicata. O que falta não é técnico: é definir se a agência é um negócio a captar cliente ou uma vitrine de capacidade.",
+    "acao": "Definir se é agência que capta cliente ou vitrine — o site está pronto, a decisão comercial não"
+  },
+  {
+    "slug": "whatsmeow",
+    "nome": "whatsmeow-gateway — várias contas de WhatsApp numa API",
+    "url": "https://whatsmeow.roilabs.com.br/",
+    "repo": "whatsmeow-gateway",
+    "gscInicio": "2026-07-30",
+    "receita": 3,
+    "receitaNota": "Infra que alimenta o Sirius CRM por webhook HMAC; valor indireto, sem cobrança própria",
+    "blockers": 1,
+    "blockersLista": [
+      "Root Directory na Vercel é / mas o site mora em site/ — git push serve a raiz e derruba o host pra 404"
+    ],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "Landing 200 após deploy manual de site/",
+    "acaoDesc": "Renomeado de whatsmeow-gateway → whatsmeow em 30/07 (host antigo em 308). Gateway em Go sobre a lib whatsmeow: várias instâncias de WhatsApp por organização, pareamento por QR, mídia, e webhook assinado com HMAC apontando pro CRM (CRM_WEBHOOK_URL = sirius.roilabs.com.br/api/webhooks/whatsmeow). Ou seja: o valor dele hoje é ser infraestrutura do Sirius, não produto vendido à parte — por isso receita 3 e não mais. Armadilha registrada em 30/07: o Root Directory na Vercel é '/', mas o site está em site/. O git push disparou um build que serviu a raiz do repo (sem index.html) e derrubou o host novo pra 404; só voltou com deploy manual de dentro de site/. A ordem é push → deploy manual → verificar, sempre.",
+    "acao": "Decidir se vira produto cobrável ou fica como infra do Sirius — hoje não tem cobrança própria"
+  },
+  {
+    "slug": "claudeloop",
+    "nome": "claude-loop-runner — Claude Code sem crescer contexto",
+    "url": "https://claudeloop.roilabs.com.br/",
+    "repo": "claude-loop-runner",
+    "gscInicio": "2026-07-30",
+    "receita": 1,
+    "receitaNota": "Ferramenta de dev usada internamente; sem modelo de cobrança e sem intenção declarada",
+    "blockers": 1,
+    "blockersLista": [
+      "Root Directory na Vercel é / mas o site mora em site/ — git push serve a raiz e derruba o host pra 404"
+    ],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "Landing 200 após deploy manual de site/",
+    "acaoDesc": "Renomeado de claude-loop-runner → claudeloop em 30/07 (host antigo em 308). Roda a CLI do Claude Code em loop contra um plano em arquivo: cada iteração é um 'claude --print' novo, então o contexto nunca cresce e a memória longa vive em dois arquivos. É a ferramenta que o próprio ROI Labs usa, e a landing está em inglês — perfil de dev tool que ganha por citação em IA e não por busca comercial. Mesma armadilha do whatsmeow: Root Directory '/' com site em site/, o push derrubou pra 404 e só voltou com deploy manual. Receita 1 é honesto: não existe cobrança nem intenção declarada de cobrar. Se a tese for audiência de dev, o caminho é o playbook GEO/AEO, não SEO comercial.",
+    "acao": "Se a tese é audiência de dev, aplicar o playbook GEO/AEO (llms.txt + @graph + BLUF) — busca comercial não serve aqui"
+  },
+  {
+    "slug": "swarm",
+    "nome": "SEM-Swarm — enxame com memória epistêmica",
+    "url": "https://swarm.nimblabs.com/",
+    "repo": "sem-swarm",
+    "gscInicio": "2026-07-30",
+    "receita": 1,
+    "receitaNota": "Pesquisa em repo público; sem produto, sem cobrança",
+    "blockers": 1,
+    "blockersLista": [
+      "Root Directory na Vercel é / mas o site mora em site/ — git push serve a raiz e derruba o host pra 404"
+    ],
+    "seoSeed": 2,
+    "decay": 2,
+    "decayNota": "Landing 200 após deploy manual de site/",
+    "acaoDesc": "Renomeado de sem-swarm → swarm em 30/07, e é o único dos 9 na zona nimblabs.com (Hostinger, não Cloudflare) — o registro foi criado com PUT overwrite:false, que preservou os outros 14. Host antigo em 308. É arquitetura de enxame heterogêneo com Small Language Models sem modelo centralizador, coordenação estigmérgica por memória epistêmica compartilhada: pesquisa, em repo PÚBLICO, não produto. Receita 1 reflete isso e não é um problema a resolver. Cuidado ao mexer no código: os loggers se chamam 'sem-swarm.filter', 'sem-swarm.scout' etc, então substituição cega de 'sem-swarm' quebra o logging — na renomeação só o FQDN sem-swarm.nimblabs.com foi trocado. Mesma armadilha de deploy dos outros dois estáticos.",
+    "acao": "Nenhuma ação comercial — é pesquisa. Manter no ar e medir citação, não conversão"
   }
 ]
