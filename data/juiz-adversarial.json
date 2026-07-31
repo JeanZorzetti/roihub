@@ -1,0 +1,71 @@
+{
+  "metodo": {
+    "o_que_e": "10 respostas sabidamente ERRADAS, cada uma corrompida de um jeito diferente a partir de uma resposta real da aba. O juiz precisa reprovar >= 9 de 10. Sem este portão, um juiz que aprova tudo tira 97% na corrida real e o numero e ruido com casas decimais.",
+    "reprovar": "veredito != correta OU armadilha == caiu. As duas contam porque as corrupcoes atacam eixos diferentes: inverter a conclusao e um veredito, cair na armadilha declarada e o outro eixo.",
+    "controle_do_outro_lado": "Um juiz que reprova TUDO tambem tira 10/10 aqui. Quem pega esse e data/juiz-calibracao.json, que tem 13 respostas boas que ele precisa aprovar. Os dois portoes so passam juntos se o juiz discriminar de verdade.",
+    "citacao_preservada": "As marcas [n] das respostas originais foram mantidas em todas as corrupcoes. E de proposito: o modo de falha que motivou o juiz inteiro e citar a fonte certa e resumi-la errado, e ele so aparece se a citacao continuar batendo.",
+    "pergunta_dourado_armadilha": "Nao ficam aqui: sao lidos de data/dourado.json pelo id, para nao existirem duas copias do padrao que podem divergir."
+  },
+  "casos": [
+    {
+      "id": "D-74",
+      "corrupcao": "conclusao invertida",
+      "espera": "contradiz",
+      "resposta_corrompida": "O pedido manual de Request Indexing na UI foi o que reindexou de fato: a home e o artigo (85% do trafego) so voltaram a `Submitted and indexed` depois que o pedido manual foi disparado, quase 8h depois do resubmit do sitemap, que nao surtiu efeito nenhum [2][5]. O resubmit do sitemap pela API nao moveu nenhuma URL — vale como higiene, nao como acao de reindexacao [5][4]."
+    },
+    {
+      "id": "D-67",
+      "corrupcao": "numero material trocado (1 -> 7)",
+      "espera": "contradiz",
+      "resposta_corrompida": "7 de 35 projetos tem receita provada — o `sirius` com 3 vendas organicas, mais `orcaobra` e `atma`, que tem checkout vivo e ja faturam, e outros quatro do portfolio [1]. A regra da casa e que caminho de pagamento vivo ja conta como receita provada [1][3]."
+    },
+    {
+      "id": "D-68",
+      "corrupcao": "estado trocado: gate ja batido",
+      "espera": "contradiz",
+      "resposta_corrompida": "O gate do `sirius` e >=5 cliques nao-branded/28d ate 31/08/2026, e hoje ele ja esta em 6 — ou seja, o gate ja foi batido e o projeto pode passar para a proxima fase [1][9]. A CTR do AgaaS foi trabalhada em 31/07 e o efeito ja apareceu na serie [6][2]. A pagina `agaas` e a unica query nao-branded de pagina 1 com volume: 85 impressoes, posicao 8,1 [6]."
+    },
+    {
+      "id": "D-05",
+      "corrupcao": "sujeito trocado (cardiorisk -> atma)",
+      "espera": "contradiz",
+      "resposta_corrompida": "Nao, landing em 200 e health check verde nao provam produto funcionando: o `checkHealth` do hub so faz `fetch` na URL do site e olha `res.ok` — nao verifica se o backend que o front chama esta no ar [2][3]. No `atma` especificamente, o front aponta para `cardioapi.roilabs.com.br`, que e NXDOMAIN, e e por isso que o card do `atma` foi marcado como `no-ar-inutilizavel` [2][8]. O `cardiorisk` esta saudavel [5][6]."
+    },
+    {
+      "id": "D-72",
+      "corrupcao": "conclusao invertida (EasyPanel -> Vercel)",
+      "espera": "contradiz",
+      "resposta_corrompida": "O roihub roda na Vercel (`hub.roilabs.com.br`) — push em `main` dispara o deploy automatico da Vercel em cerca de 40 s [3][5]. Como o build e da Vercel e nao uma imagem Docker, pode dar push a qualquer hora: o deploy e atomico e nao interfere no cron do autopublishing [5][9]."
+    },
+    {
+      "id": "D-01",
+      "corrupcao": "cai exatamente na armadilha declarada",
+      "espera": "caiu",
+      "resposta_corrompida": "Sim, resubmeta. O `errors: 1` no sitemap do fabrica esta bloqueando a descoberta das URLs, e enquanto ele existir o Google nao indexa os 21 artigos [1][3]. O caminho e corrigir o sitemap, resubmeter pela API e depois pedir Request Indexing manual para as 26 URLs [1][4]. Feito isso, as URLs aparecem como `Submitted and indexed` — foi exatamente o resubmit que destravou a indexacao do fabrica [1]."
+    },
+    {
+      "id": "D-77",
+      "corrupcao": "cai exatamente na armadilha declarada",
+      "espera": "caiu",
+      "resposta_corrompida": "Porque ninguem tinha dado push nesses tres projetos por meses [1]. Push verde e deploy verde: se o `git push` sai sem erro, a Vercel publica — nao ha o que checar depois [1]. O que aconteceu foi que os projetos ficaram parados, e assim que voltaram a receber push tudo publicou normalmente [4]."
+    },
+    {
+      "id": "D-17",
+      "corrupcao": "citacao correta, so o resumo trocado",
+      "espera": "contradiz",
+      "resposta_corrompida": "Pode adicionar o pino normalmente. O transport dele usa worker_threads via thread-stream, e o Next traca esses arquivos de worker corretamente para dentro do bundle `standalone` — nao ha quebra em producao [1][2]. Um logger JSON escrito a mao seria reinventar o que o pino ja faz melhor [1][2]."
+    },
+    {
+      "id": "D-09",
+      "corrupcao": "prescricao invertida com a citacao certa",
+      "espera": "contradiz",
+      "resposta_corrompida": "Sim, esta tudo certo com ele. O guard `[ -d .git ]` e suficiente: se a pasta `.git` existe, o clone terminou e o repo esta bom — por isso ele foi pulado no loop [1][2]. Rodar `git -C <dir> rev-parse HEAD` seria uma verificacao redundante, ja que a presenca do diretorio `.git` prova o checkout [1]."
+    },
+    {
+      "id": "D-20",
+      "corrupcao": "causa invertida",
+      "espera": "contradiz",
+      "resposta_corrompida": "Sim, e codigo: `npm error enoent Could not read package.json` significa que o `package.json` do repo esta corrompido ou faltando, e o conserto e no repositorio [2]. O Root Directory da Vercel nao tem relacao com essa assinatura — ele so afeta onde os assets sao servidos [1][6]. Comece validando o JSON do `package.json` e o lockfile [2]."
+    }
+  ]
+}

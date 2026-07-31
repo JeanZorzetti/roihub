@@ -1,0 +1,417 @@
+{
+  "metodo": {
+    "o_que_e": "Respostas reais da aba, rotuladas à mão com os 4 vereditos de lib/juiz.mjs. Serve para medir o JUIZ, não a busca: mudou o prompt do juiz, remede contra estes em segundos.",
+    "quem_rotulou": "Claude (sessão de 31/07/2026), lendo pergunta + resposta gerada + resposta dourada + armadilha, um a um. NÃO é rótulo do Jean, e não é independente: o mesmo modelo escreve o rótulo e (em outro prompt) o veredito.",
+    "dois_conjuntos": "`rotulos` (20) foi rotulado antes da 1ª corrida e 4 casos foram REVISADOS depois de ler os motivos do juiz — está contaminado e serve como conjunto de regressão, não como prova. `holdout` (8) foi rotulado com a definição já afiada e ANTES de o juiz vê-los: é o número limpo.",
+    "o_que_cada_portao_pega": "holdout (7 de 8 boas) pega o juiz que REPROVA demais. data/juiz-adversarial.json (10 sabidamente erradas) pega o juiz que APROVA demais. Nenhum dos dois sozinho prova nada; os dois juntos só passam se ele discriminar.",
+    "por_que_revisei": "Três causas, e duas são erro do rotulador. (1) Rotulei `contradiz` em D-70 e D-71 por afirmações falsas que conflitam com o CORPUS e não com o dourado — mas a passada B julga contra o dourado por construção, então isso é medir verdade numa régua de concordância. Os dois viraram caso-alvo da passada A. (2) A regra de abertura invertida estava mal definida e eu mesmo apliquei em direções opostas no D-03 e no D-08; afiada para 'só é contradiz quando a correção chega em OUTRA frase'. (3) D-14 foi punido sem que nada mudasse na ação.",
+    "resposta_congelada": "`resposta_gerada` está gravada aqui de propósito. Ela depende do top-10, que muda a cada reindexação — sem congelar o texto, os rótulos expirariam na próxima vez que alguém escrevesse um handoff.",
+    "camadas": "Nos 20: 7 protocolo + 8 estado + 5 episodio (todas as de estado e episodio do dourado). Calibrar só nas 20 primeiras perguntas seria calibrar só em protocolo, onde a síntese acerta quase tudo. O holdout é protocolo puro: ele mede o juiz, não a busca.",
+    "sem_recusou": "Nenhum caso `recusou` nas 41 respostas geradas: a aba respondeu 41. Não é lacuna — `recusou` é decidido pelo contrato (texto vazio sem erro), nunca pelo LLM, e tem teste próprio em test/juiz.test.mjs."
+  },
+  "rotulos": [
+    {
+      "id": "D-03",
+      "camada": "protocolo",
+      "pergunta": "curl -sk no endpoint devolveu 200. Posso fechar a entrega dizendo que está no ar?",
+      "resposta_gerada": "Sim, pode fechar — mas só se o `curl` foi feito SEM `-k`/`-sk`; com `-sk` o 200 não prova nada, porque a flag desliga exatamente a validação de certificado que costuma ser o bug (o navegador não tem `-k`) [1][2]. Rodar sem `-k` e receber `net::ERR_CERT_AUTHORITY_INVALID` equivalente é sinal para investigar, não obstáculo para trocar de flag [1][2]. Se o resultado veio de `-sk`, o próximo passo é `echo | openssl s_client -connect HOST:443 -servername HOST | openssl x509 -noout -subject -issuer -dates`: um `issuer` auto-assinado significa que o certificado nunca foi emitido, e aí a entrega não está no ar de fato [1][2].",
+      "citadas": [
+        "VER-01",
+        "curl_insecure_flag_hides_cert_errors"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "A ressalva que corrige está na MESMA frase da abertura e trata o caso perguntado ('com -sk o 200 não prova nada'), e o corpo prescreve openssl e curl sem -k.",
+      "veredito_original": "contradiz",
+      "revisao": "Rótulo original inconsistente com D-08 e D-09, que têm a mesma forma e foram rotulados `correta`. A regra de abertura invertida foi afiada depois da 1ª corrida: só é `contradiz` quando a correção chega em OUTRA frase."
+    },
+    {
+      "id": "D-05",
+      "camada": "protocolo",
+      "pergunta": "A landing do cardiorisk responde 200 e o health check está verde. O produto funciona?",
+      "resposta_gerada": "Não, landing em 200 e health check verde não provam produto funcionando: o `checkHealth` do hub só faz `fetch` na URL do site e olha `res.ok` — não verifica se o backend que o front chama está no ar [2][3]. No cardiorisk especificamente, o front lê `API_BASE_URL` (default hardcoded em `frontend/app/utils/api.ts`) apontando para `cardioapi.roilabs.com.br`, que é NXDOMAIN [2][8]. Isso deixa o produto 100% quebrado enquanto a vitrine responde 200, e é por isso que o card do cardiorisk foi marcado como `no-ar-inutilizavel` [5][6]. A verificação correta é grepar a env var de API do front e curlar o host que sair dali — `http=000` confirma NXDOMAIN [3].",
+      "citadas": [
+        "landing_200_backend_nxdomain",
+        "VER-03",
+        "handoff-renomear-subdominios.md",
+        "handoff-pagina-resumo-executivo.md",
+        "handoff-resumo-entregue-e-as-26-decisoes.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Bate no material: health check olha res.ok e não enxerga backend morto; nomeia cardioapi NXDOMAIN e o estado no-ar-inutilizavel; prescreve grepar a env var e curlar."
+    },
+    {
+      "id": "D-08",
+      "camada": "protocolo",
+      "pergunta": "Peguei um card da agenda do hub. Começo pela tarefa que ele descreve?",
+      "resposta_gerada": "Sim [2]. Reproduza a premissa inteira antes de codar: leia o `acaoDesc` completo (cards de dev começam com \"Repo: ...\") e confirme que o repo aponta mesmo para a URL do card [1][2]. Depois reproduza a afirmação/contagem do card por conta própria — git grep, curl, ou memória/handoff que já tratou do assunto — antes de executar [1][2]. Se a premissa estiver furada, não execute: reporte com evidência e proponha o escopo real [1][2]. Isso já rendeu pelo menos 4 tarefas improcedentes, então vale mais checar antes do que consertar depois [1].",
+      "citadas": [
+        "VER-06",
+        "roihub_agenda_task_premises_unverified"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Abre com 'Sim' mas a mesma frase manda reproduzir a premissa antes de codar, que é a prescrição do dourado ('Não antes de reproduzir a premissa'). Quem age pela abertura faz a coisa certa."
+    },
+    {
+      "id": "D-09",
+      "camada": "protocolo",
+      "pergunta": "No loop de clones, o guard [ -d .git ] pulou um repo. Está tudo certo com ele?",
+      "resposta_gerada": "Sim, o mesmo problema já foi identificado: um guard `[ -d .git ]` (presença de `.git`) não prova clone bom, porque um clone interrompido deixa a pasta `.git` cheia mesmo sem checkout completo, com HEAD gravado em `refs/heads/.invalid` [1][2]. Esse tipo de guard **pula exatamente o repo quebrado**, em vez de consertá-lo, e o repo acaba sendo reportado erroneamente como \"vazio\" quando na verdade é um clone morto [1]. O teste honesto é `git -C <dir> rev-parse HEAD`: se falhar, o repo está quebrado e precisa de `rm -rf` + reclone [1][2]. Recomendo verificar esse repo específico com esse comando antes de assumir que está tudo certo.",
+      "citadas": [
+        "broken_clone_looks_like_empty_repo",
+        "VER-07"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "O 'Sim' inicial ancora em 'o mesmo problema já foi identificado', não em 'está tudo certo com o repo': o resto afirma que o guard pula justamente o quebrado e prescreve git rev-parse HEAD + reclone."
+    },
+    {
+      "id": "D-14",
+      "camada": "protocolo",
+      "pergunta": "Os teammates do Agent Teams falham com spawn failed / runtime_not_active. Troco o modelo ou o runtime?",
+      "resposta_gerada": "Runtime, não modelo: quando o Agent Teams AI falha com \"spawn failed\"/\"runtime_not_active\", a causa comprovada é OOM do renderer Electron (commit charge saturado), que derruba os processos de runtime filhos junto — não é limitação do modelo escolhido [1][2]. A investigação já testou trocar de modelo (Haiku, OpenCode, free) achando que era capacidade, e a causa real era ambiente: 16GB com commit charge a 87%, com os 5 processos de runtime morrendo no mesmo instante do \"Renderer process gone: oom\" no log [2]. Antes de trocar modelo, meça: `Get-Counter '\\Memory\\% Committed Bytes In Use'` e cheque se o `.dev-runtime.log` mostra \"Renderer process gone: oom\" coincidindo com a morte dos processos `claude-multimodel.exe` [1][2]. Se confirmado, a ação é aliviar carga ou usar um arnês mais leve, não trocar de modelo [2].",
+      "citadas": [
+        "agent_teams_ai_oom_root_cause",
+        "AGT-06"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "A ação prescrita é a mesma da referência: medir o commit charge e o log de OOM antes de trocar qualquer coisa, e aliviar memória em vez de trocar modelo.",
+      "veredito_original": "incompleta",
+      "revisao": "Rótulo original punia a abertura ('Runtime, não modelo') sem que nada mudasse na ação. Pela definição afiada, ação igual à da referência é `correta`."
+    },
+    {
+      "id": "D-17",
+      "camada": "protocolo",
+      "pergunta": "Quero logging estruturado num app Next com output: standalone. Adiciono pino?",
+      "resposta_gerada": "Não, não deve. O transport do pino usa worker_threads via thread-stream, não traçado de forma confiável para dentro do bundle standalone, e a quebra só aparece em produção [1][2]. A troca é um `log.ts` de ~30 linhas escrevendo JSON por linha em `process.stdout.write`, mantendo a API do pino para o import trocar depois [1][2]. Cuidado: `JSON.stringify(new Error('x'))` vira `'{}'`, então precisa de serializer explícito (`type`, `message`, `stack`) para o log de erro não perder a informação e parecer que funcionou [1][2]. Se o log tocar dados de usuário, redigir PII por chave (nome, whatsapp, email, cep) e rastrear por id, com cuidado especial com string livre (ex.: subject de e-mail) que vaza PII mesmo com redaction por chave ligada [2][5].",
+      "citadas": [
+        "DEP-11",
+        "nextjs_pino_breaks_standalone_output",
+        "SEC-06"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Cobre o mecanismo (thread-stream/worker_threads não traçado no standalone), a quebra só em produção e o logger de ~30 linhas. Os extras (serializer de Error, PII) são corretos e não conflitam."
+    },
+    {
+      "id": "D-20",
+      "camada": "protocolo",
+      "pergunta": "Dei push e o build da Vercel morreu em 6 s com 'npm error enoent Could not read package.json'. É código?",
+      "resposta_gerada": "Não — essa assinatura (morte em 5–9 s com `npm error enoent Could not read package.json`) é a marca registrada de Root Directory da Vercel apontando para `/` enquanto o site mora numa subpasta, não um erro no código [2]. A causa é o build de git servindo a raiz do repo, onde não existe `package.json`, e sobrescrevendo o deploy manual que estava correto [1][6]. O conserto é `rootDirectory` via API (`PATCH /v9/projects/...`), já que a CLI não expõe esse campo [1][6]. Antes de mexer em código, confira `vercel ls <projeto> --prod`: um `● Error` de poucos segundos é quase sempre isso, não regressão do app [2].",
+      "citadas": [
+        "handoff-fabrica-e-leva-de-um-linha-31-07.md",
+        "vercel_root_dir_slash_push_kills_subfolder_site",
+        "DEP-02"
+      ],
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo": "Acerta a assinatura, a causa e o PATCH /v9/projects, mas omite a ressalva que decide se o conserto funciona: rootDirectory tem que concordar com onde mora o .vercel/ (null quando ele está na subpasta). Aplicar o fix sem isso quebra o vercel --prod."
+    },
+    {
+      "id": "D-66",
+      "camada": "estado",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "resposta_gerada": "35 projetos, vindos de `data/projects.json` mesclado com `listProjects()` — nenhuma página importa o JSON direto, então a lista é sempre a mescla do GitHub (repos vivos com `homepage`) com a curadoria manual [1][4]. O número exato oscilou por várias sessões: 37 em 28/07, 38 depois que todo repo vivo ganhou site, 40 após a correção do `tapepro`/exclusão do `alibi_ai`, e 35 é o valor citado na sessão mais recente de conformidade e no resumo executivo [4][7][2][8]. A fonte de verdade é o GitHub (repo com `homepage` preenchida vira projeto), não uma lista fixa — `projects.json` guarda só curadoria (receita, blockers, ação, URL) [4][6].",
+      "citadas": [
+        "project_roihub",
+        "roihub_github_sourced_projects",
+        "handoff-proximo-passo-02-08.md",
+        "handoff-proximo-passo-corpus-verdade.md",
+        "handoff-pagina-resumo-executivo.md",
+        "handoff-hub-github.md"
+      ],
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo": "Acerta 35 e a origem GitHub, e diz que nenhuma página importa o JSON direto. Mas apresenta 35 como 'o valor citado na sessão mais recente' de uma série que oscilou (37/38/40), quando a referência diz curadoria FECHADA em 30/07 com zero pendentes — a diferença entre confiar no número e ir reverificá-lo."
+    },
+    {
+      "id": "D-67",
+      "camada": "estado",
+      "pergunta": "Quantos dos 35 projetos têm receita provada?",
+      "resposta_gerada": "1 de 35 projetos tem receita provada — o `sirius`, com 3 vendas orgânicas [1]. Isso é diferente de \"caminho de pagamento vivo sem venda\", categoria em que entram `orcaobra` e `atma` [1][3].",
+      "citadas": [
+        "handoff-resumo-entregue-e-as-26-decisoes.md",
+        "handoff-curar-os-15-executado.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "1 de 35, o sirius com 3 vendas orgânicas, e separa explicitamente checkout vivo (orcaobra, atma) de receita — que é a armadilha declarada."
+    },
+    {
+      "id": "D-68",
+      "camada": "estado",
+      "pergunta": "Qual o gate do sirius e onde ele está hoje?",
+      "resposta_gerada": "O gate do `sirius` é ≥5 cliques não-branded/28d até 31/08/2026, e hoje ele está em 2 [1][9]. A CTR do AgaaS foi trabalhada em 31/07 (título/meta reescritos, slug intocado por gerar o único clique não-branded), mas o efeito só deve ser remedido por volta de 14/08 [6][2]. Antes disso, a página `agaas` já era a única query não-branded de página 1 com volume: 85 impressões, posição 8,1, 2 cliques [6].",
+      "citadas": [
+        "handoff-conjunto-dourado.md",
+        "PRT-03",
+        "handoff-sirius-agaas-ctr-31-07.md",
+        "handoff-proximo-passo-pos-sirius.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Gate, prazo e estado corretos (≥5 cliques não-branded/28d até 31/08, hoje 2), mais a concentração em agaas (85 imp, pos 8,1, 2 cliques) e a próxima leitura ~14/08. Não manda trabalhar o cluster solar."
+    },
+    {
+      "id": "D-69",
+      "camada": "estado",
+      "pergunta": "Qual o gate do tapepro e o que fazer nele agora?",
+      "resposta_gerada": "O gate do `tapepro` é ≥ 300 impressões/28 dias até 19/10/2026 — hoje está em 21 [1][2]. Até essa data, não fazer nada de SEO no projeto: a regra explícita é \"nada de SEO nele até lá\" [1]. É espera, não trabalho — o gate ainda não foi avaliado, e só faz sentido cruzar a série do GSC com essa data quando ela chegar [2].",
+      "citadas": [
+        "handoff-proximo-passo-pos-sirius.md",
+        "PRT-03"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "≥300 impressões/28d até 19/10 contra 21 hoje, e diz explicitamente para não abrir frente de SEO até lá."
+    },
+    {
+      "id": "D-70",
+      "camada": "estado",
+      "pergunta": "Dos 35, o que está travado e em quê?",
+      "resposta_gerada": "Dos 35, o que trava é majoritariamente ação humana fora do código, não trabalho de agente: painel de terceiro, credencial ou decisão de negócio, como o DNS/domínio do `goiania`, `polarisia` (Home V4 já com spec pronta desde 12/07) e outros itens marcados \"SÓ O JEAN PODE FAZER\" [9]. Vários casos são espera de dado reagir, não trabalho pendente — `atma` e `sirius` já foram consertados e só falta a série do GSC responder [9]. Um bloco de 21 projetos está travado porque o site está saudável mas em domínio de fornecedor (`*.vercel.app`, `*.easypanel.host`), invisível para o GSC — nenhum desses 21 está em nenhuma propriedade medida [7]. Há travas pontuais de infraestrutura: `vertice` e `compass` com `/sitemap.xml` respondendo 404 [9], e dois domínios pagos (`housingpro.com.br`, `egtelemedicina24h.com`) em NXDOMAIN há mais de 4 meses [7]. Por fim, a curadoria dos 35 no JSON já fechou (20→35, zero não-curados) [6][10], mas a matriz que cruzaria protocolo × projeto para revelar violações \"vive nos dados e nunca foi executada\" além dos 10 protocolos que já rodam [2][1].",
+      "citadas": [
+        "handoff-proximo-passo-pos-sirius.md",
+        "handoff-proximo-passo-dominios.md",
+        "handoff-curar-os-15-executado.md",
+        "handoff-curar-os-15.md",
+        "handoff-proximo-passo-corpus-verdade.md",
+        "handoff-normas-que-rodam.md"
+      ],
+      "veredito": "incompleta",
+      "armadilha": "caiu",
+      "motivo": "Enquadra a trava como infraestrutura e enumera problemas pontuais, deixando de fora as três famílias de decisão de negócio que são o que decide a ação.",
+      "veredito_original": "contradiz",
+      "revisao": "O rótulo original citava a afirmação falsa dos '21 projetos em domínio de fornecedor' (revogada em 30/07). Ela conflita com o CORPUS, não com o dourado, que não menciona domínio de fornecedor — e a passada B julga contra o dourado por construção. Caso-alvo da passada A."
+    },
+    {
+      "id": "D-71",
+      "camada": "estado",
+      "pergunta": "O que está bloqueado esperando o Jean e não pode ser feito por agente?",
+      "resposta_gerada": "O bloqueio manual explícito é a aba `/busca` em produção: ela exige senha (basic auth `HUB_USER`/`HUB_PASS` na EasyPanel), e o handoff instrui pedir essas credenciais ao Jean, sem elas dá 401 [8]. Também há dois \"Request Indexing\" manuais no GSC que só o Jean pode disparar pela UI, já que é ação de console de terceiro sem API de escrita disponível ao agente [2]. Fora isso, ações que dependem de segredos/billing de conta também recaem sobre o Jean, como rotacionar credenciais vazadas e liberar billing do GitHub [9].",
+      "citadas": [
+        "handoff-busca-hibrida-no-ar.md",
+        "handoff-fabrica-e-leva-de-um-linha-31-07.md",
+        "estetia_audit_2026_06"
+      ],
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo": "Omite os itens de maior valor do dourado (Bing Webmaster do goiania, 4 chaves Stripe do compass, GOOGLE_CLIENT_ID do reviewshield), que é o que a pessoa faria primeiro. Acerta os 2 Request Indexing e a rotação de segredos.",
+      "veredito_original": "contradiz",
+      "revisao": "O rótulo original apontava a liderança falsa ('pedir HUB_USER/HUB_PASS ao Jean', que estão no .env local). Falsidade fora do escopo do dourado, mesma razão do D-70 — a passada B não tem como ver."
+    },
+    {
+      "id": "D-72",
+      "camada": "estado",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "resposta_gerada": "O roihub roda em Docker no EasyPanel (`hub.roilabs.com.br`), não Vercel — push em `main` dispara o build da imagem automaticamente [3][5]. O repo (`JeanZorzetti/roihub`) tem deploy automático a cada push na branch `main` [5]. Só não se pode dar push entre 00:00 e 01:00 BRT, porque o cron do autopublishing dispara 00:13 BRT e um deploy nesse meio derruba a publicação de 10 projetos — regra que também aparece registrada como armadilha operacional da casa [5][9].",
+      "citadas": [
+        "handoff-proximo-passo-dominios.md",
+        "handoff-autopublish.md",
+        "roihub_autopublishing_gotchas"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Docker no EasyPanel, não Vercel, push em main, e a janela 00:00–01:00 com o cron 00:13. Só omite output: standalone. Citou handoffs em vez das fontes do dourado — ancoragem falhou e o conteúdo está certo, que é a prova de que as duas réguas medem coisas diferentes."
+    },
+    {
+      "id": "D-73",
+      "camada": "estado",
+      "pergunta": "Escrevi um test/*.test.mjs novo e ele passa quando rodo à mão. Está no CI?",
+      "resposta_gerada": "Não está no CI. `npm test` roda uma lista explícita de arquivos no `package.json`; um `test/*.test.mjs` novo precisa ser adicionado a essa lista à mão, senão nunca roda, mesmo passando quando executado manualmente [1][7].",
+      "citadas": [
+        "handoff-normas-que-rodam.md",
+        "handoff-tipar-protocolos.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Lista explícita no package.json, arquivo novo entra à mão, senão nunca roda. O resto do dourado (node --test, sem framework) não foi perguntado."
+    },
+    {
+      "id": "D-74",
+      "camada": "episodio",
+      "pergunta": "O que de fato reindexou o atma: o resubmit do sitemap ou o Request Indexing manual na UI?",
+      "resposta_gerada": "O resubmit do sitemap foi o que reindexou de fato: a home e o artigo (85% do tráfego) já voltaram a `Submitted and indexed` com `lastCrawlTime` 22h55 BRT, o minuto exato do PUT do sitemap, quase 8h antes do pedido manual na UI [2][5]. O pedido manual só pegou as outras três URLs, depois — chegou junto, mas atrás [5][4].",
+      "citadas": [
+        "site_200_is_not_indexed_url_inspection",
+        "handoff-atma-reindexado.md",
+        "handoff-proximo-passo-atma-executado.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Credita ao resubmit do sitemap com a evidência certa (lastCrawlTime 22h55 BRT = minuto do PUT, home + artigo de 85% do tráfego, manual ~8h depois)."
+    },
+    {
+      "id": "D-75",
+      "camada": "episodio",
+      "pergunta": "Por que o compass não builda por git na Vercel, se corrigir o Root Directory resolveu nos outros?",
+      "resposta_gerada": "O compass tem `.vercel/project.json` dentro de `web/`, então `rootDirectory: \"web\"` faz o CLI procurar `web/web` — regra é `.vercel/` na subpasta implica `rootDirectory` null, diferente de reforma-maestro e vertice [4]. Mesmo revertendo para `null` e testando com `rootDirectory: \"web\"`, o build por git do compass (Next 16.2.6) compila mas quebra ao publicar com `ENOENT … routes-manifest-deterministic.json`, reproduzido duas vezes, inclusive sem cache [2][4]. Ou seja: nos outros projetos o problema era só o Root Directory apontado errado; no compass há um segundo bug, específico do framework/versão, que sobrevive mesmo com o Root Directory corrigido. Por isso o compass continua publicando só por CLI de dentro de `web/` [2][3].",
+      "citadas": [
+        "vercel_root_dir_slash_push_kills_subfolder_site",
+        "DEP-02",
+        "handoff-fabrica-e-leva-de-um-linha-31-07.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Cobre as duas causas separadas: .vercel/ dentro de web/ obriga rootDirectory null, E o ENOENT do routes-manifest-deterministic.json no Next 16.2.6 reproduzido 2×. Diz explicitamente que o conserto dos outros não resolve aqui."
+    },
+    {
+      "id": "D-76",
+      "camada": "episodio",
+      "pergunta": "O sirius precisa de hreflang? O card diz que não existe uma única ocorrência no projeto.",
+      "resposta_gerada": "Sim. O trecho [4] estabelece que \"não existe uma única ocorrência de `hreflang` ou `alternates` no projeto\" e é justamente essa ausência que causa canibalização entre a versão PT e EN [4]. Mas o handoff seguinte corrigiu essa premissa: verificado por `curl` sem `-k` em produção, o hreflang **já existe** e já funciona (`pt-BR` + `en` + `x-default` servidos corretamente) [1]. Ou seja, o card do hub está desatualizado — a tarefa \"adicionar hreflang\" já foi feita e nada precisou ser escrito [1][2].",
+      "citadas": [
+        "handoff-proximo-passo-31-07.md",
+        "handoff-sirius-agaas-ctr-31-07.md",
+        "roihub_agenda_task_premises_unverified"
+      ],
+      "veredito": "contradiz",
+      "armadilha": "evitou",
+      "motivo": "Responde 'Sim' a 'o sirius precisa de hreflang?' — o oposto do dourado — e a correção só chega duas frases depois, com uma afirmação inteira ('essa ausência causa canibalização') asseverada como fato no meio. O corpo faz a verificação certa e por isso não cai na armadilha."
+    },
+    {
+      "id": "D-77",
+      "camada": "episodio",
+      "pergunta": "Por que três projetos publicavam quebrado 'desde sempre' e ninguém tinha visto?",
+      "resposta_gerada": "Os builds desses três projetos morriam em 5–9s com `ENOENT: Could not read package.json`, causado pelo Root Directory da Vercel apontando para `/` enquanto o app vivia numa subpasta [1]. Como a Vercel mantém o último deploy bom no ar quando um build falha, a produção nunca caiu visivelmente — só os pushes novos paravam de publicar, sem nenhum sinal de erro pra quem olhasse o site [1]. O achado só apareceu porque alguém rodou os 5 pushes de uma sessão e foi checar os builds automáticos disparados, não porque algum alerta acionou [1]. É o mesmo tipo de cegueira de instrumento: um health check que só olha o status 200 da vitrine (aqui, o último deploy servido) não prova que o que está sendo publicado agora funciona [4].",
+      "citadas": [
+        "handoff-fabrica-e-leva-de-um-linha-31-07.md",
+        "landing_200_backend_nxdomain"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Mecanismo certo (build morre em 5–9s, produção segue no último deploy bom, push para de publicar sem sinal) e responde o 'ninguém tinha visto': só apareceu porque alguém foi checar os builds depois do push."
+    },
+    {
+      "id": "D-78",
+      "camada": "episodio",
+      "pergunta": "Vale adotar hooks, subagents e skills de projeto no roihub?",
+      "resposta_gerada": "Não vale adotar agora: a decisão já tomada no roihub foi **adiar** hooks, subagents e skills de projeto, com justificativa explícita de que \"sem linter, sem formatter, 17 arquivos em `lib/`. Nada aqui se paga hoje\" [1]. O que foi efetivamente adotado, por ter custo zero e retorno imediato, foi só `CLAUDE.md` + `.claude/settings.json` — que substituiu ~8 chamadas de ferramenta por sessão [1]. O SDK de agente (que traria hooks/skills/subagents carregados automaticamente via `.claude/`) também foi descartado, porque só autentica por API key paga, e a casa opera via assinatura Claude com `spawn(\"claude\")` [1][5][8]. Antes de reconsiderar isso com pesquisa nova, o caminho indicado é rodar `/claude-automation-recommender`, que analisa o codebase e recomenda hooks/skills/subagents de forma grounded, antes de qualquer busca na web [4].",
+      "citadas": [
+        "handoff-harness-decidido.md",
+        "claude_agent_sdk_requires_api_key",
+        "AGT-02",
+        "handoff-deep-research-harness-de-agente.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "A decisão e os três motivos batem (sem linter/formatter, 17 arquivos em lib/, nada se paga hoje), e o que foi adotado também. Recomendar rodar o automation-recommender não é instalar a recomendação inteira."
+    }
+  ],
+  "holdout": [
+    {
+      "id": "D-25",
+      "camada": "protocolo",
+      "pergunta": "Página nova consulta o Prisma e é SSG. O build no Docker quebra sem DATABASE_URL — basta pôr revalidate?",
+      "resposta_gerada": "ISR sozinho não basta: ele ainda prerenderiza no build, e sem `try/catch` com fallback a query crua aborta o build inteiro (caso `/precos`) [1][3]. É preciso `revalidate` **E** envolver a query em try/catch com fallback (ex.: `[]`), para o build renderizar vazio e a primeira request runtime buscar do banco de verdade [1][3]. Sem o catch, ISR sozinho não impede o `ECONNREFUSED`/`DATABASE_URL not found` de derrubar o `next build` [1][3][8].",
+      "citadas": [
+        "DEP-13",
+        "ssg_db_query_build_time_gotcha",
+        "project_seven_md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Mesma ação: ISR não basta porque ainda prerenderiza no build, precisa de try/catch com fallback. Omite só o 'grepar prisma antes', que é prevenção, não o conserto perguntado."
+    },
+    {
+      "id": "D-30",
+      "camada": "protocolo",
+      "pergunta": "Traduzi as queries de MySQL para Postgres e nada acusou erro de sintaxe. Está migrado?",
+      "resposta_gerada": "Não — sintaxe limpa não prova migração: pelo menos quatro classes de erro passam no build e no lint e só aparecem rodando a query contra o banco real (agregado virando string, `LIKE` case-sensitive, coluna divergente, valor de filtro inexistente no enum) [3][4]. A verificação que vale é rodar cada query traduzida direto contra o banco com um script `pg`, com os INSERTs dentro de `BEGIN`/`ROLLBACK` para testar escrita sem sujar produção [3][4]. 2xx de endpoint também não prova nada quando o controller tem fallback [3][5]. Confira nomes de coluna contra `information_schema.columns` (não contra o `schema.sql`) e os valores de filtro contra as constantes do código, não só a sintaxe [3][4].",
+      "citadas": [
+        "postgres_migration_silent_failures",
+        "DAT-01",
+        "project_atmaapi_easypanel"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Bate ponto a ponto: as classes de erro silencioso, rodar cada query contra o banco real com script pg, INSERTs em BEGIN/ROLLBACK."
+    },
+    {
+      "id": "D-35",
+      "camada": "protocolo",
+      "pergunta": "Promovi um projeto para subdomínio próprio na Cloudflare. Deixo a nuvem laranja para ganhar o CDN?",
+      "resposta_gerada": "Nuvem laranja e host promovido não combinam: proxied impede a Vercel de emitir o certificado do domínio, então host promovido vai DNS only (nuvem cinza) [1]. Isso vale mesmo que o resto da zona use proxied para as Redirect Rules funcionarem — regra que só dispara com nuvem laranja [2]. Se o objetivo é ganhar CDN via proxy, isso é reservado para hosts aposentados que precisam de redirect na borda, não para o subdomínio promovido em si [2][4].",
+      "citadas": [
+        "DNS-05",
+        "DNS-01",
+        "PRT-04"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Decisão igual: host promovido vai DNS only porque proxied impede a Vercel de emitir o cert. Omite o limite de um label do Universal SSL, que não muda a ação perguntada."
+    },
+    {
+      "id": "D-40",
+      "camada": "protocolo",
+      "pergunta": "Peguei a foto do Unsplash pela API e a URL começa com plus.unsplash.com/premium_photo-. Posso publicar?",
+      "resposta_gerada": "Não, não pode publicar essa foto: URLs `plus.unsplash.com/premium_photo-*` são conteúdo de Unsplash+, assinatura paga, e só `images.unsplash.com/photo-*` tem licença livre para uso comercial sem atribuição obrigatória [1][2]. A regra prática é filtrar `urls.raw` e aceitar somente URLs que começam com `https://images.unsplash.com/photo-` [1][2].",
+      "citadas": [
+        "INT-04",
+        "unsplash_premium_photo_is_paid"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "premium_photo-* é pago, filtrar urls.raw aceitando só images.unsplash.com/photo-."
+    },
+    {
+      "id": "D-45",
+      "camada": "protocolo",
+      "pergunta": "O sirius está perdendo a própria marca na busca. Ligo uma campanha de brand protection no Google Ads?",
+      "resposta_gerada": "Não ligo. Regra do portfólio é canal único SEO, inclusive para defesa de marca — nunca propor Google Ads/mídia paga, sequer como próximo passo em caso de homônimo roubando a SERP do brand [3][7]. A alternativa prescrita para esse problema é entity SEO, conteúdo e brand signals, não verba paga [3]. Antes de qualquer ação, confira se a queda é real: métrica branded agregada do GSC mente quando um homônimo estrangeiro infla impressões — é preciso quebrar por país (`dimensions:[\"country\"]`) antes de concluir que a marca piorou [4][9]. No caso do Sirius, esse corte já mostrou a marca em 1º lugar no Brasil (CTR 67%), com o \"problema\" sendo ruído de Bangladesh [4].",
+      "citadas": [
+        "feedback_full_seo_no_ads",
+        "PRT-02",
+        "gsc_branded_position_polluted_by_country",
+        "SEO-03"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Recusa o Ads pelo canal único E manda quebrar o branded por país antes de concluir queda, com o caso do sirius (pos 1,0 no BR, ruído de Bangladesh)."
+    },
+    {
+      "id": "D-50",
+      "camada": "protocolo",
+      "pergunta": "A conexão com o Postgres do VPS falha no TLS. Troco o sslmode para require?",
+      "resposta_gerada": "Não. O probe do handshake SSLRequest separa duas causas opostas: servidor responde `S` (aceita TLS, aí sim o `sslmode` do cliente é a causa e trocar para `require` resolve) ou responde `N` (servidor não oferece TLS, `ssl=off` no `postgresql.conf`, e trocar `sslmode` por `require` só faz a conexão falhar — ligar TLS exige acesso ao VPS) [1][2]. Rode o probe antes de decidir: `node -e \"const s=require('net').connect(PORTA,'HOST',()=>{const b=Buffer.alloc(8);b.writeInt32BE(8,0);b.writeInt32BE(80877103,4);s.write(b)});s.once('data',d=>{console.log(d.toString());s.destroy()})\"` [1]. Casos já confirmados no VPS `2.24.207.200` (portas 5451 e 5452) mostram servidor sem TLS, então lá `sslmode=disable` é obrigatório [2][3].",
+      "citadas": [
+        "SEC-05",
+        "vps_postgres_no_tls_sslrequest_probe",
+        "project_compass_prod_setup"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Manda rodar o probe SSLRequest antes de decidir, com as duas respostas possíveis, e registra que o VPS responde N."
+    },
+    {
+      "id": "D-55",
+      "camada": "protocolo",
+      "pergunta": "Quero que o conteúdo seja citado no ChatGPT, Perplexity e Gemini. O que muda em relação a SEO normal?",
+      "resposta_gerada": "Para citação em ChatGPT/Perplexity/Gemini (GEO/AEO), além do SEO tradicional é preciso: robots.txt com whitelist explícita dos crawlers de IA (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Perplexity-User, GoogleOther, Google-Extended) — bloquear é sumir das respostas [1][2]. Adicionar llms.txt na raiz e consolidar o structured data num único `@graph` por página (Organization+WebSite+Article+FAQPage, ligado por `@id`), sendo FAQPage o de maior impacto [1][2]. Escrever em formato BLUF: H2/H3 como pergunta real do usuário, com a primeira frase (40-60 palavras) respondendo isoladamente, e cada parágrafo fazendo sentido fora de contexto [1][2]. Reforçar com densidade de estatísticas numéricas e tabelas comparativas, e garantir SSR/SSG (não é opcional) [1]. Tráfego de IA converte 4,4-23× mais que orgânico, mas keyword stuffing derruba a citação em 8% — o oposto do SEO tradicional que tolera mais esse tipo de otimização [1][2].",
+      "citadas": [
+        "geo_aeo_playbook",
+        "GEO-01"
+      ],
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo": "Cobre robots.txt com a whitelist, llms.txt, @graph único e BLUF, mas omite a regra de sameAs só com perfis canônicos verificados. Diferente de uma omissão inócua: nada do que ele prescreve pegaria um sameAs inventado depois."
+    },
+    {
+      "id": "D-60",
+      "camada": "protocolo",
+      "pergunta": "Recuperei um site estático pronto de um repo antigo, o build passou. Deployo?",
+      "resposta_gerada": "Site estático pronto de repo antigo deployado sem abrir no browser corre risco de \"quebra silenciosa\" — nenhum erro no console, mas CSS artesanal imitando Tailwind pode render texto branco sobre fundo branco por faltar as variáveis de posição do gradiente [1][5]. A regra prática é: antes de publicar, abrir no browser (Playwright + screenshot resolve em 1 minuto) e suspeitar de qualquer CSS feito à mão que imite Tailwind, além de checar logo/assets apontando para URLs mortas [1][5]. Build passar não é sinal suficiente — o caso do `roi-labs-links` ficou quebrado assim desde junho/2025 justamente porque ninguém nunca abriu a página [1][3].",
+      "citadas": [
+        "tailwind_handwritten_gradient_vars",
+        "UI-03",
+        "handoff-quatro-sites.md"
+      ],
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo": "Prescreve abrir no browser antes de publicar e suspeitar de CSS à mão imitando Tailwind. Omite o gotcha do style escopado do Astro, mas a ação prescrita (abrir e olhar) pega esse caso também."
+    }
+  ]
+}
