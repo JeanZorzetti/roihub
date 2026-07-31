@@ -115,6 +115,14 @@ morre em silêncio.
 Matéria-prima de graça: **cada handoff contém perguntas que já foram respondidas.** O
 dourado se extrai do histórico.
 
+**Escrito em 31/07: [`../data/dourado.json`](../data/dourado.json)** — 78 perguntas
+(65 de protocolo, 8 de estado, 5 de episódio), cada uma com resposta conhecida, as `fontes`
+que a recuperação precisa trazer e a `armadilha` (a resposta plausível e errada). As três
+camadas ficam separadas por design: recall medido junto esconde qual índice está ruim.
+`test/dourado.test.mjs` amarra as fontes ao corpus — fonte no formato `AREA-NN` tem que
+existir em `data/protocolos/`, e área com protocolo tipado tem que ter pelo menos uma
+pergunta, senão a avaliação não mede aquela área.
+
 ## Camada 7 — interfaces
 
 Núcleo como serviço, três cascas finas: **MCP** (agente), **rota HTTP** (hub e outros

@@ -1,0 +1,626 @@
+[
+  {
+    "id": "D-01",
+    "pergunta": "O sitemap do fabrica volta com errors: 1 no GSC e tem 21 artigos escritos. Resubmeto e peço reindexação das URLs?",
+    "resposta": "Não. Inspecionar as 26 URLs do sitemap ANTES: em 31/07 vinte e quatro já estavam Submitted and indexed, algumas desde 13/07. O errors: 1 é real e persiste, mas não estava bloqueando indexação nenhuma. O gargalo do fabrica é tráfego e conversão, não descoberta.",
+    "camada": "protocolo",
+    "fontes": ["SEO-04", "VER-06", "site_200_is_not_indexed_url_inspection", "handoff-fabrica-e-leva-de-um-linha-31-07.md"],
+    "armadilha": "Tratar errors: 1 como bloqueio, resubmeter, e depois creditar ao resubmit uma indexação que já existia há três semanas."
+  },
+  {
+    "id": "D-02",
+    "pergunta": "As impressões do atma caíram quase 98% mas a posição média MELHOROU. Perdi ranking para um concorrente?",
+    "resposta": "Não: impressão caindo com posição melhorando é assinatura de desindexação, não de perda de ranking — sobra só a cauda onde o site ainda aparece. Quem decide é a URL Inspection API (coverageState), não o GSC agregado. No atma as URLs estavam em Crawled - currently not indexed com crawl congelado em 04–06/06.",
+    "camada": "protocolo",
+    "fontes": ["SEO-04", "site_200_is_not_indexed_url_inspection", "handoff-atma-reindexado.md"],
+    "armadilha": "Ler o par impressão/posição como competição e ir caçar concorrente ou reescrever conteúdo."
+  },
+  {
+    "id": "D-03",
+    "pergunta": "curl -sk no endpoint devolveu 200. Posso fechar a entrega dizendo que está no ar?",
+    "resposta": "Não. O -k desliga justamente a validação que costuma ser o bug. Ele só serve para separar 'origem morta' de 'borda/TLS quebrada'. Declarar funcionando exige um curl SEM -k, porque o navegador não tem -k.",
+    "camada": "protocolo",
+    "fontes": ["VER-01", "curl_insecure_flag_hides_cert_errors"],
+    "armadilha": "200 no terminal com -k e 'Failed to fetch' no browser do cliente."
+  },
+  {
+    "id": "D-04",
+    "pergunta": "O /sitemap.xml do host novo responde 200. O deploy publicou o sitemap?",
+    "resposta": "Não necessariamente. Em SPA e em qualquer app com catch-all, path desconhecido devolve index.html com status 200. A validação é pelo CORPO: curl -s <host>/sitemap.xml | head -c 5 tem que ser <?xml. Vale igual para /robots.txt.",
+    "camada": "protocolo",
+    "fontes": ["VER-02", "spa_sitemap_200_is_not_proof", "handoff-renomear-subdominios.md"],
+    "armadilha": "Fechar rollout de vários hosts checando status code e descobrir depois que o sitemap nunca existiu."
+  },
+  {
+    "id": "D-05",
+    "pergunta": "A landing do cardiorisk responde 200 e o health check está verde. O produto funciona?",
+    "resposta": "Não. Health check que olha res.ok da home não enxerga backend morto. Grepar a env var de API do front (VITE_API_URL / NEXT_PUBLIC_API_URL) e curlar o host que sair dali: cardioapi, aitradingapi, arquiteturaapi e pathback seguem NXDOMAIN em 31/07, e é isso que põe cardiorisk, tapevision, potencialarquitetado e pathfinder em no-ar-inutilizavel.",
+    "camada": "protocolo",
+    "fontes": ["VER-03", "landing_200_backend_nxdomain", "handoff-resumo-entregue-e-as-26-decisoes.md"],
+    "armadilha": "Classificar o projeto como 'no ar' porque a home carrega."
+  },
+  {
+    "id": "D-06",
+    "pergunta": "O projeto sirius não aparece no vercel project ls. Ele está fora do ar? Faço um deploy novo?",
+    "resposta": "Não. vercel project ls prova ausência NA VERCEL, não que o app está fora do ar — boa parte do portfólio mora no EasyPanel/VPS. No sirius a prod não devolve header de Vercel e a CSP cita *.easypanel.host. Procurar onde ele roda hoje antes de deployar.",
+    "camada": "protocolo",
+    "fontes": ["VER-04", "vercel_project_ls_is_not_proof_of_offline", "handoff-sirius-agaas-ctr-31-07.md"],
+    "armadilha": "Criar um projeto novo na Vercel e passar a servir uma segunda cópia do site."
+  },
+  {
+    "id": "D-07",
+    "pergunta": "Rodei o Lighthouse aqui na minha máquina e o score subiu para 91. Reporto a melhoria?",
+    "resposta": "Não. Uma run não decide nada: só mediana de 5 runs contra produção. Lighthouse local nesta máquina (Windows + OneDrive) tem variância de ±30%.",
+    "camada": "protocolo",
+    "fontes": ["VER-05", "lighthouse_local_windows_onedrive_unreliable", "goiania_lcp_root_causes"],
+    "armadilha": "Fechar entrega de performance com uma medição local favorável."
+  },
+  {
+    "id": "D-08",
+    "pergunta": "Peguei um card da agenda do hub. Começo pela tarefa que ele descreve?",
+    "resposta": "Não antes de reproduzir a premissa. As ações são texto curado à mão em data/projects.json e apodrecem: ler o acaoDesc inteiro (todo card de dev começa com 'Repo: ...'), conferir que o repo serve mesmo aquele host, e medir o estado atual. Duas premissas de card caíram em dois dias (hreflang do sirius, sitemap do fabrica).",
+    "camada": "protocolo",
+    "fontes": ["VER-06", "roihub_agenda_task_premises_unverified", "handoff-sirius-agaas-ctr-31-07.md"],
+    "armadilha": "Escrever hreflang que já existe, ou mexer no repo errado porque o campo repo do card está desatualizado."
+  },
+  {
+    "id": "D-09",
+    "pergunta": "No loop de clones, o guard [ -d .git ] pulou um repo. Está tudo certo com ele?",
+    "resposta": "Não: clone interrompido deixa .git cheio e HEAD em refs/heads/.invalid — a pasta parece repo vazio e o guard por diretório pula justamente o quebrado. O guard correto é git -C <dir> rev-parse HEAD.",
+    "camada": "protocolo",
+    "fontes": ["VER-07", "broken_clone_looks_like_empty_repo"],
+    "armadilha": "Retry que 'já tem .git, então pula' — e o repo quebrado nunca é reclonado."
+  },
+  {
+    "id": "D-10",
+    "pergunta": "Posso migrar o autopublishing do spawn do CLI para o Claude Agent SDK usando o CLAUDE_CODE_OAUTH_TOKEN?",
+    "resposta": "Não. O SDK autentica só por ANTHROPIC_API_KEY (ou Bedrock/Vertex/Foundry) e a própria doc diz que a Anthropic não permite login claude.ai em produtos de terceiros. Adotar o SDK significa passar a pagar API, o que está fora por orçamento. A mesma doc registra que rodar o CLI como subprocesso com -p e --output-format json é o padrão para quem não usa o SDK — que é exatamente o que lib/autopublish-clients.ts já faz.",
+    "camada": "protocolo",
+    "fontes": ["AGT-01", "AGT-02", "budget_claude_cli_only", "claude_agent_sdk_requires_api_key", "handoff-harness-decidido.md"],
+    "armadilha": "Ler 'SDK oficial' como upgrade e trocar o spawn, herdando custo de API por token."
+  },
+  {
+    "id": "D-11",
+    "pergunta": "Posso colar o token da assinatura Claude num harness de terceiro (OpenCode, Aider, nanocodex) para ter agente rodando?",
+    "resposta": "Não. O fator de risco é cliente oficial × cliente terceiro, não local × remoto. Baixo risco: Claude Code CLI oficial autenticado por setup-token. Token de assinatura em binário não-Anthropic é risco de ban. Na triagem do harness, o único aprovado além do CLI direto foi o claude-loop-runner, que roda claude --print.",
+    "camada": "protocolo",
+    "fontes": ["AGT-03", "claude_subscription_agents_official_vs_thirdparty", "handoff-harness-decidido.md"],
+    "armadilha": "Comparar features dos harnesses antes de aplicar o filtro de ToS, que elimina a lista inteira."
+  },
+  {
+    "id": "D-12",
+    "pergunta": "spawn('claude', [...]) dá ENOENT aqui no Windows mas funciona no container. Simplifico removendo o shell: true?",
+    "resposta": "Não. O binário do CLI npm global no Windows é um shim .cmd: precisa de shell: process.platform === 'win32'. Vale para qualquer CLI npm global. E o prompt vai por stdin, nunca por argv.",
+    "camada": "protocolo",
+    "fontes": ["AGT-04", "roihub_autopublishing_gotchas"],
+    "armadilha": "Tratar o shell: true como gambiarra e 'limpar' o código, quebrando todo desenvolvimento local."
+  },
+  {
+    "id": "D-13",
+    "pergunta": "Registrei um MCP novo no projeto ROI Labs e a extensão do VSCode não enxerga. O que falta?",
+    "resposta": "Gravar nas DUAS chaves do .claude.json: existem duas entradas para o mesmo diretório diferindo só na caixa da letra do drive — C:/ (terminal) e c:/ (extensão do VSCode) — cada uma com seu próprio mcpServers. E usar caminho absoluto.",
+    "camada": "protocolo",
+    "fontes": ["AGT-09", "claude_json_case_duplicate_project_keys"],
+    "armadilha": "Concluir que o MCP está quebrado porque funciona num cliente e não no outro."
+  },
+  {
+    "id": "D-14",
+    "pergunta": "Os teammates do Agent Teams falham com spawn failed / runtime_not_active. Troco o modelo ou o runtime?",
+    "resposta": "Nenhum dos dois antes de medir memória. Quando o renderer Electron sofre OOM ele mata os processos de runtime junto — a falha aparece como problema de modelo e é consumo de RAM.",
+    "camada": "protocolo",
+    "fontes": ["AGT-06", "agent_teams_ai_oom_root_cause"],
+    "armadilha": "Trocar modelo/runtime em ciclo e nunca olhar o commit charge."
+  },
+  {
+    "id": "D-15",
+    "pergunta": "Preciso automatizar coleta numa ferramenta do Google. Qual flag anti-detecção usar no Playwright para o login passar?",
+    "resposta": "Nenhuma. O Google barra o FLUXO DE LOGIN sob automação, não uma sessão que já existe; caçar flag funciona às vezes e quebra no update seguinte. Separar quem loga de quem automatiza: logar num Chrome comum e depois conectar por CDP (connectOverCDP).",
+    "camada": "protocolo",
+    "fontes": ["AGT-07", "google_login_blocks_automated_browser"],
+    "armadilha": "Gastar a sessão em stealth plugins e user-agent spoofing."
+  },
+  {
+    "id": "D-16",
+    "pergunta": "Depois do push, a API do GitHub devolve state: pending com statuses: [] há horas. O deploy falhou?",
+    "resposta": "Não. Deploy por webhook (EasyPanel, Coolify, Dokku) não registra commit status no GitHub: fica pending para sempre. Só failure ou error explícito é sinal de falha — a verificação real é bater no host.",
+    "camada": "protocolo",
+    "fontes": ["AGT-12", "roihub_autopublishing_gotchas"],
+    "armadilha": "Robô que espera o status virar success e conclui 'deploy falhado' num deploy que deu certo."
+  },
+  {
+    "id": "D-17",
+    "pergunta": "Quero logging estruturado num app Next com output: standalone. Adiciono pino?",
+    "resposta": "Não. O transport do pino usa worker_threads via thread-stream e os arquivos de worker não são traçados de forma confiável para dentro do bundle standalone — quebra só em produção. Um logger JSON de ~30 linhas resolve.",
+    "camada": "protocolo",
+    "fontes": ["DEP-11", "nextjs_pino_breaks_standalone_output"],
+    "armadilha": "Build e dev passam limpos; a quebra só aparece no container de produção."
+  },
+  {
+    "id": "D-18",
+    "pergunta": "Vou importar um módulo compartilhado no middleware.ts. Um optional chaining protege se ele tocar API de Node?",
+    "resposta": "Não. O que o middleware importa é código Edge, e ?. não protege: o app inteiro devolve 500 em TODA rota. Verificar toda a cadeia de imports antes, e preferir duplicar 5 linhas a arrastar um módulo compartilhado para o Edge.",
+    "camada": "protocolo",
+    "fontes": ["DEP-09", "SEC-02", "nextjs_middleware_edge_forbidden_node_api"],
+    "armadilha": "Build e testes passam; a produção cai inteira."
+  },
+  {
+    "id": "D-19",
+    "pergunta": "Editei os headers de segurança no next.config.mjs, deployei, e o x-frame-options não aparece. Cache?",
+    "resposta": "Não: provavelmente existem next.config.js E next.config.mjs no repo. O Next resolve o .js primeiro e nunca lê o .mjs, sem erro e sem warning. O fix é merge no arquivo que o Next carrega (o .js), nunca renomear — um Dockerfile pode referenciar o nome. Detecta com curl -sI | grep x-frame-options.",
+    "camada": "protocolo",
+    "fontes": ["DEP-08", "nextjs_duplicate_config_js_wins_over_mjs"],
+    "armadilha": "Investigar CDN e cache do browser enquanto o config editado nunca é lido."
+  },
+  {
+    "id": "D-20",
+    "pergunta": "Dei push e o build da Vercel morreu em 6 s com 'npm error enoent Could not read package.json'. É código?",
+    "resposta": "Quase sempre não: é Root Directory em / com o app numa subpasta (site/, web/, app/, frontend-next/). A produção não cai — a Vercel segura o último deploy bom — mas nenhum push publica. Conserto é PATCH /v9/projects/{id} com rootDirectory; a CLI não expõe o campo. E rootDirectory tem que concordar com onde está o link .vercel/: se o .vercel/ mora dentro da subpasta, rootDirectory precisa ser null.",
+    "camada": "protocolo",
+    "fontes": ["DEP-01", "DEP-02", "vercel_root_dir_slash_push_kills_subfolder_site", "handoff-fabrica-e-leva-de-um-linha-31-07.md"],
+    "armadilha": "Debugar o package.json do repo, que está correto — e não notar que três projetos publicavam quebrado desde sempre."
+  },
+  {
+    "id": "D-21",
+    "pergunta": "vercel --prod falha com 'UNKNOWN: unknown error, read' e o erro não cita path nenhum. O que é?",
+    "resposta": "É o OneDrive. Deploy pela CLI da Vercel se faz de uma cópia do repo FORA do OneDrive (C:\\dev ou $TEMP); --archive=tgz não contorna. O mesmo errno -4094 corrompe node_modules e trava next build e prisma generate.",
+    "camada": "protocolo",
+    "fontes": ["DEP-04", "DEP-15", "vercel_deploy_fails_under_onedrive", "onedrive_node_modules_corruption"],
+    "armadilha": "Abrir issue na Vercel ou reinstalar a CLI."
+  },
+  {
+    "id": "D-22",
+    "pergunta": "Preciso apagar vários projetos antigos da Vercel de uma vez. Posso fazer yes | vercel project rm?",
+    "resposta": "NUNCA. O comando é interativo, não aceita --yes, e alimentar confirmação com yes apaga projetos VIZINHOS da conta. Se um projeto ficou com setting ruim, sobrescrever pelo vercel.json/API em vez de recriar.",
+    "camada": "protocolo",
+    "fontes": ["DEP-05", "vercel_project_rm_deletes_neighbors"],
+    "armadilha": "Automatizar limpeza de conta com o pipe de confirmação."
+  },
+  {
+    "id": "D-23",
+    "pergunta": "Vou aposentar um host antigo mandando 308 para o host novo pela API de domínios da Vercel. Funciona entre projetos diferentes?",
+    "resposta": "Não: o redirect exige os dois hosts no MESMO projeto; cross-project devolve 400 bad_request. A saída é DELETE do host no projeto velho e POST no projeto novo já com o redirect.",
+    "camada": "protocolo",
+    "fontes": ["DEP-06", "vercel_redirect_requires_same_project", "handoff-renomear-subdominios.md"],
+    "armadilha": "Interpretar o 400 como bug da API e ficar tentando payloads diferentes."
+  },
+  {
+    "id": "D-24",
+    "pergunta": "O vercel.json tem um catch-all em routes que engole /sitemap.xml. Removo só o catch-all?",
+    "resposta": "Não: o bloco legado builds desativa o roteamento automático da Vercel, e é por isso que esses arquivos trazem catch-all. Remover só o routes leva o site inteiro para 404. O caminho é matar o builds. E lembrar que git push desfaz deploy manual.",
+    "camada": "protocolo",
+    "fontes": ["DEP-03", "vercel_legacy_builds_needs_routes"],
+    "armadilha": "Diff mínimo aparentemente seguro que derruba o site."
+  },
+  {
+    "id": "D-25",
+    "pergunta": "Página nova consulta o Prisma e é SSG. O build no Docker quebra sem DATABASE_URL — basta pôr revalidate?",
+    "resposta": "Não sozinho: ISR ainda prerenderiza no build. O fix é ISR MAIS try/catch com fallback. Antes de tornar uma rota SSG/ISR, grepar prisma no page.tsx.",
+    "camada": "protocolo",
+    "fontes": ["DEP-13", "ssg_db_query_build_time_gotcha"],
+    "armadilha": "Achar que revalidate adia a query — ele não adia a primeira."
+  },
+  {
+    "id": "D-26",
+    "pergunta": "Adicionei uma pasta nova em public/ e as requests estão caindo em 404 num projeto com next-intl. Por quê?",
+    "resposta": "O matcher do middleware next-intl é um negative lookahead que precisa listar TODA pasta e extensão estática nova; sem isso a request é interceptada e redirecionada para /{locale}/{path}.",
+    "camada": "protocolo",
+    "fontes": ["DEP-14", "nextjs_middleware_matcher_static_assets"],
+    "armadilha": "Procurar o arquivo faltando no build enquanto ele existe e é o middleware que sequestra a rota."
+  },
+  {
+    "id": "D-27",
+    "pergunta": "Dentro de um route handler, posso montar a URL absoluta do redirect a partir de request.url?",
+    "resposta": "Não: atrás de proxy, request.url tem host 0.0.0.0:3000, o bind interno do container. Usar NEXT_PUBLIC_APP_URL. O middleware não tem o bug.",
+    "camada": "protocolo",
+    "fontes": ["DEP-16", "nextjs_route_handler_request_url_proxy"],
+    "armadilha": "Funciona em dev (localhost) e quebra em produção."
+  },
+  {
+    "id": "D-28",
+    "pergunta": "Vou remover uma coluna de uma tabela viva. Aplico a migration antes do deploy, como sempre?",
+    "resposta": "Não: inverte a ordem. Adicionar coluna = migrar antes do push. Remover coluna = publicar o código antes ou junto, porque o client Prisma já deployado faz SELECT explícito de todas as colunas e passa a quebrar.",
+    "camada": "protocolo",
+    "fontes": ["DAT-03", "sofia_next_refactor_roadmap"],
+    "armadilha": "Aplicar 'migração primeiro' por reflexo e derrubar a produção entre a migration e o deploy."
+  },
+  {
+    "id": "D-29",
+    "pergunta": "O CMD do Dockerfile roda prisma db push. O schema está aplicado em produção?",
+    "resposta": "Não confiar nisso: o db push do runner standalone não aplica schema (e o || echo esconde a falha). Toda mudança de schema precisa de arquivo de migração commitado e migrate deploy aplicado MANUALMENTE no host real. migrate diff --script serve de preview seguro.",
+    "camada": "protocolo",
+    "fontes": ["DAT-02", "sofia_next_db_push_runner_fails", "project_010_success_fee_duas_taxas"],
+    "armadilha": "Push com schema novo, build verde, e o banco de produção sem a tabela."
+  },
+  {
+    "id": "D-30",
+    "pergunta": "Traduzi as queries de MySQL para Postgres e nada acusou erro de sintaxe. Está migrado?",
+    "resposta": "Não. Quatro classes de erro passam silenciosas: agregado que volta string, LIKE virando case-sensitive, coluna com nome errado, e afins. Rodar cada query traduzida direto contra o banco com um script pg de 20 linhas, com os INSERTs dentro de BEGIN/ROLLBACK.",
+    "camada": "protocolo",
+    "fontes": ["DAT-01", "postgres_migration_silent_failures"],
+    "armadilha": "Confiar em build/typecheck para validar SQL traduzido."
+  },
+  {
+    "id": "D-31",
+    "pergunta": "Subdomínio que não uso mais: apago o registro DNS para limpar a zona?",
+    "resposta": "Não. Host aposentado vira NXDOMAIN, que não converge: o bot tenta para sempre e o percentual de crawl desperdiçado piora sozinho. Ele recebe 301 — para o sucessor preservando path, ou estático para o apex. No roilabs isso chegou a 76% do crawl, e o conserto foi Redirect Rule na borda (Cloudflare); wildcard casa um label só.",
+    "camada": "protocolo",
+    "fontes": ["DNS-01", "roilabs_dns_cloudflare_retired_subdomains"],
+    "armadilha": "Achar que apagar o DNS 'para de gastar crawl' — é o contrário."
+  },
+  {
+    "id": "D-32",
+    "pergunta": "Estou triando subdomínios por 'tem site próprio?'. Posso apagar clerk.atma..., que não serve site nenhum?",
+    "resposta": "Não sem checar quem chama. clerk.*, accounts.*, email.*, cdn.* costumam ser CNAME de SaaS que quebram calados: o site continua 200 e só a função morre. Foi o que aconteceu na Atma — auth 100% morta com o site em 200.",
+    "camada": "protocolo",
+    "fontes": ["DNS-02", "clerk_subdomain_killed_by_nxdomain_cleanup"],
+    "armadilha": "A triagem por 'tem site?' erra essa classe inteira, e o sintoma não aparece em nenhum health check de página."
+  },
+  {
+    "id": "D-33",
+    "pergunta": "Restaurei o DNS depois de o host ter ficado NXDOMAIN e o certificado continua vencido. Espero a propagação?",
+    "resposta": "Não: a Vercel não re-emite certificado sozinha. O diagnóstico que decide é vercel certs ls — se o host não aparece, não existe cert, e não é propagação. Emitir host a host.",
+    "camada": "protocolo",
+    "fontes": ["DNS-03", "vercel_cert_stuck_after_nxdomain"],
+    "armadilha": "Esperar horas por uma propagação que já terminou."
+  },
+  {
+    "id": "D-34",
+    "pergunta": "O apex resolve para 216.198.79.1, mas a receita registrada diz A 76.76.21.21. O domínio está mal configurado?",
+    "resposta": "Não necessariamente: 216.198.79.1 também é Vercel. Antes de tratar o domínio como não-configurado, medir o comportamento HTTP do apex E do www — inclusive antes de dizer NXDOMAIN.",
+    "camada": "protocolo",
+    "fontes": ["DNS-04", "vercel_new_a_record_216"],
+    "armadilha": "Reescrever a zona inteira por causa de um IP que só é mais novo que a documentação."
+  },
+  {
+    "id": "D-35",
+    "pergunta": "Promovi um projeto para subdomínio próprio na Cloudflare. Deixo a nuvem laranja para ganhar o CDN?",
+    "resposta": "Não: proxied impede a Vercel de emitir o certificado — host promovido vai DNS only (nuvem cinza). E o Universal SSL cobre um label só: www.sirius e www.goiania falham no handshake.",
+    "camada": "protocolo",
+    "fontes": ["DNS-05", "roilabs_dns_cloudflare_retired_subdomains"],
+    "armadilha": "Ligar o proxy 'de graça' e passar horas achando que o cert não emite por bug da Vercel."
+  },
+  {
+    "id": "D-36",
+    "pergunta": "O host tem dois registros A. Apago o que devolve 404 e fico com o que devolve 200?",
+    "resposta": "Ao contrário do reflexo: o 404 é que prova QUAL servidor está respondendo, e o 200 não prova que é o servidor certo. Decidir pelo CONTEÚDO servido (title, bytes, /_astro/ vs /assets/index-*.js, sitemap) antes de apagar qualquer registro.",
+    "camada": "protocolo",
+    "fontes": ["DNS-06", "splitjud_www_dns_orphan"],
+    "armadilha": "Decidir por status code e apagar o registro do site bom."
+  },
+  {
+    "id": "D-37",
+    "pergunta": "A env var está escrita no .env mas o app diz 'credencial inválida'. Erro na credencial?",
+    "resposta": "Checar BOM antes: node --env-file não descarta BOM, então um .env salvo em UTF-8-with-BOM registra a PRIMEIRA chave com \\ufeff no nome e ela fica undefined. Só a primeira linha sofre. Sintoma é 'credencial inválida', nunca 'var faltando'.",
+    "camada": "protocolo",
+    "fontes": ["INT-01", "nodejs_env_file_bom_first_key"],
+    "armadilha": "Rotacionar a credencial que está correta."
+  },
+  {
+    "id": "D-38",
+    "pergunta": "O run-autopublish grava request-failed no polarisia e no reviewshield. Onde configuro o timeout do proxy do EasyPanel?",
+    "resposta": "Provavelmente em lugar nenhum: o fetch() do Node é undici, e o headersTimeout default é 300 s. O cliente roda no GitHub Actions, enquanto a rota tem maxDuration 900 s e o CLI 600 s — o cliente desiste antes de o servidor terminar o artigo (goiania medido em 366 s). Logar error.cause?.code ANTES de mexer em infra: UND_ERR_HEADERS_TIMEOUT prova.",
+    "camada": "protocolo",
+    "fontes": ["INT-02", "undici_headers_timeout_300s", "handoff-harness-decidido.md"],
+    "armadilha": "Caçar configuração de proxy/Alpine/memória — o corte é da lib HTTP do cliente."
+  },
+  {
+    "id": "D-39",
+    "pergunta": "O checkout do goiania redireciona para ?erro=pagamento. É bug do vertical?",
+    "resposta": "Nunca é: o código do Mercado Pago é byte a byte igual entre os verticais. Significa que createPreference lançou — são duas vars no money path e o ACCESS_TOKEN não está no ambiente de PRODUÇÃO.",
+    "camada": "protocolo",
+    "fontes": ["INT-03", "roilabs_mercadopago_prod_env_vars"],
+    "armadilha": "Debugar o fluxo de checkout do vertical que acabou de ser criado."
+  },
+  {
+    "id": "D-40",
+    "pergunta": "Peguei a foto do Unsplash pela API e a URL começa com plus.unsplash.com/premium_photo-. Posso publicar?",
+    "resposta": "Não: premium_photo-* é assinatura paga. Filtrar urls.raw e aceitar somente as que começam com https://images.unsplash.com/photo-.",
+    "camada": "protocolo",
+    "fontes": ["INT-04", "unsplash_premium_photo_is_paid"],
+    "armadilha": "Metade dos resultados da busca vem premium e a URL funciona no navegador."
+  },
+  {
+    "id": "D-41",
+    "pergunta": "A API do GitHub devolveu 404 no repo privado e o token tem permissions.push. O repo foi apagado?",
+    "resposta": "Não: fine-grained token sem o repo no escopo devolve 404, porque o GitHub não confirma existência de repo privado. E permissions.push não prova escrita. Dar código próprio ao 404, senão vira 'resposta malformada' e manda o diagnóstico para o lado errado.",
+    "camada": "protocolo",
+    "fontes": ["INT-06", "roihub_autopublishing_gotchas"],
+    "armadilha": "Confundir 404 com 403 e ir procurar o repo em vez do escopo do token."
+  },
+  {
+    "id": "D-42",
+    "pergunta": "Preciso coletar posts de subreddits para o SEO Forecaster. Uso a API do Reddit?",
+    "resposta": "Não, está bloqueada para os projetos da casa. Coletar pelo feed público reddit.com/r/<sub>/hot/.rss (Atom).",
+    "camada": "protocolo",
+    "fontes": ["INT-07", "project_reddit_api_blocked"],
+    "armadilha": "Gastar a sessão em OAuth do Reddit."
+  },
+  {
+    "id": "D-43",
+    "pergunta": "O LCP do site está em 5,9 s. Comprimo a imagem do hero?",
+    "resposta": "Só depois de medir qual é o elemento do LCP (PerformanceObserver com buffered: true) — e remedir depois, porque o LCP MUDA de elemento quando se conserta o primeiro. As quatro causas reutilizáveis do goiania: Google Fonts em duas conexões em série, logo do header servido em tamanho de origem, e as demais do registro. Foi assim que 5,9 s viraram 2,5 s.",
+    "camada": "protocolo",
+    "fontes": ["PRF-01", "PRF-02", "goiania_lcp_root_causes"],
+    "armadilha": "Otimizar por palpite o elemento que não é o LCP."
+  },
+  {
+    "id": "D-44",
+    "pergunta": "Landing Next com TBT alto e sem nenhuma animação scroll-driven. Por onde começo?",
+    "resposta": "Profile do bundle de PRODUÇÃO antes de mexer: framer-motion, gsap e lenis executando no boot são peso morto quando a página não tem animação scroll-driven. E o Next embute polyfills core-js incondicionalmente (o PageSpeed acusa 'JavaScript legado'); o fix é aliasar polyfill-module para vazio, mas por último.",
+    "camada": "protocolo",
+    "fontes": ["PRF-03", "PRF-04", "estetia_landing_performance", "nextjs_unconditional_polyfills"],
+    "armadilha": "Mexer no browserslist para remover os polyfills — não remove."
+  },
+  {
+    "id": "D-45",
+    "pergunta": "O sirius está perdendo a própria marca na busca. Ligo uma campanha de brand protection no Google Ads?",
+    "resposta": "Não. SEO é canal único em todo o portfólio, inclusive para defesa de brand — nunca propor Ads ou mídia paga como ação, blocker ou próximo passo. E no caso do sirius o branded nem estava perdido: quebrando por country, era posição 1,0 no BR.",
+    "camada": "protocolo",
+    "fontes": ["PRT-02", "SEO-03", "feedback_full_seo_no_ads", "gsc_branded_position_polluted_by_country"],
+    "armadilha": "Reagir à posição média global do GSC, que está poluída por homônimo em outro país."
+  },
+  {
+    "id": "D-46",
+    "pergunta": "Tenho um repo de demo interna rodando em *.vercel.app. Dou um subdomínio próprio para ele?",
+    "resposta": "Só se ele for buscar tráfego de busca. Se não (demo, experimento, ferramenta interna), arquivar o repo e não dar domínio. Domínio de fornecedor esconde o projeto do Search Console: *.vercel.app não pertence a nenhuma propriedade sc-domain, não há onde submeter sitemap, e o 'URL is unknown to Google' de lá não é sinal de SEO.",
+    "camada": "protocolo",
+    "fontes": ["PRT-04", "SEO-02", "vendor_domain_hides_project_from_gsc"],
+    "armadilha": "Investigar indexação de um host que nenhuma propriedade do GSC enxerga."
+  },
+  {
+    "id": "D-47",
+    "pergunta": "Terminei a tarefa e os testes estão verdes. Pergunto ao Jean antes de commitar?",
+    "resposta": "Não: entrega fechada é commit e push direto, sem perguntar — trabalho não pushado não existe em produção. E toda sessão ou plano encerrado deixa um handoff.md co-localizado com o que foi feito, as decisões e por quê, os próximos passos e as pendências.",
+    "camada": "protocolo",
+    "fontes": ["DEP-12", "PRT-05", "feedback_push_apos_concluir", "feedback_handoff_md"],
+    "armadilha": "Esperar aprovação e a sessão acabar com o trabalho só no disco."
+  },
+  {
+    "id": "D-48",
+    "pergunta": "O painel tem next-auth no package.json, NEXTAUTH_SECRET no .env e o adapter no schema. Posso virar o DNS e publicar?",
+    "resposta": "Não. Dependência, env var e adapter são sinais de INTENÇÃO, não de implementação — no atma eram 22 rotas abertas. Checar /api/auth/session e varrer TODAS as rotas ANTES de virar o DNS: enquanto o host está em 301 ou sem DNS a rota aberta é dívida; depois de publicado é incidente. A correção certa é middleware.ts (rota nova nasce protegida), e no Edge a sessão tem que ser JWT.",
+    "camada": "protocolo",
+    "fontes": ["SEC-01", "SEC-02", "SEC-03", "nextauth_installed_but_never_wired"],
+    "armadilha": "strategy: 'database' com middleware desliga a proteção inteira em silêncio, com o build passando."
+  },
+  {
+    "id": "D-49",
+    "pergunta": "Achei uma credencial commitada num repo público. Torno o repo privado e resolvo depois?",
+    "resposta": "Não: repo público é rotação imediata. Tornar privado depois não desfaz nada — pode ter sido clonado ou indexado. Credencial exposta em chat se rotaciona por higiene; commitada em repo público se rotaciona agora.",
+    "camada": "protocolo",
+    "fontes": ["SEC-04", "secrets_to_rotate"],
+    "armadilha": "Tratar 'ninguém viu' como mitigação."
+  },
+  {
+    "id": "D-50",
+    "pergunta": "A conexão com o Postgres do VPS falha no TLS. Troco o sslmode para require?",
+    "resposta": "Não antes do probe do handshake SSLRequest. O Postgres do VPS 2.24.207.200 responde N: não oferece TLS (ssl=off no servidor). Trocar sslmode não liga TLS, só quebra a conexão.",
+    "camada": "protocolo",
+    "fontes": ["SEC-05", "vps_postgres_no_tls_sslrequest_probe"],
+    "armadilha": "Prometer 'é só ligar TLS' sem ter provado que o servidor aceita."
+  },
+  {
+    "id": "D-51",
+    "pergunta": "O claude-cli falhou. Gravo o stderr dele no banco para conseguir debugar depois?",
+    "resposta": "Não: o stderr de um CLI de LLM pode conter o prompt inteiro. Mapear para códigos fechados (llm-auth, llm-rate, llm-cli, llm-output, llm-parse, llm-timeout) e testar que o código não contém o texto original. Reason nova precisa entrar também na regex de status do run-autopublish.mjs, senão vira invalid-response.",
+    "camada": "protocolo",
+    "fontes": ["SEC-06", "roihub_autopublishing_gotchas"],
+    "armadilha": "Log 'completo para facilitar o debug' que vaza prompt e PII."
+  },
+  {
+    "id": "D-52",
+    "pergunta": "O IndexNow devolve 403 UserForbiddedToAccessSite num subdomínio, com a mesma chave que passa no apex. Onde está o erro da chave?",
+    "resposta": "Em lugar nenhum: o Bing trata cada subdomínio como site à parte e recusa enquanto aquele host não for verificado no Bing Webmaster Tools. Antes de investigar key file, robots ou nginx, verificar o host. E checar res.ok no ping fire-and-forget, senão o 403 passa despercebido.",
+    "camada": "protocolo",
+    "fontes": ["SEO-06", "indexnow_403_subdomain_bing"],
+    "armadilha": "Regerar a chave e reescrever o key file — o apex já provava que a chave é válida."
+  },
+  {
+    "id": "D-53",
+    "pergunta": "O Crawl Stats do GSC está vermelho com falha de servidor. Abro o código?",
+    "resposta": "Datar as falhas primeiro: o relatório é média de 90 dias, então problema JÁ CORRIGIDO fica vermelho por ~3 meses. Dias com requests>0 e bytes==0 e ms==0 são requisições que nunca chegaram ao servidor; se param numa data e não voltam, o bug já foi consertado.",
+    "camada": "protocolo",
+    "fontes": ["SEO-05", "gsc_crawl_stats_stale_90d_window"],
+    "armadilha": "Caçar bug de servidor por causa de um número que descreve o mês passado."
+  },
+  {
+    "id": "D-54",
+    "pergunta": "Site em Astro atrás de nginx: preciso me preocupar com URL sem barra final?",
+    "resposta": "Sim, é caro. No formato directory servido por nginx atrás de proxy TLS, URL sem barra vira 301 para http:// — no roilabs isso queimou 46% do crawl do Googlebot, derrubou o crawl de 261 para 6 req/dia e deixou 50 páginas 'detectada, não indexada'. Toda URL emitida (sitemap, llms.txt, feed, JSON-LD, href interno) termina com barra, e o nginx leva absolute_redirect off.",
+    "camada": "protocolo",
+    "fontes": ["SEO-01", "astro_nginx_trailing_slash_301"],
+    "armadilha": "O canonical do Astro já sai com barra, então o problema fica escondido nas URLs construídas à mão."
+  },
+  {
+    "id": "D-55",
+    "pergunta": "Quero que o conteúdo seja citado no ChatGPT, Perplexity e Gemini. O que muda em relação a SEO normal?",
+    "resposta": "Tem checklist próprio: robots.txt com whitelist explícita dos crawlers de IA (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Perplexity-User, GoogleOther, Google-Extended), llms.txt, @graph único por página e resposta em BLUF no topo. E sameAs só com os perfis canônicos verificados da ROI Labs — nunca 'roilabs'/'roi-labs' inventados.",
+    "camada": "protocolo",
+    "fontes": ["GEO-01", "GEO-02", "geo_aeo_playbook", "roilabs_canonical_social_profiles"],
+    "armadilha": "Assumir que ranking no Google basta para ser citado."
+  },
+  {
+    "id": "D-56",
+    "pergunta": "Vou criar uma tela nova no /app admin do roilabs. Uso os estilos escuros do site público?",
+    "resposta": "Não: o /app admin tem design system de tema CLARO. Tela nova ganha bloco próprio em globals.css com classes semânticas usando os tokens existentes (--ink, --porcelain, --hivis, --green, --l-text, --l-muted, --l-line). Nada de inline-style escuro.",
+    "camada": "protocolo",
+    "fontes": ["UI-01", "roilabs_app_admin_design_system"],
+    "armadilha": "Copiar o visual da landing para dentro do admin."
+  },
+  {
+    "id": "D-57",
+    "pergunta": "Preciso de uma página para uma feature nova. Faço a estrutura primeiro e o conteúdo depois?",
+    "resposta": "Não: página de feature nunca sai genérica. Copy detalhada, hierarquia visual com seções distintas, casos de uso com persona e cenário, FAQ, e design com gradiente/animação/hover e cor por categoria.",
+    "camada": "protocolo",
+    "fontes": ["UI-02", "feedback_no_lazy_features"],
+    "armadilha": "Entregar esqueleto com lorem e prometer conteúdo na próxima sessão."
+  },
+  {
+    "id": "D-58",
+    "pergunta": "A seção sticky parou de grudar depois que adicionei overflow-x-hidden no wrapper para matar o scroll horizontal. Coincidência?",
+    "resposta": "Não: overflow-x hidden em qualquer ancestral força overflow-y: auto, o elemento vira scroll container e o sticky passa a se referenciar a ele. Usar overflow-x: clip.",
+    "camada": "protocolo",
+    "fontes": ["UI-04", "overflow_x_hidden_kills_sticky"],
+    "armadilha": "Procurar o bug no position: sticky e nos tops, e não no ancestral."
+  },
+  {
+    "id": "D-59",
+    "pergunta": "Vou integrar Lenis com GSAP ScrollTrigger. Configuro o scrollerProxy?",
+    "resposta": "Não, é legado. A integração é lenis.on('scroll', ScrollTrigger.update) + gsap.ticker.add(t => lenis.raf(t*1000)) + gsap.ticker.lagSmoothing(0). E quando a altura vem por style do React (ex.: 600vh), agendar ScrollTrigger.refresh() em 100, 500 e 1500 ms — senão ele nasce com end undefined.",
+    "camada": "protocolo",
+    "fontes": ["UI-05", "UI-06", "lenis_gsap_scrolltrigger_integration", "scrolltrigger_dynamic_height_refresh"],
+    "armadilha": "Copiar o exemplo antigo do scrollerProxy que ainda circula na doc de terceiros."
+  },
+  {
+    "id": "D-60",
+    "pergunta": "Recuperei um site estático pronto de um repo antigo, o build passou. Deployo?",
+    "resposta": "Abrir no browser antes (Playwright + screenshot resolve em 1 minuto). Gradiente do Tailwind copiado à mão sem as variáveis --tw-gradient-*-position vira branco no branco, sem nenhum erro. E no Astro, style escopado não alcança DOM criado por JS: elemento feito por innerHTML/createElement não recebe data-astro-cid e renderiza com o default do browser.",
+    "camada": "protocolo",
+    "fontes": ["UI-03", "UI-08", "tailwind_handwritten_gradient_vars", "astro_scoped_styles_innerhtml_gotcha"],
+    "armadilha": "Build verde e página em branco no ar."
+  },
+  {
+    "id": "D-61",
+    "pergunta": "As páginas com next-intl continuam sendo renderizadas dinamicamente mesmo com setRequestLocale. Falta o quê?",
+    "resposta": "Chamar setRequestLocale em CADA layout ancestral, não só nas páginas: qualquer layout que use useTranslations/getTranslations sem isso opta a subárvore INTEIRA por dynamic rendering. O fix é nos DOIS layouts.",
+    "camada": "protocolo",
+    "fontes": ["UI-11", "nextintl_static_rendering_layout_gotcha"],
+    "armadilha": "Corrigir só a página e concluir que static rendering 'não funciona' no next-intl."
+  },
+  {
+    "id": "D-62",
+    "pergunta": "A tabela do artigo em MDX saiu como parágrafo cheio de pipes e o build não reclamou. Erro no markdown?",
+    "resposta": "Não: next-mdx-remote e MDX v3 não ligam GFM por padrão. Sem remarkPlugins: [remarkGfm], tabela e task list saem como texto cru — sem quebrar build e sem warning.",
+    "camada": "protocolo",
+    "fontes": ["CNT-09", "nextmdxremote_missing_remark_gfm"],
+    "armadilha": "Reescrever a tabela em HTML achando que o modelo gerou markdown inválido."
+  },
+  {
+    "id": "D-63",
+    "pergunta": "O autopublish escreveu o arquivo .mdx do artigo no repo e o push subiu. A página está publicada?",
+    "resposta": "Não necessariamente: em site com registro data-driven, sitemap, llms.txt, índice, OG dinâmico e link interno saem do REGISTRO, não do filesystem. Ao ligar um projeto novo, procurar de onde o índice lê. E a verificação casa contra o título GRAVADO — editar o título à mão exige jsonb_set no registro na mesma hora.",
+    "camada": "protocolo",
+    "fontes": ["CNT-05", "CNT-07", "roihub_autopublishing_gotchas"],
+    "armadilha": "Confirmar publicação pelo arquivo no git em vez de pela URL no ar."
+  },
+  {
+    "id": "D-64",
+    "pergunta": "O imageScene do artigo pode ser a própria keyword primária?",
+    "resposta": "Não: ele é buscado literalmente num banco de fotos. Cena fotografável em 3 a 6 palavras em inglês, só com objetos concretos — sem nome de produto ou marca, sem jargão, sem abstração. E no Unsplash só images.unsplash.com/photo-* é livre.",
+    "camada": "protocolo",
+    "fontes": ["CNT-03", "INT-04", "roihub_autopublishing_gotchas"],
+    "armadilha": "Passar a keyword e receber foto genérica ou resultado vazio."
+  },
+  {
+    "id": "D-65",
+    "pergunta": "O aftercare é clínica: posso publicar uma pauta sobre cuidados pós-operatórios?",
+    "resposta": "Não direto. Em projeto marcado risk: 'ymyl-restricted' a pauta passa por um classificador que devolve operational, clinical ou uncertain, e só operational publica. Clínico e incerto ficam de fora — o funil do aftercare virou B2B para clínica justamente por isso.",
+    "camada": "protocolo",
+    "fontes": ["CNT-04", "project_aftercare_blog_funnel"],
+    "armadilha": "Assumir que 'é o nicho do cliente' autoriza conteúdo clínico."
+  },
+  {
+    "id": "D-66",
+    "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+    "resposta": "35 curados (curadoria fechada em 30/07, zero pendentes). A lista vem do GitHub — todo repo vivo com homepage preenchida vira projeto — e a curadoria em data/projects.json vence a homepage. Em 30/07 eram 36 repos ativos, 34 com site; só roihub e repo-de-teste ficam sem homepage, por decisão. A chave do projeto é a URL do site, nunca o nome do repo: um repo serve vários sites.",
+    "camada": "estado",
+    "fontes": ["PRT-01", "roihub_github_sourced_projects", "project_roihub"],
+    "armadilha": "Importar data/projects.json direto em vez de passar por listProjects() — a aba perde os repos vindos do GitHub."
+  },
+  {
+    "id": "D-67",
+    "pergunta": "Quantos dos 35 projetos têm receita provada?",
+    "resposta": "Um: o sirius, com 3 vendas orgânicas — e o card não registra as datas. Dois têm checkout vivo: orcaobra (Kiwify 200, R$ 47,90) e atma (MP valida, nunca testado em produção). Regra da casa: dinheiro sem data é R$ 0.",
+    "camada": "estado",
+    "fontes": ["handoff-resumo-entregue-e-as-26-decisoes.md", "project_sirius_crm"],
+    "armadilha": "Contar checkout existente como receita."
+  },
+  {
+    "id": "D-68",
+    "pergunta": "Qual o gate do sirius e onde ele está hoje?",
+    "resposta": "31/08: ≥ 5 cliques não-branded em 28 dias. Em 31/07 estava em 2. A medição é por query × page × country, nunca impressão nem posição média global. A única query não-branded de página 1 com volume é 'agaas' (85 imp, pos 8,1, os 2 cliques) — logo o gate é CTR de UMA página, não ranking. Próxima leitura ~14/08.",
+    "camada": "estado",
+    "fontes": ["PRT-03", "SEO-03", "handoff-sirius-agaas-ctr-31-07.md"],
+    "armadilha": "Trabalhar ranking do cluster solar (215 imp em pos 26–41), que não vira clique até 31/08."
+  },
+  {
+    "id": "D-69",
+    "pergunta": "Qual o gate do tapepro e o que fazer nele agora?",
+    "resposta": "19/10: ≥ 300 impressões em 28 dias, contra 21 hoje. Nada de SEO nele até lá.",
+    "camada": "estado",
+    "fontes": ["PRT-03", "handoff-resumo-entregue-e-as-26-decisoes.md"],
+    "armadilha": "Abrir frente de conteúdo num projeto cujo gate manda esperar."
+  },
+  {
+    "id": "D-70",
+    "pergunta": "Dos 35, o que está travado e em quê?",
+    "resposta": "26 de 35 estão parados numa decisão de negócio, não numa tarefa — e caem em três famílias: 'não tem como cobrar' (aprovai, matchfios, compass, cardiorisk, tapevision, potencialarquitetado, pathfinder, claudeloop, seo-forecaster), 'não tem quem venda' (estetiacrm, verticemarketing, whatsmeow, qprime, vertice) e 'não tem tráfego' (o resto — a única família que as abas existentes sabem tratar). Distribuição de estado: 28 no-ar, 5 no-ar-inutilizavel, 2 protótipo.",
+    "camada": "estado",
+    "fontes": ["handoff-resumo-entregue-e-as-26-decisoes.md", "project_roihub"],
+    "armadilha": "Ler as 26 como 26 problemas diferentes e tratar decisão de negócio como tarefa da agenda."
+  },
+  {
+    "id": "D-71",
+    "pergunta": "O que está bloqueado esperando o Jean e não pode ser feito por agente?",
+    "resposta": "Bing Webmaster Tools no goiania (5 min, maior score acionável, mata o IndexNow 403), as 4 chaves do Stripe do compass, o GOOGLE_CLIENT_ID do reviewshield, os 2 Request Indexing do fabrica e — o mais antigo e perigoso — rotacionar os segredos vazados.",
+    "camada": "estado",
+    "fontes": ["SEC-04", "SEO-06", "secrets_to_rotate", "handoff-fabrica-e-leva-de-um-linha-31-07.md"],
+    "armadilha": "Gastar sessão tentando contornar credencial de painel de terceiro."
+  },
+  {
+    "id": "D-72",
+    "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+    "resposta": "Docker no EasyPanel com output: 'standalone' — não é Vercel; push em main dispara o build da imagem. E não dar push entre 00:00 e 01:00 BRT: o cron do autopublishing dispara 00:13 e um deploy no meio derruba a publicação de 10 projetos.",
+    "camada": "estado",
+    "fontes": ["VER-04", "project_roihub_autopublishing", "handoff-harness-decidido.md"],
+    "armadilha": "Procurar o roihub na Vercel, ou publicar dentro da janela do cron."
+  },
+  {
+    "id": "D-73",
+    "pergunta": "Escrevi um test/*.test.mjs novo e ele passa quando rodo à mão. Está no CI?",
+    "resposta": "Não: npm test roda uma lista explícita de arquivos no package.json — arquivo novo tem que ser adicionado lá à mão, senão nunca roda. Teste é node --test com assert/strict, sem framework: jest e vitest não estão instalados e não devem estar.",
+    "camada": "estado",
+    "fontes": ["handoff-resumo-entregue-e-as-26-decisoes.md", "handoff-tipar-protocolos.md"],
+    "armadilha": "Assumir descoberta automática de testes e ter o arquivo verde localmente e inexistente no CI."
+  },
+  {
+    "id": "D-74",
+    "pergunta": "O que de fato reindexou o atma: o resubmit do sitemap ou o Request Indexing manual na UI?",
+    "resposta": "O sitemap. As duas primeiras URLs voltaram com lastCrawlTime 31/07 01:55Z = 22:55 BRT, o minuto exato do resubmit pela API — e são justamente a home e o artigo que fazia 85% do tráfego. O pedido manual pegou as outras três ~8h depois. Da próxima vez o resubmit do sitemap é a primeira coisa, não a última.",
+    "camada": "episodio",
+    "fontes": ["SEO-04", "handoff-atma-reindexado.md", "site_200_is_not_indexed_url_inspection"],
+    "armadilha": "Creditar ao pedido manual (que é o passo visível) o resultado que veio do sitemap."
+  },
+  {
+    "id": "D-75",
+    "pergunta": "Por que o compass não builda por git na Vercel, se corrigir o Root Directory resolveu nos outros?",
+    "resposta": "Com rootDirectory: 'web' ele compila (Build Completed em 46 s) e quebra ao publicar: ENOENT em .next/routes-manifest-deterministic.json, Next 16.2.6, reproduzido 2× inclusive sem cache. Além disso o link .vercel/ dele mora dentro de web/, então setar rootDirectory quebra também o vercel --prod (passa a procurar web/web). Por isso voltou para null. Hoje publica com npx vercel --prod de dentro de C:\\dev\\compass\\web.",
+    "camada": "episodio",
+    "fontes": ["DEP-01", "DEP-02", "project_compass_prod_setup", "handoff-fabrica-e-leva-de-um-linha-31-07.md"],
+    "armadilha": "Aplicar o conserto que funcionou no orcaobra e no vertice e assumir que resolveu no compass também."
+  },
+  {
+    "id": "D-76",
+    "pergunta": "O sirius precisa de hreflang? O card diz que não existe uma única ocorrência no projeto.",
+    "resposta": "Não precisa: existe e funciona. Verificado por curl sem -k no HTML servido em 31/07 — cada página é canonical de si mesma com o par pt-BR + en + x-default, pelo helper buildLocaleAlternates em lib/seo/canonical.ts. A premissa do card era falsa e zero linha de hreflang foi escrita.",
+    "camada": "episodio",
+    "fontes": ["VER-06", "roihub_agenda_task_premises_unverified", "handoff-sirius-agaas-ctr-31-07.md"],
+    "armadilha": "Planejar em cima do texto do card em vez do HTML servido."
+  },
+  {
+    "id": "D-77",
+    "pergunta": "Por que três projetos publicavam quebrado 'desde sempre' e ninguém tinha visto?",
+    "resposta": "Root Directory da Vercel em / com o app numa subpasta: o build morre em 5–9 s com ENOENT no package.json, mas a produção continua no ar porque a Vercel segura o último deploy bom. Isso explicava o blocker antigo do orcaobra ('build de git dá ERROR em todo commit') e o 'sem push desde 03/03' do vertice. Corrigido por PATCH /v9/projects/{id} em reforma-maestro (frontend-next) e vertice (app).",
+    "camada": "episodio",
+    "fontes": ["DEP-01", "DEP-02", "vercel_root_dir_slash_push_kills_subfolder_site", "handoff-fabrica-e-leva-de-um-linha-31-07.md"],
+    "armadilha": "Push verde não é deploy verde — sem vercel ls <projeto> --prod depois do push, a falha é invisível."
+  },
+  {
+    "id": "D-78",
+    "pergunta": "Vale adotar hooks, subagents e skills de projeto no roihub?",
+    "resposta": "Hoje não se pagam, e foi decisão explícita em 31/07: sem eslint e sem prettier, o hook clássico de format/lint não tem o que chamar; rodar os 132 testes a cada edição de .tsx é ruído (se virar dor, o gatilho é matcher em lib/** e test/**); e lib/ tem 17 arquivos, não há o que paralelizar em code-review. O que foi adotado: CLAUDE.md e .claude/settings.json com deny em Read/Edit/Write(./.env) — regra declarativa, não hook.",
+    "camada": "episodio",
+    "fontes": ["handoff-harness-decidido.md", "handoff-deep-research-harness-de-agente.md"],
+    "armadilha": "Instalar a recomendação inteira do automation-recommender sem filtrar pelo que este repo tem."
+  }
+]

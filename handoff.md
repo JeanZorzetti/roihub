@@ -1,10 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — fase 2b, o conjunto dourado (~50 perguntas reais com resposta conhecida,
-> extraídas dos 36 handoffs).** ⚠️ **As fases 3+ não começam antes dele existir** — sem dourado,
-> vetor/reranker/grafo melhoram no achismo (camada 6 de
-> [`docs/rag-arquitetura.md`](docs/rag-arquitetura.md)). Depois dele: abrir as 5 lacunas
-> (`BKP`, `CST`, `OBS`, `PRV`, `A11Y`), **com a checagem definida antes da norma**.
+> ▶️ **PRÓXIMO PASSO — fase 3: híbrido + reranking, medido contra o dourado** (camada 6 de
+> [`docs/rag-arquitetura.md`](docs/rag-arquitetura.md)). **Só mantém o reranker se ele ganhar no
+> dourado.** Depois: abrir as 5 lacunas (`BKP`, `CST`, `OBS`, `PRV`, `A11Y`), **com a checagem
+> definida antes da norma**.
+>
+> ✅ **O CONJUNTO DOURADO EXISTE (31/07) — 78 perguntas —
+> [`handoff/handoff-conjunto-dourado.md`](handoff/handoff-conjunto-dourado.md)**.
+> Fase 2b fechada: [`data/dourado.json`](data/dourado.json), pergunta real + resposta conhecida +
+> `fontes` (o alvo de recall@k) + `armadilha` (a resposta plausível e errada) + `camada`
+> (protocolo 65 · estado 8 · episódio 5, separadas porque recall medido em bloco esconde qual
+> índice está ruim). `test/dourado.test.mjs` na lista do `npm test` (**147 verdes**) amarra as
+> fontes ao corpus: fonte `AREA-NN` tem que existir em `data/protocolos/`, e **área com protocolo
+> tipado tem que ter pergunta** — as 13 cobertas. Nenhum script de avaliação foi escrito:
+> `recall@k` sem índice é código morto, nasce na fase 3.
+> **⚠️ As fases 3+ já podem começar** — o que estava proibido era começá-las antes disto.
 >
 > ✅ **OS PROTOCOLOS ESTÃO TIPADOS (31/07) — 97 registros —
 > [`handoff/handoff-protocolos-tipados.md`](handoff/handoff-protocolos-tipados.md)**
