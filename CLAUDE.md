@@ -64,7 +64,7 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
   componente — tem a autoridade da resposta e nenhuma da fonte. Recusa (`NÃO ESTÁ NO
   CORPUS`) não é erro e não vira aviso.
 - **`avaliar-resposta.mjs` mede ancoragem, NÃO verdade.** Citar a fonte certa e resumi-la
-  errado passa. Nada neste sistema mede verdade.
+  errado passa nela com 100%. Quem mede isso é o juiz (abaixo) — e nem ele mede verdade.
 - **O ranking do reranker é para FUNDIR, não para obedecer.** Obedecer foi medido com dois
   prompts diferentes e perdeu as duas vezes (@10 76,7% contra 82,4% da fusão): o modelo
   acerta o conjunto e erra a ordem, porque não vê o score do BM25. `rrf(…, c=10)` — o mesmo
@@ -75,8 +75,79 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 - **`--motor todos` NÃO inclui o rerank** de propósito: 78 chamadas por acidente queimariam
   o pool. O `.cache/rerank.json` faz corrida morta retomar de onde parou — uma foi morta no
   meio e o pool virou pó.
+- **Corrida que perde o pool PARA.** Pool inteiro esgotado tem código próprio (`rerank-conta` →
+  `resposta-conta` / `juiz-conta`); 3 falhas de conta seguidas abortam a corrida, gravam o
+  parcial com `incompleto: true` e **não imprimem agregado nenhum** — nem com aviso ao lado. O
+  relatório de 31/07 trazia o aviso das 15 suprimidas e ainda assim publicou 19,2% de recusa
+  fantasma: aviso perde para percentual.
 - **Reindexar depois de escrever handoff/memória**: `node --env-file=.env scripts/indexar.mjs`.
   Memória mora em `~/.claude`, fora do repo — sem reindexar ela some da aba em silêncio.
+
+## Juiz da síntese (`lib/juiz.mjs`) — a régua de CORRETUDE
+
+`node --env-file=.env scripts/avaliar-resposta.mjs --juiz` (3 chamadas por pergunta, contra 1 sem
+juiz — por isso fora do default). Calibração: `scripts/juiz-calibrar.mjs`.
+
+- **Mede consistência com o dourado, NÃO verdade sobre o mundo.** O dourado foi escrito por um
+  agente lendo o mesmo corpus: se o corpus mente, o dourado repete e o juiz aprova. Verdade
+  contra a realidade é o `conformidade.mjs`. Está escrito no cabeçalho do script e sai impresso
+  no relatório de propósito — régua que não declara o próprio limite vira meta em cima de um
+  defeito.
+- **Duas passadas, nunca uma.** A (fidelidade, cega ao dourado e às fontes esperadas) e B
+  (concordância + armadilha). Juntá-las economiza uma chamada e destrói a célula **`fiel +
+  discorda`** — o único sinal deste sistema que aponta para dentro do corpus: resposta derivada
+  corretamente das fontes que contradiz o que a instituição julga saber é contradição entre dois
+  documentos. Já achou uma na primeira corrida (D-76: um handoff velho dizendo que o sirius não
+  tem hreflang convive com o novo que provou que tem).
+- **Julga em `opus`, a síntese roda em `sonnet`** (`JUIZ_MODEL`). Modelo avaliando a própria
+  saída tem viés de auto-preferência justamente onde a resposta é fluente. **Sem fallback
+  silencioso**: se o modelo do juiz falhar, a corrida sai com `juiz-output` em vez de cair para o
+  modelo que gerou.
+- **`armadilha` do `data/dourado.json` é eixo independente do veredito**, não sinônimo. Uma
+  resposta pode contradizer o dourado e não cometer o erro declarado, e o contrário também. Foi o
+  eixo mais estável na calibração (armadilha 100%, veredito 87,5%).
+- **Nunca publique número do juiz sem os dois portões** (`scripts/juiz-calibrar.mjs`): holdout
+  cego ≥ 85% pega o juiz que reprova demais, adversarial ≥ 9/10 pega o que aprova tudo. Um juiz
+  que aprova tudo dá 97% e não vale nada. **Rótulo revisado depois de ler o juiz é contaminado** e
+  fica marcado com `veredito_original` — só o holdout decide.
+- **`recusou` não é erro e não é veredito de LLM**: sai do contrato de `responder()` (texto vazio
+  sem erro). Resposta SUPRIMIDA tem `erro` e não pode entrar como recusa — seria creditar como
+  acerto um componente quebrado.
+
+## Dourado de `estado` (`lib/dourado-estado.mjs`) — o gabarito que não apodrece
+
+`node --env-file=.env scripts/dourado-estado.mjs [--estado tudo] [--diff]` — zero LLM. As 70
+perguntas de protocolo/episódio continuam texto em `data/dourado.json` (regra não muda sozinha);
+as 8 de `estado` são **apuradas na hora da medição**.
+
+- **Nunca gere isto para dentro do JSON.** JSON escrito ontem apodrece igual a prosa escrita
+  ontem: em `D-66` o corpus guardava quatro contagens defasadas do mesmo número (37, 39, 40, 39).
+- **Falha FECHADA:** sem rede, ou com a fonte fora do ar, sai `nao_apurado` com o motivo — nunca
+  o valor da execução anterior. `--estado offline` roda só o que sai de arquivo do repo.
+- **3 das 8 não têm fonte viva e dizem isso** (`D-67` receita, `D-70` famílias de travamento,
+  `D-71` bloqueio humano): `receita` é nota **0-10 de prioridade**, não faturamento, e
+  `blockersLista` é texto livre. Os apuradores já leem `vendas: [{data,valor}]`, `familia`/`estado`
+  e `blockersLista: [{texto,humano}]` — preencher liga os três **sem tocar em código**.
+- **Impressão pede `dimensions: []`; clique não-branded pede `query`.** Com a dimensão `query` o
+  GSC omite as raras e a soma vira piso: 5 contra 33 no tapepro. Trocar os dois inventa quedas.
+- **A janela do GSC desliza na meia-noite UTC** — o mesmo fim de tarde deu 33 e depois 42.
+  `apurado_em` é carimbado em BRT como todo o resto da casa.
+- **`(hoje N)` não se escreve em prosa.** Alvo e data do gate são curadoria e ficam escritos; o
+  número de hoje se apura. Foi a única família de defasagem real que a fase 3 encontrou.
+
+## Taxa de erro do corpus (`scripts/corpus-defasado.mjs`) — a comparação B
+
+`o CORPUS × o apurado`, contra os top-10 da mesma busca da aba: 1 chamada por documento, cache
+morno retoma corrida morta. As outras réguas comparam a RESPOSTA com o dourado; só esta aponta
+para fora do texto.
+
+- **Só roda contra pergunta com apuração de verdade.** Comparar documento com dourado escrito à
+  mão seria a mesma prosa concordando com prosa.
+- **A saída é lista NOMINAL, não percentual** — cada linha é uma edição de memória ou handoff.
+  Primeira corrida: 8 de 30 `desmente`, e **ler os 8 baixou para 5** (3 eram o check errado).
+- **Handoff datado NÃO se reescreve** para o corpus bater com hoje: é o único lugar onde se vê o
+  que se sabia quando a decisão foi tomada. Conserta-se a norma e o card, e a convenção daí pra
+  frente.
 
 ## Conformidade (`scripts/conformidade.mjs`) — a norma que RODA
 

@@ -1,5 +1,27 @@
 # ROI Hub — handoff
 
+> ✅ **O DOURADO DE `estado` SAIU DO ACHISMO (31/07, 21h) —
+> [`handoff/handoff-dourado-com-lastro-externo-executado.md`](handoff/handoff-dourado-com-lastro-externo-executado.md)**
+> (spec: [`handoff/handoff-dourado-com-lastro-externo.md`](handoff/handoff-dourado-com-lastro-externo.md)).
+> **5 das 8 perguntas de camada `estado` agora são APURADAS na fonte viva** (GitHub, GSC,
+> arquivos do repo) por `scripts/dourado-estado.mjs` — zero LLM, sem rede diz `nao_apurado` e
+> nunca um valor velho. **228 verdes.**
+> 🔑 **Existe pela primeira vez uma taxa de erro do corpus** (`scripts/corpus-defasado.mjs`, 50
+> chamadas): **8 de 30 documentos desmentiam a fonte viva — e ler os 8 baixou para 5 (16,7%)**,
+> porque 3 eram o CHECK errado (um deles com o MOTIVO dizendo "o veredito correto é nao-fala").
+> **Os 5 reais são UM defeito só: `(hoje N)` escrito em prosa** — era verdade no dia e continua
+> se afirmando presente para sempre. `PRT-03` e os cards do sirius/tapepro foram corrigidos; os
+> 4 handoffs **não** — handoff é registro datado, reescrever história para o corpus "bater" é
+> falsificar o único lugar onde se vê o que se sabia na hora da decisão.
+> 🚩 **A premissa da spec caiu em 3 das 8**: `D-67`, `D-70` e `D-71` NÃO têm fonte viva neste
+> repo (`receita` é nota 0-10 de prioridade, não faturamento; família e `humano` não existem como
+> campo). Saem `nao_apurado` com o campo que falta escrito no motivo — preencher é curadoria, não
+> código.
+> ⚠️ **Fase 0 primeiro, e ela se provou no mesmo dia:** corrida que perde o pool **aborta** em 3
+> falhas de conta seguidas e não imprime agregado nenhum. A 1ª corrida da fase 3 morreu de pool e
+> abortou sozinha; a 2ª retomou do cache. Aberto: fase 5 (detector de contradição, agora **com**
+> conjunto de calibração) e remedir `estado` com o juiz.
+>
 > ▶️ **PRÓXIMO PASSO — [`handoff/handoff-juiz-de-verdade.md`](handoff/handoff-juiz-de-verdade.md)
 > (31/07): construir o JUIZ DE VERDADE.** Especificação de trabalho, não relatório: nenhuma régua
 > deste sistema mede corretude, e **citar a fonte certa e resumi-la errado passa com 100% nas

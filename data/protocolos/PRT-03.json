@@ -3,7 +3,7 @@
   "area": "PRT",
   "titulo": "Projeto vive ou morre por gate com numero e data",
   "norma": "Cada projeto do portfolio carrega gates explicitos (numero, janela e data de aferição) e regra de kill em D+90/180/270 medida pelo GSC, com WIP maximo de 3 frentes. Gate vencido sem numero e projeto que sobrevive por inercia.",
-  "motivo": "Regra operacional do portfolio nimblabs, aplicada tambem aos projetos do roihub. Exemplos vivos: sirius com >=5 cliques nao-branded/28d ate 31/08/2026 (hoje 2) e tapepro com >=300 impressoes/28d ate 19/10/2026 (hoje 21).",
+  "motivo": "Regra operacional do portfolio nimblabs, aplicada tambem aos projetos do roihub. Exemplos vivos: sirius com >=5 cliques nao-branded/28d ate 31/08/2026 e tapepro com >=300 impressoes/28d ate 19/10/2026. O ALVO e a DATA sao curadoria e ficam escritos; o numero de HOJE nao se escreve em lugar nenhum - apura-se em scripts/dourado-estado.mjs, porque '(hoje N)' em prosa apodrece no dia seguinte e continua se afirmando presente.",
   "verificacao": {
     "tipo": "semiautomatica",
     "como": "cruzar a serie do GSC do projeto com a data do gate registrada na curadoria; sem numero medido na janela, o gate nao foi avaliado",

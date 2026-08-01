@@ -1,0 +1,1320 @@
+{
+  "quando": "2026-07-31T23:19:47.897Z",
+  "modelo_juiz": "opus",
+  "modelo_sintese": "sonnet",
+  "perguntas": 78,
+  "casos": [
+    {
+      "id": "D-01",
+      "camada": "protocolo",
+      "resposta": "Não. Inspecionar as 26 URLs do sitemap via URL Inspection API antes de resubmeter: em 31/07, 24 já estavam em `Submitted and indexed`, incluindo 20 dos 21 artigos [1][3][4]. O `errors: 1` do sitemap mede o parse do arquivo, não a descoberta das URLs, e não é bloqueio de indexação [3][4]. As duas únicas pendentes eram `/termos` e um artigo específico, ambas resolvíveis com Request Indexing manual pontual, não resubmissão em massa [1]. Gastar cota de Request Indexing só se justifica depois da inspeção mostrar bloqueio real [3].",
+      "erro": "",
+      "citadas": [
+        "handoff-fabrica-e-leva-de-um-linha-31-07.md",
+        "SEO-04",
+        "site_200_is_not_indexed_url_inspection"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — inspecionar as 26 urls antes, sem resubmissão em massa — e trata o errors: 1 como não bloqueante, sem creditar indexação já existente a um resubmit.",
+      "fiel": true,
+      "motivo_a": "todos os números e conclusões (26 urls, 24 indexadas, 20 dos 21 artigos, `/termos` + um artigo pendentes, `errors: 1` = parse e não bloqueio, inspecionar antes de gastar cota de request indexing) aparecem literalmente em [1], [3] e [4].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-02",
+      "camada": "protocolo",
+      "resposta": "É desindexação, não perda de ranking: a assinatura \"impressões despencando + posição melhorando\" indica que o Google decidiu não exibir a URL, embora ela continue ranqueando bem quando avaliada [1][8]. Site respondendo 200, com robots liberado e sitemap válido, não é prova de indexação — só a URL Inspection API, lendo `coverageState`, decide isso [1][8]. Antes de gastar cota manual pedindo reindexação, vale resubmeter o sitemap pela API, que no caso do Atma foi o que capturou a reindexação primeiro [8]. Não há indício nos trechos de que a queda tenha relação com concorrência ou perda de posição para outro site — a causa apontada é desindexação técnica, não uma disputa de ranking [1][8].",
+      "erro": "",
+      "citadas": [
+        "site_200_is_not_indexed_url_inspection",
+        "SEO-04"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre nomeando desindexação e aponta a url inspection api/coveragestate como quem decide, levando à mesma ação da referência; a ausência do detalhe de crawl congelado em 04–06/06 não muda o que a pessoa faz.",
+      "fiel": true,
+      "motivo_a": "cada afirmação — assinatura de desindexação, 200 não prova indexação, coveragestate via url inspection e resubmeter sitemap antes da cota manual (com o resubmit pegando primeiro no atma) — está literalmente nos trechos [1] e [8], e a negação sobre concorrência é apenas a constatação correta de que os trechos não mencionam concorrente.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-03",
+      "camada": "protocolo",
+      "resposta": "Não. curl -sk desliga a validação de certificado — endpoint pode responder 200 no terminal e o navegador ainda recusar a conexão [1][2][6]. Fechar entrega exige um curl sem -k: -k só serve para separar \"origem morta\" de \"borda/TLS quebrada\", nunca para declarar a entrega funcionando [2][6]. Erro de TLS num cliente que valida é sinal a investigar, não motivo para trocar para -k [2][6]. Além disso, 200 sozinho não garante que é o servidor certo (pode ser IP zumbi ou cert vencido servido por trás de um proxy) [3][8].",
+      "erro": "",
+      "citadas": [
+        "handoff-compass-e-repos-sem-site.md",
+        "curl_insecure_flag_hides_cert_errors",
+        "VER-01",
+        "handoff-proximo-passo-30-07.md",
+        "vercel_cert_stuck_after_nxdomain"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"não\", nomeia o -k como desativador da validação e exige curl sem -k para fechar — mesma ação da referência, com o cenário 200-no-terminal/falha-no-navegador explícito.",
+      "fiel": true,
+      "motivo_a": "cada afirmação sai dos trechos — [2]/[6] sustentam o `-k`, o uso só para separar origem morta de tls quebrada e o erro de tls como sinal; [3] sustenta \"200 não prova que é o servidor certo\" e [8] o cert vencido servido com host respondendo.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-04",
+      "camada": "protocolo",
+      "resposta": "VER-02 estabelece a regra: sitemap.xml em 200 não prova que o deploy publicou o sitemap, porque em SPA/catch-all qualquer path devolve o index.html com status 200 [1][2]. A validação correta é pelo corpo — só conta se começar exatamente com `<?xml` [1][2]. Vale checar também se `vercel.json` tem bloco `builds` legado, que instala um catch-all que engole `/sitemap.xml` mesmo quando o resto do site funciona [8]. Então: 200 sozinho não confirma nada; é preciso rodar `curl -s https://<host>/sitemap.xml | head -c 5` e conferir se o resultado é `<?xml` [1][2].",
+      "erro": "",
+      "citadas": [
+        "VER-02",
+        "spa_sitemap_200_is_not_proof",
+        "DEP-03"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega o 200 como prova e prescreve a mesma ação da referência (validar o corpo com `head -c 5` == `<?xml`); a omissão do `/robots.txt` e o extra sobre `vercel.json` não mudam a decisão.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações — 200 não prova, validação pelo corpo com `<?xml`, e o bloco `builds` legado instalando o catch-all que engole `/sitemap.xml` — saem de [1], [2] e [8].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-05",
+      "camada": "protocolo",
+      "resposta": "Não, landing em 200 e health check verde não provam produto funcionando: o `checkHealth` do hub só faz `fetch` na URL do site e olha `res.ok` — não verifica se o backend que o front chama está no ar [2][3]. No cardiorisk especificamente, o front lê `API_BASE_URL` (default hardcoded em `frontend/app/utils/api.ts`) apontando para `cardioapi.roilabs.com.br`, que é NXDOMAIN [2][8]. Isso deixa o produto 100% quebrado enquanto a vitrine responde 200, e é por isso que o card do cardiorisk foi marcado como `no-ar-inutilizavel` [5][6]. A verificação correta é grepar a env var de API do front e curlar o host que sair dali — `http=000` confirma NXDOMAIN [3].",
+      "erro": "",
+      "citadas": [
+        "landing_200_backend_nxdomain",
+        "VER-03",
+        "handoff-renomear-subdominios.md",
+        "handoff-pagina-resumo-executivo.md",
+        "handoff-resumo-entregue-e-as-26-decisoes.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação (grepar env var de api e curlar o host) e o mesmo diagnóstico nxdomain → `no-ar-inutilizavel`; omitir os outros três projetos não muda a ação para o cardiorisk.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — checkhealth só olhando `res.ok`, `api_base_url` hardcoded em `frontend/app/utils/api.ts` apontando para `cardioapi` nxdomain, produto 100% quebrado, `no-ar-inutilizavel` e `http=000` — aparecem literalmente nos trechos [2], [3], [5] e [6].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-06",
+      "camada": "protocolo",
+      "resposta": "Sim, o `sirius` está no ar: uma medição registrada mostra `sirius` respondendo 200, com o caso resolvido sendo apenas `homepage` errada (apontava para o alias morto `sirius-ebon.vercel.app`, enquanto `siriuscrm.com.br` respondia) [6]. Como regra geral, `vercel project ls` só prova ausência na Vercel, não que o app está fora do ar — boa parte do portfólio roda no EasyPanel/VPS [1][2]. Antes de fazer um deploy novo, confirme onde o projeto roda hoje (domínio próprio, EasyPanel etc.); se ele já responde em outro lugar, o conserto costuma ser só corrigir a `homepage` do repo, não redeployar [1].",
+      "erro": "",
+      "citadas": [
+        "handoff-21-projetos-no-ar.md",
+        "vercel_project_ls_is_not_proof_of_offline",
+        "VER-04"
+      ],
+      "ancorada": true,
+      "veredito": "contradiz",
+      "armadilha": "evitou",
+      "motivo_b": "a resposta abre com \"sim, o sirius está no ar\" onde a referência decide \"não\" — e afirma que ele já responde 200 e que o conserto é só a `homepage`, invertendo a instrução de procurar onde ele roda antes de agir.",
+      "fiel": true,
+      "motivo_a": "tanto o status 200 do `sirius` e a `homepage` apontando para o alias morto quanto a regra sobre `vercel project ls` e o conserto sem redeploy estão explicitamente em [6], [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-07",
+      "camada": "protocolo",
+      "resposta": "Não. VER-05 estabelece que score de Lighthouse/PSI só decide por mediana de 5 runs contra produção, e Lighthouse local nesta máquina (Windows+OneDrive) tem variância de ±30%, não confirmando o score [1][2]. O que é confiável localmente é bytes, breakdown do LCP e screenshot — não o score [1][2]. O caso do Estetia e do Goiânia reforçam que o score final só é medido na produção via PageSpeed/web.dev [5][6]. Reporte a melhoria só depois de rodar 5 medições Lighthouse mobile contra a URL de produção e tirar a mediana [1][5].",
+      "erro": "",
+      "citadas": [
+        "VER-05",
+        "lighthouse_local_windows_onedrive_unreliable",
+        "goiania_lcp_root_causes",
+        "estetia_landing_performance"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"não\" e prescreve exatamente a mesma ação da referência — mediana de 5 runs contra produção, com a variância local de ±30% citada.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — mediana de 5 runs contra produção, ±30% de variância local, confiabilidade de bytes/breakdown/screenshot, e score final medido em produção nos casos estetia e goiânia — aparece literalmente nos trechos [1], [2], [5] e [6].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-08",
+      "camada": "protocolo",
+      "resposta": "Card da agenda é texto curado à mão que apodrece — antes de executar, reproduzir a premissa do card, inclusive conferir o campo \"Repo:\" [1][2]. Já houve 4ª tarefa improcedente e casos de reincidência (repo apontando para monorepo errado, tarefa já concluída) que só apareceram porque ninguém validou antes de codar [1][2]. Se a premissa se confirmar, execute; se estiver furada, reporte com evidência e proponha o escopo real em vez de seguir o card cegamente [1][2]. Fechar a entrega inclui atualizar o card no projects.json e dar push [1].",
+      "erro": "",
+      "citadas": [
+        "roihub_agenda_task_premises_unverified",
+        "VER-06"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — não executar antes de reproduzir a premissa, incluindo conferir o campo \"repo:\" — que é o que a referência decide.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — card curado à mão que apodrece, conferir \"repo:\", 4ª tarefa improcedente, reincidência com repo apontando para monorepo errado e tarefa já feita, reportar premissa furada com evidência, e atualizar o card + push como parte de fechar a entrega — está literalmente em [1] e/ou [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-09",
+      "camada": "protocolo",
+      "resposta": "Sim, o repo não estava certo, mas o problema não era com ele — era com o guard. `[ -d .git ]` verifica só a presença da pasta `.git`, e um clone morto por timeout deixa o `.git` cheio (objetos baixados) sem checkout, então esse guard pula justamente o repo quebrado, tratando-o como já clonado [2][3]. O sinal correto é `git -C <dir> rev-parse HEAD`, que falha honestamente quando o HEAD aponta para `refs/heads/.invalid` [2][3]. No caso de origem, o repo \"vazio\" (`tape-vision-ai-92`) na verdade tinha 44 commits e um `Frontend/` Vite completo — quem estava quebrado era o clone, não o conteúdo [2].",
+      "erro": "",
+      "citadas": [
+        "broken_clone_looks_like_empty_repo",
+        "VER-07"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "o \"sim\" vem corrigido na mesma frase (\"o repo não estava certo... o problema era o guard\") e a ação prescrita é idêntica à referência — trocar `[ -d .git ]` por `git -c <dir> rev-parse head`.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — `.git` cheio sem checkout, o guard `-d .git` pulando o repo quebrado, `rev-parse head` como teste honesto, `refs/heads/.invalid`, e os 44 commits com `frontend/` vite do `tape-vision-ai-92` — está literalmente nos trechos [2] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-10",
+      "camada": "protocolo",
+      "resposta": "Não, migrar para o Claude Agent SDK está descartado: ele autentica exclusivamente por `ANTHROPIC_API_KEY` (ou Bedrock/Vertex/Foundry), e `CLAUDE_CODE_OAUTH_TOKEN` não aparece em lugar nenhum da documentação do SDK [1][2][6]. Adotá-lo significaria passar a pagar API, e o uso interno não tem orçamento para isso — o único acesso LLM custeado é a assinatura via claude-cli [1][8][9]. O caminho suportado para token de assinatura é o `spawn(\"claude\", [\"-p\", \"--output-format\", \"json\"])`, que é o padrão documentado pela própria Anthropic para quem não usa o SDK, não gambiarra [1][6]. Essa decisão já foi tomada no roihub em 31/07 e não precisa ser repesquisada [1][2].",
+      "erro": "",
+      "citadas": [
+        "claude_agent_sdk_requires_api_key",
+        "AGT-02",
+        "handoff-harness-decidido.md",
+        "AGT-01",
+        "budget_claude_cli_only"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega a migração pelos mesmos motivos materiais (sdk só autentica por anthropic_api_key, custo de api fora do orçamento, spawn do cli é o padrão documentado), levando à mesma ação de manter o spawn.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — autenticação só por api key, ausência de `claude_code_oauth_token` na doc, custo sem orçamento, `spawn` como padrão documentado e a decisão de 31/07 no roihub — está literalmente nos trechos [1], [2], [6], [8] e [9].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-11",
+      "camada": "protocolo",
+      "resposta": "Não. Cliente terceiro que se passa por Claude Code arrisca ban — o fator de risco é cliente oficial vs. terceiro, não local vs. remoto [1][2]. Harnesses como OpenCode, Aider e nanocodex exigiriam entregar o token OAuth da assinatura a um binário não-Anthropic, e por isso saem já na triagem [3][4]. O nanocodex especificamente é travado na API da OpenAI e só roda com Claude via um bridge que chama `claude-cli` por baixo (não injeta o token nele) [5]. O único caminho seguro para agente com assinatura é o Claude Code CLI oficial autenticado por `setup-token` [1][2][3].",
+      "erro": "",
+      "citadas": [
+        "AGT-03",
+        "claude_subscription_agents_official_vs_thirdparty",
+        "handoff-harness-decidido.md",
+        "handoff-deep-research-harness-de-agente.md",
+        "project_nanocodex_claude_bridge"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "aplica o filtro de tos antes de qualquer comparação de features e prescreve a mesma ação (só o cli oficial com setup-token); omitir o claude-loop-runner não muda o que a pessoa faz.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações — risco cliente terceiro vs. oficial [1][2], os três harnesses saindo na triagem [3][4] e o nanocodex travado na openai rodando via bridge para `claude-cli` sem receber o token [5] — estão nos trechos citados.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-12",
+      "camada": "protocolo",
+      "resposta": "[2][3][6] estabelecem que o ENOENT no Windows é causado pelo `spawn('claude')` chamar um binário que na verdade é um shim `.cmd`, e a correção documentada é `shell: process.platform === 'win32'` — não a remoção do `shell: true` [2][6]. Isso vale especificamente para o ambiente Windows/dev; em Alpine (produção) o binário roda direto e não precisa de shell [2][6]. Removendo o `shell: true` você reintroduz o próprio bug: o Windows não consegue localizar o shim `.cmd` sem passar pelo shell [2][6].",
+      "erro": "",
+      "citadas": [
+        "AGT-04",
+        "claude_cli_token_pool_rotation",
+        "roihub_autopublishing_gotchas"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — manter o shell condicionado a `process.platform === 'win32'` por causa do shim `.cmd` — e o detalhe do stdin que ela omite não muda a decisão perguntada.",
+      "fiel": true,
+      "motivo_a": "toda afirmação material — o shim `.cmd` causando enoent, a correção `shell: process.platform === 'win32'` e o funcionamento direto em alpine — está literalmente em [2] e [6].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-13",
+      "camada": "protocolo",
+      "resposta": "Faltam duas coisas: gravar o MCP nas duas chaves de projeto do `.claude.json` (`C:/` do terminal e `c:/` da extensão VSCode, cada uma com seu próprio `mcpServers`) [1][2], usando caminho absoluto no `command` [1], e recarregar a janela do VSCode depois, já que servidores MCP só spawnam no início da sessão [1][2].",
+      "erro": "",
+      "citadas": [
+        "claude_json_case_duplicate_project_keys",
+        "AGT-09"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — gravar nas duas chaves `c:/` e `c:/` com `mcpservers` próprios e caminho absoluto — e o reload da janela é fato a mais, não contradição.",
+      "fiel": true,
+      "motivo_a": "as duas chaves com `mcpservers` próprios, o caminho absoluto no `command` e o reload da janela por causa do spawn só no início da sessão estão todos literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-14",
+      "camada": "protocolo",
+      "resposta": "Alivie a memória e o commit charge antes de trocar de modelo ou runtime: o \"spawn failed\" e o \"runtime_not_active\" nesta máquina são consequência de OOM do renderer Electron derrubando os processos filhos de runtime, não capacidade do modelo nem defeito do runtime [1][2]. Prova ao vivo mostrou os 5 processos de runtime caindo de 5 para 0 no mesmo instante do \"Renderer process gone: oom\" no log [1]. Dias foram gastos trocando modelo (Haiku, OpenCode, free) achando que era capacidade, quando era ambiente: 16GB com commit charge a 87% [2]. Diagnóstico: `Get-Counter '\\Memory\\% Committed Bytes In Use'` e checar se \"Renderer process gone: oom\" aparece junto com a morte dos runtimes no log [2].",
+      "erro": "",
+      "citadas": [
+        "agent_teams_ai_oom_root_cause",
+        "AGT-06"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre mandando medir memória/commit charge antes de trocar modelo ou runtime e atribui a falha ao oom do renderer matando os runtimes — mesma ação da referência.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — oom do renderer electron como causa, os 5 runtimes caindo de 5 para 0 junto com \"renderer process gone: oom\", os dias trocando modelo, 16gb com commit charge a 87% e o comando `get-counter` — estão literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-15",
+      "camada": "protocolo",
+      "resposta": "Não existe flag que resolva: o Google barra o próprio fluxo de login sob automação (Playwright/Selenium, headless ou não), e flags como `--disable-blink-features=AutomationControlled` funcionam às vezes e quebram no update seguinte [1][2]. O caminho é separar quem abre de quem dirige — logar manualmente uma vez num Chrome comum (spawn puro, sem Playwright) num perfil dedicado, depois sempre conectar nesse mesmo perfil via `connectOverCDP` com `--remote-debugging-port=0` [1][2]. Use `playwright-core`, não `playwright`, quando o browser é o Chrome do sistema, e mantenha a janela visível — headless com sessão Google tende a pedir re-autenticação [1][2]. Isso vale para qualquer produto Google sem API (Search Console, GA4 UI, Ads UI); o primeiro run é sempre manual e presencial [1][2].",
+      "erro": "",
+      "citadas": [
+        "google_login_blocks_automated_browser",
+        "AGT-07"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — nenhuma flag, login manual em chrome comum e conexão via connectovercdp — e os detalhes extras (playwright-core, porta 0, headful) não contradizem nada.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — flags não resolvem, logar num chrome comum e conectar via connectovercdp com `--remote-debugging-port=0`, usar `playwright-core`, janela visível por causa de re-auth e o escopo \"qualquer produto google sem api\" — estão literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-16",
+      "camada": "protocolo",
+      "resposta": "Pending com statuses vazio é o comportamento normal de deploy por webhook (EasyPanel, Coolify, Dokku), que não registra commit status no GitHub — a API responde pending para sempre, não é indício de falha[1][4]. Só failure ou error explícito seriam sinal de problema; sem esse sinal, quem decide é a verificação real (HTTP 200, canonical, URL no sitemap)[1][2][4]. O EasyPanel especificamente pode demorar minutos para rebuildar sozinho, então vale esperar e checar o site diretamente em vez de julgar pelo status da API[5].",
+      "erro": "",
+      "citadas": [
+        "AGT-12",
+        "roihub_autopublishing_gotchas",
+        "handoff-correcao-e-rollout.md",
+        "handoff-proximo-passo-leva-2.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre dizendo que pending com statuses vazio é normal em deploy por webhook e que só failure/error indica falha, prescrevendo a mesma ação da referência (verificar o host diretamente).",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — pending com `statuses: []` como comportamento de deploy por webhook, só `failure`/`error` como sinal de falha, verificação real (http 200 + canonical + sitemap) e o easypanel rebuildando devagar — aparece literalmente em [1]/[4], [2] e [5].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-17",
+      "camada": "protocolo",
+      "resposta": "Adicionar pino não é recomendado num app Next com output standalone, porque o transport dele usa worker_threads/thread-stream que não é traçado de forma confiável no bundle standalone e a quebra só aparece em produção [1][2]. A alternativa é um `log.ts` de ~30 linhas escrevendo JSON por linha em `process.stdout.write`, usando a mesma API do pino, para que um upgrade futuro seja só trocar o import [1][2]. Dois cuidados nessa implementação: serializar erro explicitamente (`{type, message, stack}`), já que `JSON.stringify(new Error('x'))` vira `'{}'` e o log perde a informação do erro [1][2]; e redigir PII por chave (nome, whatsapp, email, cep), rastreando por id, com atenção a strings livres que podem vazar PII mesmo com a redaction ligada [2][5].",
+      "erro": "",
+      "citadas": [
+        "DEP-11",
+        "nextjs_pino_breaks_standalone_output",
+        "SEC-06"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência (não usar pino, logger json de ~30 linhas) e nomeia explicitamente que a quebra do worker_threads/thread-stream só aparece em produção.",
+      "fiel": true,
+      "motivo_a": "toda afirmação material — quebra do transport via worker_threads/thread-stream só em produção, o `log.ts` de ~30 linhas com a api do pino, o serializer explícito de erro e a redaction de pii por chave com cuidado com string livre — aparece literalmente em [1], [2] e [5].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-18",
+      "camada": "protocolo",
+      "resposta": "Não. O que o middleware importa é código Edge, e o erro é lançado na avaliação do módulo, não no uso do valor — optional chaining só protegeria contra `undefined`, não contra a proibição da API em si [1][4]. O sintoma é 500 em toda rota (não só na que usa a constante), com `npm run build` passando normalmente, porque o erro é de runtime [1][4]. A prática recomendada é verificar tudo que a cadeia de imports referencia antes de importar um módulo compartilhado no middleware, e preferir duplicar 5 linhas a arrastar um módulo Node [1][4].",
+      "erro": "",
+      "citadas": [
+        "DEP-09",
+        "nextjs_middleware_edge_forbidden_node_api"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega o `?.`, afirma 500 em toda rota e prescreve as mesmas ações (checar a cadeia de imports, duplicar 5 linhas), e ainda avisa que o build passa.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações — optional chaining não protege por o erro ser lançado na avaliação do módulo, 500 em toda rota com build passando, e a recomendação de verificar a cadeia de imports/duplicar 5 linhas — estão literalmente nos trechos [1] e [4].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-19",
+      "camada": "protocolo",
+      "resposta": "Cache pode ser, mas o padrão que a memória institucional já pegou é outro: se o repo tem `next.config.js` e `next.config.mjs` juntos, o Next carrega só o `.js` e ignora o `.mjs` em silêncio — sem erro, sem warning [1][2]. Isso já aconteceu antes com exatamente esse sintoma (headers de segurança configurados mas ausentes em produção) [1][2]. Antes de suspeitar de cache, rode `ls next.config.*` no repo — se os dois existirem, o arquivo com `async headers()` provavelmente é o `.mjs` que está sendo ignorado [1][2]. Confirme com `curl -sI https://dominio/ | grep -iE 'x-frame-options|x-content-type-options|referrer-policy'`: vazio indica ou falta de headers ou config duplicado [1][2]. Se for esse o caso, o conserto é fazer merge no arquivo que o Next realmente carrega (o `.js`), nunca renomear, pois um Dockerfile com `COPY next.config.js` quebraria [1][2].",
+      "erro": "",
+      "citadas": [
+        "DEP-08",
+        "nextjs_duplicate_config_js_wins_over_mjs"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — detectar config duplicado e fazer merge no `.js` sem renomear — apenas com abertura mais concessiva ao cache, corrigida na mesma frase.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — o `.js` vencer em silêncio, o caso com headers de segurança ausentes, `ls next.config.*`, o `curl` de verificação e o merge no `.js` por causa do `copy next.config.js` — estão literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-20",
+      "camada": "protocolo",
+      "resposta": "Não é código: build morrendo em 5–9 s com `npm error enoent Could not read package.json` é a assinatura do Root Directory da Vercel apontando para `/` enquanto o app vive numa subpasta [2]. O sintoma é sempre esse mesmo erro, reproduzido em três projetos diferentes só por essa causa [2]. A confirmação prática é rodar `vercel ls <projeto> --prod` e ver `● Error` de 5–9 s, que é quase sempre Root Directory, não código [2]. O conserto é alinhar `rootDirectory` (API) com onde está o `.vercel/`: se `.vercel/` está na subpasta, `rootDirectory` tem que ser `null`; se está na raiz do repo, tem que apontar para a subpasta [4].",
+      "erro": "",
+      "citadas": [
+        "handoff-fabrica-e-leva-de-um-linha-31-07.md",
+        "vercel_root_dir_slash_push_kills_subfolder_site"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — root directory, não código, com o alinhamento entre `rootdirectory` e a localização do `.vercel/` — e o que omite (produção não cai, patch via api em vez da cli) não muda o que a pessoa faz.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — assinatura do erro, build de 5–9 s, a causa root directory em `/`, os três projetos, o `vercel ls --prod` e a regra `.vercel/`↔`rootdirectory` — está literalmente nos trechos [2] e [4].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-21",
+      "camada": "protocolo",
+      "resposta": "UNKNOWN: unknown error, read com vercel --prod de uma pasta dentro do OneDrive: o CLI lê os arquivos pra upload e trava num arquivo cloud-only que o OneDrive não hidratou, e o erro não menciona OneDrive nem path de propósito — parece bug da Vercel [1][3][5]. `--archive=tgz` não contorna [1][3]. A solução é clonar o repo fora do OneDrive (`C:\\dev` ou `$TEMP`) e rodar `vercel --prod` de lá; `vercel link` funciona normalmente dentro do OneDrive, só o upload quebra [1][3][5][7][8].",
+      "erro": "",
+      "citadas": [
+        "vercel_deploy_fails_under_onedrive",
+        "DEP-04",
+        "handoff-21-projetos-no-ar.md",
+        "handoff-seis-sites.md",
+        "handoff-dns-e-paineis.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — rodar de uma cópia fora do onedrive — e repete que `--archive=tgz` não contorna; o errno -4094 em node_modules é detalhe que não muda a ação aqui.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações — causa (arquivo cloud-only não hidratado), `--archive=tgz` não contornar, erro sem path/onedrive, `vercel link` funcionar dentro do onedrive e a solução de clonar em `c:\\dev`/`$temp` — estão literalmente nos trechos [1], [3] e [5].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-22",
+      "camada": "protocolo",
+      "resposta": "NÃO usar. `yes | vercel project rm` é interativo, não aceita `--yes`, e apagar em lote assim já apagou projetos vizinhos que não eram o alvo — em 29/07 levou junto `eg`, `eg-site` e `roi-zenith`, e `eg-site` (sem repo no GitHub) foi perdido permanentemente [1][2]. Apagar projeto na Vercel é irreversível: leva env vars, domínios e histórico de deploy [1][2]. Se for exclusão real, faça pelo dashboard, um por um; e antes de concluir que um projeto \"sumiu\", confirme na página 2 do `vercel project ls` (pagina em 20) [1][2].",
+      "erro": "",
+      "citadas": [
+        "DEP-05",
+        "vercel_project_rm_deletes_neighbors"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — não usar o pipe, exclusão manual pelo dashboard — e omite apenas o atalho de sobrescrever settings, que não muda a decisão sobre o comando.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — não aceita `--yes`, apaga vizinhos, os três projetos de 29/07, `eg-site` sem repo perdido permanentemente, irreversibilidade com env vars/domínios/histórico, dashboard um por um e a paginação em 20 — está literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-23",
+      "camada": "protocolo",
+      "resposta": "Funciona apenas se os dois hosts estiverem no mesmo projeto da Vercel: o PATCH com `redirect`/`redirectStatusCode` para um destino em outro projeto devolve 400 `bad_request` [1][3]. Isso já apareceu na prática na consolidação de `cardioqwen3code.roilabs.com.br` → `cardiorisk.roilabs.com.br` e também na leva de renomeação de subdomínios, com a mensagem `\"that domain is not added to the project\"` [1][10]. A saída para projetos diferentes é: `DELETE /v9/projects/{velho}/domains/{host}` no projeto antigo, seguido de `POST /v10/projects/{novo}/domains` já com `redirect` e `redirectStatusCode` no corpo do POST — anexar e redirecionar no mesmo POST funciona, sem precisar de PATCH depois [3]. A CLI da Vercel não expõe essa opção de redirect, então é via API ou nada [1][3].",
+      "erro": "",
+      "citadas": [
+        "DEP-06",
+        "vercel_redirect_requires_same_project",
+        "handoff-renomear-subdominios-executado.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre negando o cross-project, cita o 400 bad_request e prescreve o mesmo delete-no-velho + post-com-redirect-no-novo da referência, tratando o 400 como limite da api e não como bug.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — o 400 `bad_request` cross-project, o caso `cardioqwen3code` → `cardiorisk`, a mensagem \"that domain is not added to the project\" na leva de renomeação [10], o delete+post com redirect no corpo e a cli sem redirect — aparece literalmente nos trechos [1], [3] e [10].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-24",
+      "camada": "protocolo",
+      "resposta": "Vercel legado: matar o `builds` e deixar a detecção automática, não só o `routes`, porque `routes` era a única coisa roteando quando `builds` desativa o roteamento automático [1][2]. Remover só o catch-all já causou 404 na home inteira no `cardio-risk-insight-hub` (30/07) [1]. Depois do fix, valide pelo corpo, não pelo status: `curl -s <host>/sitemap.xml | head -c 5` tem que dar `<?xml`, já que 200 pode ser só o fallback [2][3][4].",
+      "erro": "",
+      "citadas": [
+        "DEP-03",
+        "vercel_legacy_builds_needs_routes",
+        "spa_sitemap_200_is_not_proof",
+        "VER-02"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — matar o `builds`, não só o catch-all — e cita o 404 total como consequência do diff mínimo.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — matar o `builds` como conserto, o caso 30/07 do `cardio-risk-insight-hub` quebrando a home, e a validação pelo corpo com `<?xml` — estão literalmente nos trechos [1]–[4].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-25",
+      "camada": "protocolo",
+      "resposta": "NÃO ESTÁ NO CORPUS confirma metade do plano, mas não basta: ISR (`revalidate`) sozinho ainda prerenderiza a query no build, e sem `DATABASE_URL` no builder ela quebra o build inteiro se for crua [1][2]. O fix correto é ISR **mais** try/catch com fallback na query — sem o catch, o build aborta (`/precos` quebrou assim); com catch, ao menos degrada em silêncio com `[]` em vez de derrubar o deploy [1][2]. Vale grepar `prisma` no `page.tsx` antes de tornar a rota SSG/ISR, e simular localmente com `env -u DATABASE_URL NEXT_NO_STANDALONE=1 npx next build` [1].",
+      "erro": "",
+      "citadas": [
+        "DEP-13",
+        "ssg_db_query_build_time_gotcha"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — isr mais try/catch com fallback e grep de `prisma` antes — e nega explicitamente que `revalidate` adie a primeira query.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — isr sozinho prerenderiza no build, query crua aborta o build, `/precos` quebrou, fix é isr + try/catch com fallback `[]`, grepar `prisma` e o comando `env -u database_url next_no_standalone=1 npx next build` — está literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-26",
+      "camada": "protocolo",
+      "resposta": "Middleware do next-intl usa negative lookahead que precisa listar toda pasta nova de `public/`; se a pasta nova adicionada não estiver no matcher, a request é interceptada e redirecionada para `/{locale}/{path}`, batendo em 404 no App Router — e isso só aparece em produção/build, não no dev [1][2]. A correção é adicionar a pasta (e a extensão, se for nova) na negative lookahead do `config.matcher` em `middleware.ts` [2], e depois confirmar com um `curl -sI` no asset em produção [1].",
+      "erro": "",
+      "citadas": [
+        "DEP-14",
+        "nextjs_middleware_matcher_static_assets"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "identifica o matcher/negative lookahead do middleware como causa e prescreve a mesma ação (listar a pasta nova no `config.matcher`), sem procurar arquivo faltando no build.",
+      "fiel": true,
+      "motivo_a": "matcher com negative lookahead, redirect para `/{locale}/{path}` com 404, quebra só em produção, correção no `config.matcher` de `middleware.ts` e verificação por `curl -si` estão todos explícitos em [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-27",
+      "camada": "protocolo",
+      "resposta": "Não. Dentro de um route handler, `request.url` tem como host o bind interno do container (`0.0.0.0:3000`), não a URL pública, então montar redirect com `new URL(path, request.url)` quebra [1][3]. O caso real foi o sofia-next/Polaris, onde login com Google redirecionava para `https://0.0.0.0:3000/dashboard` até trocar os 4 redirects pela base pública `NEXT_PUBLIC_APP_URL` [1]. A regra é usar essa variável de ambiente para montar a URL absoluta, nunca `request.url` [1][3]. Importante notar que o middleware não tem esse bug: lá `NextResponse.redirect(new URL(..., request.url))` sai relativo e proxy-aware via `nextUrl` [1][3].",
+      "erro": "",
+      "citadas": [
+        "nextjs_route_handler_request_url_proxy",
+        "DEP-16"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega igual à referência, prescreve `next_public_app_url` e ressalva o middleware, sem nunca alegar que funciona em dev e só quebra em produção.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — host `0.0.0.0:3000` em route handler, o caso sofia-next/polaris com login google e os 4 redirects, o uso de `next_public_app_url` e a ressalva de que o middleware não tem o bug — estão explícitas nos trechos [1] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-28",
+      "camada": "protocolo",
+      "resposta": "Não, aplico o código antes ou junto — nunca depois. Drop de coluna em tabela viva exige que o código deployado pare de referenciar a coluna antes ou no mesmo momento da migração, porque o client Prisma faz SELECT explícito de colunas escalares em reads sem `select` e quebra todas as leituras se a coluna sumir do banco antes do código parar de esperá-la [1]. É o inverso da regra de adicionar coluna (migrar antes do push) [1]. Antes de aplicar, vale rodar `prisma migrate diff` contra o banco de produção para conferir o SQL exato que vai rodar, sem aplicar nada [5].",
+      "erro": "",
+      "citadas": [
+        "DAT-03",
+        "project_010_success_fee_duas_taxas"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência (código antes ou junto, nunca migration primeiro) e explicita a inversão em relação a adicionar coluna; o `migrate diff` é fato extra, não contradição.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material vem dos trechos — o select explícito de colunas escalares e a inversão do dat-02 estão em [1], e o `prisma migrate diff` como preview sem aplicar está em [5].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-29",
+      "camada": "protocolo",
+      "resposta": "",
+      "erro": "",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "recusou",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-30",
+      "camada": "protocolo",
+      "resposta": "Não, migração de sintaxe passar limpo não prova nada: build/lint não pegam agregado voltando como string (SUM/COUNT viram texto e concatenam em vez de somar), LIKE virar case-sensitive, nome de coluna divergente, ou valor de filtro que não existe no enum (query roda e devolve 0 pra sempre) [1][2]. A única verificação que vale é rodar cada query traduzida direto contra o banco real (INSERTs dentro de BEGIN/ROLLBACK) e conferir colunas contra `information_schema.columns` e valores de filtro contra as constantes do código, não contra o schema.sql [1][2]. Endpoint retornando 2xx também não prova nada quando o controller tem fallback [1][2][3]. No caso do Atma, essa migração só foi considerada concluída depois de rodar as 49 queries reais contra produção (49/49) e os INSERTs em BEGIN/ROLLBACK (10/10) [3].",
+      "erro": "",
+      "citadas": [
+        "DAT-01",
+        "postgres_migration_silent_failures",
+        "project_atmaapi_easypanel"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"não\", lista as mesmas classes de erro silencioso e prescreve a mesma ação (rodar cada query contra o banco, inserts em begin/rollback), com fatos a mais que não contradizem a referência.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — as quatro classes de erro silencioso, a verificação por script pg com begin/rollback e information_schema.columns, o 2xx com fallback, e os números 49/49 e 10/10 do atma — aparecem literalmente em [1], [2] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-31",
+      "camada": "protocolo",
+      "resposta": "DNS-01 estabelece a regra geral para subdomínio aposentado: não se apaga o registro, aplica-se 301 (ou estático para o apex), porque NXDOMAIN não converge — o bot tenta para sempre e o percentual piora sozinho conforme a janela de 90 dias rola [4]. Isso já causou 76,6% do crawl budget de roilabs.com.br consumido por 14 hosts NXDOMAIN [1]. Antes de aposentar, é preciso checar se algum app vivo ainda chama esse host: `clerk.*`, `accounts.*`, `email.*`, `cdn.*` costumam ser CNAME de SaaS que quebram calados, com o site continuando 200 e só a função parando de existir [8][3]. O conserto correto é Redirect Rule na borda do Cloudflare, nunca vhost catch-all [4].",
+      "erro": "",
+      "citadas": [
+        "DNS-01",
+        "roilabs_dns_cloudflare_retired_subdomains",
+        "DNS-02",
+        "clerk_subdomain_killed_by_nxdomain_cleanup"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre negando o apagamento e prescreve 301 + redirect rule na borda, a mesma ação da referência, com o argumento do nxdomain que não converge.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material (não apagar/301, nxdomain não converge, 76,6% de 14 hosts nxdomain, checar `clerk.*`/`accounts.*`/`email.*`/`cdn.*` que quebram calados com 200, redirect rule sem vhost catch-all) aparece literalmente nos trechos [4], [1], [8] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-32",
+      "camada": "protocolo",
+      "resposta": "Não. clerk.atma serve o Frontend API do Clerk em produção — o site continua em 200 mas é o hostname que sustenta toda a autenticação, então \"tem site próprio?\" erra essa classe de subdomínio [1][2]. É por isso que a decisão do Jean foi arrancar o Clerk do código, e só depois disso clerk.atma fica em MORTOS de propósito — apagar antes disso derruba a autenticação do portal do paciente [2]. A regra geral: antes de classificar qualquer subdomínio como morto, checar se algum app vivo o chama — clerk.*, accounts.*, email.*, cdn.* costumam ser CNAME de SaaS que quebram calados [1].",
+      "erro": "",
+      "citadas": [
+        "DNS-02",
+        "clerk_subdomain_killed_by_nxdomain_cleanup"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"não\", nomeia a classe cname de saas que quebra calada com site em 200 e prescreve checar quem chama antes de apagar — mesma ação da referência.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — frontend api do clerk em produção, site em 200 com autenticação quebrada, decisão do jean de arrancar o clerk e manter clerk.atma em mortos, e a regra sobre clerk./accounts./email./cdn.* — estão literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-33",
+      "camada": "protocolo",
+      "resposta": "Restaurar o DNS não traz o certificado de volta sozinho: o host volta a responder, mas servindo o certificado vencido [1][4]. O diagnóstico que decide não é esperar propagação, é `vercel certs ls` — se o host não aparece na lista, não existe certificado, é ausência e não propagação [1][4]. O conserto é `vercel certs issue <host>`, host a host [1][4]. Depois de emitir, a borda ainda pode servir o cert velho por alguns minutos — isso não é erro e não deve levar a reemitir de novo [1][4]. Não assuma que outros hosts do mesmo lote se comportam igual: vertice, orion e pathfinder renovaram normalmente enquanto atma ficou travado, então verifique host a host [1][4].",
+      "erro": "",
+      "citadas": [
+        "DNS-03",
+        "vercel_cert_stuck_after_nxdomain"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — `vercel certs ls` como diagnóstico e emissão host a host — e nega explicitamente que seja propagação.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações — cert vencido após restaurar dns, `vercel certs ls` como diagnóstico, `vercel certs issue` host a host, cert velho por alguns minutos sem reemitir, e vertice/orion/pathfinder renovando enquanto o atma travou — aparecem literalmente em [1] e [4].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-34",
+      "camada": "protocolo",
+      "resposta": "Não é má configuração. A Vercel passou a emitir `A 216.198.79.1` além do `76.76.21.21` da receita antiga, e o IP não bater com a receita não significa que o domínio está fora do ar [1][2]. Antes de tratar como erro, é preciso medir o comportamento HTTP do apex e do `www` (código de status e redirect) — um 307 no apex já indica que está na Vercel [1][2].",
+      "erro": "",
+      "citadas": [
+        "vercel_new_a_record_216",
+        "DNS-04"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega a má configuração, reconhece 216.198.79.1 como vercel e prescreve a mesma ação (medir http do apex e do www) sem propor reescrever a zona.",
+      "fiel": true,
+      "motivo_a": "tanto a afirmação de que a vercel emite 216.198.79.1 além do 76.76.21.21 quanto a de medir o http do apex e do www (307 = vercel) estão literalmente nos dois trechos.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-35",
+      "camada": "protocolo",
+      "resposta": "Deixa em nuvem cinza (DNS only): host promovido para domínio próprio precisa ficar assim, porque o proxy laranja impede a emissão do certificado pela plataforma (aqui, Vercel) [2]. Além disso, o Universal SSL do Cloudflare cobre só um label, então mesmo que o proxy funcionasse o `www.` do subdomínio falharia no handshake TLS [2]. A promoção de `atma`, `pathfinder`, `orion` e `vertice` em 29/07 confirma essa prática: todos voltaram a 200 só depois de virarem `A` DNS only, e saíram da regra de redirect [2].",
+      "erro": "",
+      "citadas": [
+        "DNS-05"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve dns only pelo mesmo motivo da referência (proxy impede o cert da vercel) e repete o limite de um label do universal ssl; os exemplos diferentes de host não mudam a ação.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — nuvem cinza por bloqueio de certificado vercel, universal ssl cobrindo um label só, e a ressurreição de atma/pathfinder/orion/vertice em 29/07 via a dns only fora da regra 4 — estão literalmente no trecho [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-36",
+      "camada": "protocolo",
+      "resposta": "Não, nesse caso o 200 é do servidor errado (zumbi Vite antigo) e o 404 vem justamente do servidor certo que perdeu o vhost — decidir pelo status code apagaria o registro bom [1]. Antes de apagar qualquer A record é preciso conferir o conteúdo servido (title, bytes, `/_astro/` vs `/assets/index-*.js`, sitemap) com `curl -k --resolve` em cada IP [1][2]. No caso medido do SplitJud, `187.127.2.204` (200 quando testado direto, mas 404/timeout via host) era o site Astro correto, e `185.158.133.1` (200) era o zumbi Vite de dois anos que deveria ser removido — o inverso do que o status code sozinho sugeriria [2]. Regra geral: com host errado a resposta é timeout, não 404 — 404 do nginx significa que o servidor é aquele e só perdeu o vhost [1].",
+      "erro": "",
+      "citadas": [
+        "DNS-06",
+        "splitjud_www_dns_orphan"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"não\" e prescreve a mesma ação da referência — decidir pelo conteúdo servido antes de apagar qualquer registro, tratando o 404 como prova de qual servidor responde.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — 200 não prova servidor certo, 404 prova que é aquele servidor, host errado dá timeout, o `curl -k --resolve` com comparação de conteúdo, e o par de ips do splitjud (`187.127.2.204` como o astro correto e `185.158.133.1` como o zumbi vite em 200) — aparece literalmente em [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-37",
+      "camada": "protocolo",
+      "resposta": "A env var em si (o token) pode estar correta, mas se um `.env` foi salvo com BOM (UTF-8-with-BOM), `node --env-file` não descarta os 3 bytes e registra a primeira chave do arquivo com `\\ufeff` no nome — a var vira `undefined` e o sintoma aparece exatamente como \"credencial inválida\" [1][2]. Só a primeira linha do arquivo sofre; as demais vars funcionam normalmente, o que faz o bug parecer específico daquela integração e desvia a investigação para a credencial em si [1]. Diagnóstico de 10 segundos: `node --env-file=.env -e \"console.log(JSON.stringify(Object.keys(process.env).filter(k=>/SUA_VAR/.test(k))))\"` — se a chave aparecer com caractere estranho no início, é BOM [1][2]. Antes de suspeitar da credencial, do escopo ou do parser, cheque o BOM se justamente a primeira var do arquivo está vazia e as outras não [1][2].",
+      "erro": "",
+      "citadas": [
+        "nodejs_env_file_bom_first_key",
+        "INT-01"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "aponta o bom na primeira chave do `.env` como causa e desloca a ação para checar o `\\ufeff` antes de mexer na credencial, igual à referência.",
+      "fiel": true,
+      "motivo_a": "bom na primeira chave, `\\ufeff` no nome, var `undefined` lida como \"credencial inválida\", só a primeira linha afetada, os 3 bytes e o comando de diagnóstico estão todos literalmente em [1]/[2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-38",
+      "camada": "protocolo",
+      "resposta": "O timeout do proxy do EasyPanel não é o culpado: o `request-failed` no polarisia e no reviewshield vem do `fetch()` do Node desistindo em 300s (`UND_ERR_HEADERS_TIMEOUT`, default do undici), enquanto o `run-autopublish.mjs` roda no GitHub Actions — não atrás do proxy do EasyPanel [6][7][2]. O próprio código mediu `goiania` em 366s, acima desse limite [6][7]. A correção é no cliente, não em infra: logar `error.cause?.code` para confirmar, depois usar `setGlobalDispatcher(new Agent({ headersTimeout: N, bodyTimeout: N }))` do undici, ou tornar a chamada fire-and-forget com polling [6][7]. NÃO ESTÁ NO CORPUS onde configurar o timeout do proxy do EasyPanel especificamente.",
+      "erro": "",
+      "citadas": [
+        "undici_headers_timeout_300s",
+        "INT-02",
+        "handoff-deep-research-harness-de-agente.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — logar `error.cause?.code` e tratar o `headerstimeout` de 300 s do undici no cliente — e nega explicitamente que o proxy do easypanel seja o ponto, sem caçar configuração de infra.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — 300s de headerstimeout do undici, `und_err_headers_timeout`, run-autopublish no github actions, `goiania` em 366s e as duas saídas propostas — estão literalmente em [6] e [7], e o vínculo com polarisia/reviewshield está em [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-39",
+      "camada": "protocolo",
+      "resposta": "Não é bug do vertical: código do Mercado Pago é idêntico entre porcelanato e fitas, e o redirect para `?erro=pagamento` acontece quando `createPreference` lança, que é sintoma de env var faltando em produção (MERCADOPAGO_ACCESS_TOKEN ausente) [1][3]. O padrão já ocorreu em 23/07/2026 no goiania por essa exata causa [1][3]. Verificar MERCADOPAGO_ACCESS_TOKEN e MERCADOPAGO_WEBHOOK_SECRET no painel do EasyPanel do serviço `app` e reiniciar, já que env só aplica no restart [1][3].",
+      "erro": "",
+      "citadas": [
+        "INT-03",
+        "roilabs_mercadopago_prod_env_vars"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega o bug do vertical pela identidade do código, aponta `createpreference` lançando por falta do access_token no ambiente de produção e cita as duas vars — mesma ação da referência.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — código do mp idêntico entre verticais, redirect quando `createpreference` lança, caso goiania 23/07/2026 com `mercadopago_access_token` ausente, e o fix das duas vars no easypanel com restart — está literalmente nos trechos [1] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-40",
+      "camada": "protocolo",
+      "resposta": "Não é permitido: URLs `plus.unsplash.com/premium_photo-*` são Unsplash+, conteúdo de assinatura paga, e só `images.unsplash.com/photo-*` é licença gratuita [1][2]. A regra é filtrar por `urls.raw` e aceitar somente as que começam com `https://images.unsplash.com/photo-` [1][2]. Nada na busca sinaliza essa diferença, então metade dos resultados vem premium sem aviso [1][2]. Publicar a foto premium sem assinatura seria violação de licença [1][2].",
+      "erro": "",
+      "citadas": [
+        "INT-04",
+        "unsplash_premium_photo_is_paid"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega a publicação e prescreve o mesmo filtro (`urls.raw` começando com `https://images.unsplash.com/photo-`), e menciona explicitamente que metade dos resultados vem premium sem aviso.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — premium_photo-* = unsplash+ pago, regra de filtrar `urls.raw` por `https://images.unsplash.com/photo-`, \"metade dos resultados\" sem sinalização e violação de licença sem assinatura — estão literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-41",
+      "camada": "protocolo",
+      "resposta": "Fine-grained token sem o repo escopado devolve 404, não 403, pois o GitHub não confirma existência de repo privado — o 404 sozinho não prova apagamento [1][2]. O campo `permissions.push` do `GET /repos` reflete a permissão do usuário dono do token, não o escopo do token: um token com Contents: Read devolve `push:true` e ainda assim falha com 403 em qualquer escrita [1][2]. O teste honesto é tentar escrever (`POST /repos/{owner}/{repo}/git/blobs`, 201 ou 403) ou checar `GET /user/repos?per_page=100` para ver o que o token realmente enxerga [1][2]. Há também um precedente de repo que sumiu da listagem em cache mas confirmado apagado via `GET` direto (404), então ao investigar \"foi apagado?\" o `GET` direto no repo é a fonte confiável, não a listagem [10].",
+      "erro": "",
+      "citadas": [
+        "INT-06",
+        "roihub_autopublishing_gotchas",
+        "handoff-proximo-passo-leva-2.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "leva à mesma ação da referência — 404 é escopo do token, não prova apagamento, e `permissions.push` não prova escrita; o único ponto omitido (dar código próprio ao 404) é detalhe de implementação que a pergunta não pediu.",
+      "fiel": false,
+      "motivo_a": "a resposta usa [10] para afirmar que o repo \"sumiu da listagem em cache mas foi confirmado apagado via get direto (404)\", mas o trecho diz o oposto — o egtelemedicina **ainda aparece** na listagem e o get direto é que dá 404.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-42",
+      "camada": "protocolo",
+      "resposta": "Não, a API oficial está bloqueada para os projetos da casa — a coleta deve ser feita pelo feed público `reddit.com/r/<sub>/hot/.rss` [1]. Isso é confirmado pelo próprio SEO Forecaster: o `.json` público dá 403 em IP de datacenter (como VPS/EasyPanel), então a solução em produção foi usar o RSS Atom, com a ressalva de que ele não traz score, então `raw_count=1` [3]. Uma alternativa registrada é o endpoint JSON público sem auth/app (`reddit.com/r/{subreddit}/search.json?...`), mas essa via funciona fora de IP de datacenter, exigindo User-Agent customizado e delay entre requests [2].",
+      "erro": "",
+      "citadas": [
+        "INT-07",
+        "project_seo_forecaster",
+        "project_reddit_api_blocked"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"não\" e prescreve o mesmo feed `.rss`, sendo os extras (403 em datacenter, `raw_count=1`, alternativa json) fatos a mais que não mudam a ação nem sugerem oauth.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — bloqueio da api e rss [1], 403 em ip de datacenter com `raw_count=1` [3], e o json público sem auth com user-agent customizado e delay [2] — sai do trecho citado.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-43",
+      "camada": "protocolo",
+      "resposta": "O elemento de LCP muda depois do fix, então medir antes de otimizar imagem — o goiânia tinha 5,9s e o card do hub achava que era a hero image sem preload, mas era texto; a foto só virou o gargalo depois de consertar o texto [1][5]. Score de Lighthouse local (Windows/OneDrive) tem variância de ±30% e não confirma nada — o mesmo código deu 2,7s e 5,8s no PSI para a mesma página; decide-se por mediana de 5 runs contra produção [4]. Antes de comprimir a imagem, capture o elemento real do LCP com `new PerformanceObserver(list => console.log(list.getEntries().at(-1).element)).observe({type:'largest-contentful-paint', buffered:true})` [5]; se for texto, a causa provável é fonte em cadeia crítica ou `loading=\"lazy\"` indevido no card do LCP, não a imagem [1][2]. Comprimir a imagem sem antes confirmar que ela é o elemento de LCP é otimizar por palpite [5].",
+      "erro": "",
+      "citadas": [
+        "goiania_lcp_root_causes",
+        "PRF-01",
+        "VER-05",
+        "PRF-02"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — capturar o elemento real do lcp com performanceobserver antes de mexer na imagem, e nota que o elemento muda depois do fix.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — lcp do goiânia 5,9s com elemento de texto e mudança de elemento após o fix [1][5], variância de ±30% local e 2,7s/5,8s no psi com mediana de 5 runs [4], o snippet do performanceobserver [5], e fonte/`loading=\"lazy\"` como causas de lcp [2] — aparece literalmente nos trechos citados.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-44",
+      "camada": "protocolo",
+      "resposta": "Fazer profile do bundle de PRODUÇÃO antes de mexer em qualquer coisa, não chutar: framer-motion/gsap/lenis rodando no boot são peso morto quando a página não tem animação scroll-driven [1]. Se for o caso, trocar por IntersectionObserver + CSS e converter componentes sem interatividade real para Server Component — foi o que baixou o TBT de 2500ms para 300ms no caso medido [1][2]. Cuidado com `experimental.inlineCss`: parece ganho de performance mas pode inflar o HTML e suprimir preloads de fonte do next/font [1]. Para confirmar o resultado, meça em produção (VPS), já que Lighthouse local nesta máquina (Windows+OneDrive) tem variância de ±30% e não serve para validar TBT/LCP [6].",
+      "erro": "",
+      "citadas": [
+        "PRF-03",
+        "estetia_landing_performance",
+        "lighthouse_local_windows_onedrive_unreliable"
+      ],
+      "ancorada": true,
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo_b": "não menciona os polyfills core-js embutidos incondicionalmente pelo next nem o alias de `polyfill-module` para vazio — item da referência que muda o que a pessoa vai fazer depois do profile.",
+      "fiel": true,
+      "motivo_a": "todos os pontos materiais (profile do bundle de produção, framer/gsap/lenis como peso morto, intersectionobserver+css e rsc, tbt 2500→300ms, risco do `experimental.inlinecss` com html inflado e supressão de preload do next/font, e a variância ±30% do lighthouse local que obriga medir na vps) aparecem literalmente nos trechos [1], [2] e [6].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-45",
+      "camada": "protocolo",
+      "resposta": "Não. A diretriz é 100% SEO em todo o portfólio, inclusive para defesa de brand — Google Ads nunca deve ser proposto como ação, blocker ou próximo passo, mesmo no caso de homônimos roubando a SERP [1][2]. O próprio caso Sirius já teve esse plano revertido: \"próximo passo: tráfego pago\" foi substituído por seguir 100% SEO [3]. A alternativa correta é entity SEO, conteúdo e brand signals, incluindo sameAs com os perfis canônicos verificados [1][4][6]. Antes disso, vale checar se a perda de posição branded é real e não um artefato do agregado do GSC sem corte por país [5][8].",
+      "erro": "",
+      "citadas": [
+        "feedback_full_seo_no_ads",
+        "PRT-02",
+        "project_sirius_crm",
+        "roilabs_canonical_social_profiles",
+        "GEO-02",
+        "gsc_branded_position_polluted_by_country",
+        "SEO-03"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "nega o ads como a referência e ainda levanta o corte por país como possível artefato do agregado, em vez de reagir à posição média global.",
+      "fiel": true,
+      "motivo_a": "cada afirmação material — a diretriz 100% seo inclusive para brand [1][2], a reversão do \"próximo passo: tráfego pago\" no sirius [3], a alternativa entity seo/brand signals com sameas canônico [1][4][6] e o alerta do agregado do gsc sem corte por país [5][8] — está literalmente nos trechos citados.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-46",
+      "camada": "protocolo",
+      "resposta": "Repo demo interna, sem busca de tráfego → fica em vercel.app, não recebe subdomínio próprio. Se for arquitetura já parada/não usada, arquive o repo em vez de dar domínio — repo arquivado sai do ranking sozinho, sem risco de DNS órfão [3][6]. Se em algum momento passar a buscar tráfego de busca, aí sim promova a subdomínio próprio [2][3].",
+      "erro": "",
+      "citadas": [
+        "PRT-04",
+        "SEO-02",
+        "vendor_domain_hides_project_from_gsc"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — sem tráfego de busca, fica em vercel.app e arquiva o repo — e a omissão do motivo (gsc não enxerga o host) não muda o que a pessoa faz.",
+      "fiel": true,
+      "motivo_a": "cada afirmação — vercel.app para demo interna, arquivar em vez de dar domínio, repo arquivado sai do ranking sem dns órfão, e promover a subdomínio só se buscar tráfego — está literalmente no critério de prt-04 em [3], repetido em [2], e [6] confirma que projeto sem busca de tráfego deve ficar em domínio de fornecedor.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-47",
+      "camada": "protocolo",
+      "resposta": "Sim, sempre commitar e fazer push direto para main sem pedir permissão [6].",
+      "erro": "",
+      "citadas": [
+        "feedback_push_apos_concluir"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "o \"sim\" é corrigido na mesma frase por \"sem pedir permissão\", levando à mesma ação da referência — commitar e pushar direto.",
+      "fiel": true,
+      "motivo_a": "a afirmação de commitar e dar push sem pedir permissão está literalmente no trecho [6], incluindo o destino `main`.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-48",
+      "camada": "protocolo",
+      "resposta": "Não pode. next-auth no package.json, NEXTAUTH_SECRET no .env e o adapter no schema são sinais de intenção, não de implementação — a lib pode nunca ter sido importada [2][4]. É preciso rodar os três checks (curl em /api/auth/session, grep por `from 'next-auth'`, grep por getServerSession/getToken nas rotas) e depois varrer todas as rotas sem sessão contando quantas devolvem 200 [2][4]. Verificar isso é obrigatoriamente ANTES de virar o DNS: enquanto o host está sem DNS ou atrás de 301, rota aberta é dívida; depois de publicado, é incidente [3]. A correção certa, se faltar proteção, é middleware.ts com sessão em JWT — `strategy: 'database'` desliga a proteção em silêncio porque o Edge não alcança o banco [10].",
+      "erro": "",
+      "citadas": [
+        "nextauth_installed_but_never_wired",
+        "SEC-01",
+        "SEC-03",
+        "SEC-02"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — não publicar, checar sessão e varrer todas as rotas antes do dns, corrigir com middleware.ts em jwt — e nomeia explicitamente que `strategy: 'database'` desliga a proteção em silêncio no edge.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — sinais de intenção, os três checks, a varredura de todas as rotas, verificar antes de virar o dns e o middleware com jwt porque o edge não alcança o banco — estão nos trechos [2], [3], [4] e [10] que ela cita.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-49",
+      "camada": "protocolo",
+      "resposta": "Não. Rotacionar é imediato, não depende de tornar o repo privado — tornar privado depois não desfaz nada, pois a credencial já pode ter sido clonada ou indexada [1]. A ordem de urgência é: dinheiro, email transacional, senha de banco, JWT secret [1]. Segredo em repo público é categoricamente diferente de segredo exposto em chat: neste último a rotação é só higiene, sem urgência; naquele, é agora [1][2].",
+      "erro": "",
+      "citadas": [
+        "SEC-04",
+        "secrets_to_rotate"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — rotação imediata, privatizar não desfaz nada — e mantém o contraste chat/repo público da referência.",
+      "fiel": true,
+      "motivo_a": "cada afirmação — não desfaz nada por já poder ter sido clonada/indexada, a ordem \"dinheiro, email transacional, senha de banco, jwt secret\", e o contraste chat = higiene vs. repo público = agora — está literalmente em [1], reforçada por [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-50",
+      "camada": "protocolo",
+      "resposta": "Não, trocar sslmode=disable para require só faz a conexão falhar quando o servidor não oferece TLS — é preciso provar antes com o probe do handshake SSLRequest [1][2]. Rodar o probe (net.Socket cru, sem senha nem driver): resposta `S` significa que o servidor aceita TLS e aí sim o sslmode do cliente é a causa; resposta `N` significa que o servidor não oferece TLS (`ssl=off` no postgresql.conf) e ligar exige acesso ao VPS, não ao repo [1][2]. Essas duas causas levam a trabalhos opostos — um é editar `.env`, o outro é infraestrutura fora do alcance de quem edita o código [1][2].",
+      "erro": "",
+      "citadas": [
+        "SEC-05",
+        "vps_postgres_no_tls_sslrequest_probe"
+      ],
+      "ancorada": true,
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo_b": "a referência já traz o resultado do probe (n, ssl=off no vps 2.24.207.200), que decide a ação — a resposta deixa o usuário rodar um probe cujo resultado a instituição já conhece.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — que require só faz falhar quando o servidor não oferece tls, o significado de `s`/`n`, o probe cru sem senha nem driver, e os trabalhos opostos (.env × infra no vps) — estão explicitamente nos dois trechos.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-51",
+      "camada": "protocolo",
+      "resposta": "Não. Classifique o stderr em código fechado, nunca grave o texto original: o stderr de um CLI de LLM pode conter o prompt inteiro [5]. A prática do projeto é mapear a falha para códigos estáveis (`llm-auth`, `llm-rate`, `llm-cli`, `llm-output`, `llm-parse`, `llm-timeout`) e testar que o código gravado não contém o texto original — nunca repassar a mensagem do modelo [5]. Além disso, o diagnóstico real de conta esgotada vem de `api_error_status` (429/401/403), não do texto do stderr, que às vezes nem menciona rate limit ou auth [2].",
+      "erro": "",
+      "citadas": [
+        "roihub_autopublishing_gotchas",
+        "claude_cli_token_pool_rotation"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — não gravar stderr, mapear para os mesmos códigos fechados e testar que o texto original não aparece; a omissão da regex do run-autopublish.mjs só importa ao criar uma reason nova, não à decisão perguntada.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — classificar em vez de repassar o stderr porque ele pode conter o prompt inteiro [5] e `api_error_status` (429/401/403) como diagnóstico real em vez do texto [2] — estão nos trechos; a lista de seis códigos vai além dos três exemplificados em [5], mas é enumeração da mesma prática de códigos fechados que o trecho autoriza.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-52",
+      "camada": "protocolo",
+      "resposta": "O erro não está na chave: o Bing trata cada subdomínio como site à parte e recusa o IndexNow enquanto não conhecer/verificar aquele host, mesmo com a mesma chave que passa no apex [1][2]. Para confirmar isso em 2 minutos, faça POST da mesma chave em três lugares: apex no api.indexnow.org (200, prova que código e chave estão certos), subdomínio no api.indexnow.org (403, prova que é específico do host) e subdomínio no yandex.com/indexnow (202, prova que a chave e o key file são válidos e buscáveis) [1][2]. Se o Yandex aceitar, pare de investigar key file, robots.txt, nginx ou content-type — o problema é do lado do Bing, não da chave [1][2]. O desbloqueio é manual: adicionar e verificar o subdomínio no Bing Webmaster Tools (o import do GSC traz verificação e sitemap de uma vez) [1][2][4].",
+      "erro": "",
+      "citadas": [
+        "SEO-06",
+        "indexnow_403_subdomain_bing",
+        "handoff-proximo-passo-pos-sirius.md"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação da referência — a chave está certa, o desbloqueio é verificar o host no bing webmaster tools —, faltando só o detalhe secundário do `res.ok` no ping.",
+      "fiel": true,
+      "motivo_a": "cada afirmação — bing trata subdomínio como site à parte, o teste de três endpoints (200/403/202), parar de investigar key file/robots/nginx e o desbloqueio manual no bing webmaster tools com import do gsc — está literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-53",
+      "camada": "protocolo",
+      "resposta": "Não. Trecho vermelho de crawl é média de 90 dias — problema já corrigido continua pintando o relatório por ~3 meses, então a prática é datar as falhas antes de caçar bug: checar dias com `requests>0`, `bytes==0` e `ms==0` no gráfico de resumo, fechar a conta com a tabela de \"Desconhecido (solicitações com falha)\" e cruzar com `git log --reverse` para ver se a falha parou numa data e não voltou [1][3]. Se as falhas pararam antes de um fix já aplicado, não há bug vivo — foi exatamente o caso do \"40,6% OK\" do roilabs, onde 222 das 234 requisições eram anteriores ao fix [1][3]. Só depois de datar, se restar algo vivo, checar ao vivo (curl -sI no www, apex e rota sem barra) — isso não aparece no relatório [1][3].",
+      "erro": "",
+      "citadas": [
+        "SEO-05",
+        "gsc_crawl_stats_stale_90d_window"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "prescreve a mesma ação — datar as falhas pelos dias `requests>0/bytes==0/ms==0` antes de abrir código — e o extra (curl ao vivo) só entra depois da datação.",
+      "fiel": true,
+      "motivo_a": "todos os passos (dias com requests>0/bytes==0/ms==0, tabela \"desconhecido (solicitações com falha)\", `git log --reverse`, curl -si no www/apex/rota sem barra) e o caso roilabs com 222 de 234 requisições pré-fix estão literalmente nos trechos [1] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-54",
+      "camada": "protocolo",
+      "resposta": "Sim, é o mesmo gotcha do Astro em `directory`: URL sem barra final leva a um 301 do nginx, e atrás de proxy TLS esse redirect sai absoluto em `http://` (downgrade), porque o nginx não sabe que está atrás de TLS [1][4]. Isso já queimou 46% do crawl do Googlebot num caso real e derrubou o crawl de 261 para 6 req/dia [1][4]. O fix é duplo: `absolute_redirect off;` no bloco server do nginx, e garantir que toda URL emitida (sitemap, llms.txt, feed, JSON-LD, hrefs internos) termine com barra [1]. O canonical do próprio Astro já sai correto — o risco está nas URLs montadas à mão via template string [1]. Verificação: `curl -sI` numa URL sem barra não pode devolver `Location: http://...` [1].",
+      "erro": "",
+      "citadas": [
+        "astro_nginx_trailing_slash_301",
+        "SEO-01"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "caiu",
+      "motivo_b": "prescreve as mesmas duas ações da referência (`absolute_redirect off` + toda url emitida com barra) e cita os mesmos números, mas afirma justamente que o canonical do astro já sai correto e o risco fica nas urls montadas à mão.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — 301 absoluto em `http://` atrás de proxy tls, 46% do crawl, 261→6 req/dia, fix duplo (`absolute_redirect off` + barra em todas as urls emitidas), canonical do astro já correto e a verificação com `curl -si` — aparecem literalmente nos trechos [1] e [4].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-55",
+      "camada": "protocolo",
+      "resposta": "Otimização normal para Google mira ranqueamento em uma lista de links; GEO/AEO mira ser a fonte citada dentro da resposta gerada, e isso muda a estrutura técnica e editorial do conteúdo [1][2]. É preciso liberar explicitamente os crawlers de IA no robots.txt (GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Perplexity-User, GoogleOther, Google-Extended) — bloqueá-los faz o conteúdo sumir das respostas de IA — e publicar um `llms.txt` na raiz com descrição e links das páginas de valor [1][2]. No structured data, em vez de scripts dispersos, usa-se um único `@graph` por página ligando Organization+WebSite+Article+FAQPage por `@id`, sendo o FAQPage o de maior impacto para AEO, e `sameAs` só com URLs reais [1][2]. Editorialmente, cada H2/H3 deve ser a pergunta real do usuário com a primeira frase (40-60 palavras) respondendo de forma isolável, e cada parágrafo deve fazer sentido fora de contexto (\"ilha de informação\"), com densidade de estatísticas numéricas e tabelas comparativas, além de SSR/SSG obrigatório para FCP rápido [1][2]. Esses fatores importam porque tráfego de IA converte 4,4–23× mais que orgânico, ~60% das buscas do Google já são zero-click, e o estudo de Princeton (KDD 2024) mostra que estatísticas elevam citação em 31-41%, citações diretas em 41%, enquanto keyword stuffing derruba 8% [1][2].",
+      "erro": "",
+      "citadas": [
+        "geo_aeo_playbook",
+        "GEO-01"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "cobre robots.txt com a mesma whitelist, llms.txt, @graph único e resposta isolável no topo, e abre distinguindo ranquear de ser citado — só o detalhe de `sameas` canônico da roi labs fica genérico, sem mudar a ação.",
+      "fiel": true,
+      "motivo_a": "todos os itens materiais (lista de crawlers, llms.txt, @graph único com faqpage, bluf 40-60 palavras, ilha de informação, ssr/ssg) e todos os números (4,4–23×, ~60% zero-click, princeton kdd 2024 com 31-41%, 41% e −8%) aparecem literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-56",
+      "camada": "protocolo",
+      "resposta": "Sim [2][3]. Toda tela nova no `/app` admin usa o design system tema-claro de `globals.css` — tokens `--ink/--porcelain/--hivis/--green/--l-text/--l-muted/--l-line` e classes `.page/.card/.btn/.seat-row/.toggle/.col` — nunca inline-style escuro [2][3]. Na feature 004 a UI saiu com inline-style escuro (`#111`, `#888`, selects pretos) e virou uma ilha tema-escuro dentro do app claro, com contraste péssimo, e o dono reclamou [2][3]. Cores de ênfase em fundo claro precisam passar WCAG AA (≥4,5:1): use verde forte `#166534`, não o token `--green` (`#2f9e44`, que dá só 3,45) [2][3]. Verifique o contraste real via Playwright `browser_evaluate` no DOM autenticado, já que auditoria externa cai no `/login` [2][3].",
+      "erro": "",
+      "citadas": [
+        "UI-01",
+        "roilabs_app_admin_design_system"
+      ],
+      "ancorada": true,
+      "veredito": "contradiz",
+      "armadilha": "evitou",
+      "motivo_b": "abre com \"sim\" à pergunta sobre usar os estilos escuros, e a correção (tema claro) só chega na frase seguinte — quem lê e age faz o oposto da referência.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações materiais — design system tema-claro, tokens e classes, incidente da feature 004 com inline-style escuro, wcag aa ≥4,5:1 com `#166534` em vez de `--green #2f9e44` (3,45) e verificação via playwright `browser_evaluate` no dom autenticado — estão literalmente nos trechos [2] e [3].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-57",
+      "camada": "protocolo",
+      "resposta": "Estrutura primeiro, depois conteúdo real é o padrão que já foi apontado como preguiçoso: a regra exige copy detalhada, seções distintas, casos de uso com persona e cenário, FAQ e design com cor por categoria — sem economizar no que o usuário final lê [1]. Conteúdo genérico ou lista de benefícios chapada é exatamente o erro documentado antes [1].",
+      "erro": "",
+      "citadas": [
+        "UI-02"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "rejeita explicitamente o esqueleto-primeiro e prescreve a mesma ação da referência (copy detalhada, seções, casos de uso com persona, faq, cor por categoria), omitindo só detalhes de design que não mudam a ação.",
+      "fiel": true,
+      "motivo_a": "a afirmação de que estrutura-primeiro foi apontada como preguiçosa e a lista de exigências (copy, seções, casos de uso com persona e cenário, faq, cor por categoria) estão todas no texto do ui-02.",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-58",
+      "camada": "protocolo",
+      "resposta": "Sem coincidência: overflow-x-hidden em ancestral do sticky força o CSS a computar overflow-y:auto junto, criando um scroll container intermediário que o sticky passa a referenciar em vez da viewport, o que desativa o pin de forma silenciosa (elemento continua marcado position:sticky no DevTools) [1][2]. Se o objetivo era só matar o scroll horizontal, o fix é aplicar o overflow-x-hidden no html/body global ou na própria seção problemática — nunca num wrapper ancestral da seção sticky [1][2].",
+      "erro": "",
+      "citadas": [
+        "overflow_x_hidden_kills_sticky",
+        "UI-04"
+      ],
+      "ancorada": true,
+      "veredito": "correta",
+      "armadilha": "evitou",
+      "motivo_b": "aponta o ancestral como causa e prescreve a mesma ação de tirar o overflow-x do wrapper; a referência menciona `overflow-x: clip` como alternativa, mas isso não muda a ação decidida.",
+      "fiel": true,
+      "motivo_a": "tudo — o mecanismo (overflow-y:auto → scroll container intermediário), o sintoma silencioso com position:sticky visível no devtools e o fix (html/body global ou a própria seção, nunca ancestral) — está literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-59",
+      "camada": "protocolo",
+      "resposta": "A integração oficial usa `gsap.ticker.add`, não `scrollerProxy` — este é legado, mente sobre o scroll pro ScrollTrigger e quebra o `pin` [1][2]. O padrão correto é `lenis.on('scroll', ScrollTrigger.update)` + `gsap.ticker.add(time => lenis.raf(time * 1000))` + `gsap.ticker.lagSmoothing(0)`, sem nenhum raf loop manual em paralelo [1][2]. Com `pin: true` não é preciso `pinType` customizado nesse fluxo [1].",
+      "erro": "",
+      "citadas": [
+        "lenis_gsap_scrolltrigger_integration",
+        "UI-05"
+      ],
+      "ancorada": true,
+      "veredito": "incompleta",
+      "armadilha": "evitou",
+      "motivo_b": "acerta o padrão `gsap.ticker` e descarta o scrollerproxy, mas omite o `scrolltrigger.refresh()` em 100/500/1500 ms quando a altura vem por style do react — sem isso o trigger nasce com `end` undefined.",
+      "fiel": true,
+      "motivo_a": "todas as afirmações — gsap.ticker em vez de scrollerproxy, o trecho de código exato, proibição de raf manual paralelo e pin sem pintype customizado — estão literalmente nos trechos [1] e [2].",
+      "erro_juiz": ""
+    },
+    {
+      "id": "D-60",
+      "camada": "protocolo",
+      "resposta": "Não deploye ainda: \"site estático pronto\" não é sinônimo de \"site que funciona\" — no `roi-labs-links` o build/página parecia completa, sem erro no console, mas renderizava texto branco sobre fundo branco por `var(--tw-gradient-*-position)` nunca definidas [1][3]. Isso só apareceu porque a página nunca tinha sido aberta num browser; nada falha, só resolve para nada [4]. Antes de deployar, abra no browser (Playwright + screenshot resolve em 1 minuto) e, se o CSS imitar Tailwind à mão, confira no `:root` as três variáveis `--tw-gradient-from-position`, `-via-`, `-to-` [1][4]. Aproveite para suspeitar de outros sinais do mesmo padrão: libs carregadas sem uso real (ex. `@babel/standalone` sem JSX) e URLs de assets apontando para infraestrutura antiga que virou 404 [1].",
+      "erro": "",
+      "citadas": [
+        "tailwind_handwritten_gradient_vars",
+        "handoff-quatro-sites.md",
+        "UI-03"
+      ],
+      "ancorada": true,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "juiz-output"
+    },
+    {
+      "id": "D-61",
+      "camada": "protocolo",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-62",
+      "camada": "protocolo",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-63",
+      "camada": "protocolo",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-64",
+      "camada": "protocolo",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-65",
+      "camada": "protocolo",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-66",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-67",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-68",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-69",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-70",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-71",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-72",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-73",
+      "camada": "estado",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-74",
+      "camada": "episodio",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-75",
+      "camada": "episodio",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-76",
+      "camada": "episodio",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-77",
+      "camada": "episodio",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    },
+    {
+      "id": "D-78",
+      "camada": "episodio",
+      "resposta": "",
+      "erro": "resposta-output",
+      "citadas": [],
+      "ancorada": false,
+      "veredito": "",
+      "armadilha": "",
+      "motivo_b": "",
+      "fiel": null,
+      "motivo_a": "",
+      "erro_juiz": "resposta-output"
+    }
+  ]
+}
