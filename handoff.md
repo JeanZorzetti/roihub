@@ -1,6 +1,18 @@
 # ROI Hub — handoff
 
-> ▶️ **EXECUTADO (01/08) — [`handoff/handoff-o-holdout-saiu-da-monocultura.md`](handoff/handoff-o-holdout-saiu-da-monocultura.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-a-lista-nominal-tem-30-de-ruido.md`](handoff/handoff-proximo-passo-a-lista-nominal-tem-30-de-ruido.md)
+> (01/08): 3 de cada 10 linhas da LISTA NOMINAL são tarefa fabricada — e a lista é o produto.** O
+> detector emitiu 10 `desmente` no holdout e 7 estavam certos: **precisão 70%**, recall 87,5%.
+> Bate com os 62,5% que a leitura humana dos 8 achados de 31/07 já tinha dado — **duas medições
+> independentes em ~2/3.**
+> 🚩 **A decisão desta sessão não é técnica:** ~19 h, 18 commits, 10 handoffs e **~7 defeitos reais
+> de corpus** (3 deles a MESMA memória); o número que a frente existe para publicar nunca saiu. Se o
+> objetivo é achar memória podre, **o `validade.mjs` já faz melhor** — zero LLM, dentro do `npm
+> test`, e impede o defeito de NASCER. Escreva a escolha no topo do próximo handoff.
+> ▶️ Se continuar: **exemplo para a regra do passado datado** (única mudança de prompt não tentada,
+> caso nomeado em `SEO-02`) → **adversarial fora da monocultura** → fase D.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-o-holdout-saiu-da-monocultura.md`](handoff/handoff-o-holdout-saiu-da-monocultura.md)
 > (01/08): o holdout foi de 50 casos em 8 fatos para 80 em 15, e as CÉLULAS PERIGOSAS apareceram.**
 > 🚩 **"O detector só erra para o lado seguro" era artefato do universo de 8 fatos:** contra 15 ele
 > **fabricou 3 tarefas e escondeu 1 achado**, as duas células que estavam em zero. Mesma corrida,
