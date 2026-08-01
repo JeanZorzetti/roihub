@@ -4,6 +4,7 @@ import {
   aplicaSe,
   detectarStack,
   julgarCert,
+  julgarGptbot,
   julgarHeaders,
   julgarRobots,
   julgarSameAs,
@@ -34,6 +35,28 @@ test("julgarSitemap recusa HTML servido com 200", () => {
   assert.equal(julgarSitemap('<?xml version="1.0"?><urlset/>').ok, true);
   assert.equal(julgarSitemap("<!doctype html><html>").ok, false);
   assert.equal(julgarSitemap("").ok, false);
+});
+
+// O defeito que este teste existe para segurar: o check antigo era `/GPTBot/i.test(corpo)`, e o
+// `orion` passava servindo `User-Agent: GPTBot` seguido de `Disallow: /` — site inteiro fora do
+// ChatGPT, lido como conformidade. Grep mede a palavra, não a permissão.
+test("julgarGptbot separa ausente, barrado e permitido", () => {
+  const barrado = "User-Agent: *\nAllow: /\n\nUser-Agent: GPTBot\nDisallow: /\n\nSitemap: https://x/s.xml";
+  assert.equal(julgarGptbot(barrado), "barrado");
+
+  // Grupo com vários User-agent seguidos é UM grupo: as regras valem para todos.
+  const junto = "User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nUser-agent: CCBot\nAllow: /\nDisallow: /admin/\n";
+  assert.equal(julgarGptbot(junto), "permitido");
+
+  assert.equal(julgarGptbot("User-agent: *\nAllow: /\n"), "ausente");
+  assert.equal(julgarGptbot(""), "ausente");
+
+  // Política PARCIAL não é bloqueio: o reviewshield libera /blog e /llms.txt e barra o resto de
+  // propósito. Check que reprovasse isso estaria opinando sobre escopo, não medindo a norma.
+  assert.equal(julgarGptbot("User-Agent: GPTBot\nAllow: /blog\nAllow: /llms.txt\nDisallow: /\n"), "permitido");
+
+  // Comentário não pode virar regra, e `Disallow:` vazio é o "libera tudo" do padrão.
+  assert.equal(julgarGptbot("User-agent: GPTBot # da OpenAI\nDisallow:\n"), "permitido");
 });
 
 // A exceção declarada no próprio protocolo: robots antigo passa em "começa com User-agent".

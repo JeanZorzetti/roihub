@@ -42,6 +42,10 @@ async function main(urls) {
           `  lastCrawl:    ${r.lastCrawlTime ?? "-"}`,
           `  robotsTxt:    ${r.robotsTxtState ?? "-"}`,
           `  indexing:     ${r.indexingState ?? "-"}`,
+          // Em `Duplicate, Google chose different canonical` a URL escolhida é o diagnóstico
+          // inteiro: sem ela o coverage diz que houve escolha e esconde QUAL.
+          `  canonicalUsr: ${r.userCanonical ?? "-"}`,
+          `  canonicalGgl: ${r.googleCanonical ?? "-"}`,
         ].join("\n")
       );
     } catch (e) {
