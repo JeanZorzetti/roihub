@@ -182,9 +182,23 @@ as 8 de `estado` são **apuradas na hora da medição**.
 morno retoma corrida morta. As outras réguas comparam a RESPOSTA com o dourado; só esta aponta
 para fora do texto.
 
-- **🚩 OS DOIS PORTÕES AINDA REPROVAM, por um caso cada (01/08): holdout 84,6% (11/13), adversarial
-  8/10** — `scripts/defasagem-calibrar.mjs`, detalhe em `docs/defasagem-calibracao.md`. **Nenhum
-  percentual de defasagem sai daqui, inclusive o 16,7%.**
+- **🚩 OS DOIS PORTÕES AINDA REPROVAM (01/08, holdout ampliado): holdout 87,5% (28/32) com 1 caso
+  sem veredito parseável, adversarial 8/10** — `scripts/defasagem-calibrar.mjs`, detalhe em
+  `docs/defasagem-calibracao.md` e `docs/defasagem-fase-c-2026-08-01.md`. **Nenhum percentual de
+  defasagem sai daqui, inclusive o 16,7%.**
+- **O portão 1 são DUAS condições: `>= 85%` E zero caso sem veredito parseável.** Imprimir só a
+  primeira fazia a saída se contradizer ("acerto 87.5% … portão >= 85% … REPROVOU 87.5%"). Caso que
+  não parseia não conta como aprovado — senão dá para ir excluindo o difícil até o número subir.
+- **O holdout saiu de 13 para 33 casos que contam (01/08); um caso vale 3,0 pontos, não 7,7.** 19
+  pares novos, rotulados na janela de 2400 da produção, com `ancora` conferida antes de escrever, e
+  **commitados antes da primeira corrida contra eles**. Ainda é pouco: a meta é 40, e o adversarial
+  continua em 10.
+- **Os 4 erros que restam são TODOS `bate → nao-fala` — zero `desmente` perdido, zero fabricado.**
+  Para a lista nominal (a saída do produto) o detector acertou 32/32, porque `bate` e `nao-fala`
+  prescrevem a mesma ação: nada a consertar. **Isso não libera percentual** — `bate → nao-fala` é o
+  mesmo mecanismo de `desmente → nao-fala`, que ESCONDE corpus podre, e hoje ele só cai no lado
+  seguro. Mas nomeia o alvo da fase D: o defeito é o detector não decidir **se o documento fala do
+  assunto**, que é exatamente o que a passada 1 (cega ao fato) resolve.
 - **O `VEREDITO` é a ÚLTIMA linha do prompt, e isso é decisão de ENGENHARIA.** Com ele na primeira
   linha o modelo cravava a decisão antes de escrever o raciocínio que a justifica — saía `VEREDITO:
   bate` com o `MOTIVO` terminando em "— desmente", reproduzido 3×. **Duas redações de REGRA já

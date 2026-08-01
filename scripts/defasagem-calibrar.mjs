@@ -78,7 +78,7 @@ const acertos = validas.filter((l) => l.j.veredito === l.c.veredito);
 const erros = linhas.filter((l) => l.j.erro);
 
 console.log(`── portão 1: holdout cego — ${casos.length} pares rotulados antes de o detector vê-los`);
-console.log(`acerto  ${pct(acertos.length, validas.length).padStart(7)}  (${acertos.length}/${validas.length})   ← portão: >= 85%`);
+console.log(`acerto  ${pct(acertos.length, validas.length).padStart(7)}  (${acertos.length}/${validas.length})   ← portão: >= 85% E zero sem veredito`);
 if (erros.length) console.log(`⚠️  ${erros.length} sem veredito parseável: ${erros.map((l) => `${l.c.doc.id}=${l.j.erro}`).join(", ")}`);
 
 // A matriz importa mais que o agregado. Um detector que troca `bate` por `nao-fala` é utilizável —
@@ -126,9 +126,17 @@ if (seguidas >= MAX_CONTA_SEGUIDAS) {
   process.exit(1);
 }
 
-const p1 = validas.length === casos.length && acertos.length / validas.length >= 0.85;
+// O portão são DUAS condições, e imprimir só uma fazia a saída se contradizer: a corrida de
+// 01/08 com 33 casos imprimiu "acerto 87.5% ← portão: >= 85%" e logo abaixo "portão 1 (>= 85%)
+// REPROVOU 87.5%". Quem lê tem que reler o código para descobrir que o que reprovou foi o caso
+// sem veredito parseável. Achado que não parseia não é achado, e caso que não parseia não conta
+// como aprovado — mas o critério tem que aparecer no mesmo lugar que o número.
+const semVeredito = casos.length - validas.length;
+const p1Taxa = validas.length ? acertos.length / validas.length >= 0.85 : false;
+const p1 = semVeredito === 0 && p1Taxa;
 const p2 = pegou.length >= 9;
-console.log(`\n${p1 ? "✅" : "🚩"} portão 1 (holdout cego >= 85%)   ${p1 ? "passou" : "REPROVOU"}  ${pct(acertos.length, validas.length)}`);
+const porQue1 = p1 ? "" : semVeredito ? ` — ${semVeredito} sem veredito parseável` : " — taxa abaixo do piso";
+console.log(`\n${p1 ? "✅" : "🚩"} portão 1 (holdout cego >= 85% E zero sem veredito)   ${p1 ? "passou" : "REPROVOU"}  ${pct(acertos.length, validas.length)}${porQue1}`);
 console.log(`${p2 ? "✅" : "🚩"} portão 2 (adversarial >= 9/10)   ${p2 ? "passou" : "REPROVOU"}  ${pegou.length}/${adver.casos.length}`);
 if (!p1 || !p2) {
   console.log("\nPare aqui. O problema é o PROMPT do detector, e nenhum percentual de defasagem medido depois vale — inclusive o 16,7%.");
