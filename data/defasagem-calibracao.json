@@ -401,6 +401,405 @@
       "categoria": "numero errado afirmado no presente",
       "motivo": "Afirma 'grep por manual|jean devolve 18 cards contra os 5 reais'. A curadoria apurou 8 bloqueios humanos, não 5. É uma expectativa de spec escrita como fato, e o número real a desmente.",
       "ancora": "5 reais"
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "apurado": {
+        "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+        "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-proximo-passo-02-08.md",
+        "tipo": "handoff",
+        "titulo": "handoff-proximo-passo-02-08.md",
+        "trecho": "…de Bangladesh), o `repo` do `tapepro` > apontava para o **monorepo errado**, e o CannibalScan foi **destravado de ponta a ponta** — o > problema não era Request Indexing nem sitemap, era **não ter domínio próprio**. O `alibi_ai` foi > apagado: **40 repos ativos, 39 projetos**. **O próximo passo segue sendo a data.** > ➡️ **A frente de trabalho seguinte já tem handoff próprio:** > [`handoff-proximo-passo-dominios.md`](handoff-proximo-passo-dominios.md) — **todo projeto com > domínio próprio**. Nasceu da lição do CannibalScan: 21 dos 38 sites estão em `*.vercel.app` / > `*.easypanel.host` e, por isso, **fora de qualquer propriedade do Search Console**. Este arquivo > aqui continua sendo a **data**; aquele é o que fazer quando houver sessão. Substitui [`handoff-proximo-passo-30-07.md`](hando … …m dentro da média até ~outubro, então **o OK% pode piorar com tudo certo**. Já custou uma investigação inteira nesta mesma propriedade — o \"40,6% OK\" do roilabs era problema já corrigido, zero bug vivo. **Uma semana também é pouco:** 5 dias contra uma janela de 90 movem quase nada. O que dá para ver em 02/08 é *direção*, não *número*. Prazo real da curva: 33,6% → ~90% em ~90 dias. ### Se o robô falhar Ele roda em janela visível, na máquina do Jean, com sessão Google real. Os modos de falha conhecidos, em ordem de probabilidade: | sintoma | causa | conserto | |---|---|---| | `Chrome não abriu porta de debug` | já existe janela aberta **no perfil `%LOCALAPPDATA%\\roihub-gsc-profile`** — o Chrome delega para a instância existente e o processo novo morre sem escrever o `DevToolsActivePort` | fe … …ts/fetch-crawl-stats.mjs roilabs # só uma, por substring ``` --- ## ✅ O que fechou e não se reabre ### O NXDOMAIN está aplicado — 6 hosts promovidos, produção intacta `node scripts/cloudflare-redirects.mjs --verify` (sem token, só mede) em **30/07**: | host | estado hoje | |---|---| | `pathfinder` · `orion` · `vertice` · `atma` | **200**, `A 76.76.21.21` DNS only (Vercel) | | `atmaadmin` | **307 → `/admin`**, Vercel (projeto `admin`) — 307 é a rota, não erro | | `atmaapi` | **200**, `A 2.24.207.200` (EasyPanel, app `atma` do projeto `doc_crm`) | | `sirius` · `sofiaia` | **301** para `siriuscrm.com.br` / `polarisia.com.br`, preservando path | | `clerk.atma` · `jbadvocacia` · `andorinha` · `alibi` | **301** para o apex | | `www.sirius` · `www.goiania` | ⚠️ **falha de TLS** — Universal SSL co"
+      },
+      "veredito": "desmente",
+      "categoria": "numero errado afirmado no presente, em documento de tema outro",
+      "motivo": "Afirma '40 repos ativos, 39 projetos' contra 36 e 35 de hoje, sem data grudada no número — e o TEMA do documento é crawl stats/GSC, não a contagem do hub. É o modo de falha que sobrou: afirmação incompatível dentro de documento sobre outra coisa.",
+      "ancora": "40 repos ativos, 39 projetos"
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "apurado": {
+        "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+        "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-hub-github.md",
+        "tipo": "handoff",
+        "titulo": "handoff-hub-github.md",
+        "trecho": "…o hub de TODOS os repositórios do GitHub Data: 2026-07-28 Status: **implementado, testado e buildado localmente**. Falta `GITHUB_TOKEN` no ambiente de produção (EasyPanel) e a limpeza de `homepage` no GitHub (seção \"Pendências\"). --- ## O que mudou Antes: a lista de projetos do hub era `data/projects.json`, 10 entradas escritas à mão, importadas estaticamente por 10 arquivos. Agora: a lista vem **do GitHub ao vivo** — todo repo vivo com `homepage` preenchida é um projeto do hub. `data/projects.json` continua existindo, mas só como **curadoria**: receita, blockers, notas, `acao`/`acaoDesc` e a URL de produção. Resultado medido no dev server com token real: **67 repos lidos → 37 projetos** (10 curados + 27 repos com homepage) e **31 repos sem site** listados como pendência. ### A decisão que … …etails>` \"N repos ainda sem site\" na home, cada um com o `gh repo edit … --homepage …` pronto. - **Repo arquivado** é ignorado. - **Homepage repetindo host de projeto curado** não duplica linha (compara host sem `www.`). - **Agenda**: só ação de projeto curado vira item do dia — 27 \"curar X\" afogariam a lista. - **Insights/Infra**: repo sem curadoria e sem insight fica fora (não há o que diagnosticar, e repo novo não tem propriedade no GSC pra cobrar export de crawl). ## Bugs corrigidos no caminho 1. **`{...UNCURATED}` compartilhava `blockersLista`** entre todos os repos novos (mesma referência de array; `evaluate()` concatena flags do insights nela). Pego pelo teste \"UNCURATED não vaza\"; virou a função `uncurated()`. 2. **Pré-existente — o botão Pausar/Ativar do `tapepro` era rejeitado em … …que está no ambiente do *site*, não só no do cron. Sem ela o hub roda igual a antes (só os 10 curados) e o rodapé diz \"GitHub: desligado\". Escopo necessário: `repo` (para enxergar os privados). 2. **Os 29 `homepage` que apontam pra `*.vercel.app`.** Não quebram nada hoje (a URL curada vence nos 10, e os outros 27 não têm domínio próprio mesmo), mas enquanto apontarem pra preview o health check e o GSC medem o host errado. Corrigir com `gh repo edit JeanZorzetti/<repo> --homepage https://<domínio-real>/`. 3. **`Atma` e `repo-de-teste` aparecem como projetos reais** — têm `homepage` de preview e não estão arquivados no GitHub. `Atma` está aposentado (ver o plano de crawl). Arquivar o repo ou limpar a `homepage` tira os dois do ranking sem tocar em código. 4. **`qprime.roilabs.com.br` e `tape"
+      },
+      "veredito": "bate",
+      "categoria": "medicao datada no passado",
+      "motivo": "Diz '67 repos lidos → 37 projetos' contra 36/35 de hoje, mas o trecho abre com 'Data: 2026-07-28' e a frase é 'Resultado medido no dev server' — relata uma medição pontual, não afirma o presente. Mesma regra que absolve o passado datado.",
+      "ancora": "67 repos lidos → 37 projetos"
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "apurado": {
+        "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+        "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-lastro-no-dinheiro-e-no-gabarito-executado.md",
+        "tipo": "handoff",
+        "titulo": "handoff-lastro-no-dinheiro-e-no-gabarito-executado.md",
+        "trecho": "…ec: [`handoff-lastro-no-dinheiro-e-no-gabarito.md`](handoff-lastro-no-dinheiro-e-no-gabarito.md) · índice: [`../handoff.md`](../handoff.md). **Fases A, B, C e D executadas. E e G não. F está BLOQUEADA — e quem a bloqueou foi a medição da própria fase B, não falta de tempo.** `npm test` 247 verdes · `npx tsc --noEmit` limpo · `validade` 0 achados em 231 documentos vivos · `dourado-estado --estado tudo` **8 de 8 apuradas**. --- ## 1. Os três achados que mudam decisão ### 1.1 💰 R$ 940 de faturamento que não existe — e `approved` + `live_mode: true` não separa O Mercado Pago do `atma` tem **20 pagamentos aprovados de R$ 47**, entre 28 e 30/11/2025, todos com `live_mode: true`. São **R$ 940**, e **zero venda**: os 20 têm payer `test_user_…@testuser.com` e CPF `11111111111`. É o Jean validando … …gole tudo.** O detector decide pelo TEMA do documento, não pela AFIRMAÇÃO dentro dele. Corrompi `project_roihub_conformidade` para dizer **12 projetos** em vez de 35 e ele respondeu `nao-fala`, com o motivo *\"o documento trata da corrida de conformidade e não afirma quantos projetos o hub tem hoje\"*. Ele não erra ao acaso — ele **constrói desculpas para absolver**. **Consequência que inverte a conclusão de ontem:** um instrumento que absolve 7 de 10 corrupções deliberadas **não superestima a defasagem, subestima**. Os 8 `desmente` foram os altos o bastante para sobreviver a um detector que cala por padrão. **A taxa real do corpus é provavelmente MAIOR que 16,7%**, e \"é UM defeito só, `(hoje N)` em prosa\" pode ser só o único defeito que este detector sabe ver. Detalhe estrutural, agora **re … …receitaNota` com cara de fato. - **`D-67` reescrita.** `vendas` ausente e `vendas: []` **são coisas diferentes** — ausente é \"nenhum gateway ligado\", `[]` é \"o gateway respondeu e não pagou nada\". O denominador é o dos checados e os 34 sem fonte saem **nomeados na `ressalva`**. Confundir os dois seria tratar `n/a` como aprovação. - **`MERCADOPAGO_ACCESS_TOKEN`** no `.env` e no `.env.example`. - Blocker do `atma` *\"MP nunca testado em produção\"* → **desmentido pelo gateway** e rebaixado para `humano: false`. **8 de 8 apuradas.** 🚩 **O `sirius` NÃO foi ligado, e o motivo é rede, não credencial.** O `.env` do repo tem a URL completa e `31.97.23.166:5434` devolve **ETIMEDOUT** da máquina de dev — mesmo padrão do `:5499` do sofia-next. **O esquema já foi lido e a query é conhecida**: `Organiza"
+      },
+      "veredito": "bate",
+      "categoria": "numero errado citado como exemplo, nao afirmado",
+      "motivo": "Contém '12 projetos' literalmente, mas como relato de uma corrupção deliberada: 'Corrompi ... para dizer 12 projetos em vez de 35'. O documento AFIRMA 35. Citar um número errado para explicá-lo não é afirmá-lo — a mesma regra das crases do validade.mjs.",
+      "ancora": "12 projetos** em vez de 35"
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "apurado": {
+        "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+        "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-21-projetos-no-ar.md",
+        "tipo": "handoff",
+        "titulo": "handoff-21-projetos-no-ar.md",
+        "trecho": "…rror: DEPLOYMENT_NOT_FOUND` porque **os projetos não existiam mais na Vercel**. Resolvido: 6 repos excluídos pelo Jean + 13 redeployados. O hub saiu de **5 no ar / 23 fora** para **18 no ar / 4 fora**. --- ## Estado em 29/07 (medido no fim da execução) | resultado | quantos | quais | |---|---|---| | **200** | **19** | `alibi_ai` `cardio-risk-insight-hub` `cardioqwen3code` `cyberspace` `housingpro` `matchfios-textile-connector` `monolith-muse` `orion-nova-ui` `pathfinder` `portfolio` `potencial-arquitetado` `qprime` `reforma-maestro` `sirius` `sofia-ia` `synth-bot-buddy` `tape-vision-ai-92` `vertex-landing-craft` `vertice` | | 404 | 1 | `compass` — o A1, segue em [`handoff-proximo-passo.md`](handoff-proximo-passo.md) | **Repos excluídos pelo Jean** (somem do hub sozinhos, a lista vem do Git … …`secure-business-architect`, `andorinha-digital`, `pulse-tronic-install-pro`, `sofia-ai-lux-dash`, `mk6`, `prolife`, `eg`, `roi-zenith`. `sirius` era só `homepage` errada — apontava pro alias morto `sirius-ebon.vercel.app` enquanto `siriuscrm.com.br` respondia 200 o tempo todo. **Use a apex**, `www.siriuscrm.com.br` dá 404. --- ## 1. ⛔ A armadilha que quase matou a execução: OneDrive quebra `vercel --prod` `vercel --prod` rodado de qualquer pasta **dentro do OneDrive** morre com: ``` Error: UNKNOWN: unknown error, read ``` O CLI lê os arquivos pra subir e bate num que o OneDrive não hidratou. `--archive=tgz` não ajuda. **A solução é clonar fora do OneDrive** (`$TEMP`, `C:\\dev`) e deployar de lá: ```bash cd /c/dev && git clone --depth 1 https://github.com/JeanZorzetti/<repo>.git cd <repo> # … …m **segundo ambiente de produção contra o banco real**. Projeto deletado, `homepage` corrigida pra `polarisia.com.br`. **Não repita:** antes de concluir \"fora do ar\", procure o app em **outras plataformas** (EasyPanel/VPS), não só na Vercel — `vercel project ls` responde \"não existe na Vercel\", não \"não existe\". ⚠️ Achado que continua válido: **o `DATABASE_URL` do `.env` do repo está morto** — aponta pro proxy `bot@31.97.23.166:5499`, que dá **timeout**. O banco real é `sofia_db@2.24.207.200:5435` (64 tabelas, medido). Ver [[project_polaris_teams]]. ### `vertice` — não era config de rota O `NOT_FOUND` (em vez de `DEPLOYMENT_NOT_FOUND`) sugeria projeto existente com rota quebrada. **Errado:** não havia projeto `vertice` na conta — o alias `vertice-ten.vercel.app` foi **tomado por outra cont"
+      },
+      "veredito": "nao-fala",
+      "categoria": "outra metrica do mesmo objeto",
+      "motivo": "Fala de quantos projetos respondem 200 ('18 no ar / 4 fora', 'Estado em 29/07'), não de quantos projetos o hub tem nem de onde a lista sai. Disponibilidade e contagem são coisas diferentes.",
+      "ancora": "Estado em 29/07 (medido no fim da execução)"
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "apurado": {
+        "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+        "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-proximo-passo-dominios.md",
+        "tipo": "handoff",
+        "titulo": "handoff-proximo-passo-dominios.md",
+        "trecho": "# Handoff — próximo passo: todo projeto com domínio próprio (30/07/2026) **A frente anterior fechou.** Em 29/07 todo repo vivo ganhou site (`homepage` preenchida) — a coluna \"repos sem site\" está vazia e some sozinha. A frente seguinte é a que o CannibalScan expôs hoje: > **Ter site não é ter domínio. Site em domínio de fornecedor é invisível para a medição.** Não substitui [`handoff-proximo-passo-02-08.md`](handoff-proximo-passo-02-08.md) — **aquele segue valendo**: domingo **02/08, 10:00 BRT** é o primeiro run do robô de crawl, e continua sendo a única coisa que mede o conserto do NXDOMAIN. Este aqui é o que fazer **quando houver sessão de trabalho**. Índice: [`../handoff.md`](../handoff.md). --- ## Por que isso virou prioridade: a prova do CannibalScan Medido e resolvido em 30/07 (detal … …neraliza:** todo projeto em `*.vercel.app` está hoje no mesmo estado — no ar, contando como \"site\" no hub, e **completamente fora da medição**. --- ## 🔢 O tamanho da frente, medido em 30/07 `gh repo list --no-archived` + classificação por host + `curl` um a um: | | quantos | |---|---| | repos vivos com `homepage` | **38** | | **domínio próprio** (roilabs / nimblabs / polarisia / estetiacrm / siriuscrm) | **17** | | **domínio de fornecedor** (`*.vercel.app`, `*.easypanel.host`) | **21** | | dos 21, quantos respondem **200** | **21 — todos** | | dos 21, quantos estão em **alguma propriedade do GSC** | **ZERO** | Não é um problema de site quebrado. São 21 sites saudáveis e mudos. ### A. Ganharam landing em 29/07 — 12 repos Todos com push em `2026-07-29`, todos com commit `feat(site): landing … …que o hub já teve: 14 subdomínios aposentados do `roilabs.com.br` viraram NXDOMAIN e consumiram **76% do crawl budget** do domínio ([[roilabs_dns_cloudflare_retired_subdomains]]). O Googlebot continua batendo em host morto por meses. Criar domínio \"porque sim\" em 21 projetos, dos quais metade vai morrer, **reconstrói o problema que acabou de ser consertado**. Então a pergunta por projeto não é \"tem domínio?\", é: > **Este projeto vai buscar tráfego de busca?** - **SIM** → precisa de domínio próprio, porque sem isso ele não existe para o GSC. Promover. - **NÃO** (experimento, demo, ferramenta interna, aprendizado) → o certo é **arquivar o repo**, não dar domínio. O próprio `lib/projects.mjs` documenta isso: *\"arquivar o repo é o caminho preferido para APOSENTAR um projeto\"* — o repo arquivad"
+      },
+      "veredito": "nao-fala",
+      "categoria": "recorte do portfolio, nao o total",
+      "motivo": "Fala dos sites em domínio de fornecedor ('21 sites saudáveis e mudos', '21 dos 38 sites'), que é um subconjunto medido para outro fim. Não afirma o total de projetos do hub nem a origem da lista.",
+      "ancora": "21 sites saudáveis e mudos"
+    },
+    {
+      "id": "D-67",
+      "pergunta": "Quantos dos 35 projetos têm receita provada?",
+      "apurado": {
+        "resposta": "0 de 1 projeto(s) checado(s) contra um sistema de pagamento têm venda com data: nenhum. Receita provada: R$ 0.00. Venda sem data não conta — dinheiro sem data é R$ 0.",
+        "fonte": "data/projects.json (campo `vendas`, derivado do gateway por scripts/vendas-mercadopago.mjs)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "34 dos 35 cards não têm fonte de pagamento ligada e ficam FORA da conta: ausência de `vendas` é \"não olhei\", nunca \"não vendeu\". Sem gateway: goiania, tapepro, sirius, fabrica, roilabs, polarisia, estetiacrm, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, aprovai, moderador, meridian, seo-forecaster, cannibal_scan, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder."
+      },
+      "doc": {
+        "id": "handoff-curar-os-15-executado.md",
+        "tipo": "handoff",
+        "titulo": "handoff-curar-os-15-executado.md",
+        "trecho": "# Handoff — os 15 curados; e o Atma perdeu 98% do tráfego sem ninguém ver (30/07/2026, 22h BRT) **Curadoria do hub FECHADA: 20 → 35. Não sobra nenhum projeto não-curado.** `mergeProjects` contra a lista real do GitHub: `CURADO: 35 · NÃO-CURADO: 0 · hosts duplicados: ZERO`, todos os 15 casaram com o `repo` certo, `npm test` 130/130. Receita e método vieram de [`handoff-curar-os-15.md`](handoff-curar-os-15.md). ⚠️ Não substitui [`handoff-proximo-passo-02-08.md`](handoff-proximo-passo-02-08.md) — domingo **02/08, 10:00 BRT**, 1º run do robô de crawl, segue valendo. --- ## 🚨 O achado que muda a prioridade do portfólio inteiro **O Atma está DESINDEXADO — o site inteiro, inclusive a home — e perdeu 98% das impressões.** Era, com folga, o maior ativo orgânico da ROI Labs: ~1.600 impressões e ~30 … …rdeu 98% das impressões.** Era, com folga, o maior ativo orgânico da ROI Labs: ~1.600 impressões e ~30 cliques por dia. Hoje faz 10–20 impressões/dia. Ninguém viu porque a home responde **200** e o `checkHealth` do hub só olha `res.ok` — a mesma armadilha dos 3 de ontem, em versão nova e mais cara. | janela | cliques | impressões | |---|---|---| | 28d anteriores | **298** | **14.818** | | 28d atuais | 43 | 316 | **A queda tem data exata: 09/06 fechou com 1.675 impressões; 10/06, com 380.** O que a medição fecha, em ordem: 1. **Não foi deploy.** Não existe um único commit no repo `Atma` entre 20/05 e 30/07. 2. **URL Inspection API:** home, `/pacientes/precos` e `/blog/quanto-custa-alinhador-invisivel` estão todos em **`Crawled - currently not indexed`**, com **último crawl em 04–05/06**. O … …ente 27 cannibal_scan 25 moderador 25 seo-forecaster 23 qprime 20 aprovai 19 meridian 17 lumina 12 roi-labs-links 7 portfolio ``` Régua de `receita` mantida igual à dos 9: **7** = fatura hoje (só `orcaobra`); **6** = caminho de pagamento construído e vivo, sem venda provada (`atma`); **3** = preço público sem caminho até o dinheiro (`vertice`, `compass`, `qprime`); **2** = produto comercial sem preço nem cobrança; **0–1** = dev tool, demo, vitrine, CV, boilerplate. ### ⚠️ Um defeito da régua que apareceu e que eu NÃO consertei O critério `seo` é *\"tração acontecendo = merece atenção\"*, então **um projeto que desaba ganha nota BAIXA**: o Atma tirou **0,7** justamente por ter colapsado, e o orion tirou **0**. No Atma isso foi compensado à mão pelo `decay 10`, mas a régua está empurrando para"
+      },
+      "veredito": "bate",
+      "categoria": "a fonte nao olhou — e isso nao e desmentir",
+      "motivo": "Afirma '7 = fatura hoje (só orcaobra)'. O apurado NÃO nega isso: o orcaobra está entre os 34 sem fonte de pagamento ligada, e ausência de `vendas` é 'não olhei', nunca 'não vendeu'. Tratar a lacuna de cobertura como contradição inventaria defasagem.",
+      "ancora": "fatura hoje (só `orcaobra`)"
+    },
+    {
+      "id": "D-67",
+      "pergunta": "Quantos dos 35 projetos têm receita provada?",
+      "apurado": {
+        "resposta": "0 de 1 projeto(s) checado(s) contra um sistema de pagamento têm venda com data: nenhum. Receita provada: R$ 0.00. Venda sem data não conta — dinheiro sem data é R$ 0.",
+        "fonte": "data/projects.json (campo `vendas`, derivado do gateway por scripts/vendas-mercadopago.mjs)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "34 dos 35 cards não têm fonte de pagamento ligada e ficam FORA da conta: ausência de `vendas` é \"não olhei\", nunca \"não vendeu\". Sem gateway: goiania, tapepro, sirius, fabrica, roilabs, polarisia, estetiacrm, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, aprovai, moderador, meridian, seo-forecaster, cannibal_scan, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder."
+      },
+      "doc": {
+        "id": "roihub_portfolio_nao_cobra",
+        "tipo": "memoria",
+        "titulo": "Inventário de gateways dos 35 projetos: 1 ligado, 1 servido sem régua, 3 só com página de preço, 30 sem caminho de cobrança — 'faltam 2', não 'faltam 34'",
+        "trecho": "--- name: roihub-portfolio-nao-cobra description: \"Inventário de gateways dos 35 projetos: 1 ligado, 1 servido sem régua, 3 só com página de preço, 30 sem caminho de cobrança — 'faltam 2', não 'faltam 34'\" metadata: node_type: memory type: project originSessionId: 56943882-d297-43d5-b78f-5fec61a92729 modified: 2026-08-01T04:35:04.496Z --- `roihub/scripts/gateways.mjs` (01/08/2026, zero LLM, HTTP contra os 35 sites de produção). | balde | n | quem | |---|---|---| | gateway LIGADO (a régua do dinheiro lê) | 1 | `atma` | | gateway servido, **nenhuma régua lendo** | 1 | `orcaobra` — `<a href=\"https://pay.kiwify.com.br/…\">` | | só página de preço, sem gateway | 3 | `sirius`, `estetiacrm`, `orion` | | nenhum caminho de cobrança servido | 30 | os outros | **Why:** sem esse número, \"1 de 35 tem ga … …altam 2\" — e a diferença é a diferença entre um portfólio que **não cobra** e um que cobra e não mediu. **A resposta é \"faltam 2\".** A cobertura não é baixa por falta de integração; é baixa porque não existe cobrança para integrar. Isso fechou a decisão pendente: **`receitaProvada` NÃO entra no `computeScore`** (campo quase todo nulo no score é pior que nenhum), e a condição nova está escrita em `lib/score.mjs` — entra quando **10 dos 35** tiverem gateway LIGADO, não só página de preço. **How to apply:** - **`sem-gateway` NUNCA se lê como \"não cobra\".** É \"não achei caminho de cobrança servido\": não vê gateway montado por JS depois de clique, nem cobrança fora do site — o `sirius` fatura por tier de organização no próprio banco (ver [[project_sirius_crm]]). - **As DUAS primeiras corridas m"
+      },
+      "veredito": "nao-fala",
+      "categoria": "assunto vizinho: gateway nao e receita",
+      "motivo": "Conta quantos projetos TÊM caminho de cobrança (1 ligado, 1 servido, 3 só preço, 30 nada) — nunca quantos têm receita provada. A própria memória ensina a distinção. Proximidade temática máxima e resposta diferente.",
+      "ancora": "nenhum caminho de cobrança servido"
+    },
+    {
+      "id": "D-67",
+      "pergunta": "Quantos dos 35 projetos têm receita provada?",
+      "apurado": {
+        "resposta": "0 de 1 projeto(s) checado(s) contra um sistema de pagamento têm venda com data: nenhum. Receita provada: R$ 0.00. Venda sem data não conta — dinheiro sem data é R$ 0.",
+        "fonte": "data/projects.json (campo `vendas`, derivado do gateway por scripts/vendas-mercadopago.mjs)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "34 dos 35 cards não têm fonte de pagamento ligada e ficam FORA da conta: ausência de `vendas` é \"não olhei\", nunca \"não vendeu\". Sem gateway: goiania, tapepro, sirius, fabrica, roilabs, polarisia, estetiacrm, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, aprovai, moderador, meridian, seo-forecaster, cannibal_scan, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder."
+      },
+      "doc": {
+        "id": "project_roihub_conformidade",
+        "tipo": "memoria",
+        "titulo": "roihub executa 10 protocolos × 35 projetos em ~40s — e a primeira corrida mede o CHECK, não os projetos",
+        "trecho": "--- name: project-roihub-conformidade description: roihub executa 10 protocolos × 35 projetos em ~40s — e a primeira corrida mede o CHECK, não os projetos metadata: type: project --- `scripts/conformidade.mjs` + `lib/conformidade.mjs` (roihub, 31/07/2026). Os 97 protocolos tipados têm um campo `verificacao.como` — comando de shell que decide se a norma está sendo cumprida — que nunca tinha rodado. 10 deles viraram função e rodam contra os 35 projetos de `data/projects.json`. **Rede pura, zero LLM**: não divide o pool do autopublishing. Placar da 1ª corrida: **41 violações**. `VER-01` (cert) e `DEP-03` (home viva) passam em **35/35** — nenhum cert quebrado e nenhum site fora do ar no portfólio inteiro. **A lição que se repete:** a primeira corrida de um check novo mede o **check**. Das 46 violações iniciais, 5 eram o check errado — e consertar cada uma tornou a norma mais precisa que a prosa: - `SEC-01` perguntava `/api/auth/session` e chamava 404 de \"não tem login\". O `context.nimblabs` protege `/dashboard` com Auth0. A norma manda contar **rotas que devolvem 200 SEM sessão**, qualquer que seja o provedor → 3 falsos positivos viraram 0 falhas em 10 apps. - `VER-02` adivinhava `/sitemap.xml`; o `tapepro` serve `sitemap-index.xml` (padrão `@astrojs/sitemap`) e anuncia certo no robots. **Seguir o ponteiro do robots, não adivinhar.** - `GEO-02` acusava os perfis da própria marca Atma. E a comparação de perfil tem que ser por string inteira: `roi-labs-curadoria` (canônico) contém `roi-labs` (proibido). **Decisão de design que fez o cruzamento rodar sem curadoria:** stack e infra são **detectados do header/HTML**, não declarados — `projects.json` não tem esses campos e um campo manual descreveria o que o projeto era quando alguém digitou. Achado em aberto: o `estetiacrm` serve `twitter.com/roilabs` e `linkedin.com/company/roilabs` no JSON-LD (perfil deletado + perfil de terceiro), em dois blocos `sameAs` na mesma página. Handoff: `roihub/handoff/handoff-normas-que-rodam.md`. Ver também [[project_roihub]], [[roilabs_canonical_social_profiles]], [[geo_aeo_playbook]], [[claude_cli_token_pool_rotation]]."
+      },
+      "veredito": "nao-fala",
+      "categoria": "tema totalmente outro",
+      "motivo": "Trata da corrida de conformidade (10 protocolos × 35 projetos, 41 violações). Não afirma nada sobre receita, venda ou gateway.",
+      "ancora": "Placar da 1ª corrida"
+    },
+    {
+      "id": "D-70",
+      "pergunta": "Dos 35, o que está travado e em quê?",
+      "apurado": {
+        "resposta": "27 de 35 têm blocker registrado. Por família — não tem como cobrar: 11 (polarisia, potencialarquitetado, matchfios, whatsmeow, aprovai, moderador, seo-forecaster, cannibal_scan, compass, orion, pathfinder) · não tem tráfego: 8 (goiania, fabrica, aftercare, nimblabs, orcaobra, atma, qprime, vertice) · não há o que cobrar: o produto não funciona: 4 (reviewshield, cardiorisk, tapevision, cyberspace) · não tenta faturar por decisão: 4 (claudeloop, swarm, meridian, lumina). Estado: 25 no-ar, 8 no-ar-inutilizavel, 2 prototipo.",
+        "fonte": "data/projects.json (familia + estado + blockersLista), curadoria confirmada pelo Jean",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "família e estado são julgamento humano no card; o que se apura aqui é a distribuição, não o julgamento."
+      },
+      "doc": {
+        "id": "handoff-dourado-com-lastro-externo-executado.md",
+        "tipo": "handoff",
+        "titulo": "handoff-dourado-com-lastro-externo-executado.md",
+        "trecho": "# Handoff — o dourado de `estado` saiu do achismo (executado em 31/07/2026) Especificação que originou: [`handoff-dourado-com-lastro-externo.md`](handoff-dourado-com-lastro-externo.md) · estado anterior: [`handoff-juiz-de-verdade-executado.md`](handoff-juiz-de-verdade-executado.md) · índice: [`../handoff.md`](../handoff.md). **O que passou a ser verificado contra a realidade:** 5 das 8 perguntas de camada `estado` agora têm resposta apurada na fonte viva (GitHub, GSC, arquivos do repo), e existe pela primeira vez um número para a taxa de erro do corpus. **O que continua sendo prosa concordando com prosa:** as outras 3 de `estado`, as 70 de protocolo/episódio, e todo o resto da aba `/busca`. --- ## Fase 0 — corrida que perde o pool PARA (feito) `rodarClaude` agora distingue **pool esgotado* … …ma. Aviso perde para percentual. Testes: `test/reranker.test.mjs` (3 seguidas abortam · sucesso no meio zera · erro que não é de conta não aborta). **Isto não é hipótese:** a primeira corrida da fase 3 morreu de pool no meio e abortou sozinha, com 21 documentos julgados. A segunda retomou do cache e completou. ## Fases 1–2 — as 8 viraram função (`lib/dourado-estado.mjs`) `node --env-file=.env scripts/dourado-estado.mjs [--estado tudo] [--diff]` — zero LLM, como o `conformidade.mjs`. `--estado offline` roda só o que sai de arquivo do repo; sem rede, as caras dizem `nao_apurado` e **nunca um valor velho**. Duas execuções no mesmo dia batem (verificado). | | fonte viva | apurado em 31/07 | |---|---|---| | `D-66` quantos projetos | API do GitHub + `mergeProjects()` | 35 projetos (35 curados + … …e **todas** as 8 tinham fonte viva neste repo. Não têm: - **`D-67` (receita provada)** — `data/projects.json` não tem campo de venda. `receita` é nota **0-10 de prioridade**, não faturamento, e `receitaNota` é prosa. Somar isso seria inventar. - **`D-70` (o que está travado)** — as três famílias (\"não tem como cobrar\", \"não tem quem venda\", \"não tem tráfego\") e o estado (no-ar / inutilizável / protótipo) não existem como campo; são prosa em `acaoDesc`. - **`D-71` (esperando o Jean)** — `blockersLista` é texto livre. Grep por `manual|jean` devolve **18 cards contra os 5 reais**: mede o texto, não o bloqueio. As três saem `nao_apurado` com o campo que falta escrito no motivo, e **saem de circulação como gabarito**. Preencher `vendas: [{data, valor}]`, `familia`/`estado` e `blockersLista: [{t"
+      },
+      "veredito": "desmente",
+      "categoria": "taxonomia superada afirmada no presente",
+      "motivo": "Afirma que são TRÊS famílias e nomeia 'não tem quem venda', que não existe mais — hoje são cinco, com ordem de precedência, e a distribuição é 11/8/4/4. Afirma também que não existem como campo, quando `familia` é campo de projects.json desde 01/08.",
+      "ancora": "não tem quem venda"
+    },
+    {
+      "id": "D-70",
+      "pergunta": "Dos 35, o que está travado e em quê?",
+      "apurado": {
+        "resposta": "27 de 35 têm blocker registrado. Por família — não tem como cobrar: 11 (polarisia, potencialarquitetado, matchfios, whatsmeow, aprovai, moderador, seo-forecaster, cannibal_scan, compass, orion, pathfinder) · não tem tráfego: 8 (goiania, fabrica, aftercare, nimblabs, orcaobra, atma, qprime, vertice) · não há o que cobrar: o produto não funciona: 4 (reviewshield, cardiorisk, tapevision, cyberspace) · não tenta faturar por decisão: 4 (claudeloop, swarm, meridian, lumina). Estado: 25 no-ar, 8 no-ar-inutilizavel, 2 prototipo.",
+        "fonte": "data/projects.json (familia + estado + blockersLista), curadoria confirmada pelo Jean",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "família e estado são julgamento humano no card; o que se apura aqui é a distribuição, não o julgamento."
+      },
+      "doc": {
+        "id": "handoff-o-formato-era-o-bug.md",
+        "tipo": "handoff",
+        "titulo": "handoff-o-formato-era-o-bug.md",
+        "trecho": "# Handoff — o formato era o bug, o gabarito chegou à régua, e o portfólio não cobra (01/08/2026) Spec que originou este trabalho: [`handoff-o-veredito-vem-antes-do-raciocinio.md`](handoff-o-veredito-vem-antes-do-raciocinio.md) · calibração: [`../docs/defasagem-calibracao.md`](../docs/defasagem-calibracao.md) · índice: [`../handoff.md`](../handoff.md). **Executadas: A (fase mais barata, destravou o resto), B (maior retorno por hora), C.1 e C.4. NÃO executada: D — e ela é a única que fica mais cara a cada dia.** --- ## 1. O placar, sem propaganda | fase | o que era | o que ficou | |---|---|---| | **A** — detector de defasagem | holdout 71,4% · adversarial **3/10** | holdout **84,6%** · adversarial **8/10** — os dois ainda reprovam, por UM caso cada | | **B** — dourado apurado no juiz | 8 de … …itaProvada` no score | decisão pendente | **decidida e escrita em `lib/score.mjs`**, com condição nova | | **D** — rotacionar o token do MP | 🚨 vencida | 🚨 **continua vencida** — exige o painel do Mercado Pago | **252 testes verdes · `tsc` limpo · `validade` 0 achados em 234 documentos vivos · juiz da síntese intacto em 87,5% / 10-10.** --- ## 2. As três coisas que a próxima sessão precisa saber ### 2.1 🔑 A hipótese do handoff anterior estava certa, e o preço dela era três linhas O `VEREDITO` era a **primeira** linha que o modelo escrevia. Ele tinha que cravar a decisão antes de escrever o raciocínio que a justifica, e o resultado apareceu três vezes: > `VEREDITO: bate` · `MOTIVO: o número \"hoje 9, BATIDO\" é incompatível com o apurado hoje (2, não > batido) — desmente.` Inverter para `T … …`: ≥ 5.000 imp`; o modelo citou `gate do \\`sirius\\`` — **motivo certo, aspa errada**; - um terceiro devolveu uma frase que está no `CLAUDE.md` e **não estava no documento recebido**. ### 2.3 🔑 O portfólio não cobra — e essa é a resposta que faltava para ler o \"1 de 35\" `scripts/gateways.mjs` (zero LLM, HTTP contra os 35 sites): | balde | n | quem | |---|---|---| | gateway LIGADO (a régua lê) | 1 | `atma` | | gateway servido, **nenhuma régua lendo** | 1 | `orcaobra` — `<a href=\"https://pay.kiwify.com.br/…\">` | | só página de preço, sem gateway | 3 | `sirius`, `estetiacrm`, `orion` | | nenhum caminho de cobrança servido | 30 | os outros | **A leitura certa de \"1 de 35 tem gateway ligado\" é \"faltam 2\", não \"faltam 34\".** A cobertura não é baixa por falta de integração — é baixa porque **não"
+      },
+      "veredito": "nao-fala",
+      "categoria": "assunto vizinho: cobranca nao e blocker",
+      "motivo": "Fala do inventário de gateways e dos baldes de cobrança, não de quantos projetos têm blocker registrado nem da distribuição por família.",
+      "ancora": "O portfólio não cobra"
+    },
+    {
+      "id": "D-72",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "apurado": {
+        "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+        "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-deep-research-harness-de-agente.md",
+        "tipo": "handoff",
+        "titulo": "handoff-deep-research-harness-de-agente.md",
+        "trecho": "…ce: [`../handoff.md`](../handoff.md). **Tarefa:** deep-research sobre qual **harness de agente** o roihub deve adotar. --- ## ⚠️ Leia isto antes de pesquisar: o harness já existe A pergunta **não** é \"qual harness instalar do zero\". Medido no repo em 31/07: | Peça | Onde | O que é hoje | |---|---|---| | Motor | `Dockerfile:19` | `npm install -g @anthropic-ai/claude-code` dentro da imagem Alpine | | Auth | `lib/autopublish-clients.ts:169` | `CLAUDE_CODE_OAUTH_TOKEN**S**` — **plural**, pool de tokens de assinatura (`claude setup-token`) | | Invocação | `lib/autopublish-clients.ts:176` | `spawn(process.env.CLAUDE_BIN \\|\\| \"claude\", …)` cru, modelo `sonnet`, timeout 600s | | Gatilho | `.github/workflows/seo-autopublish.yml` | cron `13 3 * * *` (00:13 BRT) → `HUB_URL` → `/api/seo/autopublish` | … …ferramenta para achar `listProjects()`, o padrão de teste (`node --test`, sem framework), os tokens de CSS e o fato de o deploy ser Docker/EasyPanel e não Vercel. Isso é custo recorrente e é o buraco real. O único resíduo de harness no repo é `.superpowers/sdd/`, de uma feature de 24/07 — não é infraestrutura viva, é histórico de uma entrega. --- ## As quatro perguntas da pesquisa ### A. Claude Agent SDK vs `spawn(\"claude\")` — a decisiva O `spawn` cru funciona mas é frágil: parsing de JSON no texto (`autopublish-clients.ts:291` documenta que \"claude-cli não tem json_schema strict\"), retry à mão, zero streaming, zero tool-use estruturado. **A pergunta que decide tudo:** o Claude Agent SDK autentica com **token de assinatura** (`CLAUDE_CODE_OAUTH_TOKEN`) ou exige **API key paga**? Se exigir … …seja. ### D. Agente dentro de container O motor roda em `node:22-alpine` no EasyPanel. Pesquisar o que quebra: dependência glibc, `git` e `ripgrep` (já instalados no `Dockerfile:18`), limite de memória, e o corte de **~300s do proxy do EasyPanel** — que já apareceu como `request-failed` falso nos runs do `polarisia` e do `reviewshield`, contra um timeout de 600s no código. --- ## Restrições que a pesquisa não pode ignorar - **Sem API paga.** Único LLM = assinatura Claude via CLI ([[budget_claude_cli_only]]). Qualquer recomendação que peça `ANTHROPIC_API_KEY` é resposta errada para este repo. - **Gargalo é rate limit, não modelo** — a solução da casa é somar contas ([[polaris_teams_use_claude_cli]]), e o pool plural já está implementado aqui. - **Windows:** `spawn(\"claude\")` quebra ([[roih"
+      },
+      "veredito": "bate",
+      "categoria": "afirmacao correta em documento de tema outro",
+      "motivo": "Diz literalmente 'o deploy ser Docker/EasyPanel e não Vercel' — bate com o apurado. O tema do documento é harness de agente, o que faz dele o espelho do modo de falha: tema outro, afirmação certa.",
+      "ancora": "o deploy ser Docker/EasyPanel e não Vercel"
+    },
+    {
+      "id": "D-72",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "apurado": {
+        "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+        "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-tipar-protocolos.md",
+        "tipo": "handoff",
+        "titulo": "handoff-tipar-protocolos.md",
+        "trecho": "…i, **não** pelo bug do undici (que continua aberto — ver no fim). --- ## Por que esta fase antes de qualquer vetor Ela **não precisa** de embedding, pgvector, reranker, grafo ou MCP. É extração e tipagem. E entrega valor sozinha: com os protocolos tipados, já se responde > *\"quais dos 35 nunca foram checados contra a lição X\"* que hoje depende do Jean lembrar — e é o que falha em silêncio com 35 empresas. Se o projeto travar depois desta fase, nada foi perdido: o ativo mais caro do portfólio (o que já foi aprendido com incidente) sai de prosa espalhada e vira dado consultável. ## Leia isto antes de começar - [`../docs/rag-arquitetura.md`](../docs/rag-arquitetura.md) — as 7 camadas e por que protocolo/estado/episódio não podem ir para o mesmo índice. - [`../docs/protocolos-areas.md`](../doc … …. --- ## O corpus (medido em 31/07) 🚨 **A fonte mais rica está FORA do repositório.** | Onde | Quanto | O que é | |---|---|---| | `C:\\Users\\jeanz\\.claude\\projects\\c--Users-jeanz-OneDrive-Desktop-ROI-Labs\\memory\\` | **123 arquivos** | A mina. Ver quebra abaixo. | | `roihub/handoff/` | **35 handoffs** | Episódio + protocolo misturados em prosa. | | `Docs/Obsidian/80-dev/` (vault do roilabs) | a medir | Docs de feature; provável fonte de DEP/DAT. | | `lib/autopublish-clients.ts` | 1 arquivo | Protocolo editorial **em código**: as regras de CNT estão no prompt (fontes, concorrente, estrutura, imageScene, YMYL). Extrair de lá também. | Quebra dos 123 arquivos de memória: - **79 candidatos diretos a protocolo** (tudo que não é `project_*` nem `feedback_*`) - **38 `project_*`** — são **estado/ep … …erge fica local. `data/` já é copiado para a imagem no `Dockerfile:28`, então os protocolos viajam com o deploy e qualquer página do hub lê por `fs` sem banco. Campos: os de `protocolos-areas.md` § \"O registro de protocolo\". Os que não podem faltar: - **`verificacao.como`** — sem comando, o protocolo não entra no robô de conformidade nem no manifesto do projeto. **É o campo que separa protocolo de anotação.** Protocolo sem checagem possível volta para a fila ou vira nota — não vira registro. - **`aplica_se_a`** — vira aresta do grafo depois; é o que responde \"quais dos 35\". - **`excecoes`** — o histórico prova que protocolo sem exceção derruba tarefa boa (o `errors: 1` do sitemap do `fabrica` viraria bloqueio falso). - **`origem`** — nome do arquivo de memória ou do handoff. Procedência é"
+      },
+      "veredito": "bate",
+      "categoria": "afirmacao correta em documento de tema outro",
+      "motivo": "Afirma que `data/` é copiado para a imagem no Dockerfile e que os protocolos viajam com o deploy — confirma Docker e a imagem, compatível com o apurado, dentro de um documento sobre tipagem de protocolos.",
+      "ancora": "já é copiado para a imagem no `Dockerfile:28`"
+    },
+    {
+      "id": "D-72",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "apurado": {
+        "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+        "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "project_roihub",
+        "tipo": "memoria",
+        "titulo": "ROI Hub — dashboard admin que rankeia os 10 projetos SEO por score de prioridade e diz o foco do dia",
+        "trecho": "--- name: project-roihub description: ROI Hub — dashboard admin que rankeia os 10 projetos SEO por score de prioridade e diz o foco do dia metadata: node_type: memory type: project originSessionId: e9757472-b881-493f-9997-dc7c506837c5 modified: 2026-07-30T18:24:49.900Z --- ROI Hub (`ROI Labs/roihub`, repo PRIVADO `JeanZorzetti/roihub`): hub administrativo criado 10/07/2026 durante crise de foco do Jean (\"10 projetos, quero focar em 1 por dia\"). Uma página Next.js 16 que rankeia os 10 projetos full-SEO por score 0–100 = receita×0.35 + blockers×0.25 + SEO×0.2 + decay×0.2, e destaca o FOCO DE HOJE. **SplitJud excluído de propósito** — dividido com o Aldo (sumido); só projetos 100% do Jean. Arquitetura (decisões conscientes): SEM banco de dados — critérios manuais em `data/projects.json` versi … …OD confirmado pelo Jean 10/07** (rodapé \"conectado — 10 propriedades\"). **Aba SEO de progressão SHIPPED 10/07 tarde (commit `c47d40f`, push→deploy automático):** `/seo` = small multiples, 1 card/projeto com stats 28d-vs-28d (cliques Δ%, impressões Δ%, posição média ponderada por impressões com leitura invertida) + 2 gráficos de colunas de 12 semanas (cliques e impressões separados — nunca 2 escalas). `gscSeries()`/`queryTimeseries` em `lib/gsc.ts` (84 dias, `dimensions:[\"date\"]`, fecha D-3); agregação pura em `lib/series.mjs` (node:test 10/10). Tooltip `<title>` SVG nativo (zero client JS) + tabela-gêmea `<details>`. Abas Ranking|SEO compartilhadas em `app/tabs.tsx`. Verificado local com dados reais (10/10 cards GSC, screenshot). `.env` local com a credencial agora existe (gitignorado). ** … …DEDICADO `roihub_db`** (`postgres://roihub_db:PAzo18**@2.24.207.200:5445/roihub_db` — Jean criou na EasyPanel 11/07; schema+seeds aplicados, tabelas hub_* da 1ª versão no roilabs_db dropadas). SEM migration formal por design: `lib/db.ts` auto-cria schema no 1º uso (mudança futura = editar `ensure()` aditivo ou SQL manual). Buckets Atrasadas/Hoje/7 dias/Mais tarde/Sem data + ações do projects.json espelhadas (key=hash do texto, editar reseta check) + Feitas com undo. Recorrência semanal (weekday 0-6), done por ocorrência. Server actions + forms puros, zero client JS. Seeds: rotina sexta, rank tracking segunda, checkpoint 15/07. E2E local com DB real OK. ✅ `DATABASE_URL` setada na EasyPanel do hub (Jean confirmou 11/07) — /agenda persistente em prod. **11/07 tarde (`e4b94af`+`ad60267`): cli"
+      },
+      "veredito": "bate",
+      "categoria": "afirmacao parcial e compativel",
+      "motivo": "Afirma 'push→deploy automático' e situa o hub na EasyPanel. Compatível com o apurado; não menciona a janela proibida, mas omitir não é contradizer.",
+      "ancora": "push→deploy automático"
+    },
+    {
+      "id": "D-72",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "apurado": {
+        "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+        "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-quatro-sites.md",
+        "tipo": "handoff",
+        "titulo": "handoff-quatro-sites.md",
+        "trecho": "# Handoff — os quatro repos que faltam viram site Escrito na 3ª sessão de 29/07, a partir da decisão do Jean. Precedente direto e **método a reusar**: [`handoff-seis-sites.md`](handoff-seis-sites.md) (6/6 no ar). Índice: [`../handoff.md`](../handoff.md). ## ✅ Estado: 4 de 4 no ar (executado em 29/07, 4ª sessão) | # | repo | URL | o que foi feito | |---|---|---|---| | 1 | `roi-labs-links` | https://roi-labs-links.vercel.app | **a página estava quebrada e ninguém sabia** — ver abaixo. Corrigida, logo morta trocada, Babel removido, deploy | | 2 | `aesthetic-perfection-page` | https://lumina-demo-beryl.vercel.app | publicada **como demonstração explícita**: barra fixa, contatos fictícios, WhatsApp → ROI Labs, form que admite não enviar nada | | 3 | `cannibal_scan` | https://cannibalscan.vercel … …ocacao.vercel.app | landing nova; projeto Vercel `aprovai-locacao` para **não** encostar no `aprovai.vercel.app` de terceiro | `homepage` gravada nos 4 repos e confirmada com 200 antes de gravar. **Repos sem `homepage`: 6 → 2**, e os 2 que sobram são os de decisão (`roihub`, `repo-de-teste`), que já estão em `semSitePorDecisao` — ou seja, **o `<details>` da home fica vazio e some sozinho**. Nenhuma mudança foi necessária no roihub. ### O que se aprendeu, por site **1 · `roi-labs-links` — \"site estático pronto\" não quer dizer \"site que funciona\".** A página nunca tinha sido aberta num browser. O CSS copia à mão as classes de gradiente do Tailwind, mas copiou também os `var(--tw-gradient-*-position)` — que **nunca foram definidos**. Um `var()` sem fallback dentro de uma custom property a inv … …ancestral mataria a barra `sticky` de demonstração (ver [[overflow_x_hidden_kills_sticky]]). **3 · `cannibal_scan` — landing, como recomendado; o app real segue bloqueado.** Nada de toolchain Rust nem de OpenRouter: a decisão de escopo foi a barata. O hero é o scan rodando (pares de URLs pontuando contra o limiar `0.70` e virando o veredito `keep`/`301` do agente) e o conteúdo saiu do crate: pesos de campo `title ×3 · h1 ×2 · meta ×1 · texto ×1`, `n*(n-1)/2` comparações, `compare_sites` com IDF compartilhado. Cor de sinal: **azul-petróleo `#12606E`**. **4 · `aprovai` — a landing é a função de score.** O hero anima `scoring.ts` de verdade: 100 pontos caindo regra a regra, com **as mesmas frases de motivo** que o corretor recebe no WhatsApp, até as faixas 70 / 40. A página **diz** que é MVP"
+      },
+      "veredito": "nao-fala",
+      "categoria": "a palavra Vercel e de OUTROS projetos",
+      "motivo": "Cheio de 'vercel.app', mas todos de outros projetos do portfólio (roi-labs-links, cannibalscan, aprovai). Não diz onde o roihub roda. Casar pela palavra marcaria isto como contradição.",
+      "ancora": "roi-labs-links.vercel.app"
+    },
+    {
+      "id": "D-72",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "apurado": {
+        "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+        "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "project_roihub_autopublishing",
+        "tipo": "memoria",
+        "titulo": "Autopublishing do ROI Hub — 1 artigo/dia x 10 projetos; 3 artigos no ar e reescritos à mão, rollout de 2 projetos/dia; motor é claude-cli, não OpenAI",
+        "trecho": "--- name: project-roihub-autopublishing description: \"Autopublishing do ROI Hub — 1 artigo/dia x 10 projetos; 3 artigos no ar e reescritos à mão, rollout de 2 projetos/dia; motor é claude-cli, não OpenAI\" metadata: node_type: memory type: project originSessionId: 1c5c7f63-890f-4551-9098-d51fb8426dc9 modified: 2026-07-25T14:09:19.688Z --- Robô que publica 1 artigo/dia em cada um dos 10 projetos SEO, dentro do [[project-roihub]]. Plano SDD em `docs/superpowers/plans/2026-07-24-seo-autopublishing.md`. **Três handoffs vivos, ler nesta ordem:** `roihub/handoff-autopublish.md` (como funciona) → `handoff-polimento-editorial.md` (qualidade do artigo) → `handoff-correcao-e-rollout.md` (estado atual e o que falta). **Estado em 2026-07-25 (fim do dia):** 3 artigos no ar (`context`, `goiania`, `tapepr"
+      },
+      "veredito": "nao-fala",
+      "categoria": "tema vizinho onde a resposta MORA",
+      "motivo": "Descreve o robô de autopublishing — justamente o componente de que sai a janela proibida de 00:13 — mas o trecho não afirma nem onde o hub roda nem como se publica.",
+      "ancora": "Robô que publica 1 artigo/dia"
+    },
+    {
+      "id": "D-72",
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "apurado": {
+        "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+        "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "roihub_autopublishing_gotchas",
+        "tipo": "memoria",
+        "titulo": "Armadilhas reutilizáveis achadas ao automatizar publicação de blog — GSC vazio vira duplicata, claude-cli spawn no Windows, WebSearch nativo do CLI",
+        "trecho": "--- name: roihub-autopublishing-gotchas description: \"Armadilhas reutilizáveis achadas ao automatizar publicação de blog — GSC vazio vira duplicata, claude-cli spawn no Windows, WebSearch nativo do CLI\" metadata: node_type: memory type: reference originSessionId: 3f1ada78-c857-4b47-992a-311739f720f8 modified: 2026-07-25T13:39:13.291Z --- Aprendizados do autopublishing do [[project-roihub-autopublishing]] que valem fora dele. **1. API de dados que \"falha silenciosa devolvendo lista vazia\" é pior que falhar.** `gscQueryPages` engolia todo erro e retornava `[]`. Com `[]` nenhum candidato casa com o inventário, então TODA pauta vira `action: \"new\"` — um GSC fora do ar publicaria 10 artigos duplicando URLs já ranqueadas. Fix: modo `strict` (3 tentativas, backoff 250/500ms) que lança `gsc-unavai … …rict` (3 tentativas, backoff 250/500ms) que lança `gsc-unavailable` em vez de retornar vazio. Regra geral: quando lista vazia e falha significam coisas opostas para quem chama, não colapse as duas. **2. `claude -p --output-format json` é um contrato estável e usável como cliente LLM.** Retorna `{ result: string, is_error: bool, usage: { input_tokens, output_tokens } }` — dá para trocar a Responses API da OpenAI por ele mudando só o adaptador, se o código já usa `output_text`/`usage`. **O CLI tem WebSearch nativo** (`--allowedTools WebSearch`), então trocar API paga por assinatura NÃO custa a pesquisa. O que se perde é `json_schema` strict: manda o schema no prompt, extrai o JSON do texto (pode vir com ``` fences) e falha fechado no parse. **3. `spawn(\"claude\")` falha com ENOENT no Windows* … …*Contents: Read* devolve `push: true` e mesmo assim dá `403 Resource not accessible by personal access token` em qualquer escrita. O único teste honesto é tentar escrever: `POST /repos/{owner}/{repo}/git/blobs` cria um objeto solto, não mexe em branch nenhum, e responde 201 ou 403. **8. Busca de imagem por termo long-tail devolve zero.** O Unsplash não tem foto para \"windsurf ai explained\". Se a pauta é long-tail de propósito (SEO), a busca de capa precisa **degradar** (intenção → cluster → 2 primeiras palavras → termo genérico), senão justamente os artigos de nicho — os que mais interessam — nunca publicam. **9. Classificar a mensagem de erro, nunca repassá-la.** O stderr de um CLI de LLM pode conter o prompt inteiro. Mapeie para códigos fechados (`llm-auth`/`llm-rate`/`llm-output`) e te"
+      },
+      "veredito": "nao-fala",
+      "categoria": "tema vizinho, afirmacoes de outra ordem",
+      "motivo": "Armadilhas de API, spawn no Windows e GSC. Nada sobre plataforma de deploy do hub.",
+      "ancora": "falha com ENOENT no Windows"
+    },
+    {
+      "id": "D-73",
+      "pergunta": "Escrevi um test/*.test.mjs novo e ele passa quando rodo à mão. Está no CI?",
+      "apurado": {
+        "resposta": "Não: npm test roda uma lista explícita no package.json (20 arquivos). Hoje 0 arquivo(s) de teste fora da lista — arquivo novo só roda depois de entrar lá à mão. Motor: node --test com assert/strict, sem framework (jest/vitest/mocha não instalados).",
+        "fonte": "package.json (scripts.test) × test/*.test.mjs no disco",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-tipar-protocolos.md",
+        "tipo": "handoff",
+        "titulo": "handoff-tipar-protocolos.md",
+        "trecho": "# Handoff — próximo passo: tipar os protocolos que já existem (31/07/2026) Estado anterior: [`handoff-harness-decidido.md`](handoff-harness-decidido.md). Índice: [`../handoff.md`](../handoff.md). **Tarefa:** executar a **fase 2** de [`../docs/rag-arquitetura.md`](../docs/rag-arquitetura.md) — transformar o conhecimento já escrito em registros de protocolo tipados e verificáveis. **Decisão do Jean (31/07):** começar por aqui, **não** pelo bug do undici (que continua aberto — ver no fim). --- ## Por que esta fase antes de qualquer vetor Ela **não precisa** de embedding, pgvector, reranker, grafo ou MCP. É extração e tipagem. E entrega valor sozinha: com os protocolos tipados, já se responde > *\"quais dos 35 nunca foram checados contra a lição X\"* que hoje depende do Jean lembrar — e é o que … …reas.md` está escrito em YAML **por legibilidade**. A implementação tem que ser **JSON**: o Node 22 não tem parser de YAML nativo e este repo não adiciona dependência para isso. Precedente da casa: `data/projects.json`. **Onde:** `data/protocolos/<AREA>-<NN>.json` — um arquivo por protocolo. Um arquivo por protocolo, e não um `protocolos.json` gigante, por três motivos: diff legível, `supersede` vira mudança de um arquivo só, e conflito de merge fica local. `data/` já é copiado para a imagem no `Dockerfile:28`, então os protocolos viajam com o deploy e qualquer página do hub lê por `fs` sem banco. Campos: os de `protocolos-areas.md` § \"O registro de protocolo\". Os que não podem faltar: - **`verificacao.como`** — sem comando, o protocolo não entra no robô de conformidade nem no manifesto do … …a bloqueio falso). - **`origem`** — nome do arquivo de memória ou do handoff. Procedência é obrigatória: resposta sem ela é resposta que o agente vai re-derivar. - **`valid_from` / `valid_to`** — bitemporal. Fato revogado sai de circulação e continua auditável. ## O teste que fecha a fase `test/protocolos.test.mjs`, no padrão da casa (`node --test`, `assert/strict`, sem framework) — e **adicionar à lista explícita do `npm test` no `package.json`**, senão nunca roda. Precisa falhar se: - algum `.json` em `data/protocolos/` não parseia; - falta campo obrigatório, ou `verificacao.como` está vazio; - `area` não é uma das 18 (13 com lastro + 5 lacunas); - `id` não bate com o nome do arquivo, ou está duplicado; - `origem` está vazio; - um `valid_to` preenchido não tem `supersede` apontando para"
+      },
+      "veredito": "bate",
+      "categoria": "afirmacao correta em documento de tema outro",
+      "motivo": "Diz 'no padrão da casa (node --test, assert/strict, sem framework)' e manda 'adicionar à lista explícita do npm test no package.json, senão nunca roda'. Bate com o apurado nos dois eixos: motor e lista explícita.",
+      "ancora": "lista explícita do `npm test` no `package.json`"
+    },
+    {
+      "id": "D-73",
+      "pergunta": "Escrevi um test/*.test.mjs novo e ele passa quando rodo à mão. Está no CI?",
+      "apurado": {
+        "resposta": "Não: npm test roda uma lista explícita no package.json (20 arquivos). Hoje 0 arquivo(s) de teste fora da lista — arquivo novo só roda depois de entrar lá à mão. Motor: node --test com assert/strict, sem framework (jest/vitest/mocha não instalados).",
+        "fonte": "package.json (scripts.test) × test/*.test.mjs no disco",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-normas-que-rodam.md",
+        "tipo": "handoff",
+        "titulo": "handoff-normas-que-rodam.md",
+        "trecho": "# Handoff — as normas rodaram, e o primeiro achado foi no próprio hub (31/07/2026, 20h BRT) Executa: [`handoff-proximo-passo-corpus-verdade.md`](handoff-proximo-passo-corpus-verdade.md), frente 1 (\"transformar os 97 protocolos em verificação que RODA\"). Antes dele: [`handoff-resposta-com-citacao.md`](handoff-resposta-com-citacao.md) · [`handoff-reranker-no-ar.md`](handoff-reranker-no-ar.md). Arquitetura: [`../docs/rag-arquitetura.md`](../docs/rag-arquitetura.md) · índice: [`../handoff.md`](../handoff.md). --- ## O achado mais caro veio do passo 1, antes de qualquer código O handoff anterior mandava começar verificando produção. Verificado: **a busca estava morta em produção e ninguém sabia.** O rodapé de `hub.roilabs.com.br/busca?q=…` trazia, lado a lado, `rerank-output` e `resposta-output … …do: **a busca estava morta em produção e ninguém sabia.** O rodapé de `hub.roilabs.com.br/busca?q=…` trazia, lado a lado, `rerank-output` e `resposta-output` — o código de erro que significa \"o modelo escreveu bobagem\". Não era o modelo. `CLAUDE_CODE_OAUTH_TOKENS` é um pool de 3 contas, e `rodarClaude` (`lib/reranker.mjs`) usava **sempre `tokens[0]`**, sem nunca tentar o próximo. Estado real do pool naquele momento: ``` token[0] 429 \"You've hit your monthly spend limit\" token[1] ok token[2] 403 \"Your organization has disabled Claude subscription access\" ``` Duas contas mortas, uma viva, e a busca inteira presa na primeira. **Não havia nada de errado com a entrega de hoje de manhã** — a síntese com citação funcionava; ela só nunca chegava à conta que respondia. O `avaliar-resposta.mjs --lim … …nta esgotada, indistinguível de rate limit normal\" — só que ele já estava acontecendo, do lado da busca, e o rodapé o reportava com o código errado há horas. --- ## A frente 1, executada: 10 normas × 35 projetos `lib/conformidade.mjs` + `scripts/conformidade.mjs` + `test/conformidade.test.mjs` (**193 verdes**). Zero chamada de LLM: é rede pura, não divide pool com o autopublishing. ``` node --env-file=.env scripts/conformidade.mjs # só as violações node --env-file=.env scripts/conformidade.mjs --tudo # inclui o que passou node --env-file=.env scripts/conformidade.mjs --projeto atma node --env-file=.env scripts/conformidade.mjs --check VER-02 ``` **Quais 10, e por quê essas.** Dos 29 protocolos `falha_significa: bloqueia` + `por entrega`, só entraram os que rodam contra a URL de produção. O"
+      },
+      "veredito": "nao-fala",
+      "categoria": "menciona teste sem afirmar o mecanismo",
+      "motivo": "Cita 'test/conformidade.test.mjs (193 verdes)' — menciona um arquivo de teste e um placar, mas não afirma como o npm test descobre os arquivos.",
+      "ancora": "test/conformidade.test.mjs"
+    },
+    {
+      "id": "D-73",
+      "pergunta": "Escrevi um test/*.test.mjs novo e ele passa quando rodo à mão. Está no CI?",
+      "apurado": {
+        "resposta": "Não: npm test roda uma lista explícita no package.json (20 arquivos). Hoje 0 arquivo(s) de teste fora da lista — arquivo novo só roda depois de entrar lá à mão. Motor: node --test com assert/strict, sem framework (jest/vitest/mocha não instalados).",
+        "fonte": "package.json (scripts.test) × test/*.test.mjs no disco",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": ""
+      },
+      "doc": {
+        "id": "handoff-juiz-de-verdade-executado.md",
+        "tipo": "handoff",
+        "titulo": "handoff-juiz-de-verdade-executado.md",
+        "trecho": "…f — o juiz de VERDADE, executado (31/07/2026) Execução de [`handoff-juiz-de-verdade.md`](handoff-juiz-de-verdade.md), fases 0 a 5. As cinco fases fecharam com os critérios de aceite que o handoff pediu, **e três decisões dele mudaram na execução** — as três estão argumentadas abaixo, com o que as forçou. Estado anterior: [`handoff-normas-que-rodam.md`](handoff-normas-que-rodam.md) · arquitetura: [`../docs/rag-arquitetura.md`](../docs/rag-arquitetura.md) · índice: [`../handoff.md`](../handoff.md). --- ## O que existe agora | arquivo | o que é | |---|---| | [`lib/juiz.mjs`](../lib/juiz.mjs) | as duas passadas, puras e testáveis | | [`scripts/juiz-calibrar.mjs`](../scripts/juiz-calibrar.mjs) | os portões — 38 chamadas, decide se vale gastar as 156 | | [`data/juiz-calibracao.json`](../data/jui … …ile=.env scripts/juiz-calibrar.mjs --ver # os portões (38 chamadas) node --env-file=.env scripts/avaliar-resposta.mjs --juiz --ver # as 78 (3 chamadas/pergunta) node --env-file=.env scripts/avaliar-resposta.mjs --ids D-70,D-76 --juiz --ver # um recorte ``` `--ids` é novo e não é conveniência: toda inspeção que importa é de um subconjunto escolhido (as 8 de `estado`, os casos que o juiz marcou `contradiz`), e `--limite N` só pega as N primeiras, que são todas `protocolo`. --- ## As três decisões que mudaram, e o que forçou cada uma ### 1. O rótulo humano de 20 não podia ser as 20 primeiras perguntas O handoff pedia \"rotule 20 respostas à mão\". As 20 primeiras do dourado são **todas de camada `protocolo`**, que é onde a síntese acerta quase tudo: rodadas as 20, a ancoragem deu 100% e eu rotu … …a, que é exatamente o erro que o handoff avisa para não cometer. - **D-03 × D-08** — a regra de \"abertura invertida\" estava mal definida e **eu mesmo a apliquei em direções opostas nos dois casos**, que têm a mesma forma. O juiz também. Afiada para: só é `contradiz` quando a correção chega em **outra frase**. - **D-14** — punido sem que nada mudasse na ação prescrita. Corrigi a **definição** (no prompt e nos rótulos) e revisei 4 rótulos. Mas **rótulo revisado depois de ler o juiz é contaminado**: medir concordância contra ele é circular, e publicar esse número seria repetir em 3 horas o pecado que este handoff existe para não repetir. Então o portão passou a ser um **holdout cego**: 8 perguntas novas, respostas geradas, rotuladas com a definição já afiada e **antes de o juiz vê-las**. Os 2"
+      },
+      "veredito": "nao-fala",
+      "categoria": "tema totalmente outro",
+      "motivo": "Trata das duas passadas do juiz e dos portões. Não afirma nada sobre a lista do npm test nem sobre o motor de teste.",
+      "ancora": "as duas passadas, puras e testáveis"
     }
   ]
 }
