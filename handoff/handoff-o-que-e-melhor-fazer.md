@@ -268,7 +268,64 @@ Com os 6 da seção 4 ligados, seriam 7.
 
 ---
 
-## 7. O que fica registrado como armadilha desta sessão
+## 7. "Redis ajuda a ficar pronto mais rápido?" — NÃO, e a medição diz por quê
+
+Pergunta feita nesta sessão. Fica registrada para não voltar.
+
+**Nenhum dos dois blockers é de I/O.** A feature A trava porque a célula `desmente` tem 5 casos —
+isso é mineração e rotulagem, não armazenamento. A feature B trava num token para rotacionar, numa
+porta fechada e num checkout para ligar. **Cache não guarda o que ainda não existe.**
+
+E não há gargalo de I/O para resolver. Medido hoje, nesta máquina:
+
+| operação | custo |
+|---|---|
+| `carregarCorpus()` (294 documentos) | **224 ms** |
+| cache de embeddings, 24,7 MB (ler + `JSON.parse`) | **251 ms** (51 MB de heap) |
+| `npm test`, 254 testes | **1,3 s** |
+| `conformidade.mjs` | ~40 s, **rede pura** contra 35 sites |
+
+Contra isso: **uma** chamada `claude -p` é um subprocesso de segundos. A busca faz **duas por
+pergunta**. O portão faz **~64**. O experimento das duas passadas queimou **~130**. **O relógio é o
+LLM e o teto é o rate limit da assinatura** — que é pool de contas, não cache. Redis acelera um
+passo de 250 ms e não move um orçamento de 130 chamadas.
+
+Três fatos do próprio repo fecham o assunto:
+
+1. **O caminho de produção já não toca no cache grande.** `lib/denso.mjs:113`: *"A consulta não passa
+   pelo cache em produção: gravar 13 MB de disco a cada busca da aba seria pagar o custo da
+   indexação inteira por pergunta."*
+2. **A decisão já foi tomada, por escrito.** `lib/corpus-db.mjs:11`: *"Postgres já existe
+   (`DATABASE_URL`) — **nenhuma infra nova**."* Corpus e vetores moram lá exatamente por isso.
+   Adicionar Redis reverteria uma decisão deliberada para um gargalo que não existe.
+3. **O ganho barato já foi colhido:** `.cache/rerank.json` e o cache morno do `corpus-defasado.mjs`
+   já fazem corrida morta retomar de onde parou, que é a única economia de pool que um cache
+   consegue dar aqui.
+
+### Onde Redis SERIA a peça certa — e por que ainda não é
+
+**Estado do pool de tokens compartilhado entre processos.** Hoje a rotação é por processo. Se o
+autopublishing passar a rodar projetos em paralelo, ou se a busca e o cron disputarem as mesmas
+contas, "qual conta está queimada agora e até quando" vira estado compartilhado com corrida — e
+contador atômico com TTL é exatamente a forma de um Redis. **Mas hoje o cron é 1 corrida/dia,
+sequencial, um processo.** E quando chegar a hora, o Postgres que já está ali resolve com uma linha
+e `SELECT … FOR UPDATE`, sem serviço novo.
+
+### O custo que decide
+
+Este repo tem **11 dependências no total** e um deploy que é uma imagem Docker só. Redis
+significa serviço novo, connection string nova e **um modo de falha novo** — numa base cuja cultura
+inteira é *falha fechada* e *evidência antes de asserção*. Cache que pode estar fora do ar é uma
+classe nova de "o número mudou e ninguém sabe por quê". **Ficaria pronto mais devagar, não mais
+rápido.**
+
+**As três alavancas reais de velocidade** são: (a) o **pool de contas claude-cli** — é o teto duro;
+(b) a **vazão de rotulagem humana** da célula `desmente`; (c) destravar **uma porta** e **uma
+rotação de token**. Nenhuma delas é infraestrutura de dados.
+
+---
+
+## 8. O que fica registrado como armadilha desta sessão
 
 - **Premissa de handoff é hipótese datada.** Três caíram hoje, e conferir custou segundos cada.
 - **Segredo em `.md` é o ponto cego estrutural.** Nenhuma varredura de `.env*` o encontra — e esta
