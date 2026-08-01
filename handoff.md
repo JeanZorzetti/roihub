@@ -1,6 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md`](handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-geo-01-nos-7-com-trafego.md`](handoff/handoff-geo-01-nos-7-com-trafego.md)
+> (01/08): `GEO-01` entregue nos 7 com tráfego — e o check media a PALAVRA `GPTBot`, não a permissão.**
+> 🚩 **O `orion` servia `User-Agent: GPTBot` + `Disallow: /` e o check chamava isso de conformidade.**
+> Site inteiro fora do ChatGPT. Mesma classe do "palavra ≠ URL" do `gateways.mjs`. **O AGREGADO NÃO SE
+> MEXEU — 41 antes, 41 depois** (o `orion` já falhava por `llms.txt`); só a LINHA mudou. Ler as linhas.
+> ⏳ **A verificação de entrega ainda NÃO foi feita:** `GEO-01` tem que cair de **28 → 21**, sete a
+> menos, e **nenhum não-tocado pode mudar de balde**. Os 7 respondiam 404 minutos depois do push — é a
+> janela do build, não falha.
+> 🚩 **Três defeitos de INFRA que o `llms.txt` desenterrou:** `output: standalone` **não empacota
+> `public/`** (o `globe.svg` do `reviewshield` já era 404 em produção) · `robots.txt` DUPLICADO em
+> `public/` e em `app/robots.ts`, **se contradizendo** no `orion` · middleware Auth0 do `context`.
+> ✅ **`claudeloop` FECHADO:** o Google escolheu o host ANTIGO (`claude-loop-runner`), que está
+> **indexado** e hoje **308 para o novo**. Conserto já de pé; falta o Google recrawlear. Não é tarefa.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md`](handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md)
 > (01/08): o `D-84` não tem UMA ação, tem QUATRO classes — e a maior já foi executada em 31/07.**
 > 🚩 **"Comece pelos 6 `Discovered`" estava errado nos dois números: são 5, e sitemap NÃO é a
 > alavanca.** Os 12 já têm sitemap válido, **submetido em 30–31/07 e baixado pelo Google em 31/07–01/08,

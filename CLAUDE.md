@@ -441,11 +441,19 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
 - **`n/a` não é aprovação**, é "não olhei". O placar imprime os três estados de propósito.
 - **41 violações em 01/08, e as duas grandes foram conferidas FORA do script** (`curl` à mão,
   `docs/estado-conformidade-crawl-2026-08-01.md`): **`GEO-01` 28 de 35** — `llms.txt` devolve 404
-  servindo HTML, por isso o check julga o CORPO como o `VER-02`, e o `orion` sai como "sem llms.txt"
-  **apenas** porque serve GPTBot, o que prova que o check separa as duas faltas. **`DEP-08` 11 de
+  servindo HTML, por isso o check julga o CORPO como o `VER-02`. **`DEP-08` 11 de
   15**: `curl -D -` confirma zero dos três headers na borda. **Os 28 são PISO** — a falta de GPTBot
   só é acusada quando o `robots.txt` existe (`!ctx.robots.erro`), então host sem robots nenhum passa
   batido. E `DEP-08` é **11 de 15 projetos `next`**, nunca "11 de 35": os 20 `n/a` são "não é next".
+- **🚩 `GEO-01` media a PALAVRA `GPTBot`, não a permissão — e o agregado escondeu (01/08).** O
+  check era `/GPTBot/i.test(corpo)`, e o `orion` passava nessa metade servindo `User-Agent: GPTBot`
+  seguido de **`Disallow: /`**: o site inteiro fora do ChatGPT, lido como conformidade. Mesma classe
+  do "palavra ≠ URL" do `gateways.mjs`. Agora `julgarGptbot()` devolve `ausente` | `barrado` |
+  `permitido`, com teste no `npm test`. **O agregado não se mexeu — 41 antes e 41 depois** — porque
+  o `orion` já falhava por `llms.txt`; só a LINHA mudou. Ler as linhas, nunca o placar.
+  **`barrado` é só o bloqueio TOTAL** (`Disallow: /` sem nenhum `Allow:` no grupo): o `reviewshield`
+  libera `/blog` e `/llms.txt` de propósito, e reprovar política parcial seria o check opinando
+  sobre escopo. **Nenhum projeto NÃO TOCADO mudou de balde** — o controle do §4.1 do handoff.
 - **Fora do `npm test` de propósito:** teste não faz 140 requisições contra produção.
 
 ## Ambiente
