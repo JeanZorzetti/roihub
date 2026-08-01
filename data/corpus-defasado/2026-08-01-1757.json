@@ -1,0 +1,464 @@
+{
+  "quando": "2026-08-01T17:57:20.277Z",
+  "apurados": {
+    "D-66": {
+      "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "",
+      "citacoes": [
+        {
+          "nome": "projetos no ranking",
+          "re": {},
+          "valor": 35
+        },
+        {
+          "nome": "repos ativos",
+          "re": {},
+          "valor": 36
+        }
+      ]
+    },
+    "D-67": {
+      "resposta": "0 de 1 projeto(s) checado(s) contra um sistema de pagamento têm venda com data: nenhum. Receita provada: R$ 0.00. Venda sem data não conta — dinheiro sem data é R$ 0.",
+      "fonte": "data/projects.json (campo `vendas`, derivado do gateway por scripts/vendas-mercadopago.mjs)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "34 dos 35 cards não têm fonte de pagamento ligada e ficam FORA da conta: ausência de `vendas` é \"não olhei\", nunca \"não vendeu\". Sem gateway: goiania, tapepro, sirius, fabrica, roilabs, polarisia, estetiacrm, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, aprovai, moderador, meridian, seo-forecaster, cannibal_scan, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder."
+    },
+    "D-68": {
+      "resposta": "Gate 31/08: ≥ 5 cliques nao-branded/28d. Hoje: 2. Top não-branded: \"crm solar\" (61 imp, pos 39.0); \"crm roi\" (40 imp, pos 43.9); \"crm para industria energetica\" (30 imp, pos 26.7).",
+      "fonte": "GSC searchAnalytics 28d (query × page × country) em siriuscrm.com.br + alvo/data do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "é PISO: clique de query anonimizada pelo GSC não entra na soma, então o real pode ser maior."
+    },
+    "D-69": {
+      "resposta": "Gate 19/10: ≥ 300 impressoes/28d. Hoje: 42 (total do site). Top não-branded: \"clichê para impressão flexográfica\" (8 imp, pos 40.6); \"cliche flexo\" (1 imp, pos 74.0); \"cliche flexografico\" (1 imp, pos 21.0).",
+      "fonte": "GSC searchAnalytics 28d (query × page × country) em tapepro.roilabs.com.br + alvo/data do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "o número é o total do site (dimensions: []); somar as linhas de query devolveria um piso."
+    },
+    "D-70": {
+      "resposta": "27 de 35 têm blocker registrado. Por família — não tem como cobrar: 11 (polarisia, potencialarquitetado, matchfios, whatsmeow, aprovai, moderador, seo-forecaster, cannibal_scan, compass, orion, pathfinder) · não tem tráfego: 8 (goiania, fabrica, aftercare, nimblabs, orcaobra, atma, qprime, vertice) · não há o que cobrar: o produto não funciona: 4 (reviewshield, cardiorisk, tapevision, cyberspace) · não tenta faturar por decisão: 4 (claudeloop, swarm, meridian, lumina). Estado: 25 no-ar, 8 no-ar-inutilizavel, 2 prototipo.",
+      "fonte": "data/projects.json (familia + estado + blockersLista), curadoria confirmada pelo Jean",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "família e estado são julgamento humano no card; o que se apura aqui é a distribuição, não o julgamento."
+    },
+    "D-71": {
+      "resposta": "7 bloqueios humanos: goiania: IndexNow devolve 403 — 94 URLs 'enviadas' a cada build não chegam a ninguém · fabrica: 2 URLs de 26 seguem 'URL is unknown to Google' — /termos e /blog/como-atrair-pacientes-clinica-de-estetica (ambas 200 e linkadas internamente). Request Indexing é manual na UI do GSC · reviewshield: GOOGLE_CLIENT_ID não está preenchido na EasyPanel — sem ele o OAuth do GBP não roda · cyberspace: DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite · compass: 🚨 As 4 chaves do Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão vazias — não há como cobrar · compass: Faltam GitHub OAuth e Resend: sem eles não há login nem e-mail transacional · qprime: Site em subdomínio de roilabs.com.br, não em domínio da própria QPrime — o cliente não é dono do host.",
+      "fonte": "data/projects.json (blockersLista com humano: true)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-72": {
+      "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+      "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-73": {
+      "resposta": "Não: npm test roda uma lista explícita no package.json (20 arquivos). Hoje 0 arquivo(s) de teste fora da lista — arquivo novo só roda depois de entrar lá à mão. Motor: node --test com assert/strict, sem framework (jest/vitest/mocha não instalados).",
+      "fonte": "package.json (scripts.test) × test/*.test.mjs no disco",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-79": {
+      "resposta": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "fonte": "scripts/validade.mjs sobre protocolos vivos + data/projects.json + memórias (zero LLM, zero rede)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "conta só documento VIVO: handoff datado fica de fora de propósito, e citação entre crases ou bloco cercado não é afirmação."
+    },
+    "D-80": {
+      "resposta": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "fonte": "API do GitHub (árvore + package.json e .env* de cada repo de data/projects.json)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "\"nada no código\" é \"não achei\", NUNCA \"não cobra\": cobrança pode morar em serviço fora do repo (o sirius fatura por tier no próprio banco), em repo privado que o token não alcança, ou além dos 40 primeiros arquivos que o check abre. Linha comentada (`# STRIPE_SECRET_KEY`) não conta como env var declarada.",
+      "citacoes": [
+        {
+          "nome": "projetos com SDK de pagamento escrito",
+          "re": {},
+          "valor": 10
+        }
+      ]
+    },
+    "D-81": {
+      "resposta": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "fonte": "cruzamento de scripts/gateways-repo.mjs (API do GitHub) com scripts/gateways.mjs (HTTP em produção) + `vendas` do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "card ≠ repositório: dois cards podem apontar para o MESMO repo (goiania e roilabs são vertical dentro de monorepo), e aí somar os dois infla o lado do código.",
+      "citacoes": [
+        {
+          "nome": "servem preço e só falta ligar",
+          "re": {},
+          "valor": 6
+        }
+      ]
+    },
+    "D-82": {
+      "resposta": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "fonte": "HTTP contra os 35 sites de produção (home + 9 caminhos de cobrança), casando só contra URL de host de gateway",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "só o HTML SERVIDO: gateway montado por JS depois de um clique não aparece, e cobrança que não passa pelo site também não. `sem-gateway` é \"não achei caminho servido\", nunca \"não cobra\".",
+      "citacoes": [
+        {
+          "nome": "sem caminho de cobrança servido",
+          "re": {},
+          "valor": 27
+        }
+      ]
+    },
+    "D-83": {
+      "resposta": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "fonte": "scripts/conformidade.mjs — VER-01 DEP-03 VER-02 DEP-08 SEO-01 GEO-01 GEO-02 SEC-01 DNS-05 VER-04 por HTTP contra produção (zero LLM)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "`n/a` NÃO é aprovação, é \"não olhei\" (check que não se aplica àquela stack, ou página que não respondeu). E a primeira corrida de um check novo mede o CHECK: 5 das 46 violações iniciais eram o check errado.",
+      "citacoes": [
+        {
+          "nome": "protocolos que rodam",
+          "re": {},
+          "valor": 10
+        }
+      ]
+    },
+    "D-84": {
+      "resposta": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (URL is unknown to Google), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (Discovered - currently not indexed), moderador (Discovered - currently not indexed), seo-forecaster (URL is unknown to Google), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "fonte": "Search Console URL Inspection API (index:inspect) na home de cada projeto com url",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "\"sem propriedade\" NÃO é \"fora do índice\": é \"não há onde olhar\" — host de fornecedor (*.vercel.app) fica fora de toda propriedade, e `URL unknown to Google` ali é falta de domínio próprio, não sinal de SEO. Só a home é inspecionada: página interna desindexada não aparece aqui."
+    },
+    "D-85": {
+      "resposta": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "fonte": "docs/Crawl-stats — exports da UI do Search Console commitados no repo (o mais antigo é de 2026-07-25)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "o número é do EXPORT, não de hoje: cada export cobre 90 dias e o mais antigo aqui é de 2026-07-25. Falha que aparece no gráfico pode ser de dois meses atrás — date antes de caçar bug. Sem export novo, o dado envelhece sozinho e nada no repo avisa."
+    }
+  },
+  "linhas": [
+    {
+      "id": "D-80",
+      "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+      "doc": "handoff-o-que-e-melhor-fazer.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-que-e-melhor-fazer.md",
+      "via": "busca",
+      "apurado": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "\"30 projetos sem caminho de cobrança\" | ❌ **Era o check errado.** São **27**.",
+      "motivo": "O trecho fala do inventário de caminho de cobrança (gateways.mjs), não do SDK declarado no package.json — assunto diferente do fato apurado.",
+      "erro": ""
+    },
+    {
+      "id": "D-80",
+      "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+      "doc": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "via": "busca",
+      "apurado": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento lista o script `gateways-repo.mjs` como fonte de fato (\"quantos repos têm SDK de pagamento escrito\"), mas não afirma nenhum número ou resultado dessa apuração.",
+      "erro": ""
+    },
+    {
+      "id": "D-80",
+      "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+      "doc": "roihub_portfolio_nao_cobra",
+      "tipo": "memoria",
+      "titulo": "Inventário de cobrança dos 35 projetos por DUAS vias (HTML servido × código do repo); o CRUZAMENTO é a leitura: 10 têm SDK de pagamento escrito, UM faturou, e 6 já servem preço e só falta ligar — e o cruzamento ainda achou 2 defeitos do próprio check",
+      "via": "busca",
+      "apurado": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "veredito": "desmente",
+      "trecho": "| só página de preço, sem gateway | 3 | `sirius`, `estetiacrm`, `orion` |",
+      "motivo": "o documento lista apenas sirius, estetiacrm e orion no balde \"só preço, sem gateway\", omitindo polarisia, context e vertice, que o fato/cruzamento também classifica no mesmo balde.",
+      "erro": ""
+    },
+    {
+      "id": "D-80",
+      "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+      "doc": "handoff-proximo-passo.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo.md",
+      "via": "busca",
+      "apurado": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento é um handoff sobre pauta de SEO/aftercare e o ML do hub, não trata de SDK de pagamento nos repos.",
+      "erro": ""
+    },
+    {
+      "id": "D-80",
+      "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+      "doc": "handoff-o-cruzamento-achou-o-check-errado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-cruzamento-achou-o-check-errado.md",
+      "via": "busca",
+      "apurado": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "veredito": "bate",
+      "trecho": "Dos **10 com SDK de pagamento no `package.json`, um único faturou** (`atma`). Os outros nove em dois estágios: - **Pede dinheiro na página E tem o checkout escrito — falta LIGAR (6):** `sirius` (mp+stripe), `polarisia` (mp), `estetiacrm` (mp), `context` (stripe), `orion` (mp), `vertice` (mp).",
+      "motivo": "o documento afirma 10 projetos com SDK de pagamento no package.json, listando os mesmos nomes do fato apurado.",
+      "erro": ""
+    },
+    {
+      "id": "D-80",
+      "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+      "doc": "handoff-a-definicao-de-pronto-executado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-a-definicao-de-pronto-executado.md",
+      "via": "busca",
+      "apurado": "10 de 35 projetos têm SDK de pagamento DECLARADO no package.json: sirius (mercadopago+stripe), polarisia (mercadopago), estetiacrm (mercadopago), reviewshield (stripe), context (stripe), aftercare (stripe), atma (mercadopago), compass (stripe), orion (mercadopago), vertice (mercadopago). Só variável de ambiente (sinal mais fraco): goiania (mercadopago+asaas), roilabs (mercadopago+asaas). Nada no código: 23. Repo ausente ou ilegível: nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata do detector de defasagem (portões, holdout, fases C/D), não menciona SDK de pagamento nem quantidade de projetos com integração de cobrança.",
+      "erro": ""
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "doc": "roihub_portfolio_nao_cobra",
+      "tipo": "memoria",
+      "titulo": "Inventário de cobrança dos 35 projetos por DUAS vias (HTML servido × código do repo); o CRUZAMENTO é a leitura: 10 têm SDK de pagamento escrito, UM faturou, e 6 já servem preço e só falta ligar — e o cruzamento ainda achou 2 defeitos do próprio check",
+      "via": "busca",
+      "apurado": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "veredito": "desmente",
+      "trecho": "10 têm SDK de pagamento escrito, UM faturou, e 6 já servem preço e só falta ligar",
+      "motivo": "o documento afirma que um projeto faturou, mas o fato apurado hoje é que 0 dos 10 faturaram com data (nenhum).",
+      "erro": ""
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "doc": "handoff-a-definicao-de-pronto.md",
+      "tipo": "handoff",
+      "titulo": "handoff-a-definicao-de-pronto.md",
+      "via": "busca",
+      "apurado": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento discute meta-medição e réguas de defasagem, não trata de quantos projetos com integração de pagamento de fato cobram.",
+      "erro": ""
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "doc": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "via": "busca",
+      "apurado": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "veredito": "bate",
+      "trecho": "| **o cruzamento dos dois** | quantos têm SDK escrito e **nunca ligado** | (derivado) |",
+      "motivo": "O documento descreve o método (cruzar gateways-repo.mjs com gateways.mjs) sem citar número, compatível com o fato apurado que usa exatamente esse cruzamento.",
+      "erro": ""
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "doc": "handoff-a-definicao-de-pronto-executado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-a-definicao-de-pronto-executado.md",
+      "via": "busca",
+      "apurado": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata do detector de defasagem (passada única vs. duas passadas) e não fala sobre gateways de pagamento ou quantos projetos cobram.",
+      "erro": ""
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "doc": "handoff-o-teste-de-20-minutos-deu-vermelho.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-teste-de-20-minutos-deu-vermelho.md",
+      "via": "busca",
+      "apurado": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata da defasagem de contagem de projetos/repos, não de gateways de pagamento nem de faturamento.",
+      "erro": ""
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "doc": "handoff-o-que-e-melhor-fazer.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-que-e-melhor-fazer.md",
+      "via": "busca",
+      "apurado": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata do incidente de vazamento do token do Mercado Pago em `DEPLOY_PRODUCTION.md`, não de quantos projetos com SDK de pagamento de fato cobram.",
+      "erro": ""
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "doc": "roihub_portfolio_nao_cobra",
+      "tipo": "memoria",
+      "titulo": "Inventário de cobrança dos 35 projetos por DUAS vias (HTML servido × código do repo); o CRUZAMENTO é a leitura: 10 têm SDK de pagamento escrito, UM faturou, e 6 já servem preço e só falta ligar — e o cruzamento ainda achou 2 defeitos do próprio check",
+      "via": "busca",
+      "apurado": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "veredito": "desmente",
+      "trecho": "| só página de preço, sem gateway | 3 | `sirius`, `estetiacrm`, `orion` |",
+      "motivo": "o documento afirma 3 sites nesse balde (sirius, estetiacrm, orion), mas o fato apurado hoje mostra 6 (inclui também polarisia, context e vertice).",
+      "erro": ""
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "doc": "handoff-o-que-e-melhor-fazer.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-que-e-melhor-fazer.md",
+      "via": "busca",
+      "apurado": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata do incidente do token e do detector de defasagem, não de quais sites servem caminho de cobrança.",
+      "erro": ""
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "doc": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "via": "busca",
+      "apurado": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "veredito": "bate",
+      "trecho": "`scripts/gateways.mjs` | quantos dos 35 servem caminho de cobrança, e em que balde | HTTP × 35 sites (~250 req)",
+      "motivo": "o documento descreve a REGRA (o que o script mede e como) sem citar nenhum número dos baldes, compatível com o fato apurado.",
+      "erro": ""
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "doc": "handoff-o-cruzamento-achou-o-check-errado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-cruzamento-achou-o-check-errado.md",
+      "via": "busca",
+      "apurado": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o trecho não trata da contagem/balde de cobrança dos 35 sites, só do processo de cruzamento e dos dois defeitos do check (`/preco` singular, âncora vs rota) — não afirma número incompatível com o fato apurado.",
+      "erro": ""
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "doc": "handoff-o-portao-tem-treze-casos.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-portao-tem-treze-casos.md",
+      "via": "busca",
+      "apurado": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata da calibração do detector de defasagem/portão de veredito, não fala de caminhos de cobrança ou gateways de pagamento nos sites.",
+      "erro": ""
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "doc": "handoff-a-segunda-via-de-selecao.md",
+      "tipo": "handoff",
+      "titulo": "handoff-a-segunda-via-de-selecao.md",
+      "via": "busca",
+      "apurado": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata de defasagem de contagem de projetos/repos, não de caminhos de cobrança/gateway.",
+      "erro": ""
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "doc": "project_roihub_conformidade",
+      "tipo": "memoria",
+      "titulo": "roihub executa 10 protocolos × 35 projetos em ~40s — e a primeira corrida mede o CHECK, não os projetos",
+      "via": "busca",
+      "apurado": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "veredito": "bate",
+      "trecho": "Placar da 1ª corrida: **41 violações**.",
+      "motivo": "O documento afirma 41 violações na 1ª corrida, mesmo número do fato apurado hoje (41 violações em 29 projetos).",
+      "erro": ""
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "doc": "first_run_measures_the_check",
+      "tipo": "memoria",
+      "titulo": "A primeira corrida de um check novo mede o CHECK, não o objeto — cinco vezes na mesma base; virou VER-08",
+      "via": "busca",
+      "apurado": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento fala do padrão \"1ª corrida mede o check\" em geral, mas não afirma nenhum número específico de violações ou projetos do conformidade.mjs de hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "doc": "handoff-normas-que-rodam.md",
+      "tipo": "handoff",
+      "titulo": "handoff-normas-que-rodam.md",
+      "via": "busca",
+      "apurado": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "veredito": "bate",
+      "trecho": "**A frente 1, executada: 10 normas × 35 projetos** … `lib/conformidade.mjs` + `scripts/conformidade.mjs` + `test/conformidade.test.mjs` (**193 verdes**)",
+      "motivo": "o documento afirma a mesma execução (10 normas contra 35 projetos, zero LLM) que o fato apurado descreve, sem citar contagem de violações que contradiga o número atual.",
+      "erro": ""
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "doc": "handoff-tipar-protocolos.md",
+      "tipo": "handoff",
+      "titulo": "handoff-tipar-protocolos.md",
+      "via": "busca",
+      "apurado": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento discute a fase de tipar protocolos como trabalho futuro (31/07), sem afirmar quantidade de violações ou projetos afetados pelos checks.",
+      "erro": ""
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "doc": "handoff-lastro-no-dinheiro-e-no-gabarito.md",
+      "tipo": "handoff",
+      "titulo": "handoff-lastro-no-dinheiro-e-no-gabarito.md",
+      "via": "busca",
+      "apurado": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "veredito": "bate",
+      "trecho": "| `scripts/conformidade.mjs` | a norma é obedecida na produção? | **zero** | **sim** — HTTP contra 35 hosts |",
+      "motivo": "o documento descreve o mecanismo de medição (HTTP contra produção, zero LLM) sem citar contagem, compatível com o método do fato apurado.",
+      "erro": ""
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "doc": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-dobrar-a-camada-estado.md",
+      "via": "busca",
+      "apurado": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+      "veredito": "bate",
+      "trecho": "`scripts/conformidade.mjs` | quantos projetos violam cada um dos 10 protocolos que rodam | HTTP × 35 (~140 req) |",
+      "motivo": "O documento descreve a REGRA (o que o script apura, contra quantos protocolos e projetos) sem citar o número de violações, e é compatível com o fato apurado (10 protocolos, 35 projetos, HTTP).",
+      "erro": ""
+    }
+  ]
+}

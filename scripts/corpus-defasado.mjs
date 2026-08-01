@@ -5,6 +5,7 @@
 //   node --env-file=.env scripts/corpus-defasado.mjs            # todas as apuráveis
 //   node --env-file=.env scripts/corpus-defasado.mjs --ids D-66  # recorte
 //   node --env-file=.env scripts/corpus-defasado.mjs --k 5       # menos documentos por pergunta
+//   node --env-file=.env scripts/corpus-defasado.mjs --estado caro  # + os inventários dos 35
 //
 // SÃO DUAS VIAS DE SELEÇÃO desde 01/08, e a segunda existe porque a primeira sozinha é o gargalo
 // do produto: a busca recupera por SEMELHANÇA DE TEMA, então número defasado citado de passagem
@@ -46,7 +47,10 @@ const ORCAMENTO = 2400;
 const dourado = JSON.parse(readFileSync(fileURLToPath(new URL("../data/dourado.json", import.meta.url)), "utf8"));
 const porPergunta = new Map(dourado.map((q) => [q.id, q]));
 
-const apurados = await apurarEstado({ modo: "tudo", gsc: consultarGsc });
+// `--estado caro` inclui os inventários que varrem os 35 sites e os 35 repos. Fica FORA do
+// default de propósito: com eles no `tudo`, toda corrida de régua dispararia ~250 requisições
+// contra produção — o mesmo motivo pelo qual o conformidade está fora do `npm test`.
+const apurados = await apurarEstado({ modo: opt("--estado", "tudo"), gsc: consultarGsc });
 // Só pergunta com apuração de verdade entra. `nao_apurado` não é reprovação nem aprovação: é
 // "não há fonte viva contra o que comparar", e comparar documento com prosa seria a régua velha.
 const alvos = Object.entries(apurados).filter(([id, a]) => !a.nao_apurado && (!ids.length || ids.includes(id)));

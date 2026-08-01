@@ -905,5 +905,88 @@
       "handoff-deep-research-harness-de-agente.md"
     ],
     "armadilha": "Instalar a recomendação inteira do automation-recommender sem filtrar pelo que este repo tem."
+  },
+  {
+    "id": "D-79",
+    "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "PRT-03",
+      "corpus_hoje_n_prose_rot",
+      "handoff-a-definicao-de-pronto-executado.md"
+    ],
+    "armadilha": "Tratar handoff datado como defeito — ele é registro do que se sabia, não afirmação de presente — ou contar número entre crases, que é citação e não afirmação."
+  },
+  {
+    "id": "D-80",
+    "pergunta": "Quantos projetos têm SDK de pagamento escrito no código?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "roihub_portfolio_nao_cobra",
+      "handoff-o-cruzamento-achou-o-check-errado.md",
+      "VER-08"
+    ],
+    "armadilha": "Ler \"nada no código\" como \"não cobra\", ou contar linha comentada (# STRIPE_SECRET_KEY) como chave configurada."
+  },
+  {
+    "id": "D-81",
+    "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "roihub_portfolio_nao_cobra",
+      "handoff-o-cruzamento-achou-o-check-errado.md",
+      "PRT-01"
+    ],
+    "armadilha": "Ler uma das metades sozinha (o HTML servido ou o código) como se fosse o inventário inteiro, ou tratar dois cards do mesmo repositório como dois projetos."
+  },
+  {
+    "id": "D-82",
+    "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "roihub_portfolio_nao_cobra",
+      "handoff-o-cruzamento-achou-o-check-errado.md",
+      "VER-02"
+    ],
+    "armadilha": "Contar página de preço como gateway, ou aceitar 200 de um host que serve a home em qualquer rota como caminho de cobrança."
+  },
+  {
+    "id": "D-83",
+    "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "project_roihub_conformidade",
+      "VER-08",
+      "handoff-normas-que-rodam.md"
+    ],
+    "armadilha": "Ler n/a como aprovação, ou tratar a primeira corrida de um check novo como medida dos projetos."
+  },
+  {
+    "id": "D-84",
+    "pergunta": "As homes dos projetos estão no índice do Google?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "SEO-04",
+      "SEO-02",
+      "site_200_is_not_indexed_url_inspection"
+    ],
+    "armadilha": "Concluir indexação a partir de status 200, ou tratar host sem propriedade no Search Console como página desindexada."
+  },
+  {
+    "id": "D-85",
+    "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+    "resposta": "",
+    "camada": "estado",
+    "fontes": [
+      "SEO-05",
+      "gsc_crawl_stats_stale_90d_window"
+    ],
+    "armadilha": "Ler o número do export como o de hoje e caçar bug de uma falha que pode ser de dois meses atrás."
   }
 ]

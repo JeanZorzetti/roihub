@@ -4,38 +4,39 @@
  *
  *   node --env-file=.env scripts/inspect-url.mjs https://atma.roilabs.com.br/ [...]
  *
- * A propriedade sai do host, igual ao submit-sitemap. A API é SOMENTE LEITURA: não existe
- * "Solicitar indexação" programático — esse passo é manual, na UI.
+ * A lógica mora em `lib/indexacao.mjs` desde 01/08 (o apurador de D-84 lê a mesma). A propriedade
+ * sai da lista real do GSC, não de um palpite sobre o host: URL fora de toda propriedade não é
+ * "não indexada", é "não há onde olhar". A API é SOMENTE LEITURA — não existe "Solicitar
+ * indexação" programático, esse passo é manual na UI.
  */
 import { pathToFileURL } from "node:url";
-import { GoogleAuth } from "google-auth-library";
-import { propertyOf } from "./submit-sitemap.mjs";
-
-const API = "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect";
+import { clienteGsc, inspecionarUrl, propriedades } from "../lib/indexacao.mjs";
+import { melhorPropriedade } from "../lib/gsc-consulta.mjs";
 
 async function main(urls) {
   if (!urls.length) {
     console.error("uso: node --env-file=.env scripts/inspect-url.mjs <url> [...]");
     return 2;
   }
-  const client = await new GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON),
-    scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
-  }).getClient();
+  const client = await clienteGsc();
+  const sites = await propriedades(client);
 
   let failed = 0;
   for (const inspectionUrl of urls) {
-    const siteUrl = propertyOf(inspectionUrl);
+    const siteUrl = melhorPropriedade(new URL(inspectionUrl).hostname, sites);
+    if (!siteUrl) {
+      // Host de fornecedor (`*.vercel.app`) fica FORA de toda propriedade — não é erro de
+      // permissão nem sinal de SEO, é a falta do passo de domínio próprio.
+      console.log(`FORA DE TODA PROPRIEDADE ${inspectionUrl}\n      nenhuma propriedade do GSC contém esse host`);
+      failed++;
+      continue;
+    }
     try {
-      const { data } = await client.request({
-        url: API,
-        method: "POST",
-        data: { inspectionUrl, siteUrl },
-      });
-      const r = data.inspectionResult?.indexStatusResult ?? {};
+      const r = await inspecionarUrl(client, inspectionUrl, siteUrl);
       console.log(
         [
           inspectionUrl,
+          `  propriedade:  ${siteUrl}`,
           `  verdict:      ${r.verdict ?? "-"}`,
           `  coverage:     ${r.coverageState ?? "-"}`,
           `  lastCrawl:    ${r.lastCrawlTime ?? "-"}`,

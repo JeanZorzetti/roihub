@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync, type Dirent } from "node:fs";
-import path from "node:path";
 import { listProjects, type Project } from "@/lib/projects";
 import {
   parseDailyChart,
@@ -10,6 +8,9 @@ import {
   bucketCrawlWeeks,
   crawlTotals28,
 } from "@/lib/crawl.mjs";
+// Achar a pasta e abrir o CSV mora em lib/ porque o apurador de D-85 lê os MESMOS exports: com o
+// regex do nome duplicado aqui, a aba e o fato divergiriam sobre qual export é o mais novo.
+import { acharExports, lerCsv } from "@/lib/crawl-exports.mjs";
 import { Tabs } from "../tabs";
 import { WeekChart, Stat, Delta, InvDelta, num, fmtDay, sinceGsc } from "../viz";
 
@@ -33,44 +34,14 @@ type Property = {
 
 const pct = (r: number) => `${(r * 100).toFixed(1).replace(".", ",")}%`;
 
-// Convenção: descompactar o export do GSC em docs/ (qualquer subpasta) e dar push.
-// O nome da pasta já identifica tudo: "{host}-Crawl-stats-{YYYY-MM-DD}".
-function findExports(): { host: string; exportDate: string; dir: string }[] {
-  const docs = path.join(process.cwd(), "docs");
-  let entries: Dirent[];
-  try {
-    entries = readdirSync(docs, { withFileTypes: true, recursive: true });
-  } catch {
-    return [];
-  }
-  const out: { host: string; exportDate: string; dir: string }[] = [];
-  for (const e of entries) {
-    if (!e.isDirectory()) continue;
-    const m = e.name.match(/^(.+)-Crawl-stats-(\d{4}-\d{2}-\d{2})$/i);
-    if (m) out.push({ host: m[1].toLowerCase(), exportDate: m[2], dir: path.join(e.parentPath, e.name) });
-  }
-  return out;
-}
-
-// Arquivos internos têm nome localizado ("Gráfico de resumo…", "Tabela de respostas.csv");
-// match por palavra sem acento pra sobreviver a variação de idioma/normalização.
-function readCsv(dir: string, pattern: RegExp): string | null {
-  try {
-    const file = readdirSync(dir).find((f) => pattern.test(f));
-    return file ? readFileSync(path.join(dir, file), "utf8") : null;
-  } catch {
-    return null;
-  }
-}
-
 function loadProperties(projects: Project[]): Property[] {
   const byHost = new Map<string, { host: string; exportDate: string; dir: string }[]>();
-  for (const e of findExports()) byHost.set(e.host, [...(byHost.get(e.host) ?? []), e]);
+  for (const e of acharExports(process.cwd())) byHost.set(e.host, [...(byHost.get(e.host) ?? []), e]);
 
   const props: Property[] = [];
   for (const [host, exps] of byHost) {
     const days: CrawlDay[] = mergeExports(
-      exps.map((e) => ({ exportDate: e.exportDate, days: parseDailyChart(readCsv(e.dir, /resumo|chart/i) ?? "") }))
+      exps.map((e) => ({ exportDate: e.exportDate, days: parseDailyChart(lerCsv(e.dir, /resumo|chart/i) ?? "") }))
     );
     if (days.length === 0) continue;
     const latest = [...exps].sort((a, b) => a.exportDate.localeCompare(b.exportDate)).at(-1)!;
@@ -81,8 +52,8 @@ function loadProperties(projects: Project[]): Property[] {
       end,
       weeks: bucketCrawlWeeks(days, end),
       t: crawlTotals28(days, end),
-      resp: classifyResponses(parseRatios(readCsv(latest.dir, /respostas|response/i) ?? "")),
-      hosts: parseHosts(readCsv(latest.dir, /hosts/i) ?? ""),
+      resp: classifyResponses(parseRatios(lerCsv(latest.dir, /respostas|response/i) ?? "")),
+      hosts: parseHosts(lerCsv(latest.dir, /hosts/i) ?? ""),
       covered: projects
         .filter((p) => {
           const h = new URL(p.url).hostname;

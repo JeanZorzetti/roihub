@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { montarPromptDefasagem, parseDefasagem, docsQueCitam } from "../lib/defasagem.mjs";
-import { CITACOES_D66 } from "../lib/dourado-estado.mjs";
+import { CITACOES_D66, CITACOES } from "../lib/dourado-estado.mjs";
 import { montarPromptJuiz, parseVeredito } from "../lib/juiz.mjs";
 
 const apurado = { resposta: "35 projetos", fonte: "API do GitHub", apurado_em: "2026-07-31" };
@@ -102,7 +102,7 @@ test("seleciona quem cita a quantidade com número diferente, e só", () => {
     docTexto("outro", "nada sobre isso"),
   ];
   assert.deepEqual(citados(docs, RANKING), ["velho"]);
-  // Sem âncora nenhuma (as outras 7 perguntas de estado) a 2ª via não seleciona nada — e não
+  // Sem âncora nenhuma (as 10 perguntas de estado que não têm) a 2ª via não seleciona nada — e não
   // pode explodir por `citacoes` ausente, que é como ela chega de `apurado` sem o campo.
   assert.deepEqual(citados(docs, undefined), []);
 });
@@ -126,6 +126,27 @@ test("âncora estreita não confunde quantidade homônima", () => {
   ];
   assert.deepEqual(citados(homonimos, RANKING), []);
   assert.deepEqual(citados([docTexto("h", "40 repos ativos, 39 projetos no ranking")], [{ ...CITACOES_D66.reposAtivos, valor: 36 }]), ["h"]);
+});
+
+// As 4 âncoras dos fatos ligados em 01/08 (D-80 a D-83). A rejeitada está no teste porque a
+// MEDIÇÃO é o que impede a próxima sessão de alargá-la: `(\d+) protocolos?` solto casa 13
+// documentos do corpus ("97 protocolos", "85 tipados", "29 candidatos") contra 3 com `× N
+// projetos` junto — e cada homônimo é uma chamada do pool para o modelo dizer `nao-fala`.
+test("as âncoras do inventário casam o fato e não o homônimo", () => {
+  const ancora = (id, valor) => CITACOES[id].map((c) => ({ ...c, valor }));
+  const docs = [
+    docTexto("cobranca", "10 com SDK escrito, UM faturou; 6 servem preço e só falta LIGAR"),
+    docTexto("conformidade", "10 protocolos × 35 projetos, ~40 s, zero LLM"),
+    docTexto("servido", "pelo HTML eram 30 sem caminho de cobrança"),
+  ];
+  assert.deepEqual(citados(docs, ancora("D-80", 11)), ["cobranca"]);
+  assert.deepEqual(citados(docs, ancora("D-81", 7)), ["cobranca"]);
+  assert.deepEqual(citados(docs, ancora("D-82", 27)), ["servido"]);
+  assert.deepEqual(citados(docs, ancora("D-83", 12)), ["conformidade"]);
+  // Bater com o apurado NÃO seleciona: a 2ª via só traz documento cujo número já diverge.
+  assert.deepEqual(citados(docs, ancora("D-83", 10)), []);
+  // O total de protocolos da casa não é o número de protocolos que RODAM.
+  assert.deepEqual(citados([docTexto("total", "97 protocolos escritos, 11 protocolos tipados")], ancora("D-83", 10)), []);
 });
 
 // `campo` virou compartilhado com o juiz; o default tem que continuar em minúscula, senão

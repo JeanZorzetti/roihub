@@ -45,7 +45,8 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 ## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
 
 `BM25 → + vetor (Ollama) → + reranker (claude-cli) → síntese (claude-cli)`, medido em
-`data/dourado.json` (78 perguntas): **82,3% → 82,4% → 88,0%** de recall@10.
+`data/dourado.json` (85 perguntas desde 01/08; os 82,3% → 82,4% → **88,0%** de recall@10 foram
+medidos com 78 — **denominador novo não se compara com número velho**, piso relativo sempre).
 
 - **São DUAS chamadas por busca** (rerank + resposta), do mesmo pool do autopublishing.
   `?rerank=0` e `?resposta=0` desligam cada uma (link no rodapé desliga as duas).
@@ -88,9 +89,9 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 `node --env-file=.env scripts/avaliar-resposta.mjs --juiz` (3 chamadas por pergunta, contra 1 sem
 juiz — por isso fora do default). Calibração: `scripts/juiz-calibrar.mjs`.
 
-- **Mede consistência com o dourado, NÃO verdade sobre o mundo — em 70 das 78.** O dourado de
+- **Mede consistência com o dourado, NÃO verdade sobre o mundo — em 70 das 85.** O dourado de
   `protocolo` e `episodio` foi escrito por um agente lendo o mesmo corpus: se o corpus mente, o
-  dourado repete e o juiz aprova. **As 8 de `estado` são a exceção desde 01/08**: o gabarito delas
+  dourado repete e o juiz aprova. **As 15 de `estado` são a exceção desde 01/08**: o gabarito delas
   é apurado na hora da medição (`apurarEstado()`), então ali o juiz compara a resposta com a fonte
   viva. A fronteira sai impressa no relatório de propósito — régua que não declara o próprio limite
   vira meta em cima de um defeito.
@@ -101,7 +102,7 @@ juiz — por isso fora do default). Calibração: `scripts/juiz-calibrar.mjs`.
   uma corrida de meses atrás e sabe contra O QUE ela mediu.
 - **Os fixtures do juiz congelam o gabarito das de `estado` (`dourado_congelado`).** Eles se diziam
   congelados e liam `dourado.json` na hora da corrida: reescrever a `resposta` de D-67 mudava o
-  número do portão sem tocar no juiz — e as 8 de `estado` estão nos 20 rótulos de regressão. Agora
+  número do portão sem tocar no juiz — e as de `estado` estão nos 20 rótulos de regressão. Agora
   `data/dourado.json` nem tem esse texto, e há teste que reprova quem usar caso de `estado` no
   fixture sem congelar o gabarito junto.
 - **Duas passadas, nunca uma.** A (fidelidade, cega ao dourado e às fontes esperadas) e B
@@ -127,11 +128,11 @@ juiz — por isso fora do default). Calibração: `scripts/juiz-calibrar.mjs`.
 
 ## Dourado de `estado` (`lib/dourado-estado.mjs`) — o gabarito que não apodrece
 
-`node --env-file=.env scripts/dourado-estado.mjs [--estado tudo] [--diff]` — zero LLM. As 70
+`node --env-file=.env scripts/dourado-estado.mjs [--estado tudo|caro] [--diff]` — zero LLM. As 70
 perguntas de protocolo/episódio continuam texto em `data/dourado.json` (regra não muda sozinha);
-as 8 de `estado` são **apuradas na hora da medição**.
+as **15** de `estado` são **apuradas na hora da medição**.
 
-- **O campo `resposta` das 8 de `estado` está VAZIO no `data/dourado.json`, e há teste que segura.**
+- **O campo `resposta` das de `estado` está VAZIO no `data/dourado.json`, e há teste que segura.**
   Ficou 24 h construído sem chegar a régua nenhuma: `avaliar-resposta.mjs` lia o JSON e o juiz
   recebia a prosa. `D-66` dizia "em 30/07 eram 36 repos ativos" e, no dia em que fossem 37, o juiz
   reprovaria a resposta CERTA sem ninguém entender por quê. **Texto que não existe não apodrece** —
@@ -141,7 +142,22 @@ as 8 de `estado` são **apuradas na hora da medição**.
   ontem: em `D-66` o corpus guardava quatro contagens defasadas do mesmo número (37, 39, 40, 39).
 - **Falha FECHADA:** sem rede, ou com a fonte fora do ar, sai `nao_apurado` com o motivo — nunca
   o valor da execução anterior. `--estado offline` roda só o que sai de arquivo do repo.
-- **8 das 8 têm fonte viva.** `D-70` e `D-71` saíram por curadoria nos cards (`familia`, `estado`,
+- **15 das 15 têm fonte viva, e 7 delas entraram em 01/08 por LIGAÇÃO, não construção** (`D-79` a
+  `D-85`): `validade.mjs`, `gateways.mjs`, `gateways-repo.mjs`, `conformidade.mjs`, `inspect-url.mjs`
+  e os exports de `docs/Crawl-stats` já apuravam com zero LLM e nenhum estava ligado. O trabalho foi
+  mover a lógica de script top-level para `lib/` — script que só imprime não se importa.
+- **🚩 `rede` tem TRÊS níveis: `offline` < `tudo` (GitHub/GSC) < `caro`.** `corpus-defasado.mjs` e
+  `avaliar-resposta.mjs` chamam com `tudo`: pendurar o inventário de gateways ali faria **toda**
+  corrida de régua disparar ~250 requisições contra produção — o mesmo motivo pelo qual o
+  conformidade está fora do `npm test`. **Fonte cara tem modo próprio, nunca só mais uma entrada em
+  `APURADORES`.** Perguntas que leem a mesma varredura compartilham cache por execução (`memo` no
+  ctx), e há teste que conta as árvores pedidas ao GitHub.
+- **A 1ª corrida dos 7 mediu o CHECK, duas vezes:** `D-85` listou **34 "hosts com problema"** e
+  nenhum era de agora — grep por `problem` casa os TRÊS estados que o GSC emite (`No problems`,
+  `Problemas no passado`, `Alguns problemas`) e o CSV vem localizado; `D-81` decompunha 10 com SDK
+  em subgrupos que somavam **9** (o balde `ligado` sumia do texto). Decomposição que não fecha é
+  conta errada.
+- **Os outros 8 fatos.** `D-70` e `D-71` saíram por curadoria nos cards (`familia`, `estado`,
   `blockersLista: [{texto,humano}]`); **`D-67` saiu pelo GATEWAY** em 31/07 —
   `scripts/vendas-mercadopago.mjs` deriva `vendas: [{data,valor,fonte,id}]` do Mercado Pago. A
   pergunta nunca foi "o que o Jean lembra", era "o que o sistema de pagamento registra".
@@ -218,14 +234,22 @@ para fora do texto.
   TEMA, então número defasado citado de passagem num doc sobre outro assunto nunca chegava ao
   detector: a memória `project_cannibalscan` afirmava `Hub: 39 projetos` (hoje 35) dentro de um doc
   sobre deploy da Vercel. A 2ª via (`docsQueCitam`, `lib/defasagem.mjs`) traz quem CITA a quantidade
-  com outro número — zero LLM, zero rede, âncoras declaradas em `CITACOES_D66`.
+  com outro número — zero LLM, zero rede, âncoras declaradas em `CITACOES_D66` e `CITACOES`.
   - **A ÂNCORA É ESTREITA porque isso foi MEDIDO:** `(\d+) projetos` solto seleciona **43**
     documentos e quase todos são quantidade HOMÔNIMA ("10 projetos" é o autopublishing, "21" são os
     apagados da Vercel) — cada um custaria uma chamada do pool para o modelo dizer `nao-fala`. Com as
     duas âncoras de D-66 são **6 documentos**. Âncora nova só entra medida contra o corpus.
-  - **Só `D-66` tem âncora, e a ausência das outras 7 é deliberada:** em `D-68`/`D-69` o ALVO do gate
-    ("≥ 5 cliques") é curadoria correta para sempre e casaria como se fosse o valor de hoje — foi um
-    dos 5 defeitos do check da mineração.
+  - **Cinco perguntas têm âncora (`D-66`, `D-80`–`D-83`), e a ausência nas outras 10 é deliberada:**
+    em `D-68`/`D-69` o ALVO do gate ("≥ 5 cliques") é curadoria correta para sempre e casaria como se
+    fosse o valor de hoje — foi um dos 5 defeitos do check da mineração. Em `D-85`, "10 propriedades
+    GSC" **não é o mesmo fato** que "10 propriedades com export no repo": casar sinônimo fabrica
+    acusação. Das 6 candidatas medidas em 01/08, **2 foram rejeitadas pela largura**: `(\d+)
+    protocolos?` solto casa **13** documentos (97 escritos, 85 tipados, 29 candidatos) contra 3 com
+    `× N projetos` junto, e `(\d+) com gateway ligado` casa o **denominador** ("1 de 35 com gateway
+    LIGADO").
+  - **A 2ª via pode trazer ZERO e não ser falha:** na corrida de 01/08 os dois candidatos (`30 sem
+    caminho de cobrança`) já tinham vindo pela busca. Ela só paga quando o TEMA do documento esconde
+    o número.
   - **🚩 O PERCENTUAL SAI SÓ DA BUSCA.** A 2ª via só seleciona documento cujo número JÁ diverge: é
     amostra PROCURADA, não recuperada. Somá-la ao denominador faria a "taxa de erro do corpus" subir
     sozinha toda vez que a âncora melhorasse — o número mediria a consulta. O campo `via` separa as

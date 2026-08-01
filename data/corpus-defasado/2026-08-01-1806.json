@@ -1,0 +1,358 @@
+{
+  "quando": "2026-08-01T18:06:09.717Z",
+  "apurados": {
+    "D-66": {
+      "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "",
+      "citacoes": [
+        {
+          "nome": "projetos no ranking",
+          "re": {},
+          "valor": 35
+        },
+        {
+          "nome": "repos ativos",
+          "re": {},
+          "valor": 36
+        }
+      ]
+    },
+    "D-67": {
+      "resposta": "0 de 1 projeto(s) checado(s) contra um sistema de pagamento têm venda com data: nenhum. Receita provada: R$ 0.00. Venda sem data não conta — dinheiro sem data é R$ 0.",
+      "fonte": "data/projects.json (campo `vendas`, derivado do gateway por scripts/vendas-mercadopago.mjs)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "34 dos 35 cards não têm fonte de pagamento ligada e ficam FORA da conta: ausência de `vendas` é \"não olhei\", nunca \"não vendeu\". Sem gateway: goiania, tapepro, sirius, fabrica, roilabs, polarisia, estetiacrm, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, aprovai, moderador, meridian, seo-forecaster, cannibal_scan, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder."
+    },
+    "D-68": {
+      "resposta": "Gate 31/08: ≥ 5 cliques nao-branded/28d. Hoje: 2. Top não-branded: \"crm solar\" (61 imp, pos 39.0); \"crm roi\" (40 imp, pos 43.9); \"crm para industria energetica\" (30 imp, pos 26.7).",
+      "fonte": "GSC searchAnalytics 28d (query × page × country) em siriuscrm.com.br + alvo/data do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "é PISO: clique de query anonimizada pelo GSC não entra na soma, então o real pode ser maior."
+    },
+    "D-69": {
+      "resposta": "Gate 19/10: ≥ 300 impressoes/28d. Hoje: 42 (total do site). Top não-branded: \"clichê para impressão flexográfica\" (8 imp, pos 40.6); \"cliche flexo\" (1 imp, pos 74.0); \"cliche flexografico\" (1 imp, pos 21.0).",
+      "fonte": "GSC searchAnalytics 28d (query × page × country) em tapepro.roilabs.com.br + alvo/data do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "o número é o total do site (dimensions: []); somar as linhas de query devolveria um piso."
+    },
+    "D-70": {
+      "resposta": "27 de 35 têm blocker registrado. Por família — não tem como cobrar: 11 (polarisia, potencialarquitetado, matchfios, whatsmeow, aprovai, moderador, seo-forecaster, cannibal_scan, compass, orion, pathfinder) · não tem tráfego: 8 (goiania, fabrica, aftercare, nimblabs, orcaobra, atma, qprime, vertice) · não há o que cobrar: o produto não funciona: 4 (reviewshield, cardiorisk, tapevision, cyberspace) · não tenta faturar por decisão: 4 (claudeloop, swarm, meridian, lumina). Estado: 25 no-ar, 8 no-ar-inutilizavel, 2 prototipo.",
+      "fonte": "data/projects.json (familia + estado + blockersLista), curadoria confirmada pelo Jean",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "família e estado são julgamento humano no card; o que se apura aqui é a distribuição, não o julgamento."
+    },
+    "D-71": {
+      "resposta": "7 bloqueios humanos: goiania: IndexNow devolve 403 — 94 URLs 'enviadas' a cada build não chegam a ninguém · fabrica: 2 URLs de 26 seguem 'URL is unknown to Google' — /termos e /blog/como-atrair-pacientes-clinica-de-estetica (ambas 200 e linkadas internamente). Request Indexing é manual na UI do GSC · reviewshield: GOOGLE_CLIENT_ID não está preenchido na EasyPanel — sem ele o OAuth do GBP não roda · cyberspace: DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite · compass: 🚨 As 4 chaves do Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão vazias — não há como cobrar · compass: Faltam GitHub OAuth e Resend: sem eles não há login nem e-mail transacional · qprime: Site em subdomínio de roilabs.com.br, não em domínio da própria QPrime — o cliente não é dono do host.",
+      "fonte": "data/projects.json (blockersLista com humano: true)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-72": {
+      "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+      "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-73": {
+      "resposta": "Não: npm test roda uma lista explícita no package.json (20 arquivos). Hoje 0 arquivo(s) de teste fora da lista — arquivo novo só roda depois de entrar lá à mão. Motor: node --test com assert/strict, sem framework (jest/vitest/mocha não instalados).",
+      "fonte": "package.json (scripts.test) × test/*.test.mjs no disco",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-79": {
+      "resposta": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "fonte": "scripts/validade.mjs sobre protocolos vivos + data/projects.json + memórias (zero LLM, zero rede)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "conta só documento VIVO: handoff datado fica de fora de propósito, e citação entre crases ou bloco cercado não é afirmação."
+    },
+    "D-80": {
+      "resposta": "",
+      "fonte": "",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "precisa de github — rode com --estado caro",
+      "ressalva": ""
+    },
+    "D-81": {
+      "resposta": "",
+      "fonte": "",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "precisa de github + produção — rode com --estado caro",
+      "ressalva": ""
+    },
+    "D-82": {
+      "resposta": "",
+      "fonte": "",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "precisa de produção — rode com --estado caro",
+      "ressalva": ""
+    },
+    "D-83": {
+      "resposta": "",
+      "fonte": "",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "precisa de produção — rode com --estado caro",
+      "ressalva": ""
+    },
+    "D-84": {
+      "resposta": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "fonte": "Search Console URL Inspection API (index:inspect) na home de cada projeto com url",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "\"sem propriedade\" NÃO é \"fora do índice\": é \"não há onde olhar\" — host de fornecedor (*.vercel.app) fica fora de toda propriedade, e `URL unknown to Google` ali é falta de domínio próprio, não sinal de SEO. Só a home é inspecionada: página interna desindexada não aparece aqui."
+    },
+    "D-85": {
+      "resposta": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "fonte": "docs/Crawl-stats — exports da UI do Search Console commitados no repo (o mais antigo é de 2026-07-25)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "o número é do EXPORT, não de hoje: cada export cobre 90 dias e o mais antigo aqui é de 2026-07-25. Falha que aparece no gráfico pode ser de dois meses atrás — date antes de caçar bug. Sem export novo, o dado envelhece sozinho e nada no repo avisa."
+    }
+  },
+  "linhas": [
+    {
+      "id": "D-79",
+      "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+      "doc": "corpus_hoje_n_prose_rot",
+      "tipo": "memoria",
+      "titulo": "A taxa de erro do corpus do roihub foi medida pela 1ª vez (16,7%) e é UM defeito só — \\\"(hoje N)\\\" escrito em prosa",
+      "via": "busca",
+      "apurado": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "veredito": "bate",
+      "trecho": "Citação de exemplo vai entre crases — é assim que o check distingue literal de afirmação.",
+      "motivo": "O documento descreve a REGRA do validade.mjs (por que citações entre crases não contam como afirmação), compatível com o fato de 0 violações apuradas.",
+      "erro": ""
+    },
+    {
+      "id": "D-79",
+      "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+      "doc": "handoff-o-teste-de-20-minutos-deu-vermelho.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-teste-de-20-minutos-deu-vermelho.md",
+      "via": "busca",
+      "apurado": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento fala de rotação de token, timeout de infra e do teste de 20 minutos da defasagem; não afirma nem discute a contagem de documentos vivos com número não apurado que é o assunto do fato (o número \"40 repos ativos, 39 projetos\" é citado como exemplo de staleness de OUTRO arquivo, não afirmado aqui).",
+      "erro": ""
+    },
+    {
+      "id": "D-79",
+      "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+      "doc": "handoff-dourado-com-lastro-externo.md",
+      "tipo": "handoff",
+      "titulo": "handoff-dourado-com-lastro-externo.md",
+      "via": "busca",
+      "apurado": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata da migração do dourado de `estado` para funções apuradas na hora, não da varredura de `validade.mjs` sobre afirmações de presente sem data.",
+      "erro": ""
+    },
+    {
+      "id": "D-79",
+      "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+      "doc": "defasagem_detector_failed_both_gates",
+      "tipo": "memoria",
+      "titulo": "Detector de defasagem do roihub: o VEREDITO vinha ANTES do raciocínio (3/10 → 8/10); os 7 erros restantes são TODOS `bate → nao-fala`; a fase D (duas passadas) reprovou; e em 01/08 a frente foi CONGELADA — o teto são 8 fatos, e o gargalo real é a SELEÇÃO por embedding, não o prompt",
+      "via": "busca",
+      "apurado": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata da calibração do detector de defasagem (números de adversarial/holdout, todos datados de 01/08/2026), não da contagem de afirmações de presente sem data medida por `scripts/validade.mjs`.",
+      "erro": ""
+    },
+    {
+      "id": "D-79",
+      "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+      "doc": "handoff-o-veredito-vem-antes-do-raciocinio.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-veredito-vem-antes-do-raciocinio.md",
+      "via": "busca",
+      "apurado": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento discute testes/calibração do detector de defasagem, não trata da varredura de `validade.mjs` sobre documentos vivos.",
+      "erro": ""
+    },
+    {
+      "id": "D-79",
+      "pergunta": "Quantos documentos vivos ainda afirmam no presente um número que não se apura?",
+      "doc": "handoff-o-portao-tem-treze-casos.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-portao-tem-treze-casos.md",
+      "via": "busca",
+      "apurado": "0 afirmação(ões) de presente com número sem data em 237 documentos vivos (99 no repo, 138 nas memórias). Nenhuma — `npm run validade` passa limpo. Handoff não entra na varredura: é registro datado.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento é sobre a régua do portão de defasagem (conformidade, corpus-defasado) e não trata do que o fato de validade.mjs mede (afirmações de presente com número sem data).",
+      "erro": ""
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "doc": "site_200_is_not_indexed_url_inspection",
+      "tipo": "memoria",
+      "titulo": "Site em 200 não prova que está no índice do Google — só a URL Inspection API decide; e queda de tráfego com posição MELHORANDO é desindexação, não perda de ranking",
+      "via": "busca",
+      "apurado": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "veredito": "nao-fala",
+      "trecho": "perdeu **98% das impressões** (14.818 → 316 em 28d) com a home em 200 o tempo todo",
+      "motivo": "o documento descreve um episódio datado de queda de indexação no Atma, sem afirmar o estado atual de indexação das homes do portfólio hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "doc": "handoff-proximo-passo-dominios.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-dominios.md",
+      "via": "busca",
+      "apurado": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "veredito": "bate",
+      "trecho": "e isso não era um sinal de SEO — era só o Google dizendo que aquele host não pertence à propriedade consultada",
+      "motivo": "o documento explica que \"URL is unknown to Google\" em domínio de fornecedor reflete ausência de propriedade no GSC, não desindexação — exatamente a mesma ressalva do FATO apurado.",
+      "erro": ""
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "doc": "handoff-proximo-passo-02-08.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-02-08.md",
+      "via": "busca",
+      "apurado": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "veredito": "nao-fala",
+      "trecho": "21 dos 38 sites estão em `*.vercel.app` / `*.easypanel.host` e, por isso, **fora de qualquer propriedade do Search Console**",
+      "motivo": "o documento fala de indexabilidade/propriedade do GSC, tema relacionado, mas não afirma se as homes estão ou não no índice — não trata do que a pergunta pede.",
+      "erro": ""
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "doc": "handoff-curar-os-15-executado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-curar-os-15-executado.md",
+      "via": "busca",
+      "apurado": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata de índice/desindexação do Atma e coverage de 3 outros projetos, sem afirmar nada sobre o conjunto agregado \"22 de 34 homes no índice\" apurado hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "doc": "handoff-crawl-plano-acao.md",
+      "tipo": "handoff",
+      "titulo": "handoff-crawl-plano-acao.md",
+      "via": "busca",
+      "apurado": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata de crawl budget/DNS de subdomínios, não da presença das homes no índice do Google.",
+      "erro": ""
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "doc": "handoff-proximo-passo-pos-sirius.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-pos-sirius.md",
+      "via": "busca",
+      "apurado": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (URL is unknown to Google), moderador (URL is unknown to Google), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (URL is unknown to Google), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata de ranking de projetos e pendências de configuração, não de indexação no Google",
+      "erro": ""
+    },
+    {
+      "id": "D-85",
+      "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+      "doc": "handoff-crawl-stats-semanal.md",
+      "tipo": "handoff",
+      "titulo": "handoff-crawl-stats-semanal.md",
+      "via": "busca",
+      "apurado": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "veredito": "desmente",
+      "trecho": "**Estado:** 9 exports (54 CSVs), **todos de `2026-07-10`** — 15 dias parados, e a pasta `Context/` está vazia: `context.nimblabs.com` nunca teve export, então a aba mostra 9 propriedades, não 10.",
+      "motivo": "O documento afirma que `context.nimblabs.com` nunca teve export e que só existem 9 propriedades, mas o fato apurado mostra 10 propriedades com export, incluindo `context.nimblabs.com` com 140 requisições.",
+      "erro": ""
+    },
+    {
+      "id": "D-85",
+      "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+      "doc": "handoff-crawl-plano-acao.md",
+      "tipo": "handoff",
+      "titulo": "handoff-crawl-plano-acao.md",
+      "via": "busca",
+      "apurado": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "veredito": "bate",
+      "trecho": "Crawl Stats é média de 90 dias, então problema já corrigido fica vermelho por ~3 meses",
+      "motivo": "O documento descreve a mesma regra da medição (a janela de 90 dias envelhece e pode mostrar problema já resolvido), compatível com a limitação apurada.",
+      "erro": ""
+    },
+    {
+      "id": "D-85",
+      "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+      "doc": "roilabs_dns_cloudflare_retired_subdomains",
+      "tipo": "memoria",
+      "titulo": "DNS de roilabs.com.br está no Cloudflare (não no EasyPanel) e 14 subdomínios NXDOMAIN queimam 76% do crawl da propriedade",
+      "via": "busca",
+      "apurado": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "veredito": "nao-fala",
+      "trecho": "Só 5 hosts vivos: `roilabs`, `www.roilabs`, `goiania`, `tapepro`, `app`.",
+      "motivo": "o documento fala de mortalidade de subdomínios (não do volume/OK% de crawl apurado hoje), então não trata da pergunta.",
+      "erro": ""
+    },
+    {
+      "id": "D-85",
+      "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+      "doc": "site_200_is_not_indexed_url_inspection",
+      "tipo": "memoria",
+      "titulo": "Site em 200 não prova que está no índice do Google — só a URL Inspection API decide; e queda de tráfego com posição MELHORANDO é desindexação, não perda de ranking",
+      "via": "busca",
+      "apurado": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata de indexação/URL Inspection API, não de volume de requisições de crawl por propriedade.",
+      "erro": ""
+    },
+    {
+      "id": "D-85",
+      "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+      "doc": "vendor_domain_hides_project_from_gsc",
+      "tipo": "memoria",
+      "titulo": "Site em *.vercel.app / *.easypanel.host fica FORA de qualquer propriedade do Search Console — sem sitemap, sem métrica, sem indexação gerenciada; e o inverso (subdomínio abandonado) vira NXDOMAIN caro",
+      "via": "busca",
+      "apurado": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata de propriedades do Search Console existirem ou não conforme domínio, não trata de volume de requisições/OK% de crawl por host.",
+      "erro": ""
+    },
+    {
+      "id": "D-85",
+      "pergunta": "Quanto o Googlebot rastreia cada propriedade, e de quando é esse dado?",
+      "doc": "DNS-01",
+      "tipo": "protocolo",
+      "titulo": "Subdominio aposentado vira NXDOMAIN e queima crawl budget do dominio inteiro",
+      "via": "busca",
+      "apurado": "10 propriedades com export no repo. Requisições em 28 dias e OK% por host — roilabs.com.br: 2596 req, OK 33,6%, 5xx 0,0% · siriuscrm.com.br: 1276 req, OK 92,2% · goiania.roilabs.com.br: 985 req, OK 74,8% · estetiacrm.com.br: 984 req, OK 82,1% · nimblabs.com: 599 req, OK 96,6% · polarisia.com.br: 353 req, OK 95,6% · estetia.estetiacrm.com.br: 288 req, OK 95,6% · aftercare.nimblabs.com: 160 req, OK 98,2% · context.nimblabs.com: 140 req, OK 91,4% · reviewshield.nimblabs.com: 123 req, OK 99,8%. Hosts com problema AGORA: nenhum — outros 12 host(s) marcados \"problemas no passado\", que é histórico da janela de 90 dias e não falha de hoje.",
+      "veredito": "bate",
+      "trecho": "roilabs.com.br, 25/07/2026: 14 dos 19 hosts da propriedade em NXDOMAIN consumiam 4.908 dos 6.408 requests do Googlebot (76,6%). Aplicado em 29/07 por scripts/cloudflare-redirects.mjs.",
+      "motivo": "O documento data explicitamente o número antigo e registra a correção aplicada em 29/07, sem afirmar que aquele volume/percentual vale hoje — compatível com o fato apurado depois da correção.",
+      "erro": ""
+    }
+  ]
+}

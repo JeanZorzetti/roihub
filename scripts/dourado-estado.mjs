@@ -1,9 +1,10 @@
-// Imprime as 8 perguntas de camada `estado` do dourado APURADAS na fonte viva, com a fonte de
+// Imprime as perguntas de camada `estado` do dourado APURADAS na fonte viva, com a fonte de
 // cada número. É o gabarito que não apodrece: `data/dourado.json` guarda as 70 de protocolo e
-// episódio (regra não muda sozinha) e estas 8 são avaliadas na hora da medição.
+// episódio (regra não muda sozinha) e estas são avaliadas na hora da medição.
 //
 //   node --env-file=.env scripts/dourado-estado.mjs                 # só o que sai de arquivo
 //   node --env-file=.env scripts/dourado-estado.mjs --estado tudo   # inclui GitHub e GSC
+//   node --env-file=.env scripts/dourado-estado.mjs --estado caro   # + inventários de 35 sites/repos
 //   node --env-file=.env scripts/dourado-estado.mjs --diff          # apurado × dourado escrito
 //
 // Zero LLM: é rede e leitura de arquivo, como o conformidade.mjs. Não divide pool com a busca.

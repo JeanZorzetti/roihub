@@ -1,7 +1,21 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-dobrar-a-camada-estado.md`](handoff/handoff-proximo-passo-dobrar-a-camada-estado.md)
-> (01/08): dobrar a camada `estado`, e as FONTES JÁ EXISTEM.** O teto do detector são **8 fatos**
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-camada-estado-dobrou.md`](handoff/handoff-a-camada-estado-dobrou.md)
+> (01/08): a camada `estado` foi de 8 para 15 fatos, e o custo era LIGAR, não construir.** As sete
+> fontes que já rodavam viraram apurador; o trabalho foi mover a lógica de script para `lib/`.
+> 🚩 **Fonte cara ganhou MODO PRÓPRIO** (`offline` < `tudo` < `caro`): sem isso, toda corrida de
+> régua dispararia ~250 requisições contra produção. Perguntas que leem a mesma varredura
+> compartilham cache por execução, e há teste que conta as requisições.
+> ✅ **A 1ª corrida mediu o CHECK duas vezes** — `D-85` listou 34 "hosts com problema" e nenhum era
+> de agora (grep por `problem` casa os TRÊS estados do GSC); `D-81` decompunha 10 em subgrupos que
+> somavam 9. **4 âncoras de 6 candidatas entraram, medidas contra o corpus antes de escrever.**
+> 🚩 **4 `desmente`: 3 reais (a MESMA memória viva, que se contradizia internamente) e 1 falso
+> positivo em handoff DATADO, que não se reescreve.** Nenhum percentual saiu daqui.
+> ⚠️ **O dourado foi de 78 para 85 perguntas:** o recall da busca tem denominador novo — piso
+> relativo (`--min bm25`), nunca comparação com o número de ontem.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-proximo-passo-dobrar-a-camada-estado.md`](handoff/handoff-proximo-passo-dobrar-a-camada-estado.md)
+> (01/08): dobrar a camada `estado`, e as FONTES JÁ EXISTEM.** O teto do detector eram **8 fatos**
 > (8 × 1,1 = 9 pares), e nenhuma varredura conserta um universo de 8. Mas **6 scripts deste repo já
 > apuram fato contra fonte viva com ZERO LLM e nenhum está ligado à camada** (`gateways`,
 > `gateways-repo`, `conformidade`, `validade`, `inspect-url`, `fetch-crawl-stats`) — são **~7 fatos
