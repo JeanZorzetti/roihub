@@ -1,6 +1,25 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-cruzamento-achou-o-check-errado.md`](handoff/handoff-o-cruzamento-achou-o-check-errado.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-que-e-melhor-fazer.md`](handoff/handoff-o-que-e-melhor-fazer.md)
+> (01/08): o que é MELHOR fazer, sem desconto por esforço — e a DEFINIÇÃO DE PRONTO das duas
+> features.** Três premissas herdadas foram medidas e **duas caíram**: 1.7 já estava fechado, e
+> "30 sem cobrança" eram 27. A terceira piorou — **o token de produção do MP está VIVO** (`/users/me`
+> → 200, conta 3020352786, `live=active`), mora em `DEPLOY_PRODUCTION.md:53` (**um `.md`, não um
+> `.env` — por isso nenhuma higiene o vê**) e é **byte-idêntico ao do `.env` deste repo**, então
+> rotacionar quebra a régua do dinheiro se os 3 consumidores não forem atualizados juntos.
+> **Só o antigo devolvendo 401 prova que fechou.** ✅ Varredura em todos os repos descartou 2ª
+> exposição.
+> 🎯 **O diagnóstico que faltava no detector: a célula que decide tem CINCO casos.** `desmente` 5/5
+> — os portões estão respondendo "ele deixa passar corpus podre?" com uma amostra de cinco, e
+> nenhuma redação de prompt conserta conjunto. **Critério 1.8 novo: `desmente` ≥ 20.**
+> 💡 **A mina de `desmente` natural é o HISTÓRICO DO GIT** — esta casa não reescreve handoff datado
+> de propósito, então ela preserva afirmações que a fonte viva hoje desmente. **Teste de 20 min que
+> mata a ideia antes de dias de trabalho está na seção 3.**
+> 💰 **A cobrança nunca teve definição de pronto. Agora tem:** *um estranho consegue pagar, o
+> dinheiro chega numa conta real e uma RÉGUA lê o valor sem ninguém digitar* — 5 testes, `payer`
+> separando venda de teste, e um SEGUNDO pagamento sem intervenção.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-o-cruzamento-achou-o-check-errado.md`](handoff/handoff-o-cruzamento-achou-o-check-errado.md)
 > (01/08): o item 5 executado, e o cruzamento auditou o próprio check.** Dos **10 projetos com SDK
 > de pagamento escrito, UM faturou** (`atma`): **6 já servem preço e só falta LIGAR** (`sirius`,
 > `polarisia`, `estetiacrm`, `context`, `orion`, `vertice`) e 3 estão mais longe (`reviewshield`,
