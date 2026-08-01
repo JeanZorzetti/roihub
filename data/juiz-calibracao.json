@@ -455,5 +455,27 @@
       "armadilha": "evitou",
       "motivo": "Prescreve abrir no browser antes de publicar e suspeitar de CSS à mão imitando Tailwind. Omite o gotcha do style escopado do Astro, mas a ação prescrita (abrir e olhar) pega esse caso também."
     }
-  ]
+  ],
+  "dourado_lacrado": {
+    "D-03": "3118466f2af7",
+    "D-05": "b5aead47d27e",
+    "D-08": "a79d906df6b2",
+    "D-09": "6e9d3e4fb6d3",
+    "D-14": "68a01a7e03ef",
+    "D-17": "05e5caf8c7ea",
+    "D-20": "2f6158a3173a",
+    "D-25": "15c25aaefbeb",
+    "D-30": "6400f8b7ef18",
+    "D-35": "d1904af898f6",
+    "D-40": "d6d762dc0d2f",
+    "D-45": "54eb40e99ccb",
+    "D-50": "703fbf1e0267",
+    "D-55": "fc65f7d20e43",
+    "D-60": "77aa1f870bc9",
+    "D-74": "239abd64e11e",
+    "D-75": "a1f1dd449504",
+    "D-76": "1ab0d06736ab",
+    "D-77": "1cb74bdf2bb3",
+    "D-78": "f51c305d641c"
+  }
 }

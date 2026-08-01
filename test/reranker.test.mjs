@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
+import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta, falhasDeConta, MAX_CONTA_SEGUIDAS, chave } from "../lib/reranker.mjs";
 
 const candidatos = [
   { id: "a", tipo: "protocolo", titulo: "A", trecho: "texto a" },
@@ -187,4 +187,17 @@ test("erro que não é de conta não aborta", () => {
   assert.equal(n, 0);
   // Uma das três chamadas da pergunta basta: o juiz gasta pool igual à síntese.
   assert.equal(falhasDeConta(0, ["", undefined, "juiz-conta"]), 1);
+});
+
+// O comentário que pôs o MODELO na chave dizia: servir o veredito de um modelo para o outro
+// esconderia a troca que se quer medir. O `effort` ficou de fora e vale o mesmo argumento — com
+// ele fora, testar `effort` no detector devolveria o resultado do effort anterior e a leitura
+// seria "não mudou nada". A chave sem effort é o formato legado: continua sendo lida (o cache já
+// custou ~100 chamadas do pool), nunca escrita.
+test("chave do cache separa por effort, e a chave legada continua estável", () => {
+  const p = "prompt qualquer";
+  assert.notEqual(chave(p, "sonnet", "low"), chave(p, "sonnet", "medium"), "effort não separa: cache serve resultado de outro effort");
+  assert.notEqual(chave(p, "sonnet", "medium"), chave(p, "opus", "medium"), "modelo não separa");
+  assert.equal(chave(p, "sonnet", ""), chave(p, "sonnet", undefined), "formato legado tem que ser o mesmo hash de antes do effort");
+  assert.notEqual(chave(p, "sonnet", ""), chave(p, "sonnet", "low"), "legado e low são chaves distintas de propósito");
 });

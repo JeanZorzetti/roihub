@@ -58,7 +58,7 @@ let seguidas = 0;
 async function julgar(caso) {
   const prompt = montarPromptDefasagem(caso.pergunta, caso.apurado, caso.doc);
   try {
-    return parseDefasagem(await rodarCacheado(prompt, (p) => rodarClaude(p, { effort: "medium" }), true), caso.doc.trecho);
+    return parseDefasagem(await rodarCacheado(prompt, rodarClaude, true, { effort: "medium" }), caso.doc.trecho);
   } catch (err) {
     return { veredito: "", trecho: "", motivo: "", erro: err.message.replace(/^rerank-/, "defasagem-") };
   }

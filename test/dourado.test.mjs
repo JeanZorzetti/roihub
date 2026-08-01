@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { basename, join } from "node:path";
 
@@ -68,6 +69,32 @@ test("fixture do juiz congela o gabarito de toda pergunta de `estado` que usa", 
     for (const id of new Set(usados.filter((i) => estado.has(i)))) {
       const g = f.dourado_congelado?.[id];
       assert.ok(g?.resposta?.trim(), `${arq}: usa ${id} (estado) sem gabarito congelado em dourado_congelado`);
+    }
+  }
+});
+
+// O congelamento de 01/08 cobriu as 8 de `estado` — as outras 27 entradas de fixture continuam
+// lendo `data/dourado.json` na hora da corrida, por uma decisão declarada em `juiz-calibrar.mjs`:
+// regra e episódio não mudam sozinhos, e duplicá-los criaria duas verdades para manter. A decisão
+// é boa e o histórico a sustenta (0 dos 21 textos mudou nos 3 commits do arquivo) — mas ela era
+// uma PREMISSA sobre comportamento futuro, e nada a segurava. O lacre é a garantia mecânica sem a
+// segunda verdade: guarda o hash, não o texto. Se alguém reescrever um gabarito que um portão lê,
+// este teste reprova em vez de o número do portão mudar em silêncio.
+//
+// Mudou de propósito? A mensagem imprime o hash novo — colar em `dourado_lacrado` é declarar que
+// o gabarito do portão mudou, que é exatamente a decisão que não pode ser tomada sem querer.
+test("gabarito que o portão lê de data/dourado.json está lacrado por hash", () => {
+  const lacre = (q) => createHash("sha1").update(`${q.resposta ?? ""}\n${q.armadilha ?? ""}`).digest("hex").slice(0, 12);
+  const porId = new Map(dourado.map((q) => [q.id, q]));
+  for (const arq of ["juiz-calibracao.json", "juiz-adversarial.json"]) {
+    const f = JSON.parse(readFileSync(fileURLToPath(new URL(`../data/${arq}`, import.meta.url)), "utf8"));
+    const usados = new Set([...(f.holdout ?? []), ...(f.rotulos ?? []), ...(f.casos ?? [])].map((c) => c.id));
+    for (const id of usados) {
+      if (!porId.has(id) || f.dourado_congelado?.[id]) continue; // congelado inline não depende do arquivo
+      const esperado = f.dourado_lacrado?.[id];
+      assert.ok(esperado, `${arq}: usa ${id} lido de dourado.json sem lacre — acrescente "${id}": "${lacre(porId.get(id))}" em dourado_lacrado`);
+      assert.equal(lacre(porId.get(id)), esperado,
+        `${arq}: o gabarito de ${id} mudou em dourado.json e move o número do portão sem tocar no juiz — se foi de propósito, atualize dourado_lacrado para "${lacre(porId.get(id))}"`);
     }
   }
 });

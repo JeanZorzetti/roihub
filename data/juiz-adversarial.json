@@ -84,5 +84,14 @@
       "espera": "contradiz",
       "resposta_corrompida": "Sim, e codigo: `npm error enoent Could not read package.json` significa que o `package.json` do repo esta corrompido ou faltando, e o conserto e no repositorio [2]. O Root Directory da Vercel nao tem relacao com essa assinatura — ele so afeta onde os assets sao servidos [1][6]. Comece validando o JSON do `package.json` e o lockfile [2]."
     }
-  ]
+  ],
+  "dourado_lacrado": {
+    "D-01": "ea87f8ebe1d3",
+    "D-05": "b5aead47d27e",
+    "D-09": "6e9d3e4fb6d3",
+    "D-17": "05e5caf8c7ea",
+    "D-20": "2f6158a3173a",
+    "D-74": "239abd64e11e",
+    "D-77": "1cb74bdf2bb3"
+  }
 }
