@@ -139,23 +139,35 @@ Escrever o arquivo era a parte fácil. Em três dos sete ele teria **404 em prod
 `/blog`. **Um `llms.txt` que os crawlers de IA estão proibidos de buscar é enfeite** — entrou
 `Allow: /llms.txt` junto.
 
-### 3.3 O portão de entrega, e ele ainda NÃO foi verificado
+### 3.3 O portão de entrega: **3 de 7 verificados em produção, 4 presos no build**
 
 ```
 node --env-file=.env scripts/conformidade.mjs
 ```
 
-O que tem que aparecer:
+**Medido às 20:10 BRT de 01/08, contra a corrida de referência da mesma sessão:**
 
-- **`GEO-01` cai de 28 para 21** — sete a menos, o número exato de projetos tocados. **Se cair para
-  menos de 21, o CHECK mudou e não o portfólio: pare e leia as linhas.**
-- **Nenhum dos 21 restantes muda de balde.**
-- **`orion` perde a linha `robots.txt BARRA o GPTBot`.**
-- `curl -sSL https://<host>/llms.txt` devolve texto, não HTML — o corpo decide, nunca o status
-  (`spa_sitemap_200_is_not_proof`).
+| | antes | agora |
+|---|---|---|
+| `GEO-01` falhando | 28 | **25** |
+| total de violações | 41 | **38** |
 
-Enquanto o build não sobe, os sete respondem 404 e **isso não é falha do trabalho, é a janela**. Não
-tire conclusão antes de o deploy fechar.
+Diff NOMINAL, que é o que decide: **sumiram exatamente `atma`, `nimblabs` e `orion` — os três que
+subiram — e ZERO violação nova apareceu.** Nenhum projeto não-tocado mudou de balde. O controle do
+§4.1 do handoff anterior passou nas duas corridas desta sessão (a do conserto do check e esta).
+
+Corpo conferido host a host, nunca o status (`spa_sitemap_200_is_not_proof`): os três servem
+`text/plain` começando em `# <nome do projeto>`, e o `robots.txt` do `orion` agora traz os 12
+crawlers de IA com `Allow: /` no lugar do `Disallow: /`.
+
+> 🚩 **Faltam 4, e a causa NÃO é o repositório: é o deploy.** `aftercare`, `context`,
+> `reviewshield` e `estetia` seguiam em **404 quarenta minutos depois do push**, enquanto `atma`,
+> `nimblabs` e `orion` — mesma plataforma, mesmo horário — subiram em minutos. Commit e push estão
+> feitos e conferidos nos quatro. **Próximo passo é olhar o auto-deploy desses quatro serviços no
+> EasyPanel**, não mexer no código: os arquivos que faltam estão no `main` de cada repo.
+>
+> Quando subirem, `GEO-01` tem que fechar em **21**. **Se cair abaixo de 21, o CHECK mudou e não o
+> portfólio: pare e leia as linhas.**
 
 ### 3.4 O que os `llms.txt` dizem, e por que não são link dump
 

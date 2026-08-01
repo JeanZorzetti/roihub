@@ -5,9 +5,11 @@
 > 🚩 **O `orion` servia `User-Agent: GPTBot` + `Disallow: /` e o check chamava isso de conformidade.**
 > Site inteiro fora do ChatGPT. Mesma classe do "palavra ≠ URL" do `gateways.mjs`. **O AGREGADO NÃO SE
 > MEXEU — 41 antes, 41 depois** (o `orion` já falhava por `llms.txt`); só a LINHA mudou. Ler as linhas.
-> ⏳ **A verificação de entrega ainda NÃO foi feita:** `GEO-01` tem que cair de **28 → 21**, sete a
-> menos, e **nenhum não-tocado pode mudar de balde**. Os 7 respondiam 404 minutos depois do push — é a
-> janela do build, não falha.
+> ✅ **3 de 7 VERIFICADOS em produção: `GEO-01` 28 → 25, violações 41 → 38.** O diff nominal mostra
+> sumindo exatamente `atma`, `nimblabs` e `orion` e **zero violação nova** — nenhum não-tocado mudou
+> de balde. ⏳ **Os outros 4 estão presos no DEPLOY, não no código** (`aftercare`, `context`,
+> `reviewshield`, `estetia` em 404 40 min após o push, com os arquivos no `main`): o próximo passo é
+> o auto-deploy deles no EasyPanel. Quando subirem, `GEO-01` fecha em **21**.
 > 🚩 **Três defeitos de INFRA que o `llms.txt` desenterrou:** `output: standalone` **não empacota
 > `public/`** (o `globe.svg` do `reviewshield` já era 404 em produção) · `robots.txt` DUPLICADO em
 > `public/` e em `app/robots.ts`, **se contradizendo** no `orion` · middleware Auth0 do `context`.
