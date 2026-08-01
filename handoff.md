@@ -1,6 +1,17 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-camada-estado-dobrou.md`](handoff/handoff-a-camada-estado-dobrou.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-o-holdout-e-monocultura.md`](handoff/handoff-proximo-passo-o-holdout-e-monocultura.md)
+> (01/08): o holdout do detector é MONOCULTURA DE FATO — 50 casos, todos de 8 perguntas.** Os 7
+> fatos que entraram hoje não têm **um único** caso nem candidato (`D-79`…`D-85`: 0 e 0). O portão
+> mede o detector *naquelas 8 perguntas*, e agora existe bancada para tirá-lo disso.
+> 🚩 **Os 42 pares julgados hoje estão CONTAMINADOS para rótulo** — os vereditos foram lidos um a
+> um. O caminho limpo está escrito no `defasagem-candidatos.json`: par sem veredito, recorte de
+> **2400** (o da produção), rotular à mão, conferir a âncora, **e só então mover**.
+> 🚩 **Consertar o corpus CONSOME a bancada:** os 3 `desmente` reais de hoje já viraram `bate`
+> porque a memória foi corrigida. O par só sobrevive se for **congelado antes** do conserto.
+> ⚠️ Piso de portão é PROPORCIONAL, e a 1ª corrida contra fixture AMPLIADO mede o FIXTURE.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-a-camada-estado-dobrou.md`](handoff/handoff-a-camada-estado-dobrou.md)
 > (01/08): a camada `estado` foi de 8 para 15 fatos, e o custo era LIGAR, não construir.** As sete
 > fontes que já rodavam viraram apurador; o trabalho foi mover a lógica de script para `lib/`.
 > 🚩 **Fonte cara ganhou MODO PRÓPRIO** (`offline` < `tudo` < `caro`): sem isso, toda corrida de
