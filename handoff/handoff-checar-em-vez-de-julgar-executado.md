@@ -87,6 +87,17 @@ check novo mede o check — e desta vez estava escrito na spec que ia acontecer.
 na linha teria absolvido o achado real — o card do aftercare tem `28/11`, `28/07` e `25/07` na
 mesma linha. Duas edições de 5 caracteres custam menos que um check que passa limpo por construção.
 
+### O 4º achado, 20 minutos depois: o check reprovou quem ENSINA a norma
+
+Ao escrever a memória desta sessão, ela citou o defeito como exemplo — `(hoje 21)` — e o check
+reprovou a citação. Não é o defeito: é um documento **falando sobre** o defeito.
+
+**Conserto:** span de crase é mascarado antes do casamento. Crase é a marca de "isto é literal,
+não é minha afirmação", e sem ela o check reprova exatamente os documentos que documentam a norma —
+o tipo de atrito que faz alguém tirar o check da lista do `package.json` na primeira sexta-feira.
+Teto declarado no código: placar de verdade escrito dentro de crase escaparia; nenhum dos 6
+achados reais até hoje estava.
+
 Corrida atual: **0 achados em 230 documentos vivos**, em segundos.
 
 ---

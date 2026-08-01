@@ -168,6 +168,9 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
   (o card do aftercare congelando "hoje são 0" cliques) e 2 de fronteira (um status HTTP, um
   "agora 6 asserts" num bullet já datado). Os três saíram datando ou apontando a apuração — mais
   barato que afrouxar a regex, que é como um check vira enfeite.
+- **Citação entre crases é literal, não afirmação.** Vinte minutos depois de passar limpo, o check
+  reprovou a memória que ENSINA a norma citando `(hoje 21)` como exemplo. Span de crase é mascarado
+  antes do casamento — check que reprova quem o documenta sai da lista na primeira sexta-feira.
 
 ## Conformidade (`scripts/conformidade.mjs`) — a norma que RODA
 

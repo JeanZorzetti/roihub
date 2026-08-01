@@ -32,6 +32,13 @@ test("a forma sem parênteses não atravessa a frase", () => {
   assert.equal(t, "hoje são 0 cliques");
 });
 
+// Um check que reprova o documento que ENSINA a norma não sobrevive a duas semanas: a memória do
+// corpus quebrou o check 20 minutos depois de ele passar limpo, citando "`(hoje 21)`" como exemplo.
+test("citação entre crases é literal, não afirmação", () => {
+  assert.deepEqual(trechos("na linha, `até 19/10/2026 (hoje 21)` seria absolvido"), []);
+  assert.deepEqual(trechos("na linha, até 19/10/2026 (hoje 21) seria absolvido"), ["(hoje 21)"]);
+});
+
 test("reporta a linha, não só o arquivo", () => {
   const achados = afirmacoesDePresente("linha um\nlinha dois\ngate X (hoje 21)");
   assert.equal(achados.length, 1);
