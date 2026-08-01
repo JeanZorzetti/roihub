@@ -50,7 +50,7 @@
     "url": "https://siriuscrm.com.br/",
     "repo": "sirius",
     "receita": 9,
-    "receitaNota": "3 vendas orgânicas AFIRMADAS, nunca checadas: o banco de produção é a fonte viva e não foi consultado uma vez sequer. `vendas` fica ausente de propósito — 'não olhei' não vira 'não vendeu'. Ligar a fonte é o próximo commit da frente do dinheiro (o atma já está ligado no Mercado Pago)",
+    "receitaNota": "3 vendas orgânicas AFIRMADAS, nunca checadas: o banco de produção é a fonte viva e não foi consultado uma vez sequer. `vendas` fica ausente de propósito — 'não olhei' não vira 'não vendeu'. Ligar a fonte é o próximo commit da frente do dinheiro (o atma já está ligado no Mercado Pago). ⚠️ TENTADO em 31/07 e BLOQUEADO por rede, não por falta de credencial: o `.env` tem a URL completa e `31.97.23.166:5434` devolve ETIMEDOUT da máquina de dev — o mesmo padrão do `:5499` do sofia-next. O esquema já foi lido e a query é conhecida: `Organization` tem `tier`, `stripeSubscriptionId`, `mercadoPagoSubscriptionId`, `billingStartDate` e — o campo que importa — `isTestAccount` ('exclude from revenue metrics'), então a contagem honesta é tier != FREE E isTestAccount = false. Falta só alcançar a porta",
     "blockers": 2,
     "blockersLista": [],
     "seoSeed": 6,
