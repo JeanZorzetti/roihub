@@ -106,6 +106,8 @@ test("D-70 falha fechada e nomeia os cards sem familia ou estado", async () => {
 
 // A quarta família ('nao-vende') nasceu da leitura dos 35: CV, demo, pesquisa e vitrine não estão
 // travados, não tentam faturar por decisão. Empurrá-los para uma das três inventaria travamento.
+// A quinta ('produto') veio da derivação cega da fase C: o defeito é ANTERIOR à cobrança, e os 4
+// estavam espalhados por três famílias diferentes dizendo a mesma coisa.
 test("D-70 conta travado por família e o estado de todos", async () => {
   const b = [{ texto: "x", humano: false }];
   const raiz = repoFalso({
@@ -114,15 +116,17 @@ test("D-70 conta travado por família e o estado de todos", async () => {
       { slug: "b", familia: "cobranca", estado: "no-ar-inutilizavel", blockersLista: b },
       { slug: "c", familia: "nao-vende", estado: "prototipo", blockersLista: b },
       { slug: "d", familia: "trafego", estado: "no-ar" },
+      { slug: "e", familia: "produto", estado: "no-ar", blockersLista: b },
     ],
   });
   const r = await apurar(raiz);
   assert.equal(r["D-70"].nao_apurado, "");
-  assert.match(r["D-70"].resposta, /3 de 4 têm blocker registrado/, "sem blocker não é travado");
+  assert.match(r["D-70"].resposta, /4 de 5 têm blocker registrado/, "sem blocker não é travado");
   assert.match(r["D-70"].resposta, /não tem como cobrar: 2 \(a, b\)/);
   assert.match(r["D-70"].resposta, /não tenta faturar por decisão: 1 \(c\)/);
+  assert.match(r["D-70"].resposta, /o produto não funciona: 1 \(e\)/);
   // O estado conta os 4, não só os travados: 'd' está no ar e sem blocker, e continua existindo.
-  assert.match(r["D-70"].resposta, /Estado: 2 no-ar, 1 no-ar-inutilizavel, 1 prototipo/);
+  assert.match(r["D-70"].resposta, /Estado: 3 no-ar, 1 no-ar-inutilizavel, 1 prototipo/);
   assert.match(r["D-70"].ressalva, /julgamento humano/);
 });
 

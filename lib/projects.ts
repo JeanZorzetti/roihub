@@ -27,7 +27,7 @@ export type Project = {
   decayNota: string;
   /** Curadoria: o que impede de faturar, e se o host serve produto de verdade. Ver `FAMILIAS` e
    * `ESTADOS` em lib/dourado-estado.mjs — é de lá que sai a apuração de `D-70`. */
-  familia?: "cobranca" | "venda" | "trafego" | "nao-vende";
+  familia?: "cobranca" | "venda" | "trafego" | "nao-vende" | "produto";
   estado?: "no-ar" | "no-ar-inutilizavel" | "prototipo";
   acao: string;
   acaoDesc: string;

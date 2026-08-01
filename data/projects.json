@@ -23,7 +23,7 @@
     "decayNota": "98 páginas no ar; CWV verde",
     "acaoDesc": "AUTOPUBLISH 25/07: o 1º guia do robô (como-escolher-fita-adesiva-para-embalagem) estava ÓRFÃO — no ar e fora de guias.ts, logo fora do sitemap, do llms.txt, do hub /guia e do OG. Registrado e reescrito no padrão da casa (JSON-LD, tabela, fontes técnicas); o hub /guia não quebra mais o build quando o robô insere guia sozinho. MANUAL (Jean, login Microsoft) — NÃO é tarefa de código. Causa do IndexNow 403 já achada e verificada 13/07: o Bing trata cada subdomínio como site à parte e recusa o ping enquanto não conhecer o host — a chave está certa (apex → 200, Yandex aceita a mesma chave → 202, key file servido 200/text-plain/sem BOM; NADA a consertar no servidor, não reabra essa investigação). Desbloqueio: adicionar goiania.roilabs.com.br no Bing Webmaster Tools e verificar — o import do GSC traz verificação + sitemap de uma vez. Gate pra fechar sem deploy: pnpm indexnow:check (repo ROI Labs/ROI Labs, site-goiania). Contexto: ✅ LCP resolvido 13/07 (5,9s→2,5s, doc Docs/Obsidian/80-dev/fontes.md). Depois do Bing: export de sexta 17/07 na aba /infra pra ver se os 33,6% de redirect caíram.",
     "acao": "Verificar goiania.roilabs.com.br no Bing Webmaster Tools — destrava o IndexNow 403 (manual)",
-    "familia": "venda",
+    "familia": "trafego",
     "estado": "no-ar"
   },
   {
@@ -158,8 +158,8 @@
     "decayNota": "",
     "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx en-US, risk legal-safe; layout renderiza FAQ e Related articles (layoutRenders já declarado). Inventário de 77 arquivos → run lento, request-failed no Actions pode ser o corte de ~300s do proxy: confira o commit no repo alvo. Run agora à 00:13 BRT. Repo: ROI Labs/review-dispute-agent. ✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina.",
     "acao": "On-page + links internos pro /checker (p78 no GSC) — sair da zona de risco do kill-gate",
-    "familia": "trafego",
-    "estado": "no-ar"
+    "familia": "produto",
+    "estado": "no-ar-inutilizavel"
   },
   {
     "slug": "context",
@@ -277,7 +277,7 @@
     "decayNota": "Front em 200, backend inexistente — saúde aparente engana",
     "acaoDesc": "Renomeado de cardio-risk-insight-hub → cardiorisk em 30/07, e ABSORVEU o cardioqwen3code: o Jean decidiu que eram o mesmo produto, o repo do irmão já tinha sido apagado do GitHub, e o host dele agora é 308 pra cá. Os títulos estavam trocados entre os dois; o <title> foi corrigido pra 'CardioCare AI' (nome do README), mas o H1 do componente segue 'Sistema IA Médica'. O blocker que importa é outro: frontend/app/utils/api.ts tem 'https://cardioapi.roilabs.com.br' como default de API_BASE_URL e esse host é NXDOMAIN — verificado ao vivo em 30/07. A landing responde 200 e o health check vai dizer que está tudo bem, mas nenhuma análise de risco roda. Decidir vale mais que codar aqui: subir o backend (FastAPI, está no repo com datasets e dashboard_medico.py) ou assumir que é vitrine e tirar o formulário.",
     "acao": "Decidir: sobe o backend FastAPI ou vira vitrine? Hoje a landing promete o que a API morta não entrega. O H1 já foi corrigido (31/07)",
-    "familia": "cobranca",
+    "familia": "produto",
     "estado": "no-ar-inutilizavel"
   },
   {
@@ -304,7 +304,7 @@
     "decayNota": "Front em 200, API e WS mortos",
     "acaoDesc": "Renomeado de tape-vision-ai-92 → tapevision em 30/07 (host antigo em 308). Curadoria medida: o Frontend aponta VITE_API_URL e VITE_WS_URL pra aitradingapi.roilabs.com.br, que não resolve — confirmado ao vivo em 30/07, junto com aitrading.roilabs.com.br. É um dashboard de trading em tempo real sem fonte de dado nem stream: o que está no ar é a casca. Mesmo padrão do cardiorisk e do potencialarquitetado — três landings cujo backend foi aposentado e ninguém repontou o front. O repo tem Backend/ e MLEngine/ completos, então a decisão é de hospedagem, não de código. Atenção ao publicar: build de git sempre dá ERROR aqui, só publica com deploy manual de dentro de Frontend/.",
     "acao": "Decidir o destino do Backend/ + MLEngine (hospedar ou aposentar) — o dashboard no ar não tem de onde ler",
-    "familia": "cobranca",
+    "familia": "produto",
     "estado": "no-ar-inutilizavel"
   },
   {
@@ -332,7 +332,7 @@
     "acaoDesc": "Renomeado de potencial-arquitetado → potencialarquitetado em 30/07 (host antigo em 308). Curadoria medida: VITE_API_URL aponta pra arquiteturaapi.roilabs.com.br/api, host que não resolve — então o backend/server.js e o /admin descritos no SISTEMA_PRONTO.md não têm onde rodar. A parte de conteúdo (frameworks de soft skills e carreira) é estática e funciona sozinha. Achado de borda: a og:image no index.html aponta pra 'arquiteturadopotencial.com' (sem .roilabs), domínio inexistente — todo compartilhamento sai sem imagem. Nenhum sinal de cobrança no código: se a tese é vender curso ou comunidade, não existe caminho de checkout hoje.",
     "acao": "Decidir se o conteúdo vira produto pago — a og:image já foi corrigida (31/07). Sem essa decisão não vale mexer em mais nada aqui",
     "familia": "cobranca",
-    "estado": "no-ar"
+    "estado": "no-ar-inutilizavel"
   },
   {
     "slug": "matchfios",
@@ -355,7 +355,7 @@
     "acaoDesc": "Renomeado de matchfios-textile-connector → matchfios em 30/07 (host antigo em 308). Curadoria medida: é o único dos 9 além do orcaobra com preço público — R$ 500 e R$ 100 em src/components/PricingSection.tsx — mas o botão chama scrollToSignup, ou seja, o funil termina num formulário, não numa cobrança. Diferente dos três irmãos quebrados, este não depende de API nenhuma: é estático e publica por git push normalmente. B2B têxtil não se vende por checkout de impulso, então formulário pode ser a escolha certa — mas aí o gargalo é para onde o lead VAI. Não há integração de lead visível no código. Decidir isso vale mais que qualquer trabalho de SEO aqui, porque o GSC começa do zero em 30/07.",
     "acao": "Ligar o formulário a um destino real (CRM/e-mail) — hoje o lead do B2B não vai pra lugar nenhum",
     "familia": "cobranca",
-    "estado": "no-ar"
+    "estado": "no-ar-inutilizavel"
   },
   {
     "slug": "verticemarketing",
@@ -663,7 +663,7 @@
     "decayNota": "Está 200 e com sitemap válido, mas o que serve é template — nunca teve conteúdo",
     "acaoDesc": "É o corte mais óbvio dos quinze e o único que não tem tese nenhuma. Medido em 30/07: responde 200, o sitemap.xml é XML válido com 1 URL e o canonical está declarado — tecnicamente tudo certo. O problema é o conteúdo: o HTML servido tem <title>Vite + React + TS</title>, <link rel='icon' href='/vite.svg'> e lang='en'. É o template que o `npm create vite` gera, publicado num subdomínio próprio de roilabs.com.br. Os chunks carregados incluem three-base, então houve alguma experiência 3D, mas nada disso chegou ao HTML servido. URL Inspection: 'Discovered - currently not indexed'. GSC 0/0. A régua vigente é zero arquivamentos, então o card entra — mas entra dizendo a verdade, e a decisão que falta é do Jean, não uma tarefa de execução: ou o cyberspace ganha um produto, ou o subdomínio passa a servir outra coisa. Escrever uma ação de SEO ou de receita aqui seria inventar trabalho para um projeto que ainda não existe, que é exatamente como card apodrece.",
     "acao": "DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite",
-    "familia": "nao-vende",
+    "familia": "produto",
     "estado": "no-ar-inutilizavel"
   },
   {
@@ -753,7 +753,7 @@
     "decayNota": "'Submitted and indexed', crawl do Google em 29/07; sitemap com 13 URLs",
     "acaoDesc": "É o mais sólido dos quinze do ponto de vista comercial e o único que descreve uma operação de verdade: QPrime, outsourcing de impressão em Goiânia, fundada em 2001, endereço e telefone reais no schema.org (Rua 255, Setor Coimbra; (62) 3235-9800), com números de operação declarados — +300 contratos ativos, +6.000 equipamentos em campo, +1 milhão de páginas/ano. Medido em 30/07: home 200, sitemap.xml XML válido com 13 URLs e URL Inspection PASS — 'Submitted and indexed', crawl do Google em 29/07, canonical do Google igual ao declarado. É um dos três dos quinze efetivamente no índice, e tem propriedade GSC própria (sc-domain:qprime.roilabs.com.br), embora ainda em 0/0 nas duas janelas de 28 dias. O caminho de dinheiro é lead-gen, não checkout: o CTA é 'Pedir diagnóstico da frota' mais WhatsApp e telefone, e o grep de pagamento no repo só encontra menções em docs de kiosk-film, nada de gateway. Isso é adequado ao modelo — contrato de outsourcing não se fecha em checkout — e coloca a nota na mesma faixa do verticemarketing, que também fatura por serviço. O ponto estrutural a decidir é o host: um cliente com 25 anos de operação está servido em subdomínio de roilabs.com.br, o que é frágil para ele e mistura o SEO dele com o do portfólio.",
     "acao": "Decidir se a QPrime vai para domínio próprio — hoje o cliente mora em subdomínio da ROI Labs",
-    "familia": "venda",
+    "familia": "trafego",
     "estado": "no-ar"
   },
   {
