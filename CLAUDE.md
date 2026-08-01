@@ -165,14 +165,25 @@ as 8 de `estado` são **apuradas na hora da medição**.
 morno retoma corrida morta. As outras réguas comparam a RESPOSTA com o dourado; só esta aponta
 para fora do texto.
 
-- **🚩 OS DOIS PORTÕES REPROVARAM (01/08): holdout 71,4%, adversarial 3/10** — `scripts/defasagem-calibrar.mjs`,
-  detalhe em `docs/defasagem-calibracao.md`. **Nenhum percentual de defasagem sai daqui, inclusive o
-  16,7%.** O modo de falha é UM: **`nao-fala` engole tudo** — o detector julga o TEMA do documento,
-  não a afirmação dentro dele (corrompi um doc para dizer "12 projetos" em vez de 35 e ele absolveu
-  dizendo que o doc "trata de conformidade"). **Isso inverte a leitura: instrumento que absolve 7 de
-  10 corrupções SUBESTIMA a defasagem.** O alvo do conserto está nomeado e não é o vocabulário: a
-  linha `VEREDITO:` não está sendo derivada do raciocínio — sai `bate` com o `MOTIVO` dizendo
-  "desmente", já reproduzido 3×.
+- **🚩 OS DOIS PORTÕES AINDA REPROVAM, por um caso cada (01/08): holdout 84,6% (11/13), adversarial
+  8/10** — `scripts/defasagem-calibrar.mjs`, detalhe em `docs/defasagem-calibracao.md`. **Nenhum
+  percentual de defasagem sai daqui, inclusive o 16,7%.**
+- **O `VEREDITO` é a ÚLTIMA linha do prompt, e isso é decisão de ENGENHARIA.** Com ele na primeira
+  linha o modelo cravava a decisão antes de escrever o raciocínio que a justifica — saía `VEREDITO:
+  bate` com o `MOTIVO` terminando em "— desmente", reproduzido 3×. **Duas redações de REGRA já
+  falharam nesse formato (71,4% e 50,0%); inverter três linhas levou o adversarial de 3/10 a 8/10.**
+  Não reordene "para ficar igual ao do juiz" — há teste que segura.
+- **Achado sem citação não conta como achado:** `desmente` sem `TRECHO` é `defasagem-incoerente`, e
+  `TRECHO` que não está no documento é `defasagem-citacao`. **A conferência ignora tudo que não é
+  letra ou dígito**, e isso foi medido: com espaço apenas normalizado, 8 citações caíram e nenhuma
+  era fabricada — o modelo cita a prosa e larga o markdown. Sobraram 2, e as duas são fabricação
+  real (trocou `tapepro` por `sirius` na aspa com o motivo certo; citou uma frase do `CLAUDE.md` que
+  não estava no documento).
+- **O que sobrou é UM modo de falha e ele tem o conserto nomeado:** o detector ainda julga o TEMA do
+  documento, não a afirmação dentro dele — todos os erros restantes são `→ nao-fala`, e o mesmo
+  documento erra nos dois portões. **A próxima tentativa NÃO é uma terceira redação de regra, é
+  quebrar em DUAS PASSADAS** (extrair a afirmação / comparar com o fato), como o juiz. Custo: dobra
+  as chamadas de `corpus-defasado.mjs`.
 - **Só roda contra pergunta com apuração de verdade.** Comparar documento com dourado escrito à
   mão seria a mesma prosa concordando com prosa.
 - **A saída é lista NOMINAL, não percentual** — cada linha é uma edição de memória ou handoff.

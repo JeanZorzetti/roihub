@@ -37,6 +37,47 @@ test("parseDefasagem lê os três campos e preserva o trecho literal", () => {
   assert.equal(v.erro, "");
 });
 
+// O bug que reprovou os dois portões em 01/08 e que NENHUMA redação de regra consertaria: o
+// formato obrigava o modelo a cravar o veredito antes de escrever o raciocínio. Três vezes saiu
+// `VEREDITO: bate` com um `MOTIVO` que terminava em "— desmente". Se alguém reordenar o prompt
+// "para ficar igual ao do juiz", este teste é o que explica por que não.
+test("o VEREDITO é a ÚLTIMA linha pedida, depois do trecho e do motivo", () => {
+  const p = montarPromptDefasagem("quantos projetos?", apurado, doc);
+  assert.ok(p.lastIndexOf("TRECHO:") < p.lastIndexOf("MOTIVO:"), "o trecho vem antes do motivo");
+  assert.ok(p.lastIndexOf("MOTIVO:") < p.lastIndexOf("VEREDITO:"), "o veredito é derivado, então vem por último");
+  assert.ok(p.trimEnd().endsWith("bate|desmente|nao-fala"), "nada depois do veredito");
+});
+
+// `desmente` é o único veredito que vira TAREFA. Sem citação ele é uma acusação sem prova, e uma
+// lista nominal cheia dessas não é lida duas vezes — o mesmo motivo do `resposta-sem-citacao`.
+test("desmente sem trecho é incoerente, não é achado", () => {
+  for (const t of ["TRECHO: -\nMOTIVO: x\nVEREDITO: desmente", "MOTIVO: x\nVEREDITO: desmente"]) {
+    assert.equal(parseDefasagem(t, "o hub tem 39 projetos").erro, "defasagem-incoerente");
+  }
+  // `bate` e `nao-fala` sem trecho continuam válidos: não afirmam achado nenhum.
+  assert.equal(parseDefasagem("TRECHO: -\nMOTIVO: x\nVEREDITO: nao-fala", "qualquer coisa").erro, "");
+});
+
+test("trecho que não está no documento é alucinação de citação, com código próprio", () => {
+  const doc39 = "o hub tem 39 projetos hoje";
+  assert.equal(parseDefasagem("TRECHO: o hub tem 41 projetos\nMOTIVO: x\nVEREDITO: desmente", doc39).erro, "defasagem-citacao");
+  // Quebra de linha do recorte e caixa não são alucinação: reprovar por isso seria trocar
+  // fabricação de citação por diagramação.
+  assert.equal(parseDefasagem("TRECHO: O Hub  tem 39\nMOTIVO: x\nVEREDITO: desmente", "o hub\ntem 39 projetos").erro, "");
+  // Markdown largado na citação foi a causa das 8 reprovações da primeira corrida invertida, e
+  // nenhuma delas era fabricada. O corpus é markdown; o modelo cita o texto que lê.
+  const md = "- **19/10** — gate do `tapepro`: ≥ 300 imp/28d (hoje 21).";
+  assert.equal(parseDefasagem(`TRECHO: 19/10 — gate do tapepro: ≥ 300 imp/28d (hoje 21).\nMOTIVO: x\nVEREDITO: desmente`, md).erro, "");
+  // …e o número trocado continua caindo, que é a única coisa que este check precisa pegar.
+  assert.equal(parseDefasagem(`TRECHO: 19/10 — gate do tapepro: ≥ 300 imp/28d (hoje 42).\nMOTIVO: x\nVEREDITO: desmente`, md).erro, "defasagem-citacao");
+  // O caso REAL de citação inválida que a corrida achou: o modelo escreveu o veredito no campo
+  // do trecho. Sem este check ele teria entrado na conta como um `nao-fala` normal.
+  assert.equal(parseDefasagem("TRECHO: nao-fala\nMOTIVO: x\nVEREDITO: nao-fala", md).erro, "defasagem-citacao");
+  // Elipse é elisão legítima do meio da frase — cada pedaço tem que estar lá.
+  assert.equal(parseDefasagem("TRECHO: o hub … 39 projetos\nMOTIVO: x\nVEREDITO: desmente", doc39).erro, "");
+  assert.equal(parseDefasagem("TRECHO: o hub … 41 projetos\nMOTIVO: x\nVEREDITO: desmente", doc39).erro, "defasagem-citacao");
+});
+
 // Falha FECHADA: veredito fora do vocabulário vira erro, nunca `nao-fala`. Tolerância aqui
 // esconderia documento defasado atrás de "o modelo não respondeu direito" — e o número que este
 // script existe para produzir é exatamente a contagem dos defasados.

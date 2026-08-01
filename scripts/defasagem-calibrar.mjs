@@ -58,7 +58,7 @@ let seguidas = 0;
 async function julgar(caso) {
   const prompt = montarPromptDefasagem(caso.pergunta, caso.apurado, caso.doc);
   try {
-    return parseDefasagem(await rodarCacheado(prompt, (p) => rodarClaude(p, { effort: "medium" }), true));
+    return parseDefasagem(await rodarCacheado(prompt, (p) => rodarClaude(p, { effort: "medium" }), true), caso.doc.trecho);
   } catch (err) {
     return { veredito: "", trecho: "", motivo: "", erro: err.message.replace(/^rerank-/, "defasagem-") };
   }
@@ -112,7 +112,10 @@ for (const c of adver.casos) {
 const pegou = advs.filter((a) => a.pegou);
 console.log(`pegou   ${String(pegou.length).padStart(2)}/${adver.casos.length}   ← portão: >= 9/10`);
 for (const a of advs) {
-  console.log(`  ${a.pegou ? "ok" : "❌"} ${a.c.id} ${a.c.doc.id.padEnd(42)} ${a.c.corrupcao.padEnd(44)} → ${a.j.veredito || a.j.erro}`);
+  // `veredito || erro` escondia o motivo real da falha: a corrida de 01/08 imprimiu três `→
+  // desmente` marcados ❌ e levou vinte minutos para revelar que eram citações descartadas, não
+  // vereditos errados. Erro que se disfarça de veredito manda debugar o componente errado.
+  console.log(`  ${a.pegou ? "ok" : "❌"} ${a.c.id} ${a.c.doc.id.padEnd(42)} ${a.c.corrupcao.padEnd(44)} → ${a.j.veredito || "—"}${a.j.erro ? `  [${a.j.erro}]` : ""}`);
   if (ver || !a.pegou) console.log(`       ${a.j.motivo}`);
 }
 

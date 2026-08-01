@@ -86,7 +86,7 @@ for (const [id, apurado] of alvos) {
     const prompt = montarPromptDefasagem(pergunta, apurado, doc);
     let v;
     try {
-      v = parseDefasagem(await rodarCacheado(prompt, (p) => rodarClaude(p, { effort: "medium" }), true));
+      v = parseDefasagem(await rodarCacheado(prompt, (p) => rodarClaude(p, { effort: "medium" }), true), doc.trecho);
     } catch (err) {
       v = { veredito: "", trecho: "", motivo: "", erro: err.message.replace(/^rerank-/, "defasagem-") };
     }
