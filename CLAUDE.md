@@ -157,6 +157,20 @@ as **15** de `estado` são **apuradas na hora da medição**.
   `Problemas no passado`, `Alguns problemas`) e o CSV vem localizado; `D-81` decompunha 10 com SDK
   em subgrupos que somavam **9** (o balde `ligado` sumia do texto). Decomposição que não fecha é
   conta errada.
+- **🚩 `D-84` é REMEDIÇÃO DATADA, não tarefa — e as "12 fora do índice" são QUATRO classes.** Os 12
+  já têm sitemap válido, **submetido em 30–31/07 e baixado pelo Google em 31/07–01/08 com
+  `errors: 0`** (`GET /webmasters/v3/sites/{prop}/sitemaps`): a inspeção que devolveu os 12 rodou 1 a
+  2 dias DEPOIS da ação. **Mesmo erro do `D-85`, com janela de 24 h em vez de 90 dias** —
+  resubmeter é a ação que parece trabalho e não move célula. As classes têm prognósticos
+  incompatíveis e **só uma tem alavanca técnica**: `URL is unknown` 2 (alavanca já puxada),
+  `Discovered` 5 (fraca), **`Crawled - currently not indexed` 4 — o Googlebot leu 486–1038 palavras
+  e RECUSOU, nenhum conserto técnico move isso**, `Duplicate canonical` 1 (diagnosticável).
+  **Meta numérica na terceira classe é meta em cima de um defeito.** Achado lateral: **3 SPAs servem
+  ZERO palavra no HTML inicial** (`pathfinder`, `matchfios`, `lumina`) — mas `orcaobra` serve 472 e
+  também está `unknown`, então shell vazio não explica os 12. ⚠️ **Contar palavra com `sed
+  's/<script[^>]*>.*<\/script>//g'` MEDE O SED**: HTML minificado é uma linha, o `.*` guloso come até
+  o ÚLTIMO `</script>` e devolve 0 palavra em página com `<h1>`. Spec em
+  `handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md`.
 - **🚩 Os 33,6% de OK do `roilabs.com.br` são de JUNHO, e o conserto já foi entregue.** É o pior
   OK% da casa e o host com mais crawl (2596 req) — e a `ressalva` "date antes de caçar bug" era
   literal. A quebra por resposta diz que não é 404 nem 5xx (0,02%): **53,5% é DNS error**, com 60,7%

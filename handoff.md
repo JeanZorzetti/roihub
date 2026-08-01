@@ -1,6 +1,22 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-frente-do-detector-foi-congelada.md`](handoff/handoff-a-frente-do-detector-foi-congelada.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md`](handoff/handoff-proximo-passo-o-d84-e-data-nao-acao.md)
+> (01/08): o `D-84` não tem UMA ação, tem QUATRO classes — e a maior já foi executada em 31/07.**
+> 🚩 **"Comece pelos 6 `Discovered`" estava errado nos dois números: são 5, e sitemap NÃO é a
+> alavanca.** Os 12 já têm sitemap válido, **submetido em 30–31/07 e baixado pelo Google em 31/07–01/08,
+> `errors: 0`** — a medição saiu 1 a 2 dias DEPOIS da ação. **É o mesmo erro do `D-85`**, só que com
+> janela de 24 h em vez de 90 dias. `D-84` é **remedição datada**, não tarefa.
+> ▶️ **As 4 classes têm prognósticos incompatíveis:** `URL unknown` 2 (alavanca já puxada) ·
+> `Discovered` 5 (fraca) · **`Crawled - currently not indexed` 4 — o Google leu 486–1038 palavras e
+> RECUSOU, não há alavanca técnica** · `Duplicate canonical` 1 (diagnosticável hoje).
+> 🎯 **META em duas metades:** ENTREGA (nossa mão, mesmo dia) = check cai pelo número exato de
+> projetos tocados e **nenhum não-tocado muda de balde**; RESULTADO (mão do Google) = **15/08 e 29/08**,
+> por classe, e **`Crawled - currently not indexed` fica SEM meta numérica** — número ali é meta em
+> cima de um defeito. Descongelar o detector: **precisão da lista nominal ≥ 90%** (hoje 70%, proposta).
+> ⚠️ **Achado novo: 3 SPAs servem ZERO palavra no HTML inicial** (`pathfinder`, `matchfios`,
+> `lumina`) — e a 1ª medição disso era o CHECK (`sed` guloso deu 0 em página COM `h1`).
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-a-frente-do-detector-foi-congelada.md`](handoff/handoff-a-frente-do-detector-foi-congelada.md)
 > (01/08): 🧊 A FRENTE DO DETECTOR ESTÁ CONGELADA POR DECISÃO, e o §6 não devolveu nenhum check
 > quebrado.** O número que congelou é a **precisão da lista nominal: 70%** — não é pausa por falta de
 > ideia (o exemplo para a regra do passado datado continua escrito e não tentado), é o produto
