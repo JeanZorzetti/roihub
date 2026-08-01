@@ -1,6 +1,24 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-definicao-de-pronto.md`](handoff/handoff-a-definicao-de-pronto.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-definicao-de-pronto-executado.md`](handoff/handoff-a-definicao-de-pronto-executado.md)
+> (01/08): a fase D era a aposta do documento e ela REPROVOU com número.** Quebrar o detector em
+> duas passadas (extrair a afirmação / julgar contra o fato) foi implementado e medido no MESMO
+> fixture congelado: **83,3% → 65,9%** no holdout, adversarial parado em 14/20, e — o que decide —
+> **as células perigosas saíram de ZERO para `bate→desmente` 5 e `desmente→nao-fala` 1**. Cego ao
+> documento é cego ao **contexto que torna a afirmação compatível**: a passada 2 chamou de
+> incompatível *"a fonte é a API do GitHub + `lib/projects.mjs`"* contra um apurado que dizia
+> *"API do GitHub + `data/projects.json` via `mergeProjects()`"* — o mesmo mecanismo com outro nome.
+> **O que funciona é evidência antes da decisão DENTRO da mesma chamada, não a decomposição em
+> duas.** Fica atrás de `--duas-passadas` só para o número ser reproduzível.
+> ✅ **C, R e F entregues:** holdout **33 → 44** casos que contam, adversarial **10 → 20** (6
+> espelhos), âncora em 20/20; **1.7 medido 2× com movimento ZERO** — o portão mede o detector, não
+> o dia; e `scripts/gateways-repo.mjs` **inverte o inventário de cobrança**: pelo HTML eram 30 sem
+> caminho, pelo CÓDIGO são **10 projetos com SDK de pagamento escrito e nunca ligado**.
+> 🚩 **Dois portões afrouxaram/travaram sozinhos:** o piso do adversarial era ABSOLUTO (`>= 9`) e
+> dobrar o fixture fez 14/20 "passar"; e **os 61 pares candidatos não têm UM `desmente` natural** —
+> a célula que decide não cresce com este material.
+>
+> 📄 **A SPEC — [`handoff/handoff-a-definicao-de-pronto.md`](handoff/handoff-a-definicao-de-pronto.md)
 > (01/08): a DEFINIÇÃO DE PRONTO, e por que ela vem antes da próxima fase.** A frase incômoda que
 > abre o documento: **em 3 dias esta frente produziu 6 handoffs, 9 réguas e 4 docs de calibração — e
 > o número que ela existe para produzir nunca foi publicado uma única vez.** Causa mecânica, não
@@ -599,6 +617,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
+| [`handoff-a-definicao-de-pronto-executado.md`](handoff/handoff-a-definicao-de-pronto-executado.md) | **comece por aqui**: fases C, D, R e F executadas. A fase D (duas passadas) foi medida contra o fixture congelado e **reprovou** — 83,3% → 65,9% e as células perigosas saíram de zero. Traz o holdout em 44/20 com âncora, a reprodutibilidade medida 2× com movimento zero, o piso do portão 2 que afrouxava sozinho, e o inventário pelo REPO que acha 10 projetos com cobrança escrita e não ligada | 🟢 vivo (01/08) — frente ativa |
+| [`handoff-a-definicao-de-pronto.md`](handoff/handoff-a-definicao-de-pronto.md) | a SPEC que o originou: os 3 níveis de PRONTO (instrumento / feature / loop), o custo honesto de ~20–26 h e o que está explicitamente FORA do escopo | 🟢 vivo (01/08) — nível 1 ainda aberto |
 | [`handoff-proximo-passo-31-07.md`](handoff/handoff-proximo-passo-31-07.md) | **comece por aqui numa sessão de trabalho**: o próximo passo é o `sirius` e o gate de 31/08 (≥5 cliques não-branded/28d, hoje 2). Traz a medição por query/país/página que desmonta o plano do card — `agaas` é query internacional, `crm roi` e `crm solar` estão canibalizados, e o par PT/EN serve **zero `hreflang`** — mais a ordem de execução (hreflang → dono do `crm roi` → CTR do `agaas` → só então conteúdo solar) | 🟢 vivo (31/07) — frente ativa |
 | [`handoff-atma-reindexado.md`](handoff/handoff-atma-reindexado.md) | o desfecho da frente mais cara do portfólio — as 5 URLs do Atma medidas em `Submitted and indexed` com crawl de 31/07, o script novo `scripts/inspect-url.mjs`, e por que o resubmit do sitemap (22h55 BRT) reindexou 2 delas antes do pedido manual. O que NÃO concluir: tráfego ainda não reagiu, `decay` fica em 10 | ✅ encerrado 31/07 — só resta reconferir a série em ~14 dias |
 | [`handoff-proximo-passo-atma-executado.md`](handoff/handoff-proximo-passo-atma-executado.md) | o que as 3 tarefas viraram em 30/07 e o que sobrou (pedido manual de indexação do Atma + verificar 2 deploys no ar). Traz os 2 achados que só apareceram abrindo o código: o `AggregateOffer` do `orion` também era inventado (4 planos de R$ 299–1.499 contra 3 planos reais) e o sitemap do `pathfinder` listava rotas inexistentes — consertar o DNS do backend teria devolvido um sitemap de 404s | ✅ executado 30/07 — o que sobrava fechou em 31/07 |

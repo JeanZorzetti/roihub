@@ -182,10 +182,29 @@ as 8 de `estado` são **apuradas na hora da medição**.
 morno retoma corrida morta. As outras réguas comparam a RESPOSTA com o dourado; só esta aponta
 para fora do texto.
 
-- **🚩 OS DOIS PORTÕES AINDA REPROVAM (01/08, holdout ampliado): holdout 87,5% (28/32) com 1 caso
-  sem veredito parseável, adversarial 8/10** — `scripts/defasagem-calibrar.mjs`, detalhe em
-  `docs/defasagem-calibracao.md` e `docs/defasagem-fase-c-2026-08-01.md`. **Nenhum percentual de
-  defasagem sai daqui, inclusive o 16,7%.**
+- **🚩 OS DOIS PORTÕES AINDA REPROVAM (01/08, holdout em 44/20): holdout 83,3% (35/42) com 2 casos
+  sem veredito parseável, adversarial 14/20** — `scripts/defasagem-calibrar.mjs`, detalhe em
+  `docs/defasagem-calibracao.md` e `handoff/handoff-a-definicao-de-pronto-executado.md`. **Nenhum
+  percentual de defasagem sai daqui, inclusive o 16,7%.**
+- **🚩 DUAS PASSADAS FOI TENTADO E REPROVOU — não tente de novo.** Quebrar em passada 1 (extrai a
+  afirmação, cega ao fato) + passada 2 (julga, cega ao documento) custa o DOBRO de chamadas e, no
+  mesmo fixture congelado, deu **65,9% contra 83,3%** — e **quebrou a célula que decide**, saindo
+  de zero para `bate→desmente` 5 e `desmente→nao-fala` 1. **Cego ao documento é cego ao contexto
+  que torna a afirmação compatível**: a passada 2 chamou `desmente` uma afirmação que citava o
+  mesmo mecanismo com outro nome. O que funcionou 3× foi forçar evidência antes da decisão DENTRO
+  da mesma chamada, não decompor em duas. Está atrás de `--duas-passadas` só para o número ser
+  reproduzível sem gastar ~130 chamadas do pool de novo.
+- **O portão é REPRODUTÍVEL, e agora isso é medido 2× (movimento ZERO):** o fixture inlina apurado
+  **e** trecho, então reindexar o corpus não move nenhuma célula — `docs/defasagem-reprodutibilidade-2026-08-01.md`.
+  **`corpus-defasado.mjs` NÃO herda isso**: ele roda a busca de verdade, então reescrever handoff
+  muda quais documentos ele julga. Comparar corridas dele exige o achado nominal sumindo, nunca o
+  percentual descendo.
+- **Piso de portão é PROPORCIONAL, nunca absoluto.** O do adversarial era `>= 9`, escrito quando o
+  fixture tinha 10 casos; ao dobrar para 20 ele imprimiu "passou 14/20" — 70%, contra os 80% que
+  reprovava no dia anterior. **A primeira corrida de um portão AMPLIADO mede o portão.**
+- **Os 61 pares candidatos não têm UM `desmente` natural.** Lidos um a um em 01/08: entre os
+  documentos que a busca recupera para as 6 perguntas de `estado`, nenhum afirma no presente algo
+  que a fonte viva desminta. A célula `desmente` fica em 7 e **não cresce com este material**.
 - **O portão 1 são DUAS condições: `>= 85%` E zero caso sem veredito parseável.** Imprimir só a
   primeira fazia a saída se contradizer ("acerto 87.5% … portão >= 85% … REPROVOU 87.5%"). Caso que
   não parseia não conta como aprovado — senão dá para ir excluindo o difícil até o número subir.
@@ -266,6 +285,15 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
 - **`sem-gateway` é "não achei caminho servido", nunca "não cobra".** Não vê gateway montado por JS
   depois de um clique, nem cobrança que não passa pelo site — o `sirius` fatura por tier de
   organização no próprio banco e nenhuma página dele carregaria gateway.
+- **`scripts/gateways-repo.mjs` é a outra metade, e ele INVERTE a leitura.** Lê `package.json` e
+  `.env*` de todos os repos pela API do GitHub (zero LLM, zero pool). Medido em 01/08: **10 com SDK
+  de pagamento** (`sirius`, `polarisia`, `estetiacrm`, `reviewshield`, `context`, `aftercare`,
+  `atma`, `compass`, `orion`, `vertice`), 2 só com env var (`goiania`, `roilabs`), 23 nada. **Pelo
+  HTML eram 30 sem caminho de cobrança; pelo código são 10 projetos com integração escrita e nunca
+  ligada** — essa é a lacuna cara. Dois defeitos de check na 1ª corrida, os dois reutilizáveis:
+  **`repo` em `projects.json` é o NOME sem o dono** (404 em 35 de 35 — "tudo quebrado" é o formato
+  de um check quebrado) e **linha COMENTADA contava como env var** (`# STRIPE_SECRET_KEY` marcava o
+  `orion`), mesma classe do "palavra ≠ URL".
 
 ## Conformidade (`scripts/conformidade.mjs`) — a norma que RODA
 
