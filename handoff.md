@@ -1,6 +1,27 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-a-lista-nominal-tem-30-de-ruido.md`](handoff/handoff-proximo-passo-a-lista-nominal-tem-30-de-ruido.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-frente-do-detector-foi-congelada.md`](handoff/handoff-a-frente-do-detector-foi-congelada.md)
+> (01/08): 🧊 A FRENTE DO DETECTOR ESTÁ CONGELADA POR DECISÃO, e o §6 não devolveu nenhum check
+> quebrado.** O número que congelou é a **precisão da lista nominal: 70%** — não é pausa por falta de
+> ideia (o exemplo para a regra do passado datado continua escrito e não tentado), é o produto
+> custando mais do que entrega. **Descongelar exige responder ANTES para quê:** para publicar taxa de
+> erro do corpus não há atalho; para achar memória podre, o `validade.mjs` já faz melhor.
+> **Descongelar por inércia é o defeito.** Nada foi apagado — fixtures, holdout e portões continuam
+> verdes.
+> ✅ **O §6 foi lido item a item** ([`docs/estado-conformidade-crawl-2026-08-01.md`](docs/estado-conformidade-crawl-2026-08-01.md)):
+> **primeira vez em 8 leituras de 1ª corrida nesta base em que NENHUM check precisou de conserto** —
+> os três já rodavam como script, então a 1ª corrida deles foi a agregação, não a medição.
+> `D-83` **`GEO-01` 28/35 e `DEP-08` 11/15 são reais** (conferidos com `curl` fora do script) — mas
+> os 28 são **PISO** (host sem `robots.txt` passa batido) e `DEP-08` é **11 de 15 `next`**, nunca 11
+> de 35. `D-84` confirma a correção: `lumina` é `Discovered`, e os `URL unknown` são **dois**.
+> 🚩 `D-85` **os 33,6% de OK do `roilabs.com.br` são de JUNHO e o conserto já foi entregue** — 53,5%
+> é DNS error (5xx é 0,02%), o export de 25/07 cobre 90 dias e engole a limpeza NXDOMAIN; hoje os 19
+> hosts resolvem e 17 servem. Sobram `www.sirius` e `www.goiania`, handshake TLS **por construção**
+> (cert Universal cobre um label) — ACM pago, registrado e não agendado.
+> ▶️ Próximo: os **6 `Discovered` do `D-84`** (mais barato, efeito em tráfego) → `GEO-01` num punhado
+> → export novo do Crawl Stats (sua mão).
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-proximo-passo-a-lista-nominal-tem-30-de-ruido.md`](handoff/handoff-proximo-passo-a-lista-nominal-tem-30-de-ruido.md)
 > (01/08): 3 de cada 10 linhas da LISTA NOMINAL são tarefa fabricada — e a lista é o produto.** O
 > detector emitiu 10 `desmente` no holdout e 7 estavam certos: **precisão 70%**, recall 87,5%.
 > Bate com os 62,5% que a leitura humana dos 8 achados de 31/07 já tinha dado — **duas medições
