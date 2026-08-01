@@ -1,7 +1,21 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-segunda-via-de-selecao.md`](handoff/handoff-a-segunda-via-de-selecao.md)
-> (01/08): o passo 3 foi EXECUTADO — o `corpus-defasado.mjs` tem 2ª via de seleção.** A busca
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-dobrar-a-camada-estado.md`](handoff/handoff-proximo-passo-dobrar-a-camada-estado.md)
+> (01/08): dobrar a camada `estado`, e as FONTES JÁ EXISTEM.** O teto do detector são **8 fatos**
+> (8 × 1,1 = 9 pares), e nenhuma varredura conserta um universo de 8. Mas **6 scripts deste repo já
+> apuram fato contra fonte viva com ZERO LLM e nenhum está ligado à camada** (`gateways`,
+> `gateways-repo`, `conformidade`, `validade`, `inspect-url`, `fetch-crawl-stats`) — são **~7 fatos
+> novos → 15**, e o trabalho é LIGAR, não construir.
+> 🎯 **Vale o dobro desde ontem:** cada fato novo ganha também uma **âncora da 2ª via**, e esses
+> números estão escritos em MEMÓRIA VIVA — o par que a mineração do git não conseguiu fabricar.
+> 🚩 **Duas premissas medidas que fecham caminhos:** gate em card rende **2 de 35** (os dois que já
+> são `D-68`/`D-69` — zero fato novo por aí) · `apurarEstado({modo:"tudo"})` roda TODOS os
+> apuradores, então pendurar `gateways.mjs` (250 req) ali faria **toda corrida de régua** disparar
+> 250 requisições contra produção.
+> ⚠️ Fato novo aumenta a BANCADA, não move portão: a frente do detector segue **congelada**.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-a-segunda-via-de-selecao.md`](handoff/handoff-a-segunda-via-de-selecao.md)
+> (01/08): o passo 3 — o `corpus-defasado.mjs` tem 2ª via de seleção.** A busca
 > recupera por TEMA; a 2ª via traz quem **CITA a quantidade com outro número** (`docsQueCitam`, zero
 > LLM, zero rede). É a única via que alcança a classe de defeito do `project_cannibalscan`.
 > 🎯 **A largura da âncora foi medida ANTES de escrever:** `(\d+) projetos` solto seleciona **43**
