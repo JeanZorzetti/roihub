@@ -1,0 +1,244 @@
+{
+  "quando": "2026-08-01T16:09:32.260Z",
+  "apurados": {
+    "D-66": {
+      "resposta": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "fonte": "API do GitHub (/user/repos) + data/projects.json via mergeProjects()",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "",
+      "citacoes": [
+        {
+          "nome": "projetos no ranking",
+          "re": {},
+          "valor": 35
+        },
+        {
+          "nome": "repos ativos",
+          "re": {},
+          "valor": 36
+        }
+      ]
+    },
+    "D-67": {
+      "resposta": "0 de 1 projeto(s) checado(s) contra um sistema de pagamento têm venda com data: nenhum. Receita provada: R$ 0.00. Venda sem data não conta — dinheiro sem data é R$ 0.",
+      "fonte": "data/projects.json (campo `vendas`, derivado do gateway por scripts/vendas-mercadopago.mjs)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "34 dos 35 cards não têm fonte de pagamento ligada e ficam FORA da conta: ausência de `vendas` é \"não olhei\", nunca \"não vendeu\". Sem gateway: goiania, tapepro, sirius, fabrica, roilabs, polarisia, estetiacrm, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, aprovai, moderador, meridian, seo-forecaster, cannibal_scan, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder."
+    },
+    "D-68": {
+      "resposta": "Gate 31/08: ≥ 5 cliques nao-branded/28d. Hoje: 2. Top não-branded: \"crm solar\" (61 imp, pos 39.0); \"crm roi\" (40 imp, pos 43.9); \"crm para industria energetica\" (30 imp, pos 26.7).",
+      "fonte": "GSC searchAnalytics 28d (query × page × country) em siriuscrm.com.br + alvo/data do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "é PISO: clique de query anonimizada pelo GSC não entra na soma, então o real pode ser maior."
+    },
+    "D-69": {
+      "resposta": "Gate 19/10: ≥ 300 impressoes/28d. Hoje: 42 (total do site). Top não-branded: \"clichê para impressão flexográfica\" (8 imp, pos 40.6); \"cliche flexo\" (1 imp, pos 74.0); \"cliche flexografico\" (1 imp, pos 21.0).",
+      "fonte": "GSC searchAnalytics 28d (query × page × country) em tapepro.roilabs.com.br + alvo/data do card",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "o número é o total do site (dimensions: []); somar as linhas de query devolveria um piso."
+    },
+    "D-70": {
+      "resposta": "27 de 35 têm blocker registrado. Por família — não tem como cobrar: 11 (polarisia, potencialarquitetado, matchfios, whatsmeow, aprovai, moderador, seo-forecaster, cannibal_scan, compass, orion, pathfinder) · não tem tráfego: 8 (goiania, fabrica, aftercare, nimblabs, orcaobra, atma, qprime, vertice) · não há o que cobrar: o produto não funciona: 4 (reviewshield, cardiorisk, tapevision, cyberspace) · não tenta faturar por decisão: 4 (claudeloop, swarm, meridian, lumina). Estado: 25 no-ar, 8 no-ar-inutilizavel, 2 prototipo.",
+      "fonte": "data/projects.json (familia + estado + blockersLista), curadoria confirmada pelo Jean",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": "família e estado são julgamento humano no card; o que se apura aqui é a distribuição, não o julgamento."
+    },
+    "D-71": {
+      "resposta": "7 bloqueios humanos: goiania: IndexNow devolve 403 — 94 URLs 'enviadas' a cada build não chegam a ninguém · fabrica: 2 URLs de 26 seguem 'URL is unknown to Google' — /termos e /blog/como-atrair-pacientes-clinica-de-estetica (ambas 200 e linkadas internamente). Request Indexing é manual na UI do GSC · reviewshield: GOOGLE_CLIENT_ID não está preenchido na EasyPanel — sem ele o OAuth do GBP não roda · cyberspace: DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite · compass: 🚨 As 4 chaves do Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão vazias — não há como cobrar · compass: Faltam GitHub OAuth e Resend: sem eles não há login nem e-mail transacional · qprime: Site em subdomínio de roilabs.com.br, não em domínio da própria QPrime — o cliente não é dono do host.",
+      "fonte": "data/projects.json (blockersLista com humano: true)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-72": {
+      "resposta": "Docker: Dockerfile na raiz, Next com output \"standalone\" confirmado em next.config.mjs. Não é Vercel: não há vercel.json nem .vercel — o build da imagem é disparado pelo push em main no EasyPanel. Janela proibida de push: 00:13 BRT (seo-autopublish.yml, \"13 3 * * *\" UTC) — deploy no meio derruba a publicação do dia.",
+      "fonte": "Dockerfile + next.config + .github/workflows (o gatilho do EasyPanel é painel, não verificável aqui)",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    },
+    "D-73": {
+      "resposta": "Não: npm test roda uma lista explícita no package.json (20 arquivos). Hoje 0 arquivo(s) de teste fora da lista — arquivo novo só roda depois de entrar lá à mão. Motor: node --test com assert/strict, sem framework (jest/vitest/mocha não instalados).",
+      "fonte": "package.json (scripts.test) × test/*.test.mjs no disco",
+      "apurado_em": "2026-08-01",
+      "nao_apurado": "",
+      "ressalva": ""
+    }
+  },
+  "linhas": [
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-proximo-passo-dominios.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-dominios.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata de domínios/GSC dos projetos, não de quantos projetos o hub tem nem de onde vem a lista.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-proximo-passo-corpus-verdade.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-corpus-verdade.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "bate",
+      "trecho": "E `data/projects.json` tem **35 projetos** com `slug`, `url`, `repo`, `blockers`.",
+      "motivo": "o número (35 projetos curados) bate com o fato apurado; o documento não fala da lista final combinada com repos do GitHub, só da curadoria em `projects.json`.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-o-teste-de-20-minutos-deu-vermelho.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-teste-de-20-minutos-deu-vermelho.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "`\\| handoff-hub-github \\| desmente \\| \"37 projetos\" contra 35 \\|`",
+      "motivo": "é uma linha de tabela de meta-rotulagem citando o texto \"37 projetos\" como exemplo de outro documento, não uma afirmação própria do quantos projetos o hub tem hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-proximo-passo-30-07.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-30-07.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento fala de \"repos ativos\" medidos em 29/07 após exclusão manual, não da lista de projetos do hub (curadoria + mergeProjects) nem afirma valer hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "defasagem_detector_failed_both_gates",
+      "tipo": "memoria",
+      "titulo": "Detector de defasagem do roihub: o VEREDITO vinha ANTES do raciocínio (3/10 → 8/10); os 7 erros restantes são TODOS `bate → nao-fala`; a fase D (duas passadas) reprovou; e em 01/08 a frente foi CONGELADA — o teto são 8 fatos, e o gargalo real é a SELEÇÃO por embedding, não o prompt",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento trata do detector de defasagem e sua calibração, não da contagem de projetos do hub nem da origem da lista.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-21-projetos-no-ar.md",
+      "tipo": "handoff",
+      "titulo": "handoff-21-projetos-no-ar.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "O hub saiu de **5 no ar / 23 fora** para **18 no ar / 4 fora**.",
+      "motivo": "O documento fala de disponibilidade (no-ar/fora) numa data passada, não da contagem/origem da lista de projetos apurada hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-proximo-passo-02-08.md",
+      "tipo": "handoff",
+      "titulo": "handoff-proximo-passo-02-08.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "desmente",
+      "trecho": "O `alibi_ai` foi > apagado: **40 repos ativos, 39 projetos**.",
+      "motivo": "o documento afirma 40 repos ativos e 39 projetos como estado corrente após a exclusão, contra os 36 repos ativos e 35 projetos apurados hoje na fonte viva.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-o-portao-tem-treze-casos.md",
+      "tipo": "handoff",
+      "titulo": "handoff-o-portao-tem-treze-casos.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O handoff trata da calibração do detector de defasagem e de um segredo exposto, não da contagem de projetos do hub nem da origem da lista.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-dourado-com-lastro-externo.md",
+      "tipo": "handoff",
+      "titulo": "handoff-dourado-com-lastro-externo.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "bate",
+      "trecho": "quantos projetos o hub tem hoje e de onde vem a lista | API do GitHub + `lib/projects.mjs` (`listProjects()`)",
+      "motivo": "o documento descreve a REGRA/fonte de verdade (API do GitHub + listProjects()) sem citar nenhum número, compatível com o fato apurado.",
+      "erro": "defasagem-citacao"
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-dourado-com-lastro-externo-executado.md",
+      "tipo": "handoff",
+      "titulo": "handoff-dourado-com-lastro-externo-executado.md",
+      "via": "busca",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "bate",
+      "trecho": "`D-66` quantos projetos | API do GitHub + `mergeProjects()` | 35 projetos (35 curados + 0 do GitHub); 36 repos ativos, 34 com homepage |",
+      "motivo": "os números (35 projetos, 35 curados + 0 do GitHub, 36 repos ativos, 34 com homepage) batem exatamente com o fato apurado hoje.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-dns-e-paineis.md",
+      "tipo": "handoff",
+      "titulo": "handoff-dns-e-paineis.md",
+      "via": "citacao",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento fala de contagem de repos sem homepage em 29/07, datada, não da lista/contagem de projetos do hub (listProjects()) que a pergunta pede.",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "handoff-quatro-sites.md",
+      "tipo": "handoff",
+      "titulo": "handoff-quatro-sites.md",
+      "via": "citacao",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "o documento fala de uma contagem datada (29/07) de repos sem homepage, não do total de projetos do hub hoje nem de listProjects().",
+      "erro": ""
+    },
+    {
+      "id": "D-66",
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "doc": "project_roihub",
+      "tipo": "memoria",
+      "titulo": "ROI Hub — dashboard admin que rankeia os 10 projetos SEO por score de prioridade e diz o foco do dia",
+      "via": "citacao",
+      "apurado": "35 projetos: 35 curados em data/projects.json + 0 vindos do GitHub sem curadoria. A lista sai de listProjects() — curadoria + todo repo vivo com homepage — e a chave é a URL do site, não o repo. Hoje 36 repos ativos, 34 com homepage; sem homepage: roihub, repo-de-teste.",
+      "veredito": "nao-fala",
+      "trecho": "-",
+      "motivo": "O documento trata do robô de crawl/domínios do ROI Hub e da lista de repos ativos naquele momento (41), não da contagem/composição atual de projetos do hub via listProjects().",
+      "erro": ""
+    }
+  ]
+}

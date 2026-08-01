@@ -1,6 +1,22 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-teste-de-20-minutos-deu-vermelho.md`](handoff/handoff-o-teste-de-20-minutos-deu-vermelho.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-segunda-via-de-selecao.md`](handoff/handoff-a-segunda-via-de-selecao.md)
+> (01/08): o passo 3 foi EXECUTADO — o `corpus-defasado.mjs` tem 2ª via de seleção.** A busca
+> recupera por TEMA; a 2ª via traz quem **CITA a quantidade com outro número** (`docsQueCitam`, zero
+> LLM, zero rede). É a única via que alcança a classe de defeito do `project_cannibalscan`.
+> 🎯 **A largura da âncora foi medida ANTES de escrever:** `(\d+) projetos` solto seleciona **43**
+> documentos e quase todos são quantidade HOMÔNIMA — cada um custaria uma chamada do pool para o
+> modelo dizer `nao-fala`. Estreita: **6**. Âncora nova só entra medida contra o corpus.
+> 🚩 **O PERCENTUAL SAI SÓ DA BUSCA.** A 2ª via só seleciona número que JÁ diverge: é amostra
+> PROCURADA, e no denominador faria a taxa de erro subir sozinha a cada melhora da âncora. O campo
+> `via` separa; a lista NOMINAL junta.
+> ✅ **1ª corrida (D-66, 16 chamadas): 3 documentos novos, 3 `nao-fala`, ZERO acusação fabricada.**
+> Os 3 estão certos — 2 handoffs de 29/07 e o `project_roihub`, cujo "41 repos ativos" mora num
+> bullet **`★ Estado 30/07`**. **Data grudada no span absolve**, a mesma regra do `validade.mjs`.
+> ⚠️ A frente do detector **segue congelada**: nada aqui move portão.
+> 🚨 **Passos 1 (token do MP), 2 (porta 5434) e 4 (chaves da Stripe) seguem parados em você.**
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-o-teste-de-20-minutos-deu-vermelho.md`](handoff/handoff-o-teste-de-20-minutos-deu-vermelho.md)
 > (01/08): o teste da seção 3 foi executado e deu VERMELHO. A frente do detector está CONGELADA.**
 > Minerar `desmente` do histórico do git rendeu **8 pares legítimos, meta era 15**. O `git log -p`
 > parecia verde com 7× de margem (116 candidatos) e **era o check**: handoff datado não se reescreve

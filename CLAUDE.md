@@ -214,12 +214,26 @@ para fora do texto.
   fabricar bancada. **(b) O teto são 8 fatos, não a varredura**: só a camada `estado` tem fonte
   viva, cada fato rende ~1 afirmação defasada, 8 × 1,1 = 9. Para 25 casos seria preciso **dobrar a
   camada `estado`** — 20 fatos apuráveis. Da mineração, **7 dos 8 pares são o mesmo fato (D-66)**.
-- **🚩 A SELEÇÃO por embedding é o gargalo, não a redação do prompt.** Um `grep` ancorado no fato
-  achou em segundos um `desmente` REAL que a busca nunca recuperou: a memória `project_cannibalscan`
-  afirmava `Hub: 39 projetos` no presente (hoje 35) — e o número aparece de passagem num doc sobre
-  deploy da Vercel, então ela jamais entra no top-10 de "quantos projetos o hub tem". **É o mesmo
-  mecanismo dos erros `bate → nao-fala`: o detector julga o TEMA.** Conserto barato e nomeado: 2ª via
-  de seleção por citação do número, além do top-k. Zero chamada a mais por documento.
+- **🚩 A SELEÇÃO por embedding era o gargalo, e agora são DUAS VIAS (01/08).** A busca recupera por
+  TEMA, então número defasado citado de passagem num doc sobre outro assunto nunca chegava ao
+  detector: a memória `project_cannibalscan` afirmava `Hub: 39 projetos` (hoje 35) dentro de um doc
+  sobre deploy da Vercel. A 2ª via (`docsQueCitam`, `lib/defasagem.mjs`) traz quem CITA a quantidade
+  com outro número — zero LLM, zero rede, âncoras declaradas em `CITACOES_D66`.
+  - **A ÂNCORA É ESTREITA porque isso foi MEDIDO:** `(\d+) projetos` solto seleciona **43**
+    documentos e quase todos são quantidade HOMÔNIMA ("10 projetos" é o autopublishing, "21" são os
+    apagados da Vercel) — cada um custaria uma chamada do pool para o modelo dizer `nao-fala`. Com as
+    duas âncoras de D-66 são **6 documentos**. Âncora nova só entra medida contra o corpus.
+  - **Só `D-66` tem âncora, e a ausência das outras 7 é deliberada:** em `D-68`/`D-69` o ALVO do gate
+    ("≥ 5 cliques") é curadoria correta para sempre e casaria como se fosse o valor de hoje — foi um
+    dos 5 defeitos do check da mineração.
+  - **🚩 O PERCENTUAL SAI SÓ DA BUSCA.** A 2ª via só seleciona documento cujo número JÁ diverge: é
+    amostra PROCURADA, não recuperada. Somá-la ao denominador faria a "taxa de erro do corpus" subir
+    sozinha toda vez que a âncora melhorasse — o número mediria a consulta. O campo `via` separa as
+    duas na saída; a lista NOMINAL junta, porque lá cada linha é uma edição.
+  - **1ª corrida (D-66, 01/08): 3 documentos novos, 3 `nao-fala`, ZERO acusação fabricada.** Os 3
+    estavam certos — 2 handoffs datados de 29/07 e o `project_roihub`, cujo "41 repos ativos" mora
+    dentro de um bullet `★ Estado 30/07`. **Data grudada no span absolve**, a mesma regra do
+    `validade.mjs`. O `desmente` do dia saiu pela 1ª via (`handoff-proximo-passo-02-08.md`).
 - **O portão 1 são DUAS condições: `>= 85%` E zero caso sem veredito parseável.** Imprimir só a
   primeira fazia a saída se contradizer ("acerto 87.5% … portão >= 85% … REPROVOU 87.5%"). Caso que
   não parseia não conta como aprovado — senão dá para ir excluindo o difícil até o número subir.
@@ -271,9 +285,12 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
   (o card do aftercare congelando "hoje são 0" cliques) e 2 de fronteira (um status HTTP, um
   "agora 6 asserts" num bullet já datado). Os três saíram datando ou apontando a apuração — mais
   barato que afrouxar a regex, que é como um check vira enfeite.
-- **Citação entre crases é literal, não afirmação.** Vinte minutos depois de passar limpo, o check
-  reprovou a memória que ENSINA a norma citando `(hoje 21)` como exemplo. Span de crase é mascarado
-  antes do casamento — check que reprova quem o documenta sai da lista na primeira sexta-feira.
+- **Citação entre crases é literal, não afirmação — e BLOCO CERCADO também (01/08).** Vinte minutos
+  depois de passar limpo, o check reprovou a memória que ENSINA a norma citando `(hoje 21)` como
+  exemplo. Span de crase é mascarado antes do casamento — check que reprova quem o documenta sai da
+  lista na primeira sexta-feira. ` ``` ` é a MESMA classe (saída de terminal colada não afirma nada)
+  e faltava: a máscara agora roda no texto INTEIRO antes de quebrar em linhas, preservando `\n` para
+  o achado não apontar a linha errada. `semLiteral` é exportada e a 2ª via do detector usa a MESMA.
 
 ## Inventário de cobrança (`scripts/gateways.mjs`) — quantos projetos sequer TÊM gateway
 

@@ -39,6 +39,15 @@ test("citação entre crases é literal, não afirmação", () => {
   assert.deepEqual(trechos("na linha, até 19/10/2026 (hoje 21) seria absolvido"), ["(hoje 21)"]);
 });
 
+// Bloco cercado é a mesma classe da crase, e faltava: saída de script colada em ``` é eco de
+// terminal, não afirmação de quem escreveu. A linha do achado seguinte não pode andar por causa
+// da máscara — é ela que manda alguém abrir o arquivo no lugar certo.
+test("bloco cercado é literal, e mascará-lo não desloca as linhas", () => {
+  assert.deepEqual(trechos("saída:\n```\nhoje são 35 projetos\n```\n"), []);
+  const achados = afirmacoesDePresente("```\nhoje são 35 projetos\n```\ngate X (hoje 21)");
+  assert.deepEqual(achados.map((a) => [a.linha, a.trecho]), [[4, "(hoje 21)"]]);
+});
+
 test("reporta a linha, não só o arquivo", () => {
   const achados = afirmacoesDePresente("linha um\nlinha dois\ngate X (hoje 21)");
   assert.equal(achados.length, 1);

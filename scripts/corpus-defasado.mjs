@@ -6,6 +6,12 @@
 //   node --env-file=.env scripts/corpus-defasado.mjs --ids D-66  # recorte
 //   node --env-file=.env scripts/corpus-defasado.mjs --k 5       # menos documentos por pergunta
 //
+// SÃO DUAS VIAS DE SELEÇÃO desde 01/08, e a segunda existe porque a primeira sozinha é o gargalo
+// do produto: a busca recupera por SEMELHANÇA DE TEMA, então número defasado citado de passagem
+// num documento sobre outro assunto nunca chega ao detector. A 2ª via (`docsQueCitam`) traz quem
+// CITA a quantidade com outro número — zero LLM, zero rede, e o custo é 1 chamada por documento
+// novo (medido: 8 documentos, contra 43 se a âncora fosse `(\d+) projetos` solto).
+//
 // Custo: 1 chamada por DOCUMENTO (~10 por pergunta), fora o rerank. Cache morno retoma corrida
 // morta. É caro e é o único jeito de sair do anedótico: hoje há duas provas de corpus defasado
 // achadas por acidente e nenhuma medida.
@@ -23,7 +29,7 @@ import { rrf } from "../lib/busca.mjs";
 import { rerank, trechoRelevante, rodarClaude, rodarCacheado, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
 import { apurarEstado } from "../lib/dourado-estado.mjs";
 import { consultarGsc } from "../lib/gsc-consulta.mjs";
-import { montarPromptDefasagem, parseDefasagem } from "../lib/defasagem.mjs";
+import { montarPromptDefasagem, parseDefasagem, docsQueCitam } from "../lib/defasagem.mjs";
 
 const opt = (nome, padrao) => {
   const i = process.argv.indexOf(nome);
@@ -77,12 +83,33 @@ async function topK(pergunta) {
   return itens.slice(0, K).map((c) => ({ ...c, trecho: trechoRelevante(porId.get(c.id).texto, termos, ORCAMENTO) }));
 }
 
+// `trechoRelevante` procura os termos no texto sem acento e em minúscula (`reranker.mjs:41`).
+// Mandar o casamento como termo é o que faz a janela do recorte cair EM CIMA da citação em vez do
+// começo do documento — num handoff de 9 mil chars a citação ficaria fora do orçamento, o modelo
+// não teria o que copiar e o achado cairia como `defasagem-citacao`.
+const comoTermo = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+// A 2ª via: documentos que CITAM o número do fato com valor diferente, mesmo falando de outro
+// assunto. Só os que a busca não trouxe — documento já no top-K não é julgado duas vezes.
+function porCitacao(apurado, jaVistos) {
+  return docsQueCitam(docs.filter((d) => !jaVistos.has(d.id)), apurado.citacoes).map(({ doc, casamentos }) => ({
+    id: doc.id,
+    tipo: doc.tipo,
+    titulo: doc.titulo,
+    trecho: trechoRelevante(doc.texto, casamentos.map(comoTermo), ORCAMENTO),
+    via: "citacao",
+  }));
+}
+
 const linhas = [];
 let seguidas = 0;
 for (const [id, apurado] of alvos) {
   const pergunta = porPergunta.get(id).pergunta;
   console.log(`${id} ${pergunta}`);
-  for (const doc of await topK(pergunta)) {
+  const daBusca = (await topK(pergunta)).map((d) => ({ ...d, via: "busca" }));
+  const daCitacao = porCitacao(apurado, new Set(daBusca.map((d) => d.id)));
+  if (daCitacao.length) console.log(`  + ${daCitacao.length} pela 2ª via (citam o número e a busca não trouxe)`);
+  for (const doc of [...daBusca, ...daCitacao]) {
     const prompt = montarPromptDefasagem(pergunta, apurado, doc);
     let v;
     try {
@@ -90,8 +117,8 @@ for (const [id, apurado] of alvos) {
     } catch (err) {
       v = { veredito: "", trecho: "", motivo: "", erro: err.message.replace(/^rerank-/, "defasagem-") };
     }
-    linhas.push({ id, pergunta, doc: doc.id, tipo: doc.tipo, titulo: doc.titulo, apurado: apurado.resposta, ...v });
-    console.log(`  ${(v.veredito || v.erro).padEnd(9)} ${doc.id}`);
+    linhas.push({ id, pergunta, doc: doc.id, tipo: doc.tipo, titulo: doc.titulo, via: doc.via, apurado: apurado.resposta, ...v });
+    console.log(`  ${(v.veredito || v.erro).padEnd(9)} ${doc.id}${doc.via === "citacao" ? "  (2ª via)" : ""}`);
     seguidas = falhasDeConta(seguidas, [v.erro]);
     if (seguidas >= MAX_CONTA_SEGUIDAS) break;
   }
@@ -106,13 +133,26 @@ if (seguidas >= MAX_CONTA_SEGUIDAS) {
   process.exit(1);
 }
 
+// O PERCENTUAL SAI SÓ DA BUSCA, e isto é o que impede a 2ª via de estragar a única régua que
+// aponta para fora do texto. A 2ª via seleciona documento cujo número JÁ diverge do apurado: ela
+// é amostra procurada, não recuperada. Somá-la ao denominador publicaria uma "taxa de erro do
+// corpus" que sobe sozinha toda vez que a busca de citação melhorar — o número mediria a consulta,
+// não o corpus. A lista nominal, essa sim, junta as duas: lá cada linha é uma edição, e de onde o
+// documento veio não muda o trabalho que ele dá.
+const daBusca = linhas.filter((l) => l.via === "busca");
+const daCitacao = linhas.filter((l) => l.via === "citacao");
 const desmentem = linhas.filter((l) => l.veredito === "desmente");
-const falam = linhas.filter((l) => l.veredito === "bate" || l.veredito === "desmente");
+const falam = daBusca.filter((l) => l.veredito === "bate" || l.veredito === "desmente");
+const desmentemBusca = daBusca.filter((l) => l.veredito === "desmente");
 const erros = linhas.filter((l) => l.erro);
 
-console.log(`\n── ${linhas.length} documentos julgados em ${alvos.length} perguntas de estado`);
-console.log(`falam do assunto        ${String(falam.length).padStart(3)}`);
-console.log(`DESMENTEM a fonte viva  ${String(desmentem.length).padStart(3)}   ${falam.length ? ((desmentem.length / falam.length) * 100).toFixed(1) : "0.0"}% dos que falam   ← a taxa de erro do corpus`);
+console.log(`\n── ${linhas.length} documentos julgados em ${alvos.length} perguntas de estado (${daBusca.length} pela busca, ${daCitacao.length} pela 2ª via)`);
+console.log(`falam do assunto        ${String(falam.length).padStart(3)}   (só os da busca)`);
+console.log(`DESMENTEM a fonte viva  ${String(desmentemBusca.length).padStart(3)}   ${falam.length ? ((desmentemBusca.length / falam.length) * 100).toFixed(1) : "0.0"}% dos que falam   ← a taxa de erro do corpus`);
+if (daCitacao.length) {
+  const d2 = daCitacao.filter((l) => l.veredito === "desmente").length;
+  console.log(`2ª via (citação)        ${String(daCitacao.length).padStart(3)}   ${d2} desmentem — FORA do percentual: seleção procurada não é amostra`);
+}
 if (erros.length) console.log(`sem veredito            ${String(erros.length).padStart(3)}   ${JSON.stringify(erros.reduce((a, l) => ({ ...a, [l.erro]: (a[l.erro] ?? 0) + 1 }), {}))}`);
 
 // Cada linha daqui é uma edição de memória ou handoff. LEIA antes de publicar percentual: das 46
@@ -120,7 +160,7 @@ if (erros.length) console.log(`sem veredito            ${String(erros.length).pa
 if (desmentem.length) {
   console.log(`\n🚨 documentos que afirmam algo desmentido pela fonte viva (${desmentem.length}) — LEIA um a um:`);
   for (const l of desmentem) {
-    console.log(`\n  ${l.doc}  [${l.tipo}]  (${l.id})`);
+    console.log(`\n  ${l.doc}  [${l.tipo}]  (${l.id})${l.via === "citacao" ? "  ← 2ª via: a busca não trouxe este documento" : ""}`);
     console.log(`    diz:     ${l.trecho}`);
     console.log(`    apurado: ${l.apurado}`);
     console.log(`    motivo:  ${l.motivo}`);

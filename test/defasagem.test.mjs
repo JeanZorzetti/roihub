@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { montarPromptDefasagem, parseDefasagem } from "../lib/defasagem.mjs";
+import { montarPromptDefasagem, parseDefasagem, docsQueCitam } from "../lib/defasagem.mjs";
+import { CITACOES_D66 } from "../lib/dourado-estado.mjs";
 import { montarPromptJuiz, parseVeredito } from "../lib/juiz.mjs";
 
 const apurado = { resposta: "35 projetos", fonte: "API do GitHub", apurado_em: "2026-07-31" };
@@ -87,6 +88,44 @@ test("veredito fora do vocabulário é erro, nunca nao-fala", () => {
     assert.equal(v.veredito, "");
     assert.equal(v.erro, "defasagem-output");
   }
+});
+
+// ── a 2ª via de seleção ─────────────────────────────────────────────────────────────────────
+const docTexto = (id, texto) => ({ id, tipo: "handoff", titulo: id, texto });
+const citados = (docs, citacoes) => docsQueCitam(docs, citacoes).map((a) => a.doc.id);
+const RANKING = [{ ...CITACOES_D66.ranking, valor: 35 }];
+
+test("seleciona quem cita a quantidade com número diferente, e só", () => {
+  const docs = [
+    docTexto("velho", "o hub tem 39 projetos hoje"),
+    docTexto("certo", "o hub tem 35 projetos hoje"),
+    docTexto("outro", "nada sobre isso"),
+  ];
+  assert.deepEqual(citados(docs, RANKING), ["velho"]);
+  // Sem âncora nenhuma (as outras 7 perguntas de estado) a 2ª via não seleciona nada — e não
+  // pode explodir por `citacoes` ausente, que é como ela chega de `apurado` sem o campo.
+  assert.deepEqual(citados(docs, undefined), []);
+});
+
+// O defeito nº 3 dos 5 que a mineração de 01/08 encontrou no próprio check: saída de script
+// colada em ``` é literal igual à crase, e ali ela absolveu D-70/D-71. Sem esta linha a 2ª via
+// gastaria chamada do pool para o modelo julgar o eco de um terminal.
+test("bloco cercado e crase são literais, não citação", () => {
+  assert.deepEqual(citados([docTexto("script", "saída:\n```\n39 projetos no ranking\n```\n")], RANKING), []);
+  assert.deepEqual(citados([docTexto("cita", "a memória dizia `39 projetos no hub` e foi corrigida")], RANKING), []);
+});
+
+// A QUANTIDADE HOMÔNIMA foi o defeito mais caro daquela mineração: `(\d+) projetos` solto casa
+// 43 documentos do corpus e quase todos são outra conta. Cada um custa uma chamada do pool para
+// o modelo responder `nao-fala`. Se alguém alargar a âncora "para achar mais", é aqui que quebra.
+test("âncora estreita não confunde quantidade homônima", () => {
+  const homonimos = [
+    docTexto("autopublish", "o cron publica 1 artigo/dia em 10 projetos"),
+    docTexto("vercel", "21 projetos apagados da Vercel"),
+    docTexto("no-ar", "19 projetos no ar"),
+  ];
+  assert.deepEqual(citados(homonimos, RANKING), []);
+  assert.deepEqual(citados([docTexto("h", "40 repos ativos, 39 projetos no ranking")], [{ ...CITACOES_D66.reposAtivos, valor: 36 }]), ["h"]);
 });
 
 // `campo` virou compartilhado com o juiz; o default tem que continuar em minúscula, senão
