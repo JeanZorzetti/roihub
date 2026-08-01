@@ -133,7 +133,12 @@ as 8 de `estado` são **apuradas na hora da medição**.
 - **A janela do GSC desliza na meia-noite UTC** — o mesmo fim de tarde deu 33 e depois 42.
   `apurado_em` é carimbado em BRT como todo o resto da casa.
 - **`(hoje N)` não se escreve em prosa.** Alvo e data do gate são curadoria e ficam escritos; o
-  número de hoje se apura. Foi a única família de defasagem real que a fase 3 encontrou.
+  número de hoje se apura. Foi a única família de defasagem real que a fase 3 encontrou — e agora
+  é `scripts/validade.mjs` (abaixo) que impede o próximo de nascer.
+- **`ressalva` é campo, não frase dentro do fato.** A limitação da medição ("é PISO: query
+  anonimizada não entra") escrita junto do número vira afirmação: foi ela que fez o detector de
+  defasagem ler discordância entre um documento que dizia "hoje 2" e um apurado de 2 — 1 dos 3
+  falsos positivos da primeira corrida. `montarPromptDefasagem` mostra as duas separadas.
 
 ## Taxa de erro do corpus (`scripts/corpus-defasado.mjs`) — a comparação B
 
@@ -148,6 +153,21 @@ para fora do texto.
 - **Handoff datado NÃO se reescreve** para o corpus bater com hoje: é o único lugar onde se vê o
   que se sabia quando a decisão foi tomada. Conserta-se a norma e o card, e a convenção daí pra
   frente.
+
+## Validade (`scripts/validade.mjs`) — a norma que impede a defasagem de NASCER
+
+`npm run validade` (repo + memórias) e `node scripts/validade.mjs --repo`. Zero LLM, zero rede,
+segundos — e por isso roda dentro do `npm test`, não ao lado dele.
+
+- **Varre só documento VIVO**: protocolos não revogados, `data/projects.json`, memórias. **Handoff
+  nunca**: é registro datado e o único lugar onde se vê o que se sabia quando a decisão foi tomada.
+- **A absolvição é avaliada DENTRO do trecho casado, nunca na linha.** Na linha, `PRT-03` — o
+  achado que originou a norma — seria absolvido pela data do gate ("até 19/10/2026 (hoje 21)"),
+  que é o prazo, não a data do número. Data que não gruda no número não data coisa nenhuma.
+- **A primeira corrida mediu o CHECK, como nas outras duas vezes:** 3 achados, 1 defeito limpo
+  (o card do aftercare congelando "hoje são 0" cliques) e 2 de fronteira (um status HTTP, um
+  "agora 6 asserts" num bullet já datado). Os três saíram datando ou apontando a apuração — mais
+  barato que afrouxar a regex, que é como um check vira enfeite.
 
 ## Conformidade (`scripts/conformidade.mjs`) — a norma que RODA
 

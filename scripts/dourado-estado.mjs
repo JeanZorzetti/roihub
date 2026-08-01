@@ -32,6 +32,7 @@ for (const [id, a] of Object.entries(apurados)) {
   } else {
     ok += 1;
     console.log(`  ✓ ${a.resposta}`);
+    if (a.ressalva) console.log(`  ressalva da medição: ${a.ressalva}`);
     console.log(`  fonte: ${a.fonte}  ·  apurado em ${a.apurado_em}`);
   }
   // O dourado escrito ao lado do apurado é a comparação B em miniatura: o que a casa afirma

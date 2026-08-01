@@ -14,6 +14,21 @@ test("o prompt leva o fato apurado, a fonte e a data — não só o número", ()
   assert.ok(p.includes(doc.trecho));
 });
 
+// O falso positivo do handoff-deep-research-harness: o fato dizia "Hoje: 2 — piso: query
+// anonimizada…" e o documento dizia "hoje 2". O modelo leu a ressalva como parte da afirmação e
+// devolveu `desmente` sobre acordo perfeito. Separada, ela é rotulada como medição, não como fato.
+test("a ressalva sai do fato e entra rotulada como limitação da medição", () => {
+  const comRessalva = { ...apurado, resposta: "Hoje: 2 cliques", ressalva: "é PISO: query anonimizada não entra." };
+  const p = montarPromptDefasagem("qual o gate?", comRessalva, doc);
+  const BLOCO = "LIMITAÇÃO DA MEDIÇÃO (como o fato foi medido";
+  const fato = p.slice(p.indexOf("FATO APURADO"), p.indexOf(BLOCO));
+  assert.ok(!fato.includes("PISO"), "a ressalva não pode voltar para dentro do bloco do fato");
+  assert.ok(p.includes("é PISO: query anonimizada não entra."));
+  // Sem ressalva o prompt não ganha um bloco vazio — cabeçalho sem conteúdo é ruído que o modelo
+  // preenche sozinho. (A regra que cita a limitação continua lá; é o BLOCO que não nasce.)
+  assert.ok(!montarPromptDefasagem("q", apurado, doc).includes(BLOCO));
+});
+
 test("parseDefasagem lê os três campos e preserva o trecho literal", () => {
   const v = parseDefasagem("VEREDITO: desmente\nTRECHO: O hub tem 39 Projetos\nMOTIVO: 39 contra 35 apurados");
   assert.equal(v.veredito, "desmente");

@@ -1,5 +1,18 @@
 # ROI Hub — handoff
 
+> ✅ **FASES 0 e 3 EXECUTADAS (31/07, 22h) —
+> [`handoff/handoff-checar-em-vez-de-julgar-executado.md`](handoff/handoff-checar-em-vez-de-julgar-executado.md).**
+> As duas de **zero chamadas**. **(0)** `ressalva` virou campo próprio: a limitação da medição saiu
+> de dentro do fato apurado — era ela que fazia o detector ler `desmente` entre um documento que
+> dizia "hoje 2" e um apurado de **2**. **(3)** `scripts/validade.mjs` no ar, dentro do `npm test`:
+> varre os documentos **vivos** (protocolo, card, memória — **handoff nunca**) atrás de `(hoje N)`,
+> e a absolvição é avaliada **dentro do trecho casado, nunca na linha** — na linha, o `PRT-03` que
+> originou a norma seria absolvido pela data do *prazo* do gate. **A primeira corrida mediu o
+> CHECK pela terceira vez seguida: 3 achados, 1 defeito limpo.** Os 2 de fronteira saíram datando o
+> documento, porque afrouxar a regex teria absolvido justamente o real. Hoje: **0 achados em 230
+> documentos vivos**, 235 testes verdes. **Fases 1, 2, 4, 5 e 6 continuam abertas, e o 16,7% de
+> defasagem continua PRELIMINAR.**
+>
 > ▶️ **PRÓXIMO PASSO — [`handoff/handoff-checar-em-vez-de-julgar.md`](handoff/handoff-checar-em-vez-de-julgar.md)
 > (31/07): parar de somar régua de LLM e converter afirmação em CHECK.** Especificação de
 > trabalho, não relatório. A tese: o que sobrevive nesta base é o que custa **zero pool** —

@@ -120,6 +120,10 @@ test("D-68 apura o clique não-branded e denuncia a curadoria defasada", async (
   assert.match(r["D-68"].resposta, /Hoje: 4/, "branded não pode entrar na conta do gate");
   assert.match(r["D-68"].resposta, /defasada em 2/);
   assert.doesNotMatch(r["D-68"].resposta, /sirius crm/);
+  // O caso do handoff-deep-research-harness: a ressalva dentro do fato fez o detector ler
+  // discordância entre "hoje 2" e um apurado de 2. Fora do fato, resta o número para comparar.
+  assert.doesNotMatch(r["D-68"].resposta, /piso|anonimizada/i);
+  assert.match(r["D-68"].ressalva, /PISO/);
 });
 
 // Impressão é o total do site: somar as linhas de query devolve um piso porque o GSC omite a
@@ -133,6 +137,7 @@ test("D-69 usa o total do site para impressão, não a soma das queries", async 
   const r = await apurar(raiz, { modo: "tudo", gsc });
   assert.match(r["D-69"].resposta, /Hoje: 33 \(total do site\)/);
   assert.match(r["D-69"].resposta, /defasada em 12/);
+  assert.match(r["D-69"].ressalva, /total do site/);
 });
 
 test("parseGate lê os dois formatos da casa e recusa o resto", () => {
