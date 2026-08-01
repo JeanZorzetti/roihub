@@ -1,5 +1,28 @@
 # ROI Hub — handoff
 
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-veredito-vem-antes-do-raciocinio.md`](handoff/handoff-o-veredito-vem-antes-do-raciocinio.md)
+> (01/08, 00h40): a casa mede bem e LIGA MAL.** Especificação de trabalho, não relatório. A tese:
+> nenhuma das três frentes abertas precisa de régua nova — as três precisam que o que já existe seja
+> ligado ao que já existe.
+> 🔑 **(A) O detector de defasagem responde ANTES de pensar.** O formato de saída pede `VEREDITO:` na
+> **linha 1** e o `MOTIVO:` na linha 3 — o modelo crava o veredito antes de escrever o raciocínio que
+> o justifica, e é exatamente a forma do bug visto 3×. Duas redações de REGRA já falharam; a hipótese
+> não testada é o FORMATO. **Inverter a ordem + falha fechada quando `desmente` vem sem `TRECHO`
+> literal. ~1 h, e decide se a fase F existe.**
+> 🔑 **(B) O juiz e o avaliador NÃO chamam `apurarEstado()`.** `avaliar-resposta.mjs:42` lê o
+> `dourado.json` e `juiz.mjs:50` recebe o texto ESCRITO — as 8 perguntas cujo gabarito a casa sabe
+> apurar seguem julgadas contra prosa que apodrece. **A frente inteira de 31/07 não chega à
+> medição.** Conserto: apurado no lugar do texto, `nao_apurado` TIRA a pergunta da corrida (nunca
+> fallback), e **esvaziar `resposta` das 8 de `estado`** — texto que não existe não apodrece.
+> 💰 **(C) 34 dos 35 sem gateway, e ninguém sabe quantos sequer TÊM um.** C.1 é o inventário de
+> gateways, zero LLM, e é o que muda a priorização. `sirius` travado em REDE (`:5434` ETIMEDOUT);
+> `orcaobra`/Kiwify nunca tentado.
+> 🚨 **(D) VEM PRIMEIRO, fora de ordem: rotacionar o token do Mercado Pago.** `SEC-04` registra
+> token de PRODUÇÃO em repo PÚBLICO, em todo o histórico — **e é o token que a régua nova de dinheiro
+> usa hoje.** É a única coisa do documento que fica mais cara a cada dia.
+> **Ordem defendida: D → A → B → C → E → F → G.** Com pool ruim, **D → C.1 → B(código) não gastam
+> uma chamada sequer.**
+>
 > ✅ **FASES A, B, C e D EXECUTADAS (01/08) —
 > [`handoff/handoff-lastro-no-dinheiro-e-no-gabarito-executado.md`](handoff/handoff-lastro-no-dinheiro-e-no-gabarito-executado.md).**
 > 💰 **(A) O dinheiro ganhou lastro em 1 dos 35: o Mercado Pago do `atma` tem 20 pagamentos
