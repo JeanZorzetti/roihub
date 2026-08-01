@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta } from "../lib/reranker.mjs";
+import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
 
 const candidatos = [
   { id: "a", tipo: "protocolo", titulo: "A", trecho: "texto a" },
@@ -158,4 +158,33 @@ test("trocaDeConta lê o status, não a mensagem", () => {
   assert.equal(trocaDeConta(desabilitado), true);
   assert.equal(trocaDeConta({ is_error: true, result: "não é JSON de ordem" }), false);
   assert.equal(trocaDeConta({ is_error: true, api_error_status: 500 }), false);
+});
+
+// A corrida das 78 de 31/07 morreu no meio e produziu números mesmo assim: 15 perguntas seguidas
+// saíram por pool esgotado e o relatório as contou como `recusou`, imprimindo 19,2% de recusa
+// fantasma. A regra que `scripts/avaliar-resposta.mjs` usa para parar mora aqui para ser testada:
+// N falhas de conta SEGUIDAS abortam.
+test("3 falhas de conta seguidas abortam a corrida", () => {
+  let n = 0;
+  for (const erro of ["resposta-conta", "juiz-conta", "resposta-conta"]) n = falhasDeConta(n, [erro]);
+  assert.equal(n, MAX_CONTA_SEGUIDAS, "a corrida devia parar na terceira");
+});
+
+// Conta que morre e volta é rotação normal do pool — abortar aí desperdiçaria uma corrida boa.
+test("resposta no meio zera o contador de falhas de conta", () => {
+  let n = 0;
+  for (const erro of ["resposta-conta", "resposta-conta", "", "resposta-conta"]) n = falhasDeConta(n, [erro]);
+  assert.equal(n, 1);
+});
+
+// O corte é por conta, não por "deu erro": modelo escrevendo bobagem é RESULTADO da medição, e
+// abortar nele esconderia justamente o defeito que a corrida existe para achar.
+test("erro que não é de conta não aborta", () => {
+  let n = 0;
+  for (const erro of ["resposta-output", "resposta-sem-citacao", "juiz-output", "resposta-timeout"]) {
+    n = falhasDeConta(n, [erro]);
+  }
+  assert.equal(n, 0);
+  // Uma das três chamadas da pergunta basta: o juiz gasta pool igual à síntese.
+  assert.equal(falhasDeConta(0, ["", undefined, "juiz-conta"]), 1);
 });

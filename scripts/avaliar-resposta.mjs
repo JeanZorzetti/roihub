@@ -20,7 +20,7 @@ import { carregarCorpus, MEMORIA_PADRAO } from "../lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "../lib/bm25.mjs";
 import { indexarDenso, buscarDenso } from "../lib/denso.mjs";
 import { rrf } from "../lib/busca.mjs";
-import { rerank, trechoRelevante } from "../lib/reranker.mjs";
+import { rerank, trechoRelevante, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
 import { responder, trechosPara } from "../lib/resposta.mjs";
 import { julgarConcordancia, julgarFidelidade, MODELO_JUIZ } from "../lib/juiz.mjs";
 
@@ -75,6 +75,11 @@ async function top10(pergunta) {
 }
 
 const linhas = [];
+// Corrida que perde o pool tem que PARAR. A de 31/07 continuou até o fim e imprimiu agregado com
+// casa decimal por cima de 15 perguntas que ninguém respondeu — número plausível com o
+// instrumento quebrado é pior que número nenhum, e é o modo de falha que este projeto existe
+// para eliminar. Contado por `-conta`, nunca por "deu erro": erro de prompt é resultado.
+let seguidas = 0;
 for (const q of dourado) {
   const { ids, termos } = await top10(q.pergunta);
   const trechos = trechosPara(ids.map((id) => porId.get(id)), termos);
@@ -106,6 +111,60 @@ for (const q of dourado) {
     console.log(`  citou: ${citadas.join(", ") || "—"}   esperado: ${q.fontes.join(", ")}`);
     if (juiz) console.log(`  juiz: ${linha.b.veredito}/${linha.b.armadilha} · ${linha.a.fiel === null ? "—" : linha.a.fiel ? "fiel" : "infiel"} · ${linha.b.motivo}`);
   }
+  seguidas = falhasDeConta(seguidas, [linha.r.erro, linha.b?.erro, linha.a?.erro]);
+  if (seguidas >= MAX_CONTA_SEGUIDAS) break;
+}
+const abortada = seguidas >= MAX_CONTA_SEGUIDAS;
+
+// Sem histórico, "melhorou?" não tem resposta: esta base já mediu 83,0% e 82,4% no mesmo corpus
+// sem uma linha de código mudar, porque reescrever handoff e memória mexe em vetor e IDF.
+// `incompleto` é gravado no arquivo, e não só impresso, porque quem compara corridas lê o JSON
+// meses depois: parcial sem carimbo vira, na próxima sessão, uma queda de qualidade inventada.
+function gravarCorrida(incompleto) {
+  const agora = new Date().toISOString().slice(0, 16).replace("T", "-").replace(":", "");
+  const arq = fileURLToPath(new URL(`../data/juiz-corridas/${agora}.json`, import.meta.url));
+  mkdirSync(dirname(arq), { recursive: true });
+  writeFileSync(
+    arq,
+    JSON.stringify(
+      {
+        quando: new Date().toISOString(),
+        incompleto,
+        modelo_juiz: MODELO_JUIZ,
+        modelo_sintese: process.env.RERANK_MODEL || "sonnet",
+        perguntas: linhas.length,
+        de: dourado.length,
+        casos: linhas.map((l) => ({
+          id: l.q.id,
+          camada: l.q.camada,
+          resposta: l.r.texto,
+          erro: l.r.erro,
+          citadas: l.citadas,
+          ancorada: l.ancorada,
+          veredito: l.b?.veredito ?? "",
+          armadilha: l.b?.armadilha ?? "",
+          motivo_b: l.b?.motivo ?? "",
+          fiel: l.a?.fiel ?? null,
+          motivo_a: l.a?.motivo ?? "",
+          erro_juiz: l.b?.erro || l.a?.erro || "",
+        })),
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  return agora;
+}
+
+// Agregado de corrida abortada não é impresso NUNCA — nem com aviso. O relatório de 31/07 trazia
+// o aviso das 15 suprimidas e mesmo assim publicou 19,2% de recusa: aviso ao lado de percentual
+// perde para o percentual. O que sobra é o parcial em disco, marcado, para ser retomado.
+if (abortada) {
+  console.log(`\n🚨 corrida ABORTADA em ${linhas.length}/${dourado.length}: ${MAX_CONTA_SEGUIDAS} falhas de conta seguidas.`);
+  console.log("   O pool esgotou (401/403/429 em toda conta) — nenhum número desta corrida vale.");
+  console.log("   Renove os tokens e rode de novo: o cache morno retoma de onde parou.");
+  if (juiz) console.log(`   parcial marcado incompleto em data/juiz-corridas/${gravarCorrida(true)}.json`);
+  process.exit(1);
 }
 
 const pct = (n, d) => `${d ? ((n / d) * 100).toFixed(1) : "0.0"}%`;
@@ -193,37 +252,5 @@ if (juiz) {
   listar("fiel + discorda — candidatos a erro no corpus ou no dourado", cruz(true, false), (l) => `\n      fidelidade: ${l.a.motivo}`);
   if (erroJuiz.length) console.log(`\n⚠️  ${erroJuiz.length} sem veredito: ${erroJuiz.map((l) => `${l.q.id}=${l.b.erro}`).join(", ")}`);
 
-  // Sem histórico, "melhorou?" não tem resposta: esta base já mediu 83,0% e 82,4% no mesmo corpus
-  // sem uma linha de código mudar, porque reescrever handoff e memória mexe em vetor e IDF.
-  const agora = new Date().toISOString().slice(0, 16).replace("T", "-").replace(":", "");
-  const arq = fileURLToPath(new URL(`../data/juiz-corridas/${agora}.json`, import.meta.url));
-  mkdirSync(dirname(arq), { recursive: true });
-  writeFileSync(
-    arq,
-    JSON.stringify(
-      {
-        quando: new Date().toISOString(),
-        modelo_juiz: MODELO_JUIZ,
-        modelo_sintese: process.env.RERANK_MODEL || "sonnet",
-        perguntas: linhas.length,
-        casos: linhas.map((l) => ({
-          id: l.q.id,
-          camada: l.q.camada,
-          resposta: l.r.texto,
-          erro: l.r.erro,
-          citadas: l.citadas,
-          ancorada: l.ancorada,
-          veredito: l.b?.veredito ?? "",
-          armadilha: l.b?.armadilha ?? "",
-          motivo_b: l.b?.motivo ?? "",
-          fiel: l.a?.fiel ?? null,
-          motivo_a: l.a?.motivo ?? "",
-          erro_juiz: l.b?.erro || l.a?.erro || "",
-        })),
-      },
-      null,
-      2,
-    ) + "\n",
-  );
-  console.log(`\ngravado em data/juiz-corridas/${agora}.json`);
+  console.log(`\ngravado em data/juiz-corridas/${gravarCorrida(false)}.json`);
 }
