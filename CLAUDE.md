@@ -124,11 +124,18 @@ as 8 de `estado` são **apuradas na hora da medição**.
   ontem: em `D-66` o corpus guardava quatro contagens defasadas do mesmo número (37, 39, 40, 39).
 - **Falha FECHADA:** sem rede, ou com a fonte fora do ar, sai `nao_apurado` com o motivo — nunca
   o valor da execução anterior. `--estado offline` roda só o que sai de arquivo do repo.
-- **7 das 8 têm fonte viva.** `D-70` e `D-71` foram ligadas em 31/07 por curadoria nos cards
-  (`familia`, `estado`, `blockersLista: [{texto,humano}]`). Só **`D-67` (receita provada)** segue
-  `nao_apurado`, e vai seguir: `vendas: [{data,valor}]` exige a data de cada venda, o Jean não as
-  tem de cabeça e **inventar data de venda é fabricar registro**. `receita` é nota 0-10 de
-  prioridade, nunca faturamento.
+- **8 das 8 têm fonte viva.** `D-70` e `D-71` saíram por curadoria nos cards (`familia`, `estado`,
+  `blockersLista: [{texto,humano}]`); **`D-67` saiu pelo GATEWAY** em 31/07 —
+  `scripts/vendas-mercadopago.mjs` deriva `vendas: [{data,valor,fonte,id}]` do Mercado Pago. A
+  pergunta nunca foi "o que o Jean lembra", era "o que o sistema de pagamento registra".
+  `receita` é nota 0-10 de prioridade, nunca faturamento.
+- **`vendas` ausente ≠ `vendas: []`.** Ausente é "nenhum gateway foi ligado neste projeto"; `[]` é
+  "o gateway respondeu e não pagou nada". `D-67` conta só os checados e **nomeia na `ressalva` os
+  34 sem fonte** — confundir os dois é tratar `n/a` como aprovação.
+- **`approved` + `live_mode: true` NÃO é venda.** Os 20 pagamentos de R$ 47 do atma (28–30/11/2025)
+  passam nos dois e são o Jean testando: payer `test_user_…@testuser.com`, CPF 11111111111. Somar
+  `approved` teria publicado **R$ 940 de faturamento inexistente com autoridade de número apurado**.
+  Quem separa é o payer, e é `lib/vendas.mjs` que decide — com o motivo de cada descarte na saída.
 - **`familia`/`estado` são CURADORIA, como o alvo do gate.** O que se apura é a DISTRIBUIÇÃO, e é
   isso que a `ressalva` de `D-70` declara. **A quarta família (`nao-vende`) não estava na spec** e
   nasceu da leitura dos 35: 7 projetos (CV, demo, pesquisa, vitrine) não tentam faturar por

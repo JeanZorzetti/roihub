@@ -530,10 +530,10 @@
   {
     "id": "D-67",
     "pergunta": "Quantos dos 35 projetos têm receita provada?",
-    "resposta": "Um: o sirius, com 3 vendas orgânicas — e o card não registra as datas. Dois têm checkout vivo: orcaobra (Kiwify 200, R$ 47,90) e atma (MP valida, nunca testado em produção). Regra da casa: dinheiro sem data é R$ 0.",
+    "resposta": "Zero — entre os que foram checados contra um gateway. Só 1 dos 35 cards tem fonte de pagamento ligada (atma, Mercado Pago) e ela devolveu 0 venda real: os 20 pagamentos aprovados de R$ 47 são todos de usuário de teste do próprio MP. Os outros 34 não têm gateway ligado, e ausência de venda registrada é 'não olhei', nunca 'não vendeu' — o '3 vendas orgânicas' do sirius é prosa do card, jamais checada no banco. Regra da casa: dinheiro sem data é R$ 0.",
     "camada": "estado",
-    "fontes": ["handoff-resumo-entregue-e-as-26-decisoes.md", "project_sirius_crm"],
-    "armadilha": "Contar checkout existente como receita."
+    "fontes": ["handoff-lastro-no-dinheiro-e-no-gabarito.md", "project_sirius_crm"],
+    "armadilha": "Contar checkout existente como receita, ou contar pagamento de teste do gateway como venda."
   },
   {
     "id": "D-68",

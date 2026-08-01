@@ -55,12 +55,12 @@ test("cronParaBrt tira as 3 horas e vira o dia", () => {
 test("D-67 e D-71 saem não-apuradas enquanto o campo estruturado não existir", async () => {
   const raiz = repoFalso({ projetos: [{ slug: "x", receita: 9, receitaNota: "3 vendas orgânicas", blockersLista: ["texto solto"] }] });
   const r = await apurar(raiz);
-  assert.match(r["D-67"].nao_apurado, /não tem campo de venda/);
+  assert.match(r["D-67"].nao_apurado, /nenhum card foi checado contra um sistema de pagamento/);
   assert.equal(r["D-67"].resposta, "");
   assert.match(r["D-71"].nao_apurado, /texto livre/);
 });
 
-test("D-67 conta venda com data e ignora venda sem data", async () => {
+test("D-67 conta venda com data, ignora venda sem data e soma a receita provada", async () => {
   const raiz = repoFalso({
     projetos: [
       { slug: "com", vendas: [{ data: "2026-06-12", valor: 97 }, { valor: 97 }] },
@@ -70,7 +70,21 @@ test("D-67 conta venda com data e ignora venda sem data", async () => {
   });
   const r = await apurar(raiz);
   assert.equal(r["D-67"].nao_apurado, "");
-  assert.match(r["D-67"].resposta, /1 de 3 têm venda com data registrada: com \(1\)/);
+  assert.match(r["D-67"].resposta, /1 de 2 projeto\(s\) checado\(s\).*: com \(1\)/);
+  // A venda sem data do "sem" e a de 97 sem data do "com" não entram na soma.
+  assert.match(r["D-67"].resposta, /Receita provada: R\$ 97\.00/);
+});
+
+// `vendas` ausente e `vendas: []` são coisas diferentes, e confundi-las é tratar "não olhei" como
+// "não vendeu" — a mesma régua do `n/a` do conformidade. O denominador é o dos checados; quem não
+// tem gateway ligado sai NOMEADO na ressalva.
+test("D-67 tira da conta quem não tem gateway ligado e nomeia na ressalva", async () => {
+  const raiz = repoFalso({ projetos: [{ slug: "checado", vendas: [] }, { slug: "nunca-olhado" }] });
+  const r = await apurar(raiz);
+  assert.match(r["D-67"].resposta, /0 de 1 projeto\(s\) checado\(s\)/);
+  assert.match(r["D-67"].ressalva, /1 dos 2 cards não têm fonte de pagamento ligada/);
+  assert.match(r["D-67"].ressalva, /nunca-olhado/);
+  assert.doesNotMatch(r["D-67"].ressalva, /checado,/);
 });
 
 // Meia apuração é pior que nenhuma: ela carrega a autoridade do número. Um card sem `familia`
