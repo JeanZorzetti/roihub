@@ -1,5 +1,22 @@
 # ROI Hub — handoff
 
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-lastro-no-dinheiro-e-no-gabarito.md`](handoff/handoff-lastro-no-dinheiro-e-no-gabarito.md)
+> (31/07, 23h): as réguas de texto amadureceram; falta lastro no DINHEIRO e no gabarito mais novo.**
+> Especificação de trabalho, não relatório. A tese: **o hub prioriza 35 projetos por um número de
+> receita que nunca foi checado contra um sistema de pagamento**, e o gabarito de `D-70`, ligado
+> ontem, é julgamento de agente sem holdout. Nenhuma das duas se resolve com mais LLM.
+> 💰 Ordem defendida: **(A)** `D-67` contra o gateway — Mercado Pago primeiro, `mcp__mercadopago__*`
+> está disponível; "o Jean não lembra as datas" fecha a pergunta errada, porque a pergunta é o que
+> o gateway registra. **Zero chamadas.** **(B)** os dois portões do detector de defasagem — e
+> refazer o `.cache/rerank.json` **uma vez só** aqui, que a fase 0 invalidou. **(C)** 🆕 o holdout
+> da CURADORIA: derivação cega e independente de `familia`/`estado` nos 35 cards, concordância
+> medida, e só os divergentes vão ao Jean. **(D)** o protocolo da primeira corrida — **a quarta vez
+> chegou** (46→5, 8→3, 3→2). **(E)** inventário do conversível · **(F)** detector de contradição ·
+> **(G)** remedir e publicar com a fronteira declarada.
+> 🚩 **O 16,7% continua PRELIMINAR: a fase 0 consertou 1 das 3 causas de falso positivo, não 3.**
+> **Com pool ruim, A → C → D não gastam uma chamada sequer** — e ainda assim são as três melhores
+> coisas a fazer.
+>
 > ✅ **FASES 0 e 3 EXECUTADAS (31/07, 22h) —
 > [`handoff/handoff-checar-em-vez-de-julgar-executado.md`](handoff/handoff-checar-em-vez-de-julgar-executado.md).**
 > As duas de **zero chamadas**. **(0)** `ressalva` virou campo próprio: a limitação da medição saiu
