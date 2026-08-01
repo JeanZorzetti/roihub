@@ -1,6 +1,24 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-veredito-vem-antes-do-raciocinio.md`](handoff/handoff-o-veredito-vem-antes-do-raciocinio.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-formato-era-o-bug.md`](handoff/handoff-o-formato-era-o-bug.md)
+> (01/08): A, B, C.1 e C.4 executadas. D NÃO — e é a única que fica mais cara a cada dia.**
+> 🔑 **(A) A hipótese era certa e custou três linhas.** `VEREDITO` deixou de ser a primeira linha da
+> resposta e virou a última, depois do trecho e do motivo: adversarial **3/10 → 8/10**, holdout
+> **71,4% → 84,6%**. Duas redações de REGRA já tinham falhado no mesmo formato. **Os dois portões
+> ainda reprovam por UM caso cada, e todo erro restante diz `nao-fala`** — o detector julga o TEMA
+> do documento. **Próximo desenho é DUAS PASSADAS, como o juiz; não é uma terceira redação.**
+> 🔑 **(B) O gabarito que não apodrece chegou à régua.** As 8 de `estado` são julgadas contra
+> apuração da hora, `nao_apurado` TIRA a pergunta da corrida, o campo `resposta` delas está VAZIO no
+> `dourado.json` com teste segurando. Achado de brinde: **o portão do juiz se dizia congelado e lia
+> um arquivo mutável** — gabarito agora inlinado em `dourado_congelado`. Juiz intacto: 87,5% / 10-10.
+> 💰 **(C.1) O portfólio NÃO COBRA, e essa é a resposta que faltava.** 1 gateway ligado (`atma`), 1
+> servido e sem régua lendo (`orcaobra`/Kiwify), 3 só com página de preço, **30 sem caminho de
+> cobrança nenhum**. A leitura de "1 de 35" é **"faltam 2", não "faltam 34"**. Fechou a C.4:
+> `receitaProvada` NÃO entra no score (condição nova escrita em `lib/score.mjs`).
+> 🚨 **(D) CONTINUA VENCIDA: o token de PRODUÇÃO do Mercado Pago em repo PÚBLICO ainda funciona** —
+> a régua do dinheiro rodou com ele hoje. Só o Jean pode, no painel do MP, e são TRÊS envs.
+>
+> ✅ **A spec que originou o trabalho acima — [`handoff/handoff-o-veredito-vem-antes-do-raciocinio.md`](handoff/handoff-o-veredito-vem-antes-do-raciocinio.md)
 > (01/08, 00h40): a casa mede bem e LIGA MAL.** Especificação de trabalho, não relatório. A tese:
 > nenhuma das três frentes abertas precisa de régua nova — as três precisam que o que já existe seja
 > ligado ao que já existe.
