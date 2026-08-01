@@ -1,6 +1,26 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-portao-tem-treze-casos.md`](handoff/handoff-o-portao-tem-treze-casos.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-os-quatro-erros-sao-a-mesma-celula.md`](handoff/handoff-os-quatro-erros-sao-a-mesma-celula.md)
+> (01/08): B e E executadas, C parcial.** A tese: **o detector não fabrica achado e não esconde
+> achado — ele erra em decidir se o documento FALA do assunto.** Com o holdout ampliado (13 → **33
+> casos que contam**, um caso vale 3,0 pts e não 7,7), os 4 erros são **todos `bate → nao-fala`**:
+> zero `desmente` perdido, zero fabricado, 5/5 na célula que decide. **Para a lista nominal o
+> detector acertou 32/32** — e isso **não libera percentual**, porque é o mesmo mecanismo do erro
+> que esconde corpus podre.
+> 🚨 **(A) O token de PRODUÇÃO do MP vazado AINDA FUNCIONA** — reconferido em 01/08, autenticou.
+> Nada depende dela, só a inércia. ~1 h, só o Jean.
+> 🔑 **(B, feita) `fiel + discorda` é NECESSÁRIO, não suficiente:** dos 3 casos, só **1** aponta para
+> o corpus — `D-71` aponta para a **síntese** (a resposta estava no trecho que ela recebeu) e `D-72`
+> para a **recuperação** (o doc citado não tem `00:13`; 10+ que têm nunca chegaram).
+> 🔑 **(E, feita) O `effort` ficava fora da chave do cache** — trocar o effort do detector devolveria
+> as respostas do effort anterior em silêncio. Consertado com 0 chamadas. E `dourado_lacrado` agora
+> trava por hash os 27 gabaritos que os portões liam de um arquivo mutável.
+> 🔑 **(C, parcial) 33 de 40.** Faltam +7 no holdout e o adversarial 10 → 20. **61 pares candidatos
+> já estão gerados e recortados** em `data/defasagem-candidatos.json` — falta a leitura.
+> 💰 **(F) `orcaobra` segue sendo o único gateway vivo sem régua lendo.**
+> **Ordem defendida: A → C(resto) → D → B-2/B-4 → F → G → H → I.**
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-o-portao-tem-treze-casos.md`](handoff/handoff-o-portao-tem-treze-casos.md)
 > (01/08, 04h50): o instrumento melhorou, o portão que julga o instrumento não.** Especificação de
 > trabalho, não relatório. A tese: o detector saiu de **3 para 9** vereditos corretos em 10
 > corrupções, enquanto o holdout marcou 71,4% → 88,9% → 91,7% → **84,6%**, subindo e descendo com a
