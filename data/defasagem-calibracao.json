@@ -19,7 +19,8 @@
       },
       "veredito": "desmente",
       "categoria": "numero errado afirmado no presente",
-      "motivo": "Escreve '19/10 — gate do tapepro: ≥ 300 imp/28d (hoje 21)'. A fonte viva devolve 42. É a família `(hoje N)` em prosa: era verdade no dia e continua se afirmando presente."
+      "motivo": "Escreve '19/10 — gate do tapepro: ≥ 300 imp/28d (hoje 21)'. A fonte viva devolve 42. É a família `(hoje N)` em prosa: era verdade no dia e continua se afirmando presente.",
+      "ancora": "hoje 21"
     },
     {
       "id": "D-69",
@@ -38,7 +39,8 @@
       },
       "veredito": "desmente",
       "categoria": "numero errado afirmado no presente",
-      "motivo": "Mesmo bloco de agenda, mesmo '(hoje 21)' contra os 42 apurados. Dois documentos com o mesmo defeito é o multiplicador: repetição é o que faz um erro virar consenso."
+      "motivo": "Mesmo bloco de agenda, mesmo '(hoje 21)' contra os 42 apurados. Dois documentos com o mesmo defeito é o multiplicador: repetição é o que faz um erro virar consenso.",
+      "ancora": "hoje 21"
     },
     {
       "id": "D-68",
@@ -57,7 +59,8 @@
       },
       "veredito": "bate",
       "categoria": "numero certo com ressalva na medicao",
-      "motivo": "Escreve '31/08 — gate do sirius: ≥ 5 cliques não-branded/28d (hoje 2)' e o apurado é 2. A ressalva ('é PISO: query anonimizada não entra') é limitação da MEDIÇÃO — o documento não tinha como saber dela, e concordar com o número é concordar. Foi este exato caso que produziu 1 dos 3 falsos positivos da primeira corrida."
+      "motivo": "Escreve '31/08 — gate do sirius: ≥ 5 cliques não-branded/28d (hoje 2)' e o apurado é 2. A ressalva ('é PISO: query anonimizada não entra') é limitação da MEDIÇÃO — o documento não tinha como saber dela, e concordar com o número é concordar. Foi este exato caso que produziu 1 dos 3 falsos positivos da primeira corrida.",
+      "ancora": "hoje 2"
     },
     {
       "id": "D-68",
@@ -76,7 +79,8 @@
       },
       "veredito": "bate",
       "categoria": "numero certo com ressalva na medicao",
-      "motivo": "Idem. O MESMO documento tem `(hoje 21)` errado para o tapepro e `(hoje 2)` certo para o sirius: se o detector julgar o documento em vez da afirmação, ele erra um dos dois."
+      "motivo": "Idem. O MESMO documento tem `(hoje 21)` errado para o tapepro e `(hoje 2)` certo para o sirius: se o detector julgar o documento em vez da afirmação, ele erra um dos dois.",
+      "ancora": "hoje 2"
     },
     {
       "id": "D-67",
@@ -95,7 +99,8 @@
       },
       "veredito": "desmente",
       "categoria": "numero errado afirmado no presente",
-      "motivo": "Tabela em presente: '1 de 35 tem receita provada (sirius, 3 vendas orgânicas)'. O gateway apurou R$ 0,00 e a única fonte de pagamento ligada devolveu zero venda real. Afirmar como PROVADO o que nunca foi checado é a afirmação que a fonte viva desmente."
+      "motivo": "Tabela em presente: '1 de 35 tem receita provada (sirius, 3 vendas orgânicas)'. O gateway apurou R$ 0,00 e a única fonte de pagamento ligada devolveu zero venda real. Afirmar como PROVADO o que nunca foi checado é a afirmação que a fonte viva desmente.",
+      "ancora": "receita provada"
     },
     {
       "id": "D-67",
@@ -114,7 +119,8 @@
       },
       "veredito": "bate",
       "categoria": "a fonte nao olhou — e isso nao e desmentir",
-      "motivo": "Diz '3 vendas orgânicas' sob o cabeçalho datado 'Validação de Mercado (Marco - 2026-03-17 a 2026-03-25)'. O fato apurado NÃO nega as 3 vendas: ele diz que o banco do sirius nunca foi consultado. 'não olhei' e 'não vendeu' são coisas diferentes, e confundi-las inventaria uma defasagem."
+      "motivo": "Diz '3 vendas orgânicas' sob o cabeçalho datado 'Validação de Mercado (Marco - 2026-03-17 a 2026-03-25)'. O fato apurado NÃO nega as 3 vendas: ele diz que o banco do sirius nunca foi consultado. 'não olhei' e 'não vendeu' são coisas diferentes, e confundi-las inventaria uma defasagem.",
+      "ancora": "3 vendas orgânicas"
     },
     {
       "id": "D-67",
@@ -133,7 +139,8 @@
       },
       "veredito": "bate",
       "categoria": "descreve a REGRA sem citar o numero",
-      "motivo": "Fala da regra 'dinheiro sem data é R$ 0' e de como ela deveria rodar. Descrever a norma sem afirmar o número é compatível com qualquer número."
+      "motivo": "Fala da regra 'dinheiro sem data é R$ 0' e de como ela deveria rodar. Descrever a norma sem afirmar o número é compatível com qualquer número.",
+      "ancora": "dinheiro sem data"
     },
     {
       "id": "D-67",
@@ -152,7 +159,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "assunto vizinho, pergunta outra",
-      "motivo": "É sobre Mercado Pago — mas sobre env var de checkout do goiania, não sobre quantos projetos faturam. Vizinhança lexical não é o assunto: foi assim que a primeira corrida comparou o gate dos canários do autopublish com o gate do tapepro."
+      "motivo": "É sobre Mercado Pago — mas sobre env var de checkout do goiania, não sobre quantos projetos faturam. Vizinhança lexical não é o assunto: foi assim que a primeira corrida comparou o gate dos canários do autopublish com o gate do tapepro.",
+      "ancora": ""
     },
     {
       "id": "D-67",
@@ -171,7 +179,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "assunto totalmente outro",
-      "motivo": "Protocolo sobre claude-cli ser o único acesso LLM custeado. Nada a ver com receita provada."
+      "motivo": "Protocolo sobre claude-cli ser o único acesso LLM custeado. Nada a ver com receita provada.",
+      "ancora": ""
     },
     {
       "id": "D-66",
@@ -190,7 +199,8 @@
       },
       "veredito": "bate",
       "categoria": "numero certo",
-      "motivo": "'10 protocolos × 35 projetos de data/projects.json' — e o apurado é 35 projetos. Confere."
+      "motivo": "'10 protocolos × 35 projetos de data/projects.json' — e o apurado é 35 projetos. Confere.",
+      "ancora": "35 projetos"
     },
     {
       "id": "D-66",
@@ -209,7 +219,8 @@
       },
       "veredito": "bate",
       "categoria": "passado datado explicitamente",
-      "motivo": "'Medição de 29/07: 31 repos não-arquivados com homepage vazia' contra os 2 de hoje. A divergência é enorme E o documento data a medição — descrever o passado com data não é afirmar o presente."
+      "motivo": "'Medição de 29/07: 31 repos não-arquivados com homepage vazia' contra os 2 de hoje. A divergência é enorme E o documento data a medição — descrever o passado com data não é afirmar o presente.",
+      "ancora": "29/07"
     },
     {
       "id": "D-72",
@@ -228,7 +239,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "assunto vizinho, pergunta outra",
-      "motivo": "Fala de Docker e de cache de layer de build, mas do roilabs.com.br e sobre fetch em build-time — não de onde o roihub roda nem de como se publica."
+      "motivo": "Fala de Docker e de cache de layer de build, mas do roilabs.com.br e sobre fetch em build-time — não de onde o roihub roda nem de como se publica.",
+      "ancora": ""
     },
     {
       "id": "D-72",
@@ -247,7 +259,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "fala de OUTROS projetos",
-      "motivo": "Trata de projetos da Vercel sem conexão com o git. O roihub não é Vercel, e a memória não afirma nada sobre ele. Documento sobre a mesma plataforma de OUTRO projeto é o falso positivo clássico."
+      "motivo": "Trata de projetos da Vercel sem conexão com o git. O roihub não é Vercel, e a memória não afirma nada sobre ele. Documento sobre a mesma plataforma de OUTRO projeto é o falso positivo clássico.",
+      "ancora": ""
     },
     {
       "id": "D-73",
@@ -266,7 +279,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "fala de OUTROS projetos",
-      "motivo": "Build e testes, mas da Estética Fábrica (pnpm, Next, blog SSG). A pergunta é sobre a lista do npm test do roihub."
+      "motivo": "Build e testes, mas da Estética Fábrica (pnpm, Next, blog SSG). A pergunta é sobre a lista do npm test do roihub.",
+      "ancora": ""
     },
     {
       "id": "D-73",
@@ -285,7 +299,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "fala de OUTROS projetos",
-      "motivo": "Fala de CI gate de jest — mas do sofia-next. Que outro repo use jest não diz nada sobre o motor de teste do roihub."
+      "motivo": "Fala de CI gate de jest — mas do sofia-next. Que outro repo use jest não diz nada sobre o motor de teste do roihub.",
+      "ancora": ""
     },
     {
       "id": "D-70",
@@ -304,7 +319,8 @@
       },
       "veredito": "desmente",
       "categoria": "numero e taxonomia errados no presente",
-      "motivo": "Afirma em presente '26 dos 35 estão parados' em TRÊS famílias, e lista estetiacrm e verticemarketing sob 'não tem quem venda'. O apurado é 27 com blocker, QUATRO famílias, e 'não tem quem venda' tem 2 (goiania, qprime). Número e pertencimento incompatíveis."
+      "motivo": "Afirma em presente '26 dos 35 estão parados' em TRÊS famílias, e lista estetiacrm e verticemarketing sob 'não tem quem venda'. O apurado é 27 com blocker, QUATRO famílias, e 'não tem quem venda' tem 2 (goiania, qprime). Número e pertencimento incompatíveis.",
+      "ancora": "26 dos 35"
     },
     {
       "id": "D-71",
@@ -323,7 +339,8 @@
       },
       "veredito": "bate",
       "categoria": "lista compativel",
-      "motivo": "'Ainda só o Jean pode fazer: Bing Webmaster no goiania, as 4 chaves do Stripe do compass, GOOGLE_CLIENT_ID do reviewshield, os 2 Request Indexing do fabrica' — todos estão entre os 8 bloqueios humanos apurados. Não citar todos não é afirmar que não existem."
+      "motivo": "'Ainda só o Jean pode fazer: Bing Webmaster no goiania, as 4 chaves do Stripe do compass, GOOGLE_CLIENT_ID do reviewshield, os 2 Request Indexing do fabrica' — todos estão entre os 8 bloqueios humanos apurados. Não citar todos não é afirmar que não existem.",
+      "ancora": "GOOGLE_CLIENT_ID"
     },
     {
       "id": "D-69",
@@ -342,7 +359,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "citacao de exemplo, nao afirmacao",
-      "motivo": "Cita `(hoje 21)` entre crases como EXEMPLO da norma que ensina — o assunto do documento é a taxa de erro do corpus, não o gate do tapepro. Documento que ensina a norma citando-a não pode ser reprovado por ela; foi o achado que fez o validade.mjs mascarar span de crase."
+      "motivo": "Cita `(hoje 21)` entre crases como EXEMPLO da norma que ensina — o assunto do documento é a taxa de erro do corpus, não o gate do tapepro. Documento que ensina a norma citando-a não pode ser reprovado por ela; foi o achado que fez o validade.mjs mascarar span de crase.",
+      "ancora": "(hoje 21)"
     },
     {
       "id": "D-71",
@@ -361,7 +379,8 @@
       },
       "veredito": "nao-fala",
       "categoria": "assunto vizinho, pergunta outra",
-      "motivo": "Fala de violações de protocolo apuradas por robô. A pergunta é sobre o que só o Jean pode destravar — nenhuma das 41 violações é bloqueio humano no sentido do card."
+      "motivo": "Fala de violações de protocolo apuradas por robô. A pergunta é sobre o que só o Jean pode destravar — nenhuma das 41 violações é bloqueio humano no sentido do card.",
+      "ancora": ""
     },
     {
       "id": "D-71",
@@ -380,7 +399,8 @@
       },
       "veredito": "desmente",
       "categoria": "numero errado afirmado no presente",
-      "motivo": "Afirma 'grep por manual|jean devolve 18 cards contra os 5 reais'. A curadoria apurou 8 bloqueios humanos, não 5. É uma expectativa de spec escrita como fato, e o número real a desmente."
+      "motivo": "Afirma 'grep por manual|jean devolve 18 cards contra os 5 reais'. A curadoria apurou 8 bloqueios humanos, não 5. É uma expectativa de spec escrita como fato, e o número real a desmente.",
+      "ancora": "5 reais"
     }
   ]
 }

@@ -1,0 +1,29 @@
+{
+  "id": "VER-08",
+  "area": "VER",
+  "titulo": "A primeira corrida de um check novo mede o CHECK: le-se um a um e nenhum percentual sai dela",
+  "norma": "Corrida inaugural de qualquer check novo (regra, detector, calibracao, apurador) mede o INSTRUMENTO, nao o objeto medido. Os achados se leem um a um antes de qualquer um virar tarefa, cada um datado como 'medindo o check', e o agregado dessa corrida NAO se publica. So a segunda corrida, ja com os achados do check corrigidos, produz numero. Corolario: exclusao de caso de um conjunto de calibracao so vale por regra MECANICA checavel sem olhar o resultado (ex.: o rotulo cita texto que o instrumento nao recebeu); excluir porque o instrumento discordou e ajustar o gabarito depois da prova.",
+  "motivo": "Cinco vezes na mesma base, sempre reaprendido em prosa. conformidade.mjs: 46 violacoes, 5 eram o check errado (SEC-01 supunha next-auth num app com Auth0; VER-02 adivinhava /sitemap.xml num projeto Astro). corpus-defasado.mjs: 8 desmente, 3 eram o check errado — um devolveu VEREDITO desmente com o MOTIVO dizendo 'o veredito correto e nao-fala'. validade.mjs (31/07): 3 achados, 2 de fronteira, e um quarto tipo novo apareceu 20 minutos depois. dourado-estado D-67 (31/07): o primeiro apurado contava 'vendas ausente' junto com 'vendas vazio', tratando 'nao olhei' como 'nao vendeu'. defasagem-calibrar.mjs (31/07): 6 dos 20 pares do holdout eram invalidos por CONSTRUCAO — rotulados contra uma janela do documento escolhida a mao, enquanto o fixture congelou a janela que a producao recorta. Nas cinco, publicar o agregado da primeira corrida teria virado meta em cima de um defeito do proprio instrumento.",
+  "verificacao": {
+    "tipo": "manual",
+    "como": "NAO E EXECUTAVEL, e isso e declarado de proposito: nenhum comando distingue 'achado real' de 'check errado' — a distincao exige ler o achado contra a fonte. O que se checa e documental: a primeira corrida deixou registro nominal dos achados lidos um a um, com quais eram o check? E o primeiro numero publicado saiu da SEGUNDA corrida? Se o unico artefato for um percentual, a norma foi violada.",
+    "frequencia": "por check novo",
+    "falha_significa": "bloqueia"
+  },
+  "aplica_se_a": {
+    "stack": ["*"],
+    "infra": ["*"],
+    "superficie": ["dados", "dev", "agente"]
+  },
+  "excecoes": [
+    "Check puramente sintatico com zero julgamento (JSON parseia, campo obrigatorio existe) nao tem 'achado que e o check errado': o agregado da primeira corrida ja vale.",
+    "Lista NOMINAL da primeira corrida pode e deve ser publicada — o que nao sai e o percentual. Foi ler as linhas que pegou 5 dos 46, 3 dos 8 e 2 dos 3."
+  ],
+  "origem": [
+    "project_roihub_conformidade",
+    "corpus_hoje_n_prose_rot"
+  ],
+  "valid_from": "2026-07-31",
+  "valid_to": null,
+  "supersede": null
+}
