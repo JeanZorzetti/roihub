@@ -1,18 +1,26 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-4-deploys-presos.md`](handoff/handoff-proximo-passo-4-deploys-presos.md)
-> (01/08): o próximo passo NÃO é código — 4 entregas estão prontas no `main` e presas no DEPLOY.**
-> 🚩 **`aftercare`, `context`, `reviewshield` e `estetia` servem a versão velha 1 h depois do push**,
-> enquanto `atma`, `nimblabs` e `orion` subiram em minutos na mesma plataforma. **As 4 hipóteses de
-> código já foram descartadas** (commit é HEAD no GitHub · `Dockerfile` copia `public/` · nenhum
-> `.dockerignore` exclui · o mesmo conserto funcionou no `nimblabs`). O problema está entre o `git
-> push` e o container.
-> ⚠️ **A hipótese que a casa já documentou:** EasyPanel **trava o rolling update e MANTÉM o container
-> ANTIGO servindo** — foi o incidente de junho no `nimblabs`. **Site em 200 NÃO prova deploy.**
-> ❌ **Não reescreva os `llms.txt` e não redeploye no braço antes de saber a causa** — o redeploy que
-> funciona apaga a evidência e deixa o mesmo defeito nos outros três.
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-4-deploys-o-easypanel-aceitou.md`](handoff/handoff-4-deploys-o-easypanel-aceitou.md)
+> (01/08): sobraram DUAS hipóteses, as duas DENTRO do painel do EasyPanel.**
+> 🚩 **O EasyPanel ACEITOU o deploy dos 4 e o container não trocou.** Webhook ativo, entrega do push
+> **200 OK no mesmo minuto** dos que subiram — e o 200 é evidência CONTROLADA: token inventado no
+> mesmo endpoint devolve `404 {"message":"Invalid Token"}`.
+> ❌ **A hipótese da casa (`HEALTHCHECK` trava o rolling update) foi REFUTADA e INVERTIDA:** quem tem
+> healthcheck (`atma`, `orion`) SUBIU; os 4 travados não têm. ❌ Cache de borda também caiu
+> (`no-cache` = 404 nos 4).
+> ✅ **PROVADO que a imagem em execução é VELHA:** o `reviewshield` serve o `robots.txt` de **04/06**
+> e 404 no `globe.svg`. O repo está fora de suspeita por MEDIDA.
+> ▶️ **Restam: (a) o build rodou e FALHOU — ler o log; (b) o token deploya um serviço que NÃO é o que
+> serve o domínio.** Não dá para separar de fora. ❌ **Não redeploye no braço** — apaga a amostra.
+> ⚠️ **`grep -c GPTBot` no robots servido deu o sinal INVERTIDO pela 3ª vez** — o `reviewshield` cita
+> `GPTBot` desde 04/06 num commit que BLOQUEIA. Ler o corpo, comparar com o `HEAD`.
 > 🎯 **Portão:** `GEO-01` **25 → 21**, violações **38 → 34**, e **nenhum dos 21 restantes muda de
 > balde**. Abaixo de 21 = o CHECK mudou, não o portfólio.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-proximo-passo-4-deploys-presos.md`](handoff/handoff-proximo-passo-4-deploys-presos.md)
+> (01/08): a spec que mandou achar a CAUSA antes de consertar — e as 4 hipóteses de código já
+> descartadas ali (commit é HEAD · `Dockerfile` copia `public/` · nenhum `.dockerignore` exclui · o
+> mesmo conserto funcionou no `nimblabs`). Não refaça essa conferência.**
 >
 > ✅ **EXECUTADO (01/08) — [`handoff/handoff-geo-01-nos-7-com-trafego.md`](handoff/handoff-geo-01-nos-7-com-trafego.md)
 > (01/08): `GEO-01` entregue nos 7 com tráfego — e o check media a PALAVRA `GPTBot`, não a permissão.**
