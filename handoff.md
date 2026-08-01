@@ -1,6 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-geo-01-nos-7-com-trafego.md`](handoff/handoff-geo-01-nos-7-com-trafego.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-4-deploys-presos.md`](handoff/handoff-proximo-passo-4-deploys-presos.md)
+> (01/08): o próximo passo NÃO é código — 4 entregas estão prontas no `main` e presas no DEPLOY.**
+> 🚩 **`aftercare`, `context`, `reviewshield` e `estetia` servem a versão velha 1 h depois do push**,
+> enquanto `atma`, `nimblabs` e `orion` subiram em minutos na mesma plataforma. **As 4 hipóteses de
+> código já foram descartadas** (commit é HEAD no GitHub · `Dockerfile` copia `public/` · nenhum
+> `.dockerignore` exclui · o mesmo conserto funcionou no `nimblabs`). O problema está entre o `git
+> push` e o container.
+> ⚠️ **A hipótese que a casa já documentou:** EasyPanel **trava o rolling update e MANTÉM o container
+> ANTIGO servindo** — foi o incidente de junho no `nimblabs`. **Site em 200 NÃO prova deploy.**
+> ❌ **Não reescreva os `llms.txt` e não redeploye no braço antes de saber a causa** — o redeploy que
+> funciona apaga a evidência e deixa o mesmo defeito nos outros três.
+> 🎯 **Portão:** `GEO-01` **25 → 21**, violações **38 → 34**, e **nenhum dos 21 restantes muda de
+> balde**. Abaixo de 21 = o CHECK mudou, não o portfólio.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-geo-01-nos-7-com-trafego.md`](handoff/handoff-geo-01-nos-7-com-trafego.md)
 > (01/08): `GEO-01` entregue nos 7 com tráfego — e o check media a PALAVRA `GPTBot`, não a permissão.**
 > 🚩 **O `orion` servia `User-Agent: GPTBot` + `Disallow: /` e o check chamava isso de conformidade.**
 > Site inteiro fora do ChatGPT. Mesma classe do "palavra ≠ URL" do `gateways.mjs`. **O AGREGADO NÃO SE
