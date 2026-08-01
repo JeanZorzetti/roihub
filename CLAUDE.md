@@ -205,6 +205,21 @@ para fora do texto.
 - **Os 61 pares candidatos não têm UM `desmente` natural.** Lidos um a um em 01/08: entre os
   documentos que a busca recupera para as 6 perguntas de `estado`, nenhum afirma no presente algo
   que a fonte viva desminta. A célula `desmente` fica em 7 e **não cresce com este material**.
+- **🧊 FRENTE CONGELADA em 01/08, e o motivo é o CONJUNTO, não o detector** —
+  `docs/defasagem-mineracao-2026-08-01.md`. Minerar `desmente` do histórico do git foi testado e
+  **reprovou: 8 pares legítimos, meta era 15**. Duas razões, e as duas fecham o caminho:
+  **(a) `git log -p` não adiciona nada** — handoff datado não se reescreve, então a afirmação de
+  30/07 já está VIVA no corpus; o que o histórico acha a mais é versão velha de `CLAUDE.md`/`docs/`,
+  que **não estão em `carregarCorpus()`**, e treinar em documento que o produto nunca julga é
+  fabricar bancada. **(b) O teto são 8 fatos, não a varredura**: só a camada `estado` tem fonte
+  viva, cada fato rende ~1 afirmação defasada, 8 × 1,1 = 9. Para 25 casos seria preciso **dobrar a
+  camada `estado`** — 20 fatos apuráveis. Da mineração, **7 dos 8 pares são o mesmo fato (D-66)**.
+- **🚩 A SELEÇÃO por embedding é o gargalo, não a redação do prompt.** Um `grep` ancorado no fato
+  achou em segundos um `desmente` REAL que a busca nunca recuperou: a memória `project_cannibalscan`
+  afirmava `Hub: 39 projetos` no presente (hoje 35) — e o número aparece de passagem num doc sobre
+  deploy da Vercel, então ela jamais entra no top-10 de "quantos projetos o hub tem". **É o mesmo
+  mecanismo dos erros `bate → nao-fala`: o detector julga o TEMA.** Conserto barato e nomeado: 2ª via
+  de seleção por citação do número, além do top-k. Zero chamada a mais por documento.
 - **O portão 1 são DUAS condições: `>= 85%` E zero caso sem veredito parseável.** Imprimir só a
   primeira fazia a saída se contradizer ("acerto 87.5% … portão >= 85% … REPROVOU 87.5%"). Caso que
   não parseia não conta como aprovado — senão dá para ir excluindo o difícil até o número subir.

@@ -1,6 +1,24 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-que-e-melhor-fazer.md`](handoff/handoff-o-que-e-melhor-fazer.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-teste-de-20-minutos-deu-vermelho.md`](handoff/handoff-o-teste-de-20-minutos-deu-vermelho.md)
+> (01/08): o teste da seção 3 foi executado e deu VERMELHO. A frente do detector está CONGELADA.**
+> Minerar `desmente` do histórico do git rendeu **8 pares legítimos, meta era 15**. O `git log -p`
+> parecia verde com 7× de margem (116 candidatos) e **era o check**: handoff datado não se reescreve
+> de propósito, então a afirmação de 30/07 já está VIVA no corpus — o histórico só acrescenta versão
+> velha de `CLAUDE.md`/`docs/`, que **nem estão em `carregarCorpus()`**.
+> 🎯 **O teto são 8 FATOS, não a varredura.** Cada fato com fonte viva rende ~1 afirmação defasada;
+> 8 × 1,1 = 9. Para 25 casos é preciso **dobrar a camada `estado`** — e **7 dos 8 pares são o mesmo
+> fato**. Nenhuma varredura conserta um universo de 8.
+> 🚩 **O subproduto vale mais: a SELEÇÃO por embedding é o gargalo, não o prompt.** Um `grep`
+> ancorado no fato achou um `desmente` REAL que a busca nunca recupera — a memória
+> `project_cannibalscan` dizia `Hub: 39 projetos` (hoje 35), num doc sobre deploy da Vercel.
+> **As 3 tentativas que falharam mexeram todas no prompt; nenhuma mexeu em quais documentos chegam
+> até ele.** Conserto barato e nomeado: 2ª via de seleção por citação do número.
+> 🚨 **Passos 1 e 2 remedidos e SEGUEM bloqueados em você:** token do MP → **200** (incidente aberto
+> há 2 dias, só o 401 fecha) · `31.97.23.166:5434` → **TIMEOUT** (as 3 vendas do `sirius` seguem sem
+> conferência no banco).
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-o-que-e-melhor-fazer.md`](handoff/handoff-o-que-e-melhor-fazer.md)
 > (01/08): o que é MELHOR fazer, sem desconto por esforço — e a DEFINIÇÃO DE PRONTO das duas
 > features.** Três premissas herdadas foram medidas e **duas caíram**: 1.7 já estava fechado, e
 > "30 sem cobrança" eram 27. A terceira piorou — **o token de produção do MP está VIVO** (`/users/me`
