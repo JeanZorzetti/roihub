@@ -1,5 +1,23 @@
 # ROI Hub — handoff
 
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-checar-em-vez-de-julgar.md`](handoff/handoff-checar-em-vez-de-julgar.md)
+> (31/07): parar de somar régua de LLM e converter afirmação em CHECK.** Especificação de
+> trabalho, não relatório. A tese: o que sobrevive nesta base é o que custa **zero pool** —
+> `conformidade.mjs` e `dourado-estado.mjs` rodam em segundos, não têm variância, não precisam de
+> calibração e não apodrecem; cada régua de LLM é custo recorrente que **morre quando o pool
+> morre** — e ele morreu ontem, no meio da corrida que mediria o corpus.
+> 🚩 **O número de ontem (16,7%) está PRELIMINAR de propósito: o detector errou 3 dos 8 flags
+> (precisão 62,5%) e não passou por portão nenhum.** O juiz da síntese só pôde publicar depois de
+> holdout cego + adversarial; este publicou sem. **Fase 1 = os dois portões, e nenhum percentual
+> de defasagem sai antes disso.**
+> 💰 Ordem defendida: **(0)** separar fato de ressalva — a ressalva embutida no texto apurado
+> causou 1 dos 3 falsos positivos; **(1)** os dois portões do detector (~1 sessão, e o grosso é
+> leitura humana de 20 rótulos); **(2)** os 3 campos do `projects.json` que destravam `D-67`,
+> `D-70` e `D-71` **com zero chamadas**; **(3)** `scripts/validade.mjs`, o check sem LLM que
+> impede `(hoje N)` de nascer; **(4)** o inventário do que é conversível em check; **(5)** só
+> então o detector de contradição. **Se só couber uma coisa: fase 2 com pool ruim, fase 1 com pool
+> bom.**
+>
 > ✅ **O DOURADO DE `estado` SAIU DO ACHISMO (31/07, 21h) —
 > [`handoff/handoff-dourado-com-lastro-externo-executado.md`](handoff/handoff-dourado-com-lastro-externo-executado.md)**
 > (spec: [`handoff/handoff-dourado-com-lastro-externo.md`](handoff/handoff-dourado-com-lastro-externo.md)).
