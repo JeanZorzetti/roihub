@@ -10,8 +10,15 @@
 > originou a norma seria absolvido pela data do *prazo* do gate. **A primeira corrida mediu o
 > CHECK pela terceira vez seguida: 3 achados, 1 defeito limpo.** Os 2 de fronteira saíram datando o
 > documento, porque afrouxar a regex teria absolvido justamente o real. Hoje: **0 achados em 230
-> documentos vivos**, 235 testes verdes. **Fases 1, 2, 4, 5 e 6 continuam abertas, e o 16,7% de
-> defasagem continua PRELIMINAR.**
+> documentos vivos**, 238 testes verdes.
+> ✅ **FASE 2 também, em 2 dos 3 campos: o dourado de `estado` está 7/8 APURADO.** `familia`,
+> `estado` e `blockersLista: {texto,humano}` curados nos 35 cards ligaram `D-70` (27 travados, e
+> uma **quarta família que a spec não previa — `nao-vende`**, 7 projetos que não tentam faturar por
+> decisão) e `D-71` (8 bloqueios humanos). **`D-67` fica `nao_apurado` e é a resposta certa: o Jean
+> não tem as datas das vendas, e inventar data de venda é fabricar registro.** ⚠️ **A curadoria por
+> card é derivada e pede o olho do Jean** — a seção 3-bis do executado lista as 6 divergências
+> contra o dourado escrito. **Fases 1, 4, 5 e 6 continuam abertas, e o 16,7% de defasagem continua
+> PRELIMINAR.**
 >
 > ▶️ **PRÓXIMO PASSO — [`handoff/handoff-checar-em-vez-de-julgar.md`](handoff/handoff-checar-em-vez-de-julgar.md)
 > (31/07): parar de somar régua de LLM e converter afirmação em CHECK.** Especificação de

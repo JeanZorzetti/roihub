@@ -124,10 +124,18 @@ as 8 de `estado` são **apuradas na hora da medição**.
   ontem: em `D-66` o corpus guardava quatro contagens defasadas do mesmo número (37, 39, 40, 39).
 - **Falha FECHADA:** sem rede, ou com a fonte fora do ar, sai `nao_apurado` com o motivo — nunca
   o valor da execução anterior. `--estado offline` roda só o que sai de arquivo do repo.
-- **3 das 8 não têm fonte viva e dizem isso** (`D-67` receita, `D-70` famílias de travamento,
-  `D-71` bloqueio humano): `receita` é nota **0-10 de prioridade**, não faturamento, e
-  `blockersLista` é texto livre. Os apuradores já leem `vendas: [{data,valor}]`, `familia`/`estado`
-  e `blockersLista: [{texto,humano}]` — preencher liga os três **sem tocar em código**.
+- **7 das 8 têm fonte viva.** `D-70` e `D-71` foram ligadas em 31/07 por curadoria nos cards
+  (`familia`, `estado`, `blockersLista: [{texto,humano}]`). Só **`D-67` (receita provada)** segue
+  `nao_apurado`, e vai seguir: `vendas: [{data,valor}]` exige a data de cada venda, o Jean não as
+  tem de cabeça e **inventar data de venda é fabricar registro**. `receita` é nota 0-10 de
+  prioridade, nunca faturamento.
+- **`familia`/`estado` são CURADORIA, como o alvo do gate.** O que se apura é a DISTRIBUIÇÃO, e é
+  isso que a `ressalva` de `D-70` declara. **A quarta família (`nao-vende`) não estava na spec** e
+  nasceu da leitura dos 35: 7 projetos (CV, demo, pesquisa, vitrine) não tentam faturar por
+  decisão — empurrá-los para uma das três inventaria um travamento que não existe.
+- **`blockersLista` é `{texto, humano}` e o `humano` não se deriva do texto.** Grep por
+  `manual|jean` devolve 18 cards contra os 8 reais: mede o texto, não o bloqueio. Quem consome:
+  `lib/evaluate.ts` (flag de robô entra com `humano: false`) e `app/page.tsx`.
 - **Impressão pede `dimensions: []`; clique não-branded pede `query`.** Com a dimensão `query` o
   GSC omite as raras e a soma vira piso: 5 contra 33 no tapepro. Trocar os dois inventa quedas.
 - **A janela do GSC desliza na meia-noite UTC** — o mesmo fim de tarde deu 33 e depois 42.

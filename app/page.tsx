@@ -153,7 +153,7 @@ export default async function Page() {
         {foco.blockersLista.length > 0 && (
           <ul className="hero-blockers">
             {foco.blockersLista.map((b) => (
-              <li key={b}>{b}</li>
+              <li key={b.texto}>{b.texto}</li>
             ))}
           </ul>
         )}

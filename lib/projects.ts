@@ -8,6 +8,11 @@ import { mergeProjects, reposSemSite } from "@/lib/projects.mjs";
 
 type Curated = (typeof curated)[number] & { repo?: string };
 
+/** `humano` = painel de terceiro, login manual ou decisão que só o Jean toma — o que nenhum agente
+ * destrava. Era string solta, e aí grep por `manual|jean` devolvia 18 cards contra os 5 reais:
+ * media o texto, não o bloqueio. */
+export type Blocker = { texto: string; humano?: boolean };
+
 export type Project = {
   slug: string;
   nome: string;
@@ -16,10 +21,14 @@ export type Project = {
   receita: number;
   receitaNota: string;
   blockers: number;
-  blockersLista: string[];
+  blockersLista: Blocker[];
   seoSeed: number;
   decay: number;
   decayNota: string;
+  /** Curadoria: o que impede de faturar, e se o host serve produto de verdade. Ver `FAMILIAS` e
+   * `ESTADOS` em lib/dourado-estado.mjs — é de lá que sai a apuração de `D-70`. */
+  familia?: "cobranca" | "venda" | "trafego" | "nao-vende";
+  estado?: "no-ar" | "no-ar-inutilizavel" | "prototipo";
   acao: string;
   acaoDesc: string;
   /** false = repo do GitHub que ainda não tem receita/blockers/ação definidos à mão. */

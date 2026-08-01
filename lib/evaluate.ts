@@ -29,9 +29,11 @@ export async function evaluate(p: Project): Promise<Evaluated> {
   const blockersLista = insight?.flags?.length
     ? [
         ...p.blockersLista,
-        ...insight.flags.map((f) =>
-          f === "crawl-waste" && insight.crawl?.detail ? `⚠ ${f} — ${insight.crawl.detail}` : `⚠ ${f}`
-        ),
+        // Flag de crawl é achado de robô: nunca `humano`, que é o que só o Jean destrava.
+        ...insight.flags.map((f) => ({
+          texto: f === "crawl-waste" && insight.crawl?.detail ? `⚠ ${f} — ${insight.crawl.detail}` : `⚠ ${f}`,
+          humano: false,
+        })),
       ]
     : p.blockersLista;
   const score = computeScore({ receita: p.receita, blockers: p.blockers, seo, decay: decayEff });

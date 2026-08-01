@@ -110,14 +110,54 @@ Corrida atual: **0 achados em 230 documentos vivos**, em segundos.
   (`handoff-autopublish` comparando gate de canário com gate de tapepro, `handoff-normas-que-rodam`
   devolvendo `desmente` com o motivo dizendo "o veredito correto é nao-fala") **não têm conserto
   estrutural conhecido** — é o holdout que decide.
-- **Fase 2 — os 3 campos do `projects.json`.** Zero chamadas, destrava `D-67`/`D-70`/`D-71`, e é a
-  melhor relação retorno/esforço do documento. **Trava no Jean**, e é a pergunta a fazer primeiro
-  na próxima sessão:
-  - `vendas: [{ data, valor }]` — **só o Jean sabe**; inventar data de venda é fabricar registro.
-  - `familia` e `estado` por card — derivável dos handoffs, **confirmado** pelo Jean.
-  - `blockersLista: [{ texto, humano: true }]` — derivável, confirmado.
+- **Fase 2 — feita em 2 dos 3 campos** (ver seção 3-bis abaixo). `D-67` fica `nao_apurado` e é a
+  resposta certa: **o Jean não tem as datas das vendas de cabeça**, e inventar data de venda é
+  fabricar registro. Só vira apurável se as datas saírem de fonte viva (Mercado Pago, Kiwify ou o
+  banco do sirius) — aí é `vendas: [{ data, valor }]` no card e o apurador já lê.
 - **Fases 4, 5 e 6** intocadas. A 5 (detector de contradição) continua sendo a mais bonita de
   mostrar e continua não sendo a primeira.
+
+## 3-bis. Fase 2 — `D-70` e `D-71` ligadas: **7 das 8 apuradas**
+
+Curadoria nos 35 cards, zero chamadas. `familia` e `estado` em todos, `blockersLista` virou
+`{ texto, humano }`.
+
+```
+D-70 ✓ 27 de 35 têm blocker registrado. Por família — não tem como cobrar: 13 · não tem tráfego: 7
+       · não tenta faturar por decisão: 5 · não tem quem venda: 2. Estado: 28 no-ar,
+       5 no-ar-inutilizavel, 2 prototipo.
+D-71 ✓ 8 bloqueios humanos: goiania (Bing Webmaster/IndexNow), fabrica (Request Indexing manual),
+       reviewshield (GOOGLE_CLIENT_ID), atma (MP nunca testado em produção), cyberspace (decisão
+       do Jean), compass (4 chaves Stripe · GitHub OAuth+Resend), qprime (domínio do cliente).
+```
+
+**A quarta família não estava na spec.** A spec pedia três — "não tem como cobrar", "não tem quem
+venda", "não tem tráfego". Lendo os 35, **sete projetos não tentam faturar por decisão** (portfolio
+e meridian são peça de candidatura, lumina é demo, swarm é pesquisa, roi-labs-links é vitrine,
+claudeloop é ferramenta interna, cyberspace não tem produto). Forçá-los para uma das três
+inventaria um travamento que não existe, e "não vende de propósito" é estado legítimo. Daí
+`familia: "nao-vende"`.
+
+**⚠️ Isto é CURADORIA e precisa do seu olho.** O apurador conta a distribuição; o julgamento por
+card é meu, derivado de `receitaNota` + `decayNota` + `acao` + `blockersLista`. Divergências
+conhecidas contra o dourado escrito, que valem revisão:
+
+| card | dourado escrito | curado agora | por quê |
+|---|---|---|---|
+| `whatsmeow` | não tem quem venda | **cobrança** | o card diz "decidir se vira produto cobrável" — não há caminho de pagamento |
+| `vertice` | não tem quem venda | **tráfego** | o CTA da hero aponta para `/signup` em 200; o que falta é indexação (parado desde 03/03) |
+| `moderador`, `cannibal_scan`, `seo-forecaster` | "o resto" (tráfego) | **cobrança** | os três anunciam grátis ou só WhatsApp: nem com tráfego faturam |
+| `goiania` | tráfego | **venda** | o gate declarado é o **1º fornecedor**, não visita |
+
+**Falha FECHADA no `D-70`:** card sem `familia`/`estado` válidos tira a pergunta inteira de
+circulação, nomeando os slugs — contagem parcial com cara de completa é o defeito que esta frente
+existe para matar.
+
+**Custo colateral que a spec não mencionou:** trocar `blockersLista` de `string[]` para objeto
+quebra três consumidores — o tipo `Project` (`lib/projects.ts`), o render do foco do dia
+(`app/page.tsx`) e o merge das flags de crawl (`lib/evaluate.ts`, que agora entra com
+`humano: false`, porque achado de robô não é bloqueio do Jean). Os três foram corrigidos; `tsc`
+limpo.
 
 ## 4. Armadilhas novas desta sessão
 
@@ -133,8 +173,9 @@ Corrida atual: **0 achados em 230 documentos vivos**, em segundos.
 
 ## 5. Primeiros 10 minutos da próxima sessão
 
-1. `npm test` (**235 verdes**) — a suite agora inclui o check de validade contra o repo real.
-2. Perguntar ao Jean as **datas de venda** do sirius (fase 2). Sem elas, `D-67` fica
-   `nao_apurado` — que é a resposta certa, não uma falha.
+1. `npm test` (**238 verdes**) — a suite agora inclui o check de validade contra o repo real.
+2. `node --env-file=.env scripts/dourado-estado.mjs --diff` — **7 das 8 apuradas**, zero LLM. E
+   **revisar a tabela de divergências da seção 3-bis**: 6 cards em que a curadoria de 31/07
+   discorda do dourado escrito. Divergência aqui não é bug, é o dourado escrito envelhecendo.
 3. Se o pool estiver bom: **fase 1**, e refazer o `.cache/rerank.json` **uma vez só**, já com a
    ressalva separada.
