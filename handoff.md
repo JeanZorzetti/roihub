@@ -1,6 +1,22 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-os-quatro-erros-sao-a-mesma-celula.md`](handoff/handoff-os-quatro-erros-sao-a-mesma-celula.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-definicao-de-pronto.md`](handoff/handoff-a-definicao-de-pronto.md)
+> (01/08): a DEFINIÇÃO DE PRONTO, e por que ela vem antes da próxima fase.** A frase incômoda que
+> abre o documento: **em 3 dias esta frente produziu 6 handoffs, 9 réguas e 4 docs de calibração — e
+> o número que ela existe para produzir nunca foi publicado uma única vez.** Causa mecânica, não
+> moral: **nenhum handoff desta frente jamais escreveu o que significa terminar**, então cada um
+> entrega 9 fases, executa 3 e gera o próximo com 8.
+> 🎯 **PRONTO = 3 níveis.** (1) o **instrumento** passa nos dois portões com 40+/20 casos, âncora em
+> 100%, **células perigosas em zero** e — critério que não existia — **reprodutibilidade medida 2×**.
+> (2) a **feature** publica a taxa de erro do corpus **uma vez**, com o recorte E a fronteira na
+> mesma frase (8 de 78 contra fonte viva; 70 são prosa concordando com prosa). (3) o **loop** fecha:
+> uma segunda corrida mostra o número **CAINDO** porque os achados da primeira foram consertados.
+> **Sem o nível 3 isto é um termômetro caro que ninguém leu.**
+> 💰 **Custo honesto do caminho inteiro: ~20 a 26 h e ~350 chamadas.** Explicitamente FORA do pronto:
+> fases I e H, cobrir as 78 com fonte viva, e qualquer régua de LLM nova.
+> **Ordem: A → C → D → R → G → L**, com F em paralelo. **A (token do MP) é dívida vencida e só sua.**
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-os-quatro-erros-sao-a-mesma-celula.md`](handoff/handoff-os-quatro-erros-sao-a-mesma-celula.md)
 > (01/08): B e E executadas, C parcial.** A tese: **o detector não fabrica achado e não esconde
 > achado — ele erra em decidir se o documento FALA do assunto.** Com o holdout ampliado (13 → **33
 > casos que contam**, um caso vale 3,0 pts e não 7,7), os 4 erros são **todos `bate → nao-fala`**:
