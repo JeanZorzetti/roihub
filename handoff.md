@@ -1,6 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-o-holdout-e-monocultura.md`](handoff/handoff-proximo-passo-o-holdout-e-monocultura.md)
+> ▶️ **EXECUTADO (01/08) — [`handoff/handoff-o-holdout-saiu-da-monocultura.md`](handoff/handoff-o-holdout-saiu-da-monocultura.md)
+> (01/08): o holdout foi de 50 casos em 8 fatos para 80 em 15, e as CÉLULAS PERIGOSAS apareceram.**
+> 🚩 **"O detector só erra para o lado seguro" era artefato do universo de 8 fatos:** contra 15 ele
+> **fabricou 3 tarefas e escondeu 1 achado**, as duas células que estavam em zero. Mesma corrida,
+> **83,3% nos 8 fatos velhos (idêntico, byte a byte) e 76,7% nos 7 novos**.
+> 🚩 **A fabricação mais cara foi contra `SEO-02`, protocolo VIVO**, que traz data no span e verbo no
+> passado — a regra do passado datado está no prompt e é **uma frase sem exemplo**. É a única mudança
+> de prompt ainda não tentada.
+> 🚩 **2 das 3 fabricações são o RÓTULO, e uma é achado de CORPUS:** `faturou` significa duas coisas
+> na casa, e o `CLAUDE.md` usava a errada (a `atma` tem gateway ligado e **não faturou**). Os rótulos
+> **não foram revisados** — leitura depois da prova fica no doc, nunca no gabarito.
+> ⚠️ **O adversarial continua monocultura: 20 casos, as mesmas 8 perguntas.** Os dois portões seguem
+> reprovando (80,6% e 14/20) e nenhum percentual de defasagem sai.
+>
+> ✅ **[`handoff/handoff-proximo-passo-o-holdout-e-monocultura.md`](handoff/handoff-proximo-passo-o-holdout-e-monocultura.md)
 > (01/08): o holdout do detector é MONOCULTURA DE FATO — 50 casos, todos de 8 perguntas.** Os 7
 > fatos que entraram hoje não têm **um único** caso nem candidato (`D-79`…`D-85`: 0 e 0). O portão
 > mede o detector *naquelas 8 perguntas*, e agora existe bancada para tirá-lo disso.

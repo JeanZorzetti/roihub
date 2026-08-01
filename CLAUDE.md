@@ -198,10 +198,25 @@ as **15** de `estado` são **apuradas na hora da medição**.
 morno retoma corrida morta. As outras réguas comparam a RESPOSTA com o dourado; só esta aponta
 para fora do texto.
 
-- **🚩 OS DOIS PORTÕES AINDA REPROVAM (01/08, holdout em 44/20): holdout 83,3% (35/42) com 2 casos
+- **🚩 OS DOIS PORTÕES AINDA REPROVAM (01/08, holdout em 74/20): holdout 80,6% (58/72) com 2 casos
   sem veredito parseável, adversarial 14/20** — `scripts/defasagem-calibrar.mjs`, detalhe em
-  `docs/defasagem-calibracao.md` e `handoff/handoff-a-definicao-de-pronto-executado.md`. **Nenhum
+  `docs/defasagem-monocultura-2026-08-01.md` e `docs/defasagem-calibracao.md`. **Nenhum
   percentual de defasagem sai daqui, inclusive o 16,7%.**
+- **🚩 "O detector só erra para o lado seguro" era ARTEFATO DE 8 FATOS.** O holdout tinha 50 casos e
+  todos saíam de 8 perguntas; com 15 fatos (80 casos) ele **fabricou 3 tarefas e escondeu 1 achado**,
+  as duas células que estavam em zero. Separando a mesma corrida: **83,3% nos 8 fatos velhos
+  (idêntico à corrida anterior — o fixture inlina apurado e trecho) e 76,7% nos 7 novos**. Todo o
+  movimento vem de pergunta contra a qual ele nunca tinha sido medido. **O adversarial continua
+  monocultura: 20 casos, as mesmas 8 perguntas.**
+- **A regra do PASSADO DATADO está no prompt e não pega sozinha.** O `desmente` fabricado mais caro
+  foi contra `SEO-02`, protocolo VIVO, que diz "CannibalScan, 30/07/2026: … 21 dos 38 sites vivos
+  **estavam** nessa condição" — data no mesmo span, verbo no passado. Achado ali vira edição de
+  norma em cima de nada.
+- **`--candidatos` gera bancada nova sem julgar** (`corpus-defasado.mjs --candidatos --ids …`): para
+  na seleção, grava o par sem veredito nem âncora e **exclui mecanicamente todo par que já passou
+  pelo detector** (varre `data/corpus-defasado/*.json` + os dois fixtures) — veredito lido por
+  alguém é rótulo contaminado. Mora no mesmo script de propósito: o valor do par é ter o recorte
+  IDÊNTICO ao da produção, e uma segunda cópia da seleção é a próxima divergência esperando.
 - **🚩 DUAS PASSADAS FOI TENTADO E REPROVOU — não tente de novo.** Quebrar em passada 1 (extrai a
   afirmação, cega ao fato) + passada 2 (julga, cega ao documento) custa o DOBRO de chamadas e, no
   mesmo fixture congelado, deu **65,9% contra 83,3%** — e **quebrou a célula que decide**, saindo
@@ -261,16 +276,21 @@ para fora do texto.
 - **O portão 1 são DUAS condições: `>= 85%` E zero caso sem veredito parseável.** Imprimir só a
   primeira fazia a saída se contradizer ("acerto 87.5% … portão >= 85% … REPROVOU 87.5%"). Caso que
   não parseia não conta como aprovado — senão dá para ir excluindo o difícil até o número subir.
-- **O holdout saiu de 13 para 33 casos que contam (01/08); um caso vale 3,0 pontos, não 7,7.** 19
-  pares novos, rotulados na janela de 2400 da produção, com `ancora` conferida antes de escrever, e
-  **commitados antes da primeira corrida contra eles**. Ainda é pouco: a meta é 40, e o adversarial
-  continua em 10.
-- **Os 4 erros que restam são TODOS `bate → nao-fala` — zero `desmente` perdido, zero fabricado.**
-  Para a lista nominal (a saída do produto) o detector acertou 32/32, porque `bate` e `nao-fala`
-  prescrevem a mesma ação: nada a consertar. **Isso não libera percentual** — `bate → nao-fala` é o
-  mesmo mecanismo de `desmente → nao-fala`, que ESCONDE corpus podre, e hoje ele só cai no lado
-  seguro. Mas nomeia o alvo da fase D: o defeito é o detector não decidir **se o documento fala do
-  assunto**, que é exatamente o que a passada 1 (cega ao fato) resolve.
+- **O holdout saiu de 13 → 33 → 74 casos que contam (01/08), e de 8 para 15 FATOS.** Os 30 pares
+  novos foram rotulados na janela de 2400 da produção, com `ancora` conferida mecanicamente antes de
+  escrever (**zero inválido por construção**, contra 6 de 20 na primeira vez à mão) e **commitados
+  antes da primeira corrida contra eles** (`d3cdde2`).
+- **O defeito continua sendo decidir SE o documento fala do assunto, e agora ele erra dos DOIS
+  lados.** `bate → nao-fala` (9) é o de sempre; `desmente → nao-fala` (1) é o MESMO mecanismo caindo
+  no lado que esconde corpus podre — apareceu na primeira pergunta cuja família de `desmente` não é
+  `(hoje N)`: um documento que afirma no presente que o cruzamento protocolo × projeto "nunca foi
+  executada uma única vez", e hoje ele roda. É o alvo da fase D (passada 1, cega ao fato) — **não uma
+  terceira redação de regra nem uma segunda decomposição**, as duas já reprovaram medidas.
+- **🚩 Duas das 3 fabricações são o RÓTULO, não o detector — e uma delas é achado de CORPUS.** O
+  documento diz "um único **faturou** (`atma`)" e o apurado diz "0 faturou(aram) com data: nenhum",
+  pondo a `atma` em "gateway ligado e régua lendo". `faturou` significa duas coisas diferentes na
+  casa e **este `CLAUDE.md` usa a errada** — os 20 pagamentos da `atma` são teste. Ler divergência
+  como defeito do detector antes de ler o corpus foi o que quase escondeu isso.
 - **O `VEREDITO` é a ÚLTIMA linha do prompt, e isso é decisão de ENGENHARIA.** Com ele na primeira
   linha o modelo cravava a decisão antes de escrever o raciocínio que a justifica — saía `VEREDITO:
   bate` com o `MOTIVO` terminando em "— desmente", reproduzido 3×. **Duas redações de REGRA já
@@ -329,7 +349,9 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
   `vertice`), 27 sem caminho de cobrança.** A leitura é "faltam 2", não "faltam 34": o portfólio
   majoritariamente **não cobra**.
 - **🚩 O CRUZAMENTO com `gateways-repo.mjs` é a leitura, não cada metade sozinha** —
-  `docs/gateways-cruzamento-2026-08-01.md`. Dos 10 com SDK escrito, **1 faturou (`atma`) e 9 não**;
+  `docs/gateways-cruzamento-2026-08-01.md`. Dos 10 com SDK escrito, **1 tem gateway LIGADO e régua
+  lendo (`atma`) e 9 não — e nem esse 1 faturou**: os 20 pagamentos da `atma` são teste, então
+  `receita provada = R$ 0,00`. Dizer "1 faturou" foi o achado que o holdout de 01/08 devolveu;
   desses 9, **6 já servem preço e só falta LIGAR** (`sirius`, `polarisia`, `estetiacrm`, `context`,
   `orion`, `vertice`) e 3 estão mais longe (`reviewshield`, `aftercare`, `compass`). `orcaobra` é o
   único inverso — Kiwify por link externo **não deixa dependência no `package.json`**, então o
