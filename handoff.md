@@ -1,6 +1,28 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-lastro-no-dinheiro-e-no-gabarito.md`](handoff/handoff-lastro-no-dinheiro-e-no-gabarito.md)
+> ✅ **FASES A, B, C e D EXECUTADAS (01/08) —
+> [`handoff/handoff-lastro-no-dinheiro-e-no-gabarito-executado.md`](handoff/handoff-lastro-no-dinheiro-e-no-gabarito-executado.md).**
+> 💰 **(A) O dinheiro ganhou lastro em 1 dos 35: o Mercado Pago do `atma` tem 20 pagamentos
+> `approved` com `live_mode: true`, R$ 47 cada — R$ 940 — e ZERO venda.** Os 20 têm payer
+> `test_user_…@testuser.com` e CPF 11111111111: é o Jean testando o checkout. **Somar `approved`
+> teria publicado R$ 940 de faturamento inexistente com autoridade de número apurado.** Quem separa
+> é o payer; `live_mode` não separa nada. **8 de 8 apuradas.** `vendas` ausente ≠ `vendas: []` —
+> ausente é "não olhei". O `sirius` NÃO foi ligado: `31.97.23.166:5434` dá **ETIMEDOUT** da máquina
+> de dev (rede, não credencial), e as "3 vendas orgânicas" viraram **"AFIRMADAS"** no card.
+> 🚩 **(B) Os dois portões do detector de defasagem REPROVARAM: holdout 71,4%, adversarial 3/10.** O
+> modo de falha é um só — **`nao-fala` engole tudo**: ele julga o TEMA do documento, não a
+> afirmação nele. **Isso INVERTE a leitura do 16,7%: um detector que absolve 7 de 10 corrupções
+> deliberadas subestima a defasagem, não superestima.** Nenhum percentual sai, e **a fase F fica
+> BLOQUEADA pela medição**, não pela agenda.
+> 🆕 **(C) Holdout da curadoria: concordância 77,1% (família) e 85,7% (estado).** A derivação cega
+> **reinventou a quarta família sozinha** (valida `nao-vende`) e **precisou de uma quinta:
+> `produto`** — 4 projetos que a curadoria tinha em três famílias diferentes dizendo a mesma coisa.
+> **6 das 8 divergências eram a DEFINIÇÃO, não o rótulo**; agora são testes com precedência.
+> **(D) `VER-08`**: a primeira corrida de um check novo mede o CHECK — e **a quinta vez foi esta
+> sessão**: 6 dos 20 rótulos do holdout eram inválidos por CONSTRUÇÃO. Ficaram no arquivo.
+> ⏭️ **Faltam E (inventário do conversível, ~1 sessão de leitura) e G (remedir com `--juiz`).**
+>
+> ▶️ **SPEC ORIGINAL — [`handoff/handoff-lastro-no-dinheiro-e-no-gabarito.md`](handoff/handoff-lastro-no-dinheiro-e-no-gabarito.md)
 > (31/07, 23h): as réguas de texto amadureceram; falta lastro no DINHEIRO e no gabarito mais novo.**
 > Especificação de trabalho, não relatório. A tese: **o hub prioriza 35 projetos por um número de
 > receita que nunca foi checado contra um sistema de pagamento**, e o gabarito de `D-70`, ligado

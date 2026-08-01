@@ -136,10 +136,14 @@ as 8 de `estado` são **apuradas na hora da medição**.
   passam nos dois e são o Jean testando: payer `test_user_…@testuser.com`, CPF 11111111111. Somar
   `approved` teria publicado **R$ 940 de faturamento inexistente com autoridade de número apurado**.
   Quem separa é o payer, e é `lib/vendas.mjs` que decide — com o motivo de cada descarte na saída.
-- **`familia`/`estado` são CURADORIA, como o alvo do gate.** O que se apura é a DISTRIBUIÇÃO, e é
-  isso que a `ressalva` de `D-70` declara. **A quarta família (`nao-vende`) não estava na spec** e
-  nasceu da leitura dos 35: 7 projetos (CV, demo, pesquisa, vitrine) não tentam faturar por
-  decisão — empurrá-los para uma das três inventaria um travamento que não existe.
+- **`familia`/`estado` são CURADORIA, e passaram por holdout cego em 01/08**: concordância **77,1%
+  (família) e 85,7% (estado)** entre duas leituras independentes dos mesmos 35 cards
+  (`docs/curadoria-familia-concordancia.md`). A derivação cega **reinventou `nao-vende` sozinha** —
+  a quarta família não é invenção de quem curou — e **precisou de uma quinta, `produto`** (o defeito
+  é ANTERIOR à cobrança), que a curadoria tinha espalhado por três famílias. **6 das 8 divergências
+  eram a DEFINIÇÃO, não o rótulo**: por isso as famílias agora são testes **com ordem de
+  precedência** (aplique de cima para baixo, pare no primeiro que casar) e `no-ar-inutilizavel` = **o
+  caminho principal não completa de ponta a ponta**. Refazer o holdout sempre que a taxonomia mudar.
 - **`blockersLista` é `{texto, humano}` e o `humano` não se deriva do texto.** Grep por
   `manual|jean` devolve 18 cards contra os 8 reais: mede o texto, não o bloqueio. Quem consome:
   `lib/evaluate.ts` (flag de robô entra com `humano: false`) e `app/page.tsx`.
@@ -161,6 +165,14 @@ as 8 de `estado` são **apuradas na hora da medição**.
 morno retoma corrida morta. As outras réguas comparam a RESPOSTA com o dourado; só esta aponta
 para fora do texto.
 
+- **🚩 OS DOIS PORTÕES REPROVARAM (01/08): holdout 71,4%, adversarial 3/10** — `scripts/defasagem-calibrar.mjs`,
+  detalhe em `docs/defasagem-calibracao.md`. **Nenhum percentual de defasagem sai daqui, inclusive o
+  16,7%.** O modo de falha é UM: **`nao-fala` engole tudo** — o detector julga o TEMA do documento,
+  não a afirmação dentro dele (corrompi um doc para dizer "12 projetos" em vez de 35 e ele absolveu
+  dizendo que o doc "trata de conformidade"). **Isso inverte a leitura: instrumento que absolve 7 de
+  10 corrupções SUBESTIMA a defasagem.** O alvo do conserto está nomeado e não é o vocabulário: a
+  linha `VEREDITO:` não está sendo derivada do raciocínio — sai `bate` com o `MOTIVO` dizendo
+  "desmente", já reproduzido 3×.
 - **Só roda contra pergunta com apuração de verdade.** Comparar documento com dourado escrito à
   mão seria a mesma prosa concordando com prosa.
 - **A saída é lista NOMINAL, não percentual** — cada linha é uma edição de memória ou handoff.
