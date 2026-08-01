@@ -1,6 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-a-definicao-de-pronto-executado.md`](handoff/handoff-a-definicao-de-pronto-executado.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-cruzamento-achou-o-check-errado.md`](handoff/handoff-o-cruzamento-achou-o-check-errado.md)
+> (01/08): o item 5 executado, e o cruzamento auditou o próprio check.** Dos **10 projetos com SDK
+> de pagamento escrito, UM faturou** (`atma`): **6 já servem preço e só falta LIGAR** (`sirius`,
+> `polarisia`, `estetiacrm`, `context`, `orion`, `vertice`) e 3 estão mais longe (`reviewshield`,
+> `aftercare`, `compass`). `orcaobra` é o único inverso — Kiwify por link externo não deixa
+> dependência no `package.json`, e por isso as duas metades precisam existir.
+> 🚩 **VER-08, oitava vez: o cruzamento achou dois defeitos do `gateways.mjs`** — `/preco` no
+> singular fora da lista de caminhos (o `polarisia` caía em "NÃO TEM GATEWAY") e **preço em ÂNCORA
+> não é rota** (`context` e `vertice` são landing de uma página só). **Um check sozinho não tem
+> contra o quê errar.** Controle: os 3 que mudaram de balde têm os 3 SDK no repo, nenhum sem SDK
+> entrou. `sem-gateway` 30 → 27.
+> 🚩 **E o item 4 daquela lista JÁ ESTAVA FEITO no commit que a criou** — 1.7 tem as duas medições
+> e está **FECHADO**. Lista de próximos passos é premissa, não fato.
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-a-definicao-de-pronto-executado.md`](handoff/handoff-a-definicao-de-pronto-executado.md)
 > (01/08): a fase D era a aposta do documento e ela REPROVOU com número.** Quebrar o detector em
 > duas passadas (extrair a afirmação / julgar contra o fato) foi implementado e medido no MESMO
 > fixture congelado: **83,3% → 65,9%** no holdout, adversarial parado em 14/20, e — o que decide —

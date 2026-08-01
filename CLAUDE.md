@@ -267,12 +267,29 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
 
 - **A pergunta que veio depois de ligar a primeira fonte e devia ter vindo antes.** Sem ela,
   "1 de 35 tem gateway ligado" tanto pode significar "faltam 34" quanto "faltam 2" — e a diferença
-  é a diferença entre um portfólio que NÃO COBRA e um que cobra e não mediu. **Medido em 01/08: 1
-  ligado (`atma`), 1 com gateway servido e sem régua lendo (`orcaobra`/Kiwify), 3 com página de
-  preço e nenhum gateway (`sirius`, `estetiacrm`, `orion`), 30 sem caminho de cobrança.** A leitura
-  é "faltam 2", não "faltam 34": o portfólio majoritariamente **não cobra**.
-- **🚩 As DUAS primeiras corridas mediram o CHECK** (sexta vez nesta base), e os dois defeitos são
-  reutilizáveis:
+  é a diferença entre um portfólio que NÃO COBRA e um que cobra e não mediu. **Medido em 01/08
+  (3ª corrida): 1 ligado (`atma`), 1 com gateway servido e sem régua lendo (`orcaobra`/Kiwify), 6
+  com preço servido e nenhum gateway (`sirius`, `polarisia`, `estetiacrm`, `context`, `orion`,
+  `vertice`), 27 sem caminho de cobrança.** A leitura é "faltam 2", não "faltam 34": o portfólio
+  majoritariamente **não cobra**.
+- **🚩 O CRUZAMENTO com `gateways-repo.mjs` é a leitura, não cada metade sozinha** —
+  `docs/gateways-cruzamento-2026-08-01.md`. Dos 10 com SDK escrito, **1 faturou (`atma`) e 9 não**;
+  desses 9, **6 já servem preço e só falta LIGAR** (`sirius`, `polarisia`, `estetiacrm`, `context`,
+  `orion`, `vertice`) e 3 estão mais longe (`reviewshield`, `aftercare`, `compass`). `orcaobra` é o
+  único inverso — Kiwify por link externo **não deixa dependência no `package.json`**, então o
+  inventário do código sozinho não o veria. **`goiania` e `roilabs` são o MESMO repo**
+  (`JeanZorzetti/roilabs`, a mesma linha do mesmo `app/.env.example`): card ≠ repositório, e somar
+  os dois infla onde há vertical dentro de monorepo.
+- **🚩 As TRÊS primeiras corridas mediram o CHECK** (sexta, e de novo na oitava vez nesta base). Os
+  dois da 3ª corrida só apareceram porque o inventário do REPO deu um palpite independente sobre
+  quem devia estar em qual balde — **check sozinho não tem contra o quê errar**:
+  **`/preco` no singular não estava em `CAMINHOS`** (o `polarisia` serve `/preco` com 200, tem
+  `mercadopago` no `package.json` e caía em "NÃO TEM GATEWAY"), e **preço em ÂNCORA não é rota**
+  (`context` e `vertice` são landing de uma página só: `href="#pricing"` na home, sem `/precos`
+  para pedir). A âncora casa contra o `href`, **nunca contra a palavra no corpo** — "plano" está em
+  qualquer marketing. Controle de que o conserto não inflou: **os 3 que mudaram de balde têm os 3
+  SDK escrito no repo**, e nenhum sem SDK entrou. `sem-gateway` foi de 30 para 27.
+- **As duas primeiras corridas também mediram o CHECK**, e os dois defeitos são reutilizáveis:
   1. **200 em rota inexistente**: `tapevision` e `potencialarquitetado` marcaram os SEIS caminhos,
      inclusive `/comprar` e `/assinar` juntos — é o shell da SPA. Validar o CORPO não bastou,
      porque o corpo É a home. **O controle é pedir uma rota que não pode existir**; se ela vem 200,
@@ -285,7 +302,8 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
 - **`sem-gateway` é "não achei caminho servido", nunca "não cobra".** Não vê gateway montado por JS
   depois de um clique, nem cobrança que não passa pelo site — o `sirius` fatura por tier de
   organização no próprio banco e nenhuma página dele carregaria gateway.
-- **`scripts/gateways-repo.mjs` é a outra metade, e ele INVERTE a leitura.** Lê `package.json` e
+- **`scripts/gateways-repo.mjs` é a outra metade, e ele INVERTE a leitura** (cruzamento em
+  `docs/gateways-cruzamento-2026-08-01.md`). Lê `package.json` e
   `.env*` de todos os repos pela API do GitHub (zero LLM, zero pool). Medido em 01/08: **10 com SDK
   de pagamento** (`sirius`, `polarisia`, `estetiacrm`, `reviewshield`, `context`, `aftercare`,
   `atma`, `compass`, `orion`, `vertice`), 2 só com env var (`goiania`, `roilabs`), 23 nada. **Pelo

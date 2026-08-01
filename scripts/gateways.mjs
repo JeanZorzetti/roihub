@@ -44,7 +44,22 @@ const GATEWAYS = [
 
 // Caminho de cobrança que existe sem gateway carregado na home: página de preço, de plano, de
 // checkout. Ela é a evidência do balde do MEIO — "existe intenção de cobrar e falta plugar".
-const CAMINHOS = ["/checkout", "/precos", "/pricing", "/planos", "/assinar", "/comprar"];
+//
+// ⚠️ O SINGULAR ENTROU NA TERCEIRA CORRIDA, e ele custou um projeto inteiro: o `polarisia` serve
+// `/preco` (sem s) com 200, tem `mercadopago` no `package.json` e caiu em `NÃO TEM GATEWAY` — o
+// balde mais errado possível — porque a lista só tinha `/precos`. Uma letra decidiu a leitura de
+// um card. Variante de rota é barata (uma requisição a mais por projeto); balde errado não é.
+const CAMINHOS = ["/checkout", "/precos", "/preco", "/pricing", "/planos", "/plano", "/plans", "/assinar", "/comprar"];
+
+// Seção de preço NA PRÓPRIA HOME, quando não há rota. O `vertice` tem `mercadopago` no
+// `package.json` e `href="#pricing"` na home, e caiu em `NÃO TEM GATEWAY` porque a lista acima só
+// pergunta por ROTA. Uma landing de uma página só não tem `/precos` — tem âncora.
+//
+// Casa contra o `href`, nunca contra a palavra solta no corpo: "plano" aparece em qualquer texto
+// de marketing, e foi exatamente essa confusão que custou a segunda corrida deste check ("palavra
+// ≠ URL"). `href="#pricing"` é o SITE declarando que ali começa a seção de preço — é estrutura,
+// da mesma família de uma rota, não vocabulário.
+const ANCORA_PRECO = /href="[^"]*#(pricing|precos?|planos?|assinatura|checkout)"/i;
 
 // Só as URLs do documento entram na comparação — `href`, `src` e qualquer `https://` solto no
 // bundle. Casar contra o HTML inteiro é o que confunde catálogo de integração com cobrança.
@@ -83,10 +98,15 @@ async function inventariar(p) {
     if (gws.length || fala) paginas.push({ caminho, gws });
   }
 
+  // A âncora vale mesmo no host que serve tudo em 200: ela está na HOME, que é a única página que
+  // aquele host serve de verdade — não é uma rota inventada pelo shell da SPA.
+  const ancora = ANCORA_PRECO.test(home.corpo);
+
   const gws = [...new Set([...naHome, ...paginas.flatMap((x) => x.gws)])];
   const evidencia = [
     ...(naHome.length ? [`gateway na home: ${naHome.join(", ")}`] : []),
     ...paginas.map((x) => `${x.caminho} 200 com ${x.gws.length ? x.gws.join(", ") : "preço/plano no corpo"}`),
+    ...(ancora ? [`âncora de preço na home: ${home.corpo.match(ANCORA_PRECO)[0]}`] : []),
     ...(serveTudo ? ["⚠️ serve 200 em rota inexistente — nenhum caminho deste host conta"] : []),
   ];
 
@@ -99,6 +119,7 @@ async function inventariar(p) {
   // página de marketing prova INTENÇÃO de cobrar, que é outro balde e outro trabalho.
   if (gws.length) return { p, balde: "gateway-nao-ligado", motivo: gws.join(", "), evidencia, gws };
   if (paginas.length) return { p, balde: "so-preco", motivo: `${paginas.map((x) => x.caminho).join(", ")} — preço sem gateway`, evidencia, gws };
+  if (ancora) return { p, balde: "so-preco", motivo: "seção de preço na home (âncora) — preço sem gateway", evidencia, gws };
   return { p, balde: "sem-gateway", motivo: `familia: ${p.familia}${serveTudo ? " · host serve tudo em 200" : ""}`, evidencia, gws };
 }
 
