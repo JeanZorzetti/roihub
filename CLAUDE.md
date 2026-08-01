@@ -227,6 +227,32 @@ segundos — e por isso roda dentro do `npm test`, não ao lado dele.
   reprovou a memória que ENSINA a norma citando `(hoje 21)` como exemplo. Span de crase é mascarado
   antes do casamento — check que reprova quem o documenta sai da lista na primeira sexta-feira.
 
+## Inventário de cobrança (`scripts/gateways.mjs`) — quantos projetos sequer TÊM gateway
+
+`node scripts/gateways.mjs [--ver]` — zero LLM, zero pool, HTTP contra os 35 sites. Fora do
+`npm test` pelo mesmo motivo do conformidade: teste não faz 250 requisições contra produção.
+
+- **A pergunta que veio depois de ligar a primeira fonte e devia ter vindo antes.** Sem ela,
+  "1 de 35 tem gateway ligado" tanto pode significar "faltam 34" quanto "faltam 2" — e a diferença
+  é a diferença entre um portfólio que NÃO COBRA e um que cobra e não mediu. **Medido em 01/08: 1
+  ligado (`atma`), 1 com gateway servido e sem régua lendo (`orcaobra`/Kiwify), 3 com página de
+  preço e nenhum gateway (`sirius`, `estetiacrm`, `orion`), 30 sem caminho de cobrança.** A leitura
+  é "faltam 2", não "faltam 34": o portfólio majoritariamente **não cobra**.
+- **🚩 As DUAS primeiras corridas mediram o CHECK** (sexta vez nesta base), e os dois defeitos são
+  reutilizáveis:
+  1. **200 em rota inexistente**: `tapevision` e `potencialarquitetado` marcaram os SEIS caminhos,
+     inclusive `/comprar` e `/assinar` juntos — é o shell da SPA. Validar o CORPO não bastou,
+     porque o corpo É a home. **O controle é pedir uma rota que não pode existir**; se ela vem 200,
+     todo 200 daquele host vale zero.
+  2. **Palavra ≠ URL**: `estetiacrm` marcou mercadopago + asaas + pagseguro porque o **catálogo de
+     integrações do próprio produto** os cita ("56 integrações nativas com WhatsApp, Google,
+     Stripe, Asaas") — gateways que o CRM integra PARA OS CLIENTES DELE. O `orcaobra`, no mesmo
+     varrimento, tinha `<a href="https://pay.kiwify.com.br/…">`. **O que separa vender de falar
+     sobre vender é a URL apontar para o host do gateway**, então o casamento é só contra URL.
+- **`sem-gateway` é "não achei caminho servido", nunca "não cobra".** Não vê gateway montado por JS
+  depois de um clique, nem cobrança que não passa pelo site — o `sirius` fatura por tier de
+  organização no próprio banco e nenhuma página dele carregaria gateway.
+
 ## Conformidade (`scripts/conformidade.mjs`) — a norma que RODA
 
 10 dos 97 protocolos viraram função e rodam contra os 35 projetos de `data/projects.json`
