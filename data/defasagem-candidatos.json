@@ -1039,6 +1039,78 @@
         "titulo": "handoff-checar-em-vez-de-julgar.md",
         "trecho": "# Handoff — parar de somar juiz e começar a converter afirmação em CHECK (aberto em 31/07/2026) Este documento é **especificação de trabalho, não relatório**. Ele assume que quem chega não tem contexto, e **esforço não é critério de corte**: onde o caminho barato e o caminho certo divergem, ele defende o certo e diz o preço na cara. Estado imediatamente anterior: [`handoff-dourado-com-lastro-externo-executado.md`](handoff-dourado-com-lastro-externo-executado.md) (frente 3 executada) · spec que a originou: [`handoff-dourado-com-lastro-externo.md`](handoff-dourado-com-lastro-externo.md) · frente 2: [`handoff-juiz-de-verdade-executado.md`](handoff-juiz-de-verdade-executado.md) · frente 1: [`handoff-normas-que-rodam.md`](handoff-normas-que-rodam.md) · arquitetura: [`../docs/rag-arquitetura.md` … …md`](../docs/rag-arquitetura.md) · índice: [`../handoff.md`](../handoff.md). --- ## 1. O que existe hoje, dito sem propaganda Quatro réguas, e cada uma responde uma pergunta diferente: | régua | pergunta | LLM? | teto declarado | |---|---|---|---| | `scripts/avaliar.mjs` | o documento certo está entre os 10? | rerank | 88,0% recall@10 | | `scripts/avaliar-resposta.mjs` | a citação aponta para documento que o dourado reconhece? | 1×/pergunta | ancoragem | | `scripts/avaliar-resposta.mjs --juiz` | o que ela escreveu bate com o que a casa sabe? | 3×/pergunta | concordância | | `scripts/conformidade.mjs` | **a norma é obedecida na produção?** | **zero** | 10 protocolos × 35 projetos | | `scripts/dourado-estado.mjs` | **o número que a casa afirma ainda é o número real?** | **zero** | 5 das 8 de … …sado.mjs` | quantos documentos o mundo desmente? | 1×/documento | 1ª corrida feita | As duas linhas em negrito são as únicas que tocam a realidade. As outras três medem o sistema contra texto — e o texto foi escrito por agentes lendo texto escrito por agentes. **228 testes verdes. Corpus: 276 documentos (97 protocolo, 48 handoff, 131 memória).** --- ## 2. A frase que a próxima sessão NÃO pode repetir errado Ontem saiu o primeiro número sobre a qualidade da memória institucional: > **8 de 30 documentos que falam do assunto desmentiam a fonte viva. Ler os 8 baixou para 5 — > 16,7%.** **Isso NÃO é \"a taxa de erro do corpus\".** É a taxa entre os documentos que a busca recupera para **5 perguntas de camada `estado`** — 50 documentos julgados de 276. Generalizar para o corpus é inventar. Escreva"
       }
+    },
+    {
+      "id": "D-81",
+      "pergunta": "Dos projetos com integração de pagamento escrita, quantos de fato cobram?",
+      "apurado": {
+        "resposta": "10 projetos têm SDK de pagamento escrito e 0 faturou(aram) com data: nenhum. Desses 10: 1 com gateway ligado e régua lendo (atma), 6 já servem preço e só falta LIGAR (sirius, polarisia, estetiacrm, context, orion, vertice), 0 servem gateway sem régua lendo (nenhum), 3 estão mais longe (reviewshield, aftercare, compass) e 0 não foram olhados (home fora do ar). Servem gateway SEM SDK no repo (cobrança por link externo): orcaobra.",
+        "fonte": "cruzamento de scripts/gateways-repo.mjs (API do GitHub) com scripts/gateways.mjs (HTTP em produção) + `vendas` do card",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "card ≠ repositório: dois cards podem apontar para o MESMO repo (goiania e roilabs são vertical dentro de monorepo), e aí somar os dois infla o lado do código."
+      },
+      "doc": {
+        "id": "handoff-a-camada-estado-dobrou.md",
+        "tipo": "handoff",
+        "titulo": "handoff-a-camada-estado-dobrou.md",
+        "trecho": "…o apurado na hora da medição: | id | o fato | custo (`rede`) | |---|---|---| | `D-79` | quantos documentos vivos afirmam presente com número sem data | offline | | `D-80` | quantos repos têm SDK de pagamento **escrito** | **caro** (GitHub) | | `D-81` | o CRUZAMENTO: dos com SDK escrito, quantos de fato cobram | **caro** (GitHub + produção) | | `D-82` | quantos sites servem caminho de cobrança, e em que balde | **caro** (produção) | | `D-83` | quantos projetos violam os 10 protocolos que rodam | **caro** (produção) | | `D-84` | as homes estão no índice do Google | gsc | | `D-85` | crawl requests / OK% por propriedade, e de quando é o dado | offline | O trabalho real não foi escrever apurador: foi **mover a lógica de script top-level para `lib/`** (`gateways-repo.mjs`, `gateways-servido.mjs`"
+      },
+      "via": "busca"
+    },
+    {
+      "id": "D-82",
+      "pergunta": "Quantos dos sites servem algum caminho de cobrança, e em que balde cada um cai?",
+      "apurado": {
+        "resposta": "Dos 35 sites, 1 com gateway LIGADO e régua lendo (atma), 1 com gateway servido e nenhuma régua consultando (orcaobra), 6 servindo preço sem gateway (sirius, polarisia, estetiacrm, context, orion, vertice) e 27 sem nenhum caminho de cobrança servido. Não olhei (home fora do ar): nenhum.",
+        "fonte": "HTTP contra os 35 sites de produção (home + 9 caminhos de cobrança), casando só contra URL de host de gateway",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "só o HTML SERVIDO: gateway montado por JS depois de um clique não aparece, e cobrança que não passa pelo site também não. `sem-gateway` é \"não achei caminho servido\", nunca \"não cobra\"."
+      },
+      "doc": {
+        "id": "handoff-a-camada-estado-dobrou.md",
+        "tipo": "handoff",
+        "titulo": "handoff-a-camada-estado-dobrou.md",
+        "trecho": "…un validade` limpo · `data/dourado.json` com **85 perguntas**, 15 de camada `estado`. --- ## 1. O que ficou de pé As sete fontes que já rodavam e não estavam ligadas agora são fato apurado na hora da medição: | id | o fato | custo (`rede`) | |---|---|---| | `D-79` | quantos documentos vivos afirmam presente com número sem data | offline | | `D-80` | quantos repos têm SDK de pagamento **escrito** | **caro** (GitHub) | | `D-81` | o CRUZAMENTO: dos com SDK escrito, quantos de fato cobram | **caro** (GitHub + produção) | | `D-82` | quantos sites servem caminho de cobrança, e em que balde | **caro** (produção) | | `D-83` | quantos projetos violam os 10 protocolos que rodam | **caro** (produção) | | `D-84` | as homes estão no índice do Google | gsc | | `D-85` | crawl requests / OK% por proprieda … …ts-semanal.md` (\"9 exports, todos de 2026-07-10\"). É handoff DATADO e **não se reescreve** — é o único lugar onde se vê o que se sabia na hora. **Nenhum percentual saiu daqui** (os dois portões do detector continuam reprovando: 83,3% e 14/20). Fato novo aumenta a bancada; ele não move portão. ## 6. O que ISTO mudou nos números das outras réguas (leia antes de comparar corridas) - **O dourado foi de 78 para 85 perguntas.** O recall da busca (`avaliar.mjs`) tem denominador novo: **não compare os 88,0% de ontem com o número de amanhã** — piso relativo, sempre (`--min bm25`). - **`avaliar-resposta.mjs` no default deixa 4 de fora** (as `caro` saem como `nao_apurado`), e o relatório imprime quantas entraram e quantas saíram. Com `--estado caro` entram as 15. ## 7. O próximo passo - **Os itens 1,"
+      },
+      "via": "busca"
+    },
+    {
+      "id": "D-83",
+      "pergunta": "Quantos projetos violam os protocolos que rodam, e em quais checks?",
+      "apurado": {
+        "resposta": "10 protocolos rodam contra 35 projetos: 41 violação(ões) em 29 projeto(s). Por check — VER-02: 1 (portfolio) · DEP-08: 11 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, verticemarketing, compass, orion, vertice) · GEO-01: 28 (fabrica, reviewshield, context, aftercare, nimblabs, orcaobra, cardiorisk, tapevision, potencialarquitetado, matchfios, verticemarketing, whatsmeow, claudeloop, swarm, atma, aprovai, moderador, meridian, seo-forecaster, roi-labs-links, lumina, cyberspace, compass, orion, qprime, portfolio, vertice, pathfinder) · GEO-02: 1 (estetiacrm). 139 de 350 células saíram n/a.",
+        "fonte": "scripts/conformidade.mjs — VER-01 DEP-03 VER-02 DEP-08 SEO-01 GEO-01 GEO-02 SEC-01 DNS-05 VER-04 por HTTP contra produção (zero LLM)",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "`n/a` NÃO é aprovação, é \"não olhei\" (check que não se aplica àquela stack, ou página que não respondeu). E a primeira corrida de um check novo mede o CHECK: 5 das 46 violações iniciais eram o check errado."
+      },
+      "doc": {
+        "id": "handoff-a-camada-estado-dobrou.md",
+        "tipo": "handoff",
+        "titulo": "handoff-a-camada-estado-dobrou.md",
+        "trecho": "…un validade` limpo · `data/dourado.json` com **85 perguntas**, 15 de camada `estado`. --- ## 1. O que ficou de pé As sete fontes que já rodavam e não estavam ligadas agora são fato apurado na hora da medição: | id | o fato | custo (`rede`) | |---|---|---| | `D-79` | quantos documentos vivos afirmam presente com número sem data | offline | | `D-80` | quantos repos têm SDK de pagamento **escrito** | **caro** (GitHub) | | `D-81` | o CRUZAMENTO: dos com SDK escrito, quantos de fato cobram | **caro** (GitHub + produção) | | `D-82` | quantos sites servem caminho de cobrança, e em que balde | **caro** (produção) | | `D-83` | quantos projetos violam os 10 protocolos que rodam | **caro** (produção) | | `D-84` | as homes estão no índice do Google | gsc | | `D-85` | crawl requests / OK% por proprieda"
+      },
+      "via": "busca"
+    },
+    {
+      "id": "D-84",
+      "pergunta": "As homes dos projetos estão no índice do Google?",
+      "apurado": {
+        "resposta": "22 de 34 home(s) inspecionável(is) estão no índice. FORA do índice: orcaobra (URL is unknown to Google), matchfios (Discovered - currently not indexed), whatsmeow (Crawled - currently not indexed), claudeloop (Duplicate, Google chose different canonical than user), swarm (Discovered - currently not indexed), moderador (Discovered - currently not indexed), seo-forecaster (Discovered - currently not indexed), cannibal_scan (Discovered - currently not indexed), lumina (Discovered - currently not indexed), orion (Crawled - currently not indexed), vertice (Crawled - currently not indexed), pathfinder (URL is unknown to Google). Sem propriedade no GSC (o Search Console não alcança o host): portfolio. Falhou a inspeção: nenhuma.",
+        "fonte": "Search Console URL Inspection API (index:inspect) na home de cada projeto com url",
+        "apurado_em": "2026-08-01",
+        "nao_apurado": "",
+        "ressalva": "\"sem propriedade\" NÃO é \"fora do índice\": é \"não há onde olhar\" — host de fornecedor (*.vercel.app) fica fora de toda propriedade, e `URL unknown to Google` ali é falta de domínio próprio, não sinal de SEO. Só a home é inspecionada: página interna desindexada não aparece aqui."
+      },
+      "doc": {
+        "id": "handoff-a-camada-estado-dobrou.md",
+        "tipo": "handoff",
+        "titulo": "handoff-a-camada-estado-dobrou.md",
+        "trecho": "# Handoff — a camada `estado` dobrou (8 → 15) e o custo era LIGAR, não construir (01/08/2026) > Para a próxima sessão. Sessão anterior: > [`handoff-proximo-passo-dobrar-a-camada-estado.md`](handoff-proximo-passo-dobrar-a-camada-estado.md) > (o plano que esta executou). Índice: [`../handoff.md`](../handoff.md). `npm test` **269 verdes** (era 258) · `npx tsc --noEmit` limpo · `npm run validade` limpo · `data/dourado.json` com **85 perguntas**, 15 de camada `estado`. --- ## 1. O que ficou de pé As sete fontes que já rodavam e não estavam ligadas agora são fato apurado na hora da medição: | id | o fato | custo (`rede`) | |---|---|---| | `D-79` | quantos documentos vivos afirmam presente com número sem data | offline | | `D-80` | quantos repos têm SDK de pagamento **escrito** | **caro** (GitHub … …s com SDK escrito, quantos de fato cobram | **caro** (GitHub + produção) | | `D-82` | quantos sites servem caminho de cobrança, e em que balde | **caro** (produção) | | `D-83` | quantos projetos violam os 10 protocolos que rodam | **caro** (produção) | | `D-84` | as homes estão no índice do Google | gsc | | `D-85` | crawl requests / OK% por propriedade, e de quando é o dado | offline | O trabalho real não foi escrever apurador: foi **mover a lógica de script top-level para `lib/`** (`gateways-repo.mjs`, `gateways-servido.mjs`, `indexacao.mjs`, `crawl-exports.mjs`). Script que só imprime não se importa de lugar nenhum — e a aba `/infra` agora lê o MESMO `acharExports` que o `D-85`, para as duas não divergirem sobre qual export é o mais novo. ## 2. 🚩 Fonte cara ganhou MODO PRÓPRIO, e isso é"
+      },
+      "via": "busca"
     }
   ]
 }
