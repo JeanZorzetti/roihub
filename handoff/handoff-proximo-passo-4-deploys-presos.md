@@ -67,6 +67,11 @@ refaça esta conferência, ela já custou o tempo dela:
 > **Consequência: o problema está entre o `git push` e o container em execução.** Não há mais nada
 > a medir do lado do repositório.
 
+⏱️ **E não é lentidão de fila: foi medido.** Um monitor bateu nos quatro `/llms.txt` a cada minuto,
+**28 verificações consecutivas entre 20:08 e 20:36 BRT, todas 404** — mais de uma hora depois do
+push, e depois de os outros três já estarem no ar. Uma fila serial de build teria liberado pelo
+menos um nesse intervalo. **Esperar mais não é plano.**
+
 ### 1.2 A hipótese que a própria casa já documentou, e ela é a primeira a checar
 
 O `Dockerfile` do `nimblabs` carrega este comentário, escrito depois de um incidente real:
