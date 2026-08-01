@@ -88,11 +88,22 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 `node --env-file=.env scripts/avaliar-resposta.mjs --juiz` (3 chamadas por pergunta, contra 1 sem
 juiz — por isso fora do default). Calibração: `scripts/juiz-calibrar.mjs`.
 
-- **Mede consistência com o dourado, NÃO verdade sobre o mundo.** O dourado foi escrito por um
-  agente lendo o mesmo corpus: se o corpus mente, o dourado repete e o juiz aprova. Verdade
-  contra a realidade é o `conformidade.mjs`. Está escrito no cabeçalho do script e sai impresso
-  no relatório de propósito — régua que não declara o próprio limite vira meta em cima de um
-  defeito.
+- **Mede consistência com o dourado, NÃO verdade sobre o mundo — em 70 das 78.** O dourado de
+  `protocolo` e `episodio` foi escrito por um agente lendo o mesmo corpus: se o corpus mente, o
+  dourado repete e o juiz aprova. **As 8 de `estado` são a exceção desde 01/08**: o gabarito delas
+  é apurado na hora da medição (`apurarEstado()`), então ali o juiz compara a resposta com a fonte
+  viva. A fronteira sai impressa no relatório de propósito — régua que não declara o próprio limite
+  vira meta em cima de um defeito.
+- **`nao_apurado` TIRA a pergunta da corrida, nunca cai de volta para a prosa.** Cair para o texto
+  escrito seria pior que não medir: o número sairia com cara de completo medindo exatamente a coisa
+  que esta frente existe para não medir. O relatório imprime quantas entraram e quantas saíram, e
+  cada linha declara `gabarito: apurado (fonte, data)` ou `gabarito: escrito` — sem isso ninguém lê
+  uma corrida de meses atrás e sabe contra O QUE ela mediu.
+- **Os fixtures do juiz congelam o gabarito das de `estado` (`dourado_congelado`).** Eles se diziam
+  congelados e liam `dourado.json` na hora da corrida: reescrever a `resposta` de D-67 mudava o
+  número do portão sem tocar no juiz — e as 8 de `estado` estão nos 20 rótulos de regressão. Agora
+  `data/dourado.json` nem tem esse texto, e há teste que reprova quem usar caso de `estado` no
+  fixture sem congelar o gabarito junto.
 - **Duas passadas, nunca uma.** A (fidelidade, cega ao dourado e às fontes esperadas) e B
   (concordância + armadilha). Juntá-las economiza uma chamada e destrói a célula **`fiel +
   discorda`** — o único sinal deste sistema que aponta para dentro do corpus: resposta derivada
@@ -120,6 +131,12 @@ juiz — por isso fora do default). Calibração: `scripts/juiz-calibrar.mjs`.
 perguntas de protocolo/episódio continuam texto em `data/dourado.json` (regra não muda sozinha);
 as 8 de `estado` são **apuradas na hora da medição**.
 
+- **O campo `resposta` das 8 de `estado` está VAZIO no `data/dourado.json`, e há teste que segura.**
+  Ficou 24 h construído sem chegar a régua nenhuma: `avaliar-resposta.mjs` lia o JSON e o juiz
+  recebia a prosa. `D-66` dizia "em 30/07 eram 36 repos ativos" e, no dia em que fossem 37, o juiz
+  reprovaria a resposta CERTA sem ninguém entender por quê. **Texto que não existe não apodrece** —
+  reescrever o texto teria apodrecido de novo em uma semana. `armadilha` e `fontes` continuam
+  escritas: são curadoria e não se apuram.
 - **Nunca gere isto para dentro do JSON.** JSON escrito ontem apodrece igual a prosa escrita
   ontem: em `D-66` o corpus guardava quatro contagens defasadas do mesmo número (37, 39, 40, 39).
 - **Falha FECHADA:** sem rede, ou com a fonte fora do ar, sai `nao_apurado` com o motivo — nunca

@@ -30,10 +30,19 @@ const total = calib.holdout.length + calib.rotulos.length + adver.casos.length;
 console.log(`juiz: ${MODELO_JUIZ}   (a síntese roda em ${process.env.RERANK_MODEL || "sonnet"} — julgar com o mesmo modelo que gerou teria viés de auto-preferência)`);
 console.log(`${calib.holdout.length} holdout + ${calib.rotulos.length} regressão + ${adver.casos.length} adversariais = ${total} chamadas\n`);
 
-async function concordar(casos, titulo, decide) {
+// O fixture do juiz se dizia congelado e lia um arquivo MUTÁVEL: o gabarito de cada caso vinha de
+// `dourado.json` na hora da corrida. Bastava alguém reescrever a `resposta` de D-67 para o número
+// deste portão mudar sem que uma linha do juiz fosse tocada — e as 8 de `estado` estão nos 20
+// rótulos de regressão, exatamente as que mais mudam. Desde 01/08 elas nem existem mais como texto
+// lá (o gabarito de `estado` é apurado na hora da medição), então o congelamento deixou de ser
+// higiene e virou requisito. `protocolo` e `episodio` continuam vindo do JSON de propósito: regra
+// e episódio não mudam sozinhos, e duplicá-los criaria duas verdades para manter.
+const gabarito = (fixture, id) => fixture.dourado_congelado?.[id] ?? dourado.get(id);
+
+async function concordar(casos, titulo, decide, fixture) {
   const linhas = [];
   for (const r of casos) {
-    const j = await julgarConcordancia(r.pergunta, r.resposta_gerada, dourado.get(r.id), { cache: true });
+    const j = await julgarConcordancia(r.pergunta, r.resposta_gerada, gabarito(fixture, r.id), { cache: true });
     linhas.push({ r, j });
   }
   const erros = linhas.filter((l) => l.j.erro);
@@ -65,15 +74,15 @@ async function concordar(casos, titulo, decide) {
 }
 
 // ── Portão 1: o número limpo. Rotulado antes de o juiz ver os casos.
-const limpo = await concordar(calib.holdout, `portão 1: holdout cego — ${calib.holdout.length} rotulados antes de o juiz vê-los`, true);
+const limpo = await concordar(calib.holdout, `portão 1: holdout cego — ${calib.holdout.length} rotulados antes de o juiz vê-los`, true, calib);
 console.log();
-await concordar(calib.rotulos, `regressão: os ${calib.rotulos.length} rótulos (4 revisados depois da 1ª corrida)`, false);
+await concordar(calib.rotulos, `regressão: os ${calib.rotulos.length} rótulos (4 revisados depois da 1ª corrida)`, false, calib);
 
 // ── Portão 2: adversarial
 console.log(`\n── portão 2: ${adver.casos.length} respostas sabidamente erradas`);
 const advs = [];
 for (const c of adver.casos) {
-  const q = dourado.get(c.id);
+  const q = gabarito(adver, c.id);
   const j = await julgarConcordancia(q.pergunta, c.resposta_corrompida, q, { cache: true });
   // Reprovar é qualquer um dos dois eixos: as corrupções atacam veredito OU armadilha.
   advs.push({ c, j, reprovou: !j.erro && (j.veredito !== "correta" || j.armadilha === "caiu") });

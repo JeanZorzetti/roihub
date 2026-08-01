@@ -6,6 +6,23 @@
     "citacao_preservada": "As marcas [n] das respostas originais foram mantidas em todas as corrupcoes. E de proposito: o modo de falha que motivou o juiz inteiro e citar a fonte certa e resumi-la errado, e ele so aparece se a citacao continuar batendo.",
     "pergunta_dourado_armadilha": "Nao ficam aqui: sao lidos de data/dourado.json pelo id, para nao existirem duas copias do padrao que podem divergir."
   },
+  "dourado_congelado": {
+    "D-67": {
+      "pergunta": "Quantos dos 35 projetos têm receita provada?",
+      "resposta": "Zero — entre os que foram checados contra um gateway. Só 1 dos 35 cards tem fonte de pagamento ligada (atma, Mercado Pago) e ela devolveu 0 venda real: os 20 pagamentos aprovados de R$ 47 são todos de usuário de teste do próprio MP. Os outros 34 não têm gateway ligado, e ausência de venda registrada é 'não olhei', nunca 'não vendeu' — o '3 vendas orgânicas' do sirius é prosa do card, jamais checada no banco. Regra da casa: dinheiro sem data é R$ 0.",
+      "armadilha": "Contar checkout existente como receita, ou contar pagamento de teste do gateway como venda."
+    },
+    "D-68": {
+      "pergunta": "Qual o gate do sirius e onde ele está hoje?",
+      "resposta": "31/08: ≥ 5 cliques não-branded em 28 dias. Em 31/07 estava em 2. A medição é por query × page × country, nunca impressão nem posição média global. A única query não-branded de página 1 com volume é 'agaas' (85 imp, pos 8,1, os 2 cliques) — logo o gate é CTR de UMA página, não ranking. Próxima leitura ~14/08.",
+      "armadilha": "Trabalhar ranking do cluster solar (215 imp em pos 26–41), que não vira clique até 31/08."
+    },
+    "D-72": {
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "resposta": "Docker no EasyPanel com output: 'standalone' — não é Vercel; push em main dispara o build da imagem. E não dar push entre 00:00 e 01:00 BRT: o cron do autopublishing dispara 00:13 e um deploy no meio derruba a publicação de 10 projetos.",
+      "armadilha": "Procurar o roihub na Vercel, ou publicar dentro da janela do cron."
+    }
+  },
   "casos": [
     {
       "id": "D-74",

@@ -9,6 +9,48 @@
     "camadas": "Nos 20: 7 protocolo + 8 estado + 5 episodio (todas as de estado e episodio do dourado). Calibrar só nas 20 primeiras perguntas seria calibrar só em protocolo, onde a síntese acerta quase tudo. O holdout é protocolo puro: ele mede o juiz, não a busca.",
     "sem_recusou": "Nenhum caso `recusou` nas 41 respostas geradas: a aba respondeu 41. Não é lacuna — `recusou` é decidido pelo contrato (texto vazio sem erro), nunca pelo LLM, e tem teste próprio em test/juiz.test.mjs."
   },
+  "dourado_congelado": {
+    "D-66": {
+      "pergunta": "Quantos projetos o hub tem hoje e de onde vem essa lista?",
+      "resposta": "35 curados (curadoria fechada em 30/07, zero pendentes). A lista vem do GitHub — todo repo vivo com homepage preenchida vira projeto — e a curadoria em data/projects.json vence a homepage. Em 30/07 eram 36 repos ativos, 34 com site; só roihub e repo-de-teste ficam sem homepage, por decisão. A chave do projeto é a URL do site, nunca o nome do repo: um repo serve vários sites.",
+      "armadilha": "Importar data/projects.json direto em vez de passar por listProjects() — a aba perde os repos vindos do GitHub."
+    },
+    "D-67": {
+      "pergunta": "Quantos dos 35 projetos têm receita provada?",
+      "resposta": "Zero — entre os que foram checados contra um gateway. Só 1 dos 35 cards tem fonte de pagamento ligada (atma, Mercado Pago) e ela devolveu 0 venda real: os 20 pagamentos aprovados de R$ 47 são todos de usuário de teste do próprio MP. Os outros 34 não têm gateway ligado, e ausência de venda registrada é 'não olhei', nunca 'não vendeu' — o '3 vendas orgânicas' do sirius é prosa do card, jamais checada no banco. Regra da casa: dinheiro sem data é R$ 0.",
+      "armadilha": "Contar checkout existente como receita, ou contar pagamento de teste do gateway como venda."
+    },
+    "D-68": {
+      "pergunta": "Qual o gate do sirius e onde ele está hoje?",
+      "resposta": "31/08: ≥ 5 cliques não-branded em 28 dias. Em 31/07 estava em 2. A medição é por query × page × country, nunca impressão nem posição média global. A única query não-branded de página 1 com volume é 'agaas' (85 imp, pos 8,1, os 2 cliques) — logo o gate é CTR de UMA página, não ranking. Próxima leitura ~14/08.",
+      "armadilha": "Trabalhar ranking do cluster solar (215 imp em pos 26–41), que não vira clique até 31/08."
+    },
+    "D-69": {
+      "pergunta": "Qual o gate do tapepro e o que fazer nele agora?",
+      "resposta": "19/10: ≥ 300 impressões em 28 dias, contra 21 hoje. Nada de SEO nele até lá.",
+      "armadilha": "Abrir frente de conteúdo num projeto cujo gate manda esperar."
+    },
+    "D-70": {
+      "pergunta": "Dos 35, o que está travado e em quê?",
+      "resposta": "26 de 35 estão parados numa decisão de negócio, não numa tarefa — e caem em três famílias: 'não tem como cobrar' (aprovai, matchfios, compass, cardiorisk, tapevision, potencialarquitetado, pathfinder, claudeloop, seo-forecaster), 'não tem quem venda' (estetiacrm, verticemarketing, whatsmeow, qprime, vertice) e 'não tem tráfego' (o resto — a única família que as abas existentes sabem tratar). Distribuição de estado: 28 no-ar, 5 no-ar-inutilizavel, 2 protótipo.",
+      "armadilha": "Ler as 26 como 26 problemas diferentes e tratar decisão de negócio como tarefa da agenda."
+    },
+    "D-71": {
+      "pergunta": "O que está bloqueado esperando o Jean e não pode ser feito por agente?",
+      "resposta": "Bing Webmaster Tools no goiania (5 min, maior score acionável, mata o IndexNow 403), as 4 chaves do Stripe do compass, o GOOGLE_CLIENT_ID do reviewshield, os 2 Request Indexing do fabrica e — o mais antigo e perigoso — rotacionar os segredos vazados.",
+      "armadilha": "Gastar sessão tentando contornar credencial de painel de terceiro."
+    },
+    "D-72": {
+      "pergunta": "Onde o roihub roda e como se publica uma mudança?",
+      "resposta": "Docker no EasyPanel com output: 'standalone' — não é Vercel; push em main dispara o build da imagem. E não dar push entre 00:00 e 01:00 BRT: o cron do autopublishing dispara 00:13 e um deploy no meio derruba a publicação de 10 projetos.",
+      "armadilha": "Procurar o roihub na Vercel, ou publicar dentro da janela do cron."
+    },
+    "D-73": {
+      "pergunta": "Escrevi um test/*.test.mjs novo e ele passa quando rodo à mão. Está no CI?",
+      "resposta": "Não: npm test roda uma lista explícita de arquivos no package.json — arquivo novo tem que ser adicionado lá à mão, senão nunca roda. Teste é node --test com assert/strict, sem framework: jest e vitest não estão instalados e não devem estar.",
+      "armadilha": "Assumir descoberta automática de testes e ter o arquivo verde localmente e inexistente no CI."
+    }
+  },
   "rotulos": [
     {
       "id": "D-03",

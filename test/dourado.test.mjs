@@ -33,11 +33,42 @@ test("toda pergunta tem os quatro campos preenchidos", () => {
     for (const campo of ["id", "pergunta", "resposta", "camada", "fontes", "armadilha"]) {
       assert.ok(campo in q, `${q.id ?? "?"}: falta ${campo}`);
     }
-    for (const campo of ["pergunta", "resposta", "armadilha"]) {
+    for (const campo of ["pergunta", "armadilha"]) {
       assert.ok(typeof q[campo] === "string" && q[campo].trim(), `${q.id}: ${campo} vazio`);
     }
     // Pergunta sem "?" costuma ser afirmação disfarçada, que não mede recuperação.
     assert.ok(q.pergunta.includes("?"), `${q.id}: pergunta não é pergunta`);
+  }
+});
+
+// Texto que não existe não apodrece. As 8 de `estado` perguntam quantos projetos o hub tem HOJE,
+// onde está o gate, o que está travado — a resposta muda sozinha, sem ninguém editar nada, e o
+// gabarito é apurado na hora da medição por `lib/dourado-estado.mjs`. Enquanto havia prosa aqui,
+// ela era a que chegava ao juiz: `D-66` dizia "em 30/07 eram 36 repos ativos" e, no dia em que
+// fossem 37, o juiz reprovaria a resposta CERTA. `armadilha` e `fontes` continuam escritas — são
+// curadoria e não se apuram.
+test("pergunta de camada `estado` NÃO tem resposta escrita — o gabarito dela se apura", () => {
+  for (const q of dourado.filter((x) => x.camada === "estado")) {
+    assert.equal(q.resposta, "", `${q.id}: resposta escrita numa pergunta de estado — ela apodrece e o juiz vai medir contra prosa datada`);
+  }
+  for (const q of dourado.filter((x) => x.camada !== "estado")) {
+    assert.ok(q.resposta.trim(), `${q.id}: resposta vazia fora de \`estado\` — só \`estado\` se apura`);
+  }
+});
+
+// O portão do juiz se dizia congelado e lia `dourado.json` na hora da corrida: reescrever a
+// `resposta` de um caso mudava o número do portão sem tocar no juiz. Agora as de `estado` moram
+// inlinadas no fixture — e este teste é o que impede alguém de acrescentar um caso de `estado`
+// sem congelar o gabarito junto, o que faria o juiz julgar contra uma string vazia.
+test("fixture do juiz congela o gabarito de toda pergunta de `estado` que usa", () => {
+  const estado = new Set(dourado.filter((q) => q.camada === "estado").map((q) => q.id));
+  for (const arq of ["juiz-calibracao.json", "juiz-adversarial.json"]) {
+    const f = JSON.parse(readFileSync(fileURLToPath(new URL(`../data/${arq}`, import.meta.url)), "utf8"));
+    const usados = [...(f.holdout ?? []), ...(f.rotulos ?? []), ...(f.casos ?? [])].map((c) => c.id);
+    for (const id of new Set(usados.filter((i) => estado.has(i)))) {
+      const g = f.dourado_congelado?.[id];
+      assert.ok(g?.resposta?.trim(), `${arq}: usa ${id} (estado) sem gabarito congelado em dourado_congelado`);
+    }
   }
 });
 

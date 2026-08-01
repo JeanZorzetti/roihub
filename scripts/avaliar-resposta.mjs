@@ -23,6 +23,8 @@ import { rrf } from "../lib/busca.mjs";
 import { rerank, trechoRelevante, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
 import { responder, trechosPara } from "../lib/resposta.mjs";
 import { julgarConcordancia, julgarFidelidade, MODELO_JUIZ } from "../lib/juiz.mjs";
+import { apurarEstado } from "../lib/dourado-estado.mjs";
+import { consultarGsc } from "../lib/gsc-consulta.mjs";
 
 const opt = (nome, padrao) => {
   const i = process.argv.indexOf(nome);
@@ -39,9 +41,40 @@ const juiz = process.argv.includes("--juiz");
 const K = 10;
 const CANDIDATOS = 50;
 
-const dourado = JSON.parse(readFileSync(fileURLToPath(new URL("../data/dourado.json", import.meta.url)), "utf8"))
+const escolhidas = JSON.parse(readFileSync(fileURLToPath(new URL("../data/dourado.json", import.meta.url)), "utf8"))
   .filter((q) => !ids.length || ids.includes(q.id))
   .slice(0, limite || undefined);
+
+// ── O gabarito das 8 de `estado` é APURADO na hora da medição, nunca lido do JSON ──────────────
+// `lib/dourado-estado.mjs` foi construído em 31/07 com uma razão escrita no próprio cabeçalho —
+// "JSON escrito ontem apodrece igual a prosa escrita ontem" — e passou 24 h sem chegar a nenhuma
+// das duas réguas que julgam a resposta. As 8 continuavam sendo julgadas contra prosa datada:
+// `D-66` dizia "em 30/07 eram 36 repos ativos" e, no dia em que fossem 37, o juiz reprovaria a
+// resposta CERTA sem ninguém entender por quê. As perguntas de `protocolo` e `episodio` seguem
+// com texto escrito à mão de propósito: regra e episódio não se apuram, são curadoria.
+const temEstado = escolhidas.some((q) => q.camada === "estado");
+const apurados = temEstado ? await apurarEstado({ modo: "tudo", gsc: consultarGsc }) : {};
+// FALHA FECHADA, e este é o ponto delicado: sem apuração a pergunta SAI da corrida — ela não cai
+// de volta para o texto escrito. Cair para a prosa seria pior que não medir, porque o número
+// sairia com cara de completo e mediria exatamente a coisa que esta frente existe para não medir.
+// Desde 01/08 o `resposta` das 8 está VAZIO no dourado.json, então o fallback nem existe: texto
+// que não existe não apodrece.
+const foraSemApuracao = escolhidas.filter((q) => q.camada === "estado" && apurados[q.id]?.nao_apurado);
+const dourado = escolhidas
+  .filter((q) => !foraSemApuracao.includes(q))
+  .map((q) => (q.camada === "estado"
+    // Só o `resposta` é substituído. `armadilha` e `fontes` continuam vindo do JSON: são curadoria
+    // e não se apuram. A `ressalva` do apurado NÃO entra no texto do gabarito — limitação de
+    // medição escrita dentro do fato vira afirmação, que é o defeito já medido no detector de
+    // defasagem; e o prompt do juiz é a única régua de LLM calibrada da casa, não se mexe nele.
+    ? { ...q, resposta: apurados[q.id].resposta, gabarito: `apurado (${apurados[q.id].fonte}, ${apurados[q.id].apurado_em})` }
+    : { ...q, gabarito: "escrito" }));
+
+if (temEstado) {
+  const entraram = dourado.filter((q) => q.camada === "estado");
+  console.log(`gabarito de \`estado\`: ${entraram.length} apurado(s) na hora, ${foraSemApuracao.length} fora da corrida`);
+  for (const q of foraSemApuracao) console.log(`  ⃠ ${q.id} sem gabarito: ${apurados[q.id].nao_apurado}`);
+}
 const docs = carregarCorpus();
 const porId = new Map(docs.map((d) => [d.id, d]));
 const tipos = docs.reduce((a, d) => ({ ...a, [d.tipo]: (a[d.tipo] ?? 0) + 1 }), {});
@@ -108,7 +141,7 @@ for (const q of dourado) {
   // Ler as respostas é a única checagem que pega isso, e sem `--ver` ela custaria outro script.
   if (process.argv.includes("--ver")) {
     console.log(`\n${q.id} ${q.pergunta}\n  → ${r.texto || `(vazio${r.erro ? `: ${r.erro}` : ": recusou"})`}`);
-    console.log(`  citou: ${citadas.join(", ") || "—"}   esperado: ${q.fontes.join(", ")}`);
+    console.log(`  citou: ${citadas.join(", ") || "—"}   esperado: ${q.fontes.join(", ")}   gabarito: ${q.gabarito}`);
     if (juiz) console.log(`  juiz: ${linha.b.veredito}/${linha.b.armadilha} · ${linha.a.fiel === null ? "—" : linha.a.fiel ? "fiel" : "infiel"} · ${linha.b.motivo}`);
   }
   seguidas = falhasDeConta(seguidas, [linha.r.erro, linha.b?.erro, linha.a?.erro]);
@@ -137,6 +170,9 @@ function gravarCorrida(incompleto) {
         casos: linhas.map((l) => ({
           id: l.q.id,
           camada: l.q.camada,
+          // Sem isto ninguém consegue ler uma corrida de meses atrás e saber contra O QUE ela
+          // mediu — e é justamente a camada `estado` que muda de gabarito de um dia para o outro.
+          gabarito: l.q.gabarito,
           resposta: l.r.texto,
           erro: l.r.erro,
           citadas: l.citadas,
@@ -213,7 +249,13 @@ if (juiz) {
 
   console.log(`\n── juiz (${MODELO_JUIZ}) — ${julgadas.length} de ${linhas.length} julgadas`);
   console.log("O QUE ISTO MEDE: se o que o sistema escreveu bate com o que a instituição sabe.");
-  console.log("O QUE NÃO MEDE: se o que a instituição sabe é verdade — o dourado saiu do mesmo corpus.\n");
+  // A fronteira mudou em 01/08 e tem que sair no mesmo parágrafo do número: `estado` deixou de ser
+  // prosa concordando com prosa. Régua que não declara o próprio limite vira meta em cima de um
+  // defeito — e a metade que continua sendo prosa é a maioria (70 das 78).
+  const apuradas = julgadas.filter((l) => l.q.camada === "estado");
+  console.log(`O QUE NÃO MEDE: se o que a instituição sabe é verdade — ${linhas.length - apuradas.length} das ${linhas.length} são julgadas`);
+  console.log(`contra texto escrito à mão, tirado do MESMO corpus que gerou a resposta. As ${apuradas.length} de \`estado\``);
+  console.log(`saem de fonte viva apurada na hora (${foraSemApuracao.length} ficaram de fora por não ter fonte).\n`);
 
   // O agregado é dominado por `protocolo` (65 das 78) e esconde justamente o que interessa:
   // `estado` apodrece por construção e `episodio` é onde a síntese tem mais espaço para inventar
