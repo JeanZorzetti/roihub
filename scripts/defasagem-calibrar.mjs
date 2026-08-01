@@ -7,8 +7,11 @@
 //   node --env-file=.env scripts/defasagem-calibrar.mjs --ver     # com o meu motivo em cada divergência
 //
 // Dois portões, e eles pegam o detector em direções OPOSTAS:
-//   holdout      >= 85%  — 20 pares rotulados à mão ANTES de rodar; pega o que ACUSA demais
-//   adversarial  >= 9/10 — 10 documentos corrompidos de propósito; pega o que ABSOLVE tudo
+//   holdout      >= 85%  — pares rotulados à mão ANTES de rodar; pega o que ACUSA demais
+//   adversarial  >= 90%  — documentos corrompidos de propósito; pega o que ABSOLVE tudo
+//
+// Os dois pisos são PROPORCIONAIS de propósito: o do adversarial era o absoluto `>= 9` e, ao
+// dobrar o fixture para 20, deixou 14/20 passar como se fosse 9/10.
 //
 // Os dois fixtures são CONGELADOS (`data/defasagem-*.json`): apurado e trecho vêm inlinados, com
 // o mesmo orçamento de recorte da produção (2400). Regenerá-los depois de ler o veredito é a
@@ -109,8 +112,15 @@ for (const c of adver.casos) {
   seguidas = falhasDeConta(seguidas, [j.erro]);
   if (seguidas >= MAX_CONTA_SEGUIDAS) break;
 }
+// O piso é PROPORCIONAL, e isto foi medido, não escolhido por elegância: enquanto ele era o
+// absoluto `>= 9`, dobrar o fixture de 10 para 20 adversariais fez o portão declarar "passou" com
+// 14/20 — 70%, contra os 80% que ele reprovava no dia anterior. Um portão que afrouxa sozinho
+// quando o denominador cresce recompensa quem amplia o fixture, que é o oposto do que ampliar o
+// fixture deve fazer. O portão 1 já era proporcional (`>= 0.85`); este ficou para trás.
+const PISO_ADVERSARIAL = 0.9;
 const pegou = advs.filter((a) => a.pegou);
-console.log(`pegou   ${String(pegou.length).padStart(2)}/${adver.casos.length}   ← portão: >= 9/10`);
+const minAdver = Math.ceil(PISO_ADVERSARIAL * adver.casos.length);
+console.log(`pegou   ${String(pegou.length).padStart(2)}/${adver.casos.length}   ← portão: >= ${minAdver}/${adver.casos.length} (${(PISO_ADVERSARIAL * 100).toFixed(0)}%)`);
 for (const a of advs) {
   // `veredito || erro` escondia o motivo real da falha: a corrida de 01/08 imprimiu três `→
   // desmente` marcados ❌ e levou vinte minutos para revelar que eram citações descartadas, não
@@ -134,10 +144,10 @@ if (seguidas >= MAX_CONTA_SEGUIDAS) {
 const semVeredito = casos.length - validas.length;
 const p1Taxa = validas.length ? acertos.length / validas.length >= 0.85 : false;
 const p1 = semVeredito === 0 && p1Taxa;
-const p2 = pegou.length >= 9;
+const p2 = pegou.length >= minAdver;
 const porQue1 = p1 ? "" : semVeredito ? ` — ${semVeredito} sem veredito parseável` : " — taxa abaixo do piso";
 console.log(`\n${p1 ? "✅" : "🚩"} portão 1 (holdout cego >= 85% E zero sem veredito)   ${p1 ? "passou" : "REPROVOU"}  ${pct(acertos.length, validas.length)}${porQue1}`);
-console.log(`${p2 ? "✅" : "🚩"} portão 2 (adversarial >= 9/10)   ${p2 ? "passou" : "REPROVOU"}  ${pegou.length}/${adver.casos.length}`);
+console.log(`${p2 ? "✅" : "🚩"} portão 2 (adversarial >= ${(PISO_ADVERSARIAL * 100).toFixed(0)}%)   ${p2 ? "passou" : "REPROVOU"}  ${pegou.length}/${adver.casos.length}`);
 if (!p1 || !p2) {
   console.log("\nPare aqui. O problema é o PROMPT do detector, e nenhum percentual de defasagem medido depois vale — inclusive o 16,7%.");
   process.exitCode = 1;
