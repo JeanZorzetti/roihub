@@ -1,6 +1,28 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-formato-era-o-bug.md`](handoff/handoff-o-formato-era-o-bug.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-o-portao-tem-treze-casos.md`](handoff/handoff-o-portao-tem-treze-casos.md)
+> (01/08, 04h50): o instrumento melhorou, o portão que julga o instrumento não.** Especificação de
+> trabalho, não relatório. A tese: o detector saiu de **3 para 9** vereditos corretos em 10
+> corrupções, enquanto o holdout marcou 71,4% → 88,9% → 91,7% → **84,6%**, subindo e descendo com a
+> qualidade só subindo. **Um portão com 13 casos válidos oscila 7 pontos quando UM caso muda de
+> lado — ele não decide nada.**
+> 🚨 **(A) O token de PRODUÇÃO do Mercado Pago vazado AINDA FUNCIONA** — autenticou hoje. Rotacionar
+> no painel do MP e atualizar os TRÊS envs. Nada depende dela, só a inércia. ~1 h.
+> 🔑 **(B) O sinal mais valioso que este sistema já produziu nunca foi lido, e custa ZERO chamada.**
+> A primeira corrida do juiz com gabarito vivo devolveu **3 `fiel + discorda` + 1 `contradiz`** — a
+> síntese derivou CERTO do corpus e mesmo assim discorda da fonte viva. É o corpus errado, medido.
+> Está em `data/juiz-corridas/2026-08-01-0423.json`.
+> 🔑 **(C) ANTES de mexer no detector de novo: holdout 13 → 40, adversarial 10 → 20.** É a fase
+> braçal, sem gráfico bonito, e é a que torna todas as outras decidíveis. **~4-6 h de rotulagem à
+> mão.** Com 13 casos a fase D não é avaliável: qualquer resultado cabe no ruído.
+> 🔑 **(D) Só então as DUAS PASSADAS** (extrair a afirmação / comparar com o fato). Três redações de
+> regra já falharam; o que funcionou 3× foi **forçar a evidência antes da decisão**.
+> 💰 **(F) `orcaobra` subiu:** é o **único** projeto com gateway vivo (`pay.kiwify.com.br`) e nenhuma
+> régua lendo. `sirius` não cobra pelo site — fatura por tier no banco, `:5434` ETIMEDOUT.
+> **Ordem defendida: A → B → C → D → E → F → G → H → I.** Com pool ruim, **A → B → C → E → F não
+> gastam uma chamada sequer.**
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-o-formato-era-o-bug.md`](handoff/handoff-o-formato-era-o-bug.md)
 > (01/08): A, B, C.1 e C.4 executadas. D NÃO — e é a única que fica mais cara a cada dia.**
 > 🔑 **(A) A hipótese era certa e custou três linhas.** `VEREDITO` deixou de ser a primeira linha da
 > resposta e virou a última, depois do trecho e do motivo: adversarial **3/10 → 8/10**, holdout
