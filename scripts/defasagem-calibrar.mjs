@@ -26,7 +26,7 @@
 // atacado passaria nos dois portões.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { montarPromptDefasagem, parseDefasagem } from "../lib/defasagem.mjs";
+import { montarPromptDefasagem, parseDefasagem, julgarDuasPassadas } from "../lib/defasagem.mjs";
 import { rodarClaude, rodarCacheado, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
 
 const ler = (nome) => JSON.parse(readFileSync(fileURLToPath(new URL(`../data/${nome}`, import.meta.url)), "utf8"));
@@ -57,11 +57,18 @@ if (invalidos.length) {
   console.log(`   o portão roda nos ${casos.length} restantes.\n`);
 }
 
+// `--duas-passadas` é OPT-IN porque a decomposição foi MEDIDA e REPROVOU — ver o bloco em
+// `lib/defasagem.mjs`. Ela fica no código como registro do que foi tentado e com que número,
+// contra o MESMO fixture congelado: sem isso a próxima sessão gasta ~130 chamadas para
+// redescobrir que dobrar as chamadas piora 17 pontos e quebra a célula que decide.
+const umaPassada = !process.argv.includes("--duas-passadas");
+const rodar = (prompt) => rodarCacheado(prompt, rodarClaude, true, { effort: "medium" });
+
 let seguidas = 0;
 async function julgar(caso) {
-  const prompt = montarPromptDefasagem(caso.pergunta, caso.apurado, caso.doc);
+  if (!umaPassada) return julgarDuasPassadas(caso.pergunta, caso.apurado, caso.doc, rodar);
   try {
-    return parseDefasagem(await rodarCacheado(prompt, rodarClaude, true, { effort: "medium" }), caso.doc.trecho);
+    return parseDefasagem(await rodar(montarPromptDefasagem(caso.pergunta, caso.apurado, caso.doc)), caso.doc.trecho);
   } catch (err) {
     return { veredito: "", trecho: "", motivo: "", erro: err.message.replace(/^rerank-/, "defasagem-") };
   }
