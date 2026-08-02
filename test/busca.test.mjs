@@ -53,6 +53,23 @@ test("rrf combina rankings sem comparar score", () => {
   assert.deepEqual(new Set(fundido.map((r) => r.id)), new Set(["x", "y", "z"]));
 });
 
+// Card fora do corpus era o que fazia `quais os blockers do goiania` devolver handoff que fala
+// do goiania e nunca o card onde os blockers estão escritos. Fonte = `data/projects.json`, id =
+// slug: id divergente do slug some da procedência da aba sem erro nenhum aparecer.
+test("os cards curados entram no corpus com id = slug e sem os números do score", () => {
+  const projetos = JSON.parse(readFileSync(fileURLToPath(new URL("../data/projects.json", import.meta.url)), "utf8"));
+  const docs = carregarCorpus({ memoriaDir: "/inexistente" }).filter((d) => d.tipo === "projeto");
+  assert.deepEqual(docs.map((d) => d.id), projetos.map((p) => p.slug));
+
+  const goiania = docs.find((d) => d.id === "goiania");
+  assert.ok(goiania.texto.includes("IndexNow devolve 403"), "blocker do card não entrou no texto");
+  // Nota 0-10 de prioridade dentro do texto é ruído de token: quem pergunta por número quer o
+  // score da home. `receita: 8` viraria os tokens `receita` e `8` em 35 documentos iguais.
+  for (const campo of ["receita", "blockers", "decay", "seoSeed"]) {
+    assert.ok(!new RegExp(`${campo}\\W*\\d`, "i").test(goiania.texto), `${campo} numérico indexado`);
+  }
+});
+
 // O id do doc é o mesmo vocabulário das fontes do dourado. Divergir aqui zera o recall em
 // silêncio — nenhum teste de formato pegaria.
 test("toda fonte de protocolo e handoff do dourado vira doc no corpus", () => {

@@ -1,18 +1,27 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)
-> (01/08): tornar a `/busca` utilizável PARA o ranking — sem deixá-la entrar no score.**
-> 🚩 **A busca NÃO entra no `computeScore`, e a régua é a do próprio `score.mjs`:** ele já RECUSOU o
-> `receitaProvada`, que é fato derivado de gateway. Busca mede **recuperação, não verdade** — LLM no
-> score transforma erro silencioso do corpus em POSIÇÃO de ranking, inauditável.
-> 🚩 **O que impede é UMA coisa medida: os 35 cards de `data/projects.json` estão FORA do corpus.**
-> `carregarCorpus()` lê protocolos + handoffs + memórias e nenhuma linha lê `projects.json` — então
-> "quais os blockers do goiania" devolve handoff que fala dele, nunca o card que TEM os blockers.
-> ▶️ **Ordem:** (1) cards no corpus, `tipo: projeto`, `id = slug` · (2) link do foco do dia para
-> `/busca?q=…&rerank=0&resposta=0` — 1 linha, zero LLM · (3) reindexar no fim do autopublish.
-> 🎯 **Portão: piso RELATIVO** (`--min bm25`) — corpus vai de 309 para 344 e o absoluto não se
-> compara com 88,0%. **Nenhuma pergunta pode PERDER a fonte que já achava**: card que expulsa handoff
-> é o modo de falha desta mudança, e ele é invisível no agregado.
+> ▶️ **PRÓXIMO PASSO — fechar o portão do rerank com o pool inteiro:
+> `node --env-file=.env scripts/avaliar.mjs --motor rerank --min bm25`.**
+> ⏳ **A corrida de 01/08 NÃO mediu: 42 das 85 voltaram `rerank-conta`** (pool esgotado) e caíram na
+> fusão — o `77,7%` que ela imprimiu é METADE reranqueada e não se compara com nada. **Se sair
+> `rerank-conta` de novo, pare**: aviso perde para percentual. Detalhe e o resto em
+> [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md).
+>
+> ✅ **EXECUTADO (01/08) — [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md)
+> (spec: [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)):
+> os 35 cards entraram no corpus (`tipo: projeto`, `id` = slug, 345 docs) e o foco do dia ganhou o
+> link para a `/busca`. A busca continua FORA do `computeScore`.**
+> 🚩 **O dourado NÃO PODE premiar os cards — nenhuma das 85 perguntas tem slug em `fontes`.** O
+> agregado só cobra o custo do denominador maior: BM25 78,1% → **77,7%**, híbrido 77,4% → **77,1%**
+> (@10, mesma corrida, zero LLM). **A leitura é o diff NOMINAL: 2 de 85 perderam uma fonte, as duas
+> caindo da posição 10 para 11ª/13ª** — e em `D-73` **não há card no top-10**, é deriva de IDF. O
+> modo de falha temido (card subindo em bloco) não aconteceu.
+> 🚩 **`blockers:` no PLURAL, medido:** o BM25 casa token literal — com `blocker:` o card do goiania
+> saía em 17º na pergunta-exemplo da spec, com o plural em 2º.
+> ❌ **O item 3 da spec (reindexar no fim do autopublish) tem PREMISSA FALSA e não foi feito:** o
+> cron roda em GitHub Actions, que não tem as memórias (`indexar.mjs` aborta sem elas, de propósito)
+> nem o Ollama (`OLLAMA_URL` é `127.0.0.1`). **O card é a exceção que não precisa:** `projects.json`
+> está na imagem e a aba une disco + banco — card editado chega fresco no BM25 a cada deploy.
 >
 > ⏳ **ABERTO, e não é agente — [`handoff/handoff-4-deploys-o-easypanel-aceitou.md`](handoff/handoff-4-deploys-o-easypanel-aceitou.md)
 > (01/08): sobraram DUAS hipóteses, as duas DENTRO do painel do EasyPanel.**

@@ -67,6 +67,7 @@ const ONDE: Record<string, (id: string) => string> = {
   protocolo: (id) => `data/protocolos/${id}.json`,
   handoff: (id) => `handoff/${id}`,
   memoria: (id) => `memória: ${id}.md`,
+  projeto: (id) => `data/projects.json — card ${id}`,
 };
 
 // Trecho em volta do primeiro termo da pergunta que aparece no doc: sem isso o resultado é só
@@ -148,7 +149,8 @@ export default async function Busca({
       <h1>ROI Hub</h1>
       <Tabs active="busca" />
       <p className="sub">
-        Pergunta em português. O índice cobre {docs.length} documentos: protocolos, handoffs e memórias.
+        Pergunta em português. O índice cobre {docs.length} documentos: protocolos, handoffs, memórias e
+        os cards de projeto do ranking.
       </p>
 
       {/* .ag-add/.ag-in/.ag-btn são os controles que a aba Agenda já usa: campo novo com
@@ -208,12 +210,17 @@ export default async function Busca({
       </ol>
 
       <p className="foot">
-        {/* Números remedidos em 31/07 com 263 docs. Um recall absoluto no rodapé envelhece sozinho:
-            o dourado é fixo e handoff/memória são reescritos toda sessão, o que mexe em vetor e
-            IDF (83,0% → 82,4% sem mudança de código). Ao remedir, atualizar aqui também. */}
-        {motor} · recall@10 medido em{" "}
-        {motor.includes("rerank") ? "88,0%" : motor === "BM25" ? "82,3%" : "82,4%"} contra as 78 perguntas de{" "}
-        <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
+        {/* BM25 e híbrido remedidos em 01/08 com 345 docs e 85 perguntas (os cards entraram no
+            corpus). O do rerank continua o de 31/07 porque a remedição parou no pool: 42 das 85
+            chamadas voltaram `rerank-conta` e a corrida vira mistura de reranqueado com híbrido
+            puro. Número velho DECLARADO velho é melhor que um número novo que mede outra coisa.
+            Um recall absoluto no rodapé envelhece sozinho de qualquer jeito: handoff e memória são
+            reescritos toda sessão, o que mexe em vetor e IDF (83,0% → 82,4% sem mudar código). */}
+        {motor} · recall@10{" "}
+        {motor.includes("rerank")
+          ? "88,0% medido em 31/07 com 263 docs e 78 perguntas — pendente remedir"
+          : `${motor === "BM25" ? "77,7%" : "77,1%"} medido em 01/08 com 345 docs e 85 perguntas`}{" "}
+        de <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {erroRerank && `⚠️ Reranker caiu para a fusão — ${erroRerank}. `}
         {/* Recusa não aparece aqui de propósito: "os 10 não sustentam" é o componente

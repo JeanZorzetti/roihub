@@ -135,6 +135,14 @@ export default async function Page() {
                 {foco.url}
               </a>{" "}
               · <HealthCell h={foco.health} />
+              {/* O ranking diz QUAL projeto e QUANTO; ele não diz o que a casa já sabe sobre ele
+                  — hoje isso custa abrir a outra aba e digitar o nome de novo. `rerank=0&resposta=0`
+                  de propósito: são ~0,3 s contra ~12 s, e link no ranking que faz esperar 12 s é
+                  link que ninguém clica duas vezes. */}
+              {" · "}
+              <a href={`/busca?q=${encodeURIComponent(foco.nome)}&rerank=0&resposta=0`}>
+                o que a casa sabe
+              </a>
             </div>
           </div>
           <div className="hero-score">
