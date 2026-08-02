@@ -1,0 +1,7 @@
+Response,Total requests ratio
+OK (200),0.9661
+Moved permanently (301),0.0118
+Not found (404),0.0106
+Page could not be reached,0.0086
+robots.txt not available,0.0027
+Moved temporarily (302),0.0002
