@@ -210,7 +210,7 @@ export default async function Busca({
       </ol>
 
       <p className="foot">
-        {/* BM25 e híbrido remedidos em 01/08 com 345 docs e 85 perguntas (os cards entraram no
+        {/* BM25 e híbrido remedidos em 02/08 com 345 docs e 85 perguntas (os cards entraram no
             corpus). O do rerank continua o de 31/07 porque a remedição parou no pool: 42 das 85
             chamadas voltaram `rerank-conta` e a corrida vira mistura de reranqueado com híbrido
             puro. Número velho DECLARADO velho é melhor que um número novo que mede outra coisa.
@@ -219,7 +219,7 @@ export default async function Busca({
         {motor} · recall@10{" "}
         {motor.includes("rerank")
           ? "88,0% medido em 31/07 com 263 docs e 78 perguntas — pendente remedir"
-          : `${motor === "BM25" ? "77,7%" : "77,1%"} medido em 01/08 com 345 docs e 85 perguntas`}{" "}
+          : `${motor === "BM25" ? "77,7%" : "77,1%"} medido em 02/08 com 345 docs e 85 perguntas`}{" "}
         de <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {erroRerank && `⚠️ Reranker caiu para a fusão — ${erroRerank}. `}

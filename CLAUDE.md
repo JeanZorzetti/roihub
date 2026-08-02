@@ -81,7 +81,7 @@ medidos com 78 — **denominador novo não se compara com número velho**, piso 
   parcial com `incompleto: true` e **não imprimem agregado nenhum** — nem com aviso ao lado. O
   relatório de 31/07 trazia o aviso das 15 suprimidas e ainda assim publicou 19,2% de recusa
   fantasma: aviso perde para percentual.
-- **O corpus tem QUATRO origens desde 01/08** — protocolos, handoffs, memórias e **os 35 cards de
+- **O corpus tem QUATRO origens desde 02/08** — protocolos, handoffs, memórias e **os 35 cards de
   `data/projects.json`** (`tipo: "projeto"`, `id` = slug, 345 docs). Sem os cards, "quais os
   blockers do goiania" devolvia handoff que FALA do goiania e nunca o card que TEM os blockers.
   **Nota 0-10 (`receita`, `blockers`, `decay`, `seoSeed`) não entra no texto**: quem pergunta por
@@ -98,7 +98,7 @@ medidos com 78 — **denominador novo não se compara com número velho**, piso 
 - **Reindexar depois de escrever handoff/memória**: `node --env-file=.env scripts/indexar.mjs`.
   Memória mora em `~/.claude`, fora do repo — sem reindexar ela some da aba em silêncio.
 - **Reindexar só roda NESTA máquina, e por isso não dá para pendurar no cron do autopublishing**
-  (a ideia do handoff de 01/08, medida e descartada): o cron roda em GitHub Actions, que não tem
+  (a ideia do handoff de 01/08, conferida em 02/08 e descartada): o cron roda em GitHub Actions, que não tem
   `~/.claude` (e `indexar.mjs` aborta sem memórias, de propósito) nem o Ollama — `OLLAMA_URL` é
   `127.0.0.1:11434`. **O card é a exceção que não precisa disso**: `data/projects.json` está na
   imagem (`Dockerfile` copia `data/`, e o tracing do `/busca` agora inclui o arquivo), e a aba une

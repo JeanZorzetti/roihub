@@ -1,4 +1,4 @@
-# Handoff — os 35 cards entraram no corpus e o ranking ganhou o link; o portão do rerank NÃO fechou (01/08/2026)
+# Handoff — os 35 cards entraram no corpus e o ranking ganhou o link; o portão do rerank NÃO fechou (02/08/2026)
 
 > Executa [`handoff-proximo-passo-busca-no-ranking.md`](handoff-proximo-passo-busca-no-ranking.md).
 > Índice: [`../handoff.md`](../handoff.md) · doc da feature: [`../docs/busca/`](../docs/busca/).
@@ -131,7 +131,7 @@ Em [`app/page.tsx`](../app/page.tsx), ao lado da URL do foco do dia: `o que a ca
 - **Os 4 deploys presos no EasyPanel** (`aftercare`, `context`, `reviewshield`, `estetia`) seguem
   em 404, com as mesmas duas hipóteses dentro do painel —
   [`handoff-4-deploys-o-easypanel-aceitou.md`](handoff-4-deploys-o-easypanel-aceitou.md).
-- **O rodapé da `/busca` agora declara a idade de cada número** (BM25 e híbrido de 01/08 com 345
+- **O rodapé da `/busca` agora declara a idade de cada número** (BM25 e híbrido de 02/08 com 345
   docs; rerank de 31/07 com 263 docs e 78 perguntas, marcado "pendente remedir"). Ao fechar o
   portão do §2, atualizar os três de uma vez — número velho declarado velho é honesto, número
   novo medindo outra coisa não é.

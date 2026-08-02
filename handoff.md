@@ -2,12 +2,12 @@
 
 > ▶️ **PRÓXIMO PASSO — fechar o portão do rerank com o pool inteiro:
 > `node --env-file=.env scripts/avaliar.mjs --motor rerank --min bm25`.**
-> ⏳ **A corrida de 01/08 NÃO mediu: 42 das 85 voltaram `rerank-conta`** (pool esgotado) e caíram na
+> ⏳ **A corrida de 02/08 NÃO mediu: 42 das 85 voltaram `rerank-conta`** (pool esgotado) e caíram na
 > fusão — o `77,7%` que ela imprimiu é METADE reranqueada e não se compara com nada. **Se sair
 > `rerank-conta` de novo, pare**: aviso perde para percentual. Detalhe e o resto em
 > [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md).
 >
-> ✅ **EXECUTADO (01/08) — [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md)
+> ✅ **EXECUTADO (02/08) — [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md)
 > (spec: [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)):
 > os 35 cards entraram no corpus (`tipo: projeto`, `id` = slug, 345 docs) e o foco do dia ganhou o
 > link para a `/busca`. A busca continua FORA do `computeScore`.**
@@ -847,6 +847,8 @@ Este arquivo é a porta de entrada e o histórico do hub. Os handoffs temáticos
 
 | arquivo | assunto | estado |
 |---|---|---|
+| [`handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md) | **comece por aqui**: os 35 cards no corpus (`tipo: projeto`, 345 docs) e o link do foco do dia para a `/busca`. Traz o que o agregado NÃO pode medir (nenhuma das 85 perguntas tem slug em `fontes`), o diff nominal das 2 que caíram da 10ª para a 11ª/13ª, o rótulo `blockers:` no plural (17º → 2º) e a premissa FALSA do item 3 da spec | 🟢 vivo (02/08) — falta só o portão do rerank |
+| [`handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md) | a SPEC que o originou: por que a busca NÃO entra no `computeScore` (a mesma régua que recusou o `receitaProvada`), os 3 itens em ordem com o preço de cada um e o portão de piso relativo | ✅ executado 02/08 — 2 de 3 itens; o 3º tem premissa falsa |
 | [`handoff-a-definicao-de-pronto-executado.md`](handoff/handoff-a-definicao-de-pronto-executado.md) | **comece por aqui**: fases C, D, R e F executadas. A fase D (duas passadas) foi medida contra o fixture congelado e **reprovou** — 83,3% → 65,9% e as células perigosas saíram de zero. Traz o holdout em 44/20 com âncora, a reprodutibilidade medida 2× com movimento zero, o piso do portão 2 que afrouxava sozinho, e o inventário pelo REPO que acha 10 projetos com cobrança escrita e não ligada | 🟢 vivo (01/08) — frente ativa |
 | [`handoff-a-definicao-de-pronto.md`](handoff/handoff-a-definicao-de-pronto.md) | a SPEC que o originou: os 3 níveis de PRONTO (instrumento / feature / loop), o custo honesto de ~20–26 h e o que está explicitamente FORA do escopo | 🟢 vivo (01/08) — nível 1 ainda aberto |
 | [`handoff-proximo-passo-31-07.md`](handoff/handoff-proximo-passo-31-07.md) | **comece por aqui numa sessão de trabalho**: o próximo passo é o `sirius` e o gate de 31/08 (≥5 cliques não-branded/28d, hoje 2). Traz a medição por query/país/página que desmonta o plano do card — `agaas` é query internacional, `crm roi` e `crm solar` estão canibalizados, e o par PT/EN serve **zero `hreflang`** — mais a ordem de execução (hreflang → dono do `crm roi` → CTR do `agaas` → só então conteúdo solar) | 🟢 vivo (31/07) — frente ativa |
