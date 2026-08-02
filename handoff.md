@@ -1,6 +1,20 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-4-deploys-o-easypanel-aceitou.md`](handoff/handoff-4-deploys-o-easypanel-aceitou.md)
+> ▶️ **PRÓXIMO PASSO — [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)
+> (01/08): tornar a `/busca` utilizável PARA o ranking — sem deixá-la entrar no score.**
+> 🚩 **A busca NÃO entra no `computeScore`, e a régua é a do próprio `score.mjs`:** ele já RECUSOU o
+> `receitaProvada`, que é fato derivado de gateway. Busca mede **recuperação, não verdade** — LLM no
+> score transforma erro silencioso do corpus em POSIÇÃO de ranking, inauditável.
+> 🚩 **O que impede é UMA coisa medida: os 35 cards de `data/projects.json` estão FORA do corpus.**
+> `carregarCorpus()` lê protocolos + handoffs + memórias e nenhuma linha lê `projects.json` — então
+> "quais os blockers do goiania" devolve handoff que fala dele, nunca o card que TEM os blockers.
+> ▶️ **Ordem:** (1) cards no corpus, `tipo: projeto`, `id = slug` · (2) link do foco do dia para
+> `/busca?q=…&rerank=0&resposta=0` — 1 linha, zero LLM · (3) reindexar no fim do autopublish.
+> 🎯 **Portão: piso RELATIVO** (`--min bm25`) — corpus vai de 309 para 344 e o absoluto não se
+> compara com 88,0%. **Nenhuma pergunta pode PERDER a fonte que já achava**: card que expulsa handoff
+> é o modo de falha desta mudança, e ele é invisível no agregado.
+>
+> ⏳ **ABERTO, e não é agente — [`handoff/handoff-4-deploys-o-easypanel-aceitou.md`](handoff/handoff-4-deploys-o-easypanel-aceitou.md)
 > (01/08): sobraram DUAS hipóteses, as duas DENTRO do painel do EasyPanel.**
 > 🚩 **O EasyPanel ACEITOU o deploy dos 4 e o container não trocou.** Webhook ativo, entrega do push
 > **200 OK no mesmo minuto** dos que subiram — e o 200 é evidência CONTROLADA: token inventado no
