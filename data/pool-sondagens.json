@@ -1,0 +1,56 @@
+[
+  {
+    "em": "2026-08-02 22:12",
+    "fonte": "handoff",
+    "contas": [
+      {
+        "estado": "viva",
+        "status": 0
+      },
+      {
+        "estado": "rate-limit",
+        "status": 429
+      },
+      {
+        "estado": "desabilitada",
+        "status": 403
+      }
+    ]
+  },
+  {
+    "em": "2026-08-03 07:46",
+    "fonte": "handoff",
+    "contas": [
+      {
+        "estado": "viva",
+        "status": 0
+      },
+      {
+        "estado": "rate-limit",
+        "status": 429
+      },
+      {
+        "estado": "desabilitada",
+        "status": 403
+      }
+    ]
+  },
+  {
+    "em": "2026-08-03 07:59",
+    "fonte": "sonda",
+    "contas": [
+      {
+        "estado": "viva",
+        "status": 0
+      },
+      {
+        "estado": "rate-limit",
+        "status": 429
+      },
+      {
+        "estado": "desabilitada",
+        "status": 403
+      }
+    ]
+  }
+]

@@ -10,13 +10,21 @@
 > da corrida — **+4,0 sobre o híbrido em @10** (77,1% → 81,1%), +3,5 em @20, e a camada `estado`
 > saindo de 28,3% para **38,9%**. Os três números do rodapé da `/busca` agora são da MESMA corrida.
 >
-> ▶️ **PRÓXIMO PASSO — datar a conta 3 do pool (1 chamada).**
-> 🚩 **"As 3 contas esgotadas" eram DOIS estados diferentes:** sondando 1 chamada por conta em
-> 02/08 22:12 e 03/08 07:46 (com o autopublishing das 00:13 no meio), o quadro foi idêntico —
-> conta 1 **viva**, conta 2 **429**, conta 3 **403**. **429 recarrega esperando; 403 é
-> `subscription access disabled` e não.** Se o 403 for permanente, o teto são **2 contas úteis** e
-> "somar conta ao pool" vira REPOSIÇÃO, não expansão. Duas leituras não provam morte — falta a
-> terceira.
+> ✅ **EXECUTADO (03/08) — A SONDA VIROU `scripts/`:
+> [`handoff/handoff-a-sonda-virou-script-e-o-403-nao-datou.md`](handoff/handoff-a-sonda-virou-script-e-o-403-nao-datou.md).**
+> `node --env-file=.env scripts/probe-pool.mjs [--gravar]`, ~40 s — **3 chamadas respondem o que
+> custava as 85 do portão**. `classificarConta` separa o que `trocaDeConta` não pode: ela responde
+> "troco de conta?" e diz `true` para 401/403/429, certo para a busca e cego para quem decide
+> comprar conta. Histórico em `data/pool-sondagens.json`.
+> ⏳ **A conta 3 NÃO ficou datada, e a 3ª leitura é a prova do contrário:** ela saiu **13 min**
+> depois da 2ª (03/08 07:59 × 07:46) e repetiu o quadro — conta 1 **viva**, conta 2 **429**, conta 3
+> **403**. As três cobrem ~10 h, que não separam "morta de vez" de "morta desde ontem à noite".
+> **429 recarrega esperando; 403 é `subscription access disabled` e não.**
+>
+> ▶️ **PRÓXIMO PASSO — sondar de novo com janela LARGA (dias) e `--gravar`.** É o único jeito de
+> datar o 403 — sondagem colada na anterior confirma o estado e não compra janela. ⚠️ **Não segure
+> a compra de conta esperando isso:** com 1 viva de 3, "somar conta" é a mesma ação nos dois
+> cenários; o dado datado muda o rótulo (reposição × expansão) e o quanto se compra, não o SE.
 >
 > ✅ **EXECUTADO (02/08) — [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md)
 > (spec: [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)):

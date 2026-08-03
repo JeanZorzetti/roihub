@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta, falhasDeConta, MAX_CONTA_SEGUIDAS, chave } from "../lib/reranker.mjs";
+import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta, classificarConta, falhasDeConta, MAX_CONTA_SEGUIDAS, chave } from "../lib/reranker.mjs";
 
 const candidatos = [
   { id: "a", tipo: "protocolo", titulo: "A", trecho: "texto a" },
@@ -158,6 +158,20 @@ test("trocaDeConta lê o status, não a mensagem", () => {
   assert.equal(trocaDeConta(desabilitado), true);
   assert.equal(trocaDeConta({ is_error: true, result: "não é JSON de ordem" }), false);
   assert.equal(trocaDeConta({ is_error: true, api_error_status: 500 }), false);
+});
+
+// `trocaDeConta` responde "troco de conta?" e diz true para os três status — é o que a busca
+// precisa. A SONDA precisa do contrário: separar quem volta de quem não volta. O handoff de
+// 02/08 leu o pool como bloco ("as 3 esgotadas") e daí saiu "o teto são 3 contas"; com 429 e 403
+// separados, o teto pode ser 2 e "somar conta" vira reposição.
+test("classificarConta separa 429 (recarrega) de 403 (não recarrega)", () => {
+  assert.equal(classificarConta(null).estado, "viva");
+  assert.equal(classificarConta(Object.assign(new Error("rerank-conta"), { status: 429 })).estado, "rate-limit");
+  assert.equal(classificarConta(Object.assign(new Error("rerank-conta"), { status: 403 })).estado, "desabilitada");
+  assert.equal(classificarConta(Object.assign(new Error("rerank-conta"), { status: 401 })).estado, "auth");
+  // Timeout e CLI quebrado não são veredito sobre a conta: chamar isso de "esgotada" mandaria
+  // repor conta viva.
+  assert.equal(classificarConta(new Error("rerank-timeout")).estado, "outro");
 });
 
 // A corrida das 78 de 31/07 morreu no meio e produziu números mesmo assim: 15 perguntas seguidas

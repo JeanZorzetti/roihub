@@ -93,11 +93,20 @@ lê DENTRO da corrida: +4,0 sobre o híbrido em @10, +3,5 em @20, e a camada `es
   `.cache/rerank.json` só retoma o que deu certo, então falha não fica barata na próxima. **O
   portão fechou em 03/08 (81,1%), e a prova de que o número vale é a linha que NÃO saiu**: o aviso
   de `avaliar.mjs:147` sai sempre que há falha, então ausência dele = 85 de 85 reranqueadas.
-- **🚩 SONDE O POOL com 1 chamada por conta ANTES de gastar as 85 do portão** — e não leia o pool
-  como bloco. Em 02/08 22:12 e 03/08 07:46 (autopublishing das 00:13 no meio) o quadro foi idêntico:
-  **conta 1 viva, conta 2 em 429, conta 3 em 403**. **429 é rate limit e recarrega esperando; 403 é
-  `subscription access disabled` e NÃO** — "as 3 esgotadas" escondia que uma pode estar morta de
-  vez, e com isso "somar conta ao pool" vira reposição em vez de expansão.
+- **🚩 SONDE O POOL com 1 chamada por conta ANTES de gastar as 85 do portão** —
+  `node --env-file=.env scripts/probe-pool.mjs [--gravar]`, ~40 s. E não leia o pool como bloco: em
+  02/08 22:12, 03/08 07:46 e 03/08 07:59 o quadro foi idêntico — **conta 1 viva, conta 2 em 429,
+  conta 3 em 403**. **429 é rate limit e recarrega esperando; 403 é `subscription access disabled` e
+  NÃO** — "as 3 esgotadas" escondia que uma pode estar morta de vez, e com isso "somar conta ao
+  pool" vira reposição em vez de expansão. `classificarConta` separa os dois porque `trocaDeConta`
+  não pode: ela responde "troco de conta?" e diz `true` para os três status, que é o certo para a
+  busca e cego para quem decide comprar conta.
+  - **⏳ O 403 da conta 3 continua NÃO DATADO, e a 3ª leitura não mudou isso**: ela saiu 13 min
+    depois da 2ª. Três leituras cobrem ~10 h (com um ciclo de autopublishing no meio) e ~10 h não
+    separam "morta de vez" de "morta desde ontem à noite". Quem data é o **histórico**
+    (`data/pool-sondagens.json`, gravado por `--gravar`) chegando a uma janela longa — não mais uma
+    leitura colada na anterior. Sondagem que repete a anterior confirma o estado e não compra
+    janela.
 - **Corrida pode morrer por TEARDOWN, sem o `🚨` e sem exit code** (aconteceu em 02/08 22:22, dentro
   do rerank). Isso NÃO é o aborto falhando: o aborto exige 3 falhas de CONTA seguidas, e ali havia
   conta respondendo. Quem salva é o `.cache/rerank.json` — a retomada fechou em 107 s.
