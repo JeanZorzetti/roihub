@@ -15,6 +15,21 @@ test("tokenizar tira acento, caixa e pontuação", () => {
   assert.deepEqual(tokenizar("UND_ERR_HEADERS_TIMEOUT"), ["und", "err", "headers", "timeout"]);
 });
 
+test("a gramática da pergunta não entra no índice nem na consulta", () => {
+  // `posso`/`quantos`/`onde` eram os termos de MAIOR idf das perguntas do dourado e existem quase
+  // só nos handoffs (`ele`: 91% dos handoffs contra 9% dos protocolos), então funcionavam como
+  // detector de handoff. Tirá-los levou o recall@10 de 77,7% para 81,1% e a camada `estado` de
+  // 30,6% para 46,1%.
+  assert.deepEqual(tokenizar("Quantos projetos o hub tem hoje e de onde vem essa lista?"), [
+    "projetos", "hub", "hoje", "vem", "lista",
+  ]);
+  // `nao` fica FORA da lista de propósito: a casa escreve norma como negação.
+  assert.ok(tokenizar("nao e prova").includes("nao"));
+  // O doc perde os mesmos tokens, senão consulta e documento deixam de casar.
+  const ix = indexar([{ id: "a", texto: "posso onde quantos" }]);
+  assert.deepEqual(buscar(ix, "posso"), []);
+});
+
 test("BM25 prefere o doc com o termo raro, não o com mais texto", () => {
   const ix = indexar([
     { id: "a", texto: "sitemap sitemap sitemap indexacao status http corpo" },

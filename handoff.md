@@ -1,5 +1,23 @@
 # ROI Hub — handoff
 
+> 🚩 **EXECUTADO (03/08, manhã) — A GRAMÁTICA DA PERGUNTA ERA UM DETECTOR DE HANDOFF:
+> [`handoff/handoff-a-gramatica-da-pergunta-era-um-detector-de-handoff.md`](handoff/handoff-a-gramatica-da-pergunta-era-um-detector-de-handoff.md).**
+> Os termos de **maior idf** das 85 perguntas eram a gramática delas: `posso` (9 perguntas, **idf
+> 5,5**) existe em UM handoff e em ZERO protocolo; `quantos` está em **29% dos handoffs e 0% dos
+> protocolos**; `ele` em **91% contra 9%**. O BM25 estava CERTO — premia a palavra rara da consulta
+> —, só que a palavra rara era o REGISTRO, não o assunto. Era isso que segurava a camada `estado`
+> (perguntas em língua natural) em **0,0% em @1**. Uma lista de vazios em `tokenizar`, ~1 linha,
+> **zero LLM**: recall@10 **77,7% → 81,1%**, `estado` **30,6% → 46,1%**, e os **8 zeros viraram 2**.
+> ⚠️ **DOIS números publicados caíram junto.** (a) O `--min bm25` **REPROVOU o híbrido**: 79,3%
+> contra 81,1% em @10 — o vetor compensava o defeito do BM25. **Não desligue**: ele ganha em @20
+> (85,1%) e @50 (**88,3%**), e é o top-50 da fusão que alimenta o reranker. (b) **O ganho do
+> reranker ficou SEM MEDIÇÃO**: os 81,1% dele são contra um híbrido de 77,1% que não existe mais, e
+> é o mesmo número que o BM25 agora faz **de graça**. Não quer dizer que virou inútil — quer dizer
+> que ninguém sabe. O rodapé da `/busca` marca o número como defasado DENTRO do texto.
+>
+> ▶️ **PRÓXIMO PASSO — remedir o portão do rerank quando o pool permitir** (85 chamadas contra 1
+> conta viva de 3; sonde antes). É o único jeito de saber se as 2 chamadas por busca ainda se pagam.
+>
 > ✅ **EXECUTADO (03/08) — O PORTÃO DO RERANK FECHOU:
 > [`handoff/handoff-o-portao-do-rerank-fechou-81-1.md`](handoff/handoff-o-portao-do-rerank-fechou-81-1.md).**
 > **`✓ recall@10 81,1% ≥ piso 77,7%`, com ZERO `rerank-conta`** — depois de duas noites em que a

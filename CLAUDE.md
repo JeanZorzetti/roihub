@@ -45,13 +45,38 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 ## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
 
 `BM25 → + vetor (Ollama) → + reranker (claude-cli) → síntese (claude-cli)`, medido em
-`data/dourado.json` (85 perguntas desde 01/08). **Medição corrente (03/08, 347 docs, 85 perguntas,
-zero `rerank-conta`): BM25 77,7% · híbrido 77,1% · rerank 81,1% em @10** — os 82,3% → 82,4% →
-88,0% que este arquivo citava foram medidos com **78** perguntas e 263 docs e **não se comparam**
-(denominador novo não se compara com número velho; piso relativo sempre). **O ganho do reranker se
-lê DENTRO da corrida: +4,0 sobre o híbrido em @10, +3,5 em @20, e a camada `estado` de 28,3% para
-38,9%** — que é a mais fraca das três.
+`data/dourado.json` (85 perguntas desde 01/08). **Medição corrente (03/08 manhã, 349 docs, 85
+perguntas, ZERO LLM): BM25 81,1% · híbrido 79,3% em @10.** Os 82,3% → 82,4% → 88,0% que este
+arquivo citava foram medidos com **78** perguntas e 263 docs e **não se comparam** (denominador
+novo não se compara com número velho; piso relativo sempre).
 
+- **🚩 O RERANKER ESTÁ SEM GANHO MEDIDO, e a causa é do lado do BM25.** Os 81,1% dele são de
+  03/08 de madrugada, contra um híbrido de 77,1% que **não existe mais**: a lista de vazios em
+  `tokenizar` (abaixo) levou o BM25 sozinho de 77,7% a **81,1%** — o mesmo número que o reranker
+  alcançava gastando 1 chamada de claude-cli por busca. O `+4,0 sobre o híbrido` não se cita mais.
+  Remedir custa 85 chamadas contra **1 conta viva de 3**, então o rodapé da `/busca` marca o número
+  do rerank como defasado DENTRO do texto — aviso ao lado perde para percentual.
+- **🚩 O `--min bm25` REPROVOU o híbrido nesta medição: 79,3% contra 81,1% em @10.** O vetor estava
+  em parte compensando o defeito do BM25, e com ele consertado a fusão DILUI em @10. **Não desligue
+  o vetor por isso**: ele ganha em @20 (85,1% contra 83,5%) e @50 (**88,3% contra 87,8%**), e é o
+  top-50 da fusão que alimenta o reranker. A camada `estado` em @20 é 56,1% contra 48,3%. Decidir
+  a fusão exige a corrida do rerank, que é justamente a que o pool não paga hoje.
+
+- **🚩 A GRAMÁTICA DA PERGUNTA era o termo mais raro da consulta, e por isso um detector de
+  handoff** (`VAZIOS` em `lib/bm25.mjs`, 03/08). O BM25 estava **certo** — premia quem tem as
+  palavras raras da consulta —, só que as palavras raras eram o registro conversacional, não o
+  assunto: `posso` aparece em 9 das 85 perguntas com **idf 5,5** e existe em UM handoff e em ZERO
+  protocolo, então sozinho dava a um doc arbitrário um pico que nenhum termo de conteúdo alcança.
+  `quantos` (7 perguntas, idf 2,7) está em **29% dos handoffs e 0% dos protocolos**; `onde` em 70%
+  contra 8%; `ele` em **91% contra 9%**. Era isso que segurava a camada `estado` (perguntas em
+  língua natural) em **0,0% em @1** enquanto `protocolo` (perguntas em jargão) fazia 89,5% em @10.
+  Tirar os vazios: **77,7% → 81,1%** no geral, **`estado` 30,6% → 46,1%** em @10 e 0,0% → 11,1% em
+  @1, e os **8 zeros em @10 viraram 2**. Zero LLM, zero rede, ~1 linha.
+  - **Filtra na `tokenizar`, que indexa E consulta.** Tirar só do lado da consulta deixaria o
+    `d.len` (denominador do BM25) inflado pelos mesmos vazios, que é metade do defeito.
+  - **`nao` fica FORA da lista de propósito** — a casa escreve norma como negação, e o idf dele é
+    0,1: não paga o risco. `diz`, `novo` e `proprio` também ficam fora: verbo e adjetivo carregam
+    assunto. **Palavra nova só entra medida contra o dourado**, como as âncoras do detector.
 - **São DUAS chamadas por busca** (rerank + resposta), do mesmo pool do autopublishing.
   `?rerank=0` e `?resposta=0` desligam cada uma (link no rodapé desliga as duas).
 - **Quem chama o claude-cli percorre o pool inteiro, nunca só `tokens[0]`.** Em 31/07 a busca

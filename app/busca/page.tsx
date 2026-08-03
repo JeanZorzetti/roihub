@@ -117,10 +117,12 @@ export default async function Busca({
   // Vetor de doc que saiu do corpus (reindexação pendente) devolve id sem texto para renderizar.
   achados = achados.filter((r) => porId.has(r.id));
 
-  // Reranker: +4,0 pontos em recall@10 sobre o híbrido da MESMA corrida (77,1% → 81,1%) e +1,1 em
-  // @3, medido em 03/08 com 85 perguntas e 347 docs, zero `rerank-conta`. O +5,6 (82,4% → 88,0%)
-  // que ficava aqui era de 31/07 com 78 perguntas e 263 docs — denominador diferente não se
-  // compara, e o ganho é lido dentro da corrida justamente por isso. Custa uma chamada de
+  // ⚠️ O GANHO DO RERANKER ESTÁ SEM MEDIÇÃO desde 03/08 (manhã), e o motivo é do lado do BM25: a
+  // lista de vazios em `tokenizar` tirou a gramática da pergunta do índice e levou o BM25 sozinho
+  // de 77,7% para 81,1% em @10 — exatamente o número que o reranker tinha alcançado partindo de um
+  // híbrido de 77,1%. O +4,0 que ficava escrito aqui foi medido contra um BM25 que não existe mais,
+  // então não se cita mais. Remedir custa 85 chamadas contra um pool com 1 conta viva de 3
+  // (`scripts/probe-pool.mjs`), e até lá o rodapé marca o número de rerank como defasado. Custa uma chamada de
   // claude-cli por busca — ~8 s, contra ~200 ms sem ele. `?rerank=0` desliga para quem quer a
   // resposta rápida, e falha do CLI cai na fusão sem derrubar a aba.
   let erroRerank = "";
@@ -213,15 +215,21 @@ export default async function Busca({
       </ol>
 
       <p className="foot">
-        {/* Os TRÊS remedidos na mesma corrida de 03/08, 347 docs e 85 perguntas, com ZERO
-            `rerank-conta` — as duas tentativas anteriores saíram com 42/85 e 59/85 caídas na fusão,
-            e o que elas imprimiam era média de reranqueado com híbrido puro. O do rerank NÃO se
-            compara com os 88,0% de 31/07: aquilo eram 78 perguntas e 263 docs, e denominador novo
-            não se compara com número velho. Um recall absoluto no rodapé envelhece sozinho de
-            qualquer jeito: handoff e memória são reescritos toda sessão, o que mexe em vetor e IDF
-            (83,0% → 82,4% sem mudar código) — por isso o portão é `--min bm25`, relativo. */}
+        {/* BM25 e híbrido remedidos em 03/08 (manhã), 349 docs e 85 perguntas, depois da lista de
+            vazios em `tokenizar`. O do RERANK é o de antes dela e por isso sai marcado: ele foi
+            medido contra um BM25 de 77,7% que não existe mais, e remedir custa 85 chamadas contra
+            1 conta viva de 3. Número sem marca de defasado é o defeito que esta base já pagou —
+            aviso ao lado perde para percentual, então a marca vai DENTRO do número.
+            O do rerank também nunca se comparou com os 88,0% de 31/07: aquilo eram 78 perguntas e
+            263 docs, e denominador novo não se compara com número velho. Um recall absoluto no
+            rodapé envelhece sozinho de qualquer jeito: handoff e memória são reescritos toda
+            sessão, o que mexe em vetor e IDF (83,0% → 82,4% sem mudar código) — por isso o portão
+            é `--min bm25`, relativo. ⚠️ E ele REPROVOU nesta medição: o híbrido faz 79,3% contra
+            81,1% do BM25 sozinho em @10 (ganha em @20 e @50, que é o que alimenta o reranker). */}
         {motor} · recall@10{" "}
-        {`${motor.includes("rerank") ? "81,1%" : motor === "BM25" ? "77,7%" : "77,1%"} medido em 03/08 com 347 docs e 85 perguntas`}{" "}
+        {motor.includes("rerank")
+          ? "81,1% medido em 03/08 com 347 docs, ANTES da lista de vazios do BM25 — defasado"
+          : `${motor === "BM25" ? "81,1%" : "79,3%"} medido em 03/08 com 349 docs e 85 perguntas`}{" "}
         de <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {erroRerank && `⚠️ Reranker caiu para a fusão — ${erroRerank}. `}
