@@ -11,7 +11,7 @@ import { carregarCorpus, MEMORIA_PADRAO } from "../lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "../lib/bm25.mjs";
 import { indexarDenso, buscarDenso, MODELO } from "../lib/denso.mjs";
 import { rrf } from "../lib/busca.mjs";
-import { rerank, trechoRelevante, MODELO_RERANK } from "../lib/reranker.mjs";
+import { rerank, trechoRelevante, MODELO_RERANK, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
 
 const KS = [1, 3, 5, 10, 20, 50];
 const K_MAX = Math.max(...KS);
@@ -51,6 +51,12 @@ if (quais !== "bm25") {
 // híbrido: comparar reranker com um baseline medido noutro dia não vale nada (o número absoluto
 // não reproduz entre sessões — ver o piso mais abaixo).
 const falhasRerank = [];
+// Este script era o ÚNICO consumidor do pool sem o aborto que `avaliar-resposta.mjs`,
+// `defasagem-calibrar.mjs` e `corpus-defasado.mjs` já tinham — e o preço saiu medido duas vezes:
+// em 02/08 a corrida do portão imprimiu 77,7% com 42/85 reranks caídos na fusão e em 02/08 à noite
+// 77,4% com 59/85, os dois números uma MISTURA de reranqueado com híbrido puro que não se compara
+// com nada. O aviso ficava ao lado do percentual, e aviso perde para percentual.
+let seguidasConta = 0;
 if (quais === "rerank") {
   const porId = new Map(docs.map((d) => [d.id, d]));
   motores.rerank = async (consulta) => {
@@ -62,6 +68,8 @@ if (quais === "rerank") {
     });
     const { itens, ok, erro } = await rerank(consulta, candidatos, { cache: true });
     if (!ok) falhasRerank.push(erro);
+    // Zera em qualquer sucesso: conta que morre e volta é rotação normal do pool (`falhasDeConta`).
+    seguidasConta = falhasDeConta(seguidasConta, [ok ? null : erro]);
     // A cauda além de 50 fica onde estava: o reranker só reordena o que recebeu.
     return [...itens, ...base.slice(50)];
   };
@@ -84,6 +92,7 @@ async function avaliar(buscarFn) {
       }),
     );
     resultados.push({ ...q, achados, alvos, fora: q.fontes.filter((f) => !ids.has(f)), recall });
+    if (seguidasConta >= MAX_CONTA_SEGUIDAS) return { resultados, ms: Date.now() - t0, abortada: true };
   }
   return { resultados, ms: Date.now() - t0 };
 }
@@ -96,7 +105,17 @@ const pct = (x) => `${(x * 100).toFixed(1)}%`;
 
 const relatorios = {};
 for (const nome of escolhidos) {
-  const { resultados, ms } = await avaliar(motores[nome]);
+  const { resultados, ms, abortada } = await avaliar(motores[nome]);
+  // Nenhum agregado sai daqui, nem com o aviso ao lado: corrida que perde o pool não mede o
+  // reranker, mede a fusão com outro nome. O `.cache/rerank.json` guarda o que já respondeu, então
+  // retomar com o pool cheio não repaga as chamadas que deram certo.
+  if (abortada) {
+    console.error(
+      `\n🚨 corrida ABORTADA em ${resultados.length}/${dourado.length} (motor ${nome}): ` +
+        `${MAX_CONTA_SEGUIDAS} falhas de conta seguidas — pool esgotado, nenhum número desta corrida vale.`,
+    );
+    process.exit(1);
+  }
   relatorios[nome] = resultados;
   const fora = resultados.reduce((a, r) => a + r.fora.length, 0);
   console.log(`\n── ${nome} — ${dourado.length} perguntas, ${ms} ms${fora ? `, ${fora} fontes fora do corpus` : ""}`);

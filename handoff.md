@@ -1,11 +1,16 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — fechar o portão do rerank com o pool inteiro:
+> ▶️ **PRÓXIMO PASSO — fechar o portão do rerank COM O POOL RECARREGADO:
 > `node --env-file=.env scripts/avaliar.mjs --motor rerank --min bm25`.**
-> ⏳ **A corrida de 02/08 NÃO mediu: 42 das 85 voltaram `rerank-conta`** (pool esgotado) e caíram na
-> fusão — o `77,7%` que ela imprimiu é METADE reranqueada e não se compara com nada. **Se sair
-> `rerank-conta` de novo, pare**: aviso perde para percentual. Detalhe e o resto em
-> [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md).
+> ⏳ **Duas noites seguidas a corrida não mediu o reranker: 42/85 e depois 59/85 voltaram
+> `rerank-conta`** (as 3 contas do pool em 401/403/429), e o `77,7%`/`77,4%` que saíram são MISTURA
+> de reranqueado com híbrido puro — o `✗ abaixo do piso` da segunda também não vale.
+> ✅ **Isso não depende mais de disciplina: `avaliar.mjs` era o ÚNICO consumidor do pool sem o
+> aborto dos outros três, e agora PARA em 3 falhas de conta seguidas com exit 1 e ZERO agregado
+> impresso** (exercitado com CLI falso devolvendo 429: parou em 3/5).
+> 🚩 **O teto é o pool** — 85 chamadas por corrida contra 3 contas que o autopublishing divide.
+> Rodar de novo com o pool morto só produz o `🚨`. Detalhe em
+> [`handoff/handoff-o-portao-para-sozinho-e-o-teto-e-o-pool.md`](handoff/handoff-o-portao-para-sozinho-e-o-teto-e-o-pool.md).
 >
 > ✅ **EXECUTADO (02/08) — [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md)
 > (spec: [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)):

@@ -80,7 +80,13 @@ medidos com 78 — **denominador novo não se compara com número velho**, piso 
   `resposta-conta` / `juiz-conta`); 3 falhas de conta seguidas abortam a corrida, gravam o
   parcial com `incompleto: true` e **não imprimem agregado nenhum** — nem com aviso ao lado. O
   relatório de 31/07 trazia o aviso das 15 suprimidas e ainda assim publicou 19,2% de recusa
-  fantasma: aviso perde para percentual.
+  fantasma: aviso perde para percentual. **`avaliar.mjs` foi o ÚLTIMO a ganhar isso (02/08), e o
+  buraco custou duas noites de pool**: ele colecionava as falhas e imprimia o aviso AO LADO do
+  percentual, então o portão do rerank saiu `77,7%` com 42/85 caídas na fusão e depois `77,4%` com
+  59/85 — média de reranqueado com híbrido puro, e a segunda ainda REPROVOU o reranker no `--min`
+  por um resultado que em sua maioria não era dele. **Uma corrida do portão custa 85 chamadas
+  contra 3 contas que o autopublishing divide: o teto é o POOL, não o prompt** — e o
+  `.cache/rerank.json` só retoma o que deu certo, então falha não fica barata na próxima.
 - **O corpus tem QUATRO origens desde 02/08** — protocolos, handoffs, memórias e **os 35 cards de
   `data/projects.json`** (`tipo: "projeto"`, `id` = slug, 345 docs). Sem os cards, "quais os
   blockers do goiania" devolvia handoff que FALA do goiania e nunca o card que TEM os blockers.
