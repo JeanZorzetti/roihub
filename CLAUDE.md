@@ -11,7 +11,10 @@ TypeScript, Node 22. No ar em `hub.roilabs.com.br`.
 2. **Teste é `node --test`, sem framework.** Nada de jest/vitest — não estão instalados e
    não devem ser. Arquivos `test/*.test.mjs`, `assert/strict`. `npm test` roda a lista
    explícita do `package.json`; **arquivo de teste novo tem que ser adicionado lá à mão**,
-   senão nunca roda. Suite inteira: ~1,6 s.
+   senão nunca roda. Suite inteira: ~1,6 s. **Desde 03/08 há check que pega o esquecimento**
+   (`test/validade.test.mjs`), e ele mora num arquivo já registrado de propósito: teste que
+   não roda não reprova nada. Compara nos dois sentidos — sobrar na lista é arquivo renomeado,
+   e aí o run inteiro morre em `ENOENT` sem dizer qual foi.
 3. **Deploy é Docker no EasyPanel**, `output: "standalone"` — **não é Vercel**.
    `vercel project ls` não prova nada sobre este repo. Push em `main` → build da imagem.
 4. **Não dar push entre 00:00 e 01:00 BRT.** O cron do autopublishing dispara 00:13 BRT
@@ -77,6 +80,29 @@ novo não se compara com número velho; piso relativo sempre).
   - **`nao` fica FORA da lista de propósito** — a casa escreve norma como negação, e o idf dele é
     0,1: não paga o risco. `diz`, `novo` e `proprio` também ficam fora: verbo e adjetivo carregam
     assunto. **Palavra nova só entra medida contra o dourado**, como as âncoras do detector.
+- **🚩 As duas perguntas que sobraram em 0,0% NÃO são a mesma classe, e "descasamento de
+  vocabulário" só vale para uma** (03/08 tarde). A coluna que decide é o **`df`**, não o idf —
+  `scripts/diagnosticar-pergunta.mjs <id> | --zeradas`, zero LLM, ~1 s, imprime idf **e df** de cada
+  token, o que o alvo casa e o top-10 com atribuição. **`D-73` é SATURAÇÃO**: o alvo casa 4 de 6
+  tokens e mesmo assim fica fora do top-10, porque esses quatro estão em **20–38% do corpus**
+  (`test` 28%, `mjs` 37%, `novo` 38%) — a casa inteira escreve "npm test verde" e "rodei à mão". O
+  único token que discrimina (7% do corpus) não existe em nenhum dos dois alvos, e no 1º colocado
+  ele aparece dentro de "secret de CI". **Lista de sinônimo não move isto** — o alvo já casa os
+  tokens. **`D-85` é o oposto: `SEO-05` casa ZERO tokens**, score 0, nenhum reranqueador ou ajuste
+  de `k1`/`b` alcança. E o dourado ali pede doc que responde **metade**: os números por propriedade
+  não estão em documento nenhum — são apurados por `d85()` lendo `docs/Crawl-stats`, e **`docs/` não
+  entra em `carregarCorpus()`**. Decidir `D-85` é decisão de GABARITO, não de motor.
+- **🚩 O handoff que DIAGNOSTICA uma pergunta do dourado vira resultado dela.** O handoff de 03/08
+  manhã citou a pergunta de `D-85` literalmente e com isso injetou no corpus o token mais raro dela
+  (5 dos 350 docs); reindexado, ele saiu em **2º lugar na medição do próprio defeito que descreve**.
+  Medido nas 85 com n-grama literal de 5 tokens: 7 perguntas citadas, 3 em top-10 sem serem fonte —
+  **mas ler as 3 derruba para 1**: as outras duas casam MENSAGEM DE ERRO (o mesmo stack trace na
+  pergunta e no doc), que é recuperação legítima. **A primeira corrida do n-grama mediu o n-grama**,
+  e ele erra dos dois lados — também perde `D-85`, cuja citação tem 4 tokens. **Movimento no recall:
+  ZERO por enquanto** (o intruso de `D-66` está em 4º e não expulsou fonte); o custo é um slot
+  queimado, e vira número quando uma fonte estiver em 10ª. **Ao escrever sobre uma pergunta do
+  dourado, nomeie pelo id e não reproduza os termos raros dela.** Handoff datado não se reescreve —
+  o slot já queimado fica.
 - **São DUAS chamadas por busca** (rerank + resposta), do mesmo pool do autopublishing.
   `?rerank=0` e `?resposta=0` desligam cada uma (link no rodapé desliga as duas).
 - **Quem chama o claude-cli percorre o pool inteiro, nunca só `tokens[0]`.** Em 31/07 a busca

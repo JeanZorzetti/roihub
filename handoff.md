@@ -1,5 +1,26 @@
 # ROI Hub — handoff
 
+> 🚩 **EXECUTADO (03/08, tarde) — AS DUAS ZERADAS NÃO SÃO A MESMA CLASSE:
+> [`handoff/handoff-as-duas-zeradas-nao-sao-a-mesma-classe.md`](handoff/handoff-as-duas-zeradas-nao-sao-a-mesma-classe.md).**
+> O §5.3 do handoff anterior classificou `D-73` e `D-85` juntas como "descasamento de vocabulário,
+> trabalho de sinônimo/vetor". **Medido, é errado para uma delas.** A coluna que decide é o **`df`**,
+> não o idf: em `D-73` o alvo **casa 4 de 6 tokens e ainda assim fica fora do top-10**, porque esses
+> quatro estão em **20–38% do corpus** — é SATURAÇÃO, e lista de sinônimo não move alvo que já casa
+> os tokens. `D-85` é o oposto: **`SEO-05` casa ZERO tokens, score 0**, que nenhum reranqueador
+> alcança — e ali o dourado pede doc que responde metade, porque os números por propriedade não
+> estão em documento nenhum (são apurados de `docs/Crawl-stats`, fora de `carregarCorpus()`).
+> ⚠️ **O handoff que DIAGNOSTICA uma pergunta vira resultado dela**: o da manhã citou `D-85`
+> literalmente, injetou o token mais raro dela (5 de 350 docs) e saiu em **2º na medição do próprio
+> defeito que descreve**. Movimento no recall **ZERO por enquanto** — o custo é um slot queimado.
+> Nomeie a pergunta pelo id, não reproduza os termos raros dela.
+> Entregue: `scripts/diagnosticar-pergunta.mjs` (zero LLM, ~1 s, idf **e df**) e o check que faltava
+> para o defeito que `D-73` descreve — arquivo de teste fora da lista do `npm test`, provado que
+> morde. **274 verdes · recall@10 81,1% sem movimento · zero LLM · pool intocado.**
+>
+> ▶️ **PRÓXIMO PASSO — decidir `D-85`, e é decisão de GABARITO, não de motor** (aceitar 0,0%
+> permanente / pôr `docs/Crawl-stats` no corpus / reescrever a pergunta). Depois, remedir o portão
+> do rerank quando o pool permitir.
+>
 > 🚩 **EXECUTADO (03/08, manhã) — A GRAMÁTICA DA PERGUNTA ERA UM DETECTOR DE HANDOFF:
 > [`handoff/handoff-a-gramatica-da-pergunta-era-um-detector-de-handoff.md`](handoff/handoff-a-gramatica-da-pergunta-era-um-detector-de-handoff.md).**
 > Os termos de **maior idf** das 85 perguntas eram a gramática delas: `posso` (9 perguntas, **idf

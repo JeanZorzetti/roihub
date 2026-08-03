@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { afirmacoesDePresente } from "../lib/validade.mjs";
 import { vivosDoRepo } from "../lib/validade-vivos.mjs";
+
+const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const trechos = (t) => afirmacoesDePresente(t).map((v) => v.trecho);
 
@@ -63,4 +68,30 @@ test("os documentos vivos do repo não afirmam presente com número", () => {
     afirmacoesDePresente(a.texto).map((v) => `${a.rel}:${v.linha}  ${v.trecho}`),
   );
   assert.deepEqual(achados, [], "apure o número ou date-o — ver scripts/validade.mjs");
+});
+
+// `node --test` aqui recebe uma LISTA EXPLÍCITA, não um glob: arquivo de teste novo fica verde na
+// mão de quem escreveu e não existe no CI até alguém lembrar de editar o `package.json`. É o item
+// 2 das cinco coisas que toda sessão redescobre, e nada no repo o pegava — nem podia: um teste que
+// não roda não reprova nada. Quem pega é este, que roda dentro de um arquivo JÁ registrado.
+// A comparação é nos DOIS sentidos: sobrar na lista é arquivo renomeado ou apagado, e aí o
+// `npm test` inteiro morre em ENOENT sem dizer qual foi.
+test("todo test/*.test.mjs está na lista do npm test", () => {
+  const script = JSON.parse(readFileSync(join(RAIZ, "package.json"), "utf8")).scripts.test;
+  const naLista = new Set(script.match(/test\/[\w.-]+\.test\.mjs/g) ?? []);
+  const emDisco = new Set(
+    readdirSync(join(RAIZ, "test"))
+      .filter((f) => f.endsWith(".test.mjs"))
+      .map((f) => `test/${f}`),
+  );
+  assert.deepEqual(
+    [...emDisco].filter((f) => !naLista.has(f)),
+    [],
+    "arquivo de teste fora do npm test: verde à mão e inexistente no CI — adicione em package.json",
+  );
+  assert.deepEqual(
+    [...naLista].filter((f) => !emDisco.has(f)),
+    [],
+    "npm test cita arquivo que não existe: o run inteiro morre em ENOENT",
+  );
 });
