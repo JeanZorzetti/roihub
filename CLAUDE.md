@@ -45,8 +45,12 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
 ## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
 
 `BM25 → + vetor (Ollama) → + reranker (claude-cli) → síntese (claude-cli)`, medido em
-`data/dourado.json` (85 perguntas desde 01/08; os 82,3% → 82,4% → **88,0%** de recall@10 foram
-medidos com 78 — **denominador novo não se compara com número velho**, piso relativo sempre).
+`data/dourado.json` (85 perguntas desde 01/08). **Medição corrente (03/08, 347 docs, 85 perguntas,
+zero `rerank-conta`): BM25 77,7% · híbrido 77,1% · rerank 81,1% em @10** — os 82,3% → 82,4% →
+88,0% que este arquivo citava foram medidos com **78** perguntas e 263 docs e **não se comparam**
+(denominador novo não se compara com número velho; piso relativo sempre). **O ganho do reranker se
+lê DENTRO da corrida: +4,0 sobre o híbrido em @10, +3,5 em @20, e a camada `estado` de 28,3% para
+38,9%** — que é a mais fraca das três.
 
 - **São DUAS chamadas por busca** (rerank + resposta), do mesmo pool do autopublishing.
   `?rerank=0` e `?resposta=0` desligam cada uma (link no rodapé desliga as duas).
@@ -86,7 +90,17 @@ medidos com 78 — **denominador novo não se compara com número velho**, piso 
   59/85 — média de reranqueado com híbrido puro, e a segunda ainda REPROVOU o reranker no `--min`
   por um resultado que em sua maioria não era dele. **Uma corrida do portão custa 85 chamadas
   contra 3 contas que o autopublishing divide: o teto é o POOL, não o prompt** — e o
-  `.cache/rerank.json` só retoma o que deu certo, então falha não fica barata na próxima.
+  `.cache/rerank.json` só retoma o que deu certo, então falha não fica barata na próxima. **O
+  portão fechou em 03/08 (81,1%), e a prova de que o número vale é a linha que NÃO saiu**: o aviso
+  de `avaliar.mjs:147` sai sempre que há falha, então ausência dele = 85 de 85 reranqueadas.
+- **🚩 SONDE O POOL com 1 chamada por conta ANTES de gastar as 85 do portão** — e não leia o pool
+  como bloco. Em 02/08 22:12 e 03/08 07:46 (autopublishing das 00:13 no meio) o quadro foi idêntico:
+  **conta 1 viva, conta 2 em 429, conta 3 em 403**. **429 é rate limit e recarrega esperando; 403 é
+  `subscription access disabled` e NÃO** — "as 3 esgotadas" escondia que uma pode estar morta de
+  vez, e com isso "somar conta ao pool" vira reposição em vez de expansão.
+- **Corrida pode morrer por TEARDOWN, sem o `🚨` e sem exit code** (aconteceu em 02/08 22:22, dentro
+  do rerank). Isso NÃO é o aborto falhando: o aborto exige 3 falhas de CONTA seguidas, e ali havia
+  conta respondendo. Quem salva é o `.cache/rerank.json` — a retomada fechou em 107 s.
 - **O corpus tem QUATRO origens desde 02/08** — protocolos, handoffs, memórias e **os 35 cards de
   `data/projects.json`** (`tipo: "projeto"`, `id` = slug, 345 docs). Sem os cards, "quais os
   blockers do goiania" devolvia handoff que FALA do goiania e nunca o card que TEM os blockers.

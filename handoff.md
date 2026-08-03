@@ -1,16 +1,22 @@
 # ROI Hub — handoff
 
-> ▶️ **PRÓXIMO PASSO — fechar o portão do rerank COM O POOL RECARREGADO:
-> `node --env-file=.env scripts/avaliar.mjs --motor rerank --min bm25`.**
-> ⏳ **Duas noites seguidas a corrida não mediu o reranker: 42/85 e depois 59/85 voltaram
-> `rerank-conta`** (as 3 contas do pool em 401/403/429), e o `77,7%`/`77,4%` que saíram são MISTURA
-> de reranqueado com híbrido puro — o `✗ abaixo do piso` da segunda também não vale.
-> ✅ **Isso não depende mais de disciplina: `avaliar.mjs` era o ÚNICO consumidor do pool sem o
-> aborto dos outros três, e agora PARA em 3 falhas de conta seguidas com exit 1 e ZERO agregado
-> impresso** (exercitado com CLI falso devolvendo 429: parou em 3/5).
-> 🚩 **O teto é o pool** — 85 chamadas por corrida contra 3 contas que o autopublishing divide.
-> Rodar de novo com o pool morto só produz o `🚨`. Detalhe em
-> [`handoff/handoff-o-portao-para-sozinho-e-o-teto-e-o-pool.md`](handoff/handoff-o-portao-para-sozinho-e-o-teto-e-o-pool.md).
+> ✅ **EXECUTADO (03/08) — O PORTÃO DO RERANK FECHOU:
+> [`handoff/handoff-o-portao-do-rerank-fechou-81-1.md`](handoff/handoff-o-portao-do-rerank-fechou-81-1.md).**
+> **`✓ recall@10 81,1% ≥ piso 77,7%`, com ZERO `rerank-conta`** — depois de duas noites em que a
+> corrida saiu com 42/85 e 59/85 caídas na fusão e imprimiu média de reranqueado com híbrido puro.
+> **A prova de que vale é a linha que NÃO saiu:** `avaliar.mjs:147` imprime o aviso sempre que há
+> falha, e ele não apareceu — 85 de 85 reranqueadas.
+> ⚠️ **81,1% NÃO se compara com os 88,0% de 31/07** (78 perguntas, 263 docs): o ganho se lê DENTRO
+> da corrida — **+4,0 sobre o híbrido em @10** (77,1% → 81,1%), +3,5 em @20, e a camada `estado`
+> saindo de 28,3% para **38,9%**. Os três números do rodapé da `/busca` agora são da MESMA corrida.
+>
+> ▶️ **PRÓXIMO PASSO — datar a conta 3 do pool (1 chamada).**
+> 🚩 **"As 3 contas esgotadas" eram DOIS estados diferentes:** sondando 1 chamada por conta em
+> 02/08 22:12 e 03/08 07:46 (com o autopublishing das 00:13 no meio), o quadro foi idêntico —
+> conta 1 **viva**, conta 2 **429**, conta 3 **403**. **429 recarrega esperando; 403 é
+> `subscription access disabled` e não.** Se o 403 for permanente, o teto são **2 contas úteis** e
+> "somar conta ao pool" vira REPOSIÇÃO, não expansão. Duas leituras não provam morte — falta a
+> terceira.
 >
 > ✅ **EXECUTADO (02/08) — [`handoff/handoff-busca-no-ranking-executado.md`](handoff/handoff-busca-no-ranking-executado.md)
 > (spec: [`handoff/handoff-proximo-passo-busca-no-ranking.md`](handoff/handoff-proximo-passo-busca-no-ranking.md)):

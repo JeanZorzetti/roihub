@@ -117,9 +117,12 @@ export default async function Busca({
   // Vetor de doc que saiu do corpus (reindexação pendente) devolve id sem texto para renderizar.
   achados = achados.filter((r) => porId.has(r.id));
 
-  // Reranker: +5,6 pontos em recall@10 (82,4% → 88,0%) e +5,1 em @3, medido no dourado. Custa
-  // uma chamada de claude-cli por busca — ~8 s, contra ~200 ms sem ele. `?rerank=0` desliga para
-  // quem quer a resposta rápida, e falha do CLI cai na fusão sem derrubar a aba.
+  // Reranker: +4,0 pontos em recall@10 sobre o híbrido da MESMA corrida (77,1% → 81,1%) e +1,1 em
+  // @3, medido em 03/08 com 85 perguntas e 347 docs, zero `rerank-conta`. O +5,6 (82,4% → 88,0%)
+  // que ficava aqui era de 31/07 com 78 perguntas e 263 docs — denominador diferente não se
+  // compara, e o ganho é lido dentro da corrida justamente por isso. Custa uma chamada de
+  // claude-cli por busca — ~8 s, contra ~200 ms sem ele. `?rerank=0` desliga para quem quer a
+  // resposta rápida, e falha do CLI cai na fusão sem derrubar a aba.
   let erroRerank = "";
   if (querRerank !== "0" && q.trim() && achados.length > 1) {
     const candidatos = achados.map((r) => {
@@ -134,9 +137,9 @@ export default async function Busca({
   }
   achados = achados.slice(0, 10);
 
-  // Síntese sobre os 10 finais: recall@10 é 88,0% mas @1 é 34,2% — o material está lá e a lista
+  // Síntese sobre os 10 finais: recall@10 é 81,1% mas @1 é 29,5% — o material está lá e a lista
   // não o entrega. Segunda chamada de claude-cli, DEPOIS da fusão, e não um prompt só que
-  // ordena e responde: acoplar as duas obrigaria a remedir os 88,0% a cada ajuste de redação.
+  // ordena e responde: acoplar as duas obrigaria a remedir o recall a cada ajuste de redação.
   // `?resposta=0` desliga; falha ou resposta sem citação some da tela e vira aviso no rodapé.
   const resposta = querResposta !== "0" && q.trim() && achados.length
     ? await responder(q, trechosPara(achados.map((r) => porId.get(r.id)!), termos))
@@ -210,16 +213,15 @@ export default async function Busca({
       </ol>
 
       <p className="foot">
-        {/* BM25 e híbrido remedidos em 02/08 com 345 docs e 85 perguntas (os cards entraram no
-            corpus). O do rerank continua o de 31/07 porque a remedição parou no pool: 42 das 85
-            chamadas voltaram `rerank-conta` e a corrida vira mistura de reranqueado com híbrido
-            puro. Número velho DECLARADO velho é melhor que um número novo que mede outra coisa.
-            Um recall absoluto no rodapé envelhece sozinho de qualquer jeito: handoff e memória são
-            reescritos toda sessão, o que mexe em vetor e IDF (83,0% → 82,4% sem mudar código). */}
+        {/* Os TRÊS remedidos na mesma corrida de 03/08, 347 docs e 85 perguntas, com ZERO
+            `rerank-conta` — as duas tentativas anteriores saíram com 42/85 e 59/85 caídas na fusão,
+            e o que elas imprimiam era média de reranqueado com híbrido puro. O do rerank NÃO se
+            compara com os 88,0% de 31/07: aquilo eram 78 perguntas e 263 docs, e denominador novo
+            não se compara com número velho. Um recall absoluto no rodapé envelhece sozinho de
+            qualquer jeito: handoff e memória são reescritos toda sessão, o que mexe em vetor e IDF
+            (83,0% → 82,4% sem mudar código) — por isso o portão é `--min bm25`, relativo. */}
         {motor} · recall@10{" "}
-        {motor.includes("rerank")
-          ? "88,0% medido em 31/07 com 263 docs e 78 perguntas — pendente remedir"
-          : `${motor === "BM25" ? "77,7%" : "77,1%"} medido em 02/08 com 345 docs e 85 perguntas`}{" "}
+        {`${motor.includes("rerank") ? "81,1%" : motor === "BM25" ? "77,7%" : "77,1%"} medido em 03/08 com 347 docs e 85 perguntas`}{" "}
         de <code>data/dourado.json</code> (<code>node scripts/avaliar.mjs</code>).{" "}
         {motor === "BM25" && (falha || porQueSemVetor) && `⚠️ Vetor desligado — ${falha || porQueSemVetor}. `}
         {erroRerank && `⚠️ Reranker caiu para a fusão — ${erroRerank}. `}
