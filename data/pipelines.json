@@ -1,0 +1,17 @@
+[
+  {
+    "slug": "orion",
+    "nome": "Orion ERP",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "atma",
+    "nome": "Atma Aligner",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "roilabs",
+    "nome": "ROI Labs (site institucional)",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  }
+]

@@ -8,6 +8,14 @@ export function middleware(req: NextRequest) {
       : NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // Ingestão de leads: mesmo padrão do autopublish, segredo PRÓPRIO. Reusar o
+  // CRON_SECRET daria a quem publica artigo o direito de gravar lead.
+  if (req.nextUrl.pathname === "/api/crm/leads") {
+    return authorized(req.headers.get("authorization"), process.env.CRM_INGEST_SECRET ?? "")
+      ? NextResponse.next()
+      : NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const pass = process.env.HUB_PASS;
   if (!pass) {
     // Fail closed em produção: hub lista blockers e notas internas de todos os projetos.

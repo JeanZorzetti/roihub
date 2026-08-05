@@ -168,6 +168,26 @@ function ensure(): Promise<unknown> {
         paused_reason TEXT,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      CREATE TABLE IF NOT EXISTS crm_leads (
+        id BIGSERIAL PRIMARY KEY,
+        external_id TEXT UNIQUE,
+        pipeline TEXT NOT NULL,
+        etapa TEXT NOT NULL,
+        nome TEXT NOT NULL,
+        email TEXT,
+        telefone TEXT,
+        origem TEXT NOT NULL,
+        valor NUMERIC(12,2),
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        atualizado TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS crm_eventos (
+        id BIGSERIAL PRIMARY KEY,
+        lead_id BIGINT NOT NULL REFERENCES crm_leads(id) ON DELETE CASCADE,
+        de TEXT, para TEXT NOT NULL, nota TEXT,
+        quando TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
       INSERT INTO seo_projects (project_slug, enabled, paused_reason)
       VALUES
         ('*', FALSE, 'Aguardando canários'),
@@ -356,6 +376,132 @@ export async function setProjectEnabled(slug: string, enabled: boolean, reason: 
     [slug, enabled, reason]
   );
   if (!result.rowCount) throw new Error("project-not-found");
+}
+
+// ===== CRM (tabelas crm_*) =====
+
+export type Lead = {
+  id: number;
+  externalId: string | null;
+  pipeline: string;
+  etapa: string;
+  nome: string;
+  email: string | null;
+  telefone: string | null;
+  origem: string;
+  valor: number | null;
+  metadata: Record<string, unknown>;
+  criado: string;
+  atualizado: string;
+  /** Quando o lead entrou na etapa atual — responde "está em proposta há quanto tempo?". */
+  desde: string;
+};
+
+type LeadRow = {
+  id: string;
+  external_id: string | null;
+  pipeline: string;
+  etapa: string;
+  nome: string;
+  email: string | null;
+  telefone: string | null;
+  origem: string;
+  valor: string | null;
+  metadata: Record<string, unknown>;
+  criado: Date | string;
+  atualizado: Date | string;
+  desde: Date | string;
+};
+
+function lead(row: LeadRow): Lead {
+  return {
+    id: Number(row.id),
+    externalId: row.external_id,
+    pipeline: row.pipeline,
+    etapa: row.etapa,
+    nome: row.nome,
+    email: row.email,
+    telefone: row.telefone,
+    origem: row.origem,
+    valor: row.valor === null ? null : Number(row.valor),
+    metadata: row.metadata,
+    criado: iso(row.criado),
+    atualizado: iso(row.atualizado),
+    desde: iso(row.desde),
+  };
+}
+
+export type NewLead = {
+  externalId: string;
+  pipeline: string;
+  etapa: string;
+  nome: string;
+  email: string | null;
+  telefone: string | null;
+  origem: string;
+  valor: number | null;
+  metadata: Record<string, unknown>;
+};
+
+/** `created: false` = reenvio do mesmo external_id. Não duplica e não sobrescreve. */
+export async function insertLead(input: NewLead): Promise<{ id: number | null; created: boolean }> {
+  await ensure();
+  const r = await pool().query<{ id: string }>(
+    `INSERT INTO crm_leads (external_id, pipeline, etapa, nome, email, telefone, origem, valor, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+     ON CONFLICT (external_id) DO NOTHING
+     RETURNING id`,
+    [
+      input.externalId,
+      input.pipeline,
+      input.etapa,
+      input.nome,
+      input.email,
+      input.telefone,
+      input.origem,
+      input.valor,
+      JSON.stringify(input.metadata),
+    ]
+  );
+  if (!r.rows[0]) return { id: null, created: false };
+  const id = Number(r.rows[0].id);
+  await pool().query(`INSERT INTO crm_eventos (lead_id, de, para, nota) VALUES ($1, NULL, $2, $3)`, [
+    id,
+    input.etapa,
+    `entrada via ${input.origem}`,
+  ]);
+  return { id, created: true };
+}
+
+/** ponytail: busca tudo — 1 usuário, e um CRM que precise de paginação já pede kanban. */
+export async function listLeads(): Promise<Lead[]> {
+  await ensure();
+  const r = await pool().query<LeadRow>(
+    `SELECT l.*, COALESCE(
+       (SELECT max(e.quando) FROM crm_eventos e WHERE e.lead_id = l.id AND e.para = l.etapa),
+       l.criado
+     ) AS desde
+     FROM crm_leads l
+     ORDER BY l.atualizado DESC, l.id DESC`
+  );
+  return r.rows.map(lead);
+}
+
+/** Move de etapa e grava o evento. Sem evento, "há quanto tempo?" não tem resposta. */
+export async function moveLead(id: number, etapa: string, nota: string | null): Promise<void> {
+  await ensure();
+  // Duas queries porque o Postgres não dá o valor ANTIGO no RETURNING (só a
+  // partir do PG18), e o `de` do evento é justamente esse valor.
+  const atual = await pool().query<{ etapa: string }>(`SELECT etapa FROM crm_leads WHERE id = $1`, [id]);
+  const de = atual.rows[0]?.etapa;
+  if (de === undefined || de === etapa) return; // id inexistente, ou já está lá
+  await pool().query(`UPDATE crm_leads SET etapa = $2, atualizado = now() WHERE id = $1`, [id, etapa]);
+  await pool().query(`INSERT INTO crm_eventos (lead_id, de, para, nota) VALUES ($1, $2, $3, $4)`, [
+    id,
+    de,
+    etapa,
+    nota,
+  ]);
 }
 
 export async function listTasks(): Promise<Task[]> {
