@@ -6,7 +6,13 @@
 
 **Status**: Draft
 
-**Input**: User description: "Melhorar o CRM do roihub para receber e gerenciar leads gerados pelo Polaris (sofia-next, polarisia.com.br). roihub já tem pipelines (orion, atma, roilabs) e um endpoint de ingestão POST /api/crm/leads protegido por CRM_INGEST_SECRET. O Polaris hoje envia leads de 3 formulários (contato, intake de site, early access) só para o Sirius CRM externo via POST /api/crm/lead. Os leads do Polaris devem passar a chegar no CRM do roihub, visíveis no kanban junto com Orion/Atma/ROI Labs."
+**Input**: User description: "Melhorar o CRM do roihub para receber e gerenciar leads gerados pelo Polaris (sofia-next, polarisia.com.br), conectando-o para que os leads do Polaris cheguem lá." roihub já tem pipelines (orion, atma, roilabs) e um endpoint de ingestão `POST /api/crm/leads` protegido por `CRM_INGEST_SECRET`.
+
+**Estado atual verificado no código do Polaris** (os 3 formulários NÃO seguem o mesmo caminho hoje):
+- `/contato` (página real, renderizada) → `POST /api/contact` → grava direto no Postgres do Polaris (`prisma.salesLead.create`, `source: "contato"`). Não passa por nenhum CRM, nem Sirius nem roihub. Funciona normalmente hoje.
+- `/peca-seu-site` (linkado no sitemap) → `IntakeForm.tsx` → `POST /api/crm/lead` (proxy próprio do Polaris) → Sirius CRM externo. Atualmente quebrado (500) por falta de `SIRIUS_CRM_API_KEY` em produção.
+- `/early-access` (linkado na navegação e em `/comunidade`) → `POST /api/crm/lead` → Sirius CRM externo. Mesmo problema do item acima.
+- `ContactForm.tsx` (componente que também posta em `/api/crm/lead`) existe no código mas não é renderizado por nenhuma página — código morto, fora do escopo desta spec.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -20,9 +26,9 @@ Um visitante do site do Polaris preenche qualquer um dos formulários existentes
 
 **Acceptance Scenarios**:
 
-1. **Given** o visitante preenche o formulário de contato do Polaris com nome e email válidos, **When** o formulário é enviado, **Then** um card de lead aparece na pipeline "Polaris" do CRM do roihub com esses dados.
-2. **Given** o visitante preenche o formulário de intake de site ("peça seu site"), **When** o formulário é enviado, **Then** um card de lead aparece na pipeline "Polaris" do CRM do roihub.
-3. **Given** o visitante se inscreve na lista de early access, **When** o formulário é enviado, **Then** um card de lead aparece na pipeline "Polaris" do CRM do roihub.
+1. **Given** o visitante preenche o formulário de contato do Polaris (`/contato`) com nome e email válidos, **When** o formulário é enviado, **Then** o registro continua sendo salvo no banco do Polaris como hoje **e** um card de lead aparece na pipeline "Polaris" do CRM do roihub.
+2. **Given** o visitante preenche o formulário de intake de site ("peça seu site"), **When** o formulário é enviado, **Then** um card de lead aparece na pipeline "Polaris" do CRM do roihub (no lugar do envio ao Sirius CRM, hoje quebrado).
+3. **Given** o visitante se inscreve na lista de early access, **When** o formulário é enviado, **Then** um card de lead aparece na pipeline "Polaris" do CRM do roihub (no lugar do envio ao Sirius CRM, hoje quebrado).
 
 ---
 
@@ -70,7 +76,7 @@ Uma falha de rede faz o formulário do Polaris tentar enviar o lead novamente. O
 - **FR-004**: O CRM do roihub MUST reter, para cada lead do Polaris, ao menos nome e email; telefone, empresa e a mensagem/contexto original do formulário MUST ser preservados quando fornecidos pelo visitante.
 - **FR-005**: O bloqueio de bots (honeypot) já existente nos formulários do Polaris MUST continuar impedindo que submissões de bot cheguem ao CRM do roihub.
 - **FR-006**: Quando o CRM do roihub estiver indisponível ou rejeitar o envio, o formulário do Polaris MUST mesmo assim ser aceito como sucesso para o visitante (entrega best-effort) — uma falha interna do CRM nunca deve aparecer como erro para quem preencheu o formulário.
-- **FR-007**: O envio ao Sirius CRM (sistema externo atual) MUST ser substituído pelo envio ao CRM do roihub — deixa de existir um segundo sistema de leads em paralelo para os formulários do Polaris.
+- **FR-007**: Para os formulários que hoje enviam ao Sirius CRM (intake de site, early access), esse envio MUST ser substituído pelo envio ao CRM do roihub — deixa de existir um segundo sistema de leads em paralelo. Para o formulário de contato (`/contato`), que hoje grava só no banco do Polaris sem tocar em nenhum CRM externo, o envio ao CRM do roihub é uma integração nova, adicional ao registro no banco do Polaris (que continua existindo).
 
 ### Key Entities
 
@@ -88,7 +94,8 @@ Uma falha de rede faz o formulário do Polaris tentar enviar o lead novamente. O
 
 ## Assumptions
 
-- O envio ao Sirius CRM é removido dos 3 formulários do Polaris nesta feature; o CRM do roihub passa a ser o único destino de leads do Polaris (decisão confirmada — substituição, não dual-write).
+- O envio ao Sirius CRM é removido do intake de site e do early access (únicos 2 formulários que hoje o utilizam); o CRM do roihub passa a ser o destino de leads desses dois. O formulário de contato mantém seu registro atual no banco do Polaris e passa a *também* alimentar o CRM do roihub (decisão confirmada — substituição onde já existia Sirius CRM; adição onde não existia CRM nenhum, sem dual-write com o Sirius).
+- `ContactForm.tsx` (componente órfão, nunca renderizado) está fora do escopo desta spec — nenhuma página real depende dele.
 - A entrega ao CRM do roihub é best-effort: uma falha ou indisponibilidade do hub não bloqueia nem falha a submissão do visitante no Polaris (decisão confirmada). Não há retry automático em fila nesta spec — um lead perdido por indisponibilidade fica apenas ausente do CRM.
 - As etapas do funil da pipeline "Polaris" seguem o mesmo padrão já usado pelas pipelines existentes (`novo`, `contato`, `proposta`, `ganho`, `perdido`), por consistência com o resto do CRM — não há indício de que o funil do Polaris precise de etapas diferentes.
 - A autenticação do envio do Polaris para o CRM do roihub reaproveita o mesmo segredo de ingestão já usado pela Orion (`CRM_INGEST_SECRET`), em vez de introduzir um segredo dedicado por origem — é o padrão já estabelecido no sistema (um segredo por capacidade de ingestão, não por chamador).
