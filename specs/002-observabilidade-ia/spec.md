@@ -49,6 +49,34 @@ numérica sobre a primeira janela de coleta.
 
 ---
 
+## Clarifications
+
+### Session 2026-08-10
+
+- **Q: Como identificar de forma estável cada conta do pool na série?**
+  **A: hash curto do token** (sha256, 8 caracteres). A identidade viaja com a credencial: reordenar
+  `CLAUDE_CODE_OAUTH_TOKENS` não mistura históricos, e trocar o token de uma conta cria identidade
+  nova — o que é o comportamento certo, porque credencial nova é conta nova para efeito de
+  rate limit. Índice posicional foi rejeitado: a env var é uma string separada por vírgula, e
+  reordenar faria o histórico de uma conta virar o da outra em silêncio, quebrando exatamente o
+  "desde quando" que a US2 existe para produzir.
+- **Q: Qual a política de retenção da série?**
+  **A: 90 dias de detalhe por chamada + resumo diário permanente.** O resumo guarda, por dia e por
+  empregado: chamadas, falhas por código, tokens de entrada/saída e latência p50/p95. A janela de
+  90 dias é a mesma do GSC Crawl Stats, então as leituras da casa se comparam entre si.
+- **Q: Onde mora a leitura da US3?**
+  **A: aba nova `/ia`**, no padrão das existentes (`/busca`, `/crm`, `/agenda`).
+- **Q: As chamadas feitas por scripts na máquina do dev entram na série?**
+  **A: sim, marcadas como `dev`, e excluídas por default de toda agregação.** É o que fecha a
+  contabilidade do pool: as corridas de régua são o maior consumidor (85 chamadas o portão do
+  reranker, 3 por pergunta o juiz) e rodam de lá. Sem elas, "quanto do pool foi gasto" não fecha.
+- **Q: O que compõe o estado de observabilidade cujo diff vira card noturno?**
+  **A: só transições categóricas** — estado de cada conta do pool, empregado que passou a falhar ou
+  parou de falhar, e coletor caído. **Nenhum limiar numérico** nesta spec: limiar sobre linha de base
+  não calibrada fabrica card, e card ruidoso mata o mecanismo de card que hoje funciona.
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Toda chamada de IA deixa um registro (Priority: P1)
@@ -112,16 +140,16 @@ verificando que uma conta que mudou de estado entre duas sondagens tem a transi�
 
 ---
 
-### User Story 3 - Uma tela responde as perguntas do dia (Priority: P2)
+### User Story 3 - A aba `/ia` responde as perguntas do dia (Priority: P2)
 
-A pessoa que abre o hub de manhã precisa ver, num lugar só: quanto do pool foi consumido nas últimas
+A pessoa que abre o hub de manhã precisa ver, numa aba própria: quanto do pool foi consumido nas últimas
 24 h e por qual empregado; quantas chamadas falharam e sob quais códigos; a latência típica de cada
 empregado; e o estado datado das contas. Sem isso, o registro da US1 é um banco que ninguém lê.
 
 **Why this priority**: É o que transforma dado em decisão, mas depende inteiramente das US1/US2 — e
 o dado bruto já tem valor sozinho para diagnóstico pontual. Por isso P2, não P1.
 
-**Independent Test**: Abrir a tela depois de um ciclo noturno completo e conferir que ela mostra o
+**Independent Test**: Abrir `/ia` depois de um ciclo noturno completo e conferir que ela mostra o
 consumo por empregado, a quebra de falhas por código e a saúde datada do pool, batendo com os
 registros brutos da mesma janela.
 
@@ -159,6 +187,9 @@ card é gerado.
    roda, **Then** nenhum card é criado.
 2. **Given** uma conta do pool mudou de estado desde ontem, **When** a corrida roda, **Then** um
    card é criado nomeando a conta, o estado novo e desde quando.
+2b. **Given** a latência ou o volume de um empregado mudou de patamar sem que ele passasse a falhar,
+   **When** a corrida roda, **Then** **nenhum** card é criado — limiar numérico está fora desta
+   feature, e a mudança fica visível apenas na aba `/ia`.
 3. **Given** é a **primeira** corrida deste coletor, **When** ela roda, **Then** ela grava a linha de
    base e **não** gera card — a alternativa seria publicar a linha de base disfarçada de achado.
 4. **Given** o coletor de observabilidade estourou, **When** a corrida roda, **Then** ele devolve
@@ -202,9 +233,14 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
   distinguível do tráfego que mede, senão o consumo da medição vira consumo do produto.
 - **Uma chamada lógica vira N tentativas** ao percorrer o pool. Contar só as tentativas infla o
   volume; contar só o sucesso esconde a saturação. Os dois números têm que ser deriváveis.
-- **Chamadas do ambiente de desenvolvimento** (Windows/OneDrive, sem os tokens de produção) não
-  podem poluir a série de produção — hoje `rodarClaude` sem pool cai na autenticação ambiente do
-  CLI de propósito, para permitir medir na máquina do dev.
+- **Chamadas do ambiente de desenvolvimento** entram na série marcadas como `dev` e ficam fora das
+  agregações por default. Mas `rodarClaude` sem pool configurado cai na autenticação ambiente do CLI
+  de propósito (para permitir medir na máquina do dev): nesse caso **não há token do qual derivar a
+  identidade da conta**, e o registro precisa de um estado próprio para isso — atribuir a chamada a
+  uma conta arbitrária do pool seria pior que não atribuir.
+- **Um script local roda sem `DATABASE_URL`**: a gravação falha, e pela FR-007 a corrida continua.
+  Uma corrida de régua inteira pode assim não deixar rastro — a lacuna precisa aparecer como lacuna
+  na aba, não como "o pool não foi usado naquele dia".
 - **Duas corridas no mesmo dia**: como em `hub_estado` (PK `run_date`), repetir o dia tem que
   produzir o mesmo resultado, não somar duas vezes.
 - **Um empregado novo entra no repo** sem ser instrumentado: ele aparece como ausente da série, o
@@ -227,9 +263,12 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
 - **FR-001**: Toda invocação de LLM feita pelo hub MUST produzir um registro individual, qualquer
   que seja o empregado que a fez.
 - **FR-002**: O registro MUST identificar: o **empregado** (autopublish-draft, autopublish-ymyl,
-  rerank, resposta, juiz, defasagem, sonda), o **modelo**, o **effort**, a **conta do pool** usada
-  (por identificador estável, nunca o token), o **início**, a **duração**, os **tokens de entrada e
-  saída**, o **desfecho** e o **ambiente** (produção ou desenvolvimento).
+  rerank, resposta, juiz, defasagem, sonda), o **modelo**, o **effort**, a **conta do pool** usada,
+  o **início**, a **duração**, os **tokens de entrada e saída**, o **desfecho** e o **ambiente**
+  (`prod` ou `dev`).
+- **FR-002a**: A conta do pool MUST ser identificada por um **hash curto derivado do próprio token**
+  (8 caracteres), nunca pela posição na variável de ambiente e nunca pelo segredo. Reordenar
+  `CLAUDE_CODE_OAUTH_TOKENS` MUST NOT misturar históricos de contas distintas.
 - **FR-003**: O desfecho de erro MUST ser um dos códigos estáveis já usados pela casa
   (prefixo do empregado + sufixo da classe: `-auth`, `-rate`, `-cli`, `-output`, `-parse`,
   `-timeout`, `-conta`). Código novo MUST ser adicionado ao conjunto validado, como já ocorre com o
@@ -244,8 +283,10 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
   MUST ficar visível como lacuna de telemetria naquela janela.
 - **FR-008**: Chamadas atendidas por cache MUST ser registradas como tal, distintas de chamadas que
   chegaram ao modelo.
-- **FR-009**: Registros de ambiente de desenvolvimento MUST ser separáveis dos de produção em
-  qualquer agregação.
+- **FR-009**: Chamadas feitas por scripts fora de produção (medições, calibrações, sonda à mão)
+  MUST ser registradas na mesma série com ambiente `dev`, e MUST ser **excluídas por default** de
+  toda agregação apresentada. O consumo do pool MUST poder ser lido incluindo-as, porque o pool é
+  o mesmo — é a latência e a taxa de erro que não se misturam.
 
 **Saúde do pool**
 
@@ -260,9 +301,9 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
 
 **Leitura**
 
-- **FR-014**: Users MUST be able to ver, para uma janela de tempo, o consumo por empregado, a
-  contagem de falhas por código e a latência típica por empregado.
-- **FR-015**: Users MUST be able to ver o estado datado de cada conta do pool.
+- **FR-014**: Users MUST be able to ver, numa aba própria `/ia`, para uma janela de tempo: o consumo
+  por empregado, a contagem de falhas por código e a latência típica por empregado.
+- **FR-015**: A aba `/ia` MUST mostrar o estado datado de cada conta do pool.
 - **FR-016**: A apresentação MUST distinguir três estados por empregado: *não acionado*, *acionado
   sem falhas* e *sem telemetria* — pelo mesmo motivo pelo qual o placar de conformidade imprime
   `n/a` separado de aprovado.
@@ -272,7 +313,10 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
 **Diff e alerta**
 
 - **FR-018**: A mudança de estado de observabilidade MUST alimentar o mecanismo de card já existente
-  (diff contra o dia anterior), e apenas células que apareceram ou sumiram MUST virar card.
+  (diff contra o dia anterior), e apenas células que apareceram ou sumiram MUST virar card. O estado
+  MUST ser composto **apenas por transições categóricas** — estado de cada conta do pool, empregado
+  que passou a falhar ou parou de falhar, coletor caído. Limiar numérico (latência, volume, taxa)
+  MUST NOT gerar card nesta feature.
 - **FR-019**: A primeira corrida do coletor MUST gravar a linha de base sem gerar card.
 - **FR-020**: Coletor que estoura MUST devolver zero chave e virar card de coletor caído, carregando
   os valores do dia anterior — nunca deixar o diff ler a ausência como conserto.
@@ -284,8 +328,11 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
 
 **Retenção**
 
-- **FR-022**: A série de registros MUST ter política de retenção declarada, com resumo agregado
-  preservado além da janela de detalhe.
+- **FR-022**: O detalhe por chamada MUST ser retido por **90 dias**. Um **resumo diário permanente**
+  por empregado MUST preservar, além dessa janela: número de chamadas, falhas por código, tokens de
+  entrada e saída e latência p50/p95.
+- **FR-023**: O resumo diário MUST ser derivável do detalhe enquanto os dois coexistem, de forma que
+  a consolidação seja conferível antes de o detalhe expirar.
 
 ### Key Entities
 
@@ -296,8 +343,11 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
 - **Empregado**: o consumidor de IA que fez a chamada — a unidade pela qual consumo, falha e
   latência são atribuídos. Cada empregado tem um prefixo de código de erro próprio.
 - **Conta do pool**: uma das credenciais de assinatura em `CLAUDE_CODE_OAUTH_TOKENS`, identificada
-  por um rótulo estável (nunca pelo segredo). Atributos: estado corrente, data de início do estado,
-  histórico de transições.
+  por um **hash curto derivado do próprio token** — nunca pela posição na lista e nunca pelo
+  segredo. Atributos: estado corrente, data de início do estado, histórico de transições.
+- **Resumo diário**: o agregado permanente por dia e por empregado que sobrevive à expiração do
+  detalhe de 90 dias. Atributos: chamadas, falhas por código, tokens de entrada e saída,
+  latência p50/p95.
 - **Corrida**: o agrupamento de chamadas de um mesmo trabalho (um ciclo de autopublishing, uma
   corrida de régua, uma busca). Atributos: empregado, início, fim, total de chamadas, marca de
   incompleta.
@@ -319,7 +369,10 @@ apresenta contas vivas, consumo já feito na janela e o custo estimado da corrid
   ~10 h, há mais de uma semana".
 - **SC-004**: Antes de uma corrida cara, é possível saber quantas contas estão vivas e quanto já foi
   consumido na janela, sem gastar mais que 1 chamada por conta.
-- **SC-005**: Uma corrida do coletor sem mudança de estado gera **zero** cards.
+- **SC-005**: Uma corrida do coletor sem mudança de estado **categórica** gera **zero** cards —
+  inclusive quando latência ou volume mudaram de patamar na mesma janela.
+- **SC-005a**: Depois de 90 dias, o consumo diário por empregado continua respondível, mesmo sem o
+  detalhe por chamada.
 - **SC-006**: Uma janela em que a coleta falhou é apresentada como lacuna, e **nunca** como zero
   falhas — verificável derrubando a escrita de telemetria de propósito.
 - **SC-007**: Nenhum registro contém texto de prompt, resultado ou stderr — verificável por check
@@ -364,3 +417,9 @@ coleta.
   do `package.json` — teste que não roda não reprova nada.
 - **O consumo do dev não é o consumo de produção**, e o `.env` local não tem os tokens de produção;
   a separação por ambiente é um campo, não uma inferência.
+- **Os scripts locais passam a escrever no mesmo Postgres de produção** (`DATABASE_URL` do `.env`),
+  que é onde a série mora — decorrência de gravar as chamadas de `dev`. Nenhum script novo precisa
+  ser criado para isso: eles já rodam com `--env-file=.env`.
+- **A retenção de 90 dias é do detalhe, não do pool.** O histórico de estado das contas (US2) é
+  categórico e pequeno, e fica **permanente** — é ele que responde "morta desde quando" quando a
+  resposta for "há três meses".
