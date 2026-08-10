@@ -1,7 +1,59 @@
 # Handoff — Observabilidade dos recursos de IA e saúde dos empregados (spec 002) — 10/08/2026
 
-**Estado**: **código completo (36 de 41 tasks), `npm test` verde (327/327), `tsc --noEmit`
-limpo, `next build` ok.** T041 rodou: commit `e5b2f29`, pushado em `main`.
+## Atualização 10/08/2026 (tarde) — validações de ponta a ponta
+
+Deploy confirmado no ar (`/ia` responde 200 com o HTML novo). Rodadas contra produção nesta sessão,
+com autorização explícita para gastar chamadas reais do pool: **T019, T035, T014 passaram
+inteiros. T030 e T024 passaram PARCIALMENTE — T024 expôs um bug real.**
+
+**🐛 Bug novo (bloqueia T024): `/ia` quebra com 500 quando o banco fica inacessível, em vez de
+mostrar a lacuna.** `dbOn()` (`lib/db.ts:112`) só confere se `DATABASE_URL` está setada, não se o
+Postgres responde. `app/ia/page.tsx:76` faz `Promise.all([porEmpregado, ultimaSonda, poolDatado,
+janela])` sem `try/catch` — com o banco fora, as 4 promessas rejeitam com `ECONNREFUSED` e o Next
+devolve a página de erro genérica (500), não o banner "⚠️ Lacuna de telemetria" que a FR-007 exige.
+**Confirmado localmente** (`DATABASE_URL` apontando pra porta fechada, `next build` + `next start`
+numa porta separada — zero risco pra produção): a busca (`/busca`) continuou respondendo 200
+(1ª metade da FR-007 ok), mas `/ia` devolveu 500 (2ª metade falhou). Log do servidor:
+`AggregateError` com `ECONNREFUSED ::1:5432` e `127.0.0.1:5432`, sem stack de app — o erro nunca
+passa por nenhum `catch` do código da feature.
+**Fix provável**: envolver o `Promise.all` de `app/ia/page.tsx` em `try/catch` (mesmo padrão do
+`try/catch` que já existe em `app/api/estado/route.ts` ao redor de `consolidar`/`expirar`) e tratar
+falha de leitura como lacuna — os quatro `let` já têm defaults (`[]`/`null`) prontos pra esse caso,
+só falta o `catch` popular `lacuna = true` em vez de deixar a exceção subir.
+
+**T019 (US2)** — `node --env-file=.env scripts/probe-pool.mjs --gravar` rodado duas vezes (14:28 e
+14:29 BRT, 3 chamadas reais cada = 6 no total). 2ª rodada **não duplicou linha**: 3 linhas em
+`ia_pool`, `desde` idêntico nas duas contas vivas e na desabilitada, só `visto` avançou. 429≠403
+confirmado (`8564b7fd`/`a706f7c7` = viva, `65e26979` = desabilitada 403). Pool vazio
+(`CLAUDE_CODE_OAUTH_TOKENS=`) estourou com a mensagem explícita, exit 1. **Task fechada.**
+
+**T035 (US5)** — `node --env-file=.env scripts/orcamento.mjs --chamadas 85`: 2 vivas de 3, 6
+chamadas já consumidas na janela de 24h, 85 previstas — zero chamada de LLM na consulta (só leu
+`ia_pool`/`ia_chamadas`). Devolve números, não adjetivo (decisão de design da T033) — o
+sub-cenário "corrida abortada" (3 falhas de conta seguidas) não foi forçado nesta sessão.
+**Task fechada** (a validação central, custo-zero, está feita).
+
+**T014 (US1)** — busca real em `/busca?q=...` gravou as 2 linhas esperadas (`rerank`+`resposta`,
+`conta` hash 8 chars, `desfecho=ok`). Controle negativo (`?rerank=0&resposta=0`) **não** gravou
+nada (confirmado por timestamp — as únicas linhas do período são da busca real, de antes). Check
+SC-007 (`prompt_hash` sha1 + nenhum campo com texto solto) devolveu `0`. **Task fechada** — só o
+cruzamento com `seo_publications` do autopublishing fica para depois do 1º ciclo noturno.
+
+**T030 (US4)** — `POST /api/estado` chamado duas vezes com `Bearer $CRON_SECRET`.
+**Achado paralelo, fora do escopo da spec 002**: `hub_estado` estava **vazio** — zero linhas antes
+de hoje. Esta foi a 1ª corrida REAL do aparato desde sempre, não uma corrida de rotina; a
+"MEMORY.md" registrava o coletor como entregue e agendado (P1/P2, 09/08), mas nunca tinha
+efetivamente gravado nada em produção. `primeira: true` e `card: "nenhum"` nas duas chamadas —
+correto para 1ª corrida, mas por isso **não dá pra testar "2ª corrida sai silenciosa" rodando duas
+vezes no mesmo dia**: `estadoAnterior()` (`lib/db.ts:568`) compara sempre com `run_date < hoje`
+por design ("rodar duas vezes no mesmo dia tem que dar o mesmo diff"), nunca com a gravação de
+agora mesmo. O card de "3 novos + 3 resolvidos no domínio POOL" também não vai acontecer, porque
+não havia POOL de chave posicional pra migrar. **Task NÃO fechada** — falta um cron real rodando
+em produção (ver seção nova abaixo) e comparar duas noites seguidas.
+
+**Estado herdado (antes desta rodada)**: **código completo (36 de 41 tasks), `npm test` verde
+(327/327), `tsc --noEmit` limpo, `next build` ok.** T041 rodou: commit `e5b2f29`, pushado em
+`main`.
 
 Faltam as 5 validações de ponta a ponta do [quickstart.md](./quickstart.md) — mas **a razão real
 é mais estreita** do que a primeira versão deste handoff dizia. Correção: este ambiente **tinha**
@@ -110,16 +162,22 @@ rodando de verdade.
 
 ---
 
-## Próximo passo
+## Próximo passo (atualizado 10/08 tarde)
 
-1. **T019 e T035** podem rodar agora, sem depender de deploy — só precisam de autorização porque
-   `probe-pool.mjs --gravar` gasta 3 chamadas reais do pool de produção.
-2. Fazer (ou confirmar) o deploy do commit `e5b2f29` no EasyPanel.
-3. Rodar T014/T024/T030 contra a URL de produção depois do deploy.
-4. Depois do primeiro ciclo noturno pós-deploy, ler as primeiras linhas de `ia_chamadas` uma a
-   uma antes de olhar qualquer agregado — regra da casa, confirmada quatro vezes nesta base
-   (`pesquisa.md` §3.6). Deploy sempre fora da janela 23:30–01:00 BRT (estado noturno 23:37,
-   autopublishing 00:13).
+1. ~~T019, T035, T014~~ — feitos, ver "Atualização 10/08" no topo.
+2. **Corrigir o bug do `/ia` (500 em vez de lacuna)** antes de fechar T024 — `try/catch` no
+   `Promise.all` de `app/ia/page.tsx:76`, tratando falha de leitura como `lacuna = true`. Depois
+   revalidar localmente com `DATABASE_URL` quebrada (mesmo teste desta sessão) e fechar T024.
+3. **Investigar por que `hub_estado` estava vazio** antes de hoje — a rotina noturna
+   (`POST /api/estado` às 23:37 BRT) foi descrita como entregue numa sessão anterior (09/08), mas
+   os dados de produção mostram que nunca gravou nada. Conferir se o GitHub Actions que dispara o
+   cron está mesmo habilitado/agendado, ou se falha antes de chegar na rota (checar
+   `dbOn()`/`CRON_SECRET` no runner, e os logs do Actions).
+4. Depois que o cron acima estiver confirmado rodando sozinho, **duas noites seguidas** fecham
+   T030 (2ª corrida silenciosa) e T014 (cruzamento com `seo_publications` do autopublishing).
+5. Ler as primeiras linhas de `ia_chamadas` uma a uma antes de olhar qualquer agregado — regra da
+   casa, confirmada quatro vezes nesta base (`pesquisa.md` §3.6). Deploy sempre fora da janela
+   23:30–01:00 BRT (estado noturno 23:37, autopublishing 00:13).
 
 ---
 
