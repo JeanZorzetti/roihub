@@ -16,6 +16,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import { carregarCorpus, MEMORIA_PADRAO } from "../lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "../lib/bm25.mjs";
 import { indexarDenso, buscarDenso } from "../lib/denso.mjs";
@@ -25,6 +26,12 @@ import { responder, trechosPara } from "../lib/resposta.mjs";
 import { julgarConcordancia, julgarFidelidade, MODELO_JUIZ } from "../lib/juiz.mjs";
 import { apurarEstado } from "../lib/dourado-estado.mjs";
 import { consultarGsc } from "../lib/gsc-consulta.mjs";
+import { montarRegistro } from "../lib/telemetria.mjs";
+import { registrar } from "../lib/telemetria-db.mjs";
+
+// Coluna `corrida` da série de IA (specs/002-observabilidade-ia US5) — sem isto ela fica
+// sempre NULL e a marca de corrida incompleta abaixo não tem sobre o que operar.
+process.env.HUB_CORRIDA ??= `avaliar-resposta-${new Date().toISOString()}`;
 
 const opt = (nome, padrao) => {
   const i = process.argv.indexOf(nome);
@@ -200,6 +207,14 @@ if (abortada) {
   console.log("   O pool esgotou (401/403/429 em toda conta) — nenhum número desta corrida vale.");
   console.log("   Renove os tokens e rode de novo: o cache morno retoma de onde parou.");
   if (juiz) console.log(`   parcial marcado incompleto em data/juiz-corridas/${gravarCorrida(true)}.json`);
+  // Linha sentinela na série (FR-017, D6): sem tabela nova, agregação por `corrida` exclui
+  // toda corrida com esta marca. `await` de propósito — o processo sai em seguida.
+  const agora = new Date();
+  await registrar(montarRegistro({
+    empregado: "resposta", modelo: "n/a", effort: "n/a", token: null, tentativa: 0,
+    pedido: randomUUID(), corrida: process.env.HUB_CORRIDA, inicio: agora, fim: agora,
+    payload: null, erro: { message: "x-corrida-incompleta" }, prompt: "",
+  }));
   process.exit(1);
 }
 

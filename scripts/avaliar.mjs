@@ -7,11 +7,19 @@
 //   node scripts/avaliar.mjs --motor hibrido --min 0.85   # piso absoluto (decai: veja o § no fim)
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
 import { carregarCorpus, MEMORIA_PADRAO } from "../lib/corpus.mjs";
 import { indexar, buscar, tokenizar } from "../lib/bm25.mjs";
 import { indexarDenso, buscarDenso, MODELO } from "../lib/denso.mjs";
 import { rrf } from "../lib/busca.mjs";
 import { rerank, trechoRelevante, MODELO_RERANK, falhasDeConta, MAX_CONTA_SEGUIDAS } from "../lib/reranker.mjs";
+import { montarRegistro } from "../lib/telemetria.mjs";
+import { registrar } from "../lib/telemetria-db.mjs";
+
+// Coluna `corrida` da série de IA (specs/002-observabilidade-ia US5): sem isto ela fica
+// sempre NULL e a entidade *Corrida* não existe para o orçamento nem para a marca de
+// incompleta abaixo operarem sobre algo.
+process.env.HUB_CORRIDA ??= `avaliar-${new Date().toISOString()}`;
 
 const KS = [1, 3, 5, 10, 20, 50];
 const K_MAX = Math.max(...KS);
@@ -114,6 +122,14 @@ for (const nome of escolhidos) {
       `\n🚨 corrida ABORTADA em ${resultados.length}/${dourado.length} (motor ${nome}): ` +
         `${MAX_CONTA_SEGUIDAS} falhas de conta seguidas — pool esgotado, nenhum número desta corrida vale.`,
     );
+    // Linha sentinela na série (FR-017, D6): sem tabela nova, agregação por `corrida` exclui
+    // toda corrida com esta marca. `await` de propósito — o processo sai em seguida.
+    const agora = new Date();
+    await registrar(montarRegistro({
+      empregado: "rerank", modelo: MODELO_RERANK, effort: "low", token: null, tentativa: 0,
+      pedido: randomUUID(), corrida: process.env.HUB_CORRIDA, inicio: agora, fim: agora,
+      payload: null, erro: { message: "x-corrida-incompleta" }, prompt: "",
+    }));
     process.exit(1);
   }
   relatorios[nome] = resultados;

@@ -11,15 +11,15 @@
 //
 //   node --env-file=.env scripts/probe-pool.mjs [--gravar]
 //
-// `--gravar` acrescenta a leitura a `data/pool-sondagens.json`, que é o que DATA a conta: duas
-// leituras a 9 h de distância não provam morte, e sem histórico a terceira também não provaria.
-import { readFileSync, writeFileSync } from "node:fs";
+// `--gravar` grava a leitura em `ia_pool` (specs/002-observabilidade-ia FR-013): o histórico
+// mora onde a produção escreve, não num arquivo versionado. `data/pool-sondagens.json` fica no
+// repo como registro datado das leituras de antes de 10/08 — não apagado, não mais escrito.
 import { fileURLToPath } from "node:url";
 // `sondar` mudou para `lib/reranker.mjs` em 09/08: o coletor noturno é o segundo consumidor e o
 // Next só importa de `lib/`. Este script voltou a ser só impressão, que é o padrão da casa.
 import { sondar } from "../lib/reranker.mjs";
-
-const HISTORICO = fileURLToPath(new URL("../data/pool-sondagens.json", import.meta.url));
+import { hashConta } from "../lib/telemetria.mjs";
+import { atualizarPool } from "../lib/telemetria-db.mjs";
 
 // Com relógio, ao contrário do `apurado_em` do dourado: as duas primeiras sondagens são do mesmo
 // ciclo de 9 h (02/08 22:12 → 03/08 07:46) e só a hora mostra o autopublishing das 00:13 no meio.
@@ -51,13 +51,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (mortas) console.log(`⚠️ ${mortas} com subscription disabled (403) — 403 NÃO recarrega esperando.`);
 
   if (process.argv.includes("--gravar")) {
-    const historico = JSON.parse(readFileSync(HISTORICO, "utf8"));
-    historico.push({
-      em,
-      fonte: "sonda",
-      contas: contas.map((c) => ({ estado: c.estado, status: c.status })),
-    });
-    writeFileSync(HISTORICO, `${JSON.stringify(historico, null, 2)}\n`);
-    console.log(`\ngravado em data/pool-sondagens.json (${historico.length} sondagens).`);
+    const leitura = tokens.map((token, i) => ({ conta: hashConta(token), estado: contas[i].estado }));
+    await atualizarPool(leitura, new Date());
+    console.log(`\ngravado em ia_pool (${leitura.length} conta(s)).`);
   }
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { montarPrompt, parseOrdem, reordenar, rerank, trechoRelevante, trocaDeConta, classificarConta, falhasDeConta, MAX_CONTA_SEGUIDAS, chave } from "../lib/reranker.mjs";
+import { montarPrompt, parseOrdem, reordenar, rerank, rodarClaude, trechoRelevante, trocaDeConta, classificarConta, falhasDeConta, MAX_CONTA_SEGUIDAS, chave } from "../lib/reranker.mjs";
 
 const candidatos = [
   { id: "a", tipo: "protocolo", titulo: "A", trecho: "texto a" },
@@ -208,6 +208,54 @@ test("erro que não é de conta não aborta", () => {
 // ele fora, testar `effort` no detector devolveria o resultado do effort anterior e a leitura
 // seria "não mudou nada". A chave sem effort é o formato legado: continua sendo lida (o cache já
 // custou ~100 chamadas do pool), nunca escrita.
+// specs/002-observabilidade-ia: spawnClaude passou a resolver o PAYLOAD inteiro, não só
+// `.result` — `rodarClaude` extrai a string e continua devolvendo string. `spawnImpl` e
+// `registrar` são injetáveis só para o teste; nada de banco aqui.
+test("rodarClaude continua devolvendo string (payload.result), nenhum consumidor muda de contrato", async () => {
+  const antes = process.env.CLAUDE_CODE_OAUTH_TOKENS;
+  process.env.CLAUDE_CODE_OAUTH_TOKENS = "tokenX";
+  try {
+    const texto = await rodarClaude("prompt", {
+      spawnImpl: async () => ({ result: "resposta do modelo", usage: { input_tokens: 5, output_tokens: 7 }, num_turns: 1 }),
+      registrar: () => {},
+    });
+    assert.equal(texto, "resposta do modelo");
+  } finally {
+    process.env.CLAUDE_CODE_OAUTH_TOKENS = antes;
+  }
+});
+
+// D4: uma linha por TENTATIVA, todas com o mesmo `pedido`. Quando a 1ª conta devolve 429 e
+// a 2ª responde, têm que aparecer DUAS tentativas — uma falha e um sucesso —, nunca uma
+// linha de sucesso só (esconderia a saturação, o defeito de 31/07).
+test("rodarClaude: 1ª conta em 429 produz DUAS tentativas com o mesmo pedido (uma falha, um sucesso)", async () => {
+  const antes = process.env.CLAUDE_CODE_OAUTH_TOKENS;
+  process.env.CLAUDE_CODE_OAUTH_TOKENS = "tokenA,tokenB";
+  const registros = [];
+  const spawnImpl = async (_prompt, token) => {
+    if (token === "tokenA") {
+      const erro = new Error("rerank-output");
+      erro.trocaDeConta = true;
+      erro.status = 429;
+      erro.payload = { api_error_status: 429 };
+      throw erro;
+    }
+    return { result: "ok", usage: { input_tokens: 1, output_tokens: 2 }, num_turns: 1 };
+  };
+  try {
+    const texto = await rodarClaude("prompt", { spawnImpl, registrar: (r) => registros.push(r) });
+    assert.equal(texto, "ok");
+    assert.equal(registros.length, 2, "duas tentativas: uma falha, um sucesso");
+    assert.equal(registros[0].pedido, registros[1].pedido, "mesmo pedido lógico agrupa as tentativas");
+    assert.deepEqual([registros[0].tentativa, registros[1].tentativa], [1, 2]);
+    assert.equal(registros[0].desfecho, "nao-declarado-conta", "tentativa que esgota a conta é -conta, indiferenciada");
+    assert.equal(registros[0].status_api, 429, "status_api é quem separa 429 de 403 no código -conta");
+    assert.equal(registros[1].desfecho, "ok");
+  } finally {
+    process.env.CLAUDE_CODE_OAUTH_TOKENS = antes;
+  }
+});
+
 test("chave do cache separa por effort, e a chave legada continua estável", () => {
   const p = "prompt qualquer";
   assert.notEqual(chave(p, "sonnet", "low"), chave(p, "sonnet", "medium"), "effort não separa: cache serve resultado de outro effort");

@@ -1,4 +1,7 @@
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { montarRegistro } from "./telemetria.mjs";
+import { registrar } from "./telemetria-db.mjs";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -235,6 +238,7 @@ export const claudeRun: ClaudeRun = async (prompt, {
 } = {}) => {
   const tokens = claudeTokens();
   if (!tokens.length) throw new Error("llm-auth");
+  const effort = webSearch ? "high" : "low";
   const args = [
     "-p",
     "--output-format",
@@ -243,19 +247,34 @@ export const claudeRun: ClaudeRun = async (prompt, {
     CLAUDE_MODEL,
     // O draft pesquisa e escreve; o classificador YMYL devolve 1 de 3 valores.
     "--effort",
-    webSearch ? "high" : "low",
+    effort,
     "--max-turns",
     webSearch ? "12" : "1",
   ];
   if (webSearch) args.push("--allowedTools", "WebSearch");
 
+  // A coluna `empregado` é quem separa os dois na série — o prefixo do código de erro
+  // (`llm-*`) é o mesmo para os dois (specs/002-observabilidade-ia D3).
+  const empregado = webSearch ? "autopublish-draft" : "autopublish-ymyl";
+  const pedido = randomUUID();
+  const corrida = process.env.HUB_CORRIDA || null;
+  const registrarTentativa = (token: string, tentativa: number, inicio: Date, payload: JsonRecord | null, erro: Error | null) =>
+    registrar(montarRegistro({
+      empregado, modelo: CLAUDE_MODEL, effort, token, tentativa, pedido, corrida,
+      inicio, fim: new Date(), payload, erro, prompt,
+    }));
+
   let lastError = new Error("llm-auth");
+  let tentativa = 0;
   for (const token of tokens) {
+    tentativa += 1;
+    const inicio = new Date();
     let raw: string;
     try {
       raw = await spawnImpl(prompt, args, timeoutMs, token);
     } catch (error) {
       lastError = error as Error;
+      registrarTentativa(token, tentativa, inicio, null, lastError);
       // Conta esgotada ou expirada: tenta a próxima. llm-output é da resposta,
       // não da conta, então trocar de token não ajudaria.
       if (["llm-rate", "llm-auth"].includes(lastError.message)) continue;
@@ -266,16 +285,20 @@ export const claudeRun: ClaudeRun = async (prompt, {
       payload = JSON.parse(raw) as JsonRecord;
     } catch {
       // stdout do CLI não é JSON: falha do processo, não do modelo.
-      throw new Error("llm-parse");
+      const erro = new Error("llm-parse");
+      registrarTentativa(token, tentativa, inicio, null, erro);
+      throw erro;
     }
     if (payload?.is_error || typeof payload?.result !== "string") {
       lastError = claudeError(
         typeof payload?.result === "string" ? payload.result : "",
         payload?.api_error_status
       );
+      registrarTentativa(token, tentativa, inicio, payload, lastError);
       if (["llm-rate", "llm-auth"].includes(lastError.message)) continue;
       throw lastError;
     }
+    registrarTentativa(token, tentativa, inicio, payload, null);
     const usage = payload.usage as JsonRecord | undefined;
     return {
       output_text: payload.result,

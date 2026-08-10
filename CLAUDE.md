@@ -93,6 +93,50 @@ claude-cli e do `CLAUDE_CODE_OAUTH_TOKENS`, e nenhum dos dois existe no runner d
   artigo em 10 repos não ganha capacidade nova gravando card de agenda. Segredo próprio é para
   capacidade MAIOR — é o caso do `CRM_INGEST_SECRET`.
 
+## Observabilidade de IA (`lib/telemetria.mjs`/`lib/telemetria-db.mjs`) — aba `/ia`
+
+specs/002-observabilidade-ia (10/08). O incidente de 31/07 (token[0] estourado, busca inteira
+degradada e ninguém viu por dias) só existia porque `usage`/`duration_ms`/`num_turns` do
+claude-cli eram lidos e jogados fora. A entrega não foi construir coleta — foi parar de
+descartar. `lib/telemetria.mjs` (puro) + `lib/telemetria-db.mjs` (`pg`, dono de `ia_chamadas`/
+`ia_resumo`/`ia_pool`) copiam o par `corpus.mjs`/`corpus-db.mjs`.
+
+- **Dois pontos de instrumentação, nunca os chamadores.** `rodarClaude`/`rodarCacheado` em
+  `lib/reranker.mjs` servem rerank, resposta, juiz, defasagem e sonda; `claudeRun` em
+  `lib/autopublish-clients.ts` serve os dois empregados do autopublishing. Empregado novo que
+  esquece de se declarar aparece como `nao-declarado` — visível, nunca invisível (FR-006).
+- **Dois sentinelas na coluna `conta`, e não são "faltando".** `cli-ambiente` é chamada sem pool
+  configurado (autenticação ambiente do CLI — mede na máquina do dev); `cache` é acerto de
+  `.cache/rerank.json` (não houve conta porque não houve chamada). Consumo do pool filtra
+  `conta NOT IN ('cache','cli-ambiente')`.
+- **🚩 Lacuna ≠ zero falhas, e a folga é 36h, não 24h.** A sonda é a batida do coração
+  (`empregado = 'sonda'`, `ultimaSonda()` = `max(inicio)`). Escrita que falha em silêncio faria a
+  janela aparecer como "zero falhas" — o melhor placar possível produzido pelo pior estado
+  possível. 36h = 24h + duas vezes o atraso medido do Actions (~97min, ver seção acima): janela
+  rígida de 24h põe a sonda para fora sozinha e declara cego um sistema saudável. Mesma constante
+  em `estadoDoEmpregado`/`celulasIA` (`lib/telemetria.mjs`) e no coletor `IA` do estado noturno.
+- **A guarda de domínio novo no diff é POR COLETOR, não só por corrida.** `hub_estado` já estava
+  povoado quando o domínio `IA` nasceu: sem a guarda, a estreia publicaria a própria linha de base
+  como achado — o mesmo defeito que `primeiraCorrida` existe para barrar, um nível abaixo.
+  `diffEstado` (`lib/estado-noturno.mjs`) ganhou `conhecidos = new Set(Object.keys(antes).map(dominioDe))`;
+  não vale quando `antes` está vazio (1ª corrida do APARATO inteiro — aí quem segura é
+  `primeiraCorrida`, como sempre foi). **Não vale para `POOL`**: aquele domínio já existe, e a
+  troca de índice posicional para hash da conta (FR-002a) produziu 3 "novos" + 3 "resolvidos" no
+  primeiro deploy — ruído de uma noite só, nomeado no commit, não achado.
+- **Retenção 90 dias + resumo permanente.** `POST /api/estado` roda `consolidar(ontem)` e
+  `expirar(90)` DEPOIS do diff/card, nessa ordem — inverter perderia o último dia. `ia_resumo`
+  sobrevive à expiração do detalhe (PK `dia, ambiente, empregado`, upsert idempotente); é ele que
+  responde "quanto consumiu em maio" quando maio já não tem `ia_chamadas`. `ia_pool` NUNCA expira
+  — é quem responde "morta desde quando" além dos 90 dias.
+- **`empregado = 'sonda'` por dia ≤ número de contas do pool** (SC-008) — a observabilidade não
+  pode virar consumidora do pool que ela mede. `scripts/telemetria-sanidade.mjs` confere isso e
+  SC-007 (nenhuma coluna guarda texto livre) contra produção, fora do `npm test`.
+- **`HUB_CORRIDA`** agrupa `scripts/avaliar.mjs`/`avaliar-resposta.mjs`/`corpus-defasado.mjs`;
+  corrida abortada por `MAX_CONTA_SEGUIDAS` grava uma linha sentinela
+  (`desfecho = '<empregado>-corrida-incompleta'`) e some de todo agregado — sem tabela nova.
+  `scripts/orcamento.mjs --chamadas N` lê contas vivas × consumo já feito × previsto ANTES de
+  gastar o pool, sem adjetivo ("arriscada" sem regra é veredito que ninguém confere depois).
+
 ## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
 
 `BM25 → + vetor (Ollama) → + reranker (claude-cli) → síntese (claude-cli)`, medido em
