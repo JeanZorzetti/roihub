@@ -188,6 +188,14 @@ function ensure(): Promise<unknown> {
         de TEXT, para TEXT NOT NULL, nota TEXT,
         quando TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      -- Uma linha por corrida noturna. run_date é PK de propósito: o Actions pode repetir o
+      -- dia, e sobrescrever é o certo — o diff sempre compara com o DIA ANTERIOR, nunca com
+      -- a linha que a própria corrida acabou de gravar.
+      CREATE TABLE IF NOT EXISTS hub_estado (
+        run_date DATE PRIMARY KEY,
+        mapa JSONB NOT NULL,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
       INSERT INTO seo_projects (project_slug, enabled, paused_reason)
       VALUES
         ('*', FALSE, 'Aguardando canários'),
@@ -550,4 +558,27 @@ export async function removeTask(id: number): Promise<void> {
   await ensure();
   await pool().query(`DELETE FROM hub_done WHERE key = $1`, [`task:${id}`]);
   await pool().query(`DELETE FROM hub_tasks WHERE id = $1`, [id]);
+}
+
+/**
+ * Mapa da última corrida ANTERIOR a `runDate` — nunca a do próprio dia. Rodar duas vezes no
+ * mesmo dia tem que dar o mesmo diff; comparar com a linha de hoje daria "zero mudança" na
+ * segunda corrida e esconderia o achado da primeira.
+ */
+export async function estadoAnterior(runDate: string): Promise<Record<string, string> | null> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT mapa FROM hub_estado WHERE run_date < $1 ORDER BY run_date DESC LIMIT 1`,
+    [runDate]
+  );
+  return r.rows[0]?.mapa ?? null;
+}
+
+export async function gravarEstado(runDate: string, mapa: Record<string, string>): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_estado (run_date, mapa) VALUES ($1, $2)
+     ON CONFLICT (run_date) DO UPDATE SET mapa = EXCLUDED.mapa, criado = now()`,
+    [runDate, JSON.stringify(mapa)]
+  );
 }

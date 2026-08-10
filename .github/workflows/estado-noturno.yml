@@ -1,0 +1,28 @@
+name: Estado noturno
+
+on:
+  schedule:
+    # 23:37 BRT (2:37 UTC, sem horário de verão) — 36 min ANTES do autopublish das 00:13.
+    # A ordem importa nos dois sentidos: a sondagem mede o pool EM REPOUSO (depois do
+    # autopublish ela mediria o pool drenado e chamaria de "morta" a conta que só está em 429),
+    # e o card fica pronto antes de o dia virar. Fora do minuto :00 a fila do Actions é menor.
+    - cron: "37 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  estado:
+    runs-on: ubuntu-latest
+    steps:
+      # Sem checkout e sem Node: o trabalho todo é server-side (o `probe-pool` precisa do
+      # claude-cli e do pool de tokens, que só existem na imagem do EasyPanel). Aqui é o gatilho.
+      - name: Dispara a corrida e falha se o hub recusar
+        run: |
+          corpo=$(curl -sS -X POST "$HUB_URL/api/estado" \
+            -H "authorization: Bearer $HUB_CRON_SECRET" \
+            -w '\n%{http_code}' --max-time 660)
+          codigo=$(printf '%s' "$corpo" | tail -n1)
+          printf '%s\n' "$corpo" | sed '$d'
+          [ "$codigo" = "200" ] || { echo "::error::hub devolveu HTTP $codigo"; exit 1; }
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          HUB_CRON_SECRET: ${{ secrets.HUB_CRON_SECRET }}

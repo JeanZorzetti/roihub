@@ -15,7 +15,9 @@
 // leituras a 9 h de distância não provam morte, e sem histórico a terceira também não provaria.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { classificarConta, rodarClaude } from "../lib/reranker.mjs";
+// `sondar` mudou para `lib/reranker.mjs` em 09/08: o coletor noturno é o segundo consumidor e o
+// Next só importa de `lib/`. Este script voltou a ser só impressão, que é o padrão da casa.
+import { sondar } from "../lib/reranker.mjs";
 
 const HISTORICO = fileURLToPath(new URL("../data/pool-sondagens.json", import.meta.url));
 
@@ -23,26 +25,6 @@ const HISTORICO = fileURLToPath(new URL("../data/pool-sondagens.json", import.me
 // ciclo de 9 h (02/08 22:12 → 03/08 07:46) e só a hora mostra o autopublishing das 00:13 no meio.
 const agoraBRT = (agora = new Date()) =>
   new Date(agora.getTime() - 3 * 3600e3).toISOString().slice(0, 16).replace("T", " ");
-
-// Prompt mínimo de propósito: a sonda mede a CONTA, não o modelo. Qualquer resposta serve.
-const PROMPT = "Responda apenas: ok";
-
-export async function sondar(tokens, { run = rodarClaude } = {}) {
-  const contas = [];
-  for (const token of tokens) {
-    const anterior = process.env.CLAUDE_CODE_OAUTH_TOKENS;
-    process.env.CLAUDE_CODE_OAUTH_TOKENS = token;
-    try {
-      await run(PROMPT, { timeoutMs: 60_000 });
-      contas.push(classificarConta(null));
-    } catch (erro) {
-      contas.push({ ...classificarConta(erro), erro: erro.message });
-    } finally {
-      process.env.CLAUDE_CODE_OAUTH_TOKENS = anterior;
-    }
-  }
-  return contas;
-}
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const tokens = String(process.env.CLAUDE_CODE_OAUTH_TOKENS ?? "")
