@@ -22,8 +22,8 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 **Purpose**: configuração de ambiente antes de qualquer código
 
-- [ ] T001 Documentar `ROIHUB_CRM_URL` e `ROIHUB_CRM_SECRET` em `sofia-next/.env.example`, na seção de integrações (convenção em [research.md §3](./research.md)). `roihub/.env.example` já documenta `CRM_INGEST_SECRET` — não precisa mudar.
-- [ ] T002 Definir as duas vars no `.env.local` do sofia-next para desenvolvimento, com `ROIHUB_CRM_SECRET` igual ao `CRM_INGEST_SECRET` do roihub local.
+- [X] T001 Documentar `ROIHUB_CRM_URL` e `ROIHUB_CRM_SECRET` em `sofia-next/.env.example`, na seção de integrações (convenção em [research.md §3](./research.md)). `roihub/.env.example` já documenta `CRM_INGEST_SECRET` — não precisa mudar.
+- [X] T002 Definir as duas vars no `.env.local` do sofia-next para desenvolvimento, com `ROIHUB_CRM_SECRET` igual ao `CRM_INGEST_SECRET` do roihub local.
 
 ---
 
@@ -33,9 +33,9 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 **⚠️ CRITICAL**: nenhuma user story funciona antes desta fase
 
-- [ ] T003 Adicionar a entrada `polaris` (slug, nome, etapas `["novo","contato","proposta","ganho","perdido"]`) em `roihub/data/pipelines.json`, conforme [data-model.md](./data-model.md).
-- [ ] T004 Estender `roihub/test/crm.test.mjs` cobrindo a nova pipeline: `parseLead` aceita `pipeline: "polaris"` e rejeita etapa fora da lista. Rodar `npm test` no roihub e confirmar verde.
-- [ ] T005 Criar `sofia-next/src/lib/roihub-crm.ts` — helper único usado pelas duas rotas. Responsabilidades: (a) montar o payload do contrato ([contracts/crm-leads-ingest.md](./contracts/crm-leads-ingest.md)); (b) derivar `external_id` = `sha256(email|origem|janela de 2min)` via `node:crypto` ([research.md §2](./research.md)); (c) disparar o `fetch` dentro de `after()` de `next/server`, com try/catch que só loga — nunca lança para o chamador (FR-006). Marcar a janela de 2 min com comentário `ponytail:` nomeando o teto conhecido (reenvio >2min vira card novo) e a alternativa (id gerado no cliente).
+- [X] T003 Adicionar a entrada `polaris` (slug, nome, etapas `["novo","contato","proposta","ganho","perdido"]`) em `roihub/data/pipelines.json`, conforme [data-model.md](./data-model.md).
+- [X] T004 Estender `roihub/test/crm.test.mjs` cobrindo a nova pipeline: `parseLead` aceita `pipeline: "polaris"` e rejeita etapa fora da lista. Rodar `npm test` no roihub e confirmar verde.
+- [X] T005 Criar `sofia-next/src/lib/roihub-crm.ts` — helper único usado pelas duas rotas. Responsabilidades: (a) montar o payload do contrato ([contracts/crm-leads-ingest.md](./contracts/crm-leads-ingest.md)); (b) derivar `external_id` = `sha256(email|origem|janela de 2min)` via `node:crypto` ([research.md §2](./research.md)); (c) disparar o `fetch` dentro de `after()` de `next/server`, com try/catch que só loga — nunca lança para o chamador (FR-006). Marcar a janela de 2 min com comentário `ponytail:` nomeando o teto conhecido (reenvio >2min vira card novo) e a alternativa (id gerado no cliente).
 
 **Checkpoint**: pipeline existe no hub e o helper está pronto para ser plugado
 
@@ -47,12 +47,12 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 **Independent Test**: enviar cada formulário e ver o card correspondente em `/crm` do roihub (cenários 1 e 2 do [quickstart.md](./quickstart.md))
 
-- [ ] T006 [US1] Reescrever `sofia-next/src/app/api/crm/lead/route.ts`: manter validação, honeypot e o formato de resposta atuais (FR-005 e contrato com a UI **não mudam**), trocando o forward ao Sirius CRM pela chamada a `roihub-crm.ts`. `origem` derivada do campo `subject` recebido: `site-intake` → `polaris:peca-seu-site`, `early_access` → `polaris:early-access`.
-- [ ] T007 [US1] Adicionar chamada ao `roihub-crm.ts` em `sofia-next/src/app/api/contact/route.ts`, **depois** do `prisma.salesLead.create` bem-sucedido, com `origem: "polaris:contato"` e `metadata` conforme [data-model.md](./data-model.md). O insert no Postgres do Polaris e a resposta ao visitante permanecem inalterados (FR-007 — aqui é adição, não substituição).
-- [ ] T008 [P] [US1] Atualizar `sofia-next/src/__tests__/integration/crm-lead.test.ts`: trocar o mock/env do Sirius (`SIRIUS_CRM_API_KEY`, `SIRIUS_CRM_URL`) pelo destino roihub; manter os casos de validação (400) e honeypot que já passam.
-- [ ] T009 [P] [US1] Atualizar `sofia-next/src/__tests__/integration/crm-lead-intake.test.ts` da mesma forma.
-- [ ] T010 [US1] Remover o que sobrou do caminho Sirius CRM nessas rotas (`SIRIUS_CRM_API_KEY` / `SIRIUS_CRM_URL` e a montagem de `notes`), já que nenhum caminho vivo o usa mais. **Não** tocar em `SIRIUS_API_URL`/`SIRIUS_API_KEY`/`SIRIUS_WEBHOOK_SECRET` — são da integração AgaaS, sem relação com esta feature.
-- [ ] T011 [US1] Rodar `npm test` no sofia-next e `npm test` no roihub; confirmar os dois verdes antes de seguir.
+- [X] T006 [US1] Reescrever `sofia-next/src/app/api/crm/lead/route.ts`: manter validação, honeypot e o formato de resposta atuais (FR-005 e contrato com a UI **não mudam**), trocando o forward ao Sirius CRM pela chamada a `roihub-crm.ts`. `origem` derivada do campo `subject` recebido: `site-intake` → `polaris:peca-seu-site`, `early_access` → `polaris:early-access`.
+- [X] T007 [US1] Adicionar chamada ao `roihub-crm.ts` em `sofia-next/src/app/api/contact/route.ts`, **depois** do `prisma.salesLead.create` bem-sucedido, com `origem: "polaris:contato"` e `metadata` conforme [data-model.md](./data-model.md). O insert no Postgres do Polaris e a resposta ao visitante permanecem inalterados (FR-007 — aqui é adição, não substituição).
+- [X] T008 [P] [US1] Atualizar `sofia-next/src/__tests__/integration/crm-lead.test.ts`: trocar o mock/env do Sirius (`SIRIUS_CRM_API_KEY`, `SIRIUS_CRM_URL`) pelo destino roihub; manter os casos de validação (400) e honeypot que já passam.
+- [X] T009 [P] [US1] Atualizar `sofia-next/src/__tests__/integration/crm-lead-intake.test.ts` da mesma forma.
+- [X] T010 [US1] Remover o que sobrou do caminho Sirius CRM nessas rotas (`SIRIUS_CRM_API_KEY` / `SIRIUS_CRM_URL` e a montagem de `notes`), já que nenhum caminho vivo o usa mais. **Não** tocar em `SIRIUS_API_URL`/`SIRIUS_API_KEY`/`SIRIUS_WEBHOOK_SECRET` — são da integração AgaaS, sem relação com esta feature.
+- [X] T011 [US1] Rodar `npm test` no sofia-next e `npm test` no roihub; confirmar os dois verdes antes de seguir.
 
 **Checkpoint**: US1 completa — MVP entregável
 
@@ -66,7 +66,7 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 > **Nota**: esta story não tem código próprio. A UI do CRM (`roihub/app/crm/page.tsx`) **já** renderiza `origem` como coluna dedicada (pill), e os 3 valores distintos são definidos em T006/T007. A fase existe para verificar, não para construir — inventar código aqui seria trabalho inútil.
 
-- [ ] T012 [US2] Verificar na `/crm` do roihub que os 3 valores de `origem` aparecem distintos na coluna dedicada. Se (e só se) os valores ficarem ilegíveis/truncados na pill, ajustar a exibição em `roihub/app/crm/page.tsx`.
+- [X] T012 [US2] Verificar na `/crm` do roihub que os 3 valores de `origem` aparecem distintos na coluna dedicada. Se (e só se) os valores ficarem ilegíveis/truncados na pill, ajustar a exibição em `roihub/app/crm/page.tsx`.
 
 **Checkpoint**: US1 e US2 funcionando
 
@@ -80,8 +80,8 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 > **Nota**: a deduplicação em si já existe no roihub (`UNIQUE(external_id)` + `ON CONFLICT DO NOTHING` em `insertLead`, com `200` em vez de `409` no reenvio). O que esta feature adiciona é a *estabilidade* do `external_id` gerado no Polaris (T005) — que é justamente a lógica não-trivial que precisa de um teste próprio.
 
-- [ ] T013 [US3] Adicionar teste em `sofia-next` cobrindo a geração do `external_id` no `roihub-crm.ts`: mesmo email+origem dentro da mesma janela → mesmo id; janelas diferentes → ids diferentes.
-- [ ] T014 [US3] Validar ponta a ponta: enviar o mesmo formulário duas vezes em menos de 2 minutos e confirmar **um único** card em `/crm`.
+- [X] T013 [US3] Adicionar teste em `sofia-next` cobrindo a geração do `external_id` no `roihub-crm.ts`: mesmo email+origem dentro da mesma janela → mesmo id; janelas diferentes → ids diferentes.
+- [X] T014 [US3] Validar ponta a ponta: enviar o mesmo formulário duas vezes em menos de 2 minutos e confirmar **um único** card em `/crm`.
 
 **Checkpoint**: as 3 stories funcionando
 
@@ -91,7 +91,7 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 - [ ] T015 Configurar `ROIHUB_CRM_URL` e `ROIHUB_CRM_SECRET` no serviço EasyPanel do sofia-next em **produção**. ⚠️ Esta é exatamente a etapa que faltou na integração Sirius e a deixou quebrada (500) sem ninguém notar — sem ela, a feature funciona local e falha em produção.
 - [ ] T016 Rodar os 4 cenários do [quickstart.md](./quickstart.md) contra produção, incluindo o cenário 4 (roihub indisponível não afeta o visitante).
-- [ ] T017 [P] Escrever `handoff.md` co-localizado em `specs/001-polaris-crm-leads/` com o que foi entregue e as evidências de produção.
+- [X] T017 [P] Escrever `handoff.md` co-localizado em `specs/001-polaris-crm-leads/` com o que foi entregue e as evidências de produção.
 
 ---
 

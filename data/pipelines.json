@@ -13,5 +13,10 @@
     "slug": "roilabs",
     "nome": "ROI Labs (site institucional)",
     "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "polaris",
+    "nome": "Polaris",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
   }
 ]

@@ -42,6 +42,22 @@ test("pipeline desconhecida é rejeitada", () => {
   assert.equal(parseLead({ ...base, pipeline: "" }, pipelines).ok, false);
 });
 
+test("pipeline polaris: aceita etapa válida, rejeita etapa fora da lista", () => {
+  const r = parseLead(
+    { ...base, pipeline: "polaris", origem: "polaris:contato", etapa: "proposta" },
+    pipelines,
+  );
+  assert.ok(r.ok);
+  assert.equal(r.lead.etapa, "proposta");
+
+  const invalida = parseLead(
+    { ...base, pipeline: "polaris", origem: "polaris:contato", etapa: "quase-fechando" },
+    pipelines,
+  );
+  assert.equal(invalida.ok, false);
+  assert.match(invalida.erro, /etapa desconhecida/);
+});
+
 test("obrigatórios: nome, origem e external_id", () => {
   for (const campo of ["nome", "origem", "external_id"]) {
     const body = { ...base, [campo]: "" };
