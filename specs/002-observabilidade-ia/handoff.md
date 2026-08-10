@@ -3,11 +3,11 @@
 ## Atualização 10/08/2026 (tarde) — validações de ponta a ponta
 
 Deploy confirmado no ar (`/ia` responde 200 com o HTML novo). Rodadas contra produção nesta sessão,
-com autorização explícita para gastar chamadas reais do pool: **T019, T035, T014 passaram
-inteiros. T030 e T024 passaram PARCIALMENTE — T024 expôs um bug real.**
+com autorização explícita para gastar chamadas reais do pool: **T019, T035, T014 e T024 fecharam.
+Só T030 fica pendente**, e só porque depende do cron de amanhã à noite (ver "Próximo passo").
 
-**🐛 Bug novo (bloqueia T024): `/ia` quebra com 500 quando o banco fica inacessível, em vez de
-mostrar a lacuna.** `dbOn()` (`lib/db.ts:112`) só confere se `DATABASE_URL` está setada, não se o
+**🐛 Bug achado e corrigido nesta sessão: `/ia` quebrava com 500 quando o banco ficava
+inacessível, em vez de mostrar a lacuna.** `dbOn()` (`lib/db.ts:112`) só confere se `DATABASE_URL` está setada, não se o
 Postgres responde. `app/ia/page.tsx:76` faz `Promise.all([porEmpregado, ultimaSonda, poolDatado,
 janela])` sem `try/catch` — com o banco fora, as 4 promessas rejeitam com `ECONNREFUSED` e o Next
 devolve a página de erro genérica (500), não o banner "⚠️ Lacuna de telemetria" que a FR-007 exige.
@@ -41,16 +41,24 @@ SC-007 (`prompt_hash` sha1 + nenhum campo com texto solto) devolveu `0`. **Task 
 cruzamento com `seo_publications` do autopublishing fica para depois do 1º ciclo noturno.
 
 **T030 (US4)** — `POST /api/estado` chamado duas vezes com `Bearer $CRON_SECRET`.
-**Achado paralelo, fora do escopo da spec 002**: `hub_estado` estava **vazio** — zero linhas antes
-de hoje. Esta foi a 1ª corrida REAL do aparato desde sempre, não uma corrida de rotina; a
-"MEMORY.md" registrava o coletor como entregue e agendado (P1/P2, 09/08), mas nunca tinha
-efetivamente gravado nada em produção. `primeira: true` e `card: "nenhum"` nas duas chamadas —
-correto para 1ª corrida, mas por isso **não dá pra testar "2ª corrida sai silenciosa" rodando duas
-vezes no mesmo dia**: `estadoAnterior()` (`lib/db.ts:568`) compara sempre com `run_date < hoje`
-por design ("rodar duas vezes no mesmo dia tem que dar o mesmo diff"), nunca com a gravação de
-agora mesmo. O card de "3 novos + 3 resolvidos no domínio POOL" também não vai acontecer, porque
-não havia POOL de chave posicional pra migrar. **Task NÃO fechada** — falta um cron real rodando
-em produção (ver seção nova abaixo) e comparar duas noites seguidas.
+**Investigado o "porquê" (não é bug, é sistema de 1 dia)**: o workflow `.github/workflows/estado-noturno.yml`
+foi criado ontem à noite (`09/08 21:11 BRT`, commit "Wire the zero-LLM measuring apparatus to a
+nightly run"). Sua 1ª disparada agendada caiu hoje de madrugada (`04:15 UTC` = `23:37 BRT` de ontem
++ o atraso conhecido do Actions, ~1h40) e **falhou por indisponibilidade intermitente do hub**
+(`request-failed`/timeout de conexão) — o mesmo padrão já documentado (memória
+`roihub_hub_unreachable_night_window`), não um defeito da feature. Um retry com backoff **já
+tinha sido adicionado hoje de manhã** (`05:47 BRT`, commit "Retry the estado trigger when the hub
+is unreachable") **antes** desta sessão. Um disparo manual (`workflow_dispatch`) teve sucesso às
+`05:44 BRT` — a linha em `hub_estado` para `run_date=2026-08-10` já existia quando esta sessão
+começou; minhas duas chamadas de teste só fizeram *upsert* na **mesma linha do mesmo dia**
+(`gravarEstado` é `ON CONFLICT (run_date) DO UPDATE`). É por isso que as três corridas de hoje
+(a das 05:44 e as minhas duas) todas leram `primeira: true`: `estadoAnterior()` (`lib/db.ts:568`)
+compara sempre com `run_date < hoje`, nunca com a gravação do próprio dia — "rodar duas vezes no
+mesmo dia tem que dar o mesmo diff" é a regra, de propósito. **Nada para corrigir aqui.**
+**Task NÃO fechada, mas só por falta de tempo**: falta o cron de **amanhã à noite** (23:37 BRT)
+rodar sozinho e comparar contra a linha de hoje — aí sim dá pra validar "2ª corrida sai
+silenciosa" de verdade. O card "3 novos + 3 resolvidos no domínio POOL" também só faz sentido
+nessa comparação entre dias.
 
 **Estado herdado (antes desta rodada)**: **código completo (36 de 41 tasks), `npm test` verde
 (327/327), `tsc --noEmit` limpo, `next build` ok.** T041 rodou: commit `e5b2f29`, pushado em
@@ -166,16 +174,14 @@ rodando de verdade.
 ## Próximo passo (atualizado 10/08 tarde)
 
 1. ~~T019, T035, T014~~ — feitos, ver "Atualização 10/08" no topo.
-2. **Corrigir o bug do `/ia` (500 em vez de lacuna)** antes de fechar T024 — `try/catch` no
-   `Promise.all` de `app/ia/page.tsx:76`, tratando falha de leitura como `lacuna = true`. Depois
-   revalidar localmente com `DATABASE_URL` quebrada (mesmo teste desta sessão) e fechar T024.
-3. **Investigar por que `hub_estado` estava vazio** antes de hoje — a rotina noturna
-   (`POST /api/estado` às 23:37 BRT) foi descrita como entregue numa sessão anterior (09/08), mas
-   os dados de produção mostram que nunca gravou nada. Conferir se o GitHub Actions que dispara o
-   cron está mesmo habilitado/agendado, ou se falha antes de chegar na rota (checar
-   `dbOn()`/`CRON_SECRET` no runner, e os logs do Actions).
-4. Depois que o cron acima estiver confirmado rodando sozinho, **duas noites seguidas** fecham
-   T030 (2ª corrida silenciosa) e T014 (cruzamento com `seo_publications` do autopublishing).
+2. ~~Corrigir o bug do `/ia` (500 em vez de lacuna)~~ — feito, commit `687203b`. T024 fechada.
+3. ~~Investigar por que `hub_estado` estava vazio~~ — não era bug: o cron (`estado-noturno.yml`)
+   só existe desde ontem à noite, a 1ª disparada caiu na janela conhecida de indisponibilidade
+   (retry já commitado antes desta sessão), disparo manual funcionou. Nada a corrigir.
+4. **Deixar o cron rodar sozinho amanhã à noite (23:37 BRT)** sem mexer em nada antes — é o que
+   falta pra fechar T030 (2ª corrida silenciosa comparando com a linha de hoje) e o cruzamento de
+   autopublishing do T014. Não rodar `POST /api/estado` manualmente de novo antes disso, senão a
+   linha de "hoje" muda de novo e o dia de comparação vira o dia seguinte.
 5. Ler as primeiras linhas de `ia_chamadas` uma a uma antes de olhar qualquer agregado — regra da
    casa, confirmada quatro vezes nesta base (`pesquisa.md` §3.6). Deploy sempre fora da janela
    23:30–01:00 BRT (estado noturno 23:37, autopublishing 00:13).
