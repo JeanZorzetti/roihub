@@ -16,10 +16,11 @@ numa porta separada — zero risco pra produção): a busca (`/busca`) continuou
 (1ª metade da FR-007 ok), mas `/ia` devolveu 500 (2ª metade falhou). Log do servidor:
 `AggregateError` com `ECONNREFUSED ::1:5432` e `127.0.0.1:5432`, sem stack de app — o erro nunca
 passa por nenhum `catch` do código da feature.
-**Fix provável**: envolver o `Promise.all` de `app/ia/page.tsx` em `try/catch` (mesmo padrão do
-`try/catch` que já existe em `app/api/estado/route.ts` ao redor de `consolidar`/`expirar`) e tratar
-falha de leitura como lacuna — os quatro `let` já têm defaults (`[]`/`null`) prontos pra esse caso,
-só falta o `catch` popular `lacuna = true` em vez de deixar a exceção subir.
+**Corrigido nesta sessão**: `try/catch` em volta do `Promise.all` de `app/ia/page.tsx`, com
+`falhaLeitura` entrando na mesma condição de `lacuna` (mesmo padrão do `try/catch` que já existe em
+`app/api/estado/route.ts` ao redor de `consolidar`/`expirar`). Revalidado local: banner "Lacuna de
+telemetria" aparece, `/busca` continua 200, `npm test` 327/327, `tsc --noEmit` limpo. Commit
+separado do de validação.
 
 **T019 (US2)** — `node --env-file=.env scripts/probe-pool.mjs --gravar` rodado duas vezes (14:28 e
 14:29 BRT, 3 chamadas reais cada = 6 no total). 2ª rodada **não duplicou linha**: 3 linhas em

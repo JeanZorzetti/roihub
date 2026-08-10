@@ -71,17 +71,25 @@ export default async function Page() {
   let ultima: string | Date | null = null;
   let pool: { conta: string; estado: string; desde: string | Date; visto: string | Date }[] = [];
   let linhasJanela: { empregado: string; desfecho: string }[] = [];
+  let falhaLeitura = false;
 
   if (on) {
-    [porEmp, ultima, pool, linhasJanela] = await Promise.all([
-      porEmpregado({ desde, ate: agora }),
-      ultimaSonda(),
-      poolDatado(),
-      janela({ desde, ate: agora }),
-    ]);
+    // FR-007, 2ª metade: banco fora não pode virar 500 — a leitura falhando é a lacuna, não
+    // um erro de página. `registrar()` já garante isso do lado da escrita (nunca lança); aqui
+    // é o mesmo contrato do lado da leitura.
+    try {
+      [porEmp, ultima, pool, linhasJanela] = await Promise.all([
+        porEmpregado({ desde, ate: agora }),
+        ultimaSonda(),
+        poolDatado(),
+        janela({ desde, ate: agora }),
+      ]);
+    } catch {
+      falhaLeitura = true;
+    }
   }
 
-  const lacuna = !ultima || agora.getTime() - new Date(ultima).getTime() > LACUNA_MS;
+  const lacuna = falhaLeitura || !ultima || agora.getTime() - new Date(ultima).getTime() > LACUNA_MS;
   const totalFalhas = porEmp.reduce((s, r) => s + Object.values(r.falhas).reduce((a, b) => a + b, 0), 0);
 
   const estados = EMPREGADOS.map((empregado) => ({
