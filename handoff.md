@@ -1,5 +1,16 @@
 # ROI Hub — handoff
 
+> ★ **ENTREGUE (09/08) — O APARATO DE MEDIÇÃO AGORA RODA SOZINHO:
+> [`handoff/handoff-estado-noturno-o-aparato-ligado.md`](handoff/handoff-estado-noturno-o-aparato-ligado.md).**
+> Cinco medidores zero-LLM existiam e nenhum rodava sem alguém digitar o comando; agora
+> `POST /api/estado` roda às **23:37 BRT** (antes do autopublish, para medir o pool EM REPOUSO) e
+> entrega o **DIFF** — célula que apareceu ou sumiu, nunca placar. **A janela de não-push virou
+> 23:30–01:00 BRT**, são dois crons nela agora.
+> 🚩 **O plano original estava errado e o erro é reutilizável: `humano: false` NÃO é fila de robô.**
+> São 46 de 53 (o "8" é `humano: true`), e **12 já dizem `✅ RESOLVIDO`** enquanto 10 são estado de
+> índice do GSC sem alavanca técnica. **26% da fila já está feita e 33% não se conserta por
+> código.** Dos 15 que sobram, 6 são `PATCH /v9/projects` e não precisam de LLM nenhum.
+>
 > 🚩 **EXECUTADO (03/08, tarde) — AS DUAS ZERADAS NÃO SÃO A MESMA CLASSE:
 > [`handoff/handoff-as-duas-zeradas-nao-sao-a-mesma-classe.md`](handoff/handoff-as-duas-zeradas-nao-sao-a-mesma-classe.md).**
 > O §5.3 do handoff anterior classificou `D-73` e `D-85` juntas como "descasamento de vocabulário,
