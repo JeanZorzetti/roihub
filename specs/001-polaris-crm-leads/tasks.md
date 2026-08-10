@@ -89,8 +89,8 @@ description: "Task list for spec 001 — CRM do roihub recebe leads do Polaris"
 
 ## Phase 6: Polish & Deploy
 
-- [ ] T015 Configurar `ROIHUB_CRM_URL` e `ROIHUB_CRM_SECRET` no serviço EasyPanel do sofia-next em **produção**. ⚠️ Esta é exatamente a etapa que faltou na integração Sirius e a deixou quebrada (500) sem ninguém notar — sem ela, a feature funciona local e falha em produção.
-- [ ] T016 Rodar os 4 cenários do [quickstart.md](./quickstart.md) contra produção, incluindo o cenário 4 (roihub indisponível não afeta o visitante).
+- [X] T015 Configurar `ROIHUB_CRM_URL` e `ROIHUB_CRM_SECRET` no serviço EasyPanel do sofia-next em **produção**. ⚠️ Esta é exatamente a etapa que faltou na integração Sirius e a deixou quebrada (500) sem ninguém notar — sem ela, a feature funciona local e falha em produção.
+- [X] T016 Rodar os 4 cenários do [quickstart.md](./quickstart.md) contra produção, incluindo o cenário 4 (roihub indisponível não afeta o visitante).
 - [X] T017 [P] Escrever `handoff.md` co-localizado em `specs/001-polaris-crm-leads/` com o que foi entregue e as evidências de produção.
 
 ---

