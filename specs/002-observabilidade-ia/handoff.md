@@ -1,10 +1,21 @@
 # Handoff — Observabilidade dos recursos de IA e saúde dos empregados (spec 002) — 10/08/2026
 
-**Estado**: **código completo (35 de 41 tasks), `npm test` verde (327/327), `tsc --noEmit` limpo.**
-As 5 validações de ponta a ponta do [quickstart.md](./quickstart.md) (T014, T019, T024, T030,
-T035) **ficaram pendentes** — exigem produção de verdade (Postgres real, pool de contas, um
-deploy) e este ambiente de implementação não tinha `DATABASE_URL` nem `CLAUDE_CODE_OAUTH_TOKENS`.
-T041 (commit + push) também não rodou ainda — ver "Próximo passo" abaixo.
+**Estado**: **código completo (36 de 41 tasks), `npm test` verde (327/327), `tsc --noEmit`
+limpo, `next build` ok.** T041 rodou: commit `e5b2f29`, pushado em `main`.
+
+Faltam as 5 validações de ponta a ponta do [quickstart.md](./quickstart.md) — mas **a razão real
+é mais estreita** do que a primeira versão deste handoff dizia. Correção: este ambiente **tinha**
+`.env` local com `DATABASE_URL` e `CLAUDE_CODE_OAUTH_TOKENS` reais (confirmado depois, conectando
+no Postgres de produção) — eu não tinha checado a existência do arquivo antes de escrever a
+primeira versão desta seção, o que violou a norma da casa de ler `.env` antes de qualquer
+diagnóstico. Refeita a conta, as 5 validações se dividem em dois grupos:
+
+- **T019 e T035 não dependiam de deploy nenhum** — são scripts standalone que rodam contra o
+  mesmo Postgres de produção. Deveriam ter rodado nesta sessão e não rodaram, por esse mesmo
+  motivo (não checar o `.env`).
+- **T014, T024 e T030 dependem do app DEPLOYADO** (`/busca`, `/ia`, `POST /api/estado` na URL de
+  produção) — essas sim ficam bloqueadas até o container do EasyPanel subir este commit. O push
+  foi só pro GitHub; não confirmei se há auto-deploy configurado.
 
 ---
 
@@ -73,37 +84,42 @@ T041 (commit + push) também não rodou ainda — ver "Próximo passo" abaixo.
 
 ## O que NÃO foi validado (e por quê)
 
-Nenhum dos 5 cenários do [quickstart.md](./quickstart.md) rodou contra produção nesta sessão —
-este ambiente não tinha `DATABASE_URL` nem `CLAUDE_CODE_OAUTH_TOKENS`. Especificamente faltam:
+### Sem deploy nenhum — dava pra ter rodado, ficou pendente por descuido meu
 
-- **T014 (US1)**: confirmar que uma busca real grava 2 linhas (`rerank`+`resposta`) e que o
+- **T019 (US2)**: `node --env-file=.env scripts/probe-pool.mjs --gravar` contra `ia_pool` de
+  produção; rodar duas vezes seguidas e confirmar que a 2ª não duplica linha, só atualiza `visto`.
+  Custo real: **3 chamadas de claude-cli** (1 por conta do pool).
+- **T035 (US5)**: `node --env-file=.env scripts/orcamento.mjs --chamadas 85`. Zero chamada de LLM
+  — só lê `ia_pool`/`ia_chamadas`.
+
+### Dependem do container redeployado
+
+- **T014 (US1)**: busca real em `hub.roilabs.com.br/busca` grava 2 linhas (`rerank`+`resposta`);
   controle negativo (`?rerank=0&resposta=0`) não grava nada.
-- **T019 (US2)**: `probe-pool.mjs --gravar` de verdade contra `ia_pool`; confirmar que sondar duas
-  vezes sem mudança não duplica linha.
 - **T024 (US3)**: abrir `/ia` depois de um ciclo noturno completo e bater os números contra o SQL
-  cru; derrubar a escrita de propósito e confirmar as duas metades da FR-007 ao mesmo tempo.
-- **T030 (US4)**: rodar `POST /api/estado` duas vezes seguidas e confirmar card silencioso na
-  segunda. **Esperado no PRIMEIRO deploy, nomeado aqui como o quickstart pede**: a corrida logo
-  após o deploy vai emitir um card com **3 "novos" + 3 "resolvidos" no domínio `POOL`** — a chave
-  trocou de índice posicional para hash da conta. Não é achado, é ruído de uma noite só (D10,
-  risco de migração conhecido).
-- **T035 (US5)**: `scripts/orcamento.mjs --chamadas 85` com 2 de 3 contas fora, confirmando que a
-  leitura evidencia que a corrida não cabe.
+  cru; derrubar a escrita de propósito e confirmar as duas metades da FR-007 ao mesmo tempo (busca
+  continua respondendo **e** a janela aparece como lacuna).
+- **T030 (US4)**: `POST /api/estado` duas vezes seguidas → 2ª sai silenciosa. **Esperado no
+  PRIMEIRO deploy**: a corrida logo após vai emitir um card com **3 "novos" + 3 "resolvidos" no
+  domínio `POOL`** — a chave trocou de índice posicional para hash da conta. Não é achado, é
+  ruído de uma noite só (D10, risco de migração conhecido).
 
-`npm test` (327/327) e `npx tsc --noEmit` (limpo) rodaram e passam — cobrem toda a lógica pura e
-os contratos de tipo, mas **não substituem** os 5 cenários acima, que só existem contra Postgres e
-pool reais.
+`npm test` (327/327) e `npx tsc --noEmit` (limpo) cobrem toda a lógica pura e os contratos de
+tipo, mas **não substituem** os 5 cenários acima — só existem contra Postgres, pool e o app
+rodando de verdade.
 
 ---
 
 ## Próximo passo
 
-1. Rodar os 5 cenários pendentes contra produção (ou um ambiente de staging com
-   `DATABASE_URL`/`CLAUDE_CODE_OAUTH_TOKENS` reais) — T014/T019/T024/T030/T035.
-2. **T041**: `git commit` + `git push`, fora da janela 23:30–01:00 BRT (estado noturno 23:37,
-   autopublishing 00:13). Depois do primeiro ciclo noturno pós-deploy, ler as primeiras linhas de
-   `ia_chamadas` uma a uma antes de olhar qualquer agregado — regra da casa, confirmada quatro
-   vezes nesta base (`pesquisa.md` §3.6).
+1. **T019 e T035** podem rodar agora, sem depender de deploy — só precisam de autorização porque
+   `probe-pool.mjs --gravar` gasta 3 chamadas reais do pool de produção.
+2. Fazer (ou confirmar) o deploy do commit `e5b2f29` no EasyPanel.
+3. Rodar T014/T024/T030 contra a URL de produção depois do deploy.
+4. Depois do primeiro ciclo noturno pós-deploy, ler as primeiras linhas de `ia_chamadas` uma a
+   uma antes de olhar qualquer agregado — regra da casa, confirmada quatro vezes nesta base
+   (`pesquisa.md` §3.6). Deploy sempre fora da janela 23:30–01:00 BRT (estado noturno 23:37,
+   autopublishing 00:13).
 
 ---
 
