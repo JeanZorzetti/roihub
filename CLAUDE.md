@@ -46,6 +46,21 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
   Regex de status em `run-autopublish.mjs:40` valida o conjunto — reason nova precisa
   entrar lá, senão vira `invalid-response`.
 
+## 🚩 O hub fica INTERMITENTEMENTE INACESSÍVEL na janela da madrugada
+
+Vale para os DOIS crons, e é anterior ao estado noturno. O autopublish falhou em **02/08 e 03/08**
+com `request-failed` — que é o `catch` do `fetch` em `requestPhase`, não erro de LLM — e a 1ª
+corrida do estado morreu em `curl: (28) Failed to connect to hub.roilabs.com.br port 443` às
+**04:15 UTC**, com o autopublish conectando normalmente às **04:49 UTC**. A janela de queda é
+curta; **reter resolve, e `estado-noturno.yml` já retenta** (5×, 120 s, só em falha de conexão).
+
+- **`request-failed` no autopublish NÃO é o modelo falhando** — é o hub fora do ar. Ler como
+  problema de LLM manda caçar bug no lugar errado. **`seo-autopublish.yml` ainda não tem retry.**
+- **O Actions atrasa o agendamento em ~1h40.** `37 2 * * *` UTC disparou 04:15 e `13 3 * * *`
+  disparou 04:49 — os dois com ~97 min de atraso. A ORDEM entre eles sobreviveu (é o que
+  importa: a sonda tem que ler o pool antes do autopublish drenar), mas **não conte com a hora
+  cheia**: o cron do Actions é o horário mais cedo possível, nunca o exato.
+
 ## Estado noturno (`lib/estado-noturno.mjs`) — o aparato que agora roda sozinho
 
 `POST /api/estado` (Bearer `CRON_SECRET`), disparado por `.github/workflows/estado-noturno.yml`

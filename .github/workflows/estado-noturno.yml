@@ -15,11 +15,33 @@ jobs:
     steps:
       # Sem checkout e sem Node: o trabalho todo é server-side (o `probe-pool` precisa do
       # claude-cli e do pool de tokens, que só existem na imagem do EasyPanel). Aqui é o gatilho.
+      #
+      # 🚩 O hub fica INTERMITENTEMENTE INACESSÍVEL nesta janela, e isso é anterior a este job:
+      # o autopublish falhou em 02/08 e 03/08 com `request-failed` (o catch do fetch), e a 1ª
+      # corrida deste aqui morreu em `curl: (28) Failed to connect ... port 443` às 04:15 UTC —
+      # com o autopublish conectando normalmente às 04:49. A janela de indisponibilidade é curta,
+      # então reter resolve.
+      #
+      # Retry SÓ em falha de conexão, nunca em erro HTTP: o servidor só gasta pool depois de
+      # aceitar o request, então repetir um 500 re-executaria a sondagem e queimaria 3 chamadas
+      # por tentativa. Sem resposta HTTP = o trabalho não começou = repetir é de graça.
+      # A corrida é idempotente (`run_date` é PK com DO UPDATE), então repetir é seguro.
       - name: Dispara a corrida e falha se o hub recusar
         run: |
-          corpo=$(curl -sS -X POST "$HUB_URL/api/estado" \
-            -H "authorization: Bearer $HUB_CRON_SECRET" \
-            -w '\n%{http_code}' --max-time 660)
+          for tentativa in 1 2 3 4 5; do
+            corpo=$(curl -sS -X POST "$HUB_URL/api/estado" \
+              -H "authorization: Bearer $HUB_CRON_SECRET" \
+              -w '\n%{http_code}' --max-time 660) && break
+            saida=$?
+            # 7 couldn't connect · 28 timeout · 35 TLS · 52 vazio · 56 recv falhou
+            case $saida in
+              7|28|35|52|56) ;;
+              *) echo "::error::curl saiu $saida — não é falha de conexão, não repete"; exit 1 ;;
+            esac
+            [ "$tentativa" = "5" ] && { echo "::error::hub inacessível em 5 tentativas"; exit 1; }
+            echo "tentativa $tentativa: curl saiu $saida (hub fora do ar), esperando 120s"
+            sleep 120
+          done
           codigo=$(printf '%s' "$corpo" | tail -n1)
           printf '%s\n' "$corpo" | sed '$d'
           [ "$codigo" = "200" ] || { echo "::error::hub devolveu HTTP $codigo"; exit 1; }
