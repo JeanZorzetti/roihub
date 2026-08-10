@@ -17,9 +17,10 @@ TypeScript, Node 22. No ar em `hub.roilabs.com.br`.
    e aí o run inteiro morre em `ENOENT` sem dizer qual foi.
 3. **Deploy é Docker no EasyPanel**, `output: "standalone"` — **não é Vercel**.
    `vercel project ls` não prova nada sobre este repo. Push em `main` → build da imagem.
-4. **Não dar push entre 00:00 e 01:00 BRT.** O cron do autopublishing dispara 00:13 BRT
-   (`13 3 * * *` UTC no `.github/workflows/seo-autopublish.yml`); um deploy no meio derruba
-   a publicação de 10 projetos.
+4. **Não dar push entre 23:30 e 01:00 BRT.** São DOIS crons na janela: o **estado noturno**
+   às 23:37 BRT (`37 2 * * *` UTC, até ~10 min) e o **autopublishing** às 00:13 BRT
+   (`13 3 * * *` UTC). Um deploy no meio derruba a publicação de 10 projetos ou a corrida do
+   estado. A ordem é deliberada — ver "Estado noturno" abaixo.
 5. **`.mjs` vs `.ts` é deliberado.** A lógica pura testável mora em `.mjs`
    (`lib/score.mjs`, `lib/projects.mjs`, `lib/crawl.mjs`…) para ser importada tanto pelo
    Next quanto pelo `node --test` sem transpilar. Só o que toca o Next/DB é `.ts`.
@@ -44,6 +45,38 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
   inteiro): `llm-auth`, `llm-rate`, `llm-cli`, `llm-output`, `llm-parse`, `llm-timeout`.
   Regex de status em `run-autopublish.mjs:40` valida o conjunto — reason nova precisa
   entrar lá, senão vira `invalid-response`.
+
+## Estado noturno (`lib/estado-noturno.mjs`) — o aparato que agora roda sozinho
+
+`POST /api/estado` (Bearer `CRON_SECRET`), disparado por `.github/workflows/estado-noturno.yml`
+às **23:37 BRT**. O Actions só dispara; o trabalho é server-side porque o `probe-pool` precisa do
+claude-cli e do `CLAUDE_CODE_OAUTH_TOKENS`, e nenhum dos dois existe no runner do GitHub.
+
+- **Quatro coletores, três de graça.** `CONF` (conformidade, ~140 req), `GTW`
+  (`gateways-servido`, ~250 req), `REPO` (`gateways-repo`, 35 árvores do GitHub) são zero LLM;
+  `POOL` (`sondar`) gasta **1 chamada por conta**. `validade.mjs` fica FORA de propósito: já roda
+  no `npm test`, e card noturno sobre o que o CI já reprovou é ruído.
+- **A entrega é o DIFF, nunca placar** — cada coletor devolve mapa `DOMINIO:slug:id → rótulo`, e
+  só célula que APARECEU ou SUMIU vira card. "41 violações" saiu igual antes e depois do conserto
+  do `GEO-01`: o agregado não se mexeu e só a LINHA mudou. Noite sem mudança é silenciosa.
+- **🚩 FALHA FECHADA POR COLETOR, e é a corretude inteira desta frente.** Coletor que estoura
+  devolve zero chave, e sem `dominiosOk` o diff leria a ausência como conserto: **"35 violações
+  resolvidas" no dia em que o `GITHUB_TOKEN` expirar**. É a regra do `nao_apurado` — fonte que não
+  respondeu SAI da corrida em vez de cair para um valor que dá notícia boa. `mesclarEstado`
+  carrega os valores de ontem do domínio que falhou, senão amanhã as mesmas chaves voltam como
+  achado novo. **Pool vazio ESTOURA** pelo mesmo motivo: env var ausente é "não olhei", não
+  "nenhuma conta com problema". Coletor fora vira card mesmo sem diff.
+- **A 1ª corrida NÃO gera card.** Sem anterior não há diff, e 40 "novidades" seriam a linha de
+  base disfarçada de achado. Grava o mapa e cala; o diff começa no dia seguinte.
+- **A ORDEM contra o autopublishing é deliberada:** 23:37 mede o pool **em repouso**. Depois das
+  00:13 a sondagem mediria o pool drenado e chamaria de morta (403) a conta que só está em 429 —
+  e é justamente essa distinção que a sonda existe para fazer.
+- **`run_date` é PK de `hub_estado`**: o Actions pode repetir o dia, e sobrescrever é o certo
+  porque `estadoAnterior` compara sempre com o DIA ANTERIOR, nunca com a linha que a própria
+  corrida acabou de gravar. Rodar duas vezes no mesmo dia dá o mesmo diff.
+- **Reusa `CRON_SECRET`** (isenção no `middleware.ts`, ao lado do autopublish): quem já publica
+  artigo em 10 repos não ganha capacidade nova gravando card de agenda. Segredo próprio é para
+  capacidade MAIOR — é o caso do `CRM_INGEST_SECRET`.
 
 ## Busca (`/busca`) — o SEGUNDO consumidor do claude-cli
 
