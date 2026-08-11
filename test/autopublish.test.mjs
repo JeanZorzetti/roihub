@@ -20,7 +20,7 @@ import {
   revertCommit,
 } from "../lib/autopublish-clients.ts";
 import { publishProject, verifyPublication } from "../lib/autopublish.ts";
-import { parseProjectStateFields } from "../app/seo/action-fields.mjs";
+import { parseProjectStateFields } from "../app/automacao/action-fields.mjs";
 
 const draft = {
   slug: "daily-guide",
@@ -1061,7 +1061,7 @@ test("renderizadores preservam schemas nativos, escapam conteúdo e materializam
 // A UI iterava data/projects.json (lista da agenda) em vez de PROJECTS: o tapepro ficou
 // ativo e sem controle de pausa na tela, e o nimblabs removido continuou aparecendo.
 test("controles da UI cobrem exatamente os projetos do autopublishing", () => {
-  const source = readFileSync(new URL("../app/seo/publications.tsx", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../app/automacao/publications.tsx", import.meta.url), "utf8");
   assert.match(source, /PROJECTS\.map\(/, "os controles precisam derivar de PROJECTS");
   assert.doesNotMatch(
     source,

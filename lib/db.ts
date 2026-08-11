@@ -574,6 +574,19 @@ export async function estadoAnterior(runDate: string): Promise<Record<string, st
   return r.rows[0]?.mapa ?? null;
 }
 
+/**
+ * A linha mais recente — é contra ELA que o diff de amanhã roda. Só leitura, para a aba
+ * /automacao mostrar o que a corrida noturna deixou gravado; `estadoAnterior` continua sendo
+ * quem a corrida usa, e ele exclui o próprio dia de propósito.
+ */
+export async function estadoUltimo(): Promise<{ runDate: string; mapa: Record<string, string>; criado: Date } | null> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT to_char(run_date, 'YYYY-MM-DD') AS "runDate", mapa, criado FROM hub_estado ORDER BY run_date DESC LIMIT 1`
+  );
+  return r.rows[0] ?? null;
+}
+
 export async function gravarEstado(runDate: string, mapa: Record<string, string>): Promise<void> {
   await ensure();
   await pool().query(

@@ -14,5 +14,5 @@ export async function updatePublishingState(form: FormData): Promise<void> {
   const fields = parseProjectStateFields(form, PROJECT_SLUGS);
   if (!fields) return;
   if (dbOn()) await setProjectEnabled(fields.slug, fields.enabled, fields.reason);
-  revalidatePath("/seo");
+  revalidatePath("/automacao");
 }

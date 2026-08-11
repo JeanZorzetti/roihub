@@ -1,11 +1,9 @@
 import { Fragment } from "react";
 import { listProjects, type Project } from "@/lib/projects";
-import { dbOn, listProjectStates, listPublications } from "@/lib/db";
 import { gscSeries, gscStatus, isoDaysAgo } from "@/lib/gsc";
 import { bucketWeeks, totals28 } from "@/lib/series.mjs";
 import { Tabs, GscFoot } from "../tabs";
 import { WeekChart, Stat, Delta, InvDelta, num, compact, fmtDay, sinceGsc } from "../viz";
-import { Publications } from "./publications";
 
 // GSC roda a cada request (16 meses de histórico na API — sem DB, sem cache de build).
 export const dynamic = "force-dynamic";
@@ -19,9 +17,8 @@ const fmtCtr = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(
 
 export default async function SeoPage() {
   const end = isoDaysAgo(3);
-  const databaseOn = dbOn();
   const projects = await listProjects();
-  const [gsc, rows, publications, projectStates] = await Promise.all([
+  const [gsc, rows] = await Promise.all([
     gscStatus(),
     Promise.all(
       projects.map(async (p): Promise<Row> => {
@@ -30,8 +27,6 @@ export default async function SeoPage() {
         return { ...p, weeks: bucketWeeks(s.days, end), t: totals28(s.days, end) };
       })
     ),
-    databaseOn ? listPublications(50) : Promise.resolve([]),
-    databaseOn ? listProjectStates() : Promise.resolve([]),
   ]);
   rows.sort((a, b) => (b.t?.current.impressions ?? -1) - (a.t?.current.impressions ?? -1));
   const withData = rows.filter((r) => r.t !== null);
@@ -113,8 +108,6 @@ export default async function SeoPage() {
         ))}
       </section>
 
-      <Publications publications={publications} states={projectStates} databaseOn={databaseOn} />
-
       {withData.length > 0 && (
         <details className="card table-details">
           <summary>Dados semanais em tabela ({withData.length} projetos × {weekHeads.length} semanas)</summary>
@@ -171,7 +164,8 @@ export default async function SeoPage() {
         anteriores. Posição média ponderada por impressões — <b>cair é melhor</b>. CTR agregado da janela
         (cliques÷impressões), não média dos CTRs diários. Impressão subindo em site novo =
         Google começando a servir o site, mesmo com 0 cliques. Tudo calculado ao vivo da API do Search Console (16
-        meses de histórico) — sem banco.
+        meses de histórico) — sem banco. A sala de controle editorial e o histórico de publicação saíram desta aba: moram
+        em <a href="/automacao">Automação</a>.
       </p>
     </main>
   );

@@ -7,7 +7,7 @@ import type { GithubStatus } from "@/lib/github";
 export function Tabs({
   active,
 }: {
-  active: "home" | "seo" | "infra" | "insights" | "agenda" | "resumo" | "busca" | "crm" | "ia";
+  active: "home" | "seo" | "infra" | "insights" | "agenda" | "resumo" | "busca" | "crm" | "ia" | "automacao";
 }) {
   const tab = (key: string, href: string, label: string) => (
     <Link href={href} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
@@ -25,6 +25,7 @@ export function Tabs({
       {tab("busca", "/busca", "Busca")}
       {tab("crm", "/crm", "CRM")}
       {tab("ia", "/ia", "IA")}
+      {tab("automacao", "/automacao", "Automação")}
     </nav>
   );
 }

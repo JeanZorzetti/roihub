@@ -36,6 +36,11 @@ Cadeia: GitHub Actions (`scripts/run-autopublish.mjs`) → `POST HUB_URL/api/seo
   é rate limit de assinatura, não crédito; conta esgotada é pulada e a próxima tenta.
   Só o token da vez chega ao processo filho (`autopublish-clients.ts:184`).
 - **`enabled` mora no banco**, não em arquivo. Ligar/desligar projeto é UPDATE.
+- **A UI é a aba `/automacao`, não a `/seo`** (11/08). Sala de controle (kill switch global +
+  pausa por projeto), histórico de publicação e um bloco só-leitura do estado noturno. As duas
+  automações agendadas da casa ficavam em abas que não são sobre automação — a editorial dentro
+  do SEO e o estado só no card da agenda. `app/automacao/action-fields.mjs` e `publications.tsx`
+  são lidos por caminho literal em `test/autopublish.test.mjs`: mover de novo exige mexer lá.
 - **A fila gira 1 passo por dia** (`projectQueue`) para o rate limit não cair sempre no
   mesmo projeto.
 - **claude-cli não tem `json_schema` strict**: o JSON vem no meio do texto e
