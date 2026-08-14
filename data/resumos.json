@@ -104,12 +104,12 @@
     "proximaDecisao": "Sobe o backend FastAPI ou tira o formulário e assume que é vitrine?"
   },
   "tapevision": {
-    "oQueE": "Dashboard de trading de mini-dólar por tape reading, com interface para Nelogica.",
+    "oQueE": "Bot de tape reading para mini-dólar. A forma decidida em 14/08 é agente local no Windows do cliente e só sinal — quem envia a ordem é o cliente; a nuvem fica com auth, billing e histórico.",
     "paraQuem": "Trader de mini-índice e mini-dólar; ninguém foi cobrado até hoje.",
     "estado": "no-ar-inutilizavel",
     "dinheiro": "R$ 0 e sem caminho de cobrança.",
-    "oQueTrava": "aitradingapi.roilabs.com.br é NXDOMAIN (confirmado 31/07): dashboard de tempo real sem dado e sem stream.",
-    "proximaDecisao": "Hospedar Backend/ + MLEngine (ambos completos no repo) ou aposentar o projeto?"
+    "oQueTrava": "O backend subiu e responde (apitapevision.roilabs.com.br, /health verificado em 14/08), mas serve número aleatório: 30 ocorrências de Math.random nas 511 linhas de server-production.js. Dado real de WDO depende da licença DLL Feed da Nelogica, que é paga.",
+    "proximaDecisao": "Ligar o motor da spec 002 (validado ao vivo contra a Binance em 14/08) no lugar do Math.random(), ou esperar a licença paga da Nelogica?"
   },
   "potencialarquitetado": {
     "oQueE": "Biblioteca de frameworks de carreira e soft skills. O conteúdo é estático e funciona; a área logada e o /admin não.",

@@ -287,23 +287,35 @@
     "repo": "tape-vision-ai-92",
     "gscInicio": "2026-07-30",
     "receita": 2,
-    "receitaNota": "Dashboard no ar sem backend: API e WebSocket apontam pra host inexistente",
+    "receitaNota": "Backend no ar e respondendo, mas o que ele serve é número aleatório: não há dado real nem cobrança",
     "blockers": 7,
     "blockersLista": [
       {
-        "texto": "aitradingapi.roilabs.com.br é NXDOMAIN e está em VITE_API_URL e VITE_WS_URL do .env.production — dashboard sem dado e sem stream",
+        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 14/08: aitradingapi.roilabs.com.br saiu do VITE_API_URL e VITE_WS_URL em 13/08 (commit 0a4ce3b); o front aponta para apitapevision.roilabs.com.br, que responde /health com status healthy",
         "humano": false
       },
       {
-        "texto": "Publica SÓ por deploy manual de Frontend/ — build de git dá ERROR em todo commit",
+        "texto": "✅ DECIDIDO 14/08: MLEngine aposentado — o commit b62ff07 removeu os 38 arquivos de MLEngine/ mais o MLEngineService.ts do Backend; ml.aitrading.roilabs.com.br nunca chegou a ser deployado",
         "humano": false
+      },
+      {
+        "texto": "O que serve produção é server-production.js, 511 linhas com 30 ocorrências de Math.random contadas na fonte em 14/08: o dashboard lê preço, confiança e P&L inventados, o P&L com viés positivo",
+        "humano": false
+      },
+      {
+        "texto": "Dado real de WDO depende da licença DLL Feed da Nelogica, que é paga: conversa comercial aberta pelo dono e sem resposta até 14/08. É gate de dinheiro, não de código",
+        "humano": true
+      },
+      {
+        "texto": "Repo PÚBLICO com .env.production commitado (JWT_SECRET e senhas em texto claro, o mesmo segredo hardcoded como fallback no server-production.js) — adiado conscientemente pelo dono até o primeiro cliente pagante; a branch security/secret-containment existe e não foi pushada",
+        "humano": true
       }
     ],
     "seoSeed": 2,
     "decay": 6,
-    "decayNota": "Front em 200, API e WS mortos",
-    "acaoDesc": "Renomeado de tape-vision-ai-92 → tapevision em 30/07 (host antigo em 308). Curadoria medida: o Frontend aponta VITE_API_URL e VITE_WS_URL pra aitradingapi.roilabs.com.br, que não resolve — confirmado ao vivo em 30/07, junto com aitrading.roilabs.com.br. É um dashboard de trading em tempo real sem fonte de dado nem stream: o que está no ar é a casca. Mesmo padrão do cardiorisk e do potencialarquitetado — três landings cujo backend foi aposentado e ninguém repontou o front. O repo tem Backend/ e MLEngine/ completos, então a decisão é de hospedagem, não de código. Atenção ao publicar: build de git sempre dá ERROR aqui, só publica com deploy manual de dentro de Frontend/.",
-    "acao": "Decidir o destino do Backend/ + MLEngine (hospedar ou aposentar) — o dashboard no ar não tem de onde ler",
+    "decayNota": "Backend vivo desde 13/08, mas serve número aleatório: a casca deixou de ser o front e passou a ser o dado",
+    "acaoDesc": "Renomeado de tape-vision-ai-92 → tapevision em 30/07 (host antigo em 308). A virada de 14/08 invalidou o card anterior inteiro, e o destino do Backend/ + MLEngine FOI decidido: MLEngine aposentado (commit b62ff07) e Backend/ hospedado — apitapevision.roilabs.com.br responde /health com status healthy, verificado por curl em 14/08. O aitradingapi.roilabs.com.br segue NXDOMAIN, mas saiu do código em 13/08, então 'o dashboard não tem de onde ler' deixou de ser verdade. O problema mudou de lugar, não sumiu: o que está no ar é server-production.js, 511 linhas com 30 ocorrências de Math.random, ignorando as ~41 mil linhas de TradingEngine/TapeReader escritas em Backend/src — nenhum dado de mercado real jamais entrou no sistema. A forma do produto já foi decidida: agente local no Windows do cliente, só sinal (quem envia a ordem é o cliente, o que evita regra da CVM), e a nuvem encolhe para auth, billing e histórico. A spec 002 fechou 14/14 tarefas em 14/08 com o motor de verdade em agent/ (tape_reader, order_flow_analyzer, session_filter), validado numa corrida de 3h ao vivo contra o feed público da Binance — mercado errado, mecânica certa. O gate do produto real é dinheiro: a licença DLL Feed da Nelogica é paga. MetaTrader 5 foi testado e descartado (corretora BR não serve WDO/WIN por MT5). Atenção ao publicar: push em main deploya, então mudança de comportamento vai em branch.",
+    "acao": "Ligar o motor da spec 002 (validado ao vivo em 14/08) no lugar do Math.random() — é o único passo que não espera a licença paga da Nelogica",
     "familia": "produto",
     "estado": "no-ar-inutilizavel"
   },
