@@ -286,9 +286,9 @@
     "url": "https://tapevision.roilabs.com.br/",
     "repo": "tape-vision-ai-92",
     "gscInicio": "2026-07-30",
-    "receita": 2,
-    "receitaNota": "Backend no ar e respondendo, mas o que ele serve é número aleatório: não há dado real nem cobrança",
-    "blockers": 7,
+    "receita": 0,
+    "receitaNota": "Backend no ar e respondendo, mas o que ele serve é número aleatório: não há dado real nem cobrança. Deprioritizado 14/08: o que resta é gate externo (licença paga da Nelogica, segredo adiado pelo dono), nada acionável hoje",
+    "blockers": 0,
     "blockersLista": [
       {
         "texto": "✅ RESOLVIDO E VERIFICADO NO AR 14/08: aitradingapi.roilabs.com.br saiu do VITE_API_URL e VITE_WS_URL em 13/08 (commit 0a4ce3b); o front aponta para apitapevision.roilabs.com.br, que responde /health com status healthy",
@@ -311,9 +311,9 @@
         "humano": true
       }
     ],
-    "seoSeed": 2,
-    "decay": 6,
-    "decayNota": "Backend vivo desde 13/08, mas serve número aleatório: a casca deixou de ser o front e passou a ser o dado",
+    "seoSeed": 0,
+    "decay": 0,
+    "decayNota": "Backend vivo desde 13/08, mas serve número aleatório: a casca deixou de ser o front e passou a ser o dado. decay manual zerado 14/08 (deprioritizado); o efetivo ainda vem de insights.json (saúde 30, 09/08) até essa leitura expirar ou ser regerada",
     "acaoDesc": "Renomeado de tape-vision-ai-92 → tapevision em 30/07 (host antigo em 308). A virada de 14/08 invalidou o card anterior inteiro, e o destino do Backend/ + MLEngine FOI decidido: MLEngine aposentado (commit b62ff07) e Backend/ hospedado — apitapevision.roilabs.com.br responde /health com status healthy, verificado por curl em 14/08. O aitradingapi.roilabs.com.br segue NXDOMAIN, mas saiu do código em 13/08, então 'o dashboard não tem de onde ler' deixou de ser verdade. O problema mudou de lugar, não sumiu: o que está no ar é server-production.js, 511 linhas com 30 ocorrências de Math.random, ignorando as ~41 mil linhas de TradingEngine/TapeReader escritas em Backend/src — nenhum dado de mercado real jamais entrou no sistema. A forma do produto já foi decidida: agente local no Windows do cliente, só sinal (quem envia a ordem é o cliente, o que evita regra da CVM), e a nuvem encolhe para auth, billing e histórico. A spec 002 fechou 14/14 tarefas em 14/08 com o motor de verdade em agent/ (tape_reader, order_flow_analyzer, session_filter), validado numa corrida de 3h ao vivo contra o feed público da Binance — mercado errado, mecânica certa. O gate do produto real é dinheiro: a licença DLL Feed da Nelogica é paga. MetaTrader 5 foi testado e descartado (corretora BR não serve WDO/WIN por MT5). Atenção ao publicar: push em main deploya, então mudança de comportamento vai em branch.",
     "acao": "Ligar o motor da spec 002 (validado ao vivo em 14/08) no lugar do Math.random() — é o único passo que não espera a licença paga da Nelogica",
     "familia": "produto",
