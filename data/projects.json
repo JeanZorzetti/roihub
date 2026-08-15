@@ -330,8 +330,12 @@
     "blockers": 5,
     "blockersLista": [
       {
-        "texto": "arquiteturaapi.roilabs.com.br é NXDOMAIN e está em VITE_API_URL do .env.production",
+        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 15/08 (commit a74e1bd): arquiteturaapi.roilabs.com.br é NXDOMAIN, e Index/Blog/Article buscavam os artigos DELE — o blog inteiro renderizava vazio com a home em 200. services/api.ts agora resolve dos 6 artigos que já estavam em src/data/articles.ts. O /admin continua sem host (não é caminho público)",
         "humano": false
+      },
+      {
+        "texto": "Formulários públicos não capturam nada: CTABox (newsletter) faz POST no host NXDOMAIN e /contato só exibe 'Mensagem enviada com sucesso!' sem enviar a lugar nenhum. Sem destino de captura não há lista — e é a lista que decide se o conteúdo vira produto pago. Falta Jean escolher o destino (Formspree, Google Form ou inbox real; contato@arquiteturadopotencial.com é NXDOMAIN)",
+        "humano": true
       },
       {
         "texto": "✅ RESOLVIDO E VERIFICADO NO AR 31/07: og:image, twitter:image e twitter:url apontavam para arquiteturadopotencial.com (NXDOMAIN); agora servem /og-image.png no domínio próprio",
@@ -340,9 +344,9 @@
     ],
     "seoSeed": 2,
     "decay": 5,
-    "decayNota": "Conteúdo estático em 200; backend e /admin sem host",
-    "acaoDesc": "Renomeado de potencial-arquitetado → potencialarquitetado em 30/07 (host antigo em 308). Curadoria medida: VITE_API_URL aponta pra arquiteturaapi.roilabs.com.br/api, host que não resolve — então o backend/server.js e o /admin descritos no SISTEMA_PRONTO.md não têm onde rodar. A parte de conteúdo (frameworks de soft skills e carreira) é estática e funciona sozinha. Achado de borda: a og:image no index.html aponta pra 'arquiteturadopotencial.com' (sem .roilabs), domínio inexistente — todo compartilhamento sai sem imagem. Nenhum sinal de cobrança no código: se a tese é vender curso ou comunidade, não existe caminho de checkout hoje.",
-    "acao": "Decidir se o conteúdo vira produto pago — a og:image já foi corrigida (31/07). Sem essa decisão não vale mexer em mais nada aqui",
+    "decayNota": "6 artigos servidos desde 15/08; /admin sem host; formulários públicos não capturam",
+    "acaoDesc": "DECISÃO TOMADA 15/08: não vira produto pago agora — GSC acusava 0 impressões e 0 cliques em 28 dias, e a premissa do card era falsa. O card dizia que 'a parte de conteúdo é estática e funciona sozinha': não era. Index/Blog/Article chamavam services/api.ts → arquiteturaapi.roilabs.com.br (NXDOMAIN), então os 6 artigos NUNCA chegaram ao browser — só /sobre e /framework eram de fato estáticos. Sem audiência não existe a quem cobrar, então o passo é consertar o grátis e medir: commit a74e1bd faz api.ts resolver de src/data/articles.ts (mesma assinatura, páginas intocadas), põe as 6 URLs de artigo no sitemap (tinha só a home) e deixa um node:test sem dependência que falha se um artigo novo ficar de fora. Deploy Ready, sitemap live com 11 URLs, slug conferido no bundle de produção. Reavaliar com dado de GSC a partir de meados de setembro/2026.",
+    "acao": "Submeter o sitemap novo ao GSC e escolher onde a newsletter/contato entregam — sem lista capturada não há como decidir cobrança em setembro",
     "familia": "cobranca",
     "estado": "no-ar-inutilizavel"
   },
