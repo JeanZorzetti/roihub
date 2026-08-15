@@ -786,32 +786,52 @@
     "nome": "Vértice — onboarding de clientes para agências (R$ 97–197/mês)",
     "url": "https://vertice.roilabs.com.br/",
     "repo": "vertice",
-    "receita": 3,
-    "receitaNota": "Preço público de verdade (Starter R$ 97/mês, Pro R$ 197/mês, trial 14 dias) mas o CTA principal é href='#'",
-    "blockers": 4,
+    "receita": 5,
+    "receitaNota": "Cadastro PROVADO de ponta a ponta em 15/08 (POST /api/agency/signup cria agência, e a conta criada autentica) — mas o portal do cliente é inalcançável sem RESEND_API_KEY e não há gateway ligado",
+    "blockers": 8,
     "blockersLista": [
       {
-        "texto": "A navbar serve href=\"#\" em Funcionalidades, Integrações e Preços — o CTA da hero NÃO: os 5 botões apontam para /signup, que responde 200 (conferido por curl em 31/07)",
+        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 15/08: o SaaS estava FORA DO AR — DATABASE_URL nunca foi configurada na Vercel e o Prisma caía em 127.0.0.1:5432. Variável setada, 8 migrations aplicadas, /api/health responde 200 com {\"status\":\"healthy\",\"db\":\"ok\"}",
         "humano": false
       },
       {
-        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 31/07: /sitemap.xml e /robots.txt respondiam 404 nos dois; agora servem app/app/sitemap.ts e app/app/robots.ts (/ e /signup; crawler barrado em /admin, /onboarding e /api) e o sitemap foi submetido em sc-domain:roilabs.com.br",
+        "texto": "✅ RESOLVIDO 15/08: lib/auth.ts assinava JWT com o fallback embutido \"dev-secret-change-in-production\" e JWT_SECRET não estava em produção — com o banco de pé, qualquer um que lesse o repo forjava sessão de qualquer agência ou cliente. JWT_SECRET, ENCRYPTION_KEY e CRON_SECRET gerados e configurados",
         "humano": false
       },
       {
-        "texto": "✅ RESOLVIDO 31/07: Root Directory da Vercel era '/' com o app em app/ — todo push falhava em 9s e a produção ficava congelada num deploy manual antigo. Corrigido via API",
+        "texto": "✅ RESOLVIDO 15/08: as âncoras href=\"#\" da navbar sumiram — a home serve 0 ocorrências e o nav aponta para /funcionalidades, /precos, /integracoes, /signup (medido por curl)",
         "humano": false
       },
       {
-        "texto": "'Crawled - currently not indexed', último crawl em 23/05",
+        "texto": "RESEND_API_KEY ausente: o magic link por e-mail é a ÚNICA porta do portal do cliente (não há senha nem link alternativo), então nenhum cliente consegue entrar no onboarding mesmo com tudo respondendo 200",
+        "humano": true
+      },
+      {
+        "texto": "R2 (5 vars) e OAuth Meta/Google ausentes: as etapas 2 (upload de assets) e 3 (conectar plataformas) das 4 do fluxo do cliente não funcionam",
+        "humano": true
+      },
+      {
+        "texto": "ANTHROPIC_API_KEY ausente: a análise de briefing por IA é exatamente o que o /precos vende como exclusividade do plano Pro (R$ 197) — a página promete o que a produção não entrega",
+        "humano": true
+      },
+      {
+        "texto": "Mercado Pago sem MP_ACCESS_TOKEN/MP_WEBHOOK_SECRET (os 3 IDs de plano já existem): não há como cobrar assinatura",
+        "humano": true
+      },
+      {
+        "texto": "NEXT_PUBLIC_BASE_DOMAIN precisa continuar VAZIA: preenchida, lib/resend.ts monta o magic link como {slug}.{BASE_DOMAIN} e não há DNS wildcard — roi-labs.vertice.roilabs.com.br não resolve (testado 15/08)",
+        "humano": true
+      },
+      {
+        "texto": "'Crawled - currently not indexed', último crawl em 23/05 — não remedido nesta sessão",
         "humano": false
       }
     ],
     "seoSeed": 2,
-    "decay": 6,
-    "decayNota": "No ar e com preço público, mas desindexado e parado desde 03/03",
-    "acaoDesc": "Um dos dois dos quinze sem push recente (03/03, cinco meses), mas isso NÃO é abandono: o produto está no ar, em português, com proposta clara — automatizar onboarding de clientes para agências, com portal white-label, magic links e cobrança automática de pendências. E tem a coisa mais rara do portfólio: preço público de verdade, Starter R$ 97/mês (até 5 clientes) e Pro R$ 197/mês (até 20 clientes, com análise por IA), trial de 14 dias. Medido em 30/07: home 200, /signup e /login respondem 200 — então existe superfície de cadastro. O que quebra a cadeia é o CTA: o botão principal da hero é href='#', ou seja, quem chega pela dobra e clica em 'Começar Grátis' não vai a lugar nenhum; só quem usa o link do nav chega ao /signup. Isso é o mesmo padrão do matchfios (preço na página, botão que não leva ao dinheiro) e por isso a mesma nota de receita 3. Do lado de busca: /sitemap.xml responde 404 e a URL Inspection devolve 'Crawled - currently not indexed' com último crawl em 23/05. Ressalva medida: o 'Stripe' que aparece na home é logo da seção de integrações, não gateway de cobrança do próprio Vértice — não confundir com caminho de pagamento vivo. Não testei se o /signup cria conta de verdade; essa é a próxima medição, e ela decide se o projeto é SaaS parado ou landing sem backend.",
-    "acao": "Dar destino às âncoras href=\"#\" da navbar e submeter o sitemap novo ao GSC — o /sitemap.xml saiu do 404 em 31/07",
+    "decay": 2,
+    "decayNota": "Saiu de cinco meses parado: 6 commits em 15/08, produção restaurada e publicando por git push",
+    "acaoDesc": "A pergunta que este card carregava desde julho — \"o /signup cria conta de verdade ou é landing sem backend?\" — foi respondida em 15/08 e a resposta é a melhor possível: POST /api/agency/signup devolveu {\"ok\":true}, criou a agência, e a conta criada autenticou em seguida com 200 (conta de teste removida do banco depois). É SaaS de verdade, com 24 semanas de feature já escrita. Mas a medição só foi possível porque a produção estava morta e voltou nesta sessão: DATABASE_URL nunca tinha sido configurada na Vercel, o Prisma caía em 127.0.0.1:5432 e TODO fluxo que toca banco (signup, login, onboarding, webhook do MP, API pública) respondia 500 — o card antigo dizia \"parado desde 03/03\", mas o correto era \"fora do ar\". Junto veio um buraco pior que o downtime: JWT_SECRET não estava em produção e lib/auth.ts tinha o fallback \"dev-secret-change-in-production\" embutido no repo, então no instante em que o banco voltasse qualquer leitor do repositório forjaria sessão de qualquer agência. Fechado no mesmo dia, com ENCRYPTION_KEY e CRON_SECRET. O que sobrou não é código: é chave de terceiro. E há uma hierarquia clara entre elas, que é o ponto deste card. O cliente da agência entra no portal EXCLUSIVAMENTE pelo magic link enviado por e-mail — não existe senha, convite manual nem link direto. Sem RESEND_API_KEY o produto está no ar, responde 200 em tudo, e é literalmente inutilizável: a agência cria o onboarding, gera o token, e o cliente nunca recebe como entrar. Todas as outras chaves (R2 na etapa 2, OAuth na etapa 3, Anthropic no briefing, Mercado Pago na cobrança) só produzem efeito depois que existe um cliente dentro do fluxo. Uma armadilha já foi desarmada de graça: NEXT_PUBLIC_APP_URL não estava setada e o fallback é http://localhost:3000, ou seja, colar o Resend sozinho teria mandado todo cliente um link pro localhost dele — já configurei a variável. A gêmea segue armada: NEXT_PUBLIC_BASE_DOMAIN tem que ficar vazia até existir DNS wildcard, senão o link vira {slug}.vertice.roilabs.com.br, que não resolve.",
+    "acao": "Colar RESEND_API_KEY + RESEND_FROM na Vercel e rodar o fluxo do cliente de ponta a ponta — o magic link é a única porta do portal, sem ele o SaaS está no ar e inutilizável",
     "familia": "trafego",
     "estado": "no-ar"
   },

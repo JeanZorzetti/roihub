@@ -267,9 +267,9 @@
     "oQueE": "SaaS que automatiza o onboarding de cliente novo em agência: portal white-label, magic link e cobrança automática de pendência. Repo vertice — NÃO é o verticemarketing, que é site de agência.",
     "paraQuem": "Agência que perde tempo coletando material e acesso de cliente novo. Starter R$ 97/mês, Pro R$ 197/mês.",
     "estado": "no-ar",
-    "dinheiro": "R$ 0 — tem o preço público mais claro do portfólio e nenhuma assinatura.",
-    "oQueTrava": "Ninguém sabe se o /signup cria conta de verdade: a medição que separa 'SaaS parado' de 'landing sem backend' nunca foi feita.",
-    "proximaDecisao": "Se o /signup funcionar, vale reativar um produto parado desde 03/03 ou o esforço vai para outro lugar?"
+    "dinheiro": "R$ 0 — preço público mais claro do portfólio, cadastro provado funcionando em 15/08, e nenhuma assinatura: falta o gateway (Mercado Pago sem token) e falta poder usar o produto.",
+    "oQueTrava": "O magic link por e-mail é a única porta do portal do cliente e RESEND_API_KEY não está em produção: o SaaS responde 200 em tudo e nenhum cliente consegue entrar.",
+    "proximaDecisao": "A dúvida \"SaaS parado ou landing sem backend?\" morreu em 15/08 — o /signup cria conta e ela autentica. A decisão agora é comercial: colar as chaves de terceiro e buscar a primeira agência, ou aceitar que 24 semanas de código fiquem no ar sem uso."
   },
   "pathfinder": {
     "oQueE": "Testes de autoconhecimento (MBTI, Big Five, Eneagrama) com conteúdo sobre propósito de carreira.",
