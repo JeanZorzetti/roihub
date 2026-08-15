@@ -684,11 +684,11 @@
     "url": "https://compass.polarisia.com.br/",
     "repo": "compass",
     "receita": 3,
-    "receitaNota": "Stripe está no código mas as 4 chaves estão VAZIAS no .env — produto no ar, não cobrável",
+    "receitaNota": "Stripe está no código; 3 das 4 chaves preenchidas via API em 15/08 (PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET), falta só SECRET_KEY — produto no ar, ainda não cobrável",
     "blockers": 6,
     "blockersLista": [
       {
-        "texto": "🚨 As 4 chaves do Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão vazias — não há como cobrar",
+        "texto": "🚨 Falta só STRIPE_SECRET_KEY — a API do Stripe não expõe esse valor (nem de chave existente, nem cria uma nova da própria conta), só sai copiando do Dashboard (acct_1SjN4cD6GTFfNAq4/apikeys). As outras 3 (PRICE_PRO_MONTHLY=price_1Taa0jD6GTFfNAq4YVY4V9CO $19/mo, PRICE_LIFETIME=price_1Taa1UD6GTFfNAq4o3c0lyo1 $49, WEBHOOK_SECRET novo — o endpoint antigo we_1TabffD6GTFfNAq40CE7fCiU foi desabilitado, nunca teve secret salvo) já estão em Vercel production. Falta redeploy depois da última chave",
         "humano": true
       },
       {
@@ -712,7 +712,7 @@
     "decay": 5,
     "decayNota": "Home 200 desde o deploy, mas invisível ao Google e sem cobrança ligada",
     "acaoDesc": "Está no ar em compass.polarisia.com.br e não é usável nem cobrável — o que já estava registrado, e ficou CONFIRMADO por medição em 30/07 em vez de herdado. No repo local, web/.env existe e o grep de chaves STRIPE preenchidas devolve ZERO: STRIPE_SECRET_KEY, STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_LIFETIME e STRIPE_WEBHOOK_SECRET estão todas em branco, exatamente como no .env.example. O código do Stripe existe (web/package.json, rotas de webhook), então não é trabalho de programação: é painel de terceiro, sem uma linha de código para escrever. Faltam também GitHub OAuth e Resend. Do lado de busca o quadro é o pior possível entre os quinze junto com o pathfinder: URL Inspection devolve 'URL is unknown to Google' — o Google nem descobriu o host — e /sitemap.xml responde 404, o que explica por quê: não há nada apontando o crawler para lá. GSC 0/0 na propriedade sc-domain:polarisia.com.br. Receita 3 e não menos porque o produto tem preço definido e o caminho de pagamento está construído; falta virar a chave. Como o próprio .env.example avisa, webhook morto significa cliente paga e não recebe — então a ordem importa: chaves e webhook antes de qualquer divulgação.",
-    "acao": "Preencher as 4 chaves do Stripe (Stripe Dashboard) e rodar `vercel env add ... production` em web/ + redeploy — painel de terceiro, não da EasyPanel (essa só hospeda o Postgres). Sitemap: já resolvido, re-submetido em sc-domain:polarisia.com.br em 15/08",
+    "acao": "Copiar STRIPE_SECRET_KEY em dashboard.stripe.com/acct_1SjN4cD6GTFfNAq4/apikeys e `vercel env add STRIPE_SECRET_KEY production` em web/ (última chave; as outras 3 já foram) + `vercel --prod` pra aplicar. Sitemap: já resolvido e submetido em sc-domain:polarisia.com.br",
     "familia": "cobranca",
     "estado": "no-ar-inutilizavel"
   },
