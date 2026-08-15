@@ -255,30 +255,30 @@
   },
   {
     "slug": "cardiorisk",
-    "nome": "CardioCare AI — Análise de Risco Cardiovascular",
+    "nome": "CardioRisk — Estratificação de Risco Cardiovascular",
     "url": "https://cardiorisk.roilabs.com.br/",
     "repo": "cardio-risk-insight-hub",
     "gscInicio": "2026-07-30",
     "receita": 2,
-    "receitaNota": "Landing no ar, mas o produto NÃO funciona: a API que ele chama não existe",
-    "blockers": 6,
+    "receitaNota": "Landing e API no ar e FUNCIONANDO de verdade (verificado 15/08); ferramenta acadêmica sem modelo de cobrança, então a nota segue baixa por falta de monetização, não por bug",
+    "blockers": 1,
     "blockersLista": [
       {
-        "texto": "cardioapi.roilabs.com.br é NXDOMAIN e é o default de API_BASE_URL em frontend/app/utils/api.ts — toda análise falha",
+        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 15/08: a decisão 'sobe o backend ou vira vitrine' foi tomada fora do hub — subiu o backend. cardioapi.roilabs.com.br responde 200 em / e valida payloads de verdade em /risco/rapido e /risco/prevent (testado ao vivo). Entre 14-15/08 o produto foi reconstruído: o score fake baseado em SHAP/ad-hoc virou escores clínicos reais e validados (Framingham office-based e PREVENT/AHA), o frontend virou Next.js com 3 rotas (/calculadora, /calculadora/prevent, /metodologia), e ganhou marca própria, favicon e correções de acessibilidade (labels e contraste em dark mode)",
         "humano": false
       },
       {
-        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 31/07: o H1 era 'Sistema IA Médica' e agora bate com o <title> ('CardioCare AI — Análise de Risco Cardiovascular')",
+        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 31/07: o H1 era 'Sistema IA Médica' e agora bate com o <title> ('CardioRisk — Calculadora de Risco Cardiovascular')",
         "humano": false
       }
     ],
     "seoSeed": 2,
-    "decay": 6,
-    "decayNota": "Front em 200, backend inexistente — saúde aparente engana",
-    "acaoDesc": "Renomeado de cardio-risk-insight-hub → cardiorisk em 30/07, e ABSORVEU o cardioqwen3code: o Jean decidiu que eram o mesmo produto, o repo do irmão já tinha sido apagado do GitHub, e o host dele agora é 308 pra cá. Os títulos estavam trocados entre os dois; o <title> foi corrigido pra 'CardioCare AI' (nome do README), mas o H1 do componente segue 'Sistema IA Médica'. O blocker que importa é outro: frontend/app/utils/api.ts tem 'https://cardioapi.roilabs.com.br' como default de API_BASE_URL e esse host é NXDOMAIN — verificado ao vivo em 30/07. A landing responde 200 e o health check vai dizer que está tudo bem, mas nenhuma análise de risco roda. Decidir vale mais que codar aqui: subir o backend (FastAPI, está no repo com datasets e dashboard_medico.py) ou assumir que é vitrine e tirar o formulário.",
-    "acao": "Decidir: sobe o backend FastAPI ou vira vitrine? Hoje a landing promete o que a API morta não entrega. O H1 já foi corrigido (31/07)",
+    "decay": 2,
+    "decayNota": "Front e backend em 200, API validando e respondendo de verdade — a saúde aparente agora é real, não engana mais",
+    "acaoDesc": "Renomeado de cardio-risk-insight-hub → cardiorisk em 30/07, e ABSORVEU o cardioqwen3code: o Jean decidiu que eram o mesmo produto, o repo do irmão já tinha sido apagado do GitHub, e o host dele agora é 308 pra cá. Este card pedia uma decisão ('subir o backend ou virar vitrine') que já tinha sido tomada e executada em 14-15/08, sem passar pelo hub: o backend FastAPI subiu de verdade (cardioapi.roilabs.com.br, verificado 200 e validando payloads em 15/08), o score fake foi trocado por Framingham+PREVENT reais, e o frontend foi reescrito em Next.js com 3 rotas dedicadas, marca e acessibilidade. A premissa do card antigo ('produto não funciona') não é mais verdade — produto é uma ferramenta acadêmica funcional ponta a ponta, sem monetização.",
+    "acao": "Sem blocker técnico: produto funciona ponta a ponta. Falta tração — GSC começou em 30/07, ainda sem histórico útil; segue sem plano de monetização por ser ferramenta acadêmica",
     "familia": "produto",
-    "estado": "no-ar-inutilizavel"
+    "estado": "no-ar"
   },
   {
     "slug": "tapevision",
