@@ -23,5 +23,10 @@
     "slug": "matchfios",
     "nome": "MatchFios (têxtil B2B)",
     "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "verticemarketing",
+    "nome": "Vértice Marketing (agência)",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
   }
 ]

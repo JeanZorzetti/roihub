@@ -132,8 +132,8 @@
     "paraQuem": "Empresa que contrataria serviço de agência.",
     "estado": "no-ar",
     "dinheiro": "R$ 0 — a receita seria por serviço prestado; não há produto nem checkout.",
-    "oQueTrava": "Não é técnico: não existe agência operando por trás do site.",
-    "proximaDecisao": "É agência que capta cliente de verdade ou vitrine de capacidade da ROI Labs?"
+    "oQueTrava": "Nada mais no caminho do lead: era agência sem formulário funcionando (500 em produção, credencial do Sirius nunca configurada). Desde 16/08 o formulário grava no CRM do hub.",
+    "proximaDecisao": "Decidido em 16/08: é agência que capta. Falta o primeiro lead real chegar no CRM."
   },
   "whatsmeow": {
     "oQueE": "Gateway em Go que roda várias contas de WhatsApp numa API só, com pareamento por QR e webhook assinado por HMAC.",
