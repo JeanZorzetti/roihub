@@ -18,5 +18,10 @@
     "slug": "polaris",
     "nome": "Polaris",
     "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "matchfios",
+    "nome": "MatchFios (têxtil B2B)",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
   }
 ]
