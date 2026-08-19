@@ -189,6 +189,15 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
   padding: 18px 20px 14px;
   box-shadow: 0 1px 2px rgba(11, 11, 11, 0.04);
 }
+/* top do ranking por score composto — só a borda muda de cor, card mantém o mesmo tamanho */
+.seo-card--top { border-color: var(--accent); }
+.seo-rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 22px; height: 22px; padding: 0 6px; margin-right: 8px;
+  border-radius: 999px; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--grid); color: var(--ink2); vertical-align: middle;
+}
+.seo-card--top .seo-rank-badge { background: var(--accent); color: #fff; }
 .seo-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .seo-stats { display: flex; gap: 28px; margin: 12px 0 14px; flex-wrap: wrap; }
 .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }

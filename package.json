@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test test/score.test.mjs test/series.test.mjs test/crawl.test.mjs test/crawl-fetch.test.mjs test/agenda.test.mjs test/autopublish.test.mjs test/projects.test.mjs test/submit-sitemap.test.mjs test/resumos.test.mjs test/protocolos.test.mjs test/dourado.test.mjs test/busca.test.mjs test/reranker.test.mjs test/resposta.test.mjs test/juiz.test.mjs test/conformidade.test.mjs test/dourado-estado.test.mjs test/defasagem.test.mjs test/validade.test.mjs test/vendas.test.mjs test/crm.test.mjs test/estado-noturno.test.mjs test/telemetria.test.mjs",
+    "test": "node --test test/score.test.mjs test/seo-score.test.mjs test/series.test.mjs test/crawl.test.mjs test/crawl-fetch.test.mjs test/agenda.test.mjs test/autopublish.test.mjs test/projects.test.mjs test/submit-sitemap.test.mjs test/resumos.test.mjs test/protocolos.test.mjs test/dourado.test.mjs test/busca.test.mjs test/reranker.test.mjs test/resposta.test.mjs test/juiz.test.mjs test/conformidade.test.mjs test/dourado-estado.test.mjs test/defasagem.test.mjs test/validade.test.mjs test/vendas.test.mjs test/crm.test.mjs test/estado-noturno.test.mjs test/telemetria.test.mjs",
     "validade": "node scripts/validade.mjs"
   },
   "dependencies": {
