@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { WD_LABELS, TIPOS, tipoDe } from "@/lib/agenda.mjs";
+import { WD_LABELS, TIPOS, tipoDe, RESPONSAVEIS } from "@/lib/agenda.mjs";
 import type { Task } from "@/lib/db";
 import { update, promote } from "./actions";
 
@@ -68,6 +68,14 @@ export function EditTask({
             {TIPOS.map((t: { id: string; label: string; icone: string }) => (
               <option key={t.id} value={t.id}>
                 {t.icone} {t.label}
+              </option>
+            ))}
+          </select>
+          <select name="responsavel" defaultValue={task.responsavel ?? ""} className="ag-in" title="Responsável">
+            <option value="">— sem responsável —</option>
+            {RESPONSAVEIS.map((r: { id: string; label: string }) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
               </option>
             ))}
           </select>

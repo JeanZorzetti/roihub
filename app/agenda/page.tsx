@@ -12,6 +12,7 @@ import {
   NO_DATE,
   URGENCIAS,
   ORIGENS,
+  RESPONSAVEIS,
   ORDENS,
   lerFiltros,
   filtrosAtivos,
@@ -99,6 +100,7 @@ function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWr
               due: null,
               weekday: null,
               tipo: null,
+              responsavel: null,
             }}
             done={done}
             acaoKey={item.key}
@@ -112,6 +114,11 @@ function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWr
           {item.projeto && <span className="pill">{item.projeto}</span>}
           {item.taskId === null && <span className="pill">AÇÃO DO RANKING</span>}
           {item.task?.tipo && <span className="pill">BALDE FIXADO</span>}
+          {item.task?.responsavel && (
+            <span className="pill">
+              {RESPONSAVEIS.find((r: Opcao) => r.id === item.task!.responsavel)?.label}
+            </span>
+          )}
           {item.meta && (
             <span className={atrasada ? "ag-atraso" : undefined}>
               {atrasada && <span aria-hidden="true">⚠ </span>}
@@ -227,8 +234,13 @@ export default async function Page({
     projeto: f.projeto,
     urgencia: URGENCIAS.find((u: Opcao) => u.id === f.urgencia)?.label ?? "",
     origem: ORIGENS.find((o: Opcao) => o.id === f.origem)?.label ?? "",
+    responsavel: RESPONSAVEIS.find((r: Opcao) => r.id === f.responsavel)?.label ?? "",
   };
-  const semFiltro = comFiltro({ ...f, q: "", projeto: "", urgencia: "", origem: "" }, "ordem", f.ordem);
+  const semFiltro = comFiltro(
+    { ...f, q: "", projeto: "", urgencia: "", origem: "", responsavel: "" },
+    "ordem",
+    f.ordem,
+  );
 
   return (
     <main className="page">
@@ -280,6 +292,14 @@ export default async function Page({
               </option>
             ))}
           </select>
+          <select name="responsavel" className="ag-in" title="Responsável">
+            <option value="">— sem responsável —</option>
+            {(RESPONSAVEIS as Opcao[]).map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
+              </option>
+            ))}
+          </select>
           <button className="ag-btn">Adicionar</button>
         </form>
       )}
@@ -318,6 +338,14 @@ export default async function Page({
           {(ORIGENS as Opcao[]).map((o) => (
             <option key={o.id} value={o.id}>
               {o.label}
+            </option>
+          ))}
+        </select>
+        <select name="responsavel" defaultValue={f.responsavel} className="ag-in" aria-label="Filtrar por responsável">
+          <option value="">todo mundo</option>
+          {(RESPONSAVEIS as Opcao[]).map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
             </option>
           ))}
         </select>

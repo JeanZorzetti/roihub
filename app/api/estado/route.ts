@@ -111,7 +111,14 @@ export async function POST() {
   // tipo fixo: o card noturno é uma lista nominal pra CONFERIR célula por célula (conserto
   // de verdade ou coletor quebrado?) — nunca uma execução. Não depende da heurística.
   if (card)
-    await insertTask({ ...card, projeto: null, weekday: null, descricao: card.descricao, tipo: "conferencia" });
+    await insertTask({
+      ...card,
+      projeto: null,
+      weekday: null,
+      descricao: card.descricao,
+      tipo: "conferencia",
+      responsavel: null,
+    });
 
   // Consolidação e expiração da série de IA rodam DEPOIS do diff/card, nessa ordem — inverter
   // perderia o último dia (D8). Best-effort: erro aqui não pode derrubar a corrida noturna

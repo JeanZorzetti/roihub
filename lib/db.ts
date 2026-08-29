@@ -12,6 +12,7 @@ export type Task = {
   due: string | null; // YYYY-MM-DD
   weekday: number | null; // 0-6 = recorrente semanal (domingo=0); 7 = diária
   tipo: string | null; // null = deriva do título por tipoDe(); valor = override manual
+  responsavel: string | null; // null = sem dono, visível para todos; "jean" | "maria"
 };
 
 export type PublicationStatus = "running" | "published" | "updated" | "blocked" | "failed" | "reverted";
@@ -144,6 +145,9 @@ function ensure(): Promise<unknown> {
       -- quando a heurística erra. Sem CHECK de propósito: a lista de tipos vive no .mjs,
       -- e duplicá-la aqui daria uma migração a cada rótulo novo — a validação é na action.
       ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS tipo TEXT;
+      -- NULL = sem dono, tarefa visível pros dois. Mesma lógica de tipo: a lista de
+      -- responsáveis vive no .mjs, sem CHECK aqui — validação é na action.
+      ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS responsavel TEXT;
       CREATE TABLE IF NOT EXISTS seo_publications (
         id BIGSERIAL PRIMARY KEY,
         project_slug TEXT NOT NULL,
@@ -520,7 +524,7 @@ export async function moveLead(id: number, etapa: string, nota: string | null): 
 export async function listTasks(): Promise<Task[]> {
   await ensure();
   const r = await pool().query(
-    `SELECT id, titulo, descricao, projeto, to_char(due, 'YYYY-MM-DD') AS due, weekday, tipo
+    `SELECT id, titulo, descricao, projeto, to_char(due, 'YYYY-MM-DD') AS due, weekday, tipo, responsavel
      FROM hub_tasks ORDER BY due NULLS LAST, id`
   );
   return r.rows;
@@ -536,16 +540,16 @@ export async function listDone(): Promise<Set<string>> {
 export async function insertTask(t: Omit<Task, "id">): Promise<void> {
   await ensure();
   await pool().query(
-    `INSERT INTO hub_tasks (titulo, descricao, projeto, due, weekday, tipo) VALUES ($1, $2, $3, $4, $5, $6)`,
-    [t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo]
+    `INSERT INTO hub_tasks (titulo, descricao, projeto, due, weekday, tipo, responsavel) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo, t.responsavel]
   );
 }
 
 export async function updateTask(id: number, t: Omit<Task, "id">): Promise<void> {
   await ensure();
   await pool().query(
-    `UPDATE hub_tasks SET titulo = $2, descricao = $3, projeto = $4, due = $5, weekday = $6, tipo = $7 WHERE id = $1`,
-    [id, t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo]
+    `UPDATE hub_tasks SET titulo = $2, descricao = $3, projeto = $4, due = $5, weekday = $6, tipo = $7, responsavel = $8 WHERE id = $1`,
+    [id, t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo, t.responsavel]
   );
 }
 

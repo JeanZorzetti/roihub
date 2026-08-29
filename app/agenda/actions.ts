@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { dbOn, insertTask, removeTask, setDone, updateTask } from "@/lib/db";
-import { NO_DATE, TIPO_IDS } from "@/lib/agenda.mjs";
+import { NO_DATE, TIPO_IDS, RESPONSAVEL_IDS } from "@/lib/agenda.mjs";
 import { listProjects } from "@/lib/projects";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -21,7 +21,10 @@ async function taskFields(fd: FormData) {
   // vazio/desconhecido = null = a agenda deriva o balde do título
   const tipoRaw = String(fd.get("tipo") ?? "");
   const tipo = (TIPO_IDS as string[]).includes(tipoRaw) ? tipoRaw : null;
-  return { titulo, descricao, projeto, due, weekday, tipo };
+  // vazio/desconhecido = null = sem dono, tarefa visível pros dois
+  const respRaw = String(fd.get("responsavel") ?? "");
+  const responsavel = (RESPONSAVEL_IDS as string[]).includes(respRaw) ? respRaw : null;
+  return { titulo, descricao, projeto, due, weekday, tipo, responsavel };
 }
 
 export async function addTask(fd: FormData): Promise<void> {
