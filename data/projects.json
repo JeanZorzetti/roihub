@@ -493,19 +493,23 @@
     "url": "https://aprovai.roilabs.com.br/",
     "repo": "aprovai",
     "receita": 2,
-    "receitaNota": "Sem preço público e sem caminho de pagamento: a página diz 'grátis' e o único CTA é WhatsApp",
+    "receitaNota": "Preço e checkout MercadoPago implementados no código (29/08) — Starter R$29/análise, pacote de 5 por R$145 — mas ainda não estão no ar: o domínio ainda serve a landing estática de portfólio, o app completo (com o checkout) nunca foi deployado",
     "blockers": 2,
     "blockersLista": [
       {
-        "texto": "Nenhum caminho de cobrança no repo (grep stripe|mercadopago|checkout|kiwify: vazio) — está indexado e não tem como faturar",
+        "texto": "App real (auth, WhatsApp, dashboard, checkout MercadoPago) só existe no repo local — nunca foi deployado. O que está no ar em aprovai.roilabs.com.br é só a landing estática (site/index.html), que se descreve como 'peça de portfólio, não produto à venda'",
         "humano": false
+      },
+      {
+        "texto": "Falta configurar MERCADOPAGO_ACCESS_TOKEN (e as demais env vars do .env.example: DATABASE_URL, REDIS_URL, EVOLUTION_API_URL, ANTHROPIC_API_KEY) no ambiente de produção — nenhuma delas está setada hoje",
+        "humano": true
       }
     ],
     "seoSeed": 2,
     "decay": 2,
     "decayNota": "Um dos 3 dos 15 realmente no índice: 'Submitted and indexed', Google rastreou em 30/07 21:30",
-    "acaoDesc": "Medido em 30/07: home 200, sitemap.xml XML válido com 1 URL (landing de página única) e — o que separa este dos outros 14 — a URL Inspection devolve PASS, 'Submitted and indexed', com crawl do Google às 21:30 do próprio dia 30/07 e canonical do Google igual ao declarado. É um dos únicos três dos quinze que o Google de fato indexou (os outros: links e qprime). GSC ainda em 0 cliques / 0 impressões nas duas janelas de 28 dias, o que é esperado num host indexado há pouco — a série começa agora. O gargalo aqui não é técnico nem de SEO: é comercial. O grep de caminho de dinheiro (stripe|mercadopago|checkout|hotmart|kiwify) volta VAZIO no repo, a página anuncia 'grátis' e o único CTA é WhatsApp. Ou seja, o projeto conquistou a parte difícil (estar no índice) e não tem como converter isso em dinheiro. Receita 2 e não 3 porque nem preço público existe — o matchfios, que ficou com 3, ao menos exibe preço.",
-    "acao": "Definir preço e caminho de cobrança — está indexado e não tem como faturar",
+    "acaoDesc": "Medido em 30/07: home 200, sitemap.xml XML válido com 1 URL (landing de página única) e — o que separa este dos outros 14 — a URL Inspection devolve PASS, 'Submitted and indexed', com crawl do Google às 21:30 do próprio dia 30/07. É um dos únicos três dos quinze que o Google de fato indexou (os outros: links e qprime). Só que a landing indexada é a estática de portfólio (site/index.html), que existe pra mostrar o código, não pra vender — ela mesma diz 'não é produto à venda'. O produto de verdade (Next.js completo: auth, dashboard, análise via WhatsApp, sistema de créditos por Organization) mora em src/app e nunca foi ao ar. Em 29/08, decisão foi virar produto cobrável de verdade: adicionado modelo Payment (Prisma), rota /api/billing/checkout que cria preferência MercadoPago Checkout Pro (pacote de 5 análises = R$145, mesmo preço unitário já existente na seção Planos do app), webhook /api/webhook/mercadopago que credita a Organization de forma idempotente, e botão 'Comprar créditos' no dashboard. Reusa a infra de Docker/EasyPanel que os outros projetos já usam (Dockerfile e docker-compose.prod.yml já existiam). O que falta agora não é mais código de precificação — é decisão humana de infra: deployar esse app no EasyPanel (em vez da landing estática) e configurar as env vars de produção.",
+    "acao": "Deployar o app real no EasyPanel (Dockerfile já existe) e apontar aprovai.roilabs.com.br pra ele, com MERCADOPAGO_ACCESS_TOKEN e as demais env vars configuradas — hoje o ar ainda é só a landing estática de portfólio",
     "familia": "cobranca",
     "estado": "no-ar"
   },
