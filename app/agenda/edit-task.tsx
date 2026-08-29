@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { WD_LABELS } from "@/lib/agenda.mjs";
+import { WD_LABELS, TIPOS, tipoDe } from "@/lib/agenda.mjs";
 import type { Task } from "@/lib/db";
 import { update, promote } from "./actions";
 
@@ -18,6 +18,7 @@ export function EditTask({
   slugs: string[];
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const auto = TIPOS.find((t: { id: string }) => t.id === tipoDe(task.titulo));
   return (
     <>
       <button
@@ -59,6 +60,14 @@ export function EditTask({
             {slugs.map((slug) => (
               <option key={slug} value={slug}>
                 {slug}
+              </option>
+            ))}
+          </select>
+          <select name="tipo" defaultValue={task.tipo ?? ""} className="ag-in" title="Em que seção da agenda o card cai">
+            <option value="">— automático ({auto?.label}) —</option>
+            {TIPOS.map((t: { id: string; label: string; icone: string }) => (
+              <option key={t.id} value={t.id}>
+                {t.icone} {t.label}
               </option>
             ))}
           </select>

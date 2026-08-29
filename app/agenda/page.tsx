@@ -1,11 +1,24 @@
 import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listTasks, listDone, type Task } from "@/lib/db";
-import { todaySP, addDaysISO, nextOccurrence, hash8, brShort, WD_LABELS, NO_DATE } from "@/lib/agenda.mjs";
+import {
+  todaySP,
+  addDaysISO,
+  nextOccurrence,
+  hash8,
+  brShort,
+  tipoDe,
+  TIPOS,
+  ORDEM_BUCKET,
+  WD_LABELS,
+  NO_DATE,
+} from "@/lib/agenda.mjs";
 import { Tabs } from "../tabs";
 import { addTask, toggle, del } from "./actions";
 import { EditTask } from "./edit-task";
 
 export const dynamic = "force-dynamic";
+
+type Tipo = { id: string; label: string; icone: string };
 
 type Item = {
   key: string;
@@ -16,21 +29,38 @@ type Item = {
   taskId: number | null; // null = ação automática do projects.json
   task?: Task; // presente só em tarefa do banco — habilita edição
   desc?: string | null; // descrição de ação do ranking (acaoDesc do projects.json)
+  bucket: string; // urgência de data — ordena e pinta a linha dentro do balde
+  tipo: string; // conferencia | execucao | decisao
 };
 
-function itemFromTask(t: Task, today: string): { item: Item; bucket: string } {
-  const base = { titulo: t.titulo, projeto: t.projeto, taskId: t.id, key: `task:${t.id}`, task: t };
+function itemFromTask(t: Task, today: string): Item {
+  const base = {
+    titulo: t.titulo,
+    projeto: t.projeto,
+    taskId: t.id,
+    key: `task:${t.id}`,
+    task: t,
+    tipo: t.tipo ?? tipoDe(t.titulo), // override manual vence a heurística
+  };
   if (t.weekday !== null) {
     const occ = nextOccurrence(t.weekday, today);
     const meta = t.weekday === 7 ? `todo dia · ${brShort(occ)}` : `toda ${WD_LABELS[t.weekday]} · ${brShort(occ)}`;
-    return { item: { ...base, occ, meta }, bucket: occ === today ? "hoje" : "semana" };
+    return { ...base, occ, meta, bucket: occ === today ? "hoje" : "semana" };
   }
   if (t.due) {
     const bucket =
       t.due < today ? "atrasadas" : t.due === today ? "hoje" : t.due <= addDaysISO(today, 7) ? "semana" : "depois";
-    return { item: { ...base, occ: t.due, meta: brShort(t.due) }, bucket };
+    return { ...base, occ: t.due, meta: brShort(t.due), bucket };
   }
-  return { item: { ...base, occ: NO_DATE, meta: null }, bucket: "semdata" };
+  return { ...base, occ: NO_DATE, meta: null, bucket: "semdata" };
+}
+
+/** Urgência primeiro, data depois. Sort estável: dentro de "sem data" a ordem do
+ *  ranking (score) sobrevive, que é a única ordenação que aqueles cards têm. */
+function porUrgencia(a: Item, b: Item): number {
+  const ordem = ORDEM_BUCKET as Record<string, number>;
+  const d = ordem[a.bucket] - ordem[b.bucket];
+  return d !== 0 ? d : a.occ.localeCompare(b.occ);
 }
 
 function Check({ item, done }: { item: Item; done: boolean }) {
@@ -51,6 +81,7 @@ function Check({ item, done }: { item: Item; done: boolean }) {
 
 function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWrite: boolean; slugs: string[] }) {
   const desc = item.task?.descricao ?? item.desc;
+  const atrasada = item.bucket === "atrasadas" && !done;
   return (
     <li className="ag-item">
       {canWrite && <Check item={item} done={done} />}
@@ -59,7 +90,15 @@ function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWr
           <EditTask task={item.task} done={done} slugs={slugs} />
         ) : canWrite && item.taskId === null ? (
           <EditTask
-            task={{ id: 0, titulo: item.titulo, descricao: item.desc ?? null, projeto: item.projeto, due: null, weekday: null }}
+            task={{
+              id: 0,
+              titulo: item.titulo,
+              descricao: item.desc ?? null,
+              projeto: item.projeto,
+              due: null,
+              weekday: null,
+              tipo: null,
+            }}
             done={done}
             acaoKey={item.key}
             slugs={slugs}
@@ -71,7 +110,14 @@ function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWr
         <div className="ag-meta">
           {item.projeto && <span className="pill">{item.projeto}</span>}
           {item.taskId === null && <span className="pill">AÇÃO DO RANKING</span>}
-          {item.meta && <span>{item.meta}</span>}
+          {item.task?.tipo && <span className="pill">BALDE FIXADO</span>}
+          {item.meta && (
+            <span className={atrasada ? "ag-atraso" : undefined}>
+              {atrasada && <span aria-hidden="true">⚠ </span>}
+              {atrasada && <span className="sr-only">Atrasada — </span>}
+              {item.meta}
+            </span>
+          )}
         </div>
       </div>
       {canWrite && item.taskId !== null && (
@@ -86,16 +132,47 @@ function Row({ item, done, canWrite, slugs }: { item: Item; done: boolean; canWr
   );
 }
 
-function Section({ title, items, doneSet, canWrite, slugs, alert }: { title: string; items: Item[]; doneSet: Set<string>; canWrite: boolean; slugs: string[]; alert?: boolean }) {
-  if (items.length === 0) return null;
+function Balde({
+  tipo,
+  items,
+  doneSet,
+  canWrite,
+  slugs,
+}: {
+  tipo: Tipo;
+  items: Item[];
+  doneSet: Set<string>;
+  canWrite: boolean;
+  slugs: string[];
+}) {
+  const atrasadas = items.filter((i) => i.bucket === "atrasadas").length;
   return (
     <section className="card ag-section">
-      <h2 className={alert ? "ag-h alert" : "ag-h"}>{title}</h2>
-      <ul className="ag-list">
-        {items.map((it) => (
-          <Row key={it.key + it.occ} item={it} done={doneSet.has(`${it.key}@${it.occ}`)} canWrite={canWrite} slugs={slugs} />
-        ))}
-      </ul>
+      <h2 className="ag-h">
+        <span aria-hidden="true">{tipo.icone} </span>
+        {tipo.label} ({items.length})
+        {atrasadas > 0 && (
+          <span className="ag-h-atraso">
+            {" · "}
+            {atrasadas} atrasada{atrasadas > 1 ? "s" : ""}
+          </span>
+        )}
+      </h2>
+      {items.length === 0 ? (
+        <p className="ag-vazio">Nada aqui.</p>
+      ) : (
+        <ul className="ag-list">
+          {items.map((it) => (
+            <Row
+              key={it.key + it.occ}
+              item={it}
+              done={doneSet.has(`${it.key}@${it.occ}`)}
+              canWrite={canWrite}
+              slugs={slugs}
+            />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -108,27 +185,27 @@ export default async function Page() {
     on ? Promise.all([listTasks(), listDone()]) : [[] as Task[], new Set<string>()],
   ]);
 
-  const buckets: Record<string, Item[]> = { atrasadas: [], hoje: [], semana: [], depois: [], semdata: [] };
-  for (const t of tasks) {
-    const { item, bucket } = itemFromTask(t, today);
-    buckets[bucket].push(item);
-  }
   const slugs = ranked.map((p) => p.slug);
   // só o que tem curadoria vira ação da agenda: repo novo sem receita/ação definidas entra
   // no ranking da home marcado SEM CURADORIA, mas não afoga a lista do dia.
-  const acoes: Item[] = ranked.filter((p) => p.curated).map((p, i) => ({
-    key: `acao:${p.slug}:${hash8(p.acao)}`,
-    occ: NO_DATE,
-    titulo: p.acao,
-    projeto: p.slug,
-    meta: `#${i + 1} · score ${p.score}`,
-    taskId: null,
-    desc: p.acaoDesc ?? null,
-  }));
+  const acoes: Item[] = ranked
+    .filter((p) => p.curated)
+    .map((p, i) => ({
+      key: `acao:${p.slug}:${hash8(p.acao)}`,
+      occ: NO_DATE,
+      titulo: p.acao,
+      projeto: p.slug,
+      meta: `#${i + 1} · score ${p.score}`,
+      taskId: null,
+      desc: p.acaoDesc ?? null,
+      bucket: "semdata",
+      tipo: tipoDe(p.acao), // ação do ranking não tem linha no banco: heurística é o único caminho
+    }));
 
-  const all = [...Object.values(buckets).flat(), ...acoes];
+  const all = [...tasks.map((t) => itemFromTask(t, today)), ...acoes];
   const feitas = all.filter((i) => doneSet.has(`${i.key}@${i.occ}`));
-  const pend = (xs: Item[]) => xs.filter((i) => !doneSet.has(`${i.key}@${i.occ}`));
+  const pendentes = all.filter((i) => !doneSet.has(`${i.key}@${i.occ}`));
+  const tipos = TIPOS as Tipo[];
 
   return (
     <main className="page">
@@ -139,7 +216,9 @@ export default async function Page() {
           </div>
           <Tabs active="agenda" />
         </div>
-        <div className="topbar-meta">hoje é {brShort(today)} ({WD_LABELS[new Date(today + "T12:00:00Z").getUTCDay()]})</div>
+        <div className="topbar-meta">
+          hoje é {brShort(today)} ({WD_LABELS[new Date(today + "T12:00:00Z").getUTCDay()]})
+        </div>
       </div>
 
       {!on && (
@@ -156,7 +235,7 @@ export default async function Page() {
           <select name="weekday" className="ag-in" title="Repetição">
             <option value="">não repete</option>
             <option value="7">todo dia</option>
-            {WD_LABELS.map((l, i) => (
+            {WD_LABELS.map((l: string, i: number) => (
               <option key={l} value={i}>
                 toda {l}
               </option>
@@ -170,16 +249,28 @@ export default async function Page() {
               </option>
             ))}
           </select>
+          <select name="tipo" className="ag-in" title="Em que balde o card cai">
+            <option value="">— balde automático —</option>
+            {tipos.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.icone} {t.label}
+              </option>
+            ))}
+          </select>
           <button className="ag-btn">Adicionar</button>
         </form>
       )}
 
-      <Section title="⚠ Atrasadas" items={pend(buckets.atrasadas)} doneSet={doneSet} canWrite={on} slugs={slugs} alert />
-      <Section title="Hoje" items={pend(buckets.hoje)} doneSet={doneSet} canWrite={on} slugs={slugs} />
-      <Section title="Próximos 7 dias" items={pend(buckets.semana)} doneSet={doneSet} canWrite={on} slugs={slugs} />
-      <Section title="Mais tarde" items={pend(buckets.depois)} doneSet={doneSet} canWrite={on} slugs={slugs} />
-      <Section title="Sem data" items={pend(buckets.semdata)} doneSet={doneSet} canWrite={on} slugs={slugs} />
-      <Section title="Ações dos projetos (do ranking)" items={pend(acoes)} doneSet={doneSet} canWrite={on} slugs={slugs} />
+      {tipos.map((t) => (
+        <Balde
+          key={t.id}
+          tipo={t}
+          items={pendentes.filter((i) => i.tipo === t.id).sort(porUrgencia)}
+          doneSet={doneSet}
+          canWrite={on}
+          slugs={slugs}
+        />
+      ))}
 
       {feitas.length > 0 && (
         <details className="card table-details">
@@ -193,12 +284,17 @@ export default async function Page() {
       )}
 
       <p className="foot">
-        Tarefas datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>); recorrente
-        reseta sozinha a cada ocorrência. "Ações dos projetos" espelha a <code>acao</code> do{" "}
-        <code>data/projects.json</code> na ordem do ranking da home (mesmo score, ao vivo) — mudou o
-        texto, o check reseta. Ação de projeto feita de verdade = editar o
-        projects.json (aqui o check é só pra riscar do dia). Clicar numa ação abre o modal: salvar vira tarefa do
-        banco e risca a ação original.
+        Três baldes pelo que o card exige de você: <strong>Conferência</strong> (medir ou olhar um
+        número), <strong>Execução</strong> (escrever, publicar, deployar) e <strong>Decisão</strong>{" "}
+        (não há o que fazer até você decidir). Dentro de cada um a ordem é urgência — atrasada
+        primeiro, depois hoje, semana, mais tarde. O balde sai do título por palavra-chave; quando
+        errar, abra o card e fixe no seletor de tipo (aí ele ganha o selo BALDE FIXADO). Tarefas
+        datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>);
+        recorrente reseta sozinha a cada ocorrência. &quot;Ação do ranking&quot; espelha a{" "}
+        <code>acao</code> do <code>data/projects.json</code> na ordem do ranking da home — mudou o
+        texto, o check reseta, e o balde é sempre derivado (não há onde fixar). Ação de projeto feita
+        de verdade = editar o projects.json. Clicar numa ação abre o modal: salvar vira tarefa do
+        banco e risca a original.
       </p>
     </main>
   );

@@ -319,3 +319,12 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .busca-cab strong { font-size: 15px; letter-spacing: -0.01em; }
 .busca-trecho { margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: var(--ink2); }
 .busca-res .foot { margin-top: 4px; font-size: 12px; }
+
+/* agenda — baldes por tipo (Conferência/Execução/Decisão) */
+.ag-h-atraso { color: var(--crit-ink); }
+.ag-atraso { color: var(--crit-ink); font-weight: 700; }
+.ag-vazio { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
