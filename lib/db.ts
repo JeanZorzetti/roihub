@@ -530,10 +530,27 @@ export async function listTasks(): Promise<Task[]> {
   return r.rows;
 }
 
+/**
+ * Dias que um check de AÇÃO DO RANKING vale antes de voltar a pendente.
+ *
+ * A chave da ação carrega o hash do texto (`acao:<slug>:<hash8>`), então o único reset
+ * previsto era "alguém reescreveu a ação no projects.json" — e sem reescrita o check
+ * valia para sempre. Medido em 29/08: isso escondia os 18 PRIMEIROS do ranking inteiro
+ * dentro do "Feitas" recolhido, o foco do dia (#1 Atma, score 72) junto, por checks de
+ * 11 a 17/08. Ação não tem data própria; sem prazo o hub esquece o topo do próprio
+ * ranking. 10 dias é a mesma régua de "velho" de decayFromHealth (lib/score.mjs) e do
+ * /insights. Tarefa do banco NÃO expira: ela tem data e só some quando é apagada.
+ */
+export const ACAO_DONE_DIAS = 10;
+
 /** Set de "key@occurrence" feitos. ponytail: busca tudo — 1 usuário, tabela minúscula. */
 export async function listDone(): Promise<Set<string>> {
   await ensure();
-  const r = await pool().query(`SELECT key, to_char(occurrence, 'YYYY-MM-DD') AS occurrence FROM hub_done`);
+  const r = await pool().query(
+    `SELECT key, to_char(occurrence, 'YYYY-MM-DD') AS occurrence FROM hub_done
+     WHERE key NOT LIKE 'acao:%' OR done_at > now() - ($1 || ' days')::interval`,
+    [ACAO_DONE_DIAS]
+  );
   return new Set(r.rows.map((x: { key: string; occurrence: string }) => `${x.key}@${x.occurrence}`));
 }
 
@@ -555,8 +572,14 @@ export async function updateTask(id: number, t: Omit<Task, "id">): Promise<void>
 
 export async function setDone(key: string, occurrence: string, done: boolean): Promise<void> {
   await ensure();
+  // DO UPDATE, não DO NOTHING: a linha da ação expirada continua na tabela, e sem
+  // renovar done_at o card voltava a pendente e não aceitava mais ser marcado.
   if (done)
-    await pool().query(`INSERT INTO hub_done (key, occurrence) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [key, occurrence]);
+    await pool().query(
+      `INSERT INTO hub_done (key, occurrence) VALUES ($1, $2)
+       ON CONFLICT (key, occurrence) DO UPDATE SET done_at = now()`,
+      [key, occurrence]
+    );
   else await pool().query(`DELETE FROM hub_done WHERE key = $1 AND occurrence = $2`, [key, occurrence]);
 }
 

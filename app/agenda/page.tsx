@@ -1,5 +1,5 @@
 import { evaluateAll } from "@/lib/evaluate";
-import { dbOn, listTasks, listDone, type Task } from "@/lib/db";
+import { ACAO_DONE_DIAS, dbOn, listTasks, listDone, type Task } from "@/lib/db";
 import {
   todaySP,
   addDaysISO,
@@ -403,13 +403,16 @@ export default async function Page({
       <p className="foot">
         Três baldes pelo que o card exige de você: <strong>Conferência</strong> (medir ou olhar um
         número), <strong>Execução</strong> (escrever, publicar, deployar) e <strong>Decisão</strong>{" "}
-        (não há o que fazer até você decidir). Dentro de cada um a ordem é urgência — atrasada
-        primeiro, depois hoje, semana, mais tarde. O balde sai do título por palavra-chave; quando
+        (não há o que fazer até você decidir). Dentro de cada um a <strong>ação do ranking vem
+        primeiro</strong>, na ordem do score — ela é o ranking, e antes afundava no rodapé da
+        seção. Depois dela vêm as tarefas por urgência: atrasada, hoje, semana, mais tarde. O balde sai do título por palavra-chave; quando
         errar, abra o card e fixe no seletor de tipo (aí ele ganha o selo BALDE FIXADO). Tarefas
         datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>);
         recorrente reseta sozinha a cada ocorrência. &quot;Ação do ranking&quot; espelha a{" "}
         <code>acao</code> do <code>data/projects.json</code> na ordem do ranking da home — mudou o
-        texto, o check reseta, e o balde é sempre derivado (não há onde fixar). Ação de projeto feita
+        texto, o check reseta; e o check <strong>expira em {ACAO_DONE_DIAS} dias</strong>, porque
+        ação não tem data própria e um check eterno some com o topo do ranking. O balde é sempre
+        derivado (não há onde fixar). Ação de projeto feita
         de verdade = editar o projects.json. Clicar numa ação abre o modal: salvar vira tarefa do
         banco e risca a original. Filtro e ordem ficam na URL — a visão é compartilhável e sobrevive
         a marcar, editar e apagar; os três baldes continuam na tela mesmo vazios, para o filtro não
