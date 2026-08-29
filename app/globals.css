@@ -339,3 +339,64 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+/* quadros (Marketing e Ideias) — Marketing em colunas lado a lado, Ideias em seções
+   empilhadas no formato da agenda. É o mesmo componente: só o container muda. */
+.q-colunas {
+  display: flex; gap: 12px; align-items: flex-start; overflow-x: auto; padding-bottom: 8px;
+}
+.q-colunas > .q-coluna { flex: 0 0 300px; margin-bottom: 0; }
+.q-secoes > .q-coluna { margin-bottom: 16px; }
+.q-coluna-nova { flex: 0 0 220px; }
+.q-coluna-head { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.q-coluna-cfg summary { cursor: pointer; color: var(--muted); font-size: 13px; list-style: none; }
+.q-coluna-cfg summary::-webkit-details-marker { display: none; }
+.q-coluna-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+.q-coluna-form .ag-in { font-size: 13px; padding: 4px 8px; }
+.q-icone { width: 52px; text-align: center; }
+.q-coluna-ordem { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+.q-coluna-ordem .foot { margin-top: 0; font-size: 12px; }
+
+.q-card { flex-direction: column; align-items: stretch; gap: 6px; }
+.q-desc { white-space: pre-wrap; }
+.q-libera { color: #92620a; }
+.q-acoes { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.q-mover { display: flex; gap: 6px; align-items: center; }
+.q-mover .ag-in { font-size: 12px; padding: 3px 6px; }
+.q-mini {
+  border: 1px solid var(--grid); background: var(--surface); color: var(--ink2);
+  border-radius: 6px; padding: 2px 8px; font-size: 13px; cursor: pointer; line-height: 1.4;
+}
+.q-mini:hover { border-color: var(--accent); color: var(--accent); }
+
+/* carrossel — miniatura com width fixo resolve; gerar thumbnail seria uma segunda cópia dos
+   bytes no mesmo banco que a retenção existe para aliviar. */
+.q-anexos summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.q-slides { list-style: none; display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0; padding: 0; }
+.q-slide {
+  border: 1px solid var(--grid); border-radius: 8px; padding: 6px; background: var(--surface);
+  width: 136px; font-size: 11px; color: var(--muted);
+}
+.q-slide img { display: block; width: 120px; height: auto; border-radius: 4px; }
+.q-slide-liberado {
+  width: 120px; height: 70px; display: flex; align-items: center; justify-content: center;
+  border: 1px dashed var(--grid); border-radius: 4px; color: var(--muted); font-size: 11px;
+}
+.q-slide-meta { margin-top: 4px; word-break: break-word; line-height: 1.4; }
+.q-slide-n { font-weight: 700; color: var(--ink2); }
+.q-slide-acoes { display: flex; gap: 4px; margin-top: 4px; }
+.q-upload { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.q-upload .ag-in { font-size: 12px; }
+
+/* calendário — sete colunas fixas: a semana começa no domingo, igual à agenda */
+.q-vistas { margin-bottom: 16px; }
+.q-cal-nav { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
+.q-cal-nav .ag-h { margin: 0; font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.q-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.q-cal-wd { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 2px 4px; }
+.q-cal-dia { border: 1px solid var(--grid); border-radius: 6px; min-height: 84px; padding: 4px; background: var(--surface); }
+.q-cal-fora { background: transparent; border-color: transparent; }
+.q-cal-n { font-size: 11px; color: var(--muted); }
+.q-cal-card { font-size: 11px; line-height: 1.4; margin-top: 4px; word-break: break-word; }
+.q-cal-card .pill { margin-left: 0; font-size: 10px; }
+@media (max-width: 700px) { .q-cal-dia { min-height: 56px; } }

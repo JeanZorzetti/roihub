@@ -7,7 +7,19 @@ import type { GithubStatus } from "@/lib/github";
 export function Tabs({
   active,
 }: {
-  active: "home" | "seo" | "infra" | "insights" | "agenda" | "resumo" | "busca" | "crm" | "ia" | "automacao";
+  active:
+    | "home"
+    | "seo"
+    | "infra"
+    | "insights"
+    | "agenda"
+    | "marketing"
+    | "ideias"
+    | "resumo"
+    | "busca"
+    | "crm"
+    | "ia"
+    | "automacao";
 }) {
   const tab = (key: string, href: string, label: string) => (
     <Link href={href} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
@@ -21,6 +33,10 @@ export function Tabs({
       {tab("infra", "/infra", "Infra")}
       {tab("insights", "/insights", "Insights")}
       {tab("agenda", "/agenda", "Agenda")}
+      {/* Quadros vêm logo depois da Agenda porque é dela que se distinguem: a Agenda é
+          compromisso com data, o quadro é o que ainda não virou compromisso. */}
+      {tab("marketing", "/marketing", "Marketing")}
+      {tab("ideias", "/ideias", "Ideias")}
       {tab("resumo", "/resumo", "Resumo")}
       {tab("busca", "/busca", "Busca")}
       {tab("crm", "/crm", "CRM")}

@@ -1,6 +1,7 @@
 import { Pool } from "pg";
 import { validTransition } from "./autopublish-core.mjs";
 import { PROJECTS } from "./autopublish-projects.mjs";
+import { COLUNAS_INICIAIS } from "./pauta.mjs";
 
 // Postgres da agenda (tabelas hub_*). Sem DATABASE_URL → aba mostra estado de setup.
 
@@ -205,6 +206,66 @@ function ensure(): Promise<unknown> {
         mapa JSONB NOT NULL,
         criado TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      -- Quadros de Marketing e Ideias. Nada aqui atravessa para hub_tasks ou para o ranking:
+      -- o isolamento é o requisito central da feature, não um efeito colateral do desenho.
+      -- Coluna é TABELA e não enum no .mjs (ao contrário de tipo/canal): FR-012 exige que o
+      -- usuário mude o fluxo sem publicar versão nova, e enum em código pediria deploy a cada
+      -- ajuste — exatamente o atrito que o quadro existe para eliminar.
+      CREATE TABLE IF NOT EXISTS hub_pauta_coluna (
+        id SERIAL PRIMARY KEY,
+        quadro TEXT NOT NULL,
+        nome TEXT NOT NULL,
+        icone TEXT,
+        ordem INT NOT NULL DEFAULT 0,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (quadro, nome)
+      );
+      CREATE TABLE IF NOT EXISTS hub_pauta (
+        id SERIAL PRIMARY KEY,
+        quadro TEXT NOT NULL,
+        coluna_id INT REFERENCES hub_pauta_coluna(id),
+        tipo TEXT NOT NULL DEFAULT 'card',
+        titulo TEXT NOT NULL,
+        descricao TEXT,
+        projeto TEXT,
+        responsavel TEXT,
+        canal TEXT,
+        data DATE,
+        url TEXT,
+        arquivado_em TIMESTAMPTZ,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        atualizado TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS hub_pauta_quadro ON hub_pauta (quadro, coluna_id);
+      -- bytes é anulável POR DESENHO: é o que a retenção esvazia. A linha fica para sempre
+      -- (nome, formato, tamanho e ordem), só o conteúdo visual é temporário.
+      CREATE TABLE IF NOT EXISTS hub_pauta_anexo (
+        id SERIAL PRIMARY KEY,
+        pauta_id INT NOT NULL REFERENCES hub_pauta(id) ON DELETE CASCADE,
+        ordem INT NOT NULL DEFAULT 0,
+        nome TEXT NOT NULL,
+        mime TEXT NOT NULL,
+        tamanho INT NOT NULL,
+        bytes BYTEA,
+        liberado_em TIMESTAMPTZ,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      -- Índice PARCIAL: só a linha que ainda tem bytes interessa à varredura. Liberada, ela
+      -- sai do índice — então o índice encolhe com o tempo em vez de crescer com o histórico.
+      CREATE INDEX IF NOT EXISTS hub_pauta_anexo_vivo
+        ON hub_pauta_anexo (pauta_id) WHERE bytes IS NOT NULL;
+      -- Semeadura idempotente (FR-016): quadro utilizável no primeiro acesso, sem sobrescrever
+      -- o que o usuário já renomeou ou reordenou.
+      INSERT INTO hub_pauta_coluna (quadro, nome, icone, ordem)
+      VALUES
+        ${Object.entries(COLUNAS_INICIAIS)
+          .flatMap(([quadro, cols]) =>
+            (cols as { nome: string; icone: string; ordem: number }[]).map(
+              (c) => `('${quadro}', '${c.nome}', '${c.icone}', ${c.ordem})`
+            )
+          )
+          .join(",\n        ")}
+      ON CONFLICT (quadro, nome) DO NOTHING;
       INSERT INTO seo_projects (project_slug, enabled, paused_reason)
       VALUES
         ('*', FALSE, 'Aguardando canários'),
@@ -622,5 +683,307 @@ export async function gravarEstado(runDate: string, mapa: Record<string, string>
     `INSERT INTO hub_estado (run_date, mapa) VALUES ($1, $2)
      ON CONFLICT (run_date) DO UPDATE SET mapa = EXCLUDED.mapa, criado = now()`,
     [runDate, JSON.stringify(mapa)]
+  );
+}
+
+// ── Quadros de Marketing e Ideias (hub_pauta*) ──────────────────────────────
+// Nenhuma função aqui escreve em hub_tasks, seo_* ou crm_*. FR-009/FR-010 são verificáveis
+// por leitura: se aparecer um insertTask nesta seção, a entrega está errada.
+
+export type PautaColuna = {
+  id: number;
+  quadro: string;
+  nome: string;
+  icone: string | null;
+  ordem: number;
+};
+
+export type PautaCard = {
+  id: number;
+  quadro: string;
+  coluna_id: number | null;
+  tipo: string; // "card" | "doc"
+  titulo: string;
+  descricao: string | null;
+  projeto: string | null;
+  responsavel: string | null;
+  canal: string | null;
+  data: string | null; // YYYY-MM-DD
+  url: string | null;
+  arquivado_em: string | null;
+};
+
+/** Sem `bytes`: a lista é para a tela e para o contador de espaço, não para servir imagem. */
+export type PautaAnexo = {
+  id: number;
+  pauta_id: number;
+  ordem: number;
+  nome: string;
+  mime: string;
+  tamanho: number;
+  liberado_em: string | null;
+};
+
+export type NovoPautaCard = Omit<PautaCard, "id" | "arquivado_em">;
+
+export async function listColunas(quadro: string): Promise<PautaColuna[]> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT id, quadro, nome, icone, ordem FROM hub_pauta_coluna
+     WHERE quadro = $1 ORDER BY ordem, id`,
+    [quadro]
+  );
+  return r.rows;
+}
+
+/** Busca o quadro inteiro. ponytail: 2 usuários e dezenas de cards — paginar seria adivinhar. */
+export async function listCards(quadro: string): Promise<PautaCard[]> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT id, quadro, coluna_id, tipo, titulo, descricao, projeto, responsavel, canal,
+            to_char(data, 'YYYY-MM-DD') AS data, url, arquivado_em
+     FROM hub_pauta WHERE quadro = $1 ORDER BY coluna_id, id`,
+    [quadro]
+  );
+  return r.rows;
+}
+
+export async function listAnexos(pautaIds: number[]): Promise<PautaAnexo[]> {
+  await ensure();
+  if (!pautaIds.length) return [];
+  const r = await pool().query(
+    `SELECT id, pauta_id, ordem, nome, mime, tamanho, liberado_em FROM hub_pauta_anexo
+     WHERE pauta_id = ANY($1::int[]) ORDER BY pauta_id, ordem, id`,
+    [pautaIds]
+  );
+  return r.rows;
+}
+
+/** Contador permanente de espaço da aba (FR-036) — a soma sai do banco, não de um map em memória. */
+export async function resumoAnexos(): Promise<{ ativos: number; bytes: number; liberados: number }> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT COUNT(*) FILTER (WHERE bytes IS NOT NULL) AS ativos,
+            COALESCE(SUM(tamanho) FILTER (WHERE bytes IS NOT NULL), 0) AS bytes,
+            COUNT(*) FILTER (WHERE bytes IS NULL) AS liberados
+     FROM hub_pauta_anexo`
+  );
+  const row = r.rows[0] ?? {};
+  return {
+    ativos: Number(row.ativos ?? 0),
+    bytes: Number(row.bytes ?? 0),
+    liberados: Number(row.liberados ?? 0),
+  };
+}
+
+export async function insertPauta(c: NovoPautaCard): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_pauta (quadro, coluna_id, tipo, titulo, descricao, projeto, responsavel, canal, data, url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [c.quadro, c.coluna_id, c.tipo, c.titulo, c.descricao, c.projeto, c.responsavel, c.canal, c.data, c.url]
+  );
+}
+
+export async function updatePauta(id: number, c: NovoPautaCard): Promise<void> {
+  await ensure();
+  await pool().query(
+    `UPDATE hub_pauta SET coluna_id = $2, tipo = $3, titulo = $4, descricao = $5, projeto = $6,
+            responsavel = $7, canal = $8, data = $9, url = $10, atualizado = now()
+      WHERE id = $1 AND quadro = $11`,
+    [id, c.coluna_id, c.tipo, c.titulo, c.descricao, c.projeto, c.responsavel, c.canal, c.data, c.url, c.quadro]
+  );
+}
+
+/**
+ * O EXISTS é o que impede um card de Marketing cair no quadro de Ideias por id trocado na URL:
+ * a coluna de destino tem que ser do MESMO quadro do card.
+ */
+export async function movePauta(id: number, colunaId: number): Promise<void> {
+  await ensure();
+  await pool().query(
+    `UPDATE hub_pauta p SET coluna_id = $2, atualizado = now()
+      WHERE p.id = $1
+        AND EXISTS (SELECT 1 FROM hub_pauta_coluna c WHERE c.id = $2 AND c.quadro = p.quadro)`,
+    [id, colunaId]
+  );
+}
+
+/** Anexos vão junto pelo ON DELETE CASCADE — sem depender de alguém lembrar de limpar. */
+export async function removePauta(id: number): Promise<void> {
+  await ensure();
+  await pool().query(`DELETE FROM hub_pauta WHERE id = $1`, [id]);
+}
+
+export async function arquivarPauta(id: number): Promise<void> {
+  await ensure();
+  await pool().query(`UPDATE hub_pauta SET arquivado_em = now(), atualizado = now() WHERE id = $1`, [id]);
+}
+
+/** Restaurar ZERA a carência: arquivar de novo recomeça os 30 dias (FR-034/FR-035). */
+export async function restaurarPauta(id: number): Promise<void> {
+  await ensure();
+  await pool().query(`UPDATE hub_pauta SET arquivado_em = NULL, atualizado = now() WHERE id = $1`, [id]);
+}
+
+export async function insertColuna(quadro: string, nome: string, icone: string | null): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_pauta_coluna (quadro, nome, icone, ordem)
+     VALUES ($1, $2, $3, COALESCE((SELECT MAX(ordem) + 1 FROM hub_pauta_coluna WHERE quadro = $1), 0))
+     ON CONFLICT (quadro, nome) DO NOTHING`,
+    [quadro, nome, icone]
+  );
+}
+
+/** Só nome e ícone. FR-015 é garantido pela ESTRUTURA (o card aponta para id), não por cuidado aqui. */
+export async function renameColuna(id: number, nome: string, icone: string | null): Promise<void> {
+  await ensure();
+  await pool().query(`UPDATE hub_pauta_coluna SET nome = $2, icone = $3 WHERE id = $1`, [id, nome, icone]);
+}
+
+/** Troca a ordem com a vizinha numa transação: metade da troca deixaria duas colunas empatadas. */
+export async function swapColunaOrdem(id: number, dir: number): Promise<void> {
+  await ensure();
+  const client = await pool().connect();
+  try {
+    await client.query("BEGIN");
+    const atual = await client.query(`SELECT quadro, ordem FROM hub_pauta_coluna WHERE id = $1`, [id]);
+    if (atual.rows[0]) {
+      const { quadro, ordem } = atual.rows[0];
+      const vizinha = await client.query(
+        dir < 0
+          ? `SELECT id, ordem FROM hub_pauta_coluna WHERE quadro = $1 AND ordem < $2 ORDER BY ordem DESC LIMIT 1`
+          : `SELECT id, ordem FROM hub_pauta_coluna WHERE quadro = $1 AND ordem > $2 ORDER BY ordem ASC LIMIT 1`,
+        [quadro, ordem]
+      );
+      if (vizinha.rows[0]) {
+        await client.query(`UPDATE hub_pauta_coluna SET ordem = $2 WHERE id = $1`, [id, vizinha.rows[0].ordem]);
+        await client.query(`UPDATE hub_pauta_coluna SET ordem = $2 WHERE id = $1`, [vizinha.rows[0].id, ordem]);
+      }
+    }
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+/** Cards em qualquer estado, arquivados inclusive: card arquivado ainda aponta para a coluna. */
+export async function contarCardsDaColuna(id: number): Promise<number> {
+  await ensure();
+  const r = await pool().query(`SELECT COUNT(*)::int AS n FROM hub_pauta WHERE coluna_id = $1`, [id]);
+  return r.rows[0]?.n ?? 0;
+}
+
+export async function contarColunas(quadro: string): Promise<number> {
+  await ensure();
+  const r = await pool().query(`SELECT COUNT(*)::int AS n FROM hub_pauta_coluna WHERE quadro = $1`, [quadro]);
+  return r.rows[0]?.n ?? 0;
+}
+
+export async function removeColuna(id: number): Promise<void> {
+  await ensure();
+  await pool().query(`DELETE FROM hub_pauta_coluna WHERE id = $1`, [id]);
+}
+
+export async function cardExiste(id: number): Promise<{ quadro: string } | null> {
+  await ensure();
+  const r = await pool().query(`SELECT quadro FROM hub_pauta WHERE id = $1`, [id]);
+  return r.rows[0] ?? null;
+}
+
+export async function contarAnexos(pautaId: number): Promise<number> {
+  await ensure();
+  const r = await pool().query(`SELECT COUNT(*)::int AS n FROM hub_pauta_anexo WHERE pauta_id = $1`, [pautaId]);
+  return r.rows[0]?.n ?? 0;
+}
+
+export async function insertAnexo(a: {
+  pauta_id: number;
+  nome: string;
+  mime: string;
+  tamanho: number;
+  bytes: Buffer;
+}): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_pauta_anexo (pauta_id, ordem, nome, mime, tamanho, bytes)
+     VALUES ($1, COALESCE((SELECT MAX(ordem) + 1 FROM hub_pauta_anexo WHERE pauta_id = $1), 0), $2, $3, $4, $5)`,
+    [a.pauta_id, a.nome, a.mime, a.tamanho, a.bytes]
+  );
+}
+
+/** `null` = id inexistente. `bytes: null` = liberado — a rota traduz isso em 410, não em 404. */
+export async function getAnexoBytes(
+  id: number
+): Promise<{ mime: string; tamanho: number; bytes: Buffer | null } | null> {
+  await ensure();
+  const r = await pool().query(`SELECT mime, tamanho, bytes FROM hub_pauta_anexo WHERE id = $1`, [id]);
+  return r.rows[0] ?? null;
+}
+
+export async function anexoDoCard(id: number): Promise<{ pauta_id: number; quadro: string } | null> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT a.pauta_id, p.quadro FROM hub_pauta_anexo a JOIN hub_pauta p ON p.id = a.pauta_id WHERE a.id = $1`,
+    [id]
+  );
+  return r.rows[0] ?? null;
+}
+
+export async function removeAnexo(id: number): Promise<void> {
+  await ensure();
+  await pool().query(`DELETE FROM hub_pauta_anexo WHERE id = $1`, [id]);
+}
+
+/** Buraco na sequência de ordem é irrelevante: a exibição ordena por `ordem`, não por contiguidade. */
+export async function swapAnexoOrdem(id: number, dir: number): Promise<void> {
+  await ensure();
+  const client = await pool().connect();
+  try {
+    await client.query("BEGIN");
+    const atual = await client.query(`SELECT pauta_id, ordem FROM hub_pauta_anexo WHERE id = $1`, [id]);
+    if (atual.rows[0]) {
+      const { pauta_id, ordem } = atual.rows[0];
+      const vizinho = await client.query(
+        dir < 0
+          ? `SELECT id, ordem FROM hub_pauta_anexo WHERE pauta_id = $1 AND ordem < $2 ORDER BY ordem DESC LIMIT 1`
+          : `SELECT id, ordem FROM hub_pauta_anexo WHERE pauta_id = $1 AND ordem > $2 ORDER BY ordem ASC LIMIT 1`,
+        [pauta_id, ordem]
+      );
+      if (vizinho.rows[0]) {
+        await client.query(`UPDATE hub_pauta_anexo SET ordem = $2 WHERE id = $1`, [id, vizinho.rows[0].ordem]);
+        await client.query(`UPDATE hub_pauta_anexo SET ordem = $2 WHERE id = $1`, [vizinho.rows[0].id, ordem]);
+      }
+    }
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Varredura de liberação. Idempotente por construção — `WHERE bytes IS NOT NULL` faz a segunda
+ * passada não achar linha — e por isso é segura de chamar em toda renderização de quadro, que é
+ * onde ela roda (R-005). Cron novo não: já há dois na janela da madrugada, o hub cai nela, e com
+ * carência de 30 dias um atraso de horas é irrelevante.
+ */
+export async function liberarAnexosVencidos(dias: number): Promise<void> {
+  await ensure();
+  await pool().query(
+    `UPDATE hub_pauta_anexo a
+        SET bytes = NULL, liberado_em = now()
+       FROM hub_pauta p
+      WHERE a.pauta_id = p.id
+        AND a.bytes IS NOT NULL
+        AND p.arquivado_em IS NOT NULL
+        AND p.arquivado_em < now() - ($1 || ' days')::interval`,
+    [dias]
   );
 }
