@@ -259,6 +259,17 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
   background: var(--accent); color: #fff;
 }
 .ag-btn:hover { background: var(--seq550); }
+/* Filtrar muda a VISÃO; Adicionar cria dado. Dois botões primários idênticos
+   empilhados fazem os dois formulários parecerem o mesmo comando. */
+.ag-btn.sec { background: transparent; color: var(--accent); }
+.ag-btn.sec:hover { background: var(--page); color: var(--seq550); border-color: var(--seq550); }
+/* filtro ativo: visível e removível um a um — lista vazia com filtro escondido
+   é o bug nº 1 de painel de dados. */
+.ag-chips { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: -8px 0 16px; font-size: 12px; }
+.ag-chips-cont { color: var(--muted); }
+.ag-chip { text-decoration: none; cursor: pointer; }
+.ag-chip:hover { border-color: var(--crit-ink); color: var(--crit-ink); }
+.ag-chips-limpar { color: var(--muted); }
 .ag-section { margin-bottom: 16px; padding: 14px 16px; }
 .ag-h { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
 .ag-h.alert { color: var(--crit-ink); }

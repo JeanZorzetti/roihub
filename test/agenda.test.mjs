@@ -10,6 +10,11 @@ import {
   tipoDe,
   TIPOS,
   ORDEM_BUCKET,
+  lerFiltros,
+  filtrosAtivos,
+  comFiltro,
+  filtrar,
+  ordenar,
 } from "../lib/agenda.mjs";
 
 test("todaySP resolve o fuso de São Paulo na virada do dia UTC", () => {
@@ -103,4 +108,47 @@ test("ORDEM_BUCKET: atrasada primeiro, sem data por último", () => {
   const b = ["semdata", "hoje", "depois", "atrasadas", "semana"];
   b.sort((x, y) => ORDEM_BUCKET[x] - ORDEM_BUCKET[y]);
   assert.deepEqual(b, ["atrasadas", "hoje", "semana", "depois", "semdata"]);
+});
+
+// ── filtro e ordem da lista ────────────────────────────────────────────────
+
+const CARDS = [
+  { titulo: "Conferir LCP", projeto: "goiania", desc: null, bucket: "hoje", taskId: 1, occ: "2026-07-11" },
+  { titulo: "Publicar artigo", projeto: "atma", desc: "sobre preço", bucket: "atrasadas", taskId: 2, occ: "2026-07-09" },
+  { titulo: "Decidir cobrança", projeto: null, desc: null, bucket: "semdata", taskId: null, occ: "1970-01-01" },
+];
+
+test("lerFiltros descarta valor desconhecido — filtro que não casa com nada esconde a lista", () => {
+  const f = lerFiltros({ urgencia: "amanha", ordem: "score", projeto: "inexistente", origem: "x" }, ["atma"]);
+  assert.deepEqual(f, { q: "", projeto: "", urgencia: "", origem: "", ordem: "urgencia" });
+  assert.deepEqual(filtrosAtivos(f), []);
+  // e aceita o que existe
+  const ok = lerFiltros({ urgencia: "hoje", ordem: "titulo", projeto: "atma", origem: "acao", q: "  lcp  " }, ["atma"]);
+  assert.deepEqual(ok, { q: "lcp", projeto: "atma", urgencia: "hoje", origem: "acao", ordem: "titulo" });
+  assert.deepEqual(filtrosAtivos(ok), ["q", "projeto", "urgencia", "origem"]);
+});
+
+test("filtrar: texto ignora acento e varre título, projeto e descrição", () => {
+  const so = (sp) => filtrar(CARDS, lerFiltros(sp, ["atma", "goiania"])).map((c) => c.titulo);
+  assert.deepEqual(so({ q: "cobranca" }), ["Decidir cobrança"]); // acento na tarefa, não na busca
+  assert.deepEqual(so({ q: "PREÇO" }), ["Publicar artigo"]); // casa pela descrição
+  assert.deepEqual(so({ q: "goiania" }), ["Conferir LCP"]); // casa pelo projeto
+  assert.deepEqual(so({ projeto: "atma" }), ["Publicar artigo"]);
+  assert.deepEqual(so({ urgencia: "atrasadas" }), ["Publicar artigo"]);
+  assert.deepEqual(so({ origem: "acao" }), ["Decidir cobrança"]); // taskId null = ação do ranking
+  assert.deepEqual(so({ origem: "tarefa" }), ["Conferir LCP", "Publicar artigo"]);
+  assert.deepEqual(so({ projeto: "atma", urgencia: "hoje" }), []); // filtros são E, não OU
+});
+
+test("ordenar: urgência é o padrão e o desempate; sem projeto vai para o fim", () => {
+  assert.deepEqual(ordenar(CARDS, "urgencia").map((c) => c.bucket), ["atrasadas", "hoje", "semdata"]);
+  assert.deepEqual(ordenar(CARDS, "projeto").map((c) => c.projeto), ["atma", "goiania", null]);
+  assert.deepEqual(ordenar(CARDS, "titulo").map((c) => c.titulo), ["Conferir LCP", "Decidir cobrança", "Publicar artigo"]);
+  assert.notEqual(ordenar(CARDS, "urgencia"), CARDS); // ordena uma cópia
+});
+
+test("comFiltro: remover um chip preserva os outros e omite a ordem padrão", () => {
+  const f = lerFiltros({ q: "lcp", projeto: "atma", urgencia: "hoje", ordem: "titulo" }, ["atma"]);
+  assert.equal(comFiltro(f, "projeto", ""), "?q=lcp&urgencia=hoje&ordem=titulo");
+  assert.equal(comFiltro({ ...f, q: "", projeto: "", urgencia: "" }, "ordem", "urgencia"), "?");
 });

@@ -8,9 +8,16 @@ import {
   brShort,
   tipoDe,
   TIPOS,
-  ORDEM_BUCKET,
   WD_LABELS,
   NO_DATE,
+  URGENCIAS,
+  ORIGENS,
+  ORDENS,
+  lerFiltros,
+  filtrosAtivos,
+  comFiltro,
+  filtrar,
+  ordenar,
 } from "@/lib/agenda.mjs";
 import { Tabs } from "../tabs";
 import { addTask, toggle, del } from "./actions";
@@ -19,6 +26,8 @@ import { EditTask } from "./edit-task";
 export const dynamic = "force-dynamic";
 
 type Tipo = { id: string; label: string; icone: string };
+/** Opção de filtro/ordem: mesma forma do balde, sem ícone. */
+type Opcao = { id: string; label: string };
 
 type Item = {
   key: string;
@@ -53,14 +62,6 @@ function itemFromTask(t: Task, today: string): Item {
     return { ...base, occ: t.due, meta: brShort(t.due), bucket };
   }
   return { ...base, occ: NO_DATE, meta: null, bucket: "semdata" };
-}
-
-/** Urgência primeiro, data depois. Sort estável: dentro de "sem data" a ordem do
- *  ranking (score) sobrevive, que é a única ordenação que aqueles cards têm. */
-function porUrgencia(a: Item, b: Item): number {
-  const ordem = ORDEM_BUCKET as Record<string, number>;
-  const d = ordem[a.bucket] - ordem[b.bucket];
-  return d !== 0 ? d : a.occ.localeCompare(b.occ);
 }
 
 function Check({ item, done }: { item: Item; done: boolean }) {
@@ -138,12 +139,14 @@ function Balde({
   doneSet,
   canWrite,
   slugs,
+  filtrando,
 }: {
   tipo: Tipo;
   items: Item[];
   doneSet: Set<string>;
   canWrite: boolean;
   slugs: string[];
+  filtrando: boolean;
 }) {
   const atrasadas = items.filter((i) => i.bucket === "atrasadas").length;
   return (
@@ -159,7 +162,7 @@ function Balde({
         )}
       </h2>
       {items.length === 0 ? (
-        <p className="ag-vazio">Nada aqui.</p>
+        <p className="ag-vazio">{filtrando ? "Nenhum card sobreviveu ao filtro." : "Nada aqui."}</p>
       ) : (
         <ul className="ag-list">
           {items.map((it) => (
@@ -177,7 +180,12 @@ function Balde({
   );
 }
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
   const on = dbOn();
   const today = todaySP();
   const [ranked, [tasks, doneSet]] = await Promise.all([
@@ -203,9 +211,24 @@ export default async function Page() {
     }));
 
   const all = [...tasks.map((t) => itemFromTask(t, today)), ...acoes];
-  const feitas = all.filter((i) => doneSet.has(`${i.key}@${i.occ}`));
-  const pendentes = all.filter((i) => !doneSet.has(`${i.key}@${i.occ}`));
+  const f = lerFiltros(sp, slugs);
+  const ativos = filtrosAtivos(f) as string[];
+  const visiveis = filtrar(all, f) as Item[];
+  const feitas = ordenar(
+    visiveis.filter((i) => doneSet.has(`${i.key}@${i.occ}`)),
+    f.ordem,
+  ) as Item[];
+  const pendentes = visiveis.filter((i) => !doneSet.has(`${i.key}@${i.occ}`));
   const tipos = TIPOS as Tipo[];
+  // Chip de filtro ativo carrega o valor, não o nome do campo: "atma" diz o que
+  // está escondendo a lista; "projeto" não diz nada.
+  const ROTULO: Record<string, string> = {
+    q: `"${f.q}"`,
+    projeto: f.projeto,
+    urgencia: URGENCIAS.find((u: Opcao) => u.id === f.urgencia)?.label ?? "",
+    origem: ORIGENS.find((o: Opcao) => o.id === f.origem)?.label ?? "",
+  };
+  const semFiltro = comFiltro({ ...f, q: "", projeto: "", urgencia: "", origem: "" }, "ordem", f.ordem);
 
   return (
     <main className="page">
@@ -261,14 +284,80 @@ export default async function Page() {
         </form>
       )}
 
+      {/* Filtro e ordem por GET: a visão inteira cabe na URL, então ela é
+          compartilhável, sobrevive ao reload e às server actions (marcar, editar e
+          apagar revalidam /agenda sem trocar a querystring). Sem client component. */}
+      <form className="card ag-add" method="get">
+        <input
+          className="ag-in grow"
+          type="search"
+          name="q"
+          defaultValue={f.q}
+          maxLength={100}
+          placeholder="Filtrar por título, projeto ou descrição…"
+          aria-label="Filtrar por texto"
+        />
+        <select name="projeto" defaultValue={f.projeto} className="ag-in" aria-label="Filtrar por projeto">
+          <option value="">todos os projetos</option>
+          {slugs.map((slug) => (
+            <option key={slug} value={slug}>
+              {slug}
+            </option>
+          ))}
+        </select>
+        <select name="urgencia" defaultValue={f.urgencia} className="ag-in" aria-label="Filtrar por urgência">
+          <option value="">toda urgência</option>
+          {(URGENCIAS as Opcao[]).map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.label}
+            </option>
+          ))}
+        </select>
+        <select name="origem" defaultValue={f.origem} className="ag-in" aria-label="Filtrar por origem do card">
+          <option value="">tarefas e ações</option>
+          {(ORIGENS as Opcao[]).map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <select name="ordem" defaultValue={f.ordem} className="ag-in" aria-label="Ordenar por">
+          {(ORDENS as Opcao[]).map((o) => (
+            <option key={o.id} value={o.id}>
+              ordenar por {o.label}
+            </option>
+          ))}
+        </select>
+        <button className="ag-btn sec">Filtrar</button>
+      </form>
+
+      {ativos.length > 0 && (
+        <div className="ag-chips">
+          <span className="ag-chips-cont">
+            {visiveis.length} de {all.length} cards
+          </span>
+          {ativos.map((k) => (
+            <a key={k} className="pill ag-chip" href={comFiltro(f, k, "")}>
+              {ROTULO[k]}
+              <span aria-hidden="true"> ×</span>
+              <span className="sr-only"> — remover este filtro</span>
+            </a>
+          ))}
+          <a className="ag-chips-limpar" href={semFiltro}>
+            limpar filtros
+          </a>
+        </div>
+      )}
+
       {tipos.map((t) => (
         <Balde
           key={t.id}
           tipo={t}
-          items={pendentes.filter((i) => i.tipo === t.id).sort(porUrgencia)}
+          items={ordenar(pendentes.filter((i) => i.tipo === t.id), f.ordem) as Item[]}
           doneSet={doneSet}
           canWrite={on}
           slugs={slugs}
+          filtrando={ativos.length > 0}
         />
       ))}
 
@@ -294,7 +383,9 @@ export default async function Page() {
         <code>acao</code> do <code>data/projects.json</code> na ordem do ranking da home — mudou o
         texto, o check reseta, e o balde é sempre derivado (não há onde fixar). Ação de projeto feita
         de verdade = editar o projects.json. Clicar numa ação abre o modal: salvar vira tarefa do
-        banco e risca a original.
+        banco e risca a original. Filtro e ordem ficam na URL — a visão é compartilhável e sobrevive
+        a marcar, editar e apagar; os três baldes continuam na tela mesmo vazios, para o filtro não
+        esconder que existe um balde.
       </p>
     </main>
   );
