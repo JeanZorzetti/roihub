@@ -26,6 +26,7 @@ import { Tabs } from "./tabs";
 import { EditarCard } from "./editar-card";
 import {
   addCard,
+  salvarNota,
   moverCard,
   delCard,
   arquivarCard,
@@ -38,13 +39,26 @@ import {
 
 type Opcao = { id: string; label: string };
 
-/** A rota traduz o código; o código é o que o teste e o log leem. */
+/**
+ * A rota traduz o código; o código é o que o teste e o log leem.
+ *
+ * Os três primeiros são recusa de ARQUIVO no meio de um lote — por isso a frase sobre os demais
+ * terem sido gravados. Os de baixo são a requisição inteira que não deu em nada, e ganharam
+ * mensagem própria porque antes viravam uma página de JSON no lugar do quadro: clicar duas vezes
+ * no "×" (ou voltar e reenviar) devolvia `{"error":"anexo não encontrado"}` em tela cheia, que é
+ * a cara de um sistema quebrado para uma ação que só aconteceu duas vezes.
+ */
 const ERRO_ANEXO: Record<string, string> = {
   mime: "Formato recusado — só PNG, JPEG e WebP.",
   tamanho: "Arquivo recusado — acima de 3 MB.",
   quantidade: `Limite de ${ANEXO_MAX_POR_CARD} imagens por card atingido.`,
   card: "Card não encontrado.",
+  vazio: "Nenhum arquivo escolhido — clique em “Escolher ficheiros” antes de “Anexar”.",
+  sumiu: "Essa imagem já não estava mais no card — nada foi alterado.",
 };
+
+/** Recusa de um arquivo dentro de um lote: os outros do mesmo envio entraram. */
+const ERRO_DE_LOTE = new Set(["mime", "tamanho", "quantidade"]);
 
 const rotuloCanal = (id: string | null) => (CANAIS as Opcao[]).find((c) => c.id === id)?.label ?? id ?? "";
 const rotuloResp = (id: string | null) => (RESPONSAVEIS as Opcao[]).find((r) => r.id === id)?.label ?? id ?? "";
@@ -52,7 +66,10 @@ const rotuloResp = (id: string | null) => (RESPONSAVEIS as Opcao[]).find((r) => 
 function Anexos({ card, anexos, voltar }: { card: PautaCard; anexos: PautaAnexo[]; voltar: string }) {
   const vivos = anexos.filter((a) => a.liberado_em === null);
   return (
-    <details className="q-anexos">
+    // `open` quando há arte: fechado, a miniatura só existe para quem lembra de clicar no
+    // resumo — e depois de anexar, mover ou remover a página recarrega e o painel voltava
+    // fechado, dando a impressão de que a imagem tinha sumido.
+    <details className="q-anexos" open={anexos.length > 0}>
       <summary>
         🖼️ Arte ({anexos.length}
         {anexos.length !== vivos.length && ` · ${anexos.length - vivos.length} liberada(s)`})
@@ -64,7 +81,22 @@ function Anexos({ card, anexos, voltar }: { card: PautaCard; anexos: PautaAnexo[
               {/* Anexo liberado continua listado: nome, formato, tamanho e ordem são o registro
                   permanente (FR-033) — só os bytes é que não existem mais. */}
               {a.liberado_em === null ? (
-                <img src={`/api/pauta/anexo/${a.id}`} alt={a.nome} width={120} loading="lazy" />
+                // A miniatura tem 120px de largura: numa arte de carrossel isso é ilegível.
+                // O link abre a MESMA rota que já serve a imagem, em tamanho real e em aba
+                // nova — sem visualizador próprio, que precisaria de JS e de um segundo
+                // caminho para os bytes.
+                <a
+                  href={`/api/pauta/anexo/${a.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="q-slide-abrir"
+                  title={`Abrir ${a.nome} em tamanho real`}
+                >
+                  <img src={`/api/pauta/anexo/${a.id}`} alt={a.nome} width={120} loading="lazy" />
+                  <span className="q-slide-lupa" aria-hidden="true">
+                    ⤢ abrir
+                  </span>
+                </a>
               ) : (
                 <div className="q-slide-liberado" aria-label="imagem liberada">
                   liberada
@@ -116,6 +148,31 @@ function Anexos({ card, anexos, voltar }: { card: PautaCard; anexos: PautaAnexo[
   );
 }
 
+/**
+ * Editor de anotação direto no card, sem abrir o diálogo. Existe porque a anotação é o
+ * CONTEÚDO da vista de documentação, não um detalhe do card: escondê-la atrás de um clique no
+ * título faz a tela parecer vazia. Manda um campo só e cai em `salvarNota`, que preserva o
+ * resto do card.
+ */
+function Nota({ card, rotulo }: { card: PautaCard; rotulo: string }) {
+  return (
+    <form action={salvarNota} className="q-nota">
+      <input type="hidden" name="id" value={card.id} />
+      <input type="hidden" name="quadro" value={card.quadro} />
+      <textarea
+        name="descricao"
+        defaultValue={card.descricao ?? ""}
+        placeholder={rotulo}
+        rows={card.tipo === "doc" ? 10 : 4}
+        maxLength={DESCRICAO_MAX}
+        className="ag-in"
+        aria-label={`Anotações de "${card.titulo}"`}
+      />
+      <button className="ag-btn sec">salvar anotações</button>
+    </form>
+  );
+}
+
 function Card({
   card,
   colunas,
@@ -123,6 +180,7 @@ function Card({
   anexos,
   voltar,
   on,
+  nota = false,
 }: {
   card: PautaCard;
   colunas: PautaColuna[];
@@ -130,9 +188,14 @@ function Card({
   anexos: PautaAnexo[];
   voltar: string;
   on: boolean;
+  /** Anotação em editor aberto no card, em vez de texto só de leitura. */
+  nota?: boolean;
 }) {
   const arquivado = card.arquivado_em !== null;
   const libera = dataDeLiberacao(card);
+  // Documento vivo não tem "×": a exclusão permanente exige arquivar antes. A trava de verdade
+  // está no WHERE de removePauta — aqui só se evita oferecer o botão que o banco recusa.
+  const podeApagar = card.tipo !== "doc" || arquivado;
   return (
     <li className="ag-item q-card">
       <div className="ag-body">
@@ -141,7 +204,21 @@ function Card({
         ) : (
           <div className="ag-title">{card.titulo}</div>
         )}
-        {card.descricao && <div className="ag-desc q-desc">{card.descricao}</div>}
+        {nota && on ? (
+          <Nota card={card} rotulo="Processo, estudo, o que a casa aprendeu…" />
+        ) : (
+          <>
+            {card.descricao && <div className="ag-desc q-desc">{card.descricao}</div>}
+            {/* Fechado por padrão para a coluna não virar uma torre de textareas, mas VISÍVEL:
+                antes a única porta para a anotação era descobrir que o título é clicável. */}
+            {on && (
+              <details className="q-nota-det">
+                <summary>✎ {card.descricao ? "editar anotações" : "anotações"}</summary>
+                <Nota card={card} rotulo="Anotações, legenda do post, referências…" />
+              </details>
+            )}
+          </>
+        )}
         <div className="ag-meta">
           {card.projeto && <span className="pill">{card.projeto}</span>}
           {card.canal && <span className="pill">{rotuloCanal(card.canal)}</span>}
@@ -184,13 +261,17 @@ function Card({
               {arquivado ? "↩" : "📥"}
             </button>
           </form>
-          <form action={delCard}>
-            <input type="hidden" name="id" value={card.id} />
-            <input type="hidden" name="quadro" value={card.quadro} />
-            <button className="ag-del" aria-label={`Apagar "${card.titulo}"`}>
-              ×
-            </button>
-          </form>
+          {podeApagar ? (
+            <form action={delCard}>
+              <input type="hidden" name="id" value={card.id} />
+              <input type="hidden" name="quadro" value={card.quadro} />
+              <button className="ag-del" aria-label={`Apagar "${card.titulo}"`}>
+                ×
+              </button>
+            </form>
+          ) : (
+            <span className="foot q-trava">documento: arquive antes de apagar</span>
+          )}
         </div>
       )}
     </li>
@@ -346,7 +427,8 @@ export function Quadro({
 
       {erro && ERRO_ANEXO[erro] && (
         <div className="banner" role="alert">
-          {ERRO_ANEXO[erro]} Os demais arquivos do envio foram gravados.
+          {ERRO_ANEXO[erro]}
+          {ERRO_DE_LOTE.has(erro) && " Os demais arquivos do envio foram gravados."}
         </div>
       )}
 
@@ -412,6 +494,21 @@ export function Quadro({
               <input type="date" name="data" className="ag-in" title="Data de publicação" />
             </>
           )}
+          {/* A anotação nasce COM o card. Antes ela só existia dentro do diálogo de edição, ou
+              seja: só quem já sabia que o título era clicável conseguia escrever a legenda do
+              post — e a legenda costuma ser a razão de o card existir. */}
+          <textarea
+            name="descricao"
+            rows={2}
+            maxLength={DESCRICAO_MAX}
+            className="ag-in q-add-nota"
+            placeholder={
+              marketing
+                ? "Anotações, legenda do post, referências… (opcional)"
+                : "Anotações, o problema que resolve… (opcional)"
+            }
+            aria-label="Anotações"
+          />
           <button className="ag-btn">Adicionar</button>
         </form>
       )}
@@ -429,6 +526,22 @@ export function Quadro({
               </option>
             ))}
           </select>
+          <select name="projeto" className="ag-in" title="Projeto">
+            <option value="">— transversal —</option>
+            {slugs.map((slug) => (
+              <option key={slug} value={slug}>
+                {slug}
+              </option>
+            ))}
+          </select>
+          <textarea
+            name="descricao"
+            rows={4}
+            maxLength={DESCRICAO_MAX}
+            className="ag-in q-add-nota"
+            placeholder="Anotações do documento — pode escrever agora e continuar depois direto no card."
+            aria-label="Anotações do documento"
+          />
           <button className="ag-btn">Criar documento</button>
         </form>
       )}
@@ -582,13 +695,26 @@ export function Quadro({
           ) : (
             <ul className="ag-list">
               {docs.map((c) => (
-                <Card key={c.id} card={c} colunas={colunas} slugs={slugs} anexos={anexosDe(c.id)} voltar={voltar} on={on} />
+                <Card
+                  key={c.id}
+                  card={c}
+                  colunas={colunas}
+                  slugs={slugs}
+                  anexos={anexosDe(c.id)}
+                  voltar={voltar}
+                  on={on}
+                  nota
+                />
               ))}
             </ul>
           )}
           <p className="foot">
             Documento não entra em coluna nem no calendário — é o que a casa sabe, não o que está
-            para publicar.
+            para publicar. A anotação é gravada no banco a cada <em>salvar anotações</em> e fica
+            para sempre: <strong>documento não tem “×” enquanto está vivo</strong> — para apagar
+            de vez é preciso arquivar antes, e a recusa é do banco, não da tela. Imagem anexada
+            aqui segue a mesma retenção do resto do quadro ({ANEXO_CARENCIA_DIAS} dias depois do
+            arquivamento); o texto escrito não expira nunca.
           </p>
         </section>
       )}
@@ -612,6 +738,9 @@ export function Quadro({
         execução é decisão de pessoa, e por enquanto se faz criando a tarefa na Agenda à mão. Filtro
         e vista vivem na URL: a tela é compartilhável e sobrevive a criar, mover, arquivar e apagar.
         As colunas continuam visíveis mesmo vazias, para o filtro não esconder que a etapa existe.
+        Anotação e legenda entram já na criação e depois pelo <em>✎ anotações</em> do card; o texto
+        é gravado no banco e entra no filtro por texto junto com título e projeto. Miniatura de arte
+        abre em tamanho real em aba nova.
       </p>
     </main>
   );

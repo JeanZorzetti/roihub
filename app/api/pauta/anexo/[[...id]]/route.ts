@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server.js";
+import { revalidatePath } from "next/cache";
 import {
   dbOn,
   cardExiste,
@@ -35,6 +36,18 @@ function destino(fd: FormData, padrao: string): string {
 /** 303 e não 302: força o navegador a trocar POST por GET, então recarregar não reenvia o upload. */
 const volta = (req: Request, para: string) => NextResponse.redirect(new URL(para, req.url), 303);
 
+/**
+ * Recusa de POST volta para o QUADRO com o código na querystring, nunca como JSON.
+ *
+ * A rota é alvo de `<form>` e não de fetch: o que o navegador faz com um 404 `application/json`
+ * é pintar a tela inteira de `{"error":"anexo não encontrado"}` e engolir o quadro. E o caminho
+ * para chegar nisso é banal — clicar "×" duas vezes, ou usar o botão Voltar depois de remover
+ * e clicar de novo: na segunda vez a linha já não existe. Isso é uma ação repetida, não um
+ * erro do sistema, e a resposta certa é a tela de sempre com um aviso em cima.
+ */
+const recusa = (req: Request, para: string, codigo: string) =>
+  volta(req, `${para}${para.includes("?") ? "&" : "?"}erro=${codigo}`);
+
 const semBanco = () => NextResponse.json({ error: "DATABASE_URL ausente" }, { status: 503 });
 
 export async function POST(request: Request, ctx: { params: Promise<{ id?: string[] }> }) {
@@ -49,28 +62,37 @@ export async function POST(request: Request, ctx: { params: Promise<{ id?: strin
   if (seg.length === 2) {
     const id = Number(seg[0]);
     const acao = seg[1];
-    if (!Number.isInteger(id) || id <= 0) return NextResponse.json({ error: "id inválido" }, { status: 404 });
+    // `voltar` já veio no corpo do formulário: dá para devolver a pessoa ao quadro certo mesmo
+    // quando o anexo não existe mais e não há dono de onde deduzir a rota.
+    const paraSemDono = destino(fd, "/marketing");
+    if (!Number.isInteger(id) || id <= 0) return recusa(request, paraSemDono, "sumiu");
     const dono = await anexoDoCard(id);
-    if (!dono) return NextResponse.json({ error: "anexo não encontrado" }, { status: 404 });
+    if (!dono) return recusa(request, paraSemDono, "sumiu");
     const padrao = dono.quadro === "marketing" ? "/marketing" : "/ideias";
+    const para = destino(fd, padrao);
     if (acao === "remover") await removeAnexo(id);
     else if (acao === "mover") {
       const dir = new URL(request.url).searchParams.get("dir") === "-1" ? -1 : 1;
       await swapAnexoOrdem(id, dir);
-    } else return NextResponse.json({ error: "ação desconhecida" }, { status: 404 });
-    return volta(request, destino(fd, padrao));
+    } else return recusa(request, para, "sumiu");
+    // A página é `force-dynamic`, mas o redirect cai no cache de rota do App Router e a lista
+    // de anexos podia voltar com a imagem que acabou de sair — o "erro" mais parecido com bug
+    // que esta tela produzia.
+    revalidatePath(padrao);
+    return volta(request, para);
   }
 
-  if (seg.length) return NextResponse.json({ error: "rota desconhecida" }, { status: 404 });
+  if (seg.length) return recusa(request, destino(fd, "/marketing"), "sumiu");
 
   const pautaId = Number(fd.get("pauta_id"));
-  if (!Number.isInteger(pautaId) || pautaId <= 0)
-    return NextResponse.json({ error: "pauta_id inválido" }, { status: 404 });
-  const card = await cardExiste(pautaId);
-  if (!card) return NextResponse.json({ error: "card não encontrado" }, { status: 404 });
+  const card = Number.isInteger(pautaId) && pautaId > 0 ? await cardExiste(pautaId) : null;
+  if (!card) return recusa(request, destino(fd, "/marketing"), "card");
 
   const para = destino(fd, card.quadro === "marketing" ? "/marketing" : "/ideias");
   const arquivos = fd.getAll("imagens").filter((x): x is File => x instanceof File && x.size > 0);
+  // Enviar o formulário sem escolher arquivo recarregava a página e não dizia nada — ação sem
+  // efeito e sem explicação é indistinguível de falha para quem está do outro lado.
+  if (!arquivos.length) return recusa(request, para, "vazio");
   let jaTem = await contarAnexos(pautaId);
   let erro = "";
 
@@ -92,7 +114,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ id?: strin
     jaTem++;
   }
 
-  return volta(request, erro ? `${para}${para.includes("?") ? "&" : "?"}erro=${erro}` : para);
+  revalidatePath(card.quadro === "marketing" ? "/marketing" : "/ideias");
+  return erro ? recusa(request, para, erro) : volta(request, para);
 }
 
 export async function GET(_request: Request, ctx: { params: Promise<{ id?: string[] }> }) {

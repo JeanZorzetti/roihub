@@ -796,6 +796,24 @@ export async function updatePauta(id: number, c: NovoPautaCard): Promise<void> {
 }
 
 /**
+ * Grava SÓ a anotação. Existe separada de updatePauta porque o editor inline da vista de
+ * documentação manda um campo só: passar pelo update completo faria os campos que o formulário
+ * não tem (projeto, responsável, canal, data) voltarem para NULL — perda silenciosa numa tela
+ * cujo contrato declarado é justamente nunca perder o que foi escrito.
+ */
+export async function updatePautaDescricao(
+  id: number,
+  quadro: string,
+  descricao: string | null
+): Promise<void> {
+  await ensure();
+  await pool().query(
+    `UPDATE hub_pauta SET descricao = $3, atualizado = now() WHERE id = $1 AND quadro = $2`,
+    [id, quadro, descricao]
+  );
+}
+
+/**
  * O EXISTS é o que impede um card de Marketing cair no quadro de Ideias por id trocado na URL:
  * a coluna de destino tem que ser do MESMO quadro do card.
  */
@@ -809,10 +827,20 @@ export async function movePauta(id: number, colunaId: number): Promise<void> {
   );
 }
 
-/** Anexos vão junto pelo ON DELETE CASCADE — sem depender de alguém lembrar de limpar. */
+/**
+ * Anexos vão junto pelo ON DELETE CASCADE — sem depender de alguém lembrar de limpar.
+ *
+ * O `AND` é a trava de documento (vista `docs`): `tipo = 'doc'` só sai do banco depois de
+ * arquivado. A vista de documentação é o lugar onde a casa guarda anotação que ninguém pretende
+ * excluir, e um "×" ao lado do "📥" apaga texto de meses num clique errado. A trava mora no
+ * WHERE e não na tela porque esconder o botão não é garantia: id trocado na requisição passaria.
+ */
 export async function removePauta(id: number): Promise<void> {
   await ensure();
-  await pool().query(`DELETE FROM hub_pauta WHERE id = $1`, [id]);
+  await pool().query(
+    `DELETE FROM hub_pauta WHERE id = $1 AND (tipo <> 'doc' OR arquivado_em IS NOT NULL)`,
+    [id]
+  );
 }
 
 export async function arquivarPauta(id: number): Promise<void> {

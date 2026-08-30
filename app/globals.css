@@ -37,7 +37,11 @@ body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-.page { max-width: 1060px; margin: 0 auto; padding: 32px 24px 64px; }
+/* 1060px era estreito demais para as 12 abas + o contador: o contador não cabia na linha das
+   abas, caía sozinho para a linha de baixo e o hub inteiro ficava numa faixa no meio da tela
+   com o resto vazio. Em 1560 a barra fecha numa linha só e o quadro de Marketing ganha ~500px
+   de coluna, que é onde a falta de largura mais doía (a régua de rolagem horizontal do kanban). */
+.page { max-width: 1560px; margin: 0 auto; padding: 32px 24px 64px; }
 
 /* topbar */
 .topbar {
@@ -46,7 +50,9 @@ a:hover { text-decoration: underline; }
 }
 .brand { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
 .brand span { color: var(--accent); }
-.topbar-meta { color: var(--muted); font-size: 13px; }
+/* `margin-left: auto` mantém o contador colado na direita mesmo quando a linha quebra em telas
+   estreitas — sem ele, `space-between` joga o item solto da segunda linha para a esquerda. */
+.topbar-meta { color: var(--muted); font-size: 13px; margin-left: auto; text-align: right; }
 .topbar-left { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
 
 /* abas */
@@ -359,6 +365,14 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 
 .q-card { flex-direction: column; align-items: stretch; gap: 6px; }
 .q-desc { white-space: pre-wrap; }
+/* anotação: ocupa a linha inteira do formulário de criação em vez de disputar espaço com os
+   selects — texto de legenda não cabe num campo de 220px. */
+.q-add-nota { flex: 1 0 100%; min-height: 44px; }
+.q-nota-det summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.q-nota { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin: 4px 0 2px; }
+.q-nota textarea { width: 100%; }
+.q-nota .ag-btn { font-size: 12px; padding: 3px 10px; }
+.q-trava { margin: 0; font-size: 11px; }
 .q-libera { color: #92620a; }
 .q-acoes { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .q-mover { display: flex; gap: 6px; align-items: center; }
@@ -378,6 +392,15 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   width: 136px; font-size: 11px; color: var(--muted);
 }
 .q-slide img { display: block; width: 120px; height: auto; border-radius: 4px; }
+/* A miniatura é o link: 120px não deixa julgar uma arte, e abrir em aba nova reusa a mesma
+   rota que serve os bytes — sem visualizador próprio e sem um segundo caminho para a imagem. */
+.q-slide-abrir { display: block; position: relative; text-decoration: none; }
+.q-slide-abrir:hover { text-decoration: none; }
+.q-slide-abrir:hover img { outline: 2px solid var(--accent); outline-offset: 1px; }
+.q-slide-lupa {
+  position: absolute; left: 4px; bottom: 4px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(11, 11, 11, 0.62); color: #fff; font-size: 10px; font-weight: 600;
+}
 .q-slide-liberado {
   width: 120px; height: 70px; display: flex; align-items: center; justify-content: center;
   border: 1px dashed var(--grid); border-radius: 4px; color: var(--muted); font-size: 11px;

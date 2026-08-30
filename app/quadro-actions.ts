@@ -5,6 +5,7 @@ import {
   dbOn,
   insertPauta,
   updatePauta,
+  updatePautaDescricao,
   movePauta,
   removePauta,
   arquivarPauta,
@@ -124,6 +125,24 @@ export async function updateCard(fd: FormData): Promise<void> {
   const c = await camposDoCard(fd, quadro);
   if (!c) return;
   await updatePauta(id, c);
+  revalidar(quadro);
+}
+
+/**
+ * Anotação do card, gravada sem passar pelo formulário inteiro. É o que sustenta o editor
+ * inline da vista de documentação: lá a pessoa escreve direto no card, e um update completo
+ * apagaria projeto/responsável/canal por eles não estarem no formulário.
+ *
+ * Anotação VAZIA é apagamento legítimo do texto e nada mais — o card, os anexos e o registro
+ * continuam. É por isso que aqui não há `if (!descricao) return`: engolir o salvamento faria a
+ * tela mentir que gravou.
+ */
+export async function salvarNota(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const quadro = quadroDe(fd);
+  const id = inteiro(fd, "id");
+  if (!quadro || !id) return;
+  await updatePautaDescricao(id, quadro, texto(fd, "descricao", DESCRICAO_MAX) || null);
   revalidar(quadro);
 }
 
