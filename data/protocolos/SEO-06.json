@@ -2,8 +2,8 @@
   "id": "SEO-06",
   "area": "SEO",
   "titulo": "IndexNow 403 UserForbiddedToAccessSite em subdominio e o Bing, nao a chave",
-  "norma": "O Bing trata cada subdominio como site a parte e recusa IndexNow enquanto nao verificar aquele host, mesmo com a mesma chave que passa no apex. Antes de investigar key file, robots, nginx ou content-type, isolar por endpoint. E: ping fire-and-forget sempre checa res.ok e loga o corpo.",
-  "motivo": "goiania.roilabs.com.br, 13/07/2026: 94 URLs de malha pSEO recrawleando no vazio havia semanas. O script logava 'HTTP 403' com cara de sucesso porque nao checava res.ok nem lia o corpo.",
+  "norma": "O Bing trata cada subdominio como site a parte e recusa IndexNow enquanto aquele host nao estiver verificado NELE, mesmo com a mesma chave que passa no apex. E verificacao IMPORTADA do Google Search Console nao vale para o IndexNow: ele so honra prova NATIVA do Bing (BingSiteAuth.xml, meta msvalidate.01 ou CNAME). Enquanto o site estiver marcado como importado, o painel se recusa a mostrar o codigo nativo — servir os arquivos de prova nao basta, alguem precisa re-adicionar o site a mao e clicar Verificar. Antes de investigar key file, robots, nginx ou content-type, isolar por endpoint. E: ping fire-and-forget sempre checa res.ok e loga o corpo.",
+  "motivo": "goiania.roilabs.com.br, 13/07/2026: 94 URLs de malha pSEO recrawleando no vazio havia semanas. O script logava 'HTTP 403' com cara de sucesso porque nao checava res.ok nem lia o corpo. A hipotese 'o Bing ainda nao conhece o host' foi QUEIMADA no mesmo dia: o site ja estava verificado por import do GSC e continuava 403. Remedido em 31/08/2026 — segue 403 com as duas provas nativas servidas (BingSiteAuth.xml 200, meta no head de prod, key file 200/text-plain/32 bytes): sem o passo manual no painel, nada disso destrava.",
   "verificacao": {
     "tipo": "automatica",
     "como": "pnpm indexnow:check ; para isolar: POST da mesma chave em api.indexnow.org com o apex (200), com o subdominio (403) e em yandex.com/indexnow com o subdominio (202 = chave e key file validos)",
@@ -23,7 +23,8 @@
     ]
   },
   "excecoes": [
-    "O desbloqueio e manual e do Jean: adicionar e verificar o subdominio no Bing Webmaster Tools (import do GSC traz verificacao e sitemap de uma vez)."
+    "O desbloqueio e manual e do Jean (login Microsoft): excluir o site no Bing Webmaster Tools, desconectar a conta do Google Search Console (senao o painel re-importa e o site volta a 'importado', sem codigo nativo), adicionar de novo SEM importar e escolher XML File ou meta tag. Importar do GSC e exatamente o caminho que falha — nao recomende isso.",
+    "Antes de desconectar a conta do GSC, conferir se outro host da mesma conta depende daquela importacao: em 31/08/2026 o apex roilabs.com.br era o unico host com IndexNow em 200 e nao servia prova nativa propria (so o key file). Blindar o apex antes, senao o desbloqueio de um host derruba o canal do outro."
   ],
   "origem": [
     "indexnow_403_subdomain_bing"

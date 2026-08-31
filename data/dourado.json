@@ -593,7 +593,7 @@
   {
     "id": "D-52",
     "pergunta": "O IndexNow devolve 403 UserForbiddedToAccessSite num subdomínio, com a mesma chave que passa no apex. Onde está o erro da chave?",
-    "resposta": "Em lugar nenhum: o Bing trata cada subdomínio como site à parte e recusa enquanto aquele host não for verificado no Bing Webmaster Tools. Antes de investigar key file, robots ou nginx, verificar o host. E checar res.ok no ping fire-and-forget, senão o 403 passa despercebido.",
+    "resposta": "Em lugar nenhum: o Bing trata cada subdomínio como site à parte e recusa enquanto aquele host não estiver verificado no Bing Webmaster Tools — e verificação importada do Google Search Console não conta, porque o IndexNow só honra prova nativa do Bing (BingSiteAuth.xml, meta msvalidate.01 ou CNAME). Antes de investigar key file, robots ou nginx, verificar o host. E checar res.ok no ping fire-and-forget, senão o 403 passa despercebido.",
     "camada": "protocolo",
     "fontes": [
       "SEO-06",
