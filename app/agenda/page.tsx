@@ -16,6 +16,7 @@ import {
   ORIGENS,
   RESPONSAVEIS,
   ORDENS,
+  acoesDoRanking,
   lerFiltros,
   filtrosAtivos,
   comFiltro,
@@ -233,19 +234,7 @@ export default async function Page({
   // diferentes, a tela mostraria um número e ordenaria por outro — que é exatamente o bug
   // medido em 29/08, quando "#N" era só rótulo.
   const rank = new Map(curados.map((p, i) => [p.slug, i]));
-  const acoes: Item[] = curados.map((p, i) => ({
-    key: `acao:${p.slug}:${hash8(p.acao)}`,
-    occ: NO_DATE,
-    titulo: p.acao,
-    projeto: p.slug,
-    meta: `#${i + 1} · score ${p.score}`,
-    taskId: null,
-    desc: p.acaoDesc ?? null,
-    bucket: "semdata",
-    tipo: tipoDe(p.acao), // ação do ranking não tem linha no banco: heurística é o único caminho
-    rank: i,
-    seguranca: seguranca(p.acao),
-  }));
+  const acoes: Item[] = acoesDoRanking(curados) as Item[];
 
   const all = [...tasks.map((t) => itemFromTask(t, today, rank)), ...acoes];
   const f = lerFiltros(sp, slugs);
@@ -468,7 +457,8 @@ export default async function Page({
         datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>);
         recorrente reseta sozinha a cada ocorrência. &quot;Ação do ranking&quot; espelha a{" "}
         <code>acao</code> do <code>data/projects.json</code> na ordem do ranking da home — mudou o
-        texto, o check reseta; e o check <strong>expira em {ACAO_DONE_DIAS} dias</strong>, porque
+        texto, o check reseta; <code>acao</code> vazia não vira linha nenhuma (card curado para
+        dizer que não há o que fazer não é tarefa de execução); e o check <strong>expira em {ACAO_DONE_DIAS} dias</strong>, porque
         ação não tem data própria e um check eterno some com o topo do ranking. O balde é sempre
         derivado (não há onde fixar). O <strong>card noturno de estado</strong> é notícia do dia:
         a corrida recolhe o card pendente da véspera antes de publicar o de hoje — 14 avisos não

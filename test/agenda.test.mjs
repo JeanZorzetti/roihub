@@ -6,6 +6,7 @@ import {
   weekdayOf,
   nextOccurrence,
   hash8,
+  acoesDoRanking,
   brShort,
   tipoDe,
   seguranca,
@@ -265,4 +266,22 @@ test("comFiltro: remover um chip preserva os outros e omite a ordem padrão", ()
   const f = lerFiltros({ q: "lcp", projeto: "atma", urgencia: "hoje", ordem: "titulo" }, ["atma"]);
   assert.equal(comFiltro(f, "projeto", ""), "?q=lcp&urgencia=hoje&ordem=titulo");
   assert.equal(comFiltro({ ...f, q: "", projeto: "", urgencia: "" }, "ordem", "urgencia"), "?");
+});
+
+test("acoesDoRanking: card sem `acao` não vira linha, e o #N continua sendo a posição no ranking", () => {
+  const curados = [
+    { slug: "atma", acao: "medir o checkout", score: 9 },
+    { slug: "lumina", acao: "", acaoDesc: "demonstração — não abrir tarefa de SEO neste card", score: 5 },
+    { slug: "portfolio", acao: "   ", score: 4 }, // só espaço é tão vazio quanto ""
+    { slug: "sirius", acao: "ligar a cobrança", score: 3 },
+  ];
+  const acoes = acoesDoRanking(curados);
+  // os 3 cards fantasma de 31/08: `acao` vazia caía no fallback "execucao" com título em branco
+  assert.deepEqual(acoes.map((a) => a.projeto), ["atma", "sirius"]);
+  assert.ok(acoes.every((a) => a.titulo.trim()));
+  // numerar DEPOIS de filtrar traria de volta o bug de 29/08 — sirius é o #4 do ranking, não o #2
+  assert.deepEqual(acoes.map((a) => a.meta), ["#1 · score 9", "#4 · score 3"]);
+  assert.deepEqual(acoes.map((a) => a.rank), [0, 3]);
+  // `acao` ausente não pode estourar: card novo entra no JSON sem o campo
+  assert.deepEqual(acoesDoRanking([{ slug: "novo", score: 1 }]), []);
 });
