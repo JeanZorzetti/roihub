@@ -145,7 +145,9 @@ const resto = seg.length ? items.filter((i) => !i.seguranca) : items;
 
 1. `seguranca()` casa os positivos reais: `"Rotacionar o token de produção do MercadoPago"`,
    `"CORS fixo no checkout"`, `"CVE-2026-1234 no next"`, `"credencial exposta no repo público"`.
-2. **`seguranca("Definir o author do post") === false`** — `\bauth\b` não pode pegar "author".
+2. **Nem "author" nem URL:** `seguranca("Definir o author do post") === false` **e**
+   `seguranca("Configurar GitHub OAuth (callback /api/auth/callback/github)") === false`. O segundo
+   é o falso-positivo real medido em 31/08 — sem esse teste ele volta na primeira mexida na lista.
 3. Ortogonalidade: `tipoDe("Rotacionar o token…") === "execucao"` **e** `seguranca(…) === true`.
    O card não sai da Execução.
 4. Partição: com 1 card de segurança rank 20 e 1 comum rank 2, o de segurança vem primeiro; e
