@@ -433,15 +433,15 @@
     "blockers": 1,
     "blockersLista": [
       {
-        "texto": "Root Directory na Vercel é / mas o site mora em site/ — git push serve a raiz e derruba o host pra 404",
+        "texto": "O projeto na Vercel NÃO está ligado ao git (verificado 31/08: sem Connected Git Repository, Root Directory '.'). Push em main não publica nada — deploy é 'vercel --prod' rodado de dentro de site/, com o clone em C:/dev/claude-loop-runner",
         "humano": false
       }
     ],
     "seoSeed": 2,
     "decay": 2,
-    "decayNota": "Landing 200 após deploy manual de site/",
-    "acaoDesc": "Renomeado de claude-loop-runner → claudeloop em 30/07 (host antigo em 308). Roda a CLI do Claude Code em loop contra um plano em arquivo: cada iteração é um 'claude --print' novo, então o contexto nunca cresce e a memória longa vive em dois arquivos. É a ferramenta que o próprio ROI Labs usa, e a landing está em inglês — perfil de dev tool que ganha por citação em IA e não por busca comercial. Mesma armadilha do whatsmeow: Root Directory '/' com site em site/, o push derrubou pra 404 e só voltou com deploy manual. Receita 1 é honesto: não existe cobrança nem intenção declarada de cobrar. Se a tese for audiência de dev, o caminho é o playbook GEO/AEO, não SEO comercial.",
-    "acao": "Se a tese é audiência de dev, aplicar o playbook GEO/AEO (llms.txt + @graph + BLUF) — busca comercial não serve aqui",
+    "decayNota": "Landing 200; GEO/AEO aplicado e verificado em prod em 31/08",
+    "acaoDesc": "Renomeado de claude-loop-runner → claudeloop em 30/07 (host antigo em 308). Roda a CLI do Claude Code em loop contra um plano em arquivo: cada iteração é um 'claude --print' novo, então o contexto nunca cresce e a memória longa vive em dois arquivos. É a ferramenta que o próprio ROI Labs usa, e a landing está em inglês — perfil de dev tool que ganha por citação em IA e não por busca comercial. Receita 1 é honesto: não existe cobrança nem intenção declarada de cobrar. ✅ 31/08: playbook GEO/AEO aplicado e verificado em produção (commit dc3c2aa + deploy manual) — llms.txt na raiz (200), robots.txt com allowlist explícita de GPTBot/OAI-SearchBot/ChatGPT-User/ClaudeBot/PerplexityBot/Google-Extended/GoogleOther, um @graph único (Organization + Person + WebSite + SoftwareApplication/SoftwareSourceCode + WebPage/FAQPage) com sameAs só nos perfis reais da ROI Labs, e BLUF: os quatro H2 viraram as perguntas reais do leitor, cada abertura responde sozinha e entrou um FAQ de 7 respostas espelhado no schema. site/check-geo.mjs trava a deriva entre o schema e a página. De quebra corrigiu erro factual que o schema ia amplificar: a landing anunciava tags [plan]/[build], mas o runner só lê [low]/[medium]/[high]. ⚠️ A armadilha do Root Directory foi remedida errado no card: o projeto Vercel não tem git ligado, então push não derruba nem publica — quem publica é 'vercel --prod' de site/.",
+    "acao": "Decidir a tese: audiência de dev vale investimento ou é ferramenta interna? Enquanto não decide, medir a única coisa medível — log de acesso de GPTBot/PerplexityBot/ClaudeBot e 5 perguntas manuais nos 3 assistentes, com data, pra ter linha de base de citação",
     "familia": "nao-vende",
     "estado": "no-ar"
   },
