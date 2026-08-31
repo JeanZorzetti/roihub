@@ -1,5 +1,25 @@
 # ROI Hub — handoff
 
+> 🚨 **EXECUTADO (31/08) — O TOKEN "DE PRODUÇÃO" DO MERCADO PAGO ERA USUÁRIO DE TESTE:
+> [`handoff/handoff-o-token-de-producao-era-usuario-de-teste.md`](handoff/handoff-o-token-de-producao-era-usuario-de-teste.md).**
+> Card #1 da Execução (balde 🔒 Segurança, atma, score 66) dizia "rotacionar o token de produção do MP
+> é o único item que sobrou, e é humano". **Errado nos dois pontos.** `GET /users/me` devolve
+> `tags: ["test_user","normal"]`, nickname `TESTUSER87806…`, e-mail `@testuser.com` — o prefixo
+> `APP_USR-` é IGUAL em usuário de teste, e as duas verificações anteriores paravam em `live=active`.
+> Logo **o checkout do atma não consegue receber dinheiro real**, e o que fecha o projeto é uma
+> credencial, não marketing. `preferences/search` devolve `total: 1`: a única preferência da conta é
+> a PRÓPRIA prova de 11/08 (`payer_email: teste-diagnostico-roihub@example.com`).
+> 🚩 **E o `DEPLOY_PRODUCTION.md` nunca tinha sido apagado — ele MUDOU DE PASTA.** A auditoria de 01/08
+> conferiu o caminho na raiz, viu 404 e escreveu "removido"; o token seguiu em `main` por mais um mês em
+> `docs/deploy/`. **Conferir caminho não é conferir conteúdo.**
+> Entregue (`JeanZorzetti/Atma@2b05bee`): 5 segredos purgados do `DEPLOY_PRODUCTION.md`, a chave Resend
+> citada EM PROSA no `TESTE_COMPLETO.md`, `DB_PASSWORD`/`JWT_SECRET` em 4 arquivos, **quatro `.env`
+> versionados destrackeados** (nenhum Dockerfile os lê — conferido) e os fallbacks
+> `process.env.DB_PASSWORD || '<senha de prod>'` removidos dos 2 runners de migração. Aferido: Resend
+> **morto**, Clerk `sk_test_` **vivo**. ⚠️ Redação não desfaz vazamento — rotação segue pendente e é manual.
+> ⚠️ `npm test` estava **vermelho em main** antes desta sessão por falso positivo do `(hoje N)` em prosa
+> (`data/projects.json:141`, "agora … 2026"). Datado. **389 verdes.**
+>
 > ★ **ENTREGUE (31/08) — O RANKING NÃO É PORTA DE ENTRADA DA AGENDA, É A ORDEM DELA:
 > [`handoff/handoff-o-ranking-nao-e-porta-de-entrada-e-ordem.md`](handoff/handoff-o-ranking-nao-e-porta-de-entrada-e-ordem.md).**
 > O pedido era "toda tarefa vir do ranking"; **recusado nessa forma** — o ranking tem UMA `acao` por
