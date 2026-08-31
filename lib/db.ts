@@ -654,14 +654,6 @@ export async function dropPendentesGeradas(gerador: string): Promise<void> {
   );
 }
 
-export async function updateTask(id: number, t: Omit<Task, "id">): Promise<void> {
-  await ensure();
-  await pool().query(
-    `UPDATE hub_tasks SET titulo = $2, descricao = $3, projeto = $4, due = $5, weekday = $6, tipo = $7, responsavel = $8 WHERE id = $1`,
-    [id, t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo, t.responsavel]
-  );
-}
-
 export async function setDone(key: string, occurrence: string, done: boolean): Promise<void> {
   await ensure();
   // DO UPDATE, não DO NOTHING: a linha da ação expirada continua na tabela, e sem
@@ -673,12 +665,6 @@ export async function setDone(key: string, occurrence: string, done: boolean): P
       [key, occurrence]
     );
   else await pool().query(`DELETE FROM hub_done WHERE key = $1 AND occurrence = $2`, [key, occurrence]);
-}
-
-export async function removeTask(id: number): Promise<void> {
-  await ensure();
-  await pool().query(`DELETE FROM hub_done WHERE key = $1`, [`task:${id}`]);
-  await pool().query(`DELETE FROM hub_tasks WHERE id = $1`, [id]);
 }
 
 /**

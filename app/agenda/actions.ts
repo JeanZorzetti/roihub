@@ -1,75 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { dbOn, insertTask, removeTask, setDone, updateTask } from "@/lib/db";
-import { NO_DATE, TIPO_IDS, RESPONSAVEL_IDS } from "@/lib/agenda.mjs";
-import { listProjects } from "@/lib/projects";
+import { dbOn, setDone } from "@/lib/db";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-async function taskFields(fd: FormData) {
-  const titulo = String(fd.get("titulo") ?? "").trim().slice(0, 200);
-  const descricao = String(fd.get("descricao") ?? "").trim().slice(0, 2000) || null;
-  const wdRaw = String(fd.get("weekday") ?? "");
-  const weekday = /^[0-7]$/.test(wdRaw) ? Number(wdRaw) : null; // 7 = diária
-  const dueRaw = String(fd.get("due") ?? "");
-  const due = weekday === null && ISO_DATE.test(dueRaw) ? dueRaw : null; // recorrente ignora data
-  const projRaw = String(fd.get("projeto") ?? "");
-  // lista viva: repo novo do GitHub já pode receber tarefa sem esperar curadoria
-  const slugs = new Set((await listProjects()).map((p) => p.slug));
-  const projeto = slugs.has(projRaw) ? projRaw : null;
-  // vazio/desconhecido = null = a agenda deriva o balde do título
-  const tipoRaw = String(fd.get("tipo") ?? "");
-  const tipo = (TIPO_IDS as string[]).includes(tipoRaw) ? tipoRaw : null;
-  // vazio/desconhecido = null = sem dono, tarefa visível pros dois
-  const respRaw = String(fd.get("responsavel") ?? "");
-  const responsavel = (RESPONSAVEL_IDS as string[]).includes(respRaw) ? respRaw : null;
-  return { titulo, descricao, projeto, due, weekday, tipo, responsavel };
-}
-
-export async function addTask(fd: FormData): Promise<void> {
-  if (!dbOn()) return;
-  const t = await taskFields(fd);
-  if (!t.titulo) return;
-  await insertTask(t);
-  revalidatePath("/agenda");
-}
-
-export async function update(fd: FormData): Promise<void> {
-  if (!dbOn()) return;
-  const id = Number(fd.get("id"));
-  if (!Number.isInteger(id)) return;
-  const t = await taskFields(fd);
-  if (!t.titulo) return;
-  await updateTask(id, t);
-  revalidatePath("/agenda");
-}
-
-/** Ação do ranking (projects.json, read-only) vira tarefa do banco; a original é riscada. */
-export async function promote(fd: FormData): Promise<void> {
-  if (!dbOn()) return;
-  const key = String(fd.get("key") ?? "");
-  if (!key.startsWith("acao:")) return;
-  const t = await taskFields(fd);
-  if (!t.titulo) return;
-  await insertTask(t);
-  await setDone(key, NO_DATE, true);
-  revalidatePath("/agenda");
-}
-
+/**
+ * O único write da agenda: marcar/desmarcar uma ação do ranking.
+ *
+ * A aba não cria, não edita e não apaga nada — ela é a projeção do `data/projects.json`, e o
+ * check é o único estado que ela tem. `key` vem do form, então é validada aqui: sem o prefixo
+ * `acao:` este endpoint marcaria qualquer linha de `hub_done`, inclusive as das tarefas que a
+ * agenda não renderiza mais.
+ */
 export async function toggle(fd: FormData): Promise<void> {
   if (!dbOn()) return;
   const key = String(fd.get("key") ?? "");
   const occurrence = String(fd.get("occurrence") ?? "");
-  if (!key || !ISO_DATE.test(occurrence)) return;
+  if (!key.startsWith("acao:") || !ISO_DATE.test(occurrence)) return;
   await setDone(key, occurrence, String(fd.get("to")) === "1");
-  revalidatePath("/agenda");
-}
-
-export async function del(fd: FormData): Promise<void> {
-  if (!dbOn()) return;
-  const id = Number(fd.get("id"));
-  if (!Number.isInteger(id)) return;
-  await removeTask(id);
   revalidatePath("/agenda");
 }

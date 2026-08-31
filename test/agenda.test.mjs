@@ -3,17 +3,13 @@ import assert from "node:assert/strict";
 import {
   todaySP,
   addDaysISO,
-  weekdayOf,
-  nextOccurrence,
   hash8,
   acoesDoRanking,
   brShort,
   tipoDe,
   seguranca,
   TIPOS,
-  ORDEM_BUCKET,
   NO_DATE,
-  SEM_RANK,
   lerFiltros,
   filtrosAtivos,
   comFiltro,
@@ -31,16 +27,6 @@ test("addDaysISO cruza mês e ano", () => {
   assert.equal(addDaysISO("2026-07-30", 3), "2026-08-02");
   assert.equal(addDaysISO("2026-12-31", 1), "2027-01-01");
   assert.equal(addDaysISO("2026-07-11", -1), "2026-07-10");
-});
-
-test("nextOccurrence: hoje conta; senão avança até o weekday", () => {
-  // 2026-07-11 é sábado (6)
-  assert.equal(weekdayOf("2026-07-11"), 6);
-  assert.equal(nextOccurrence(6, "2026-07-11"), "2026-07-11"); // sábado hoje
-  assert.equal(nextOccurrence(1, "2026-07-11"), "2026-07-13"); // segunda que vem
-  assert.equal(nextOccurrence(5, "2026-07-11"), "2026-07-17"); // sexta que vem
-  assert.equal(nextOccurrence(7, "2026-07-11"), "2026-07-11"); // 7 = diária: sempre hoje
-  assert.equal(nextOccurrence(7, "2026-07-12"), "2026-07-12");
 });
 
 test("hash8 estável e sensível ao texto", () => {
@@ -142,40 +128,28 @@ test("seguranca(null|undefined) não estoura — mesmo contrato de tipoDe", () =
   assert.equal(seguranca(undefined), false);
 });
 
-test("ORDEM_BUCKET: atrasada primeiro, sem data por último", () => {
-  const b = ["semdata", "hoje", "depois", "atrasadas", "semana"];
-  b.sort((x, y) => ORDEM_BUCKET[x] - ORDEM_BUCKET[y]);
-  assert.deepEqual(b, ["atrasadas", "hoje", "semana", "depois", "semdata"]);
-});
-
 // ── filtro e ordem da lista ────────────────────────────────────────────────
 
 const CARDS = [
-  { titulo: "Conferir LCP", projeto: "goiania", desc: null, bucket: "hoje", tipo: "conferencia", taskId: 1, occ: "2026-07-11" },
-  { titulo: "Publicar artigo", projeto: "atma", desc: "sobre preço", bucket: "atrasadas", tipo: "execucao", taskId: 2, occ: "2026-07-09" },
-  { titulo: "Decidir cobrança", projeto: null, desc: null, bucket: "semdata", tipo: "decisao", taskId: null, occ: "1970-01-01" },
+  { titulo: "Conferir LCP", projeto: "goiania", desc: null, tipo: "conferencia", rank: 0, occ: NO_DATE },
+  { titulo: "Publicar artigo", projeto: "atma", desc: "sobre preço", tipo: "execucao", rank: 1, occ: NO_DATE },
+  { titulo: "Decidir cobrança", projeto: "sirius", desc: null, tipo: "decisao", rank: 2, occ: NO_DATE },
 ];
 
 test("lerFiltros descarta valor desconhecido — filtro que não casa com nada esconde a lista", () => {
-  const f = lerFiltros(
-    { urgencia: "amanha", ordem: "score", projeto: "inexistente", origem: "x", responsavel: "ninguem" },
-    ["atma"]
-  );
-  assert.deepEqual(f, {
-    q: "", projeto: "", tipo: "", urgencia: "", origem: "", responsavel: "", ordem: "urgencia",
-  });
+  const f = lerFiltros({ ordem: "score", projeto: "inexistente", urgencia: "hoje" }, ["atma"]);
+  assert.deepEqual(f, { q: "", projeto: "", tipo: "", ordem: "ranking" });
   assert.deepEqual(filtrosAtivos(f), []);
   // e aceita o que existe
-  const ok = lerFiltros(
-    { urgencia: "hoje", ordem: "titulo", projeto: "atma", tipo: "decisao", origem: "acao", responsavel: "jean", q: "  lcp  " },
-    ["atma"]
-  );
-  assert.deepEqual(ok, {
-    q: "lcp", projeto: "atma", tipo: "decisao", urgencia: "hoje", origem: "acao", responsavel: "jean", ordem: "titulo",
-  });
-  assert.deepEqual(filtrosAtivos(ok), ["q", "projeto", "tipo", "urgencia", "origem", "responsavel"]);
+  const ok = lerFiltros({ ordem: "titulo", projeto: "atma", tipo: "decisao", q: "  lcp  " }, ["atma"]);
+  assert.deepEqual(ok, { q: "lcp", projeto: "atma", tipo: "decisao", ordem: "titulo" });
+  assert.deepEqual(filtrosAtivos(ok), ["q", "projeto", "tipo"]);
   // balde inventado na URL não vira filtro que não casa com nada
   assert.equal(lerFiltros({ tipo: "urgente" }, []).tipo, "");
+  // urgência, origem e responsável saíram com as tarefas do banco: não voltam pela querystring
+  assert.deepEqual(Object.keys(lerFiltros({ origem: "tarefa", responsavel: "jean" }, [])).sort(), [
+    "ordem", "projeto", "q", "tipo",
+  ]);
 });
 
 test("filtrar: texto ignora acento e varre título, projeto e descrição", () => {
@@ -184,88 +158,51 @@ test("filtrar: texto ignora acento e varre título, projeto e descrição", () =
   assert.deepEqual(so({ q: "PREÇO" }), ["Publicar artigo"]); // casa pela descrição
   assert.deepEqual(so({ q: "goiania" }), ["Conferir LCP"]); // casa pelo projeto
   assert.deepEqual(so({ projeto: "atma" }), ["Publicar artigo"]);
-  assert.deepEqual(so({ urgencia: "atrasadas" }), ["Publicar artigo"]);
-  assert.deepEqual(so({ origem: "acao" }), ["Decidir cobrança"]); // taskId null = ação do ranking
-  assert.deepEqual(so({ origem: "tarefa" }), ["Conferir LCP", "Publicar artigo"]);
-  assert.deepEqual(so({ projeto: "atma", urgencia: "hoje" }), []); // filtros são E, não OU
+  assert.deepEqual(so({ projeto: "atma", tipo: "decisao" }), []); // filtros são E, não OU
   assert.deepEqual(so({ tipo: "conferencia" }), ["Conferir LCP"]);
   assert.deepEqual(so({ tipo: "decisao" }), ["Decidir cobrança"]);
   assert.deepEqual(so({ tipo: "execucao", projeto: "goiania" }), []); // E, também com o balde
 });
 
-test("ordenar: ação do ranking primeiro, urgência depois; sem projeto vai para o fim", () => {
-  // "Decidir cobrança" é ação do ranking (taskId null): vem antes da tarefa atrasada.
-  assert.deepEqual(ordenar(CARDS, "urgencia").map((c) => c.bucket), ["semdata", "atrasadas", "hoje"]);
-  assert.deepEqual(ordenar(CARDS, "projeto").map((c) => c.projeto), ["atma", "goiania", null]);
+test("ordenar: a ordem padrão é a do ranking, não a de chegada", () => {
+  assert.deepEqual(ordenar([CARDS[2], CARDS[0], CARDS[1]], "ranking").map((c) => c.rank), [0, 1, 2]);
+  assert.deepEqual(ordenar(CARDS, "projeto").map((c) => c.projeto), ["atma", "goiania", "sirius"]);
   assert.deepEqual(ordenar(CARDS, "titulo").map((c) => c.titulo), ["Conferir LCP", "Decidir cobrança", "Publicar artigo"]);
-  assert.notEqual(ordenar(CARDS, "urgencia"), CARDS); // ordena uma cópia
+  assert.notEqual(ordenar(CARDS, "ranking"), CARDS); // ordena uma cópia
 });
 
-test("ordenar: entre ações o empate preserva a ordem do ranking, e tarefa sem data não sobe junto", () => {
-  const acao = (n) => ({ titulo: `acao ${n}`, projeto: `p${n}`, bucket: "semdata", taskId: null, occ: NO_DATE });
-  const lista = [
-    { titulo: "tarefa sem data", projeto: "z", bucket: "semdata", taskId: 9, occ: NO_DATE },
-    { titulo: "tarefa atrasada", projeto: "y", bucket: "atrasadas", taskId: 8, occ: "2026-07-09" },
-    acao(1),
-    acao(2),
-    acao(3),
-  ];
-  const fora = ordenar(lista, "urgencia").map((c) => c.titulo);
-  // as três ações no topo, na ordem em que o ranking as entregou (#1, #2, #3)
-  assert.deepEqual(fora.slice(0, 3), ["acao 1", "acao 2", "acao 3"]);
-  // e a tarefa sem data continua depois da atrasada — só a ação foi promovida
-  assert.deepEqual(fora.slice(3), ["tarefa atrasada", "tarefa sem data"]);
-});
-
-test("ordenar: dentro do mesmo balde de data quem manda é o ranking do projeto", () => {
-  const t = (n, rank, occ) => ({ titulo: n, projeto: n, bucket: "atrasadas", tipo: "execucao", taskId: 1, rank, occ });
-  // a do #20 venceu por 20 dias de atraso; a do #1 é que tem que aparecer primeiro
-  const lista = [t("projeto 20", 19, "2026-07-01"), t("projeto 1", 0, "2026-07-21")];
-  assert.deepEqual(ordenar(lista, "urgencia").map((c) => c.titulo), ["projeto 1", "projeto 20"]);
-  // empatado no rank, a data volta a desempatar
-  const par = [t("b", 3, "2026-07-21"), t("a", 3, "2026-07-01")];
-  assert.deepEqual(ordenar(par, "urgencia").map((c) => c.titulo), ["a", "b"]);
-});
-
-test("ordenar: rank ausente não vira NaN — a linha vai para o fim do balde", () => {
-  const t = (n, rank) => ({ titulo: n, projeto: n, bucket: "hoje", tipo: "execucao", taskId: 1, rank, occ: "2026-07-11" });
-  const lista = [t("sem projeto", undefined), t("curado", 5), t("fora do curado", SEM_RANK)];
-  assert.deepEqual(ordenar(lista, "urgencia").map((c) => c.titulo), [
-    "curado",
-    "sem projeto",
-    "fora do curado",
-  ]);
-  assert.ok(Number.isFinite(SEM_RANK), "SEM_RANK infinito faria Infinity - Infinity = NaN");
-});
-
-test("ordenar: a ação do ranking sobe pelo rank, não pela estabilidade do sort", () => {
-  const acao = (n, rank) => ({ titulo: `acao ${n}`, projeto: `p${n}`, bucket: "semdata", tipo: "execucao", taskId: null, rank, occ: NO_DATE });
+test("ordenar: a linha sobe pelo rank, não pela estabilidade do sort", () => {
+  const acao = (n, rank) => ({ titulo: `acao ${n}`, projeto: `p${n}`, tipo: "execucao", rank, occ: NO_DATE });
   // entregues fora de ordem de propósito: se o rank não fosse chave, sairia 3, 1, 2
-  const fora = ordenar([acao(3, 2), acao(1, 0), acao(2, 1)], "urgencia").map((c) => c.titulo);
+  const fora = ordenar([acao(3, 2), acao(1, 0), acao(2, 1)], "ranking").map((c) => c.titulo);
   assert.deepEqual(fora, ["acao 1", "acao 2", "acao 3"]);
 });
 
+test("ordenar: empate em projeto ou título é desempatado pelo ranking", () => {
+  const c = (rank) => ({ titulo: "mesma coisa", projeto: "p", tipo: "execucao", rank, occ: NO_DATE });
+  assert.deepEqual(ordenar([c(7), c(2)], "projeto").map((x) => x.rank), [2, 7]);
+  assert.deepEqual(ordenar([c(7), c(2)], "titulo").map((x) => x.rank), [2, 7]);
+});
+
 test("partição de segurança: dentro do grupo, ordenar() continua valendo pelo rank", () => {
-  const t = (n, rank, seg) => ({
-    titulo: n, projeto: n, bucket: "atrasadas", tipo: "execucao", taskId: 1, rank, occ: "2026-07-01", seguranca: seg,
-  });
+  const t = (n, rank, seg) => ({ titulo: n, projeto: n, tipo: "execucao", rank, occ: NO_DATE, seguranca: seg });
   const items = [t("comum rank 2", 1, false), t("seguranca rank 20", 19, true)];
   const seg = items.filter((i) => i.seguranca);
   const resto = seg.length ? items.filter((i) => !i.seguranca) : items;
-  assert.deepEqual(ordenar(seg, "urgencia").map((c) => c.titulo), ["seguranca rank 20"]);
-  assert.deepEqual(ordenar(resto, "urgencia").map((c) => c.titulo), ["comum rank 2"]);
+  assert.deepEqual(ordenar(seg, "ranking").map((c) => c.titulo), ["seguranca rank 20"]);
+  assert.deepEqual(ordenar(resto, "ranking").map((c) => c.titulo), ["comum rank 2"]);
   // dentro do próprio grupo de segurança, o rank do projeto continua desempatando
   const doisDeSeg = [t("seg rank 5", 4, true), t("seg rank 1", 0, true)];
   assert.deepEqual(
-    ordenar(doisDeSeg.filter((i) => i.seguranca), "urgencia").map((c) => c.titulo),
+    ordenar(doisDeSeg.filter((i) => i.seguranca), "ranking").map((c) => c.titulo),
     ["seg rank 1", "seg rank 5"],
   );
 });
 
 test("comFiltro: remover um chip preserva os outros e omite a ordem padrão", () => {
-  const f = lerFiltros({ q: "lcp", projeto: "atma", urgencia: "hoje", ordem: "titulo" }, ["atma"]);
-  assert.equal(comFiltro(f, "projeto", ""), "?q=lcp&urgencia=hoje&ordem=titulo");
-  assert.equal(comFiltro({ ...f, q: "", projeto: "", urgencia: "" }, "ordem", "urgencia"), "?");
+  const f = lerFiltros({ q: "lcp", projeto: "atma", tipo: "decisao", ordem: "titulo" }, ["atma"]);
+  assert.equal(comFiltro(f, "projeto", ""), "?q=lcp&tipo=decisao&ordem=titulo");
+  assert.equal(comFiltro({ ...f, q: "", projeto: "", tipo: "" }, "ordem", "ranking"), "?");
 });
 
 test("acoesDoRanking: card sem `acao` não vira linha, e o #N continua sendo a posição no ranking", () => {

@@ -302,6 +302,12 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ag-del:hover { color: var(--crit-ink); }
 .ag-edit { border: none; background: none; padding: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
 .ag-desc { font-size: 12px; color: var(--ink2); white-space: pre-wrap; margin: 2px 0 4px; }
+/* A `acaoDesc` do projects.json é diário de bordo — 30 linhas por card. Com a agenda inteira
+   virando ação do ranking, 32 diários empilhados escondem os próprios títulos que a lista
+   existe para mostrar. Recolhido por padrão: `<details>` nativo abre por clique e por teclado,
+   sem client component. */
+.ag-ctx > summary { cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink2); margin: 2px 0; }
+.ag-ctx > summary:hover { color: var(--accent); }
 textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .ag-edit:hover { text-decoration: underline; }
 .ag-edit.done:hover { text-decoration: line-through underline; }
@@ -339,8 +345,6 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .busca-res .foot { margin-top: 4px; font-size: 12px; }
 
 /* agenda — baldes por tipo (Conferência/Execução/Decisão) */
-.ag-h-atraso { color: var(--crit-ink); }
-.ag-atraso { color: var(--crit-ink); font-weight: 700; }
 .ag-vazio { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
