@@ -14,6 +14,7 @@ export type Task = {
   weekday: number | null; // 0-6 = recorrente semanal (domingo=0); 7 = diária
   tipo: string | null; // null = deriva do título por tipoDe(); valor = override manual
   responsavel: string | null; // null = sem dono, visível para todos; "jean" | "maria"
+  gerador?: string | null; // null = digitada à mão; valor = robô que a criou ("estado")
 };
 
 export type PublicationStatus = "running" | "published" | "updated" | "blocked" | "failed" | "reverted";
@@ -149,6 +150,16 @@ function ensure(): Promise<unknown> {
       -- NULL = sem dono, tarefa visível pros dois. Mesma lógica de tipo: a lista de
       -- responsáveis vive no .mjs, sem CHECK aqui — validação é na action.
       ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS responsavel TEXT;
+      -- Quem criou a linha. NULL = humano digitou. Existe para o robô poder recolher o que
+      -- ele mesmo despejou (dropPendentesGeradas) sem casar por TÍTULO: o texto do card é
+      -- rótulo de exibição, e rótulo nunca é chave — "Estado 2026-08-29: …" digitado à mão
+      -- viraria alvo de DELETE. Backfill abaixo adota, UMA vez, os cards noturnos que já
+      -- estavam na tabela antes da coluna existir. Classe [0-9] e não a abreviação \d de
+      -- sempre: isto aqui é um template literal do JS, onde \d colapsa para d e o UPDATE
+      -- casaria zero linhas sem erro nenhum.
+      ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS gerador TEXT;
+      UPDATE hub_tasks SET gerador = 'estado'
+        WHERE gerador IS NULL AND titulo ~ '^Estado [0-9]{4}-[0-9]{2}-[0-9]{2}: ';
       CREATE TABLE IF NOT EXISTS seo_publications (
         id BIGSERIAL PRIMARY KEY,
         project_slug TEXT NOT NULL,
@@ -618,8 +629,28 @@ export async function listDone(): Promise<Set<string>> {
 export async function insertTask(t: Omit<Task, "id">): Promise<void> {
   await ensure();
   await pool().query(
-    `INSERT INTO hub_tasks (titulo, descricao, projeto, due, weekday, tipo, responsavel) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo, t.responsavel]
+    `INSERT INTO hub_tasks (titulo, descricao, projeto, due, weekday, tipo, responsavel, gerador)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [t.titulo, t.descricao, t.projeto, t.due, t.weekday, t.tipo, t.responsavel, t.gerador ?? null]
+  );
+}
+
+/**
+ * Apaga as tarefas PENDENTES de um gerador — o robô recolhe o card de ontem antes de pôr o
+ * de hoje. Medido em 29/08: o card noturno entrava um por dia, sem projeto e com data já
+ * vencida, e 14 deles se empilharam desde 12/08 no balde Conferência, todos por conferir.
+ * Card de diff é notícia do dia: 14 avisos não lidos não são 14 avisos, são zero.
+ *
+ * Pendente só: card já marcado fica onde está, senão a corrida da noite apagaria o histórico
+ * de "Feitas". O mapa de estado vive em `hub_estado` — nada do que foi apurado se perde aqui.
+ */
+export async function dropPendentesGeradas(gerador: string): Promise<void> {
+  await ensure();
+  await pool().query(
+    `DELETE FROM hub_tasks t
+      WHERE t.gerador = $1
+        AND NOT EXISTS (SELECT 1 FROM hub_done d WHERE d.key = 'task:' || t.id)`,
+    [gerador]
   );
 }
 

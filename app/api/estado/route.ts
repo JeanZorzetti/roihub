@@ -4,7 +4,7 @@
 //
 // Três coletores são zero LLM (rede pura + API do GitHub). O quarto gasta 1 chamada por conta
 // do pool — o toque mais barato que existe, e o único jeito de DATAR o 403 da conta 3.
-import { insertTask, estadoAnterior, gravarEstado, dbOn } from "@/lib/db";
+import { insertTask, dropPendentesGeradas, estadoAnterior, gravarEstado, dbOn } from "@/lib/db";
 import { listProjects } from "@/lib/projects";
 import { todaySP, addDaysISO } from "@/lib/agenda.mjs";
 import { rodarProjeto } from "@/lib/conformidade.mjs";
@@ -110,7 +110,10 @@ export async function POST() {
   const card = primeira ? null : montarCard(diff, runDate, falhas);
   // tipo fixo: o card noturno é uma lista nominal pra CONFERIR célula por célula (conserto
   // de verdade ou coletor quebrado?) — nunca uma execução. Não depende da heurística.
-  if (card)
+  // Recolhe o card de ontem ANTES de pôr o de hoje: o diff é notícia do dia e não empilha.
+  // Só o pendente sai — o que você já conferiu continua em "Feitas".
+  if (card) {
+    await dropPendentesGeradas("estado");
     await insertTask({
       ...card,
       projeto: null,
@@ -118,7 +121,9 @@ export async function POST() {
       descricao: card.descricao,
       tipo: "conferencia",
       responsavel: null,
+      gerador: "estado",
     });
+  }
 
   // Consolidação e expiração da série de IA rodam DEPOIS do diff/card, nessa ordem — inverter
   // perderia o último dia (D8). Best-effort: erro aqui não pode derrubar a corrida noturna

@@ -10,6 +10,7 @@ import {
   TIPOS,
   WD_LABELS,
   NO_DATE,
+  SEM_RANK,
   URGENCIAS,
   ORIGENS,
   RESPONSAVEIS,
@@ -41,9 +42,10 @@ type Item = {
   desc?: string | null; // descrição de ação do ranking (acaoDesc do projects.json)
   bucket: string; // urgência de data — ordena e pinta a linha dentro do balde
   tipo: string; // conferencia | execucao | decisao
+  rank: number; // posição do projeto no ranking — desempata dentro do balde de data
 };
 
-function itemFromTask(t: Task, today: string): Item {
+function itemFromTask(t: Task, today: string, rank: Map<string, number>): Item {
   const base = {
     titulo: t.titulo,
     projeto: t.projeto,
@@ -51,6 +53,9 @@ function itemFromTask(t: Task, today: string): Item {
     key: `task:${t.id}`,
     task: t,
     tipo: t.tipo ?? tipoDe(t.titulo), // override manual vence a heurística
+    // A tarefa herda a posição do projeto dela: é isso que faz o ranking valer dentro da
+    // agenda, e não só na home. Sem projeto (ou projeto sem curadoria) cai no fim.
+    rank: (t.projeto !== null ? rank.get(t.projeto) : undefined) ?? SEM_RANK,
   };
   if (t.weekday !== null) {
     const occ = nextOccurrence(t.weekday, today);
@@ -203,21 +208,25 @@ export default async function Page({
   const slugs = ranked.map((p) => p.slug);
   // só o que tem curadoria vira ação da agenda: repo novo sem receita/ação definidas entra
   // no ranking da home marcado SEM CURADORIA, mas não afoga a lista do dia.
-  const acoes: Item[] = ranked
-    .filter((p) => p.curated)
-    .map((p, i) => ({
-      key: `acao:${p.slug}:${hash8(p.acao)}`,
-      occ: NO_DATE,
-      titulo: p.acao,
-      projeto: p.slug,
-      meta: `#${i + 1} · score ${p.score}`,
-      taskId: null,
-      desc: p.acaoDesc ?? null,
-      bucket: "semdata",
-      tipo: tipoDe(p.acao), // ação do ranking não tem linha no banco: heurística é o único caminho
-    }));
+  const curados = ranked.filter((p) => p.curated);
+  // Uma fonte só para o rótulo "#N" e para a chave de ordenação: se saíssem de arrays
+  // diferentes, a tela mostraria um número e ordenaria por outro — que é exatamente o bug
+  // medido em 29/08, quando "#N" era só rótulo.
+  const rank = new Map(curados.map((p, i) => [p.slug, i]));
+  const acoes: Item[] = curados.map((p, i) => ({
+    key: `acao:${p.slug}:${hash8(p.acao)}`,
+    occ: NO_DATE,
+    titulo: p.acao,
+    projeto: p.slug,
+    meta: `#${i + 1} · score ${p.score}`,
+    taskId: null,
+    desc: p.acaoDesc ?? null,
+    bucket: "semdata",
+    tipo: tipoDe(p.acao), // ação do ranking não tem linha no banco: heurística é o único caminho
+    rank: i,
+  }));
 
-  const all = [...tasks.map((t) => itemFromTask(t, today)), ...acoes];
+  const all = [...tasks.map((t) => itemFromTask(t, today, rank)), ...acoes];
   const f = lerFiltros(sp, slugs);
   const ativos = filtrosAtivos(f) as string[];
   const visiveis = filtrar(all, f) as Item[];
@@ -232,12 +241,13 @@ export default async function Page({
   const ROTULO: Record<string, string> = {
     q: `"${f.q}"`,
     projeto: f.projeto,
+    tipo: tipos.find((t) => t.id === f.tipo)?.label ?? "",
     urgencia: URGENCIAS.find((u: Opcao) => u.id === f.urgencia)?.label ?? "",
     origem: ORIGENS.find((o: Opcao) => o.id === f.origem)?.label ?? "",
     responsavel: RESPONSAVEIS.find((r: Opcao) => r.id === f.responsavel)?.label ?? "",
   };
   const semFiltro = comFiltro(
-    { ...f, q: "", projeto: "", urgencia: "", origem: "", responsavel: "" },
+    { ...f, q: "", projeto: "", tipo: "", urgencia: "", origem: "", responsavel: "" },
     "ordem",
     f.ordem,
   );
@@ -286,7 +296,12 @@ export default async function Page({
           </select>
           <select name="tipo" className="ag-in" title="Em que balde o card cai">
             <option value="">— balde automático —</option>
-            {tipos.map((t) => (
+            {/* Sem filtro de balde os três ficam na tela mesmo vazios, para o filtro não esconder
+          que existe um balde. Com o filtro ligado o balde FOI a escolha: mostrar os outros
+          dois vazios é ruído, não transparência. */}
+      {tipos
+        .filter((t) => !f.tipo || t.id === f.tipo)
+        .map((t) => (
               <option key={t.id} value={t.id}>
                 {t.icone} {t.label}
               </option>
@@ -322,6 +337,19 @@ export default async function Page({
           {slugs.map((slug) => (
             <option key={slug} value={slug}>
               {slug}
+            </option>
+          ))}
+        </select>
+        <select name="tipo" defaultValue={f.tipo} className="ag-in" aria-label="Filtrar por balde">
+          <option value="">os três baldes</option>
+          {/* Sem filtro de balde os três ficam na tela mesmo vazios, para o filtro não esconder
+          que existe um balde. Com o filtro ligado o balde FOI a escolha: mostrar os outros
+          dois vazios é ruído, não transparência. */}
+      {tipos
+        .filter((t) => !f.tipo || t.id === f.tipo)
+        .map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.icone} {t.label}
             </option>
           ))}
         </select>
@@ -377,17 +405,22 @@ export default async function Page({
         </div>
       )}
 
-      {tipos.map((t) => (
-        <Balde
-          key={t.id}
-          tipo={t}
-          items={ordenar(pendentes.filter((i) => i.tipo === t.id), f.ordem) as Item[]}
-          doneSet={doneSet}
-          canWrite={on}
-          slugs={slugs}
-          filtrando={ativos.length > 0}
-        />
-      ))}
+      {/* Sem filtro de balde os três ficam na tela mesmo vazios, para o filtro não esconder
+          que existe um balde. Com o filtro ligado o balde FOI a escolha: mostrar os outros
+          dois vazios é ruído, não transparência. */}
+      {tipos
+        .filter((t) => !f.tipo || t.id === f.tipo)
+        .map((t) => (
+          <Balde
+            key={t.id}
+            tipo={t}
+            items={ordenar(pendentes.filter((i) => i.tipo === t.id), f.ordem) as Item[]}
+            doneSet={doneSet}
+            canWrite={on}
+            slugs={slugs}
+            filtrando={ativos.length > 0}
+          />
+        ))}
 
       {feitas.length > 0 && (
         <details className="card table-details">
@@ -405,18 +438,26 @@ export default async function Page({
         número), <strong>Execução</strong> (escrever, publicar, deployar) e <strong>Decisão</strong>{" "}
         (não há o que fazer até você decidir). Dentro de cada um a <strong>ação do ranking vem
         primeiro</strong>, na ordem do score — ela é o ranking, e antes afundava no rodapé da
-        seção. Depois dela vêm as tarefas por urgência: atrasada, hoje, semana, mais tarde. O balde sai do título por palavra-chave; quando
+        seção. Depois dela vêm as tarefas por urgência: atrasada, hoje, semana, mais tarde — e{" "}
+        <strong>dentro da mesma urgência manda o ranking do projeto</strong>: tarefa do #1 antes
+        da tarefa do #20, porque antes as duas empatavam e quem decidia era a data de
+        vencimento, que não sabe nada de prioridade. Tarefa sem projeto (ou de repo sem
+        curadoria) vai para o fim do balde. O balde sai do título por palavra-chave; quando
         errar, abra o card e fixe no seletor de tipo (aí ele ganha o selo BALDE FIXADO). Tarefas
         datadas e recorrentes vivem no Postgres (<code>hub_tasks</code>/<code>hub_done</code>);
         recorrente reseta sozinha a cada ocorrência. &quot;Ação do ranking&quot; espelha a{" "}
         <code>acao</code> do <code>data/projects.json</code> na ordem do ranking da home — mudou o
         texto, o check reseta; e o check <strong>expira em {ACAO_DONE_DIAS} dias</strong>, porque
         ação não tem data própria e um check eterno some com o topo do ranking. O balde é sempre
-        derivado (não há onde fixar). Ação de projeto feita
+        derivado (não há onde fixar). O <strong>card noturno de estado</strong> é notícia do dia:
+        a corrida recolhe o card pendente da véspera antes de publicar o de hoje — 14 avisos não
+        lidos empilhados não são 14 avisos, são zero. O que você já conferiu fica em Feitas.
+        Ação de projeto feita
         de verdade = editar o projects.json. Clicar numa ação abre o modal: salvar vira tarefa do
         banco e risca a original. Filtro e ordem ficam na URL — a visão é compartilhável e sobrevive
         a marcar, editar e apagar; os três baldes continuam na tela mesmo vazios, para o filtro não
-        esconder que existe um balde.
+        esconder que existe um balde — a menos que você escolha um no filtro de balde, aí os
+        outros dois saem da tela, porque escolher já é a resposta.
       </p>
     </main>
   );

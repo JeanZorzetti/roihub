@@ -1,5 +1,19 @@
 # ROI Hub — handoff
 
+> ★ **ENTREGUE (31/08) — O RANKING NÃO É PORTA DE ENTRADA DA AGENDA, É A ORDEM DELA:
+> [`handoff/handoff-o-ranking-nao-e-porta-de-entrada-e-ordem.md`](handoff/handoff-o-ranking-nao-e-porta-de-entrada-e-ordem.md).**
+> O pedido era "toda tarefa vir do ranking"; **recusado nessa forma** — o ranking tem UMA `acao` por
+> projeto (32 de 35), então isso põe teto de 32 cards e mata o 2º passo de qualquer projeto.
+> 🚩 **E a premissa estava furada:** das 20 tarefas pendentes, 14 não tinham projeto e **as 14 eram
+> do cron** `POST /api/estado` — as 6 manuais já tinham projeto, todas. Quem despejava card órfão era
+> o robô. Entregue: (1) o **rank virou chave de ordenação**, não rótulo — dentro do mesmo balde de
+> data manda o ranking do projeto, e `#N` sai do mesmo array da ordem; (2) `hub_tasks.gerador` +
+> `dropPendentesGeradas`, e o card noturno **recolhe o pendente da véspera** (só o pendente); (3)
+> filtro por balde na URL. **349 verdes · tsc limpo · verificado a 1440 e 360.**
+> 🚨 **Duas armadilhas de escape reutilizáveis:** em SQL dentro de template literal do JS, `\d`
+> colapsa para `d` e o `UPDATE` casa **zero linhas sem erro** (usar `[0-9]`), e **crase em comentário
+> SQL fecha o template literal** (`TS1127`).
+>
 > ★ **ENTREGUE (09/08) — O APARATO DE MEDIÇÃO AGORA RODA SOZINHO:
 > [`handoff/handoff-estado-noturno-o-aparato-ligado.md`](handoff/handoff-estado-noturno-o-aparato-ligado.md).**
 > Cinco medidores zero-LLM existiam e nenhum rodava sem alguém digitar o comando; agora
