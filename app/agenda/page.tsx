@@ -1,11 +1,14 @@
 import { evaluateAll } from "@/lib/evaluate";
-import { ACAO_DONE_DIAS, dbOn, listDone } from "@/lib/db";
+import { ACAO_DONE_DIAS, dbOn, listDone, listDonos } from "@/lib/db";
 import {
   todaySP,
   brShort,
   TIPOS,
   WD_LABELS,
   ORDENS,
+  RESPONSAVEIS,
+  SEM_RESP,
+  rotuloResp,
   acoesDoRanking,
   lerFiltros,
   filtrosAtivos,
@@ -14,7 +17,7 @@ import {
   ordenar,
 } from "@/lib/agenda.mjs";
 import { Tabs } from "../tabs";
-import { toggle } from "./actions";
+import { atribuir, toggle } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +27,8 @@ type Opcao = { id: string; label: string };
 
 /**
  * Uma linha da agenda. TODA linha é a `acao` de um projeto do ranking — não existe mais card
- * de outra fonte, então não há `taskId`, nem data, nem dono para carregar.
+ * de outra fonte, então não há `taskId` nem data. O `responsavel` não vem da projeção: é a
+ * segunda camada que o banco guarda por cima dela, ao lado do check.
  */
 type Item = {
   key: string;
@@ -36,6 +40,7 @@ type Item = {
   tipo: string; // conferencia | execucao | decisao
   rank: number; // posição do projeto no ranking curado
   seguranca: boolean; // furou a fila da Execução — ortogonal a `tipo`
+  responsavel: string | null; // null = ninguém decidiu ainda; vem de hub_acao_dono
 };
 
 function Check({ item, done }: { item: Item; done: boolean }) {
@@ -54,6 +59,38 @@ function Check({ item, done }: { item: Item; done: boolean }) {
   );
 }
 
+/**
+ * Seletor de dono: um botão por responsável, e clicar no ativo desatribui.
+ *
+ * Um `<select>` precisaria de um submit ao lado (a aba não tem client JS), o que dá dois
+ * cliques por linha e ~60 na primeira passada da fila inteira. Dois botões resolvem em um,
+ * e `aria-pressed` diz o estado sem precisar de um `<label>` por linha.
+ */
+function Dono({ item }: { item: Item }) {
+  return (
+    <form action={atribuir} className="ag-dono">
+      <input type="hidden" name="key" value={item.key} />
+      {(RESPONSAVEIS as Opcao[]).map((r) => {
+        const ativo = item.responsavel === r.id;
+        return (
+          <button
+            key={r.id}
+            name="responsavel"
+            // O ativo manda "" — a action trata desconhecido como "sem dono", então o mesmo
+            // botão atribui e desatribui.
+            value={ativo ? "" : r.id}
+            className={ativo ? "ag-dono-b on" : "ag-dono-b"}
+            aria-pressed={ativo}
+            aria-label={`${ativo ? "Tirar" : "Atribuir a"} ${r.label}: "${item.titulo}"`}
+          >
+            {r.label.split(" ")[0]}
+          </button>
+        );
+      })}
+    </form>
+  );
+}
+
 function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: boolean }) {
   return (
     <li className="ag-item">
@@ -62,8 +99,16 @@ function Row({ item, done, canWrite }: { item: Item; done: boolean; canWrite: bo
         <div className={done ? "ag-title done" : "ag-title"}>{item.titulo}</div>
         <div className="ag-meta">
           <span className="pill">{item.projeto}</span>
+          {/* Sem dono é pendência, não espaço em branco: a linha tem que cobrar a decisão.
+              Feitas continuam mostrando de quem era — histórico sem dono não é histórico. */}
+          {item.responsavel ? (
+            <span className="pill">{rotuloResp(item.responsavel)}</span>
+          ) : (
+            <span className="pill pill-warn">sem responsável</span>
+          )}
           <span>{item.meta}</span>
         </div>
+        {canWrite && !done && <Dono item={item} />}
         {item.desc && !done && (
           <details className="ag-ctx">
             {/* O rótulo se repete em 32 linhas: sem o projeto junto, quem navega por elementos
@@ -138,16 +183,19 @@ export default async function Page({
   const sp = await searchParams;
   const on = dbOn();
   const today = todaySP();
-  const [ranked, doneSet] = await Promise.all([
+  const [ranked, doneSet, donos] = await Promise.all([
     evaluateAll(), // mesma avaliação da home — a agenda é a projeção dela
     // falha de DB nunca derruba a agenda: sem os checks, tudo aparece como pendente
     on ? listDone().catch(() => new Set<string>()) : new Set<string>(),
+    // mesmo contrato para os donos: sem banco, toda ação aparece "sem responsável" e a fila
+    // continua completa e na ordem do ranking
+    on ? listDonos().catch(() => new Map<string, string>()) : new Map<string, string>(),
   ]);
 
   // só o que tem curadoria vira linha: repo novo sem receita/ação definidas entra no ranking
   // da home marcado SEM CURADORIA, mas não afoga a lista do dia.
   const curados = ranked.filter((p) => p.curated);
-  const acoes = acoesDoRanking(curados) as Item[];
+  const acoes = acoesDoRanking(curados, donos) as Item[];
   // O select lista quem TEM linha, não os 35 do ranking: projeto sem ação viraria um filtro
   // que devolve lista vazia sem explicação, que é o bug #1 de painel.
   const slugs = [...new Set(acoes.map((a) => a.projeto))];
@@ -165,8 +213,13 @@ export default async function Page({
     q: `"${f.q}"`,
     projeto: f.projeto,
     tipo: tipos.find((t) => t.id === f.tipo)?.label ?? "",
+    responsavel: f.responsavel === SEM_RESP ? "sem responsável" : rotuloResp(f.responsavel),
   };
-  const semFiltro = comFiltro({ ...f, q: "", projeto: "", tipo: "" }, "ordem", f.ordem);
+  const semFiltro = comFiltro(
+    { ...f, q: "", projeto: "", tipo: "", responsavel: "" },
+    "ordem",
+    f.ordem,
+  );
 
   return (
     <main className="page">
@@ -223,6 +276,22 @@ export default async function Page({
                 {t.icone} {t.label}
               </option>
             ))}
+        </select>
+        {/* "sem responsável" é opção de filtro, não um terceiro responsável: é ela que
+            responde "o que ainda não tem dono", a pergunta que cobra a regra. */}
+        <select
+          name="responsavel"
+          defaultValue={f.responsavel}
+          className="ag-in"
+          aria-label="Filtrar por responsável"
+        >
+          <option value="">todos os responsáveis</option>
+          {(RESPONSAVEIS as Opcao[]).map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+          <option value={SEM_RESP}>sem responsável</option>
         </select>
         <select name="ordem" defaultValue={f.ordem} className="ag-in" aria-label="Ordenar por">
           {(ORDENS as Opcao[]).map((o) => (
@@ -295,7 +364,11 @@ export default async function Page({
         O check é só um lembrete de &quot;já olhei isso&quot;: ele expira em{" "}
         <strong>{ACAO_DONE_DIAS} dias</strong>, porque ação não tem data própria e um check eterno
         some com o topo do ranking. Concluir de verdade é trocar a <code>acao</code> no{" "}
-        <code>data/projects.json</code> e dar push — o texto muda, o check reseta sozinho. Para o
+        <code>data/projects.json</code> e dar push — o texto muda, o check reseta sozinho. O{" "}
+        <strong>responsável</strong> segue a mesma regra: ele mora no banco, não no JSON, e a
+        chave dele é o texto da ação — reescreveu a ação, a linha volta para{" "}
+        <a href={comFiltro(f, "responsavel", SEM_RESP)}>sem responsável</a>, porque ação nova é
+        decisão nova de quem faz. Para o
         que não é ação de projeto, use os quadros de <a href="/marketing">Marketing</a> e{" "}
         <a href="/ideias">Ideias</a>; o card noturno de estado fica em{" "}
         <a href="/automacao">Automação</a>.

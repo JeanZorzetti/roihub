@@ -295,6 +295,14 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ag-title.done { text-decoration: line-through; color: var(--muted); font-weight: 400; }
 .ag-meta { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ag-meta .pill { margin-left: 0; }
+.ag-dono { display: flex; gap: 6px; margin-top: 6px; }
+.ag-dono-b {
+  cursor: pointer; padding: 3px 10px; min-height: 26px;
+  border: 1px solid var(--grid); border-radius: 999px; background: #fff;
+  color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; line-height: 1;
+}
+.ag-dono-b:hover { border-color: var(--accent); color: var(--accent); }
+.ag-dono-b.on { border-color: var(--accent); background: var(--accent); color: #fff; }
 .ag-del {
   border: none; background: none; cursor: pointer; flex: none;
   color: var(--muted); font-size: 16px; line-height: 1; padding: 2px 6px;

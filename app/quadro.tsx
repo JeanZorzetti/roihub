@@ -20,7 +20,7 @@ import {
   dataDeLiberacao,
   tamanhoHumano,
 } from "@/lib/pauta.mjs";
-import { RESPONSAVEIS, RESPONSAVEL_IDS, todaySP, brShort, WD_LABELS } from "@/lib/agenda.mjs";
+import { RESPONSAVEIS, RESPONSAVEL_IDS, rotuloResp, todaySP, brShort, WD_LABELS } from "@/lib/agenda.mjs";
 import type { PautaAnexo, PautaCard, PautaColuna } from "@/lib/db";
 import { Tabs } from "./tabs";
 import { EditarCard } from "./editar-card";
@@ -61,7 +61,6 @@ const ERRO_ANEXO: Record<string, string> = {
 const ERRO_DE_LOTE = new Set(["mime", "tamanho", "quantidade"]);
 
 const rotuloCanal = (id: string | null) => (CANAIS as Opcao[]).find((c) => c.id === id)?.label ?? id ?? "";
-const rotuloResp = (id: string | null) => (RESPONSAVEIS as Opcao[]).find((r) => r.id === id)?.label ?? id ?? "";
 
 function Anexos({ card, anexos, voltar }: { card: PautaCard; anexos: PautaAnexo[]; voltar: string }) {
   const vivos = anexos.filter((a) => a.liberado_em === null);

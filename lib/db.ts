@@ -160,6 +160,24 @@ function ensure(): Promise<unknown> {
       ALTER TABLE hub_tasks ADD COLUMN IF NOT EXISTS gerador TEXT;
       UPDATE hub_tasks SET gerador = 'estado'
         WHERE gerador IS NULL AND titulo ~ '^Estado [0-9]{4}-[0-9]{2}-[0-9]{2}: ';
+      -- Dono da AÇÃO DO RANKING. Tabela própria, e não uma coluna em hub_tasks: aquela coluna
+      -- é dono de tarefa do banco, e a agenda não renderiza mais hub_tasks desde 31/08 —
+      -- reaproveitá-la exigiria criar uma tarefa por ação, que é o caminho 'promote' removido
+      -- naquela mesma refatoração. A chave é a do check (acao:<slug>:<hash8>), então
+      -- reescrever a ação no projects.json zera o dono: ação nova é decisão nova de alocação,
+      -- e a aba passa a ter UMA regra de identidade em vez de duas.
+      -- responsavel NOT NULL de propósito: "sem dono" é a AUSÊNCIA de linha, nunca uma linha
+      -- com NULL. Desatribuir é DELETE — um estado, uma representação.
+      -- Sem CHECK, pela mesma razão já escrita para hub_tasks.responsavel: a lista de
+      -- responsáveis vive em lib/agenda.mjs e duplicá-la aqui daria migração a cada rótulo
+      -- novo. A validação é na server action, contra RESPONSAVEL_IDS.
+      -- (Sem crase nestes comentários: isto é um template literal do JS, e uma crase aqui
+      -- FECHA a string — o parser reclama de sintaxe TS a 100 linhas de distância.)
+      CREATE TABLE IF NOT EXISTS hub_acao_dono (
+        key TEXT PRIMARY KEY,
+        responsavel TEXT NOT NULL,
+        atualizado TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
       CREATE TABLE IF NOT EXISTS seo_publications (
         id BIGSERIAL PRIMARY KEY,
         project_slug TEXT NOT NULL,
@@ -624,6 +642,33 @@ export async function listDone(): Promise<Set<string>> {
     [ACAO_DONE_DIAS]
   );
   return new Set(r.rows.map((x: { key: string; occurrence: string }) => `${x.key}@${x.occurrence}`));
+}
+
+/**
+ * Mapa "key da ação" → responsável. ponytail: busca tudo, igual `listDone` — 35 projetos.
+ *
+ * Sem corte por validade de propósito: `ACAO_DONE_DIAS` existe para o CHECK não sumir com o
+ * topo do ranking, e dono que expirasse só produziria ação sem ninguém — que é exatamente o
+ * estado que esta tabela existe para eliminar.
+ */
+export async function listDonos(): Promise<Map<string, string>> {
+  await ensure();
+  const r = await pool().query(`SELECT key, responsavel FROM hub_acao_dono`);
+  return new Map(r.rows.map((x: { key: string; responsavel: string }) => [x.key, x.responsavel]));
+}
+
+/** `null` desatribui: a ausência de dono é a ausência de linha, não uma linha com NULL. */
+export async function setDono(key: string, responsavel: string | null): Promise<void> {
+  await ensure();
+  if (responsavel === null) {
+    await pool().query(`DELETE FROM hub_acao_dono WHERE key = $1`, [key]);
+    return;
+  }
+  await pool().query(
+    `INSERT INTO hub_acao_dono (key, responsavel) VALUES ($1, $2)
+     ON CONFLICT (key) DO UPDATE SET responsavel = $2, atualizado = now()`,
+    [key, responsavel]
+  );
 }
 
 export async function insertTask(t: Omit<Task, "id">): Promise<void> {

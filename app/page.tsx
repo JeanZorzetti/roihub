@@ -4,8 +4,8 @@ import { githubStatus } from "@/lib/github";
 import { listReposSemSite } from "@/lib/projects";
 import { WEIGHTS } from "@/lib/score.mjs";
 import { evaluateAll, type Project, type Evaluated } from "@/lib/evaluate";
-import { dbOn, listDone } from "@/lib/db";
-import { hash8, NO_DATE } from "@/lib/agenda.mjs";
+import { dbOn, listDone, listDonos } from "@/lib/db";
+import { acaoKey, NO_DATE, rotuloResp } from "@/lib/agenda.mjs";
 import { Tabs, GscFoot, GithubFoot } from "./tabs";
 
 export const dynamic = "force-dynamic";
@@ -58,15 +58,20 @@ function TrendCell({ p }: { p: Evaluated }) {
 }
 
 export default async function Page() {
-  const [gsc, gh, evaluated, semSite, doneSet] = await Promise.all([
+  const [gsc, gh, evaluated, semSite, doneSet, donos] = await Promise.all([
     gscStatus(),
     githubStatus(),
     evaluateAll(),
     listReposSemSite(),
     // falha de DB nunca derruba o hub — sem agenda, nada é riscado
     dbOn() ? listDone().catch(() => new Set<string>()) : new Set<string>(),
+    // idem para o dono: sem banco a ação só aparece sem responsável, o ranking não muda
+    dbOn() ? listDonos().catch(() => new Map<string, string>()) : new Map<string, string>(),
   ]);
-  const acaoDone = (p: Project) => doneSet.has(`acao:${p.slug}:${hash8(p.acao)}@${NO_DATE}`);
+  const acaoDone = (p: Project) => doneSet.has(`${acaoKey(p.slug, p.acao)}@${NO_DATE}`);
+  // A home EXIBE o dono e não atribui: duas telas escrevendo o mesmo campo divergem calado.
+  // Atribuir é na /agenda, que é onde a fila é operada.
+  const dono = (p: Project) => (p.acao ? (donos.get(acaoKey(p.slug, p.acao)) ?? null) : null);
   const foco = evaluated[0];
   const down = evaluated.filter((p) => !p.health.ok);
   const curados = evaluated.filter((p) => p.curated).length;
@@ -155,6 +160,11 @@ export default async function Page() {
 
         <div className={acaoDone(foco) ? "acao done" : "acao"}>
           {acaoDone(foco) ? "✓" : "→"} {foco.acao}
+          {foco.acao && (
+            <span className={dono(foco) ? "pill" : "pill pill-warn"}>
+              {dono(foco) ? rotuloResp(dono(foco)) : "sem responsável"}
+            </span>
+          )}
           {foco.receitaNota && <small>{foco.receitaNota}</small>}
         </div>
 
@@ -230,7 +240,14 @@ export default async function Page() {
                     />
                   </div>
                 </td>
-                <td className={acaoDone(p) ? "acao-cell done" : "acao-cell"}>{p.acao}</td>
+                <td className={acaoDone(p) ? "acao-cell done" : "acao-cell"}>
+                  {p.acao}
+                  {p.acao && (
+                    <span className={dono(p) ? "pill" : "pill pill-warn"}>
+                      {dono(p) ? rotuloResp(dono(p)) : "sem responsável"}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

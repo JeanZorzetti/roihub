@@ -20,6 +20,22 @@
 > ⚠️ `npm test` estava **vermelho em main** antes desta sessão por falso positivo do `(hoje N)` em prosa
 > (`data/projects.json:141`, "agora … 2026"). Datado. **389 verdes.**
 >
+> ★ **ENTREGUE (31/08) — A AÇÃO DO RANKING GANHOU DONO:
+> [`handoff/handoff-a-acao-do-ranking-ganhou-dono.md`](handoff/handoff-a-acao-do-ranking-ganhou-dono.md)**
+> (spec `specs/008-acao-responsavel/`). **A Maria virou dev**, então a fila tem dois executores e
+> linha sem dono não é executada por ninguém. ⚠️ **A regra "o hub é SÓ DEV" de 11/07 CONTINUA
+> VALENDO** — o que mudou é o conjunto de quem é dev; comercial e captação seguem fora do hub.
+> Isto **revoga o FR-007 da spec 005**, que excluía de propósito as ações do ranking. Tabela
+> `hub_acao_dono` com a **mesma chave do check** (`acao:<slug>:<hash8>`): reescrever a `acao` zera
+> o dono, e isso é a regra, não um efeito colateral. Seletor de **1 clique** (par de botões com
+> `aria-pressed`, zero client JS); "sem dono" é AUSÊNCIA de linha, desatribuir é DELETE. Filtro
+> "sem responsável" de volta — é ele que mede em um clique se a regra está sendo cumprida
+> (**hoje: 32 de 32 sem dono**; alocar é decisão do Jean). **392 verdes · build limpo · verificado
+> no navegador com banco real, e também sem banco.**
+> 🚨 **Reincidi na armadilha de HOJE DE MANHÃ: crase em comentário SQL dentro de template
+> literal fecha a string** — o erro sai como sintaxe TS em `lib/db.ts`, dentro de um teste de
+> autopublishing que não tem nada a ver com o arquivo.
+>
 > ★ **ENTREGUE (31/08) — O RANKING NÃO É PORTA DE ENTRADA DA AGENDA, É A ORDEM DELA:
 > [`handoff/handoff-o-ranking-nao-e-porta-de-entrada-e-ordem.md`](handoff/handoff-o-ranking-nao-e-porta-de-entrada-e-ordem.md).**
 > O pedido era "toda tarefa vir do ranking"; **recusado nessa forma** — o ranking tem UMA `acao` por

@@ -15,6 +15,9 @@ import {
   comFiltro,
   filtrar,
   ordenar,
+  acaoKey,
+  rotuloResp,
+  SEM_RESP,
 } from "../lib/agenda.mjs";
 
 test("todaySP resolve o fuso de São Paulo na virada do dia UTC", () => {
@@ -138,17 +141,23 @@ const CARDS = [
 
 test("lerFiltros descarta valor desconhecido — filtro que não casa com nada esconde a lista", () => {
   const f = lerFiltros({ ordem: "score", projeto: "inexistente", urgencia: "hoje" }, ["atma"]);
-  assert.deepEqual(f, { q: "", projeto: "", tipo: "", ordem: "ranking" });
+  assert.deepEqual(f, { q: "", projeto: "", tipo: "", responsavel: "", ordem: "ranking" });
   assert.deepEqual(filtrosAtivos(f), []);
   // e aceita o que existe
-  const ok = lerFiltros({ ordem: "titulo", projeto: "atma", tipo: "decisao", q: "  lcp  " }, ["atma"]);
-  assert.deepEqual(ok, { q: "lcp", projeto: "atma", tipo: "decisao", ordem: "titulo" });
-  assert.deepEqual(filtrosAtivos(ok), ["q", "projeto", "tipo"]);
+  const ok = lerFiltros(
+    { ordem: "titulo", projeto: "atma", tipo: "decisao", responsavel: "maria", q: "  lcp  " },
+    ["atma"],
+  );
+  assert.deepEqual(ok, { q: "lcp", projeto: "atma", tipo: "decisao", responsavel: "maria", ordem: "titulo" });
+  assert.deepEqual(filtrosAtivos(ok), ["q", "projeto", "tipo", "responsavel"]);
   // balde inventado na URL não vira filtro que não casa com nada
   assert.equal(lerFiltros({ tipo: "urgente" }, []).tipo, "");
-  // urgência, origem e responsável saíram com as tarefas do banco: não voltam pela querystring
-  assert.deepEqual(Object.keys(lerFiltros({ origem: "tarefa", responsavel: "jean" }, [])).sort(), [
-    "ordem", "projeto", "q", "tipo",
+  // "sem responsável" é valor de filtro válido; pessoa inventada na URL, não
+  assert.equal(lerFiltros({ responsavel: SEM_RESP }, []).responsavel, SEM_RESP);
+  assert.equal(lerFiltros({ responsavel: "aldo" }, []).responsavel, "");
+  // urgência e origem saíram com as tarefas do banco: não voltam pela querystring
+  assert.deepEqual(Object.keys(lerFiltros({ origem: "tarefa" }, [])).sort(), [
+    "ordem", "projeto", "q", "responsavel", "tipo",
   ]);
 });
 
@@ -221,4 +230,59 @@ test("acoesDoRanking: card sem `acao` não vira linha, e o #N continua sendo a p
   assert.deepEqual(acoes.map((a) => a.rank), [0, 3]);
   // `acao` ausente não pode estourar: card novo entra no JSON sem o campo
   assert.deepEqual(acoesDoRanking([{ slug: "novo", score: 1 }]), []);
+});
+
+test("acoesDoRanking: o dono vem do Map pela MESMA key do check", () => {
+  const curados = [
+    { slug: "atma", acao: "medir o checkout", score: 9 },
+    { slug: "sirius", acao: "ligar a cobrança", score: 3 },
+  ];
+  const donos = new Map([[acaoKey("atma", "medir o checkout"), "maria"]]);
+  const acoes = acoesDoRanking(curados, donos);
+  assert.deepEqual(acoes.map((a) => a.responsavel), ["maria", null]);
+  // chamador antigo (sem o Map) não estoura e não inventa dono
+  assert.deepEqual(acoesDoRanking(curados).map((a) => a.responsavel), [null, null]);
+});
+
+test("acoesDoRanking: reescrever a ação zera o dono, igual ao check", () => {
+  const donos = new Map([[acaoKey("atma", "medir o checkout"), "jean"]]);
+  // mesma decisão de identidade do check: texto novo é ação nova, e ação nova precisa de dono novo
+  const [depois] = acoesDoRanking([{ slug: "atma", acao: "medir o checkout DE NOVO", score: 9 }], donos);
+  assert.equal(depois.responsavel, null);
+  assert.notEqual(depois.key, acaoKey("atma", "medir o checkout"));
+});
+
+test("acaoKey é a chave que liga projeção e banco — o mesmo texto sempre dá a mesma", () => {
+  assert.equal(acaoKey("atma", "medir"), `acao:atma:${hash8("medir")}`);
+  assert.equal(acaoKey("atma", "medir"), acaoKey("atma", "medir"));
+  assert.notEqual(acaoKey("atma", "medir"), acaoKey("sirius", "medir"));
+});
+
+test("rotuloResp: id conhecido vira nome; desconhecido volta como veio, nunca vazio", () => {
+  assert.equal(rotuloResp("jean"), "Jean Zorzetti");
+  assert.equal(rotuloResp("maria"), "Maria Zorzetti");
+  assert.equal(rotuloResp("aldo"), "aldo"); // dado velho no banco aparece, não some da tela
+  assert.equal(rotuloResp(null), "");
+});
+
+test("filtrar por responsável: SEM_RESP lista o que falta decidir", () => {
+  const acoes = [
+    { titulo: "a de jean", projeto: "atma", tipo: "execucao", rank: 0, responsavel: "jean" },
+    { titulo: "a de maria", projeto: "sirius", tipo: "execucao", rank: 1, responsavel: "maria" },
+    { titulo: "sem dono", projeto: "goiania", tipo: "execucao", rank: 2, responsavel: null },
+  ];
+  const so = (sp) => filtrar(acoes, lerFiltros(sp, ["atma", "sirius", "goiania"])).map((c) => c.titulo);
+  assert.deepEqual(so({ responsavel: "jean" }), ["a de jean"]);
+  assert.deepEqual(so({ responsavel: "maria" }), ["a de maria"]);
+  // é este filtro que responde SC-002: quantas ações ainda não têm dono
+  assert.deepEqual(so({ responsavel: SEM_RESP }), ["sem dono"]);
+  assert.deepEqual(so({}), ["a de jean", "a de maria", "sem dono"]); // sem filtro, ninguém some
+  // continua sendo E com os outros, nunca OU
+  assert.deepEqual(so({ responsavel: "jean", projeto: "sirius" }), []);
+});
+
+test("comFiltro carrega e remove o responsável como qualquer outro chip", () => {
+  const f = lerFiltros({ responsavel: "maria", projeto: "atma" }, ["atma"]);
+  assert.equal(comFiltro(f, "responsavel", ""), "?projeto=atma");
+  assert.equal(comFiltro(f, "responsavel", SEM_RESP), "?projeto=atma&responsavel=sem");
 });
