@@ -7,6 +7,7 @@ import {
   hash8,
   brShort,
   tipoDe,
+  seguranca,
   TIPOS,
   WD_LABELS,
   NO_DATE,
@@ -43,6 +44,7 @@ type Item = {
   bucket: string; // urgência de data — ordena e pinta a linha dentro do balde
   tipo: string; // conferencia | execucao | decisao
   rank: number; // posição do projeto no ranking — desempata dentro do balde de data
+  seguranca: boolean; // furou a fila da Execução — ortogonal a `tipo`
 };
 
 function itemFromTask(t: Task, today: string, rank: Map<string, number>): Item {
@@ -53,6 +55,7 @@ function itemFromTask(t: Task, today: string, rank: Map<string, number>): Item {
     key: `task:${t.id}`,
     task: t,
     tipo: t.tipo ?? tipoDe(t.titulo), // override manual vence a heurística
+    seguranca: seguranca(t.titulo),
     // A tarefa herda a posição do projeto dela: é isso que faz o ranking valer dentro da
     // agenda, e não só na home. Sem projeto (ou projeto sem curadoria) cai no fim.
     rank: (t.projeto !== null ? rank.get(t.projeto) : undefined) ?? SEM_RANK,
@@ -161,6 +164,23 @@ function Balde({
   filtrando: boolean;
 }) {
   const atrasadas = items.filter((i) => i.bucket === "atrasadas").length;
+  // Segurança fura a fila só dentro de Execução — nos outros dois baldes o grupo fica vazio e
+  // a lista renderiza chapada, exatamente como antes desta partição existir.
+  const seg = tipo.id === "execucao" ? items.filter((i) => i.seguranca) : [];
+  const resto = seg.length ? items.filter((i) => !i.seguranca) : items;
+  const lista = (its: Item[]) => (
+    <ul className="ag-list">
+      {its.map((it) => (
+        <Row
+          key={it.key + it.occ}
+          item={it}
+          done={doneSet.has(`${it.key}@${it.occ}`)}
+          canWrite={canWrite}
+          slugs={slugs}
+        />
+      ))}
+    </ul>
+  );
   return (
     <section className="card ag-section">
       <h2 className="ag-h">
@@ -175,18 +195,18 @@ function Balde({
       </h2>
       {items.length === 0 ? (
         <p className="ag-vazio">{filtrando ? "Nenhum card sobreviveu ao filtro." : "Nada aqui."}</p>
+      ) : seg.length === 0 ? (
+        lista(resto)
       ) : (
-        <ul className="ag-list">
-          {items.map((it) => (
-            <Row
-              key={it.key + it.occ}
-              item={it}
-              done={doneSet.has(`${it.key}@${it.occ}`)}
-              canWrite={canWrite}
-              slugs={slugs}
-            />
-          ))}
-        </ul>
+        <>
+          <h3 className="ag-sub">
+            <span aria-hidden="true">🔒 </span>
+            Segurança ({seg.length})
+          </h3>
+          {lista(seg)}
+          <h3 className="ag-sub">resto</h3>
+          {lista(resto)}
+        </>
       )}
     </section>
   );
@@ -224,6 +244,7 @@ export default async function Page({
     bucket: "semdata",
     tipo: tipoDe(p.acao), // ação do ranking não tem linha no banco: heurística é o único caminho
     rank: i,
+    seguranca: seguranca(p.acao),
   }));
 
   const all = [...tasks.map((t) => itemFromTask(t, today, rank)), ...acoes];

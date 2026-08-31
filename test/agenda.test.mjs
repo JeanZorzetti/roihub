@@ -8,6 +8,7 @@ import {
   hash8,
   brShort,
   tipoDe,
+  seguranca,
   TIPOS,
   ORDEM_BUCKET,
   NO_DATE,
@@ -104,6 +105,40 @@ test("tipoDe: todo título cai em um dos três baldes, sem exceção", () => {
   const ids = new Set(TIPOS.map((t) => t.id));
   for (const t of ["", "   ", "xyz sem verbo nenhum", null, undefined])
     assert.ok(ids.has(tipoDe(t)), `caiu fora dos baldes: ${JSON.stringify(t)}`);
+});
+
+// ── sub-balde segurança (predicado ortogonal a tipoDe) ──────────────────────
+
+test("seguranca: casa os positivos reais", () => {
+  for (const t of [
+    "Rotacionar o token de produção do MercadoPago",
+    "CORS fixo no checkout do app",
+    "CVE-2026-1234 no next",
+    "credencial exposta no repo público",
+  ])
+    assert.equal(seguranca(t), true, t);
+});
+
+test("seguranca: nem 'author' nem auth dentro de URL — falso-positivo real medido em 31/08", () => {
+  assert.equal(seguranca("Definir o author do post"), false);
+  assert.equal(
+    seguranca("Configurar GitHub OAuth (callback …/api/auth/callback/github) e Resend"),
+    false,
+  );
+  // mas auth isolado, fora de caminho de URL, continua pegando
+  assert.equal(seguranca("Rota /admin sem auth"), true);
+  assert.equal(seguranca("auth quebrada na Atma"), true);
+});
+
+test("seguranca é ortogonal a tipoDe — card de segurança não sai da Execução", () => {
+  const t = "Rotacionar o token de produção do MercadoPago";
+  assert.equal(tipoDe(t), "execucao");
+  assert.equal(seguranca(t), true);
+});
+
+test("seguranca(null|undefined) não estoura — mesmo contrato de tipoDe", () => {
+  assert.equal(seguranca(null), false);
+  assert.equal(seguranca(undefined), false);
 });
 
 test("ORDEM_BUCKET: atrasada primeiro, sem data por último", () => {
@@ -207,6 +242,23 @@ test("ordenar: a ação do ranking sobe pelo rank, não pela estabilidade do sor
   // entregues fora de ordem de propósito: se o rank não fosse chave, sairia 3, 1, 2
   const fora = ordenar([acao(3, 2), acao(1, 0), acao(2, 1)], "urgencia").map((c) => c.titulo);
   assert.deepEqual(fora, ["acao 1", "acao 2", "acao 3"]);
+});
+
+test("partição de segurança: dentro do grupo, ordenar() continua valendo pelo rank", () => {
+  const t = (n, rank, seg) => ({
+    titulo: n, projeto: n, bucket: "atrasadas", tipo: "execucao", taskId: 1, rank, occ: "2026-07-01", seguranca: seg,
+  });
+  const items = [t("comum rank 2", 1, false), t("seguranca rank 20", 19, true)];
+  const seg = items.filter((i) => i.seguranca);
+  const resto = seg.length ? items.filter((i) => !i.seguranca) : items;
+  assert.deepEqual(ordenar(seg, "urgencia").map((c) => c.titulo), ["seguranca rank 20"]);
+  assert.deepEqual(ordenar(resto, "urgencia").map((c) => c.titulo), ["comum rank 2"]);
+  // dentro do próprio grupo de segurança, o rank do projeto continua desempatando
+  const doisDeSeg = [t("seg rank 5", 4, true), t("seg rank 1", 0, true)];
+  assert.deepEqual(
+    ordenar(doisDeSeg.filter((i) => i.seguranca), "urgencia").map((c) => c.titulo),
+    ["seg rank 1", "seg rank 5"],
+  );
 });
 
 test("comFiltro: remover um chip preserva os outros e omite a ordem padrão", () => {
