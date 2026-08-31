@@ -110,15 +110,19 @@
     "blockers": 4,
     "blockersLista": [
       {
-        "texto": "Home V4: T001–T017 pendentes (spec 012 pronta desde 12/07)",
+        "texto": "Tabela de preços sem valores — decisão do Jean (§5 da estratégia V4)",
+        "humano": true
+      },
+      {
+        "texto": "Sem checkout: cadastro nasce plan:'pro' e o downgrade é preguiçoso (sem cron) — receita R$ 0 em 6 meses",
         "humano": false
       }
     ],
     "seoSeed": 4,
     "decay": 4,
     "decayNota": "",
-    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx, layout conferido em 25/07 — NÃO renderiza capa/FAQ/related, o corpo sai completo. Inventário de 92 arquivos = o projeto mais lento do lote; se o Actions reportar request-failed, é o proxy do EasyPanel cortando em ~300s, não falha real: a verdade é o commit no repo alvo. Run agora à 00:13 BRT. Repo: ROI Labs/Imob/sofia-next (github JeanZorzetti/sofia-ia). ✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. Spec 012 da home V4 pronta desde 12/07 no sofia-next: rodar speckit-implement nas T001–T017 e reposicionar a home em 'sites de produção, não protótipos' (docs/strategy_V4, validado 07/07). É a última peça antes de pensar em billing. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
-    "acao": "Implementar a home V4 'sites de produção' (spec 012, T001–T017)",
+    "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx, layout conferido em 25/07 — NÃO renderiza capa/FAQ/related, o corpo sai completo. Inventário de 92 arquivos = o projeto mais lento do lote; se o Actions reportar request-failed, é o proxy do EasyPanel cortando em ~300s, não falha real: a verdade é o commit no repo alvo. Run agora à 00:13 BRT. Repo: ROI Labs/Imob/sofia-next (github JeanZorzetti/sofia-ia). ✅ BYOS (spec 011) SHIPPED + E2E — usuário traz a própria assinatura Claude via setup-token oficial. ✅ Spec 012 (home V4) SHIPPED 10-11/08 — 17/17 tasks, commits 8b7ee43/4601c76/993e85d, tudo pushado. Verificado em 31/08: home serve 'Sites de produção, não protótipos', /plataforma e /peca-seu-site em 200, e o intake de lead chega mesmo no CRM do roihub (pipeline polaris) — o bloqueio antigo do SIRIUS_CRM_API_KEY morreu com o reroteamento do commit 858658f. ⚠️ O envio roda em after() best-effort: um POST válido devolve 200 ao visitante mesmo sem ROIHUB_CRM_URL/ROIHUB_CRM_SECRET, então 200 não prova lead salvo — conferir no banco. 💰 Agora a peça que falta É a cobrança: zero checkout em 6 meses, os usuários 'PRO' são trials vencidos (cadastro nasce plan:'pro', downgrade sem cron) e /admin/analytics agrupa por plan SEM status, o que infla receita aparente. Os 2 únicos leads no CRM (10 e 11/08) são testes — a home nova ainda não trouxe lead real. Rename Sofia→Polaris segue adiado (cosmético, não bloqueia).",
+    "acao": "Ligar cobrança: preço decidido + checkout + downgrade de trial vencido",
     "familia": "cobranca",
     "estado": "no-ar"
   },
