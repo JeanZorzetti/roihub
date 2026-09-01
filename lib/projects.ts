@@ -36,6 +36,11 @@ export type Project = {
    * `consulta → compareceu` falham por motivos opostos e pedem conserto oposto. Ausente é
    * `não apurado` de propósito: cadeia errada é pior que cadeia ausente, porque parece medida. */
   perfil?: "A" | "B" | "C" | "D";
+  /** Meta DECLARADA pelo humano, nunca apurada e nunca inferida (FR-001/FR-002). `ticket` paga a
+   *  lacuna que a 009 deixou aberta de propósito — mas rotulado como declaração, não medição.
+   *  `valor` é o que FALTA a partir de `declaradaEm`: a tela não desconta o realizado (seria
+   *  acompanhamento), então o desconto é curadoria e a data existe para ele não apodrecer calado. */
+  meta?: { valor?: number; ticket?: number; prazo?: string; declaradaEm?: string };
   /** Régua de dinheiro escrita por `scripts/vendas-mercadopago.mjs`. AUSENTE é "não olhei",
    * `[]` é "olhei, zero" — a distinção inteira de `lib/funil.mjs`. */
   vendas?: { data: string }[];
