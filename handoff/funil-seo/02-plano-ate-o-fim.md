@@ -17,7 +17,22 @@ entre não saber e saber que não dá.
 
 ---
 
-## P1 — Instrumentar lead nos 3 que têm tráfego · **PRÓXIMO**
+## P1 — Instrumentar lead nos 3 que têm tráfego · **1/3 FECHADO, 2/3 esperando env**
+
+> **Fechado em 01/09/2026 para a `atma`**, e não como este passo previa: ela já capturava lead
+> havia dois meses no próprio banco (`patient_leads`, 43 reais). Não foi preciso instrumentar
+> nada — o hub passou a LER a fonte (`FONTES_PROPRIAS` em `scripts/funil.mjs`). Resultado:
+> **535 → 39 (7,29%) → 0**. A `atma` é o primeiro e único projeto com cadeia apurada.
+>
+> `sirius` e `estetiacrm` são o caso que este passo descrevia: os formulários dos dois
+> (`/api/contact` e `/api/leads/capture-calculator`, mesmo código, um é fork do outro) só
+> disparavam e-mail e criavam contato no Resend. O `POST /api/crm/leads` foi ligado nos dois
+> (`lib/roihub-crm.ts`, best-effort em `after()`), as pipelines foram cadastradas, e **o que
+> falta é uma coisa só: `ROIHUB_CRM_URL` e `ROIHUB_CRM_SECRET` nos dois serviços do EasyPanel.**
+> Sem elas o formulário responde 200 igual e o lead não chega — falha silenciosa por desenho,
+> e é por isso que a prova é a linha em `crm_leads`, nunca o 200.
+
+### O texto original do passo, para contexto
 
 `atma` (535 cliques/28d), `sirius` (56), `estetiacrm` (23). São os únicos do portfólio com tráfego
 relevante e nenhum denominador. Sem isto, `CR(clique→lead)` continua existindo em **um** projeto.
@@ -33,6 +48,11 @@ relevante e nenhum denominador. Sem isto, `CR(clique→lead)` continua existindo
 **Pronto quando:** `scripts/funil.mjs` mostrar os 3 com a coluna `leads` **apurada** (não basta a
 pipeline existir — o gate é ter recebido ≥1 lead de verdade, ver `00-`).
 
+**⚠️ E não confunda lead com lead de teste.** Adicionado em 01/09: os 5 leads que o `crm_leads`
+tinha na vida inteira eram os 5 nossos, e deles saía a única taxa do portfólio. `ehLeadDeTeste()`
+agora os exclui e o `--ver` lista os contados nome a nome. Testar o encanamento é obrigatório —
+mandar `metadata.teste: true` ao testar também.
+
 **⚠️ Não confunda pronto com instrumentado:** o card pode dizer "instrumentado" e o funil continuar
 `não apurado` porque nenhum lead chegou ainda. Os dois estados são diferentes e o segundo é o que
 vale. Se depois de 28 dias com tráfego nenhum lead entrar, isso É o achado — e aí o gargalo é
@@ -40,7 +60,11 @@ oferta, não encanamento.
 
 ---
 
-## P2 — Nível 0: DEMANDA, antes de qualquer conserto técnico
+## P2 — Nível 0: DEMANDA, antes de qualquer conserto técnico · **PRÓXIMO**
+
+> Com a `atma` medida, a pergunta que ela levanta é de demanda e de oferta, não de tráfego:
+> **39 leads, 22 cancelados, 0 convertidos.** Mais clique multiplica um `CR(fecho)` que hoje é
+> zero. Antes de perseguir volume em qualquer projeto, este passo decide se há mercado.
 
 31 dos 35 param nos cliques, quase todos com **0**. `0 clique` é ambíguo entre duas causas que pedem
 trabalho oposto:

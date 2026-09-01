@@ -19,14 +19,30 @@ com número apurado, quanto vale um clique a mais.
 
 ## O estado em uma frase
 
-**A cascata não fecha em nenhum projeto do portfólio: 0 de 35 têm funil mensurável de ponta a ponta.**
-Isso está medido, não suposto — `scripts/funil.mjs`, corrida de 01/09/2026.
+**A cascata fecha em UM projeto do portfólio, e o que ela diz é que o gargalo não é tráfego:
+`atma` faz 535 cliques → 39 leads (7,29%) → 0 vendas.** Os outros 34 continuam sem numerador.
+Medido, não suposto — `scripts/funil.mjs`, corrida de 01/09/2026 (2ª corrida do dia).
+
+Na 1ª corrida a coluna de leads da `atma` saía `não apurado` e a única taxa do portfólio era
+`polarisia 6,67% (2/30)`. **As duas leituras estavam erradas, em direções opostas**, e as duas
+causas estão registradas abaixo: a Atma tinha 43 leads reais num banco que o hub não lia, e os
+2 leads do Polaris eram testes do próprio Jean.
 
 ## Os três fatos que decidem tudo aqui
 
+**0. O lead pode já estar medido — em outro banco.** (Aprendido em 01/09, depois dos 3 abaixo.)
+A `atma` captura paciente em `patient_leads` no PRÓPRIO banco desde julho: 43 linhas com nome e
+e-mail de gente real, 39 dentro da janela. O plano original mandava *instrumentar* o site dela
+para reenviar isso ao CRM do hub — o que criaria uma cópia PIOR da tabela que já existe, sem o
+histórico e contando só de hoje em diante. **Antes de instrumentar qualquer projeto, procure o
+lead onde ele já cai.** O hub agora lê a fonte onde ela está (`FONTES_PROPRIAS` em
+`scripts/funil.mjs`, uma entrada, `ATMA_DATABASE_URL`).
+
 **1. `ARR` é MULTIPLICAÇÃO, e há um fator zerado.**
 `ARR = Tráfego × CR(visitante→lead) × CR(lead→SQL) × … × ACV`. Hoje `CR(fecho)` tem **zero eventos**
-(0 de 35 com gateway ligado de verdade) e `CR(visitante→lead)` é **não medido em 34 de 35**. Dá para
+(0 de 35 com gateway ligado de verdade) e `CR(visitante→lead)` é **não medido em 34 de 35** — a
+`atma` é a exceção, e ela fecha o `CR(fecho)` em **0 de 39** (22 cancelados, 7 em pré-orçamento,
+nenhum convertido). Dá para
 medir INP, crawl budget e razão de 304 com perfeição absoluta e a OKR ainda resolve para R$ 0.
 **Não existe número oculto que conserte um fator zerado.**
 
@@ -48,34 +64,67 @@ instrumentação com "0 leads" de um projeto instrumentado fabrica uma taxa com 
 | Coleta + relatório dos 35 | `scripts/funil.mjs` | ENTREGUE |
 | 7 testes, registrados no `package.json` | `test/funil.test.mjs` | ENTREGUE |
 | Handoff recursivo no corpus (esta pasta é buscável) | `lib/corpus.mjs` | ENTREGUE |
+| Filtro de lead de teste (`ehLeadDeTeste`) | `lib/funil.mjs` + teste | ENTREGUE 01/09 |
+| Leitura do banco da Atma (`FONTES_PROPRIAS`) | `scripts/funil.mjs` | ENTREGUE 01/09 |
+| POST ao CRM do hub no sirius e no estetiacrm | `lib/roihub-crm.ts` dos 2 repos | ENTREGUE 01/09 · **falta env** |
 | Plano até o fim, com critério de pronto | `02-plano-ate-o-fim.md` | É O QUE FALTA |
 
 Comando:
 
 ```bash
 node --env-file=.env scripts/funil.mjs          # os 35
-node --env-file=.env scripts/funil.mjs --ver    # com o motivo de cada `não apurado`
+node --env-file=.env scripts/funil.mjs --ver    # motivo de cada `não apurado` + leads nominais
 ```
 
-## O resultado da primeira corrida (01/09/2026, janela 01/08 → 29/08)
+Precisa de `ATMA_DATABASE_URL` no `.env` (só leitura de `patient_leads`). Sem ela a coluna de
+leads da Atma volta a `não apurado` — nunca a 0.
 
-| onde o funil MORRE | n |
-|---|---|
-| nem cliques | 1 |
-| para nos cliques | 31 |
-| para nos leads | 3 |
-| **mensurável até vendas** | **0** |
+## O resultado da corrida (01/09/2026, janela 01/08 → 29/08)
 
-- **Uma única taxa clique→lead existe no portfólio:** `polarisia`, **6,67% (2/30)**.
-- Chegam ao degrau de leads: `polarisia` (2), `matchfios` (1), `verticemarketing` (1).
+| onde o funil MORRE | 1ª corrida | **depois dos dois consertos** |
+|---|---|---|
+| nem cliques | 1 | 1 |
+| para nos cliques | 31 | **33** |
+| para nos leads | 3 | **0** |
+| **mensurável até vendas** | **0** | **1** (`atma`) |
+
+**A cadeia da `atma`, a única que existe:**
+
+```
+535 cliques  →  39 leads  →  0 vendas
+             7,29% (39/535)      0 de 39
+```
+
+O denominador saiu do GSC, o numerador de `patient_leads` no banco da própria Atma, os dois na
+mesma janela. Por status: **22 cancelado, 14 contatado, 7 pré-orçamento, 0 convertido** — o
+pipeline foi TRABALHADO e mesmo assim fechou zero. Não é um zero de "ninguém olhou".
+
 - `portfolio` é o único sem nem cliques — `*.vercel.app` fica fora de toda propriedade do GSC.
-- Os 5 leads que o CRM tem na vida inteira estão **todos** em `etapa=perdido`. Não investigado.
+- **Os 5 leads que o `crm_leads` tem na vida inteira são os 5 de teste.** Investigado em 01/09:
+  nome "Teste"/"TESTE E2E Spec012", e-mails nossos (`teste@teste.com.br`, `flow.controlx@`,
+  `jeanzorzetti@`), todos em `etapa=perdido` porque ninguém nunca os moveu. Era daí que saía o
+  `6,67%` do `polarisia`. **A taxa existia; a demanda, não.**
+- **Os 3 com tráfego e sem denominador tinham diagnósticos DIFERENTES**, e supor que era o mesmo
+  ("falta instrumentar") custou meio plano:
 
-**Os 3 com tráfego e sem denominador — a lista acionável:**
-`atma` (535 cliques), `sirius` (56), `estetiacrm` (23).
+| projeto | captação | grava? | o que faltava de verdade |
+|---|---|---|---|
+| `atma` (535 cliques) | funil de paciente | ✅ `patient_leads`, 43 reais | **o hub LER** — feito |
+| `sirius` (56) | `/api/contact` + calculadora | ❌ só e-mail / Resend | POST ao hub — feito, falta env |
+| `estetiacrm` (23) | as mesmas duas (fork) | ❌ só e-mail / Resend | POST ao hub — feito, falta env |
 
 ## As armadilhas já pagas — não pise de novo
 
+- **🚩 Lead nosso não é demanda, e contar um fecha este subprojeto com um `curl`.** O critério de
+  pronto é "existe cadeia apurada"; três testes do Jean produziam cadeia apurada em três
+  projetos. Agora `ehLeadDeTeste()` (em `lib/funil.mjs`, com teste) tira nome "teste", e-mail
+  começando com "teste" e domínio nosso — e quem testa com nome plausível manda
+  `metadata.teste: true`. **A heurística é o piso, não a garantia:** a defesa que não depende
+  dela é o `--ver`, que agora lista os leads contados NOME A NOME. Confira as pessoas antes de
+  citar a taxa.
+- **`não apurado` da coluna de leads não quer dizer "o site não captura".** Queria dizer, no
+  máximo, "o CRM do hub não tem". A Atma capturava havia dois meses. Antes de escrever
+  encanamento novo: procure a tabela do próprio projeto, o Resend, a caixa de entrada.
 - **A 1ª corrida imprimia `6,67%` sozinho.** Esse número cai na faixa ELITE da tabela da pesquisa
   sendo **2 leads em 30 cliques**. A fração agora sai colada: `6,67% (2/30)`. Regra da casa: aviso ao
   lado perde para percentual; denominador DENTRO do texto, não.

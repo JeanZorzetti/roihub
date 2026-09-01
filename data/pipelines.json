@@ -28,5 +28,15 @@
     "slug": "verticemarketing",
     "nome": "Vértice Marketing (agência)",
     "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "sirius",
+    "nome": "Sirius CRM",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
+  },
+  {
+    "slug": "estetiacrm",
+    "nome": "Estetia CRM (clínicas de estética)",
+    "etapas": ["novo", "contato", "proposta", "ganho", "perdido"]
   }
 ]

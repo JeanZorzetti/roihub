@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { apurado, naoApurado, ehApurado, razao, montarLinha, resumir, pct, DEGRAUS } from "../lib/funil.mjs";
+import { apurado, naoApurado, ehApurado, razao, montarLinha, resumir, pct, DEGRAUS, ehLeadDeTeste } from "../lib/funil.mjs";
 
 test("célula não apurada nunca se confunde com zero", () => {
   assert.equal(ehApurado(apurado(0)), true);
@@ -57,4 +57,26 @@ test("resumo não é acumulado: as casas somam o total", () => {
 test("percentual com 2 casas — arredondar mata o sinal de um funil raso", () => {
   assert.equal(pct(3 / 1240), "0,24%");
   assert.equal(pct(0), "0,00%");
+});
+
+test("lead que nós mesmos criamos não conta como demanda", () => {
+  // Os 5 que o crm_leads tinha na vida inteira em 01/09/2026 — e de onde saía o único
+  // CR(clique→lead) do portfólio. Se estes contarem, o critério do subprojeto fecha com um curl.
+  for (const l of [
+    { nome: "Teste", email: "teste@teste.com.br" },
+    { nome: "TESTE E2E Spec012", email: "teste-spec012@roilabs.com.br" },
+    { nome: "Teste", email: "flow.controlx@gmail.com" },
+  ])
+    assert.equal(ehLeadDeTeste(l), true, l.email);
+
+  // Escotilha para o teste com e-mail plausível, que a heurística não pega sozinha.
+  assert.equal(ehLeadDeTeste({ nome: "Ana Souza", email: "ana@gmail.com", metadata: { teste: true } }), true);
+
+  // E o que NÃO pode virar teste: gente de verdade. Nomes reais do patient_leads da Atma.
+  for (const l of [
+    { nome: "Alicia Oliveira Silva", email: "aliciaoliveira087@gmail.com" },
+    { nome: "Marcelo Tizzi", email: "marcelotizzi@gmail.com" },
+    { nome: "Estela Prado", email: "estela@clinica.com.br" }, // começa com "este", não com "teste"
+  ])
+    assert.equal(ehLeadDeTeste(l), false, l.email);
 });

@@ -17,7 +17,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { consultarGsc, diasAtras } from "../lib/gsc-consulta.mjs";
-import { apurado, naoApurado, ehApurado, montarLinha, resumir, mostrar, pct } from "../lib/funil.mjs";
+import { apurado, naoApurado, ehApurado, montarLinha, resumir, mostrar, pct, ehLeadDeTeste } from "../lib/funil.mjs";
 
 const ver = process.argv.includes("--ver");
 const ler = (p) => JSON.parse(readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8"));
@@ -35,39 +35,128 @@ const pipelineDe = (slug) => PIPELINE_DO_PROJETO[slug] ?? slug;
 const temPipeline = new Set(pipelines.map((p) => p.slug));
 
 // ── leads ────────────────────────────────────────────────────────────────────────────────────
-// Uma consulta só, com as DUAS contagens: a da janela e a histórica. A histórica não é enfeite —
-// é ela que decide se o 0 da janela pode ser publicado (ver `celulaLeads`).
-async function lerLeads() {
-  if (!process.env.DATABASE_URL) return { erro: "DATABASE_URL ausente" };
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 2 });
+// Duas fontes, e a distinção importa: o CRM do hub (`crm_leads`) e o banco DO PRÓPRIO PROJETO,
+// para quem já capturava lead antes de o hub existir.
+const zerado = () => ({ total: 0, janela: 0, teste: 0, reais: [] });
+
+// Linha a linha em vez de `count()` no SQL por dois motivos: o filtro de lead de teste é lógica
+// testada (`ehLeadDeTeste`, com teste em `test/funil.test.mjs`), e o `--ver` precisa listar os
+// leads contados NOME A NOME. O volume é de dezenas — agrupar aqui sai mais barato que a segunda
+// query que a contagem no banco exigiria.
+function agrupar(rows, chaveDe) {
+  const m = new Map();
+  for (const r of rows) {
+    const k = chaveDe(r);
+    let e = m.get(k);
+    if (!e) m.set(k, (e = zerado()));
+    // 🚩 Lead nosso não é demanda. Sem esta linha, o critério de pronto deste subprojeto fecha
+    // com um curl — foi o que aconteceu com o `polarisia 6,67% (2/30)`, dois testes do Jean.
+    if (ehLeadDeTeste(r)) {
+      e.teste++;
+      continue;
+    }
+    e.total++;
+    if (r.dia >= INICIO && r.dia <= FIM) {
+      e.janela++;
+      e.reais.push(r);
+    }
+  }
+  return m;
+}
+
+async function comPool(url, fn) {
+  const pool = new pg.Pool({ connectionString: url, max: 2 });
   try {
-    const { rows } = await pool.query(
-      `SELECT pipeline,
-              count(*)                                                        AS total,
-              count(*) FILTER (WHERE criado::date BETWEEN $1 AND $2)          AS janela
-         FROM crm_leads GROUP BY pipeline`,
-      [INICIO, FIM],
-    );
-    return { porPipeline: new Map(rows.map((r) => [r.pipeline, { total: +r.total, janela: +r.janela }])) };
-  } catch (e) {
-    // Falha FECHADA: banco fora NÃO pode virar "0 leads em todo mundo", que é o melhor placar
-    // possível produzido pelo pior estado possível.
-    return { erro: e?.code ?? e?.message?.slice(0, 80) ?? "erro" };
+    return await fn(pool);
   } finally {
     await pool.end();
   }
 }
 
-function celulaLeads(slug, leads) {
+async function lerLeads() {
+  if (!process.env.DATABASE_URL) return { erro: "DATABASE_URL ausente" };
+  try {
+    const rows = await comPool(process.env.DATABASE_URL, async (pool) =>
+      (
+        await pool.query(
+          `SELECT pipeline, nome, email, metadata, to_char(criado, 'YYYY-MM-DD') AS dia
+             FROM crm_leads ORDER BY criado`,
+        )
+      ).rows,
+    );
+    return { porPipeline: agrupar(rows, (r) => r.pipeline) };
+  } catch (e) {
+    // Falha FECHADA: banco fora NÃO pode virar "0 leads em todo mundo", que é o melhor placar
+    // possível produzido pelo pior estado possível.
+    return { erro: e?.code ?? e?.message?.slice(0, 80) ?? "erro" };
+  }
+}
+
+// Projeto que captura lead no PRÓPRIO banco. A Atma tem funil de paciente desde julho
+// (`patient_leads`, com nome e e-mail de gente real): instrumentar o site para reenviar tudo ao
+// CRM do hub criaria uma segunda cópia PIOR da tabela que já existe — sem o histórico, contando
+// só de hoje em diante. O hub lê a fonte onde ela está.
+//
+// Uma entrada só, e explícita. `sirius` e `estetiacrm` NÃO entram aqui: os formulários dos dois
+// (`/api/contact` e `/api/leads/capture-calculator`) só disparam e-mail e Resend, não gravam em
+// lugar nenhum — lá não há o que ler, e o conserto é no site.
+const FONTES_PROPRIAS = {
+  atma: {
+    env: "ATMA_DATABASE_URL",
+    tabela: "patient_leads",
+    sql: `SELECT nome, email, to_char(created_at, 'YYYY-MM-DD') AS dia
+            FROM patient_leads ORDER BY created_at`,
+  },
+};
+
+async function lerFontesProprias() {
+  const out = new Map();
+  for (const [slug, f] of Object.entries(FONTES_PROPRIAS)) {
+    const url = process.env[f.env];
+    if (!url) {
+      out.set(slug, { erro: `${f.env} ausente` });
+      continue;
+    }
+    try {
+      const rows = await comPool(url, async (pool) => (await pool.query(f.sql)).rows);
+      out.set(slug, { agregado: agrupar(rows, () => slug).get(slug) ?? zerado() });
+    } catch (e) {
+      out.set(slug, { erro: e?.code ?? String(e?.message ?? "erro").slice(0, 60) });
+    }
+  }
+  return out;
+}
+
+// 🚩 ZERO LEAD NA HISTÓRIA INTEIRA NÃO É ZERO — é a pergunta sem resposta. Fonte ligada e nenhum
+// lead jamais recebido não separa "o site não manda evento" de "manda e ninguém converteu". As
+// duas hipóteses dão o mesmo 0 e pedem trabalho oposto (encanamento × oferta).
+function contar(e, onde) {
+  if (!e || e.total === 0)
+    return naoApurado(
+      e?.teste
+        ? `${e.teste} lead(s) em ${onde}, TODOS de teste nosso — nenhum lead real jamais recebido`
+        : `${onde} existe e nunca recebeu lead — não separa 'sem instrumentação' de 'instrumentado e zero'`,
+    );
+  return apurado(e.janela);
+}
+
+function celulaLeads(slug, leads, proprias) {
+  const propria = proprias.get(slug);
+  if (propria) {
+    if (propria.erro) return naoApurado(`fonte própria indisponível (${propria.erro})`);
+    return contar(propria.agregado, `tabela \`${FONTES_PROPRIAS[slug].tabela}\` do próprio projeto`);
+  }
   if (leads.erro) return naoApurado(`banco indisponível (${leads.erro})`);
   const pipe = pipelineDe(slug);
   if (!temPipeline.has(pipe)) return naoApurado("sem pipeline no CRM");
-  const l = leads.porPipeline.get(pipe);
-  // 🚩 ZERO LEAD NA HISTÓRIA INTEIRA NÃO É ZERO — é a pergunta sem resposta. Pipeline cadastrada
-  // e nenhum lead jamais recebido não separa "o site não manda evento" de "manda e ninguém
-  // converteu". As duas hipóteses dão o mesmo 0 e pedem trabalho oposto (encanamento × oferta).
-  if (!l || l.total === 0) return naoApurado("pipeline existe e nunca recebeu lead — não separa 'sem instrumentação' de 'instrumentado e zero'");
-  return apurado(l.janela);
+  return contar(leads.porPipeline.get(pipe), `pipeline \`${pipe}\``);
+}
+
+/** Os leads REAIS contados na janela, por slug — o `--ver` lista nome a nome. */
+function reaisDe(slug, leads, proprias) {
+  const propria = proprias.get(slug);
+  if (propria) return propria.agregado?.reais ?? [];
+  return leads.porPipeline?.get(pipelineDe(slug))?.reais ?? [];
 }
 
 // ── vendas ───────────────────────────────────────────────────────────────────────────────────
@@ -108,13 +197,15 @@ console.log("fontes: GSC (cliques) · crm_leads (leads) · campo `vendas` do car
 const leads = await lerLeads();
 if (leads.erro) console.log(`⚠️ coluna LEADS caiu inteira: ${leads.erro} — nenhuma linha vira 0 por isso\n`);
 
+const proprias = await lerFontesProprias();
+
 const linhas = [];
 for (const p of projetos) {
   linhas.push(
     montarLinha({
       slug: p.slug,
       cliques: await celulaCliques(p),
-      leads: celulaLeads(p.slug, leads),
+      leads: celulaLeads(p.slug, leads, proprias),
       vendas: celulaVendas(p),
     }),
   );
@@ -132,9 +223,16 @@ for (const l of [...linhas].sort((a, b) => b.profundidade - a.profundidade || a.
     ? `${pct(l.crCliqueLead.valor)} (${l.leads.valor}/${l.cliques.valor})`
     : "—";
   console.log(`${l.slug.padEnd(22)}${col(l.cliques, 12)}${col(l.leads, 14)}${col(l.vendas, 14)}   ${taxa}`);
-  if (ver)
+  if (ver) {
     for (const d of ["cliques", "leads", "vendas"])
       if (!ehApurado(l[d])) console.log(`${"".padEnd(22)}   · ${d}: ${l[d].naoApurado}`);
+    // LISTA NOMINAL do numerador. Percentual não se confere; nome e e-mail se conferem — e foi
+    // exatamente a falta disto que deixou `6,67%` de dois testes passar por taxa do portfólio.
+    const reais = reaisDe(l.slug, leads, proprias);
+    for (const r of reais.slice(0, 5))
+      console.log(`${"".padEnd(22)}   · lead: ${r.dia} ${String(r.nome).slice(0, 28)} <${r.email ?? "sem e-mail"}>`);
+    if (reais.length > 5) console.log(`${"".padEnd(22)}   · … e mais ${reais.length - 5} lead(s) na janela`);
+  }
 }
 
 const r = resumir(linhas);

@@ -38,7 +38,10 @@ test("etapa que não existe no JSON é rejeitada — sem FK, a validação é aq
 });
 
 test("pipeline desconhecida é rejeitada", () => {
-  assert.equal(parseLead({ ...base, pipeline: "sirius" }, pipelines).ok, false);
+  // Slug inventado, e não o de um projeto real: este teste usava "sirius" e virou falso
+  // vermelho no dia em que o sirius ganhou pipeline. Exemplo de ausência não se escreve com
+  // nome de algo que pode passar a existir.
+  assert.equal(parseLead({ ...base, pipeline: "pipeline-que-nunca-vai-existir" }, pipelines).ok, false);
   assert.equal(parseLead({ ...base, pipeline: "" }, pipelines).ok, false);
 });
 
