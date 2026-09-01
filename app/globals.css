@@ -5,7 +5,11 @@
   --surface: #fcfcfb;
   --ink: #0b0b0b;
   --ink2: #52514e;
-  --muted: #898781;
+  /* #898781 dava 3,50:1 sobre --surface e reprovava o AA de 4,5:1 — e este é o cinza de `.foot`,
+     de todo `th` e de todo `td.foot`, ou seja, do texto `não apurado — motivo` do /okr, que é
+     justamente o que a R1 manda ocupar o LUGAR do número. Régua ilegível não é régua. #72706a
+     mantém o cinza quente e dá 4,82:1 sobre --surface e 4,70:1 sobre --page. */
+  --muted: #72706a;
   --grid: #e1e0d9;
   --border: rgba(11, 11, 11, 0.1);
   /* ramp sequencial (magnitude do score) */
@@ -184,6 +188,12 @@ td.rank { color: var(--muted); font-variant-numeric: tabular-nums; width: 30px; 
 .score-fill { height: 100%; border-radius: 4px; }
 
 td.acao-cell { color: var(--ink2); max-width: 260px; }
+
+/* aba OKR — o veredito (§7.N) é a única coisa que a tela existe para dizer, e no `.hero-top` da
+   home ele ia para o extremo direito: 10px de fonte a 1350px do nome que ele qualifica. Cola no
+   nome e sobe de 10 para 12px. `baseline` alinha o pill à linha do nome, não ao topo da caixa. */
+.okr-top { justify-content: flex-start; align-items: baseline; gap: 10px; }
+.okr-top .pill { margin-left: 0; font-size: 12px; padding: 1px 9px; }
 
 /* aba SEO — small multiples */
 .seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 16px; }

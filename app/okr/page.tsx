@@ -123,12 +123,18 @@ export default async function OkrPage() {
   // Ordem da §7: posição 1 primeiro. `sem perfil` (posição 0) vai para o FIM — não é um veredito,
   // é a ausência de um.
   const ordenadas = [...linhas].sort((a, b) => (a.v.posicao || 99) - (b.v.posicao || 99) || a.p.slug.localeCompare(b.p.slug));
+  // 23 dos 40 cards renderizavam o MESMO texto duas vezes ("sem perfil declarado" no pill e no
+  // corpo) e ocupavam 2288px de rolagem a 1440 — 57% dos cards com zero informação. A ausência de
+  // veredito continua contada no resumo acima e nomeável aqui embaixo, mas não paga um card
+  // inteiro cada. Mesmo padrão do `.sem-site` da home: pendência recolhida, não alerta.
+  const comVeredito = ordenadas.filter((l) => l.v.posicao);
+  const semPerfil = ordenadas.filter((l) => !l.v.posicao);
 
   return (
     <main className="page">
       <Tabs active="okr" />
 
-      <section className="card">
+      <section className="card ag-section">
         <p className="eyebrow">OKR · a árvore N0-N6 do portfólio</p>
         <h1>O que adianta fazer agora</h1>
         <p>
@@ -146,10 +152,12 @@ export default async function OkrPage() {
         {erroLeads && <p className="banner">⚠️ A coluna de leads caiu inteira ({erroLeads}). Nenhuma linha vira 0 por isso — todas viram `não apurado`.</p>}
       </section>
 
-      {ordenadas.map(({ p, ficha, v }) => (
-        <section className="card" key={p.slug}>
-          <div className="hero-top">
-            <span className="hero-name">{p.nome}</span>
+      {comVeredito.map(({ p, ficha, v }) => (
+        <section className="card ag-section" key={p.slug}>
+          {/* `<h2>`, não `<span>`: com 40 nomes em span a página inteira tinha UM heading, e quem
+              navega por heading parava uma vez em 10886px. */}
+          <div className="hero-top okr-top">
+            <h2 className="hero-name">{p.nome}</h2>
             <span className={v.posicao === 1 ? "pill pill-crit" : v.posicao === 2 ? "pill pill-warn" : "pill"}>
               {v.posicao ? `§7.${v.posicao} — ${v.rotulo}` : v.rotulo}
             </span>
@@ -193,8 +201,26 @@ export default async function OkrPage() {
         </section>
       ))}
 
-      <section className="card">
-        <p className="eyebrow">O que isto NÃO vê</p>
+      {semPerfil.length > 0 && (
+        <details className="sem-site">
+          <summary>
+            {semPerfil.length} projetos sem perfil declarado — fora da árvore até alguém escolher a cadeia
+          </summary>
+          <ul>
+            {semPerfil.map(({ p }) => (
+              <li key={p.slug}>
+                <a href={p.url} target="_blank" rel="noreferrer">
+                  {p.nome}
+                </a>
+                <code>{p.slug}</code>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      <section className="card ag-section">
+        <h2 className="eyebrow">O que isto NÃO vê</h2>
         <ul className="foot">
           <li>
             <strong>`não apurado` nunca significa zero.</strong> Significa que não há de onde ler — e para cada célula o conserto é
