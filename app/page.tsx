@@ -209,6 +209,7 @@ export default async function Page() {
                 <td>
                   <div className="proj-name">
                     {p.nome}
+                    {p.standby && <span className="pill" title={p.standby}>⏸ STAND-BY</span>}
                     {!p.curated && <span className="pill">SEM CURADORIA</span>}
                   </div>
                   <div className="proj-url">
@@ -241,8 +242,8 @@ export default async function Page() {
                   </div>
                 </td>
                 <td className={acaoDone(p) ? "acao-cell done" : "acao-cell"}>
-                  {p.acao}
-                  {p.acao && (
+                  {p.standby ? p.standby : p.acao}
+                  {p.acao && !p.standby && (
                     <span className={dono(p) ? "pill" : "pill pill-warn"}>
                       {dono(p) ? rotuloResp(dono(p)) : "sem responsável"}
                     </span>

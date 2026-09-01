@@ -31,6 +31,11 @@ export type Project = {
   estado?: "no-ar" | "no-ar-inutilizavel" | "prototipo";
   acao: string;
   acaoDesc: string;
+  /** Stand-by: decisão de não trabalhar o projeto agora, e o motivo. Preenchido = cai pro fim do
+   * ranking (`ordemDoRanking`) e a `acao` não vira linha na agenda — mas continua sendo medido
+   * (health, GSC, insights) e a `acao` fica guardada intacta para quando voltar. Por isso é campo
+   * e não apagar a `acao`: apagar destrói a curadoria e zera o dono no banco. */
+  standby?: string;
   /** false = repo do GitHub que ainda não tem receita/blockers/ação definidos à mão. */
   curated: boolean;
   repo: string | null;

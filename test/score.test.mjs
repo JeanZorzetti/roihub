@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeScore, seoScoreFromClicks, decayFromHealth, WEIGHTS } from "../lib/score.mjs";
+import { computeScore, seoScoreFromClicks, decayFromHealth, WEIGHTS, ordemDoRanking } from "../lib/score.mjs";
 
 test("pesos somam 1", () => {
   const sum = Object.values(WEIGHTS).reduce((a, b) => a + b, 0);
@@ -51,4 +51,19 @@ test("seoScoreFromClicks: crescimento mapeado e clampado", () => {
   assert.equal(seoScoreFromClicks(500, 100), 10); // clamp topo
   assert.equal(seoScoreFromClicks(5, 0), 8); // saiu do zero
   assert.equal(seoScoreFromClicks(0, 0), 2); // parado no zero
+});
+
+test("ordemDoRanking: stand-by cai pro fim mesmo com o maior score", () => {
+  const projetos = [
+    { slug: "parado", standby: "⏸ decisão do Jean", score: 99, curated: true },
+    { slug: "curado", score: 40, curated: true },
+    { slug: "cru", score: 40, curated: false }, // mesmo score: curado empata acima
+    { slug: "foco", score: 55, curated: true },
+  ];
+  assert.deepEqual([...projetos].sort(ordemDoRanking).map((p) => p.slug), ["foco", "curado", "cru", "parado"]);
+  // é isto que impede o projeto parado de virar foco do dia sozinho quando o site dele cai
+  // (health falso força decayEff 10 em evaluate.ts)
+  assert.notEqual([...projetos].sort(ordemDoRanking)[0].slug, "parado");
+  // campo ausente = não está em stand-by; não pode virar `undefined` mandando pro fim
+  assert.deepEqual([{ score: 1 }, { score: 2 }].sort(ordemDoRanking).map((p) => p.score), [2, 1]);
 });

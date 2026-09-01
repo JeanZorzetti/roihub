@@ -232,6 +232,21 @@ test("acoesDoRanking: card sem `acao` não vira linha, e o #N continua sendo a p
   assert.deepEqual(acoesDoRanking([{ slug: "novo", score: 1 }]), []);
 });
 
+test("acoesDoRanking: projeto em stand-by não vira linha, e a `acao` dele fica intacta", () => {
+  const curados = [
+    { slug: "atma", acao: "medir o checkout", score: 9 },
+    { slug: "compass", acao: "ligar o GitHub OAuth", standby: "⏸ STAND-BY 01/09", score: 5 },
+    { slug: "sirius", acao: "ligar a cobrança", score: 3 },
+  ];
+  const acoes = acoesDoRanking(curados);
+  // o corte é o `standby`, NÃO apagar a ação: apagar destruiria a curadoria e zeraria o dono
+  assert.deepEqual(acoes.map((a) => a.projeto), ["atma", "sirius"]);
+  assert.equal(curados[1].acao, "ligar o GitHub OAuth");
+  // tirar o campo devolve a linha, sem precisar reescrever nada
+  const devolta = acoesDoRanking(curados.map(({ standby, ...p }) => p));
+  assert.deepEqual(devolta.map((a) => a.projeto), ["atma", "compass", "sirius"]);
+});
+
 test("acoesDoRanking: o dono vem do Map pela MESMA key do check", () => {
   const curados = [
     { slug: "atma", acao: "medir o checkout", score: 9 },

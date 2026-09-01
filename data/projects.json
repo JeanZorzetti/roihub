@@ -163,7 +163,8 @@
     "acaoDesc": "AUTOPUBLISH 25/07: ligado (ativação total dos 10). Renderizador mdx en-US, risk legal-safe; layout renderiza FAQ e Related articles (layoutRenders já declarado). Inventário de 77 arquivos → run lento, request-failed no Actions pode ser o corte de ~300s do proxy: confira o commit no repo alvo. Run agora à 00:13 BRT. Repo: ROI Labs/review-dispute-agent. ✅ GOOGLE_CLIENT_ID setado no EasyPanel e disputa E2E rodada — OAuth GBP funcionando, fechado até 13/07. A revisão interina de 11/07 (nimblabs/docs/killgate-review-2026-07-11.md) marcou ReviewShield EM RISCO no kill-gate: o blog impressiona, mas o /checker (a página que converte) está em p78. Tarefa dev: on-page do checker (title/H1/copy na query alvo) + links internos dos posts do blog → /checker. Medir o efeito na próxima revisão interina. ✅ EXECUTADO 16/08 (commits 041bf73+02eefdf, em origin/main): CTA dos 76 posts trocado pra âncora com keyword, link da home no Hero, links contextuais nos 3 posts com impressão, bloco de saída no /fake-review-checker, dateModified bumpado. On-page (title/H1/FAQPage+WebApplication JSON-LD/canonical) já era exact-match desde 12/06. 🚩 REMEDIDO 31/08: NENHUM efeito — /fake-review-checker segue em pos 79,9 (era 76,6 em 12/07), 34 imp/28d, ZERO clique desde sempre. URL Inspection API nas 91 URLs do sitemap: só 3 'Submitted and indexed' (/, /blog, /fake-review-checker), 9 'Crawled - currently not indexed' e 79 de 91 (87%) 'URL is unknown to Google' — nunca rastreadas. Crawl Stats: 95,2% das requisições do Googlebot são Refresh, só 4,8% Discovery. O card estava pedindo o remédio errado: on-page e link interno têm teto baixo aqui, o gargalo é DESCOBERTA — zero backlink externo, subdomínio sem autoridade. Achado à parte: 1 URL do sitemap está malformada, espaço literal não escapado em <loc> (`/blog/category/Review Removal Process`, devia ser o slug `review-removal`) — sitemap tecnicamente inválido nessa linha.",
     "acao": "31/08: on-page+links pro /checker JÁ FEITO (16/08) e remedido sem efeito — pos 79,9, 0 clique. O gargalo é indexação: 79 de 91 páginas nunca rastreadas pelo Google (zero backlink externo). Próximo passo não é copy: conseguir link/menção externa (diretório, guest post, comunidade de contractors) que dê autoridade e budget de crawl ao subdomínio; sitemap sozinho não compra descoberta.",
     "familia": "produto",
-    "estado": "no-ar-inutilizavel"
+    "estado": "no-ar-inutilizavel",
+    "standby": "⏸ STAND-BY desde 01/09/2026, decisão do Jean: o foco vai para os projetos que já têm caminho de cobrança. Sem prazo de retomada — a `acao` abaixo fica guardada intacta e volta para a agenda no dia em que este campo sair. Parado com o gargalo em indexação (79/91 páginas nunca rastreadas, zero backlink), não em produto."
   },
   {
     "slug": "context",
@@ -180,7 +181,8 @@
     "acaoDesc": "Repo: ROI Labs/context-keeper. ✅ User.apiToken hasheado — fechado até 13/07 (publish 1.2.0 já estava no npm desde 10/06). llms.txt confirmado 404 em 13/07 — tarefa segue válida. Indexação do subdomínio segue no card nimblabs (não duplicar). Enquanto o índice não vem, deixar as páginas prontas pra citação em IA seguindo o playbook GEO/AEO do portfólio: llms.txt, @graph único (SoftwareApplication + Organization), BLUF nos posts do blog e whitelist de crawlers IA no robots — dev tool de contexto pra Claude Code é exatamente o tipo de produto que ChatGPT/Perplexity citam, e citação converte 4–23× melhor.",
     "acao": "GEO/AEO on-page do CK: llms.txt + @graph único + BLUF no blog",
     "familia": "cobranca",
-    "estado": "no-ar"
+    "estado": "no-ar",
+    "standby": "⏸ STAND-BY desde 01/09/2026, decisão do Jean: o foco vai para os projetos que já têm caminho de cobrança. Sem prazo de retomada — a `acao` abaixo fica guardada intacta e volta para a agenda no dia em que este campo sair. Parado no ar e sem billing ativo."
   },
   {
     "slug": "aftercare",
@@ -325,7 +327,8 @@
     "acaoDesc": "Renomeado de tape-vision-ai-92 → tapevision em 30/07 (host antigo em 308). A virada de 14/08 invalidou o card anterior inteiro, e o destino do Backend/ + MLEngine FOI decidido: MLEngine aposentado (commit b62ff07) e Backend/ hospedado — apitapevision.roilabs.com.br responde /health com status healthy, verificado por curl em 14/08. O aitradingapi.roilabs.com.br segue NXDOMAIN, mas saiu do código em 13/08, então 'o dashboard não tem de onde ler' deixou de ser verdade. O problema mudou de lugar, não sumiu: o que está no ar é server-production.js, 511 linhas com 30 ocorrências de Math.random, ignorando as ~41 mil linhas de TradingEngine/TapeReader escritas em Backend/src — nenhum dado de mercado real jamais entrou no sistema. A forma do produto já foi decidida: agente local no Windows do cliente, só sinal (quem envia a ordem é o cliente, o que evita regra da CVM), e a nuvem encolhe para auth, billing e histórico. A spec 002 fechou 14/14 tarefas em 14/08 com o motor de verdade em agent/ (tape_reader, order_flow_analyzer, session_filter), validado numa corrida de 3h ao vivo contra o feed público da Binance — mercado errado, mecânica certa. O gate do produto real é dinheiro: a licença DLL Feed da Nelogica é paga. MetaTrader 5 foi testado e descartado (corretora BR não serve WDO/WIN por MT5). Atenção ao publicar: push em main deploya, então mudança de comportamento vai em branch.",
     "acao": "Ligar o motor da spec 002 (validado ao vivo em 14/08) no lugar do Math.random() — é o único passo que não espera a licença paga da Nelogica",
     "familia": "produto",
-    "estado": "no-ar-inutilizavel"
+    "estado": "no-ar-inutilizavel",
+    "standby": "⏸ STAND-BY desde 01/09/2026, decisão do Jean: o foco vai para os projetos que já têm caminho de cobrança. Sem prazo de retomada — a `acao` abaixo fica guardada intacta e volta para a agenda no dia em que este campo sair. Parado atrás de gate externo (licença paga da Nelogica) — já estava deprioritizado desde 14/08."
   },
   {
     "slug": "potencialarquitetado",
@@ -726,7 +729,8 @@
     "acaoDesc": "Está no ar em compass.polarisia.com.br. Estado ATUALIZADO em 15/08 (substitui o registro de 30/07, que media as 4 chaves Stripe vazias e o sitemap em 404 — as duas coisas foram resolvidas nesta data): as 4 chaves Stripe (SECRET_KEY, PRICE_PRO_MONTHLY, PRICE_LIFETIME, WEBHOOK_SECRET) estão em Vercel production, o webhook endpoint foi recriado (o antigo nunca teve secret salvo), e um `vercel --prod` aplicou tudo — smoke test pós-deploy: / e /pricing 200, /api/stripe/checkout 401 (pede sessão, não quebra mais). O sitemap.xml/robots.txt saíram do 404 e foram submetidos em sc-domain:polarisia.com.br. Faltam GitHub OAuth e Resend: sem eles ninguém loga, então ninguém completa um checkout de verdade — é o próximo blocker real, não o Stripe.",
     "acao": "Configurar GitHub OAuth (callback compass.polarisia.com.br/api/auth/callback/github) e Resend (magic link + e-mail transacional) — sem isso ninguém loga pra testar o checkout que já está ligado",
     "familia": "cobranca",
-    "estado": "no-ar-inutilizavel"
+    "estado": "no-ar-inutilizavel",
+    "standby": "⏸ STAND-BY desde 01/09/2026, decisão do Jean: o foco vai para os projetos que já têm caminho de cobrança. Sem prazo de retomada — a `acao` abaixo fica guardada intacta e volta para a agenda no dia em que este campo sair. Parado com o checkout Stripe já ligado e sem login: quem retomar começa pelo GitHub OAuth + Resend."
   },
   {
     "slug": "orion",
