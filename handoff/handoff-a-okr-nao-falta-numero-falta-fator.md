@@ -185,12 +185,65 @@ sem saber o sinal do próximo.
 
 ---
 
-## Próximo passo recomendado (não executado)
+## Passo A — EXECUTADO no mesmo dia, e a resposta é ZERO
 
-**Passo A** — o script do funil por projeto com `não apurado`. ~1 script, zero LLM, zero infra.
-Produz na primeira corrida o número que fecha a discussão: **quantos dos 35 têm funil mensurável de
-ponta a ponta.** Palpite: 1. Se for 1, a OKR está decidida por medição e não por opinião.
+`lib/funil.mjs` (puro) + `scripts/funil.mjs` (coleta) + `test/funil.test.mjs` (7 casos, registrado
+no `package.json`). Zero LLM, zero pool, zero infra nova. Três fontes que já existiam: GSC (cliques,
+janela 28d fechando em D-3), `crm_leads` (leads por pipeline), campo `vendas` do card.
 
-⚠️ Lembrar da regra desta casa: **a primeira corrida mede o CHECK.** O primeiro resultado do passo A
-provavelmente diz mais sobre o script do que sobre o portfólio — conferir nominalmente antes de
-publicar percentual.
+```
+node --env-file=.env scripts/funil.mjs [--ver]
+```
+
+**Corrida de 01/09/2026, janela 01/08 → 29/08:**
+
+| onde o funil MORRE | n |
+|---|---|
+| nem cliques | 1 |
+| para nos cliques | 31 |
+| para nos leads | 3 |
+| **mensurável até vendas** | **0** |
+
+- **0 de 35 têm funil mensurável de ponta a ponta.** O palpite era 1; era otimista.
+- **1 tem taxa clique→lead apurada:** `polarisia`, **6,67% (2/30)**.
+- Os 3 que chegam ao degrau de leads são `polarisia` (2), `matchfios` (1), `verticemarketing` (1).
+- `portfolio` é o único sem nem cliques — `*.vercel.app` fica fora de toda propriedade do GSC.
+
+**Isto fecha a discussão da OKR por medição, não por opinião:** não existe hoje um único projeto do
+qual se possa derivar `ARR` pela cascata da pesquisa. Escrever meta de receita agora seria escrever
+benchmark de terceiro.
+
+### O que a primeira corrida achou do próprio CHECK (VER-08, mais uma vez)
+
+**A régua concorda com uma régua independente:** `atma` deu 535 cliques nas duas — neste script e no
+`serie-gsc.mjs` somando a série diária da mesma janela. E as 3 linhas de lead conferem contra o
+`crm_leads` lido à mão (polaris 2 em 10 e 11/08; matchfios tem 2 mas a de 31/08 cai FORA da janela;
+vertice 1 em 16/08).
+
+**Um defeito real, consertado na hora:** a primeira versão imprimia `6,67%` sozinho. Esse número cai
+na faixa de **ELITE** da tabela de benchmarks da pesquisa (5–11% para visitante→lead) e é **2 leads
+em 30 cliques** — ruído de amostra com cara de performance. Agora a fração sai colada no percentual,
+dentro do texto: `6,67% (2/30)`. Aviso ao lado perde para percentual; denominador dentro, não.
+
+**Achado de brinde, não do funil:** os 5 leads que o CRM tem na vida inteira estão TODOS em
+`etapa=perdido`. Não muda nenhuma célula deste relatório e não foi investigado aqui.
+
+### As três regras que o `lib/funil.mjs` existe para sustentar
+
+1. **`0` e `não apurado` nunca ocupam a mesma casa.** Cada célula é `{valor}` ou `{naoApurado: motivo}`.
+2. **`0/0` NÃO é 0%.** É a diferença entre "ninguém que chegou converteu" (problema de conversão) e
+   "ninguém chegou" (problema de tráfego, ou de demanda). Vira `não apurado`.
+3. **Numerador > denominador vira `não apurado`, nunca taxa acima de 100%.** Lead sem clique no GSC
+   significa que as pontas não medem a mesma coisa — outro canal, ou propriedade que não cobre o host.
+
+E a regra de fora: **pipeline cadastrada com ZERO lead na história inteira é `não apurado`, não 0** —
+não separa "o site não manda evento" de "manda e ninguém converteu", e as duas hipóteses pedem
+trabalho oposto (encanamento × oferta). É por isso que o `atma`, com 535 cliques, aparece sem lead
+apurado em vez de com 0,00%.
+
+## Próximo passo (não executado)
+
+Com o número na mão, o KR2 do handoff deixa de ser abstrato: **instrumentar evento de lead nos que
+têm tráfego e não têm medição** — `atma` (535 cliques), `sirius` (56), `estetiacrm` (23). São os três
+únicos do portfólio com tráfego relevante e nenhum denominador. `POST /api/crm/leads` +
+`CRM_INGEST_SECRET` já existem; falta o lado dos sites.
