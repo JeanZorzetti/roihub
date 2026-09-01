@@ -19,7 +19,8 @@ export function Tabs({
     | "busca"
     | "crm"
     | "ia"
-    | "automacao";
+    | "automacao"
+    | "okr";
 }) {
   const tab = (key: string, href: string, label: string) => (
     <Link href={href} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
@@ -39,6 +40,9 @@ export function Tabs({
       {tab("ideias", "/ideias", "Ideias")}
       {tab("resumo", "/resumo", "Resumo")}
       {tab("busca", "/busca", "Busca")}
+      {/* OKR fica depois do CRM porque é dele que sai o numerador: a árvore só mede o que o CRM
+          e o gateway já gravaram. */}
+      {tab("okr", "/okr", "OKR")}
       {tab("crm", "/crm", "CRM")}
       {tab("ia", "/ia", "IA")}
       {tab("automacao", "/automacao", "Automação")}

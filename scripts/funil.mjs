@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { consultarGsc, diasAtras } from "../lib/gsc-consulta.mjs";
 import { apurado, naoApurado, ehApurado, montarLinha, resumir, mostrar, pct, ehLeadDeTeste } from "../lib/funil.mjs";
+import { pipelineDe } from "../lib/okr.mjs";
 
 const ver = process.argv.includes("--ver");
 const ler = (p) => JSON.parse(readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8"));
@@ -27,11 +28,8 @@ const pipelines = ler("../data/pipelines.json");
 const INICIO = diasAtras(31);
 const FIM = diasAtras(3);
 
-// A pipeline do CRM cujo slug NÃO é o slug do projeto. Mapa explícito de uma entrada em vez de
-// casar por prefixo: prefixo erraria calado, e atribuir lead ao projeto errado é leitura de
-// dinheiro. Pipeline nova com nome divergente entra aqui à mão, de propósito.
-const PIPELINE_DO_PROJETO = { polarisia: "polaris" };
-const pipelineDe = (slug) => PIPELINE_DO_PROJETO[slug] ?? slug;
+// O mapa de pipeline mudou de casa para `lib/okr.mjs` em 01/09: a `/okr` lê a MESMA pipeline que
+// este script, e duas cópias divergiriam na primeira pipeline nova sem ninguém ver.
 const temPipeline = new Set(pipelines.map((p) => p.slug));
 
 // ── leads ────────────────────────────────────────────────────────────────────────────────────

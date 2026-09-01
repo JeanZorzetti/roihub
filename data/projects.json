@@ -1,6 +1,7 @@
 [
   {
     "slug": "goiania",
+    "perfil": "B",
     "nome": "ROI Labs Goiânia (fitas + porcelanato)",
     "url": "https://goiania.roilabs.com.br/",
     "repo": "roilabs",
@@ -28,6 +29,7 @@
   },
   {
     "slug": "tapepro",
+    "perfil": "B",
     "nome": "Tapepro (fitas adesivas — 1ª cadeira)",
     "url": "https://tapepro.roilabs.com.br/",
     "repo": "tape",
@@ -46,6 +48,7 @@
   },
   {
     "slug": "sirius",
+    "perfil": "A",
     "nome": "Sirius CRM",
     "url": "https://siriuscrm.com.br/",
     "repo": "sirius",
@@ -63,6 +66,7 @@
   },
   {
     "slug": "fabrica",
+    "perfil": "C",
     "nome": "Estética Fábrica (landing B2B)",
     "url": "https://estetia.estetiacrm.com.br/",
     "repo": "estetia-demo",
@@ -85,6 +89,7 @@
   },
   {
     "slug": "roilabs",
+    "perfil": "C",
     "nome": "ROI Labs (site institucional)",
     "url": "https://roilabs.com.br/",
     "repo": "roilabs",
@@ -102,6 +107,7 @@
   },
   {
     "slug": "polarisia",
+    "perfil": "A",
     "nome": "Polaris IA",
     "url": "https://polarisia.com.br/",
     "repo": "sofia-ia",
@@ -128,6 +134,7 @@
   },
   {
     "slug": "estetiacrm",
+    "perfil": "A",
     "nome": "Estetia CRM",
     "url": "https://estetiacrm.com.br/",
     "repo": "estetia",
@@ -145,6 +152,7 @@
   },
   {
     "slug": "reviewshield",
+    "perfil": "A",
     "nome": "ReviewShield",
     "url": "https://reviewshield.nimblabs.com/",
     "repo": "review-dispute",
@@ -168,6 +176,7 @@
   },
   {
     "slug": "context",
+    "perfil": "A",
     "nome": "Context Keeper",
     "url": "https://context.nimblabs.com/",
     "repo": "context-keeper",
@@ -186,6 +195,7 @@
   },
   {
     "slug": "aftercare",
+    "perfil": "D",
     "nome": "AftercareGen",
     "url": "https://aftercare.nimblabs.com/",
     "repo": "aftercare-nimblabs",
@@ -386,6 +396,7 @@
   },
   {
     "slug": "verticemarketing",
+    "perfil": "C",
     "nome": "Vértice Marketing — agência de marketing digital",
     "url": "https://verticemarketing.roilabs.com.br/",
     "repo": "vertex-landing-craft",
@@ -473,6 +484,7 @@
   },
   {
     "slug": "atma",
+    "perfil": "D",
     "nome": "Atma Aligner — alinhadores invisíveis + infoproduto R$ 47",
     "url": "https://atma.roilabs.com.br/",
     "repo": "Atma",
@@ -578,6 +590,7 @@
   },
   {
     "slug": "seo-forecaster",
+    "perfil": "A",
     "nome": "SEO Forecaster — o termo antes do volume de busca",
     "url": "https://seoforecaster.nimblabs.com/",
     "repo": "seo-forecaster",
@@ -604,6 +617,7 @@
   },
   {
     "slug": "cannibal_scan",
+    "perfil": "A",
     "nome": "CannibalScan — canibalização de páginas no browser (Rust/WASM)",
     "url": "https://cannibalscan.nimblabs.com/",
     "repo": "cannibal_scan",
@@ -695,6 +709,7 @@
   },
   {
     "slug": "compass",
+    "perfil": "A",
     "nome": "Compass — monitor de uso de IA para devs",
     "url": "https://compass.polarisia.com.br/",
     "repo": "compass",
@@ -764,6 +779,7 @@
   },
   {
     "slug": "qprime",
+    "perfil": "C",
     "nome": "QPrime — outsourcing de impressão para empresas (Goiânia)",
     "url": "https://qprime.roilabs.com.br/",
     "repo": "qprime",
@@ -803,6 +819,7 @@
   },
   {
     "slug": "vertice",
+    "perfil": "A",
     "nome": "Vértice — onboarding de clientes para agências (R$ 97–197/mês)",
     "url": "https://vertice.roilabs.com.br/",
     "repo": "vertice",

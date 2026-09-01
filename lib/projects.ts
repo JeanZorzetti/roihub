@@ -31,6 +31,14 @@ export type Project = {
   estado?: "no-ar" | "no-ar-inutilizavel" | "prototipo";
   acao: string;
   acaoDesc: string;
+  /** Perfil de negócio do §4 de `handoff/okr-kpi-template.md` — A SaaS, B E-commerce, C Serviço,
+   * D Clínica/lead. Decide QUAL cadeia a `/okr` monta: `trial → primeira cobrança` e
+   * `consulta → compareceu` falham por motivos opostos e pedem conserto oposto. Ausente é
+   * `não apurado` de propósito: cadeia errada é pior que cadeia ausente, porque parece medida. */
+  perfil?: "A" | "B" | "C" | "D";
+  /** Régua de dinheiro escrita por `scripts/vendas-mercadopago.mjs`. AUSENTE é "não olhei",
+   * `[]` é "olhei, zero" — a distinção inteira de `lib/funil.mjs`. */
+  vendas?: { data: string }[];
   /** Stand-by: decisão de não trabalhar o projeto agora, e o motivo. Preenchido = cai pro fim do
    * ranking (`ordemDoRanking`) e a `acao` não vira linha na agenda — mas continua sendo medido
    * (health, GSC, insights) e a `acao` fica guardada intacta para quando voltar. Por isso é campo
