@@ -194,6 +194,14 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
    nome e sobe de 10 para 12px. `baseline` alinha o pill à linha do nome, não ao topo da caixa. */
 .okr-top { justify-content: flex-start; align-items: baseline; gap: 10px; }
 .okr-top .pill { margin-left: 0; font-size: 12px; padding: 1px 9px; }
+/* 30px é o tamanho do PLACAR da home, onde há um card só. Aqui são 17 nomes com o mesmo peso do
+   `<h1>`, e em 390px cada um comia duas linhas. 20px separa o título da página dos itens dela. */
+.okr-top .hero-name { font-size: 20px; }
+
+/* A tabela rola sozinha em vez de fazer o card inteiro rolar; `tabIndex` no wrapper porque região
+   rolável precisa ser alcançável por teclado (WCAG 2.1.1). */
+.tabela-rolavel { overflow-x: auto; }
+.tabela-rolavel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* aba SEO — small multiples */
 .seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 16px; }
@@ -367,6 +375,14 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* São 13 abas antes do conteúdo em TODA navegação — quem usa teclado atravessava as 13 a cada
+   página. Escondido até receber foco, e aí visível como qualquer outro alvo. */
+.skip:focus {
+  position: fixed; top: 8px; left: 8px; z-index: 10;
+  width: auto; height: auto; margin: 0; padding: 6px 14px; clip: auto; overflow: visible;
+  background: var(--accent); color: #fff; border-radius: 8px;
+  font-size: 13px; font-weight: 600; text-decoration: none;
 }
 
 /* quadros (Marketing e Ideias) — Marketing em colunas lado a lado, Ideias em seções

@@ -145,9 +145,13 @@ export default async function OkrPage() {
           </strong>{" "}
           — 28 dias fechando em D-3, o atraso do Search Console.
         </p>
-        <p className="foot">
-          {resumo.porPosicao.map((n, i) => `${n} ${POSICOES[i]}`).join(" · ")} — soma {resumo.porPosicao.reduce((a: number, b: number) => a + b, 0)} de{" "}
-          {resumo.total}.
+        {/* Em ordem de índice a linha abria com `23 sem perfil declarado`, em cinza de rodapé: o
+            primeiro número que se lia era a AUSÊNCIA de veredito, e o que decide o dia (quantos com
+            fator zerado) vinha depois e apagado. Posição 0 continua na linha — a soma tem que fechar
+            em 40, senão a contagem mente sobre onde a perda acontece — mas por último. */}
+        <p>
+          {[1, 2, 3].map((i) => `${resumo.porPosicao[i]} ${POSICOES[i]}`).join(" · ")} · {resumo.porPosicao[0]} {POSICOES[0]} — soma{" "}
+          {resumo.porPosicao.reduce((a: number, b: number) => a + b, 0)} de {resumo.total}.
         </p>
         {erroLeads && <p className="banner">⚠️ A coluna de leads caiu inteira ({erroLeads}). Nenhuma linha vira 0 por isso — todas viram `não apurado`.</p>}
       </section>
@@ -173,30 +177,36 @@ export default async function OkrPage() {
           </p>
 
           {ficha.marcos.length > 0 && (
-            <table>
-              <thead>
-                <tr>
-                  <th>degrau</th>
-                  <th>valor</th>
-                  <th>taxa desde o anterior</th>
-                  <th>fonte</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ficha.marcos.map((m: { chave: string; nome: string; celula: Celula; fonte: string; familiaDoBuraco: string | null }, i: number) => (
-                  <tr key={m.chave}>
-                    <td>{m.nome}</td>
-                    <td>
-                      <Celula c={m.celula} />
-                    </td>
-                    <td>{i > 0 ? <Taxa t={ficha.taxas[i - 1]} /> : "—"}</td>
-                    <td className="foot">
-                      {m.familiaDoBuraco && <span className="pill">{m.familiaDoBuraco}</span>} {m.fonte}
-                    </td>
+            // A rolagem horizontal vinha do `overflow-x` do próprio `.card` — que não é focável, e
+            // em 390px a tabela rola de fato (383 contra 325): teclado sem mouse não alcançava
+            // colunas que existem (WCAG 2.1.1). Container próprio, focável e nomeado; assim o card
+            // também para de rolar junto com a prosa.
+            <div className="tabela-rolavel" tabIndex={0} role="region" aria-label={`Degraus da cadeia de ${p.nome}`}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>degrau</th>
+                    <th>valor</th>
+                    <th>taxa desde o anterior</th>
+                    <th>fonte</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {ficha.marcos.map((m: { chave: string; nome: string; celula: Celula; fonte: string; familiaDoBuraco: string | null }, i: number) => (
+                    <tr key={m.chave}>
+                      <td>{m.nome}</td>
+                      <td>
+                        <Celula c={m.celula} />
+                      </td>
+                      <td>{i > 0 ? <Taxa t={ficha.taxas[i - 1]} /> : "—"}</td>
+                      <td className="foot">
+                        {m.familiaDoBuraco && <span className="pill">{m.familiaDoBuraco}</span>} {m.fonte}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       ))}

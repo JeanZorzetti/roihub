@@ -28,25 +28,36 @@ export function Tabs({
     </Link>
   );
   return (
-    <nav className="tabs" aria-label="Seções">
-      {tab("home", "/", "Ranking")}
-      {tab("seo", "/seo", "SEO")}
-      {tab("infra", "/infra", "Infra")}
-      {tab("insights", "/insights", "Insights")}
-      {tab("agenda", "/agenda", "Agenda")}
-      {/* Quadros vêm logo depois da Agenda porque é dela que se distinguem: a Agenda é
-          compromisso com data, o quadro é o que ainda não virou compromisso. */}
-      {tab("marketing", "/marketing", "Marketing")}
-      {tab("ideias", "/ideias", "Ideias")}
-      {tab("resumo", "/resumo", "Resumo")}
-      {tab("busca", "/busca", "Busca")}
-      {/* OKR fica depois do CRM porque é dele que sai o numerador: a árvore só mede o que o CRM
-          e o gateway já gravaram. */}
-      {tab("okr", "/okr", "OKR")}
-      {tab("crm", "/crm", "CRM")}
-      {tab("ia", "/ia", "IA")}
-      {tab("automacao", "/automacao", "Automação")}
-    </nav>
+    <>
+      {/* O alvo mora AQUI, logo depois da nav, e não em cada página: `Tabs` é a primeira coisa
+          dentro do `<main>` das 13, então "depois da nav" é o começo do conteúdo em todas — e um
+          `id` por página seriam 13 edições para o mesmo salto. */}
+      <a href="#conteudo" className="sr-only skip">
+        Pular para o conteúdo
+      </a>
+      <nav className="tabs" aria-label="Seções">
+        {tab("home", "/", "Ranking")}
+        {tab("seo", "/seo", "SEO")}
+        {tab("infra", "/infra", "Infra")}
+        {tab("insights", "/insights", "Insights")}
+        {tab("agenda", "/agenda", "Agenda")}
+        {/* Quadros vêm logo depois da Agenda porque é dela que se distinguem: a Agenda é
+            compromisso com data, o quadro é o que ainda não virou compromisso. */}
+        {tab("marketing", "/marketing", "Marketing")}
+        {tab("ideias", "/ideias", "Ideias")}
+        {tab("resumo", "/resumo", "Resumo")}
+        {tab("busca", "/busca", "Busca")}
+        {/* OKR fica depois do CRM porque é dele que sai o numerador: a árvore só mede o que o CRM
+            e o gateway já gravaram. */}
+        {tab("okr", "/okr", "OKR")}
+        {tab("crm", "/crm", "CRM")}
+        {tab("ia", "/ia", "IA")}
+        {tab("automacao", "/automacao", "Automação")}
+      </nav>
+      {/* `tabIndex={-1}` para o alvo receber o foco de fato: sem ele o navegador rola até a âncora
+          e deixa o foco na barra, e o próximo Tab volta para a primeira aba. */}
+      <span id="conteudo" tabIndex={-1} />
+    </>
   );
 }
 
