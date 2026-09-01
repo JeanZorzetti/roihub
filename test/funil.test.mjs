@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { apurado, naoApurado, ehApurado, razao, montarLinha, resumir, pct, DEGRAUS, ehLeadDeTeste } from "../lib/funil.mjs";
+import { apurado, naoApurado, ehApurado, razao, exigencia, montarLinha, resumir, pct, DEGRAUS, ehLeadDeTeste } from "../lib/funil.mjs";
 
 test("célula não apurada nunca se confunde com zero", () => {
   assert.equal(ehApurado(apurado(0)), true);
@@ -27,6 +27,33 @@ test("numerador maior que denominador vira não apurado, nunca taxa acima de 100
   const r = razao(apurado(5), apurado(2));
   assert.equal(ehApurado(r), false);
   assert.match(r.naoApurado, /pontas não casam/);
+});
+
+test("exigência é fração normal com as duas pontas apuradas", () => {
+  assert.deepEqual(exigencia(apurado(2.89), apurado(39)), { valor: 2.89 / 39 });
+});
+
+test("exigência, ao contrário de razão, sai APURADA acima de 1 — é a prova de meta impossível", () => {
+  const e = exigencia(apurado(100), apurado(39));
+  assert.equal(ehApurado(e), true);
+  assert.ok(e.valor > 1);
+  assert.equal(e.valor, 100 / 39);
+});
+
+test("exigência com âncora zerada nunca divide por zero", () => {
+  const e = exigencia(apurado(2.89), apurado(0));
+  assert.equal(ehApurado(e), false);
+  assert.match(e.naoApurado, /âncora zerada/);
+});
+
+test("exigência com cada ponta não apurada nomeia o lado certo no motivo", () => {
+  const semAncora = exigencia(apurado(2.89), naoApurado("sem âncora"));
+  assert.equal(ehApurado(semAncora), false);
+  assert.match(semAncora.naoApurado, /^âncora: /);
+
+  const semNecessario = exigencia(naoApurado("sem meta"), apurado(39));
+  assert.equal(ehApurado(semNecessario), false);
+  assert.match(semNecessario.naoApurado, /^necessário: /);
 });
 
 test("profundidade conta degraus CONTÍGUOS a partir do topo", () => {

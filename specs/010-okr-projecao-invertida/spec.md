@@ -66,18 +66,20 @@ O veredito deixa de ser "não apurado" e vira uma taxa nomeada a ir medir.
 
 - **Não é previsão.** Não existe "receita estimada", "projeção de fechamento" nem cenário
   otimista/pessimista. A tela nunca escreve um número que ninguém mediu nem declarou.
-- **Não é acompanhamento.** A coluna não mostra "quanto falta para a meta" ao longo do tempo.
-  Ela mostra **o que cada fator precisa valer**, que é uma frase sobre o futuro, não sobre o
-  passado.
+- **Não é acompanhamento.** O bloco não mostra "quanto falta para a meta" ao longo do tempo.
+  Ele mostra **o que cada fator precisa valer**, que é uma frase sobre o futuro, não sobre o
+  passado. O `valor` declarado no card já É "o que falta", mas quem desconta o realizado é o
+  humano ao reescrever o campo — a tela nunca lê histórico para descontar sozinha, e `declaradaEm`
+  existe para essa defasagem ficar à vista em vez de silenciosa.
 - **Não substitui o diagnóstico da 009.** A posição de ataque continua sendo o veredito; a
-  inversão entra ao lado dela, na mesma linha.
+  inversão entra logo abaixo dela, no mesmo card.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Saber quanto cada fator precisa valer (Priority: P1)
 
-Jean declara a meta de um projeto no card (`meta: { valor, ticket, prazo }`) e abre `/okr`. Na
-linha do projeto, ao lado da posição de ataque, lê o **fator obrigatório**: a partir do último
+Jean declara a meta de um projeto no card (`meta: { valor, ticket, prazo }`) e abre `/okr`. No
+card do projeto, logo abaixo da posição de ataque, lê o **fator obrigatório**: a partir do último
 degrau realmente medido, quanto o resto da cadeia tem que converter para a meta acontecer na
 janela.
 
@@ -92,15 +94,17 @@ conferível à mão pela divisão; sem meta declarada, exibe `não apurado: sem 
 1. **Given** um projeto com `meta` e `ticket` declarados e ao menos um degrau apurado,
    **When** Jean abre `/okr`, **Then** a linha mostra o N1 necessário na janela e o fator
    obrigatório do ponto medido até o fim da cadeia, com a divisão colada no mesmo texto
-   (`32,05% (12,5/39)`), no formato da R2.
-2. **Given** um projeto **sem** `meta` declarada, **When** a linha é renderizada, **Then** a
-   coluna sai como `não apurado: sem meta declarada` e **nunca** com meta inferida, arredondada
+   no formato da R2 — `<percentual> (<necessário>/<âncora>)`, p.ex. `32,05% (12,5/39)` quando a
+   meta é declarada na própria janela. O percentual concreto depende do `prazo` (FR-004): o
+   critério é a divisão exibida bater com a conta à mão, nunca um número fixo.
+2. **Given** um projeto **sem** `meta` declarada, **When** a linha é renderizada, **Then** o
+   bloco sai como `não apurado: sem meta declarada` e **nunca** com meta inferida, arredondada
    ou herdada de outro projeto.
 3. **Given** um projeto com `meta` mas **sem** `ticket`, **When** a linha é renderizada,
    **Then** o N1 necessário sai como `não apurado: sem ticket declarado — R$ não vira contagem
    sem valor por unidade`, pagando a lacuna que a FR-018 da 009 deixou aberta de propósito.
-4. **Given** um projeto sem nenhum degrau apurado, **When** a linha é renderizada, **Then** a
-   coluna sai como `não apurado: sem âncora — nenhum degrau medido para dividir`, e o trabalho
+4. **Given** um projeto sem nenhum degrau apurado, **When** a linha é renderizada, **Then** o
+   bloco sai como `não apurado: sem âncora — nenhum degrau medido para dividir`, e o trabalho
    apontado continua sendo o da posição 2 (apurar).
 
 ---
@@ -127,8 +131,13 @@ que a saída é "impossível" com o multiplicador de volume necessário, não um
    fatores restantes com o múltiplo necessário de cada (`precisa de 1,9× no volume de entrada,
    OU de 1,9× no ticket`) — e **não** sugere copy, performance ou indexação.
 3. **Given** um projeto com a cadeia inteira fechada e já batendo a meta, **When** a linha é
-   renderizada, **Then** ela mostra a **folga** (`fator atual 41%, obrigatório 32% — folga de
-   1,28×`), não um alerta.
+   renderizada, **Then** a âncora é o **próprio N1** e a linha mostra o **múltiplo necessário**
+   (`necessário 2,89 ÷ atual 3,70 = 0,78× — folga de 1,28×`), não uma taxa e não um alerta.
+
+   Sem degrau depois da âncora não existe trecho a exigir: o `fator obrigatório` sai
+   `não apurado: âncora é o próprio N1 — não há trecho a exigir`, e **o teto de 100% não se
+   aplica neste ramo**. Múltiplo maior que 1 aqui não é impossibilidade, é crescimento — e
+   confundir os dois declararia "meta impossível" em projetos perfeitamente viáveis.
 
 ---
 
@@ -171,6 +180,11 @@ obrigatórios numa razão de 4 para 1.
 - **`ticket` declarado igual a `0` ou ausente**: `não apurado`, nunca N1 infinito.
 - **Meta declarada em R$ num projeto sem perfil**: sem perfil não há cadeia, logo não há âncora
   nem degraus a exigir. Sai `não apurado: sem perfil declarado`, herdando a regra da 009.
+- **Cadeia fechada — a âncora É o N1**: não há degrau depois dela. O fator obrigatório sai
+  `não apurado: âncora é o próprio N1 — não há trecho a exigir`, e a linha mostra o **múltiplo**
+  da FR-010. Nenhum veredito de impossibilidade neste ramo, por maior que seja o múltiplo. Em
+  01/09/2026 **nenhum** dos 17 projetos com perfil declarado alcança este caso: 16 não têm o campo
+  `vendas` e o único que tem (`atma`) tem três degraus não apurados acima dele.
 - **Fator obrigatório exatamente `1,0`**: exige 100% de conversão em todos os degraus restantes.
   Tratado como **impossível na prática**, com o texto dizendo que 100% não é meta, é limite.
 - **Meta batida com folga**: mostra a folga; não vira alerta e não some da tela.
@@ -180,8 +194,12 @@ obrigatórios numa razão de 4 para 1.
 ### Functional Requirements
 
 - **FR-001**: O card DEVE aceitar um campo `meta` opcional com `valor` (R$), `ticket` (R$ por
-  unidade de N1) e `prazo` (data), curado à mão em `data/projects.json` como `perfil` e `estado`
-  já são. NÃO há meta inferida, herdada nem padrão.
+  unidade de N1), `prazo` (data) e `declaradaEm` (data), curado à mão em `data/projects.json`
+  como `perfil` e `estado` já são. NÃO há meta inferida, herdada nem padrão.
+
+  `valor` é **o que falta a partir da declaração**, não o total histórico do período: a tela não
+  desconta o já realizado, porque descontar seria acompanhamento — e a spec o proíbe. Corrigir
+  `valor` conforme o período avança é curadoria à mão, como `perfil` e `estado`.
 - **FR-002**: `meta` e `ticket` DEVEM ser rotulados na tela como **declarados**, nunca como
   apurados. São escolhas do humano, não medições — e a distinção é o que mantém a R1 de pé
   quando um número escrito à mão entra na mesma linha que células medidas.
@@ -189,31 +207,51 @@ obrigatórios numa razão de 4 para 1.
   perfil) por `valor ÷ ticket`. Sem `ticket`, o N1 necessário é `não apurado` com o motivo —
   nunca a meta em R$ tratada como se fosse contagem.
 - **FR-004**: O sistema DEVE normalizar o N1 necessário para a **janela declarada** (R7) antes de
-  dividir, usando o prazo restante da meta. As duas leituras — total do prazo e parcela da
-  janela — DEVEM aparecer, com a conta de normalização visível.
+  dividir, usando o prazo restante contado **do dia de hoje** até o `prazo`. As duas leituras —
+  total do prazo e parcela da janela — DEVEM aparecer, com a conta de normalização visível.
+
+  Contar de hoje, e não de `declaradaEm`, é deliberado: o fator obrigatório TEM que subir
+  conforme a janela aperta. Congelá-lo na data da declaração transformaria a projeção num retrato
+  datado e apagaria o achado que a User Story 2 existe para produzir.
 - **FR-005**: O sistema DEVE eleger como **âncora** o último degrau apurado da sequência contígua
   a partir do topo da cadeia. Degrau apurado após um `não apurado` NÃO é âncora.
+
+  Numa cadeia **fechada** a âncora é o próprio N1. Nesse ramo não há trecho a exigir: vale a
+  FR-010 (múltiplo necessário), e não a FR-006 nem a FR-007.
 - **FR-006**: O **fator obrigatório** é `N1 necessário na janela ÷ valor da âncora`, e representa
-  o produto das taxas de todos os degraus entre a âncora e o fim da cadeia.
+  o produto das taxas de todos os degraus entre a âncora e o fim da cadeia. Existe **somente**
+  quando há ao menos um degrau depois da âncora; sem isso sai
+  `não apurado: âncora é o próprio N1 — não há trecho a exigir`.
 - **FR-007**: Fator obrigatório `> 1` DEVE ser exibido como **meta impossível na janela**, com a
   prova aritmética escrita (o percentual exigido e a frase de que taxa não passa de 100%).
+
+  Este teto vale **só** no ramo da FR-006. Múltiplo necessário maior que 1 (FR-010) NÃO é
+  impossibilidade — é crescimento, e não existe teto para ele. Um único ramo decidindo os dois
+  declararia "meta impossível" em projeto viável.
 - **FR-008**: No caso impossível, o sistema DEVE nomear os dois únicos fatores restantes —
   volume de entrada e ticket — com o múltiplo necessário de cada, e NÃO PODE sugerir trabalho de
   taxa (copy, performance, indexação) para esse projeto.
 - **FR-009**: O sistema DEVE nomear **quais degraus** compõem o fator obrigatório, um a um, para
   que a saída seja uma lista de coisas a medir e não um número solto.
 - **FR-010**: Quando a cadeia estiver fechada (posição 3 da 009), o sistema DEVE exibir o
-  **múltiplo necessário** = fator obrigatório ÷ fator atual, e a **folga** quando o múltiplo for
-  menor que 1.
+  **múltiplo necessário** = `N1 necessário na janela ÷ N1 apurado`, e a **folga** = `1 ÷ múltiplo`
+  quando o múltiplo for menor que 1. É um múltiplo, nunca uma taxa — e `fator obrigatório` e
+  `múltiplo necessário` NUNCA saem preenchidos ao mesmo tempo.
 - **FR-011**: Toda razão exibida DEVE trazer a fração colada no mesmo texto (R2), inclusive as
   desta feature. Fator obrigatório sem o `(necessário/âncora)` ao lado é proibido na renderização.
 - **FR-012**: O sistema NÃO PODE derivar, sugerir ou preencher a meta a partir de benchmark,
   média do portfólio ou histórico do próprio projeto (R6). Meta ausente é `não apurado`, ponto.
-- **FR-013**: O sistema NÃO PODE produzir número algum para um projeto sem meta declarada. Uma
-  coluna majoritariamente `não apurado` é o resultado pretendido, como a FR-019 da 009 já
+- **FR-013**: O sistema NÃO PODE produzir número algum para um projeto sem meta declarada. Um
+  bloco majoritariamente `não apurado` é o resultado pretendido, como a FR-019 da 009 já
   estabeleceu para as células vazias.
-- **FR-014**: A projeção DEVE entrar como **coluna na `/okr` existente**, ao lado da posição de
-  ataque, na mesma linha do projeto. NÃO é rota nova e NÃO substitui o veredito da 009.
+- **FR-014**: A projeção DEVE entrar na **`/okr` existente**, como bloco no card do projeto logo
+  abaixo da posição de ataque. NÃO é rota nova e NÃO substitui o veredito da 009.
+
+  "Coluna" era a palavra original e ela foi trocada de propósito (emenda 7 do
+  `checklists/requirements.md`): a `/okr` não é tabela de projetos — é uma sequência de cards com
+  uma tabela de degraus dentro de cada um. Coluna literal quebra em 390px, e a `.tabela-rolavel`
+  que já existe no card mede degraus, não projetos. O requisito é **onde a informação aparece**
+  (no card, colada ao veredito), não a forma geométrica.
 - **FR-015**: A lógica de inversão DEVE nascer em `.mjs` puro, testável por `node --test` sem
   subir o Next — Princípio III. Ela DEVE importar `lib/funil.mjs` e `lib/okr.mjs`, e NÃO PODE
   reimplementar célula, razão ou cadeia.
@@ -228,16 +266,21 @@ obrigatórios numa razão de 4 para 1.
 
 ### Key Entities
 
-- **Meta**: `valor` em R$, `ticket` em R$ por unidade de N1, `prazo` em data. Declarada à mão no
-  card. É entrada do humano, não medição — e é rotulada assim em toda exibição.
+- **Meta**: `valor` em R$ (o que falta a partir da declaração), `ticket` em R$ por unidade de N1,
+  `prazo` em data, `declaradaEm` em data. Declarada à mão no card. É entrada do humano, não
+  medição — e é rotulada assim em toda exibição. `declaradaEm` existe para a defasagem ficar
+  visível: `valor` não se atualiza sozinho, e sem a data isso apodrece sem parecer errado. A tela
+  **nunca** recusa uma meta por idade — escolher um limiar de "velha demais" seria escolher um
+  número, que é o que a R6 proíbe.
 - **N1 necessário**: contagem da unidade final do perfil que a meta exige, já normalizada para a
   janela. `não apurado` sem ticket, sem prazo válido ou sem perfil.
 - **Âncora**: o último degrau apurado da sequência contígua a partir do topo da cadeia. É o
-  denominador da inversão.
-- **Fator obrigatório**: `N1 necessário na janela ÷ âncora`. Produto das taxas dos degraus
-  restantes. Acima de 1 = meta impossível na janela.
-- **Múltiplo necessário**: `fator obrigatório ÷ fator atual`, só quando a cadeia está fechada.
-  Menor que 1 = folga.
+  denominador da inversão. Pode ser o próprio N1, quando a cadeia está fechada.
+- **Fator obrigatório**: `N1 necessário na janela ÷ âncora`, **só** quando há degrau depois da
+  âncora. Produto das taxas dos degraus restantes. Acima de 1 = meta impossível na janela.
+- **Múltiplo necessário**: `N1 necessário na janela ÷ N1 apurado`, só quando a cadeia está
+  fechada — isto é, quando a âncora É o N1. Menor que 1 = folga. Não tem teto: é crescimento,
+  não taxa. Nunca coexiste com o fator obrigatório.
 - **Degraus a medir**: a lista nominal dos degraus entre a âncora e o fim da cadeia. É o
   entregável de trabalho da feature.
 
@@ -246,10 +289,16 @@ obrigatórios numa razão de 4 para 1.
 ### Measurable Outcomes
 
 - **SC-001**: `/okr` continua respondendo 200 e listando os 40 projetos que `listProjects()`
-  devolve, agora com a coluna de projeção. Nenhuma linha existente muda de posição de ataque.
-- **SC-002**: Com `meta: { valor: 50000, ticket: 4000, prazo }` em `atma`, a linha exibe âncora
-  `lead = 39`, N1 necessário e fator obrigatório conferíveis à mão pela divisão, e nomeia os
-  quatro degraus entre `lead` e `tratamento`.
+  devolve, agora com o bloco de projeção. Nenhuma linha existente muda de posição de ataque.
+- **SC-002**: Com `meta: { valor: 50000, ticket: 4000, prazo: "2026-12-31", declaradaEm:
+  "2026-09-01" }` em `atma`, a linha exibe âncora `lead = 39`, N1 necessário e fator obrigatório
+  conferíveis à mão pela divisão, e nomeia os quatro degraus entre `lead` e `tratamento`.
+
+  ⚠️ O número **depende do prazo declarado**, e por isso não é fixável aqui: lido em 01/09/2026
+  com prazo em 31/12 são 121 dias restantes, logo `12,5 × 28/121 = 2,89` na janela e
+  `7,42% (2,89/39)`. O `32,05%` que aparece no Contexto continua correto como ilustração — lá a
+  meta é declarada **na janela**, e aqui o prazo é o ano. O critério é a conferência à mão bater
+  com a tela na data em que se olha, nunca um percentual fixo.
 - **SC-003**: Zero projetos exibindo fator obrigatório sem meta declarada — conferível por
   varredura do HTML servido.
 - **SC-004**: Zero fatores obrigatórios exibidos sem a fração colada.
