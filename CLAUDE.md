@@ -669,3 +669,21 @@ binário via `shell: true` (o CLI é um shim `.cmd`) — o código já trata, n�
   `autopublish-clients.ts`). Comentário que narra o que a linha faz é ruído.
 - Sem linter e sem formatter configurados — siga o estilo do arquivo vizinho.
 - Fechar entrega = `npm test` verde + commit + push, sem perguntar.
+
+## Agent skills
+
+### Issue tracker
+
+Issues vivem no GitHub Issues de `JeanZorzetti/roihub`, via `gh` CLI. **O repo é PÚBLICO** —
+toda issue é visível e indexável. Ver `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Os 5 rótulos canônicos, sem renomear: `needs-triage`, `needs-info`, `ready-for-agent`,
+`ready-for-human`, `wontfix`. Ver `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: um `CONTEXT.md` na raiz + `docs/adr/`. Nenhum dos dois existe ainda, e isso
+não é problema — `/domain-modeling` cria quando houver termo ou decisão de verdade para
+registrar. Ver `docs/agents/domain.md`.
