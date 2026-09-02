@@ -202,7 +202,7 @@ inferência e que nenhuma taxa mudou de valor por causa dela (quickstart §5).
       da mudança (SC-004, SC-010) e canal orgânico idêntico em todos (SC-008)
 - [ ] T030 Executar quickstart §4 — GA4 fora do ar (`propertyId` inválido ou credencial sem acesso):
       toda ficha continua abrindo e o número orgânico continua exibido (SC-006, FR-008)
-- [ ] T031 Executar quickstart §6 — varredura dos 35 projetos conferindo que nenhum canal sem fonte
+- [X] T031 Executar quickstart §6 — varredura dos 35 projetos conferindo que nenhum canal sem fonte
       exibe `0` (SC-003)
 - [X] T032 Conferir que `GOOGLE_SERVICE_ACCOUNT_JSON` e o `propertyId` não aparecem em log, erro ou
       resposta — `grep` por `console.` em `lib/ga4.ts` deve sair vazio (FR-013, Princípio V)
@@ -283,3 +283,46 @@ Cada degrau é conferível pelo quickstart e nenhum deles muda número que já e
 - `0` e `não apurado` são coisas diferentes em toda tarefa desta lista. É a R1, e é o defeito
   central que a feature combate.
 - Commit por tarefa ou por grupo lógico; parar em qualquer checkpoint deixa a tela consistente.
+
+---
+
+## Conferência ao vivo — 02/09/2026, HTML servido pelo EasyPanel
+
+Feita com `curl -su "$HUB_USER:$HUB_PASS"` contra `hub.roilabs.com.br`, nunca `next dev`.
+
+| Item | Resultado |
+|---|---|
+| **SC-006** — toda ficha abre | 17/17 projetos com `perfil` responderam **200** |
+| **SC-003** — nenhum canal sem fonte exibe `0` | **zero** ocorrências de número em `Direto/Pago/Indicação/Outbound/Social` nos 17 |
+| Detector da varredura auto-validado | acha número onde ele existe (`orgânico` 525 atma, 55 sirius, 29 polarisia, 24 estetiacrm) — não é falso negativo |
+| **FR-005b** — total composto rotulado | `total composto (orgânico)` · fonte `Search Console` — cobertura declarada, nunca "sessões" |
+| **FR-005d** — nota do nível | impressa uma vez abaixo do `<h2>` de N4 |
+| Motivos distintos por situação | `sem propriedade GA4 configurada para este projeto` (4 canais) × `a fonte GA4 não distingue prospecção ativa` (outbound) |
+
+### Defeito encontrado e corrigido na conferência
+
+A ficha da `atma` imprimia `contato fora do formulário: 0 inferido`. Medido no banco
+(`ATMA_DATABASE_URL`): os **2** orçamentos com `paciente_lead_id` nulo são de **01/09**, e a janela
+da cadeia é **03/08 → 30/08** (D-3). Estão fora da janela — o `0` era aritmeticamente correto e
+enganoso do mesmo jeito. Corrigido para a célula só existir com volume, como o data-model §4
+(célula 10) já mandava: *"só quando o vestígio existe"*. Régua nova em `test/ficha.test.mjs`.
+
+**Consequência para a leitura da Atma**: o canal novo (contato direto por WhatsApp) começou a
+aparecer no banco **depois** do fim da janela atual. Ele entra na ficha sozinho conforme a janela
+desliza — não é ausência de vestígio, é vestígio recente demais para a janela declarada.
+
+### Bloqueio operacional para T002/T012/T030
+
+A conta de serviço é `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com`. Sondadas as
+duas APIs com ela:
+
+- **GA4 Data API**: `403 — has not been used in project 845396101677 before or it is disabled`
+- **GA4 Admin API**: mesmo erro (por isso o `propertyId` não pôde ser descoberto por API)
+
+O screenshot do admin do GA4 traz o **fluxo** (`12127687264`) e o **measurement ID**
+(`G-EMCS41DMSP`) — nenhum dos dois é o `propertyId` que a Data API exige. Falta:
+
+1. habilitar **Google Analytics Data API** no projeto GCP `review-dispute-agent-498311`;
+2. adicionar a conta de serviço como **Visualizador** na propriedade GA4 da Atma;
+3. o **ID da propriedade** (Administrador → Detalhes da propriedade) — ou habilitar também a
+   **Admin API**, e aí o número é descoberto sozinho.
