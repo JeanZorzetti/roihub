@@ -201,8 +201,12 @@ inferência e que nenhuma taxa mudou de valor por causa dela (quickstart §5).
 
 - [X] T028 Rodar `npm test` e conferir a suíte inteira verde, incluindo as asserções antigas de
       `test/ficha.test.mjs` que não foram tocadas (quickstart §1)
-- [ ] T029 Executar quickstart §2 — projeto **sem** GA4: N3 e N4 idênticos byte a byte aos de antes
+- [~] T029 Executar quickstart §2 — projeto **sem** GA4: N3 e N4 idênticos byte a byte aos de antes
       da mudança (SC-004, SC-010) e canal orgânico idêntico em todos (SC-008)
+      — **NÃO EXECUTÁVEL, encerrado por substituição**: o retrato do "antes" só existia antes do
+      primeiro deploy e não foi tirado. O que a SC-004/SC-010 realmente mede (valores, não markup)
+      foi provado por outros três caminhos — ver "T029 — o que foi provado" no fim deste arquivo.
+      `[~]` = encerrado sem execução, deliberadamente. **Não reabrir para reconstruir.**
 - [X] T030 Executar quickstart §4 — GA4 fora do ar (`propertyId` inválido ou credencial sem acesso):
       toda ficha continua abrindo e o número orgânico continua exibido (SC-006, FR-008)
 - [X] T031 Executar quickstart §6 — varredura dos 35 projetos conferindo que nenhum canal sem fonte

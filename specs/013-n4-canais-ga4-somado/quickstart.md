@@ -93,13 +93,19 @@ denominador continua o orgânico. Detalhe em `tasks.md` → "Fechamento do T002"
 Simular a falha sem derrubar nada: apontar `ga4.propertyId` do card para uma propriedade
 inexistente (`properties/1`) e recarregar a ficha.
 
-- [ ] a página **abre**;
-- [ ] o número orgânico continua lá, com o mesmo valor;
-- [ ] os quatro canais do GA4 dizem `não apurado` nomeando a falha — nenhum `0`;
-- [ ] a mensagem **não** contém valor de variável de ambiente, chave, e-mail da conta de serviço
+- [X] a página **abre**;
+- [X] o número orgânico continua lá, com o mesmo valor;
+- [X] os quatro canais do GA4 dizem `não apurado` nomeando a falha — nenhum `0`;
+- [X] a mensagem **não** contém valor de variável de ambiente, chave, e-mail da conta de serviço
       nem trecho de credencial (FR-013, Princípio V).
 
 Reverter o card em seguida.
+
+**Rodado em 02/09/2026 — e com dado real, não simulado**: enquanto a Data API estava desabilitada, a
+`atma` já tinha o `propertyId` curado, o que produziu exatamente este cenário sem tocar no card.
+Página 200, `orgânico 525 (Search Console)` intacto, os quatro canais em `fonte GA4 indisponível
+(403)` sem nenhum `0`, e varredura por `private_key` / `client_email` / `gserviceaccount` / nome da
+env no HTML: nenhuma ocorrência. Detalhe em `tasks.md` → "T012 e T030 fechados".
 
 ---
 
@@ -112,6 +118,13 @@ Na ficha `/okr/atma`:
 - [ ] a dívida está escrita ao lado: instrumentar a origem do contato é feature separada (FR-011b);
 - [ ] o número **não** aparece somado em lugar nenhum: nem no total composto, nem em canal, nem em
       taxa do N3.
+
+> ⏳ **Aberto por calendário, não por defeito — não tente destravar.** Em 02/09/2026 a linha
+> corretamente **não aparece**: os 2 orçamentos com `paciente_lead_id` nulo são de **01/09** e a
+> janela da cadeia é **03/08 → 30/08** (D-3, atraso do GSC). O código está pronto e testado (US3
+> inteira fechada, T021–T027); falta só a janela deslizar, o que acontece por volta de **05/09**.
+> Reconferir esta seção então. Forçar a linha a aparecer com `0` reintroduz o defeito que o commit
+> `4f8de90` corrigiu — zero deduzido não é vestígio.
 
 Prova da SC-009 sem rodar nada: a célula inferida não está em `espacosKr["n4:"]`, não é insumo de
 `combinar()` e não chega a `montarFicha()`. Remover a linha da tela não muda número nenhum — se

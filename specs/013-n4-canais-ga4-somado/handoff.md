@@ -1,8 +1,13 @@
 # Handoff — N4 por canal, GA4 somado ao GSC
 
-**Feature**: `013-n4-canais-ga4-somado` | **Data**: 2026-09-02 | **Estado**: **33 de 34 tarefas
-fechadas** (só o T029 fica em aberto, e é irrecuperável — §3), **no ar e acesa** em
-`hub.roilabs.com.br`.
+**Feature**: `013-n4-canais-ga4-somado` | **Data**: 2026-09-02 | **Estado**: **34 de 34 tarefas
+encerradas** (33 executadas + T029 encerrado por substituição, §3), **no ar e acesa** em
+`hub.roilabs.com.br`. **A spec está fechada.**
+
+Sobra **uma** conferência, e ela é de calendário, não de código: o quickstart **§5** (linha de
+inferência do WhatsApp) só é conferível a partir de ~**05/09/2026**, quando a janela D-3 alcançar os
+orçamentos de 01/09. O código da US3 está pronto, testado e no ar; hoje a linha corretamente não
+aparece. Reconferir naquela data e marcar o §5 — não é motivo para manter a feature aberta.
 
 **T002 fechou em 02/09.** A Data API foi habilitada e a conta de serviço ganhou acesso à propriedade
 GA4 da Atma — os canais acenderam sem deploy novo, como o desenho previa. O que a ficha da `atma`
@@ -113,7 +118,8 @@ vivo dos 17 projetos com perfil, e o T008 (assinatura de 3 argumentos). **Liçã
 retrato do "antes" é barato e só existe antes — tirar por padrão no começo de qualquer feature que
 mexa em tela.
 
-**A linha de inferência do WhatsApp ainda não aparece, e está certo.** Os 2 orçamentos com
+**A única conferência que sobra: quickstart §5, a partir de ~05/09.** A linha de inferência do
+WhatsApp ainda não aparece, e está certo. Os 2 orçamentos com
 `paciente_lead_id` nulo são de **01/09**; a janela da cadeia é **03/08 → 30/08** (D-3, atraso do
 GSC). Ela entra sozinha conforme a janela desliza — a partir de ~**05/09**. Se alguém "consertar"
 isso forçando a linha a aparecer com `0`, está reintroduzindo o defeito que o commit `4f8de90`
