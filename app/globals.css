@@ -43,7 +43,8 @@ a:hover { text-decoration: underline; }
 
 /* 1060px era estreito demais para as 12 abas + o contador: o contador não cabia na linha das
    abas, caía sozinho para a linha de baixo e o hub inteiro ficava numa faixa no meio da tela
-   com o resto vazio. Em 1560 a barra fecha numa linha só e o quadro de Marketing ganha ~500px
+   com o resto vazio. As abas viraram coluna e saíram dessa conta, mas 1560 continua sendo o que
+   dá ao quadro de Marketing ~500px
    de coluna, que é onde a falta de largura mais doía (a régua de rolagem horizontal do kanban). */
 .page { max-width: 1560px; margin: 0 auto; padding: 32px 24px 64px; }
 
@@ -59,15 +60,27 @@ a:hover { text-decoration: underline; }
 .topbar-meta { color: var(--muted); font-size: 13px; margin-left: auto; text-align: right; }
 .topbar-left { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
 
-/* abas */
-.tabs { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; } /* 6 abas não cabem em 390px sem quebrar */
+/* art-direction · Corte Seco (aplicada ao chrome de navegação) · eixos: geometria/estado/clara
+   · orçamento: 0kb de JS, LCP inalterado · 2026-09-01
+   "Sumário de caderno": 13 seções em 4 grupos numerados. Regra da direção — nada faz fade.
+   `border-radius: 0`, `box-shadow: none`, `transition: none`; hover e ativo são INVERSÃO de cor,
+   nunca opacidade. Nenhuma animação existe aqui, então não há o que desligar em
+   `prefers-reduced-motion`: a coluna já é o estado final estático. */
+
+/* < 1024px: os grupos se dissolvem (`display: contents`) e os 13 links voltam a ser a faixa
+   horizontal de sempre — sem hambúrguer, sem overlay, sem JS. O que se perde no celular são os
+   rótulos de grupo; o que NÃO se perde é nenhum link, que é o que importa numa tela pequena. */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; counter-reset: sec; }
+.nav-grupo, .nav-grupo > ul, .nav-grupo li { display: contents; }
+.nav-grupo > ul { list-style: none; margin: 0; padding: 0; }
+.nav-grupo-h { display: none; }
 .tab { padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--ink2); }
 .tab:hover { background: #f0f0ec; text-decoration: none; }
 .tab.active { color: var(--accent); background: #eaf1fd; }
 
-/* aba OKR — par link + disclosure (011). `.tab-okr` fica no fluxo do `.tabs` (mesmo flex-wrap),
-   então a faixa quebra em linha junto com as outras abas em 390px sem `overflow-x` novo no
-   `<main>` nem no `.card` (SC-014). */
+/* entrada OKR — par link + disclosure (011). `.tab-okr` fica no fluxo do `.tabs` (mesmo
+   flex-wrap), então a faixa quebra em linha junto com os outros links em 390px sem `overflow-x`
+   novo no `<main>` nem no `.card` (SC-014). */
 .tab-okr { display: inline-flex; align-items: center; gap: 2px; position: relative; }
 .tab-okr > a.tab { padding-right: 6px; }
 .okr-menu summary {
@@ -102,6 +115,80 @@ a:hover { text-decoration: underline; }
 .okr-menu li a:hover { background: #f0f0ec; text-decoration: none; }
 .okr-menu li a.active { color: var(--accent); font-weight: 600; }
 .okr-menu li a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ≥ 1024px: a faixa vira coluna. `position: fixed` porque a nav é chamada de DENTRO do topbar em
+   11 das 13 telas — tirando-a do fluxo, a coluna nasce sem tocar em nenhum `.tsx` de página. */
+/* Escopado em `.nav-col` e nao em `.tabs`: o quadro de Marketing reusa `className="tabs"`
+   para as sub-abas Fluxo/Calendario/Documentacao (quadro.tsx), e elas viravam uma SEGUNDA coluna
+   fixa por cima desta. So a nav de secoes vira coluna; qualquer outra `.tabs` segue faixa. */
+@media (min-width: 1024px) {
+  .nav-col {
+    position: fixed; inset: 0 auto 0 0; width: 216px; z-index: 5;
+    display: block; overflow-y: auto;
+    padding: 28px 0 32px;
+    background: var(--surface);
+    border-right: 1px solid var(--grid);
+  }
+  .page { padding-left: 240px; max-width: 1800px; } /* 1560 de conteúdo + a coluna */
+
+  .nav-grupo { display: block; margin-bottom: 20px; }
+  .nav-grupo:last-child { margin-bottom: 0; }
+  .nav-grupo > ul { display: block; }
+  .nav-grupo li { display: list-item; }
+  /* mono é o contraste de família — vem do sistema, custa 0kb. Uma serifa de display exigiria
+     webfont, e a direção não paga fonte por um rótulo de 6 letras. */
+  .nav-grupo-h {
+    display: block; margin: 0 0 4px; padding: 0 22px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .nav-col .tab {
+    display: flex; align-items: baseline; gap: 10px;
+    margin: 0 6px; padding: 5px 10px;
+    border-radius: 0; font-size: 14px; font-weight: 500;
+    transition: none;
+  }
+  /* a numeração é o "sumário": contador de CSS, zero markup e zero JS. Some no celular junto
+     com os grupos, porque lá a faixa não tem ordem para numerar. */
+  .nav-col .tab::before {
+    counter-increment: sec;
+    content: counter(sec, decimal-leading-zero);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10px; font-variant-numeric: tabular-nums; color: var(--muted);
+  }
+  .nav-col .tab:hover { background: var(--ink); color: var(--page); }
+  .nav-col .tab:hover::before { color: var(--page); }
+  .nav-col .tab.active { background: var(--accent); color: var(--page); font-weight: 700; }
+  .nav-col .tab.active::before { color: var(--page); }
+  /* o foco sai para FORA do item (offset positivo, com a margem de 6px cabendo o traço): preto
+     sobre o papel da coluna, legível nos três estados — normal, hover invertido e ativo azul. */
+  .nav-col .tab:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .nav-col .tab-okr { display: block; }
+  .nav-col .tab-okr > a.tab { padding-right: 30px; }
+  /* o ▾ sobrepõe a faixa do link em vez de disputar largura com o rótulo. */
+  .nav-col .okr-menu summary {
+    position: absolute; top: 5px; right: 12px;
+    border-radius: 0; padding: 1px 4px; background: none;
+  }
+  .nav-col .okr-menu[open] summary { background: none; color: var(--ink2); }
+  .nav-col .tab-okr:has(> a.tab.active) .okr-menu summary { color: var(--page); }
+  /* na coluna a lista de fichas é sub-índice, não popover: sem caixa, sem sombra, sem raio —
+     só o fio vertical que marca o nível. */
+  .nav-col .okr-menu ul {
+    display: block; min-width: 0;
+    margin: 2px 6px 2px 30px; padding: 2px 0 2px 10px;
+    background: none; border: 0; border-left: 1px solid var(--grid);
+    border-radius: 0; box-shadow: none;
+  }
+  .nav-col .okr-menu li a { border-radius: 0; padding: 3px 8px; transition: none; }
+  .nav-col .okr-menu li a:hover { background: var(--ink); color: var(--page); }
+  .nav-col .okr-menu li a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  /* o skip link não pode abrir por baixo da coluna. */
+  .skip:focus { left: 248px; }
+}
 
 /* repos do GitHub que ainda não têm site — pendência, não alerta */
 .sem-site {
@@ -507,3 +594,32 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .q-cal-card { font-size: 11px; line-height: 1.4; margin-top: 4px; word-break: break-word; }
 .q-cal-card .pill { margin-left: 0; font-size: 10px; }
 @media (max-width: 700px) { .q-cal-dia { min-height: 56px; } }
+
+/* Transição de rota — a 4ª camada do Corte Seco (a direção do .art/log.json).
+   O verbo é o mesmo do hover e do item ativo: CORTAR. O conteúdo velho sai por um `clip-path`
+   que fecha para a direita, o novo entra pelo mesmo corte abrindo da esquerda — um wipe só,
+   atravessando a tela. Nenhum `opacity` em lugar nenhum: um único fade e a direção inteira cai.
+
+   `conteudo` e não `root`: o <ViewTransition> do layout extrai o conteúdo do snapshot da raiz,
+   então é NELE que o wipe tem de morar. `mix-blend-mode: normal` porque o padrão do navegador
+   para os dois snapshots é `plus-lighter`, feito para cross-fade — com clip-path ele clareia a
+   faixa onde os dois se sobrepõem e suja o corte. */
+::view-transition-old(conteudo) { animation: vt-sair 260ms cubic-bezier(0.2, 0, 0, 1) both; mix-blend-mode: normal; }
+::view-transition-new(conteudo) { animation: vt-entrar 260ms cubic-bezier(0.2, 0, 0, 1) both; mix-blend-mode: normal; }
+@keyframes vt-sair { to { clip-path: inset(0 0 0 100%); } }
+@keyframes vt-entrar { from { clip-path: inset(0 100% 0 0); } }
+
+/* Nada mais se mexe. O grupo não interpola tamanho (as rotas têm alturas muito diferentes e o
+   morph seria um segundo gesto), o fundo da raiz fica parado, e a coluna — que é o chrome
+   persistente — ganha nome próprio para sair do snapshot da raiz: vê-la ser recortada a cada
+   rota desmentiria a única coisa que ela promete, que é estar sempre ali. */
+::view-transition-group(conteudo) { animation: none; }
+::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+.nav-col { view-transition-name: coluna; }
+::view-transition-group(coluna), ::view-transition-old(coluna), ::view-transition-new(coluna) { animation: none; }
+
+/* O corte É movimento: quem pediu menos movimento troca a rota sem wipe nenhum — a tela nova
+   simplesmente já está lá, que é o estado final do gesto, não a sua ausência. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(conteudo), ::view-transition-new(conteudo) { animation: none; }
+}

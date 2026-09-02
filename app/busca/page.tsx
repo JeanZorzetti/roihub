@@ -150,7 +150,7 @@ export default async function Busca({
   const tipos = docs.reduce<Record<string, number>>((a, d) => ({ ...a, [d.tipo]: (a[d.tipo] ?? 0) + 1 }), {});
 
   return (
-    <main>
+    <main className="page">
       <h1>ROI Hub</h1>
       <Tabs active="busca" />
       <p className="sub">
