@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
 type CelulaFicha =
   | { estado: "apurado"; valor: number | string; rotulo: string; fonte: string }
   | { estado: "declarado"; valor: number | string; rotulo: string; declaradoEm: string; oQue: string }
-  | { estado: "nao-apurado"; rotulo: string; motivo: string; consultar: string };
+  | { estado: "nao-apurado"; rotulo: string; motivo: string; consultar: string }
+  | { estado: "inferido"; valor: number; rotulo: string; de: string; divida: string };
 
 /** Só apresentação — as chaves cruas continuam sendo o espaço de `n4:`/`n5:` que `validarKrs()`
  *  casa por igualdade exata (FR-017/R-017); não mexer nos catálogos de lib/ficha.mjs. */
@@ -72,6 +73,12 @@ function Cel({ c }: { c: CelulaFicha }) {
       <>
         <strong>{c.valor}</strong> <span className="foot">declarado em {c.declaradoEm}</span>
       </>
+    );
+  if (c.estado === "inferido")
+    return (
+      <span className="ficha-inferido">
+        <strong>{c.valor}</strong> <span className="foot">inferido de {c.de} — dívida: {c.divida}</span>
+      </span>
     );
   return (
     <span className="foot">
@@ -142,7 +149,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, orcamentosSemLead } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
   const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas, orcamentos, orcamentosAceitos } });
   const veredito = posicaoDeAtaque(ficha);
   const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
@@ -194,10 +201,13 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     datasDono,
     disponiveisN5,
     janela: { inicio: INICIO, fim: FIM },
+    ga4,
+    orcamentosSemLead,
   }) as Array<{
     id: string;
     titulo: string;
     celulas: CelulaFicha[];
+    nota?: string;
     krs?: {
       kr: { kpi: string; dono?: string; meta?: number | null; prazo?: string | null };
       marca: string | null;
@@ -242,6 +252,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
       {niveis.map((n) => (
         <section className="card ag-section" aria-labelledby={n.id} key={n.id}>
           <h2 className="eyebrow" id={n.id}>{n.titulo}</h2>
+          {n.id === "N4" && n.nota && <p className="foot ficha-nota-n4">{n.nota}</p>}
 
           {n.id === "N3" && n.funil && n.funil.length > 0 && <FunilN3 segmentos={n.funil} />}
 

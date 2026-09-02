@@ -35,6 +35,10 @@ export type Project = {
    *  não-apagar de `standby`. Card continua na agenda, mas separado do que é ação de fato pendente
    *  (FR-031 proíbe inferir isso do texto/emoji de `acao`). */
   descontinuado?: boolean;
+  /** Propriedade GA4 que responde pelos canais não-orgânicos deste projeto (013). AUSENTE é
+   *  "não configurado", nunca "sem tráfego" — a distinção inteira da FR-010. Não é segredo:
+   *  `propertyId` é o número visível no admin do GA4. */
+  ga4?: { propertyId: string };
   /** Perfil de negócio do §4 de `handoff/okr-kpi-template.md` — A SaaS, B E-commerce, C Serviço,
    * D Clínica/lead. Decide QUAL cadeia a `/okr` monta: `trial → primeira cobrança` e
    * `consulta → compareceu` falham por motivos opostos e pedem conserto oposto. Ausente é

@@ -346,6 +346,13 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ficha-funil polygon { fill: var(--seq550); }
 .ficha-funil line { stroke: var(--grid); }
 
+/* Nota do nível N4 (013) — declara que o total composto não é o `visitante` da cadeia. */
+.ficha-nota-n4 { margin-top: 0; margin-bottom: 10px; }
+
+/* Célula `inferido` (013) — marca distinta de `apurado`: corte-seco (raio 0, sombra 0), borda
+   sólida em vez de cor de fundo, para não competir com `.pill-warn` de KR. */
+.ficha-inferido { border-left: 3px solid var(--seq550); border-radius: 0; box-shadow: none; padding-left: 8px; }
+
 /* aba SEO — small multiples */
 .seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 16px; }
 @media (max-width: 520px) { .seo-grid { grid-template-columns: 1fr; } }

@@ -11,9 +11,13 @@ import {
   estadoDeApurado,
   declarada,
   naoApurada,
+  inferida,
   combinar,
   avaliarN2,
   montarN4,
+  montarN4Nivel,
+  mapearCanaisGa4,
+  GRUPOS_GA4,
   escolherFamilia,
   montarN5,
   validarKrs,
@@ -206,6 +210,237 @@ test("G7 — perfil D (cadeia começa em visitante) organico TEM elo", () => {
   const marcos = [{ chave: "visitante", nome: "visitante", celula: apurado(535) }];
   const canais = montarN4(CANAIS, apurado(535), marcos);
   assert.equal(canais.find((c) => c.id === "organico").semElo, false);
+});
+
+// ── 013 — N4 por canal, GA4 somado ao GSC ────────────────────────────────────
+
+const JANELA = { inicio: "2026-08-04", fim: "2026-08-29" };
+const MARCOS_VISITANTE = [{ chave: "visitante", nome: "visitante", celula: apurado(535) }];
+
+test("T006 — mapearCanaisGa4() sempre traz as quatro chaves, 0 quando o grupo não veio", () => {
+  const { porCanal } = mapearCanaisGa4([{ grupo: "Direct", sessoes: 10 }]);
+  assert.deepEqual(Object.keys(porCanal).sort(), ["direto", "indicacao", "pago", "social"].sort());
+  assert.equal(porCanal.direto, 10);
+  assert.equal(porCanal.pago, 0);
+  assert.equal(porCanal.indicacao, 0);
+  assert.equal(porCanal.social, 0);
+});
+
+test("T006 — Organic Search nunca entra em porCanal, vai para organicoIgnorado", () => {
+  const { porCanal, organicoIgnorado } = mapearCanaisGa4([{ grupo: "Organic Search", sessoes: 300 }]);
+  assert.equal(Object.values(porCanal).every((v) => v === 0), true);
+  assert.equal(organicoIgnorado, 300);
+});
+
+test("T006 — grupo fora do mapa vai inteiro para foraDoCatalogo, nome preservado, nunca somado a canal existente", () => {
+  const { porCanal, foraDoCatalogo } = mapearCanaisGa4([{ grupo: "Email", sessoes: 12 }]);
+  assert.deepEqual(foraDoCatalogo, [{ grupo: "Email", sessoes: 12 }]);
+  assert.equal(Object.values(porCanal).every((v) => v === 0), true);
+});
+
+test("T006 — sessoes não numérico ou negativo é grupo desconhecido, não 0", () => {
+  const { porCanal, foraDoCatalogo } = mapearCanaisGa4([
+    { grupo: "Direct", sessoes: -5 },
+    { grupo: "Referral", sessoes: "3" },
+  ]);
+  assert.equal(porCanal.direto, 0);
+  assert.equal(porCanal.indicacao, 0);
+  assert.equal(foraDoCatalogo.length, 2);
+});
+
+test("T006 — [] é função total: quatro chaves em 0, organicoIgnorado 0, foraDoCatalogo []", () => {
+  const r = mapearCanaisGa4([]);
+  assert.deepEqual(r, { porCanal: { direto: 0, pago: 0, indicacao: 0, social: 0 }, organicoIgnorado: 0, foraDoCatalogo: [] });
+});
+
+test("T006 — mapa GRUPOS_GA4 não contém outbound, de propósito", () => {
+  assert.equal(Object.values(GRUPOS_GA4).includes("outbound"), false);
+});
+
+test("T007/SC-008 — organico é idêntico nas cinco situações de ga4, e nenhuma lê linha do GA4", () => {
+  const situacoes = [
+    undefined,
+    null,
+    { erro: "403" },
+    { linhas: [], janela: JANELA, propriedade: "properties/1" },
+    { linhas: [{ grupo: "Organic Search", sessoes: 999 }], janela: JANELA, propriedade: "properties/1" },
+  ];
+  for (const ga4 of situacoes) {
+    const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+    const organico = canais.find((c) => c.id === "organico");
+    assert.equal(organico.celula.estado, "apurado");
+    assert.equal(organico.celula.valor, 535);
+    assert.equal(organico.celula.fonte, "Search Console");
+  }
+});
+
+test("T007 — outbound é sempre não apurado nomeando que a fonte não distingue, em qualquer situação de ga4", () => {
+  for (const ga4 of [undefined, { erro: "x" }, { linhas: [{ grupo: "Direct", sessoes: 1 }], janela: JANELA, propriedade: "properties/1" }]) {
+    const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+    const outbound = canais.find((c) => c.id === "outbound");
+    assert.equal(outbound.celula.estado, "nao-apurado");
+    assert.match(outbound.celula.motivo, /não distingue prospecção ativa/);
+  }
+});
+
+test("T007 — ga4 null/undefined: os quatro canais do GA4 saem não apurado nomeando ausência de propriedade", () => {
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, undefined, JANELA);
+  for (const id of ["direto", "pago", "indicacao", "social"]) {
+    const c = canais.find((x) => x.id === id);
+    assert.equal(c.celula.estado, "nao-apurado");
+    assert.match(c.celula.motivo, /sem propriedade GA4 configurada/);
+  }
+});
+
+test("T007 — ga4 {erro}: os quatro canais saem não apurado nomeando o erro, nunca 0", () => {
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, { erro: "ECONNRESET" }, JANELA);
+  for (const id of ["direto", "pago", "indicacao", "social"]) {
+    const c = canais.find((x) => x.id === id);
+    assert.equal(c.celula.estado, "nao-apurado");
+    assert.match(c.celula.motivo, /fonte GA4 indisponível \(ECONNRESET\)/);
+  }
+});
+
+test("T007 — ga4 {linhas: []}: os quatro canais saem 0 APURADO, porque a fonte respondeu", () => {
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, { linhas: [], janela: JANELA, propriedade: "properties/1" }, JANELA);
+  for (const id of ["direto", "pago", "indicacao", "social"]) {
+    const c = canais.find((x) => x.id === id);
+    assert.equal(c.celula.estado, "apurado");
+    assert.equal(c.celula.valor, 0);
+    assert.match(c.celula.fonte, /GA4/);
+  }
+});
+
+test("T007 — ga4 {linhas:[...]}: canal apurado com o valor somado e a fonte GA4 · propriedade", () => {
+  const ga4 = {
+    linhas: [
+      { grupo: "Direct", sessoes: 40 },
+      { grupo: "Paid Search", sessoes: 5 },
+      { grupo: "Paid Social", sessoes: 3 },
+    ],
+    janela: JANELA,
+    propriedade: "properties/123",
+  };
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+  const direto = canais.find((c) => c.id === "direto");
+  const pago = canais.find((c) => c.id === "pago");
+  assert.equal(direto.celula.estado, "apurado");
+  assert.equal(direto.celula.valor, 40);
+  assert.equal(direto.celula.fonte, "GA4 · properties/123");
+  assert.equal(pago.celula.valor, 8);
+});
+
+test("T008 — montarN4() chamado com três argumentos (compatibilidade) continua produzindo o resultado de hoje", () => {
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE);
+  const organico = canais.find((c) => c.id === "organico");
+  assert.equal(organico.celula.estado, "apurado");
+  assert.equal(organico.celula.valor, 535);
+  for (const c of canais.filter((c) => c.id !== "organico")) {
+    assert.equal(c.celula.estado, "nao-apurado");
+  }
+});
+
+test("T014/FR-006 — janela do GA4 diferente da janela da cadeia: canais do GA4 não apurado, organico intacto", () => {
+  const ga4 = { linhas: [{ grupo: "Direct", sessoes: 10 }], janela: { inicio: "2026-07-01", fim: "2026-07-28" }, propriedade: "properties/1" };
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+  const direto = canais.find((c) => c.id === "direto");
+  assert.equal(direto.celula.estado, "nao-apurado");
+  assert.match(direto.celula.motivo, /janela do GA4 \(2026-07-01→2026-07-28\) difere da janela da cadeia \(2026-08-04→2026-08-29\)/);
+  const organico = canais.find((c) => c.id === "organico");
+  assert.equal(organico.celula.estado, "apurado");
+  assert.equal(organico.celula.valor, 535);
+});
+
+test("T015 — montarN4Nivel(): total composto soma só apurados, rótulo declara cobertura, fonte é a junção", () => {
+  const ga4 = { linhas: [{ grupo: "Direct", sessoes: 40 }], janela: JANELA, propriedade: "properties/1" };
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+  const { celulas } = montarN4Nivel(canais, {});
+  const total = celulas.find((c) => c.rotulo?.startsWith("total composto"));
+  assert.equal(total.estado, "apurado");
+  assert.equal(total.valor, 535 + 40); // organico + direto; pago/indicacao/social apurados em 0 somam 0
+  assert.match(total.rotulo, /orgânico \+ \d+ canais/);
+  assert.match(total.fonte, /Search Console/);
+  assert.match(total.fonte, /GA4/);
+});
+
+test("T015 — total composto sai não apurado quando nenhum canal é apurado", () => {
+  const canais = montarN4(CANAIS, { naoApurado: "sem coletor" }, MARCOS_VISITANTE, undefined, JANELA);
+  const { celulas } = montarN4Nivel(canais, {});
+  const total = celulas.find((c) => c.rotulo?.startsWith("total composto"));
+  assert.equal(total.estado, "nao-apurado");
+});
+
+test("T015 — diferença permanece não apurado nomeando os canais sem fonte enquanto houver algum", () => {
+  const ga4 = { linhas: [{ grupo: "Direct", sessoes: 40 }], janela: JANELA, propriedade: "properties/1" };
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+  const { celulas } = montarN4Nivel(canais, {});
+  const diferenca = celulas.find((c) => c.rotulo === "diferença");
+  assert.equal(diferenca.estado, "nao-apurado");
+  assert.match(diferenca.motivo, /outbound/);
+});
+
+test("T015 — fora do catálogo só aparece com volume, lista grupo e valor, e não entra no total", () => {
+  const extras = { foraDoCatalogo: [{ grupo: "Email", sessoes: 12 }], propriedade: "properties/1", organicoIgnorado: 0 };
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, { linhas: [], janela: JANELA, propriedade: "properties/1" }, JANELA);
+  const { celulas } = montarN4Nivel(canais, extras);
+  const fora = celulas.find((c) => c.rotulo?.startsWith("fora do catálogo"));
+  assert.ok(fora, "célula fora do catálogo ausente com volume presente");
+  assert.equal(fora.estado, "apurado");
+  assert.equal(fora.valor, 12);
+  assert.match(fora.rotulo, /Email 12/);
+  const total = celulas.find((c) => c.rotulo?.startsWith("total composto"));
+  assert.equal(total.valor, 535); // não inclui os 12 do fora do catálogo
+});
+
+test("T015 — fora do catálogo ausente quando não há volume", () => {
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, { linhas: [], janela: JANELA, propriedade: "properties/1" }, JANELA);
+  const { celulas } = montarN4Nivel(canais, {});
+  assert.equal(celulas.some((c) => c.rotulo?.startsWith("fora do catálogo")), false);
+});
+
+test("T021 — inferida() devolve o envelope certo e lança sem `de` ou `divida`", () => {
+  const c = inferida(2, { de: "orçamento sem lead vinculado", divida: "instrumentar a origem" });
+  assert.deepEqual(c, { estado: "inferido", valor: 2, rotulo: "", de: "orçamento sem lead vinculado", divida: "instrumentar a origem" });
+  assert.throws(() => inferida(2, { de: "", divida: "x" }));
+  assert.throws(() => inferida(2, { de: "x", divida: "" }));
+});
+
+test("T022 — célula inferida não entra no total composto de montarN4Nivel(), e não é canal", () => {
+  const ga4 = { linhas: [{ grupo: "Direct", sessoes: 40 }], janela: JANELA, propriedade: "properties/1" };
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
+  const extras = { inferencias: [{ rotulo: "contato fora do formulário", valor: 999, de: "orçamento sem lead vinculado", divida: "x" }] };
+  const { celulas } = montarN4Nivel(canais, extras);
+  const total = celulas.find((c) => c.rotulo?.startsWith("total composto"));
+  assert.equal(total.valor, 535 + 40); // 999 NÃO entra
+  assert.equal(celulas.some((c) => c.id === "inferido"), false); // não é canal
+  const inferidaCel = celulas.find((c) => c.estado === "inferido");
+  assert.equal(inferidaCel.valor, 999);
+});
+
+test("T022 — KR apontando para a célula inferida sai chave-invalida (ela não mora em nenhum espaço n3:/n4:/n5:)", () => {
+  const espacos = { "n4:": { organico: { estado: "apurado", valor: 1, fonte: "x" } } };
+  const krs = [{ kpi: "x", baseline: null, meta: 1, prazo: "2026-12-31", dono: "jean", celula: "n4:inferido" }];
+  const [r] = validarKrs(krs, espacos);
+  assert.equal(r.marca, "chave-invalida");
+});
+
+test("T029/SC-004 — montarNiveis() sem ga4: N4 idêntico ao comportamento de hoje, organico intacto", () => {
+  const niveis = montarNiveis(fichaCompleta());
+  const n4 = niveis.find((n) => n.id === "N4");
+  const organico = n4.celulas[0];
+  assert.equal(organico.estado, "apurado");
+  assert.equal(organico.valor, 535);
+  // células 2-6 seguem a ordem de CANAIS: direto, pago, indicacao, outbound, social
+  for (let i = 1; i < 6; i++) assert.equal(n4.celulas[i].estado, "nao-apurado");
+});
+
+test("T031/SC-010 — montarNiveis() com ga4 configurado não muda nenhuma taxa de N3", () => {
+  const ga4 = { linhas: [{ grupo: "Direct", sessoes: 40 }], janela: JANELA, propriedade: "properties/1" };
+  const semGa4 = montarNiveis(fichaCompleta({ janela: JANELA }));
+  const comGa4 = montarNiveis(fichaCompleta({ janela: JANELA, ga4 }));
+  const n3Sem = semGa4.find((n) => n.id === "N3").celulas;
+  const n3Com = comGa4.find((n) => n.id === "N3").celulas;
+  assert.deepEqual(n3Sem, n3Com);
 });
 
 // ── G8 — N5 devolve uma família só; posição média sempre nao-apurado ────────

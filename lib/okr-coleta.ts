@@ -4,6 +4,7 @@ import { totals28 } from "@/lib/series.mjs";
 import { apurado, naoApurado, ehApurado } from "@/lib/funil.mjs";
 import { pipelineDe, celulaDeLeads, celulasDeOrcamento } from "@/lib/okr.mjs";
 import { dbOn, listLeads } from "@/lib/db";
+import { ga4Canais, type LeituraGa4 } from "@/lib/ga4";
 
 // A coleta das três células da 009 (cliques, leads, vendas), extraída de app/okr/page.tsx sem
 // mudar comportamento (011, decisão D5): "se aparecer uma segunda [entrada], isto vira `lib/`" —
@@ -108,7 +109,7 @@ export async function coletarLeadsDoHub(): Promise<{
  * cadeia é `montarFicha()` (009), chamada pela página.
  */
 export async function coletarDoProjeto(
-  p: { slug: string; url: string; vendas?: { data: string }[] },
+  p: { slug: string; url: string; vendas?: { data: string }[]; ga4?: { propertyId: string } },
   {
     inicio = INICIO,
     fim = FIM,
@@ -122,10 +123,13 @@ export async function coletarDoProjeto(
   impressoes: Celula;
   orcamentos: Celula;
   orcamentosAceitos: Celula;
+  ga4: LeituraGa4;
+  orcamentosSemLead: { valor: number } | null;
 }> {
   // cliques — o GSC. Host de fornecedor (`*.vercel.app`) fica FORA de toda propriedade: isso NÃO
   // é "zero tráfego", é "não há onde olhar", e o conserto é domínio próprio, não SEO.
-  const s = await gscSeries(p.url);
+  // GA4 (013) entra no MESMO Promise.all — duas fontes independentes, sem somar latência.
+  const [s, ga4] = await Promise.all([gscSeries(p.url), ga4Canais(p.ga4?.propertyId, { inicio, fim })]);
   const totals = s ? totals28(s.days, fim) : null;
   const cliques: Celula = totals ? apurado(totals.current.clicks) : naoApurado(`sem propriedade no GSC para ${p.url}`);
   // impressões — a MESMA série que dá cliques, sem chamada nova (FR-036, US3 disponiveisN5).
@@ -145,16 +149,22 @@ export async function coletarDoProjeto(
   // tabela passaria a exibir uma cadeia zerada que ninguém mediu.
   const linhasOrc =
     propria && !("erro" in propria) && propria.orcamentos && !("erro" in propria.orcamentos)
-      ? (propria.orcamentos.rows as { criado: string; status: string }[])
+      ? (propria.orcamentos.rows as { criado: string; status: string; paciente_lead_id: string | null }[])
       : null;
   const { enviados: orcamentos, aceitos: orcamentosAceitos } = celulasDeOrcamento(linhasOrc, { inicio, fim });
+
+  // orçamentoSemLead (013, US3) — o vestígio do WhatsApp: a coluna paciente_lead_id JÁ vem no
+  // SELECT acima e era descartada. `null` quando não há fonte de orçamento; nunca vira `0`.
+  const orcamentosSemLead = linhasOrc
+    ? { valor: linhasOrc.filter((o) => o.criado >= inicio && o.criado <= fim && o.paciente_lead_id == null).length }
+    : null;
 
   // vendas — AUSENTE é "não olhei", `[]` é "olhei, zero". A distinção inteira do template.
   const vendas: Celula = Array.isArray(p.vendas)
     ? apurado(p.vendas.filter((v) => v?.data && v.data >= inicio && v.data <= fim).length)
     : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
 
-  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos };
+  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, orcamentosSemLead };
 }
 
 export { ehApurado };
