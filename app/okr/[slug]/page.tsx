@@ -142,8 +142,8 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, vendas, impressoes } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
-  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas } });
+  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas, orcamentos, orcamentosAceitos } });
   const veredito = posicaoDeAtaque(ficha);
   const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
 

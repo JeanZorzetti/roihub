@@ -102,8 +102,10 @@ export default async function OkrPage() {
 
   const linhas = await Promise.all(
     projects.map(async (p) => {
-      const { cliques, leads: leadsCel, vendas } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
-      const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, vendas } });
+      const { cliques, leads: leadsCel, vendas, orcamentos, orcamentosAceitos } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+      // SC-001: a lista e a ficha leem o MESMO `coletado`. Passar menos aqui faria a `/okr` julgar
+      // a posição de ataque por uma cadeia mais curta que a que a ficha exibe.
+      const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, vendas, orcamentos, orcamentosAceitos } });
       const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
       return { p, ficha, v: posicaoDeAtaque(ficha), projecao };
     })

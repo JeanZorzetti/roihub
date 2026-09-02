@@ -17,6 +17,40 @@ Nasceu de uma deep-research que o Jean encomendou:
 **Ele NÃO é um projeto de SEO.** É um projeto de MEDIÇÃO. O produto final é a capacidade de dizer,
 com número apurado, quanto vale um clique a mais.
 
+## ⚠️ ATUALIZAÇÃO 02/09/2026 — a cadeia da Atma MUDOU de forma, leia antes do resto
+
+O texto abaixo continua válido como método. O que mudou é o **negócio**, e com ele a cadeia:
+
+**A Atma parou de prometer "achamos um doutor perto de você".** Ela era representante comercial; o
+sócio que fazia comercial + fabricação saiu por não entregar a venda. A fábrica nova cuida de
+planejamento e fabricação, mas exige os exames. Um dos leads acusou propaganda enganosa (não foi
+adiante), e o posicionamento público virou **hiperfoco em PREÇO**.
+
+**Consequência de medição, e é ela que importa aqui:** o que trazia cadastro era a comodidade do
+direcionamento, não o preço. O paciente agora chega **direto no WhatsApp do Jean** e não preenche
+form. Por isso `patient_leads` está seco desde 17/08 — **queda de CANAL, não de demanda.** Ler
+aqueles 16 dias como colapso de funil manda o trabalho errado.
+
+O que a cadeia passou a medir (`lib/okr.mjs`, perfil D):
+
+```
+visitante 525 → lead (form) 35 → contato feito [?] → orçamento ENVIADO 5 → orçamento ACEITO [?] → tratamento 0
+```
+
+- **`orcamentos` era o degrau que já estava medido e a ficha dizia "sem coletor".** 7 linhas,
+  R$ 37.465, todas `enviado`; 5 na janela, R$ 28.485. Agora é coletor de verdade.
+- **2 dos 7 orçamentos têm `paciente_lead_id NULL`** — é a assinatura do lead de WhatsApp: veio
+  sem cadastro. É o proxy medível do canal novo.
+- `patient_orthodontist_assignments` tem **0 linhas** — o passo "atribuir ortodontista" nunca
+  rodou de verdade e agora não existe mais. Não modele por ele.
+- **`orçamento ACEITO` sai `não apurado`, nunca 0**: a tabela só conheceu `enviado`, e nenhum
+  código do repo da Atma escreve outro status. `STATUS_ACEITE` em `lib/okr.mjs` está **vazio de
+  propósito** — preencher só quando a Atma DECLARAR a regra, nunca por adivinhação.
+- **`contato feito` continua `não apurado` de propósito.** `status` é posição ATUAL, não evento: os
+  16 `cancelado` quase todos foram atendidos antes. Migration pronta e **não rodada** em
+  `Atma/Site/database/2026-09-02-historico-status.sql` — e ela só conta de hoje em diante, o
+  passado não volta.
+
 ## O estado em uma frase
 
 **A cascata fecha em UM projeto do portfólio, e o que ela diz é que o gargalo não é tráfego:

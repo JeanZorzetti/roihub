@@ -180,10 +180,10 @@ test("G5 — degraus acima do primeiro fator (a entrada) não produzem erro", ()
 // ── G6 — veredito de N2 nunca "fecha" derivado de ausência ──────────────────
 
 test("G6 — veredito nao-apurado nomeia os fatores faltando, nunca finge fechar", () => {
-  const ficha = fichaAtma(); // contatado/agendada/compareceu sem coletor
+  const ficha = fichaAtma(); // contatado sem coletor, aceito sem regra de aceite declarada
   const { veredito } = avaliarN2(PERFIS.D.fatores, ficha.marcos, ficha.taxas, { ticket: 4000 });
   assert.equal(veredito.estado, "nao-apurado");
-  assert.match(veredito.motivo, /CR\(lead→consulta\)/);
+  assert.match(veredito.motivo, /CR\(lead→orçamento\)/);
 });
 
 // ── G7 — N4 sem total, diferença nao-apurado, perfil C marca organico sem elo ─
@@ -376,10 +376,10 @@ test("R2 — o 1º fator de cadeia de N2 é VOLUME (não taxa); os seguintes sã
   // "Leads" — 1º fator de cadeia: o count bruto de `lead` (39), não uma razão.
   assert.equal(fatores[0].estado, "apurado");
   assert.equal(fatores[0].valor, 39);
-  // "CR(consulta→tratamento)" — cobertura de UM degrau só (["tratamento"]); tem que ser a TAXA
-  // tratamento/compareceu, nunca o valor cru do marco (era o bug: virava "0" em vez de "0,00%").
-  const crConsultaTratamento = fatores.find((f) => f.rotulo === "CR(consulta→tratamento)");
-  if (crConsultaTratamento.estado === "apurado") assert.match(String(crConsultaTratamento.valor), /%/);
+  // "CR(orçamento→tratamento)" — tem que ser a TAXA tratamento/aceito, nunca o valor cru do marco
+  // (era o bug: virava "0" em vez de "0,00%").
+  const crOrcamentoTratamento = fatores.find((f) => f.rotulo === "CR(orçamento→tratamento)");
+  if (crOrcamentoTratamento.estado === "apurado") assert.match(String(crOrcamentoTratamento.valor), /%/);
 });
 
 // ── N3 funil visual (spec 012) — segmentosDoFunil() e n3.funil ──────────────
@@ -494,4 +494,20 @@ test("invariante — todo projeto com `ficha` curada existe em listProjects()", 
   assert.ok(comFicha.length > 0, "nenhum projeto curado com `ficha` — o teste não prova nada");
   const todos = new Set(mergeProjects(curated, []).map((p) => p.slug));
   for (const slug of comFicha) assert.ok(todos.has(slug), `${slug} tem ficha mas não está em listProjects()`);
+});
+
+// ── escolherFamilia — zero na ENTRADA e zero no FIM são doenças opostas ─────
+
+test("escolherFamilia — zero no FIM da cadeia não é D1", () => {
+  // `atma`: 525 cliques, 35 leads, 0 tratamentos. Descoberta é a única coisa que funciona —
+  // devolver D1 aqui manda otimizar indexação num projeto que já é achado.
+  const ficha = montarFicha({ slug: "atma", perfil: "D", coletado: { cliques: apurado(525), leads: apurado(35), vendas: apurado(0) } });
+  const { familia } = escolherFamilia(posicaoDeAtaque(ficha), ficha);
+  assert.equal(familia, "D3");
+});
+
+test("escolherFamilia — zero na ENTRADA continua D1", () => {
+  const ficha = montarFicha({ slug: "x", perfil: "D", coletado: { cliques: apurado(0), leads: apurado(0), vendas: apurado(0) } });
+  const { familia } = escolherFamilia(posicaoDeAtaque(ficha), ficha);
+  assert.equal(familia, "D1");
 });

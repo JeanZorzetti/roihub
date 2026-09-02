@@ -22,10 +22,10 @@ test("cada perfil tem a cadeia do template, não uma cadeia genérica", () => {
 
 test("degrau sem coletor é `não apurado` com a fonte a CONSULTAR — nunca 0", () => {
   const f = ficha("D", { cliques: apurado(535), leads: apurado(39), vendas: apurado(0) });
-  const compareceu = f.marcos.find((m) => m.chave === "compareceu");
-  assert.equal(ehApurado(compareceu.celula), false);
+  const contatado = f.marcos.find((m) => m.chave === "contatado");
+  assert.equal(ehApurado(contatado.celula), false);
   // R4: a mensagem manda consultar a fonte que já existe, não escrever encanamento novo.
-  assert.match(compareceu.celula.naoApurado, /sem coletor — consultar agenda da clínica/);
+  assert.match(contatado.celula.naoApurado, /sem coletor — consultar histórico de status/);
 });
 
 test("projeto sem perfil NÃO cai em perfil padrão", () => {

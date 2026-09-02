@@ -520,12 +520,12 @@
           "celula": "n3:lead"
         },
         {
-          "kpi": "consulta agendada",
-          "baseline": null,
+          "kpi": "orçamentos enviados na janela",
+          "baseline": 5,
           "meta": 30,
           "prazo": "2026-12-31",
           "dono": "jean",
-          "celula": "n3:agendada"
+          "celula": "n3:orcamento"
         }
       ]
     }
