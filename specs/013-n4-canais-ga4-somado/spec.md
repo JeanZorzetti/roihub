@@ -26,6 +26,18 @@ seis canais do N4 nunca tiveram coletor e imprimem `não apurado` fixo. A conseq
 O defeito não é da Atma: **todo projeto do portfólio que recebe tráfego fora da busca orgânica tem
 o topo da cadeia subestimado**, e a subestimação é silenciosa.
 
+## Clarifications
+
+### Session 2026-09-02
+
+- Q: GSC conta cliques num resultado de busca e a fonte nova conta sessões no site. Como compor o total do topo sem misturar unidades nem contar duas vezes? → A: Opção A — o canal orgânico continua vindo do Search Console e a fonte nova serve **apenas** os cinco canais que o GSC não enxerga. Não há sobreposição por construção; o total passa a ser **composto** e DEVE ser rotulado como composto na tela, nunca como "sessões".
+- Q: O lead que chega por WhatsApp deve ser instrumentado nesta feature ou apenas rotulado como inferência? → A: Opção C — rotular a inferência agora, dentro do hub, e abrir a instrumentação da origem do contato como feature separada, mantendo a dívida explícita em vez de esquecida.
+- Q: O total composto vira o `visitante` da cadeia, ou fica só como leitura no N4? → A: Opção A — `visitante` continua sendo o orgânico do Search Console e a cadeia não muda. O N4 exibe todos os canais e o total composto lado a lado, como leitura, sem alimentar o N3. Promover o composto a denominador fica como migração futura, datada e separada.
+
+**Critério comum às duas decisões**: nenhuma delas altera número que já está na tela. Quando uma
+leitura nova entra junto com uma mudança de significado, não dá para separar o que melhorou do que
+só mudou de régua.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Ver o topo do funil por canal, com a fonte de cada parcela (Priority: P1)
@@ -61,8 +73,9 @@ O total do topo da cadeia passa a considerar todos os canais com fonte, sem que 
 entre a leitura do GSC e a do GA4 infle o número.
 
 **Why this priority**: uma soma que conta o mesmo visitante duas vezes é pior que a subestimação de
-hoje, porque parece melhor. O `visitante` é o denominador de toda taxa da cadeia — inflar o
-denominador **abaixa toda conversão do projeto** e manda otimizar o degrau errado.
+hoje, porque parece melhor. E como o total composto é leitura — não denominador (FR-005c) — ele
+precisa ser inequívoco justamente por ficar ao lado de um número menor que continua governando as
+taxas.
 
 **Independent Test**: para um projeto com as duas fontes, conferir que o total do topo bate com a
 regra de composição declarada e que nenhum visitante entra por duas fontes.
@@ -79,24 +92,29 @@ regra de composição declarada e que nenhum visitante entra por duas fontes.
 
 ---
 
-### User Story 3 - Enxergar o lead que chega por WhatsApp (Priority: P2)
+### User Story 3 - Enxergar o lead que chega por WhatsApp, rotulado como inferência (Priority: P2)
 
-O canal que hoje só existe como suspeita ganha um lugar honesto na ficha: ou medido de verdade, ou
-declarado como inferência que não entra na cadeia como número apurado.
+O canal que hoje só existe como suspeita ganha um lugar honesto na ficha: aparece com o volume que
+o vestígio no banco permite deduzir, **marcado como inferência**, sem entrar na cadeia como número
+apurado nem sustentar taxa nenhuma.
 
-**Why this priority**: é o caso concreto que motivou a feature, mas depende de decisão de escopo
-(instrumentar o link ou apenas rotular a inferência). P2 porque as histórias 1 e 2 entregam valor
-sem ela.
+**Why this priority**: é o caso concreto que motivou a feature, mas as histórias 1 e 2 entregam
+valor sem ela. Fica em P2 também porque a inferência é um paliativo declarado: a medição real
+depende de instrumentar a origem do contato, o que está fora deste escopo (FR-011b).
 
-**Independent Test**: abrir a ficha da Atma e verificar que o volume que chega por WhatsApp está
-representado, e que a representação diz claramente se é apuração ou inferência.
+**Independent Test**: abrir a ficha da Atma e verificar que o volume que chega fora do formulário
+aparece com marca de inferência, e que nenhuma taxa da cadeia foi calculada a partir dele.
 
 **Acceptance Scenarios**:
 
 1. **Given** um orçamento sem lead vinculado, **When** a ficha da Atma é montada, **Then** ele nunca
    é somado como lead apurado do formulário.
-2. **Given** a origem WhatsApp identificada, **When** ela aparece na ficha, **Then** o estado dela
-   (apurado ou inferido) é explícito ao lado do número.
+2. **Given** a origem WhatsApp deduzida do vestígio no banco, **When** ela aparece na ficha,
+   **Then** ela vem visivelmente marcada como inferência, ao lado do número.
+3. **Given** uma origem marcada como inferência, **When** qualquer taxa da cadeia é calculada,
+   **Then** o valor inferido não entra nem como numerador nem como denominador.
+4. **Given** esta feature entregue, **When** alguém procura por que a origem não é apurada,
+   **Then** encontra a dívida registrada com o motivo, e não o silêncio.
 
 ---
 
@@ -130,7 +148,19 @@ representado, e que a representação diz claramente se é apuração ou inferê
 - **FR-004**: O sistema DEVE registrar `0` apurado quando a fonte respondeu com sucesso e o volume
   do canal na janela foi zero.
 - **FR-005**: O sistema DEVE garantir que cada canal receba volume de **exatamente uma** fonte, de
-  modo que nenhum visitante seja contado duas vezes no total do topo.
+  modo que nenhum visitante seja contado duas vezes no total do topo. Especificamente: o canal
+  orgânico é servido pelo Search Console e a fonte nova serve **somente** os cinco canais restantes.
+- **FR-005a**: O sistema NÃO PODE usar a fonte nova para produzir o volume do canal orgânico, nem
+  para substituir, corrigir ou reconciliar o número que o Search Console já serve.
+- **FR-005b**: O total composto do N4, por somar grandezas de origens diferentes (cliques em
+  resultado de busca e sessões no site), DEVE ser rotulado na tela como **composto**, e NÃO PODE ser
+  apresentado sob o nome de uma única grandeza.
+- **FR-005c**: O marco `visitante` da cadeia CONTINUA sendo o volume orgânico do Search Console. O
+  total composto do N4 é **leitura**, e NÃO PODE alimentar o N3 nem servir de denominador a
+  qualquer taxa da cadeia.
+- **FR-005d**: A tela DEVE deixar explícito que o total composto do N4 e o `visitante` da cadeia são
+  números diferentes, com abrangências diferentes — exibi-los sem essa distinção faria a diferença
+  entre eles parecer erro de medição.
 - **FR-006**: O sistema DEVE aplicar a MESMA janela declarada (R7) às duas fontes, e DEVE recusar a
   soma quando as duas leituras não cobrirem o mesmo intervalo.
 - **FR-007**: O sistema DEVE preservar o comportamento atual — inclusive o valor exibido — para todo
@@ -143,6 +173,11 @@ representado, e que a representação diz claramente se é apuração ou inferê
   configuração DEVE ser distinguível de "configurada e sem tráfego".
 - **FR-011**: O sistema DEVE distinguir, na tela, número **apurado** de número **inferido**, e valor
   inferido NÃO PODE entrar na cadeia como apurado nem sustentar uma taxa.
+- **FR-011a**: A origem WhatsApp DEVE ser exibida nesta feature como **inferência rotulada**,
+  derivada do vestígio já existente no banco do projeto, sem qualquer alteração no site do projeto.
+- **FR-011b**: A instrumentação da origem do contato — que tornaria essa origem apurada — está
+  **fora do escopo** desta feature e DEVE ficar registrada como dívida explícita, com o motivo de
+  não ter sido feita aqui.
 - **FR-012**: O sistema DEVE manter a diferença entre a soma medida dos canais e a entrada da cadeia
   como `não apurado` enquanto houver qualquer canal sem fonte.
 - **FR-013**: A configuração da fonte nova DEVE ser validada pelo nome da variável de ambiente,
@@ -170,11 +205,21 @@ representado, e que a representação diz claramente se é apuração ou inferê
   do portfólio.
 - **SC-004**: Para todo projeto sem a fonte nova configurada, os valores exibidos no N3 e no N4
   permanecem idênticos aos de antes da mudança.
-- **SC-005**: A soma dos volumes dos canais nunca excede o total do topo declarado para o projeto.
+- **SC-005**: Nenhum canal recebe volume de mais de uma fonte — verificável somando as parcelas por
+  procedência e conferindo que cada canal aparece uma única vez. (O total composto do N4 **excede**
+  o `visitante` da cadeia por construção, já que este é só o orgânico: excedente aqui é o
+  comportamento correto, não erro.)
 - **SC-006**: Com a fonte nova fora do ar, toda ficha do portfólio continua abrindo e o número
   orgânico continua sendo exibido.
 - **SC-007**: Na ficha da Atma, o volume que chega fora do formulário deixa de ser invisível e passa
-  a ter linha própria com estado explícito.
+  a ter linha própria marcada como inferência.
+- **SC-008**: O número do canal orgânico exibido depois da mudança é idêntico, para todos os
+  projetos, ao exibido antes dela — a fonte nova não toca esse canal.
+- **SC-009**: Nenhuma taxa da cadeia muda de valor por causa de um número inferido — verificável
+  removendo as inferências e conferindo que toda taxa permanece igual.
+- **SC-010**: Toda taxa do N3, em todos os projetos, permanece idêntica à de antes da mudança —
+  inclusive nos projetos com a fonte nova configurada. A feature acrescenta leitura ao N4 e não
+  toca a cadeia.
 
 ## Assumptions
 
@@ -190,43 +235,25 @@ representado, e que a representação diz claramente se é apuração ou inferê
 - Nenhuma métrica de terceiro entra como meta — a R6 continua valendo. A feature mede volume, não
   compara com benchmark.
 - O histórico anterior à ligação da fonte nova não existe e não será reconstruído.
+- A leitura do canal orgânico permanece intocada (FR-005a): a feature **adiciona** canais, nunca
+  reinterpreta o que já estava medido. A comparabilidade histórica das taxas é preservada de
+  propósito.
+- O total do topo passa a somar grandezas diferentes (cliques em resultado de busca + sessões no
+  site). Isso é aceito conscientemente em troca de zero dupla contagem e zero quebra de histórico;
+  o preço é que o total só pode ser lido como composto (FR-005b). Unificar a grandeza, se um dia
+  for desejado, é migração declarada com data — nunca efeito colateral desta feature.
 
-## Clarifications necessárias
+## Fora de escopo
 
-### Question 1: Unidade do total quando as duas fontes se somam
-
-**Context**: FR-005 e FR-006. O Search Console conta **cliques num resultado de busca**; a fonte
-nova conta **sessões no site**. São grandezas diferentes: o mesmo visitante pode gerar um clique e
-duas sessões, ou uma sessão sem clique nenhum. Somar as duas produz um número cuja unidade não
-existe — e esse número é o denominador de toda taxa da cadeia.
-
-**What we need to know**: como compor o total do topo sem misturar unidades nem contar duas vezes?
-
-| Option | Answer | Implications |
-|--------|--------|--------------|
-| A | Orgânico continua vindo do GSC; a fonte nova serve **apenas** os cinco canais que o GSC não enxerga | Não há sobreposição por construção e o número orgânico de hoje não muda (SC-004 fica trivial). O total mistura cliques com sessões — precisa ser rotulado como composto, nunca como "sessões" |
-| B | Todos os seis canais passam a vir da fonte nova; o GSC vira **conferência** exibida ao lado, nunca somada | Unidade única e coerente em toda a cadeia. Mas o `visitante` de todo projeto muda de valor de uma vez, e com ele toda taxa histórica — exige aceitar a quebra de comparabilidade |
-| C | Dois totais separados, lado a lado, **nunca somados**: "busca orgânica" e "demais canais" | Zero risco de dupla contagem e zero mistura de unidade. Em troca, a cadeia deixa de ter um `visitante` único e o N3 precisa escolher qual dos dois é o denominador |
-| Custom | Outra composição | Descreva a regra e qual grandeza vira o denominador do N3 |
-
-**Your choice**: _[aguardando]_
-
----
-
-### Question 2: O lead de WhatsApp — instrumentar ou rotular?
-
-**Context**: User Story 3 e FR-011. Hoje o único vestígio é orçamento com `paciente_lead_id` nulo
-(2 de 7). Isso é inferência: o lead pode ter vindo de WhatsApp, de telefone, ou de um cadastro que
-falhou.
-
-**What we need to know**: a feature entrega medição do canal ou apenas a rotulagem honesta da
-inferência?
-
-| Option | Answer | Implications |
-|--------|--------|--------------|
-| A | Só rotular: a inferência aparece marcada como inferência e nunca sustenta taxa | Escopo pequeno, entrega imediata, nenhuma mudança fora do hub. O canal continua sem número apurado — a pergunta "quanto o WhatsApp traz" segue sem resposta |
-| B | Instrumentar a origem do contato de WhatsApp para que ele passe a ser apurado de verdade | Responde a pergunta que motivou a feature. Exige mudança no site da Atma e só conta de quando for ligado em diante — o passado não volta |
-| C | Rotular agora (A) e abrir a instrumentação (B) como feature separada | Entrega valor já sem bloquear a spec numa mudança em outro repositório, e mantém a dívida explícita em vez de esquecida |
-| Custom | Outra abordagem | Descreva |
-
-**Your choice**: _[aguardando]_
+- **Instrumentar a origem do contato de WhatsApp** para torná-la apurada. Fica como feature
+  separada (FR-011b). Motivo de não estar aqui: exige mudança no site do projeto, em outro
+  repositório, e só passaria a contar a partir da data em que fosse ligada — o passado não volta.
+  Enquanto isso, a origem aparece como inferência rotulada.
+- **Promover o total composto a `visitante` da cadeia** (FR-005c). Mudaria o denominador de toda
+  taxa do N3 no mesmo momento em que a fonte nova chega — e aí não daria para separar "a conversão
+  caiu" de "a conta mudou". Fica como migração futura, datada e isolada, a ser feita quando os
+  projetos já tiverem a fonte configurada.
+- **Unificar a grandeza do topo da cadeia** (migrar o orgânico para a fonte nova). Mudaria o
+  `visitante` de todos os projetos de uma vez e com ele toda taxa histórica.
+- **Criar canais novos** além dos seis do catálogo atual. Volume que chegar rotulado fora do
+  catálogo é nomeado, não descartado (FR-009), mas não gera canal.

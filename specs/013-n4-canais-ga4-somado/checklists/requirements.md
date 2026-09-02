@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,19 +31,31 @@
 
 ## Notes
 
-**Duas perguntas abertas, ambas de escopo, ambas na seção "Clarifications necessárias" do spec.md.**
+**Todas as perguntas abertas foram resolvidas na sessão de clarificação de 02/09/2026** (registradas
+na seção `## Clarifications` do spec.md). Checklist passou de 15/16 para 16/16.
 
-1. **Unidade do total** — GSC conta cliques, GA4 conta sessões. Não é detalhe técnico: o
-   `visitante` é o denominador de toda taxa da cadeia, e a escolha entre as opções A/B/C decide se
-   o número histórico de conversão de todos os projetos muda de uma vez. Sem resposta, FR-005 e
-   FR-006 não têm critério de aceite verificável.
+As três decisões, e o que cada uma fechou:
 
-2. **Lead de WhatsApp** — decide se a feature toca outro repositório (o site da Atma) ou fica
-   contida no hub. Muda o tamanho da entrega e a User Story 3.
+1. **Unidade do total** → o orgânico continua vindo do GSC e a fonte nova serve só os cinco canais
+   cegos (FR-005, FR-005a). Fechou o critério de aceite de FR-005/FR-006, que antes não era
+   verificável.
+2. **Lead de WhatsApp** → inferência rotulada agora, instrumentação como feature separada
+   (FR-011a, FR-011b). Fechou o tamanho da entrega: a feature não sai do hub.
+3. **O composto vira `visitante`?** → não (FR-005c). Esta surgiu ao aplicar a decisão 1 e era uma
+   contradição real: a decisão 1 foi escolhida por não mexer em número já exibido, mas promover o
+   composto a denominador mudaria toda taxa do N3. Resolvida mantendo a cadeia intocada; a promoção
+   virou item de **Fora de escopo**, como migração futura datada.
+
+**Ajuste de consistência decorrente**: SC-005 dizia que a soma dos canais nunca excede o total do
+topo. Com FR-005c isso ficou invertido — o composto do N4 **deve** exceder o `visitante`, que é só
+o orgânico. SC-005 foi reescrito para medir unicidade de fonte por canal, e SC-010 foi adicionado
+para travar que nenhuma taxa do N3 muda de valor.
 
 Nomes de fonte foram mantidos fora dos requisitos de propósito: "GA4" aparece no título e no input
 do usuário, mas os FR falam em "fonte nova" / "fonte de canal" para não amarrar a spec a um vendor
 antes do `/speckit-plan`.
 
-Itens marcados incompletos exigem atualização antes de `/speckit-plan`. O caminho recomendado é
-responder as duas perguntas via `/speckit-clarify`.
+**Deferido para o `/speckit-plan`** (não bloqueia): a `/okr` percorre todos os projetos e a rota é
+`force-dynamic`. Ler a fonte nova por projeto a cada requisição multiplica chamadas externas numa
+página que já foi reportada como indisponível em janela noturna. Decidir entre leitura por
+requisição, cache ou coleta em lote é decisão de arquitetura, não de escopo.
