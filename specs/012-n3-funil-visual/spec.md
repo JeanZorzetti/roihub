@@ -49,18 +49,19 @@ parágrafos um a um. Sem essa leitura rápida, a pergunta "onde é que a cadeia 
 cabeçalho da ficha já responde em texto, via `escolherFamilia()`) não tem apoio visual no nível
 que efetivamente mede a perda degrau a degrau.
 
-**Independent Test**: abrir `/okr/atma` (perfil D, 1 de 5 degraus apurado) e `/okr/<projeto de
-perfil A/B/C>` (contagem de degraus diferente) lado a lado; confirmar que o funil de cada um tem o
-número certo de segmentos e que o segmento apurado é visualmente distinto do vazio, sem ler texto.
+**Independent Test**: abrir `/okr/atma` (perfil D, 6 marcos → 5 taxas, 1 apurada) e
+`/okr/<projeto de perfil A/B/C>` (5 marcos → 4 taxas) lado a lado; confirmar que o funil de cada um
+tem o número certo de segmentos e que o segmento apurado é visualmente distinto do vazio, sem ler
+texto.
 
 **Acceptance Scenarios**:
 
-1. **Given** a ficha da `atma` (perfil D, 5 degraus, 1 apurado), **When** o card N3 renderiza,
-   **Then** o funil mostra 5 segmentos em ordem, o primeiro preenchido e os outros quatro com o
-   padrão vazio/hachurado.
-2. **Given** um projeto de perfil com contagem de degraus diferente de 5, **When** a ficha desse
-   projeto renderiza, **Then** o funil mostra exatamente o número de degraus daquele perfil — sem
-   nenhuma mudança de código por perfil.
+1. **Given** a ficha da `atma` (perfil D, 6 marcos → 5 taxas, 1 apurada), **When** o card N3
+   renderiza, **Then** o funil mostra 5 segmentos em ordem, o primeiro preenchido e os outros
+   quatro com o padrão vazio/hachurado.
+2. **Given** um projeto de perfil A, B ou C (5 marcos → 4 taxas), **When** a ficha desse projeto
+   renderiza, **Then** o funil mostra exatamente 4 segmentos — sem nenhuma mudança de código por
+   perfil.
 
 ---
 
@@ -100,9 +101,12 @@ presente, na mesma ordem, com o mesmo motivo; a única adição é o funil acima
 ### Functional Requirements
 
 - **FR-001**: O card N3 DEVE renderizar um funil horizontal acima das linhas de texto já
-  existentes, com um segmento por degrau da cadeia do perfil ativo do projeto.
+  existentes, com um segmento por **taxa** da cadeia do perfil ativo — isto é, um segmento por par
+  de marcos consecutivos, na mesma ordem e em correspondência 1:1 com as linhas de texto que N3 já
+  renderiza. Cadeia de N marcos tem N−1 segmentos, nunca N (ver Key Entities).
 - **FR-002**: O número de segmentos DEVE vir do tamanho real da cadeia do perfil ativo — nunca
-  fixo em 5. Perfis diferentes (A/B/C/D) têm contagens diferentes de degraus.
+  fixo em 5. Perfis diferentes têm contagens diferentes: A, B e C têm 5 marcos (**4 segmentos**),
+  D tem 6 marcos (**5 segmentos**).
 - **FR-003**: Cada segmento DEVE indicar seu estado — apurado (preenchido) ou não apurado (trilho
   vazio, padrão hachurado, nunca cor sozinha) — usando o mesmo estado que já rege a linha de texto
   correspondente, nunca um estado novo nem inferido.
@@ -120,9 +124,19 @@ presente, na mesma ordem, com o mesmo motivo; a única adição é o funil acima
 
 ### Key Entities *(include if feature involves data)*
 
-- **Degrau (marco) da cadeia N3**: um ponto da árvore de conversão do perfil ativo (ex.:
-  visitante, lead, consulta, tratamento). Tem nome, estado (apurado/declarado/não apurado) e,
-  quando apurado, um valor — os mesmos três estados que já regem toda a ficha (FR-009 da spec 011).
+São **duas** entidades, e confundi-las é o erro que esta seção existe para prevenir: o marco é o
+ponto, a taxa é o vazamento entre dois pontos. N3 mede o segundo. A cadeia da `atma` tem **6
+marcos** (`525 → 35 → ? → ? → ? → 0`) e **5 taxas** — e são cinco as linhas de texto que N3 já
+renderiza hoje.
+
+- **Marco (degrau) da cadeia**: um ponto da árvore de conversão do perfil ativo (ex.: visitante,
+  lead, consulta, tratamento). Tem nome, estado (apurado/declarado/não apurado) e, quando apurado,
+  um valor — os mesmos três estados que já regem toda a ficha (FR-009 da spec 011). **Não é o
+  segmento**: é dele que sai a *altura* do segmento.
+- **Taxa entre dois marcos consecutivos**: a razão `marco[i+1] / marco[i]`, com o numerador de uma
+  sendo o denominador da seguinte. É a unidade de N3 — uma linha de texto hoje, **um segmento do
+  funil** a partir desta feature. Só existe apurada quando os dois marcos que a formam existem
+  apurados; caso contrário é `não apurado` com motivo. Uma cadeia de N marcos tem N−1 taxas.
 
 ## Success Criteria *(mandatory)*
 

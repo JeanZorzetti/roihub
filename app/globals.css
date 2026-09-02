@@ -341,6 +341,11 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ficha-krs li { border-top: 1px solid var(--grid); padding-top: 8px; }
 .ficha-krs li:first-child { border-top: none; padding-top: 0; }
 
+/* Funil de N3 (spec 012) — direção corte-seco: raio 0, sombra 0, nenhuma opacity. */
+.ficha-funil { width: 100%; height: auto; display: block; margin: 0 0 10px; }
+.ficha-funil polygon { fill: var(--seq550); }
+.ficha-funil line { stroke: var(--grid); }
+
 /* aba SEO — small multiples */
 .seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 16px; }
 @media (max-width: 520px) { .seo-grid { grid-template-columns: 1fr; } }

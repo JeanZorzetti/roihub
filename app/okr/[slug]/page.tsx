@@ -106,6 +106,32 @@ function Linha({ c }: { c: CelulaFicha }) {
   );
 }
 
+/** O funil de N3 (spec 012): um segmento por taxa, na mesma ordem das linhas de texto abaixo dele
+ *  — decorativo (FR-008), sem `'use client'` nem estado (FR-007). `entrada`/`saida` já chegam em
+ *  fração `0..1` de `segmentosDoFunil()`; aqui só a conversão para unidade de `viewBox` (× 44). */
+function FunilN3({ segmentos }: { segmentos: { estado: string; entrada?: number; saida?: number }[] }) {
+  const largura = 600 / segmentos.length;
+  return (
+    <svg className="ficha-funil" viewBox="0 0 600 96" aria-hidden="true" focusable="false">
+      <defs>
+        <pattern id="n3-hachura" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" />
+        </pattern>
+      </defs>
+      {segmentos.map((s, i) => {
+        const x0 = i * largura + 4;
+        const x1 = (i + 1) * largura - 4;
+        if (s.estado === "apurado") {
+          const e = s.entrada ?? 0;
+          const sa = s.saida ?? 0;
+          return <polygon key={i} points={`${x0},${48 - e * 44} ${x1},${48 - sa * 44} ${x1},${48 + sa * 44} ${x0},${48 + e * 44}`} />;
+        }
+        return <rect key={i} x={x0} y="4" width={x1 - x0} height="88" fill="url(#n3-hachura)" />;
+      })}
+    </svg>
+  );
+}
+
 export default async function FichaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const projects = await listProjects();
@@ -176,6 +202,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     familia?: string | null;
     motivoFamilia?: string;
     itens?: { key: string; titulo: string; meta: string | null; dono: string | null; data: CelulaFicha; celulaQueMove: string; descontinuado: boolean }[];
+    funil?: { estado: string; entrada?: number; saida?: number }[];
   }>;
 
   // O veredito já é calculado por escolherFamilia() dentro de montarNiveis() — só precisa subir
@@ -210,6 +237,8 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
       {niveis.map((n) => (
         <section className="card ag-section" aria-labelledby={n.id} key={n.id}>
           <h2 className="eyebrow" id={n.id}>{n.titulo}</h2>
+
+          {n.id === "N3" && n.funil && n.funil.length > 0 && <FunilN3 segmentos={n.funil} />}
 
           {n.id === "N4" || n.id === "N5"
             ? (() => {

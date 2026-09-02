@@ -18,6 +18,7 @@ import {
   montarN5,
   validarKrs,
   montarNiveis,
+  segmentosDoFunil,
   CANAIS,
   MEDIDORES,
 } from "../lib/ficha.mjs";
@@ -379,6 +380,110 @@ test("R2 — o 1º fator de cadeia de N2 é VOLUME (não taxa); os seguintes sã
   // tratamento/compareceu, nunca o valor cru do marco (era o bug: virava "0" em vez de "0,00%").
   const crConsultaTratamento = fatores.find((f) => f.rotulo === "CR(consulta→tratamento)");
   if (crConsultaTratamento.estado === "apurado") assert.match(String(crConsultaTratamento.valor), /%/);
+});
+
+// ── N3 funil visual (spec 012) — segmentosDoFunil() e n3.funil ──────────────
+
+test("T005 — funil.length é o mesmo de n3.celulas.length para os quatro perfis, sem branch por perfil", () => {
+  for (const k of Object.keys(PERFIS)) {
+    const ficha = montarFicha({ slug: "x", perfil: k, coletado: {} });
+    const niveis = montarNiveis(
+      entradaBase({ ficha, meta: null, veredito: posicaoDeAtaque(ficha), projecao: projetar({ ficha, meta: null, hoje: "2026-09-01" }), declarada: null }),
+    );
+    const n3 = niveis.find((n) => n.id === "N3");
+    assert.equal(n3.funil.length, PERFIS[k].marcos.length - 1, `perfil ${k}`);
+    assert.equal(n3.funil.length, n3.celulas.length, `perfil ${k}`);
+  }
+});
+
+test("T006 — funil[i].estado copia n3.celulas[i].estado; apurado tem entrada/saida em [0,1] com saida<=entrada; nao-apurado não tem nenhum", () => {
+  const niveis = montarNiveis(fichaCompleta()); // atma: 535 cliques → 39 leads, resto sem coletor
+  const n3 = niveis.find((n) => n.id === "N3");
+  for (let i = 0; i < n3.celulas.length; i++) {
+    assert.equal(n3.funil[i].estado, n3.celulas[i].estado, `segmento ${i}`);
+    if (n3.funil[i].estado === "apurado") {
+      assert.ok(n3.funil[i].entrada >= 0 && n3.funil[i].entrada <= 1);
+      assert.ok(n3.funil[i].saida >= 0 && n3.funil[i].saida <= 1);
+      assert.ok(n3.funil[i].saida <= n3.funil[i].entrada);
+    } else {
+      assert.equal(n3.funil[i].entrada, undefined);
+      assert.equal(n3.funil[i].saida, undefined);
+    }
+  }
+  // AS-1: o primeiro segmento (535→39) é o único apurado, quase cheio na entrada.
+  assert.equal(n3.funil[0].estado, "apurado");
+  assert.equal(n3.funil[0].entrada, 1); // 535 é o próprio maior marco apurado da cadeia — base
+  for (let i = 1; i < n3.funil.length; i++) assert.equal(n3.funil[i].estado, "nao-apurado");
+});
+
+test("T007 — marco apurado com valor 0 produz altura 0 exata, sem piso", () => {
+  const ficha = { marcos: [{ celula: apurado(500) }, { celula: apurado(0) }], taxas: [{ numerador: apurado(0), denominador: apurado(500), celula: apurado(0) }] };
+  const [segmento] = segmentosDoFunil(ficha, [{ estado: "apurado" }]);
+  assert.equal(segmento.entrada, 1);
+  assert.equal(segmento.saida, 0);
+});
+
+test("T007 — a base é o maior marco APURADO da cadeia, não o primeiro marco", () => {
+  const topoNaoApurado = naoApuradoF("sem coletor");
+  const meio = apurado(100);
+  const fim = apurado(10);
+  const ficha = {
+    marcos: [{ celula: topoNaoApurado }, { celula: meio }, { celula: fim }],
+    taxas: [
+      { numerador: meio, denominador: topoNaoApurado, celula: naoApuradoF("sem denominador") },
+      { numerador: fim, denominador: meio, celula: apurado(0.1) },
+    ],
+  };
+  const [, segundo] = segmentosDoFunil(ficha, [{ estado: "nao-apurado" }, { estado: "apurado" }]);
+  assert.equal(segundo.entrada, 1); // base = 100 (o maior apurado — o topo não conta, está não apurado)
+  assert.ok(Math.abs(segundo.saida - 0.1) < 1e-9);
+});
+
+test("T007 — cadeia com marcos apurados todos em 0 produz alturas 0, nunca NaN nem Infinity", () => {
+  const ficha = { marcos: [{ celula: apurado(0) }, { celula: apurado(0) }], taxas: [{ numerador: apurado(0), denominador: apurado(0), celula: apurado(0) }] };
+  const [segmento] = segmentosDoFunil(ficha, [{ estado: "apurado" }]);
+  assert.equal(segmento.entrada, 0);
+  assert.equal(segmento.saida, 0);
+  assert.ok(Number.isFinite(segmento.entrada) && Number.isFinite(segmento.saida));
+});
+
+test("T007a — nenhum marco apurado: funil inteiro nao-apurado, contagem certa, sem -Infinity vazando (C8, Edge Case 1)", () => {
+  const ficha = montarFicha({ slug: "x", perfil: "D", coletado: {} });
+  const niveis = montarNiveis(
+    entradaBase({ ficha, meta: null, veredito: posicaoDeAtaque(ficha), projecao: projetar({ ficha, meta: null, hoje: "2026-09-01" }), declarada: null }),
+  );
+  const n3 = niveis.find((n) => n.id === "N3");
+  assert.equal(n3.funil.length, PERFIS.D.marcos.length - 1);
+  for (const s of n3.funil) {
+    assert.equal(s.estado, "nao-apurado");
+    assert.equal(s.entrada, undefined);
+    assert.equal(s.saida, undefined);
+  }
+});
+
+test("T007a — taxa 0/0 (denominador zero) vira segmento nao-apurado, nunca apurado com altura 0 (C9, R1)", () => {
+  const ficha = montarFicha({ slug: "x", perfil: "D", coletado: { cliques: apurado(0), leads: apurado(0), vendas: apurado(0) } });
+  const niveis = montarNiveis(
+    entradaBase({ ficha, meta: null, veredito: posicaoDeAtaque(ficha), projecao: projetar({ ficha, meta: null, hoje: "2026-09-01" }), declarada: null }),
+  );
+  const n3 = niveis.find((n) => n.id === "N3");
+  assert.equal(n3.celulas[0].estado, "nao-apurado"); // visitante→lead: 0/0, denominador 0 não é 0%
+  assert.equal(n3.funil[0].estado, "nao-apurado");
+  assert.equal(n3.funil[0].entrada, undefined);
+});
+
+// ── N3 funil — US2: a forma não pode custar o motivo (spec 012) ─────────────
+
+test("T011 — funil é [] para projeto sem perfil; nenhum outro nível ganha o campo `funil`", () => {
+  const semPerfil = montarFicha({ slug: "x", perfil: null, coletado: {} });
+  const niveis = montarNiveis(
+    entradaBase({ ficha: semPerfil, meta: null, veredito: posicaoDeAtaque(semPerfil), projecao: projetar({ ficha: semPerfil, meta: null, hoje: "2026-09-01" }), declarada: null }),
+  );
+  const n3 = niveis.find((n) => n.id === "N3");
+  assert.deepEqual(n3.funil, []);
+  for (const id of ["N0", "N1", "N2", "N4", "N5", "N6"]) {
+    assert.equal(niveis.find((n) => n.id === id).funil, undefined, `${id} não deveria ter campo funil`);
+  }
 });
 
 // ── T010 — invariante: listFichas() ⊆ listProjects() por slug ───────────────
