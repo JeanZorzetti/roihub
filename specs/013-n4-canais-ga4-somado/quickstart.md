@@ -70,15 +70,21 @@ uma regressão pode aparecer só no perfil C (onde `organico` fica `semElo`).
 
 Na ficha do projeto configurado, no card **N4**:
 
-- [ ] pelo menos **4** canais com número e procedência na mesma linha (SC-001, SC-002);
-- [ ] `outbound` continua `não apurado`, nomeando que a fonte não o distingue;
-- [ ] cada canal aparece **uma vez**, com **uma** fonte (SC-005);
-- [ ] o total composto está rotulado **composto**, com a cobertura no rótulo (FR-005b);
-- [ ] a nota do nível diz que o composto **não** é o `visitante` da cadeia (FR-005d);
-- [ ] o `visitante` do N3 e todas as taxas estão **iguais** ao retrato de antes (SC-010).
+- [X] pelo menos **4** canais com número e procedência na mesma linha (SC-001, SC-002);
+- [X] `outbound` continua `não apurado`, nomeando que a fonte não o distingue;
+- [X] cada canal aparece **uma vez**, com **uma** fonte (SC-005);
+- [X] o total composto está rotulado **composto**, com a cobertura no rótulo (FR-005b);
+- [X] a nota do nível diz que o composto **não** é o `visitante` da cadeia (FR-005d);
+- [X] o `visitante` do N3 e todas as taxas estão **iguais** ao retrato de antes (SC-010).
 
 Conferência aritmética: somar à mão os canais apurados exibidos e bater com o total composto. Se
 não bater, ou o total somou um `não apurado` como zero (R1) ou incluiu o volume fora do catálogo.
+
+**Rodado em 02/09/2026 na `atma`**, no HTML servido pelo EasyPanel, janela `2026-08-03 → 2026-08-30`:
+orgânico 525 (Search Console) + Direto 130 + Pago 0 + Indicação 0 + Social 6 = **661**, e a página
+mostra `total composto (orgânico + 4 canais) 661` — bate. `fora do catálogo (AI Assistant 46 ·
+Unassigned 1) 47` fica de fora do total, como manda o desenho. N3 intacto: `6,67% (35/525)`, o
+denominador continua o orgânico. Detalhe em `tasks.md` → "Fechamento do T002".
 
 ---
 

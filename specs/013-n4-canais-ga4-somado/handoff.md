@@ -1,10 +1,27 @@
 # Handoff — N4 por canal, GA4 somado ao GSC
 
-**Feature**: `013-n4-canais-ga4-somado` | **Data**: 2026-09-02 | **Estado**: 32 de 34 tarefas
-fechadas, **no ar** em `hub.roilabs.com.br`, 6 commits em `main` (`c783faa` → `89a698c`).
+**Feature**: `013-n4-canais-ga4-somado` | **Data**: 2026-09-02 | **Estado**: **33 de 34 tarefas
+fechadas** (só o T029 fica em aberto, e é irrecuperável — §3), **no ar e acesa** em
+`hub.roilabs.com.br`.
 
-A feature está **entregue e funcionando**. Falta **um** passo, e ele não é código: habilitar a GA4
-Data API no projeto GCP. Depois disso os quatro canais acendem **sem novo deploy**.
+**T002 fechou em 02/09.** A Data API foi habilitada e a conta de serviço ganhou acesso à propriedade
+GA4 da Atma — os canais acenderam sem deploy novo, como o desenho previa. O que a ficha da `atma`
+mostra agora, conferido no HTML servido:
+
+```
+orgânico                            [525]  (Search Console)
+Direto                              [130]  (GA4 · properties/504053080)
+Pago                                  [0]  (GA4 · properties/504053080)
+Indicação                             [0]  (GA4 · properties/504053080)
+Social                                [6]  (GA4 · properties/504053080)
+fora do catálogo (AI Assistant 46 · Unassigned 1)  [47]
+total composto (orgânico + 4 canais) [661]  (Search Console · GA4)
+Outbound                             não apurado — a fonte GA4 não distingue prospecção ativa
+diferença                            não apurado — canais sem fonte: outbound
+```
+
+N3 intacto: `visitante → lead 6,67% (35/525)` — o denominador continua o orgânico (SC-010).
+`Pago 0` e `Indicação 0` são o FR-004 funcionando: a fonte respondeu zero, então o zero é apurado.
 
 ---
 
@@ -25,7 +42,9 @@ Working tree **limpo**, tudo commitado e pushado. `npm test` 509/509, `npx tsc -
 | `app/globals.css` | `.ficha-inferido` (corte-seco: raio 0, sombra 0) e `.ficha-nota-n4` |
 | `test/ficha.test.mjs` | +38 asserções; nenhum arquivo de teste novo, `package.json` intocado |
 
-**Estado atual da ficha da `atma`, no HTML servido pelo EasyPanel:**
+**A ficha atual está no topo deste arquivo.** Para referência, era assim enquanto o T002 estava
+aberto — todo canal do GA4 em `não apurado`, o que é o comportamento correto na ausência da fonte,
+não regressão:
 
 ```
 orgânico                   [525]  (Search Console)
@@ -37,92 +56,51 @@ diferença                         não apurado — canais sem fonte: direto, pa
 
 ---
 
-## 1. O ÚNICO passo bloqueante — habilitar a Data API (T002)
+## 1. Como o T002 fechou (histórico — não é tarefa)
 
-A conta de serviço é **`nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com`**, a mesma de
-`GOOGLE_SERVICE_ACCOUNT_JSON` que já serve o GSC. No projeto GCP **845396101677**
-(`review-dispute-agent-498311`), a Data API responde:
+Os três passos, e por que os 403 confundem:
 
-```
-403 — Google Analytics Data API has not been used in project 845396101677 before or it is disabled
-https://console.developers.google.com/apis/api/analyticsdata.googleapis.com/overview?project=845396101677
-```
-
-São **três** passos distintos, e o 403 do primeiro se parece com o do terceiro:
-
-1. ~~habilitar a Google Analytics Data API no projeto GCP~~ — **FEITO em 02/09**, via
+1. **Habilitar a Google Analytics Data API — não precisou de console nem `gcloud`.** A própria conta
+   de serviço (`nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com`) tem
+   `serviceUsageAdmin` no projeto `845396101677`, então
    `POST serviceusage.googleapis.com/v1/projects/845396101677/services/analyticsdata.googleapis.com:enable`
-   com a própria conta de serviço (ela tem `serviceUsageAdmin` no projeto). Não precisou de console;
-2. adicionar a conta de serviço como **Visualizador** na propriedade GA4 da Atma ← **é o que falta**.
-   A sonda agora responde `User does not have sufficient permissions for this property`, que é o 403
-   do passo 2. Isto **não** dá para automatizar: a Admin API exige que quem chama já seja admin da
-   propriedade, e a conta não enxerga nenhuma. É manual em *GA4 → Administrador → Acesso à
-   propriedade → `+` → `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com` → Visualizador*;
-3. o `propertyId` — **já resolvido**: `properties/504053080`, curado no card.
+   com escopo `cloud-platform` devolveu `operations/acat.…` e a API subiu na hora.
+2. **Acesso de Visualizador na propriedade — único passo genuinamente manual.** A Admin API só deixa
+   criar `accessBinding` quem já é admin *daquela* propriedade; a conta não enxergava nenhuma, logo
+   não podia se auto-adicionar. Feito à mão em *GA4 → Administrador → Acesso à propriedade*.
+3. **`propertyId`** — `properties/504053080`, já curado no card.
 
-⚠️ O screenshot do admin do GA4 mostra `CÓDIGO DO FLUXO` (`12127687264`) e `ID DA MÉTRICA`
-(`G-EMCS41DMSP`). **Nenhum dos dois serve** para a Data API — ela quer o ID da propriedade, que só
-aparece em *Administrador → Detalhes da propriedade*. Foi onde a primeira leitura errou.
+**O texto do 403 diz em qual passo você está** — e só ele:
 
-**Sonda para saber em qual dos três passos você está** (leitura pura, não escreve nada). Salve como
-`tmp-probe.mjs` na raiz do `roihub`, rode `node --env-file=.env tmp-probe.mjs`, apague depois:
+| Resposta | Passo pendente |
+|---|---|
+| `has not been used in project … or it is disabled` | 1 — habilitar a API |
+| `User does not have sufficient permissions for this property` | 2 — acesso à propriedade |
+| lista de grupos e sessões | nenhum |
 
-```js
-import { GoogleAuth } from "google-auth-library";
-const auth = new GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON),
-  scopes: ["https://www.googleapis.com/auth/analytics.readonly"],
-});
-const client = await auth.getClient();
-const inicio = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
-const fim = new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);
-try {
-  const r = await client.request({
-    url: "https://analyticsdata.googleapis.com/v1beta/properties/504053080:runReport",
-    method: "POST",
-    data: {
-      dateRanges: [{ startDate: inicio, endDate: fim }],
-      dimensions: [{ name: "sessionDefaultChannelGroup" }],
-      metrics: [{ name: "sessions" }],
-    },
-  });
-  for (const x of r.data.rows ?? []) console.log(x.dimensionValues[0].value, x.metricValues[0].value);
-} catch (e) {
-  console.log("FALHOU:", e?.response?.status, String(e?.message).slice(0, 200));
-}
-```
-
-**Como ler a resposta:**
-
-| Resposta | Significa | Ação |
-|---|---|---|
-| `has not been used ... or it is disabled` | passo 1 pendente | habilitar a API no console |
-| `PERMISSION_DENIED` / `does not have sufficient permissions` | passo 1 OK, passo 2 pendente | adicionar a conta como Visualizador |
-| lista de grupos e sessões | tudo pronto | ir para §2 |
+⚠️ O admin do GA4 mostra `CÓDIGO DO FLUXO` (`12127687264`) e `ID DA MÉTRICA` (`G-EMCS41DMSP`).
+**Nenhum dos dois serve** para a Data API — ela quer o ID da propriedade, em *Administrador →
+Detalhes da propriedade*. Foi onde a primeira leitura errou.
 
 ---
 
-## 2. Quando acender — conferir e fechar (quickstart §3)
+## 2. O que foi conferido ao acender (quickstart §3, rodado)
 
-**Não precisa de deploy.** A rota é `force-dynamic` e a leitura é por requisição (D4) — basta
-recarregar `/okr/atma`.
+Sem deploy: a rota é `force-dynamic` e a leitura é por requisição (D4), bastou recarregar
+`/okr/atma` via `curl -su "$HUB_USER:$HUB_PASS" https://hub.roilabs.com.br/okr/atma`.
 
-```bash
-curl -su "$HUB_USER:$HUB_PASS" https://hub.roilabs.com.br/okr/atma
-```
+- [X] **5** canais com número e procedência (o desenho previa 5) — SC-001;
+- [X] a fonte de cada um diz `GA4 · properties/504053080`;
+- [X] `outbound` segue `não apurado`, e sempre seguirá — decisão de desenho (D3);
+- [X] `total composto (orgânico + 4 canais) 661`; à mão 525+130+0+0+6 = 661;
+- [X] `visitante` do N3 e todas as taxas idênticos — `6,67% (35/525)` (SC-010);
+- [X] `fora do catálogo (AI Assistant 46 · Unassigned 1) 47`, fora do total, como previsto;
+- [X] `Sessões orgânicas do GA4 ignoradas: 765` — descartado e nomeado (FR-005a, SC-008);
+- [X] `diferença` encolheu de cinco canais sem fonte para **um** (`outbound`), e por isso continua
+      não apurada (FR-012).
 
-Checklist do quickstart §3:
-
-- [ ] pelo menos **4** canais com número e procedência na mesma linha (SC-001; o desenho prevê **5**
-      apurados: orgânico + direto + pago + indicação + social);
-- [ ] a fonte de cada um diz `GA4 · properties/504053080`;
-- [ ] `outbound` continua `não apurado` — ele **nunca** terá fonte, é decisão de desenho (D3);
-- [ ] `total composto` muda de `(orgânico)` para `(orgânico + 4 canais)` e a soma bate à mão;
-- [ ] o `visitante` do N3 e **todas** as taxas continuam idênticos (SC-010) — se mudarem, a feature
-      furou o próprio contrato;
-- [ ] se aparecer `fora do catálogo (Email 12 · ...)`, está certo: é volume nomeado, fora do total.
-
-Depois: fechar `T002` no `tasks.md` e marcar o quickstart §3.
+Janela conferida: `2026-08-03 → 2026-08-30` (D-30 → D-3). `T002` fechado no `tasks.md` e o
+quickstart §3 marcado.
 
 ---
 

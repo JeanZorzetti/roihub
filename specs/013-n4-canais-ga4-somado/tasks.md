@@ -31,10 +31,13 @@ Aplicação web única, raiz do repo `roihub/`: `lib/`, `app/`, `data/`, `test/`
 - [X] T001 Confirmar que `google-auth-library` está em `dependencies` de `package.json` e que
       `test/ficha.test.mjs` já consta na lista de arquivos de `npm test` — a feature NÃO adiciona
       dependência nem arquivo de teste (plan.md → Technical Context, D1)
-- [ ] T002 Pré-requisito operacional (fora do código): adicionar a conta de serviço de
+- [X] T002 Pré-requisito operacional (fora do código): adicionar a conta de serviço de
       `GOOGLE_SERVICE_ACCOUNT_JSON` como **Visualizador** na propriedade GA4 da `atma` e anotar o
       `propertyId`, conforme `specs/013-n4-canais-ga4-somado/quickstart.md` §0. Sem isso a API
       devolve 403 e os quatro canais saem `não apurado` — comportamento correto, não regressão
+      — **fechado em 02/09/2026**: Data API habilitada por API (a própria conta tem
+      `serviceUsageAdmin`, `serviceusage…:enable` dispensa console) e acesso de Visualizador
+      concedido na propriedade `504053080`. Ver "Fechamento do T002" no fim deste arquivo
 
 **Checkpoint**: nada a instalar; credencial e propriedade prontas.
 
@@ -329,10 +332,43 @@ indisponível (403)` — as três situações da FR-010 produzindo três textos 
 **Quando a API for habilitada, os canais acendem sem novo deploy**: a rota é `force-dynamic` e a
 leitura acontece por requisição (D4).
 
-### Bloqueio operacional restante (T002)
+### Fechamento do T002 (02/09/2026) — os canais acenderam
+
+Os três passos fecharam. Registro do que cada um exigiu, porque os 403 se parecem:
+
+1. **Habilitar a Data API não precisou de console nem `gcloud`.** A própria conta de serviço tem
+   `serviceUsageAdmin` no projeto: `POST serviceusage.googleapis.com/v1/projects/845396101677/`
+   `services/analyticsdata.googleapis.com:enable` (escopo `cloud-platform`) devolveu
+   `operations/acat.…` e a API subiu na hora.
+2. **O acesso à propriedade é o único passo genuinamente manual.** A Admin API só deixa criar
+   `accessBinding` quem já é admin *daquela* propriedade — a conta não enxergava nenhuma, logo não
+   podia se auto-adicionar. Feito à mão em *GA4 → Administrador → Acesso à propriedade*.
+3. `propertyId` já estava curado no card.
+
+**Como saber em qual passo se está**: o 403 do passo 1 diz `has not been used in project …`; o do
+passo 2 diz `User does not have sufficient permissions for this property`. Só o texto separa.
+
+**Conferência no HTML servido pelo EasyPanel** (`curl -u` em `/okr/atma`, sem deploy novo — rota
+`force-dynamic`, D4), quickstart §3:
+
+| Item | Resultado |
+|---|---|
+| canais com número + procedência | **5** apurados: orgânico 525 (Search Console), Direto 130, Pago 0, Indicação 0, Social 6 — os quatro últimos com fonte `GA4 · properties/504053080` (SC-001) |
+| `outbound` | segue `não apurado — a fonte GA4 não distingue prospecção ativa` (D3) ✔ |
+| total composto | `(orgânico + 4 canais)` = **661**; à mão 525+130+0+0+6 = 661 ✔ |
+| fora do catálogo | `AI Assistant 46 · Unassigned 1` = 47, **fora** do total ✔ |
+| orgânico do GA4 | `Sessões orgânicas do GA4 ignoradas: 765` — descartado e nomeado (FR-005a, SC-008) ✔ |
+| N3 intacto | `visitante → lead 6,67% (35/525)` — denominador continua 525, não 661 (SC-010) ✔ |
+| `diferença` | `não apurado — canais sem fonte: outbound` — encolheu de cinco canais para um, e segue não apurada por causa do outbound (FR-012) ✔ |
+
+`Pago 0` e `Indicação 0` são a assimetria do FR-004 funcionando: a fonte foi consultada e respondeu
+zero, então o zero é apurado e a linha fica. A janela conferida foi `2026-08-03 → 2026-08-30` (D-30
+→ D-3).
+
+### Bloqueio operacional (T002) — histórico, resolvido acima
 
 A conta de serviço é `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com`. Sondadas as
-duas APIs com ela:
+duas APIs com ela, **antes** do fechamento:
 
 - **GA4 Data API**: `403 — has not been used in project 845396101677 before or it is disabled`
 - **GA4 Admin API**: mesmo erro (por isso o `propertyId` não pôde ser descoberto por API)
