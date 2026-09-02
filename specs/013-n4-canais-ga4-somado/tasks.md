@@ -102,7 +102,7 @@ fonte, enquanto os outros 34 projetos saem byte a byte como hoje (quickstart §2
       (<erro>)` (FR-001, FR-003, FR-004, FR-005, FR-005a)
 - [X] T011 [US1] Passar `ga4` e a janela declarada (R7) no chamador de `montarN4()` em
       `lib/ficha.mjs` (hoje linha 344), sem alterar o argumento `cliquesCelula` (depende de T005)
-- [ ] T012 [US1] Adicionar `"ga4": { "propertyId": "..." }` ao card da `atma` em
+- [X] T012 [US1] Adicionar `"ga4": { "propertyId": "..." }` ao card da `atma` em
       `data/projects.json` — curadoria, não segredo (T002 fornece o número)
 - [X] T013 [US1] Conferir em `app/okr/[slug]/page.tsx` que `<Cel>` já imprime `fonte` na mesma linha
       de toda célula `apurado` (FR-002, SC-002). Só mexer se não imprimir
@@ -200,7 +200,7 @@ inferência e que nenhuma taxa mudou de valor por causa dela (quickstart §5).
       `test/ficha.test.mjs` que não foram tocadas (quickstart §1)
 - [ ] T029 Executar quickstart §2 — projeto **sem** GA4: N3 e N4 idênticos byte a byte aos de antes
       da mudança (SC-004, SC-010) e canal orgânico idêntico em todos (SC-008)
-- [ ] T030 Executar quickstart §4 — GA4 fora do ar (`propertyId` inválido ou credencial sem acesso):
+- [X] T030 Executar quickstart §4 — GA4 fora do ar (`propertyId` inválido ou credencial sem acesso):
       toda ficha continua abrindo e o número orgânico continua exibido (SC-006, FR-008)
 - [X] T031 Executar quickstart §6 — varredura dos 35 projetos conferindo que nenhum canal sem fonte
       exibe `0` (SC-003)
@@ -209,7 +209,7 @@ inferência e que nenhuma taxa mudou de valor por causa dela (quickstart §5).
 - [X] T033 Registrar a dívida da FR-011b (instrumentar a origem do contato) onde ela fica
       encontrável: na `divida` da própria célula inferida e na seção "Fora de escopo" da spec, que
       já a documenta — conferir que a linha da ficha aponta o motivo, e não o silêncio (SC-007)
-- [ ] T034 Push e conferência no **HTML servido pelo EasyPanel**, nunca `next dev` (quickstart §7).
+- [X] T034 Push e conferência no **HTML servido pelo EasyPanel**, nunca `next dev` (quickstart §7).
       Push fora de 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
 
 ---
@@ -311,7 +311,25 @@ enganoso do mesmo jeito. Corrigido para a célula só existir com volume, como o
 aparecer no banco **depois** do fim da janela atual. Ele entra na ficha sozinho conforme a janela
 desliza — não é ausência de vestígio, é vestígio recente demais para a janela declarada.
 
-### Bloqueio operacional para T002/T012/T030
+### T012 e T030 fechados — 02/09/2026
+
+`propertyId` da Atma curado: **`properties/504053080`** (confirmado no admin do GA4). Com a Data API
+ainda desabilitada, isso executou o **quickstart §4 com dado real**, não simulado:
+
+| Conferência §4 | Resultado no HTML servido |
+|---|---|
+| a página abre | **200** |
+| o número orgânico continua lá, mesmo valor | `orgânico 525 (Search Console)` |
+| os 4 canais dizem `não apurado` nomeando a falha, nenhum `0` | `fonte GA4 indisponível (403)` · consultar `GA4 Data API` |
+| a mensagem não carrega credencial | varredura por `private_key`/`client_email`/`gserviceaccount`/nome da env: **nenhuma ocorrência** |
+
+O motivo na tela mudou de `sem propriedade GA4 configurada para este projeto` para `fonte GA4
+indisponível (403)` — as três situações da FR-010 produzindo três textos distintos, ao vivo.
+
+**Quando a API for habilitada, os canais acendem sem novo deploy**: a rota é `force-dynamic` e a
+leitura acontece por requisição (D4).
+
+### Bloqueio operacional restante (T002)
 
 A conta de serviço é `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com`. Sondadas as
 duas APIs com ela:
