@@ -345,6 +345,20 @@ test("G15 — celulaQueMove é sempre nao-declarada, mesmo quando o título cita
   assert.equal(n6.itens[0].celulaQueMove, "nao-declarada");
 });
 
+test("N6 — descontinuado vem do campo curado de data/projects.json, não do texto do título", () => {
+  const niveis = montarNiveis(
+    fichaCompleta({
+      itensAgenda: [
+        { key: "acao:x:1", occ: "1970-01-01", titulo: "🚫 DESCONTINUADO em teste", projeto: "x", meta: null, desc: null, tipo: "execucao", rank: 0, seguranca: false, responsavel: null, descontinuado: true },
+        { key: "acao:x:2", occ: "1970-01-01", titulo: "ação pendente normal", projeto: "x", meta: null, desc: null, tipo: "execucao", rank: 1, seguranca: false, responsavel: null, descontinuado: false },
+      ],
+    }),
+  );
+  const n6 = niveis.find((n) => n.id === "N6");
+  assert.equal(n6.itens[0].descontinuado, true);
+  assert.equal(n6.itens[1].descontinuado, false);
+});
+
 // ── R2 — fração SEMPRE colada no percentual, em N2 e N3 ─────────────────────
 
 test("R2 — N3 cola a fração no percentual, nunca devolve o número cru 0..1", () => {

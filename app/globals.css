@@ -329,7 +329,13 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .tabela-rolavel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ficha N0-N6 (011) — uma linha por CelulaFicha, o único caminho que imprime valor. */
-.ficha-linha { margin: 6px 0; font-size: 14px; }
+/* Mesmo motivo do `.okr-top .hero-name` (acima): nome de projeto por extenso em h1 default
+   (32px) quebra em até 5 linhas a 390px, antes de qualquer conteúdo. Classe própria porque
+   `.okr-top .hero-name` está deliberadamente escopada à listagem `/okr`. */
+.ficha-nome { font-size: 22px; line-height: 1.25; margin: 0 0 8px; }
+/* O veredito de escolherFamilia() (lib/ficha.mjs) — "onde atacar" — antes vivia como a última
+   linha `.foot` de 13px do card N5, com o mesmo peso das 24 linhas "não apurado" acima dele. */
+.ficha-veredito { font-size: 15px; margin: 0 0 10px; }
 .ficha-rotulo { font-weight: 600; margin-right: 6px; }
 .ficha-krs { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
 .ficha-krs li { border-top: 1px solid var(--grid); padding-top: 8px; }

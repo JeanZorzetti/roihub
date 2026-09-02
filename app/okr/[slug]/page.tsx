@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { listProjects } from "@/lib/projects";
-import { montarFicha, posicaoDeAtaque } from "@/lib/okr.mjs";
+import { montarFicha, posicaoDeAtaque, FAMILIAS } from "@/lib/okr.mjs";
 import { projetar } from "@/lib/projecao.mjs";
 import { acoesDoRanking } from "@/lib/agenda.mjs";
 import { evaluateAll } from "@/lib/evaluate";
@@ -17,6 +17,47 @@ type CelulaFicha =
   | { estado: "apurado"; valor: number | string; rotulo: string; fonte: string }
   | { estado: "declarado"; valor: number | string; rotulo: string; declaradoEm: string; oQue: string }
   | { estado: "nao-apurado"; rotulo: string; motivo: string; consultar: string };
+
+/** Só apresentação — as chaves cruas continuam sendo o espaço de `n4:`/`n5:` que `validarKrs()`
+ *  casa por igualdade exata (FR-017/R-017); não mexer nos catálogos de lib/ficha.mjs. */
+const ROTULOS_AMIGAVEIS: Record<string, string> = {
+  organico: "Orgânico",
+  direto: "Direto",
+  pago: "Pago",
+  indicacao: "Indicação",
+  outbound: "Outbound",
+  social: "Social",
+  "paginas-indexadas": "Páginas indexadas",
+  "posicao-media-com-corte-pais": "Posição média (BR)",
+  cobertura: "Cobertura",
+  alcance: "Alcance",
+  "citacao-por-ia": "Citação por IA",
+  impressoes: "Impressões",
+  lcp: "LCP",
+  inp: "INP",
+  cls: "CLS",
+  ttfb: "TTFB",
+  uptime: "Uptime",
+  "taxa-5xx": "Taxa de erro 5xx",
+  build: "Build",
+  certificado: "Certificado SSL",
+  "scroll-ate-oferta": "Scroll até a oferta",
+  "cliques-cta": "Cliques no CTA",
+  "abandono-por-campo": "Abandono por campo",
+  "saida-checkout": "Saída no checkout",
+  "lead-gravado": "Lead gravado",
+  "webhook-2xx": "Webhook respondendo",
+  "gateway-ligado": "Gateway de pagamento ligado",
+  "email-entregue": "E-mail entregue",
+};
+
+/** `marca` de KR (FR-017/R-017) — valores fixos de `validarKrs()` em lib/ficha.mjs. */
+const MARCAS_AMIGAVEIS: Record<string, string> = {
+  "chave-invalida": "chave inválida",
+  "nao-verificavel": "não verificável",
+  "sem-dono": "sem dono",
+  excedente: "excedente",
+};
 
 /** O único caminho que imprime valor (FR-009). Sem `0`, sem `—`, sem célula em branco. */
 function Cel({ c }: { c: CelulaFicha }) {
@@ -39,10 +80,28 @@ function Cel({ c }: { c: CelulaFicha }) {
   );
 }
 
+/** N4/N5 repetem o mesmo `motivo` em várias células "não apurado" (achado 4 do design-review: 9
+ *  das 33 linhas da ficha). Agrupamento só de apresentação — `montarN4Nivel`/`montarN5` continuam
+ *  devolvendo lista plana; célula apurada nunca entra num grupo. */
+function agruparPorMotivo(celulas: CelulaFicha[]) {
+  const avulsas: CelulaFicha[] = [];
+  const porMotivo = new Map<string, Extract<CelulaFicha, { estado: "nao-apurado" }>[]>();
+  for (const c of celulas) {
+    if (c.estado !== "nao-apurado") {
+      avulsas.push(c);
+      continue;
+    }
+    const grupo = porMotivo.get(c.motivo) ?? [];
+    grupo.push(c);
+    porMotivo.set(c.motivo, grupo);
+  }
+  return { avulsas, grupos: [...porMotivo.values()] };
+}
+
 function Linha({ c }: { c: CelulaFicha }) {
   return (
     <p className="ficha-linha">
-      <span className="ficha-rotulo">{c.rotulo}</span> <Cel c={c} />
+      <span className="ficha-rotulo">{ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo}</span> <Cel c={c} />
     </p>
   );
 }
@@ -116,8 +175,12 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     krs?: { kr: { kpi: string; dono?: string }; marca: string | null; texto: string }[];
     familia?: string | null;
     motivoFamilia?: string;
-    itens?: { key: string; titulo: string; meta: string | null; dono: string | null; data: CelulaFicha; celulaQueMove: string }[];
+    itens?: { key: string; titulo: string; meta: string | null; dono: string | null; data: CelulaFicha; celulaQueMove: string; descontinuado: boolean }[];
   }>;
+
+  // O veredito já é calculado por escolherFamilia() dentro de montarNiveis() — só precisa subir
+  // para o topo da página, onde a pergunta "onde atacar" é respondida antes de rolar 6 cards.
+  const n5 = niveis.find((n) => n.id === "N5");
 
   return (
     <main className="page">
@@ -125,7 +188,16 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
       <section className="card ag-section">
         <p className="eyebrow">OKR · ficha de {p.nome}</p>
-        <h1>{p.nome}</h1>
+        <h1 className="ficha-nome">{p.nome}</h1>
+        {n5?.familia && (
+          <p className="ficha-veredito">
+            A cadeia trava em{" "}
+            <strong>
+              {n5.familia} — {FAMILIAS[n5.familia as keyof typeof FAMILIAS]?.split(" — ")[0] ?? n5.familia}
+            </strong>{" "}
+            ({n5.motivoFamilia}).
+          </p>
+        )}
         <p>
           Janela única para a árvore inteira (R7):{" "}
           <strong>
@@ -136,12 +208,36 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
       </section>
 
       {niveis.map((n) => (
-        <section className="card ag-section" key={n.id}>
-          <h2 className="eyebrow">{n.titulo}</h2>
+        <section className="card ag-section" aria-labelledby={n.id} key={n.id}>
+          <h2 className="eyebrow" id={n.id}>{n.titulo}</h2>
 
-          {n.celulas.map((c, i) => (
-            <Linha key={i} c={c} />
-          ))}
+          {n.id === "N4" || n.id === "N5"
+            ? (() => {
+                const { avulsas, grupos } = agruparPorMotivo(n.celulas);
+                return (
+                  <>
+                    {avulsas.map((c, i) => (
+                      <Linha key={`avulsa-${i}`} c={c} />
+                    ))}
+                    {grupos.map((grupo, i) =>
+                      grupo.length > 1 ? (
+                        <details key={`grupo-${i}`} className="ficha-linha">
+                          <summary>
+                            {grupo.length} não apurados — {grupo[0].motivo}:{" "}
+                            {grupo.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
+                          </summary>
+                          {grupo.map((c, j) => (
+                            <Linha key={j} c={c} />
+                          ))}
+                        </details>
+                      ) : (
+                        <Linha key={`grupo-${i}`} c={grupo[0]} />
+                      ),
+                    )}
+                  </>
+                );
+              })()
+            : n.celulas.map((c, i) => <Linha key={i} c={c} />)}
 
           {n.id === "N0" && n.krs && n.krs.length > 0 && (
             <ul className="ficha-krs">
@@ -149,32 +245,51 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                 <li key={i}>
                   <strong>{k.kr.kpi}</strong>
                   {k.kr.dono && <span className="pill">{k.kr.dono}</span>}
-                  {k.marca && <span className="pill pill-warn">{k.marca}</span>}
+                  {k.marca && <span className="pill pill-warn">{MARCAS_AMIGAVEIS[k.marca] ?? k.marca}</span>}
                   {k.texto && <div className="foot">{k.texto}</div>}
                 </li>
               ))}
             </ul>
           )}
 
-          {n.id === "N5" && "familia" in n && (
-            <p className="foot">
-              família: <strong>{n.familia ?? "nenhuma"}</strong> — {n.motivoFamilia}
-            </p>
-          )}
-
           {n.id === "N6" && n.itens && n.itens.length > 0 && (
-            <ul className="ficha-krs">
-              {n.itens.map((item) => (
-                <li key={item.key}>
-                  <strong>{item.titulo}</strong>
-                  {item.meta && <span>{item.meta}</span>}
-                  {item.dono ? <span className="pill">{item.dono}</span> : <span className="pill pill-warn">sem responsável</span>}
-                  <div className="foot">
-                    <Cel c={item.data} /> · célula que move: não declarada
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <>
+              {n.itens.some((item) => !item.descontinuado) && (
+                <ul className="ficha-krs">
+                  {n.itens
+                    .filter((item) => !item.descontinuado)
+                    .map((item) => (
+                      <li key={item.key}>
+                        <strong>{item.titulo}</strong>
+                        {item.meta && <span> {item.meta}</span>}
+                        {item.dono ? <span className="pill">{item.dono}</span> : <span className="pill pill-warn">sem responsável</span>}
+                        <div className="foot">
+                          <Cel c={item.data} /> · célula que move: {item.celulaQueMove === "nao-declarada" ? "não declarada" : item.celulaQueMove}
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+              )}
+              {n.itens.some((item) => item.descontinuado) && (
+                <details>
+                  <summary className="foot">decisões revogadas</summary>
+                  <ul className="ficha-krs">
+                    {n.itens
+                      .filter((item) => item.descontinuado)
+                      .map((item) => (
+                        <li key={item.key}>
+                          <strong>{item.titulo}</strong>
+                          {item.meta && <span> {item.meta}</span>}
+                          {item.dono ? <span className="pill">{item.dono}</span> : <span className="pill pill-warn">sem responsável</span>}
+                          <div className="foot">
+                            <Cel c={item.data} /> · célula que move: {item.celulaQueMove === "nao-declarada" ? "não declarada" : item.celulaQueMove}
+                          </div>
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              )}
+            </>
           )}
         </section>
       ))}
