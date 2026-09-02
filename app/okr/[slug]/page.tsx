@@ -198,7 +198,12 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     id: string;
     titulo: string;
     celulas: CelulaFicha[];
-    krs?: { kr: { kpi: string; dono?: string }; marca: string | null; texto: string }[];
+    krs?: {
+      kr: { kpi: string; dono?: string; meta?: number | null; prazo?: string | null };
+      marca: string | null;
+      celulaAlvo: CelulaFicha | null;
+      texto: string;
+    }[];
     familia?: string | null;
     motivoFamilia?: string;
     itens?: { key: string; titulo: string; meta: string | null; dono: string | null; data: CelulaFicha; celulaQueMove: string; descontinuado: boolean }[];
@@ -275,6 +280,23 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                   <strong>{k.kr.kpi}</strong>
                   {k.kr.dono && <span className="pill">{k.kr.dono}</span>}
                   {k.marca && <span className="pill pill-warn">{MARCAS_AMIGAVEIS[k.marca] ?? k.marca}</span>}
+                  {/* O KR que passa na validação era o que aparecia mais POBRE: `validarKrs()` só
+                      produz `texto` quando há problema, então KR válido saía como nome + dono e
+                      nada mais — meta e prazo ficavam no card sem nunca chegar à tela, e um
+                      coletor novo podia ser ligado sem que seu número aparecesse em lugar nenhum.
+                      O valor sai por `Cel`, o único caminho que imprime valor (FR-009). */}
+                  {k.celulaAlvo && (
+                    <div className="foot">
+                      hoje: <Cel c={k.celulaAlvo} />
+                      {k.kr.meta != null && (
+                        <>
+                          {" · meta "}
+                          {k.kr.meta}
+                          {k.kr.prazo && ` até ${k.kr.prazo}`}
+                        </>
+                      )}
+                    </div>
+                  )}
                   {k.texto && <div className="foot">{k.texto}</div>}
                 </li>
               ))}
