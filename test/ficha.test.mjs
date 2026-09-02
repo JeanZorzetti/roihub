@@ -424,6 +424,31 @@ test("T022 — KR apontando para a célula inferida sai chave-invalida (ela não
   assert.equal(r.marca, "chave-invalida");
 });
 
+test("T025 — inferência com valor 0 na janela NÃO vira linha: vestígio de zero não é vestígio (data-model §4, célula 10)", () => {
+  const niveis = montarNiveis(fichaCompleta({ orcamentosSemLead: { valor: 0 } }));
+  const n4 = niveis.find((n) => n.id === "N4");
+  assert.equal(n4.celulas.some((c) => c.estado === "inferido"), false);
+});
+
+test("T025 — inferência com volume vira linha própria, marcada como inferido, com vestígio e dívida", () => {
+  const niveis = montarNiveis(fichaCompleta({ orcamentosSemLead: { valor: 2 } }));
+  const n4 = niveis.find((n) => n.id === "N4");
+  const cel = n4.celulas.find((c) => c.estado === "inferido");
+  assert.equal(cel.valor, 2);
+  assert.equal(cel.rotulo, "contato fora do formulário");
+  assert.match(cel.de, /orçamento sem lead vinculado/);
+  assert.match(cel.divida, /FR-011b/);
+});
+
+test("T025/SC-009 — a inferência não entra no total composto nem em taxa nenhuma do N3", () => {
+  const semInf = montarNiveis(fichaCompleta());
+  const comInf = montarNiveis(fichaCompleta({ orcamentosSemLead: { valor: 999 } }));
+  assert.deepEqual(semInf.find((n) => n.id === "N3").celulas, comInf.find((n) => n.id === "N3").celulas);
+  const totalSem = semInf.find((n) => n.id === "N4").celulas.find((c) => c.rotulo?.startsWith("total composto"));
+  const totalCom = comInf.find((n) => n.id === "N4").celulas.find((c) => c.rotulo?.startsWith("total composto"));
+  assert.deepEqual(totalSem, totalCom);
+});
+
 test("T029/SC-004 — montarNiveis() sem ga4: N4 idêntico ao comportamento de hoje, organico intacto", () => {
   const niveis = montarNiveis(fichaCompleta());
   const n4 = niveis.find((n) => n.id === "N4");
