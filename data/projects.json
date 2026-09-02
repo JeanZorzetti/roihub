@@ -505,7 +505,29 @@
     "acao": "🚫 DESCONTINUADO em 01/09/2026, decisão do Jean: a Atma não vai mais oferecer o infoproduto (Relatório de Viabilidade Ortodôntica, R$ 47) via checkout MercadoPago. Revoga a ação anterior — não é mais falta de credencial de produção, é produto fora do escopo. Sem ação de pagamento pendente; o vazamento do token de teste no repo já tinha sido fechado no código em 31/08 (Atma@2b05bee).",
     "familia": "trafego",
     "estado": "no-ar",
-    "vendas": []
+    "vendas": [],
+    "ficha": {
+      "declaradaEm": "2026-09-01",
+      "objetivo": "Atma volta a converter busca orgânica em tratamento iniciado",
+      "krs": [
+        {
+          "kpi": "leads na janela",
+          "baseline": 39,
+          "meta": 120,
+          "prazo": "2026-12-31",
+          "dono": "jean",
+          "celula": "n3:lead"
+        },
+        {
+          "kpi": "consulta agendada",
+          "baseline": null,
+          "meta": 30,
+          "prazo": "2026-12-31",
+          "dono": "jean",
+          "celula": "n3:agendada"
+        }
+      ]
+    }
   },
   {
     "slug": "aprovai",

@@ -60,10 +60,48 @@ a:hover { text-decoration: underline; }
 .topbar-left { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
 
 /* abas */
-.tabs { display: flex; gap: 4px; flex-wrap: wrap; } /* 6 abas não cabem em 390px sem quebrar */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; } /* 6 abas não cabem em 390px sem quebrar */
 .tab { padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--ink2); }
 .tab:hover { background: #f0f0ec; text-decoration: none; }
 .tab.active { color: var(--accent); background: #eaf1fd; }
+
+/* aba OKR — par link + disclosure (011). `.tab-okr` fica no fluxo do `.tabs` (mesmo flex-wrap),
+   então a faixa quebra em linha junto com as outras abas em 390px sem `overflow-x` novo no
+   `<main>` nem no `.card` (SC-014). */
+.tab-okr { display: inline-flex; align-items: center; gap: 2px; position: relative; }
+.tab-okr > a.tab { padding-right: 6px; }
+.okr-menu summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: var(--ink2);
+  font-size: 11px;
+}
+.okr-menu summary::-webkit-details-marker { display: none; }
+.okr-menu summary:hover { background: #f0f0ec; }
+.okr-menu[open] summary { color: var(--accent); background: #eaf1fd; }
+.okr-menu summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.okr-menu ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(11, 11, 11, 0.08);
+  /* Sem `position: absolute`: um menu flutuante por cima do conteúdo é a MESMA rolagem
+     horizontal que a 011 proíbe reintroduzir em 390px — a lista abre no FLUXO normal, como o
+     `.sem-site` já faz, e empurra o resto da página para baixo. */
+  min-width: 180px;
+}
+.okr-menu li a { display: block; padding: 4px 8px; border-radius: 6px; font-size: 13px; color: var(--ink2); }
+.okr-menu li a:hover { background: #f0f0ec; text-decoration: none; }
+.okr-menu li a.active { color: var(--accent); font-weight: 600; }
+.okr-menu li a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* repos do GitHub que ainda não têm site — pendência, não alerta */
 .sem-site {
@@ -202,6 +240,13 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
    rolável precisa ser alcançável por teclado (WCAG 2.1.1). */
 .tabela-rolavel { overflow-x: auto; }
 .tabela-rolavel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ficha N0-N6 (011) — uma linha por CelulaFicha, o único caminho que imprime valor. */
+.ficha-linha { margin: 6px 0; font-size: 14px; }
+.ficha-rotulo { font-weight: 600; margin-right: 6px; }
+.ficha-krs { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.ficha-krs li { border-top: 1px solid var(--grid); padding-top: 8px; }
+.ficha-krs li:first-child { border-top: none; padding-top: 0; }
 
 /* aba SEO — small multiples */
 .seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 16px; }

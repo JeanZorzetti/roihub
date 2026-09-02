@@ -1,63 +1,16 @@
-import { Pool } from "pg";
+import Link from "next/link";
 import { listProjects } from "@/lib/projects";
-import { gscSeries, isoDaysAgo } from "@/lib/gsc";
-import { totals28 } from "@/lib/series.mjs";
-import { apurado, naoApurado, ehApurado, pct } from "@/lib/funil.mjs";
-import { montarFicha, posicaoDeAtaque, resumirPortfolio, POSICOES, pipelineDe, celulaDeLeads } from "@/lib/okr.mjs";
+import { ehApurado, pct } from "@/lib/funil.mjs";
+import { montarFicha, posicaoDeAtaque, resumirPortfolio, POSICOES } from "@/lib/okr.mjs";
 import { projetar } from "@/lib/projecao.mjs";
-import { dbOn, listLeads } from "@/lib/db";
+import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
 import { Tabs } from "../tabs";
 
 // GSC e CRM a cada request, igual /seo e /crm. Sem cache: um número de OKR que veio do build é um
 // número de outra janela, e a R7 do template pede UMA janela declarada para a árvore inteira.
 export const dynamic = "force-dynamic";
 
-// A mesma janela de `scripts/funil.mjs` e de `totals28`: 28 dias fechando em D-3, porque o Search
-// Console fecha o dia com ~3 dias de atraso. Uma janela só, declarada na tela (R7) — numerador de
-// agosto sobre denominador de 90 dias é uma taxa inventada.
-const FIM = isoDaysAgo(3);
-const INICIO = isoDaysAgo(30);
-// ⚠️ `hoje` NÃO é `FIM`: o prazo da meta é compromisso de calendário, e o atraso de 3 dias do GSC
-// é defeito da fonte, não do calendário (D3). Usar `FIM` alongaria o prazo em 3 dias e o número
-// da tela deixaria de bater com a conferência à mão, que é o critério inteiro da SC-002.
-const HOJE = isoDaysAgo(0);
-
 type Celula = { valor: number } | { naoApurado: string };
-
-/**
- * A Atma captura paciente no PRÓPRIO banco (`patient_leads`) desde julho. R4 manda ler o dado onde
- * ele JÁ cai: reinstrumentar o site para reenviar tudo ao CRM do hub criaria uma cópia PIOR da
- * tabela que já existe — sem histórico, contando só de hoje em diante.
- *
- * Pool próprio e efêmero porque é banco EXTERNO, não o do hub. Uma entrada só e explícita; se
- * aparecer uma segunda, isto vira `lib/`.
- */
-const FONTES_PROPRIAS: Record<string, { env: string; tabela: string; sql: string }> = {
-  atma: {
-    env: "ATMA_DATABASE_URL",
-    tabela: "patient_leads",
-    sql: `SELECT nome, email, to_char(created_at, 'YYYY-MM-DD') AS criado FROM patient_leads ORDER BY created_at`,
-  },
-};
-
-async function lerFontePropria(slug: string) {
-  const f = FONTES_PROPRIAS[slug];
-  if (!f) return null;
-  // Princípio V: o NOME da variável, nunca o valor.
-  if (!process.env[f.env]) return { erro: `${f.env} ausente` };
-  const pool = new Pool({ connectionString: process.env[f.env], max: 1 });
-  try {
-    const r = await pool.query(f.sql);
-    return { rows: r.rows, tabela: f.tabela };
-  } catch (e) {
-    // Falha FECHADA: banco externo fora NÃO pode virar "0 leads", que é o melhor placar possível
-    // produzido pelo pior estado possível.
-    const err = e as { code?: string; message?: string };
-    return { erro: err?.code ?? String(err?.message ?? "erro").slice(0, 60) };
-  } finally {
-    await pool.end();
-  }
-}
 
 /** Fração SEMPRE colada no percentual (R2). `6,67%` sozinho cai na faixa de elite dos benchmarks e
  * são 2 leads em 30 cliques — aviso ao lado perde para o percentual em qualquer leitura rápida. */
@@ -145,43 +98,11 @@ export default async function OkrPage() {
   const projects = await listProjects();
 
   // UMA query de leads para os 35, não uma por projeto.
-  let leads: Awaited<ReturnType<typeof listLeads>> | null = null;
-  let erroLeads: string | null = null;
-  if (!dbOn()) erroLeads = "DATABASE_URL ausente";
-  else {
-    try {
-      leads = await listLeads();
-    } catch (e) {
-      erroLeads = (e as { code?: string })?.code ?? "banco indisponível";
-    }
-  }
-  const porPipeline = new Map<string, typeof leads>();
-  for (const l of leads ?? []) {
-    const arr = porPipeline.get(l.pipeline) ?? [];
-    arr.push(l);
-    porPipeline.set(l.pipeline, arr as typeof leads);
-  }
+  const { porPipeline, erroLeads } = await coletarLeadsDoHub();
 
   const linhas = await Promise.all(
     projects.map(async (p) => {
-      // cliques — o GSC. Host de fornecedor (`*.vercel.app`) fica FORA de toda propriedade: isso
-      // NÃO é "zero tráfego", é "não há onde olhar", e o conserto é domínio próprio, não SEO.
-      const s = await gscSeries(p.url);
-      const cliques: Celula = s ? apurado(totals28(s.days, FIM).current.clicks) : naoApurado(`sem propriedade no GSC para ${p.url}`);
-
-      // leads — fonte própria primeiro (R4), CRM do hub depois.
-      let leadsCel: Celula;
-      const propria = await lerFontePropria(p.slug);
-      if (propria && "erro" in propria) leadsCel = naoApurado(`fonte própria indisponível (${propria.erro})`);
-      else if (propria) leadsCel = celulaDeLeads(propria.rows, { inicio: INICIO, fim: FIM, onde: `tabela \`${propria.tabela}\` do próprio projeto` }).celula;
-      else if (erroLeads) leadsCel = naoApurado(`banco indisponível (${erroLeads})`);
-      else leadsCel = celulaDeLeads(porPipeline.get(pipelineDe(p.slug)) ?? null, { inicio: INICIO, fim: FIM, onde: `pipeline \`${pipelineDe(p.slug)}\`` }).celula;
-
-      // vendas — AUSENTE é "não olhei", `[]` é "olhei, zero". A distinção inteira do template.
-      const vendas: Celula = Array.isArray(p.vendas)
-        ? apurado(p.vendas.filter((v) => v?.data && v.data >= INICIO && v.data <= FIM).length)
-        : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
-
+      const { cliques, leads: leadsCel, vendas } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
       const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, vendas } });
       const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
       return { p, ficha, v: posicaoDeAtaque(ficha), projecao };
@@ -230,7 +151,12 @@ export default async function OkrPage() {
           {/* `<h2>`, não `<span>`: com 40 nomes em span a página inteira tinha UM heading, e quem
               navega por heading parava uma vez em 10886px. */}
           <div className="hero-top okr-top">
-            <h2 className="hero-name">{p.nome}</h2>
+            {/* Única mudança permitida nesta página (FR-006/FR-032): o nome do card com perfil
+                declarado vira link para a ficha inteira. Mesmo `<h2>`, mesma posição, mesmo
+                texto — a SC-001 confere por diff do HTML servido. */}
+            <h2 className="hero-name">
+              <Link href={`/okr/${p.slug}`}>{p.nome}</Link>
+            </h2>
             <span className={v.posicao === 1 ? "pill pill-crit" : v.posicao === 2 ? "pill pill-warn" : "pill"}>
               {v.posicao ? `§7.${v.posicao} — ${v.rotulo}` : v.rotulo}
             </span>

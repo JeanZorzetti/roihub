@@ -657,6 +657,19 @@ export async function listDonos(): Promise<Map<string, string>> {
   return new Map(r.rows.map((x: { key: string; responsavel: string }) => [x.key, x.responsavel]));
 }
 
+/**
+ * A data em que alguém assumiu cada ação — `hub_acao_dono.atualizado`, coluna que já existe. É a
+ * única data que o hub tem por ação (a `acao` do card não é datada), e a ficha N6 da 011 precisa
+ * dela porque premissa de card apodrece (FR-030a). NÃO altera `listDonos()`: a assinatura dela é
+ * lida pela `/agenda` e por `acoesDoRanking()`, e a SC-018 exige que os itens e donos da ficha
+ * sejam exatamente os de lá — quanto menos a compartilhada muda, mais barato é provar isso.
+ */
+export async function listDonoDatas(): Promise<Map<string, string>> {
+  await ensure();
+  const r = await pool().query(`SELECT key, to_char(atualizado, 'YYYY-MM-DD') AS atualizado FROM hub_acao_dono`);
+  return new Map(r.rows.map((x: { key: string; atualizado: string }) => [x.key, x.atualizado]));
+}
+
 /** `null` desatribui: a ausência de dono é a ausência de linha, não uma linha com NULL. */
 export async function setDono(key: string, responsavel: string | null): Promise<void> {
   await ensure();
