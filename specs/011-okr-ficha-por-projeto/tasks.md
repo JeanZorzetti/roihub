@@ -33,11 +33,11 @@ levam `[P]` entre si. O paralelismo real desta feature está na Fase 2 e entre o
 **Propósito**: abrir o gate do Princípio II e **congelar a linha de base** antes de existir código
 para testar.
 
-- [ ] T001 Registrar `test/ficha.test.mjs` na lista de `node --test` do script `test` em
+- [X] T001 Registrar `test/ficha.test.mjs` na lista de `node --test` do script `test` em
   `package.json` e criar o arquivo com o cabeçalho `import test from "node:test"` +
   `import assert from "node:assert/strict"` e um primeiro caso vazio. `test/validade.test.mjs`
   reprova se o arquivo novo não estiver na lista — é o gate, e ele já existe (FR-034, SC-016).
-- [ ] T001a **Antes de tocar em qualquer arquivo**, guardar a linha de base da `/okr` do HTML
+- [X] T001a **Antes de tocar em qualquer arquivo**, guardar a linha de base da `/okr` do HTML
   servido em produção: `curl -s "$HUB/okr" > /tmp/okr-antes.html`, mais a contagem
   `curl -s "$HUB/okr" | grep -c 'hero-name'`. A T034 compara contra este arquivo, e a captura
   precisa **preceder a T009** — a extração da coleta é a primeira coisa que pode mexer no HTML da
@@ -54,30 +54,30 @@ começa antes de T007 fechar.
 **⚠️ CRÍTICO**: sem a espinha de `montarNiveis()` não existe rota que responda 200 com sete
 títulos, e é ela que a US1 renderiza.
 
-- [ ] T002 [P] Declarar `fatores` em `PERFIS.D` de `lib/okr.mjs`, ao lado dos `marcos` cuja `chave`
+- [X] T002 [P] Declarar `fatores` em `PERFIS.D` de `lib/okr.mjs`, ao lado dos `marcos` cuja `chave`
   a cobertura referencia: `Leads` (cadeia, `["lead"]`), `CR(lead→consulta)` (cadeia,
   `["contatado","agendada","compareceu"]`), `CR(consulta→tratamento)` (cadeia, `["tratamento"]`),
   `Valor do tratamento` (valor, `meta.ticket`). **Perfis A, B e C não ganham `fatores`** — a
   ausência é o que a FR-019a lê para dizer "fatores do perfil ainda não declarados". Nada mais
   muda em `lib/okr.mjs` (FR-019, FR-019a).
-- [ ] T003 [P] Adicionar o campo `ficha?` ao tipo `Project` em `lib/projects.ts` com o JSDoc do
+- [X] T003 [P] Adicionar o campo `ficha?` ao tipo `Project` em `lib/projects.ts` com o JSDoc do
   contrato, fazer ele atravessar `mergeProjects()` pelo **mesmo spread** de `perfil`/`meta`/`vendas`,
   e criar `listFichas(): Promise<{slug,nome}[]>` lendo a curadoria direto, sem `listRepos()`
   (FR-035, Complexity Tracking do plano — a única violação assumida do Princípio I).
-- [ ] T004 [P] Adicionar o campo `ficha` da `atma` em `data/projects.json`: `declaradaEm`,
+- [X] T004 [P] Adicionar o campo `ficha` da `atma` em `data/projects.json`: `declaradaEm`,
   `objetivo` (uma frase, **sem número**) e KRs cobrindo os dois casos que a US4 precisa provar —
   um `n3:` sobre célula apurada e um `n3:` sobre célula não apurada, com `dono` (FR-013, US4).
-- [ ] T005 Criar `lib/ficha.mjs` com os typedefs `CelulaApurada|CelulaDeclarada|CelulaNaoApurada` e
+- [X] T005 Criar `lib/ficha.mjs` com os typedefs `CelulaApurada|CelulaDeclarada|CelulaNaoApurada` e
   as quatro primitivas: `estadoDeApurado(celula, fonte)`, `declarada(valor, {em,oQue,rotulo})`
   (`em` ausente → `"data não registrada"`, a declaração não some), `naoApurada(motivo, consultar,
   rotulo)` (`consultar` obrigatório, não vazio — R4) e `combinar(insumos, calcular)` com a tabela
   de herança do [data-model §1](./data-model.md). Imports permitidos só de `./funil.mjs` e
   `./okr.mjs`. **Zero** `new Date()`, `Date.now()`, `process.env` ou `pg` (FR-009, FR-010, FR-033).
-- [ ] T006 Acrescentar a `lib/ficha.mjs` os catálogos fixos: `CANAIS` (`organico`, `direto`, `pago`,
+- [X] T006 Acrescentar a `lib/ficha.mjs` os catálogos fixos: `CANAIS` (`organico`, `direto`, `pago`,
   `indicacao`, `outbound`, `social`) e `MEDIDORES` com as **quatro** famílias D1-D4 do §5 do
   template. São eles os espaços de chave de `n4:` e `n5:` na validação de KR — o catálogo inteiro,
   não só a família exibida (data-model §8, decisão 7 do plano).
-- [ ] T007 Implementar `montarNiveis(entrada)` em `lib/ficha.mjs` devolvendo **sempre sete** níveis
+- [X] T007 Implementar `montarNiveis(entrada)` em `lib/ficha.mjs` devolvendo **sempre sete** níveis
   `N0..N6` na ordem, cada um com título, pergunta e ao menos uma `CelulaFicha`. Nesta tarefa os
   níveis saem com célula de espinha; cada história substitui o seu. Assinatura exata em
   [contracts/ficha-mjs.md](./contracts/ficha-mjs.md) — `montarFicha()` e `projetar()` chegam
@@ -89,17 +89,17 @@ títulos, e é ela que a US1 renderiza.
   feature com o sinal trocado — a ficha diria que não olhou onde o número existe. O texto de
   espinha some quando a história daquele nível fecha; se algum sobreviver ao deploy, ele diz que
   sobreviveu.
-- [ ] T008 Em `test/ficha.test.mjs`: **G1** (sete níveis na ordem para qualquer entrada, inclusive
+- [X] T008 Em `test/ficha.test.mjs`: **G1** (sete níveis na ordem para qualquer entrada, inclusive
   projeto sem perfil, sem meta e sem `ficha`), **G2** (nenhum `estado` fora dos três; nenhuma
   `apurado` sem `fonte`; nenhuma `declarado` sem `declaradoEm`; nenhuma `nao-apurado` sem `motivo`
   **e** `consultar`; nenhuma `nao-apurado` com `valor`) e **G3** (`0 tratamentos × R$ 4.000
   declarados` → `declarado`, nunca `apurado`) — FR-008, FR-009, FR-010, SC-002/003/004/006.
-- [ ] T009 Criar `lib/okr-coleta.ts` movendo de `app/okr/page.tsx`, **sem mudar comportamento**:
+- [X] T009 Criar `lib/okr-coleta.ts` movendo de `app/okr/page.tsx`, **sem mudar comportamento**:
   `FONTES_PROPRIAS`, `lerFontePropria()`, a janela `INICIO`/`FIM`/`HOJE` e a coleta por projeto
   (cliques do GSC, leads com fonte própria antes do CRM, vendas do card). `app/okr/page.tsx` passa
   a importar de lá. É `.ts` porque toca `pg` e `google-auth-library`, e **não contém regra** — o
   `diff` da SC-001 tem que sair limpo depois desta tarefa (decisão 5 do plano, FR-032).
-- [ ] T010 Em `test/ficha.test.mjs`: invariante `listFichas() ⊆ listProjects()` por `slug`,
+- [X] T010 Em `test/ficha.test.mjs`: invariante `listFichas() ⊆ listProjects()` por `slug`,
   conferida contra a curadoria de `data/projects.json`. Se um dia um repo do GitHub puder trazer
   `ficha`, este teste reprova e a justificativa da Complexity Tracking deixa de valer.
 
@@ -116,17 +116,17 @@ e 404 no slug inexistente.
 acionamento e `/okr/atma` em **dois**, só com teclado, com o link "Pular para o conteúdo" ainda
 como primeiro alvo.
 
-- [ ] T011 [US1] `app/tabs.tsx`: a aba OKR passa a ser um **par** — o `<Link href="/okr">` que já
+- [X] T011 [US1] `app/tabs.tsx`: a aba OKR passa a ser um **par** — o `<Link href="/okr">` que já
   existe **continua sendo link** (FR-002) e ganha um `<details>` irmão cujo `<summary>` é o
   controle. `open={rota === "/okr" || rota.startsWith("/okr/")}`, decidido no servidor (FR-003).
   Itens: `Portfólio` (`/okr`) + `listFichas()`, na ordem da curadoria. `aria-current="page"` no
   item que casa a rota. Com `listFichas().length === 0` a aba volta a ser link simples, sem
   `<details>` (FR-005). **Nenhum `"use client"`**, e o `<a class="sr-only skip">` continua antes
   do `<nav>` (FR-001, FR-004).
-- [ ] T012 [P] [US1] `app/globals.css`: estilo do `<summary>` e da faixa do menu, com foco visível.
+- [X] T012 [P] [US1] `app/globals.css`: estilo do `<summary>` e da faixa do menu, com foco visível.
   A faixa quebra em linhas pela mesma regra de `flex-wrap` da `.tabs`. **Nenhum `overflow-x` novo**
   no `<main>` nem no `.card` — rolagem horizontal só dentro de `.tabela-rolavel` (SC-014).
-- [ ] T013 [US1] Criar `app/okr/[slug]/page.tsx`: `export const dynamic = "force-dynamic"`,
+- [X] T013 [US1] Criar `app/okr/[slug]/page.tsx`: `export const dynamic = "force-dynamic"`,
   `const { slug } = await params` (Next 16), `notFound()` quando o slug não está em
   `listProjects()` — a lista **completa**, curados + GitHub (FR-007, SC-011). Renderiza os sete
   níveis de `montarNiveis()` e escreve a janela `INICIO → FIM` na tela, importada de
@@ -134,7 +134,7 @@ como primeiro alvo.
   componente de célula, o único caminho que imprime valor: `apurado` → número **com a fonte na
   mesma linha**; `declarado` → número + `declarado em <data>`; `nao-apurado` → motivo + fonte a
   consultar. Sem `0`, sem `—`, sem célula em branco (FR-009, SC-003, SC-004).
-- [ ] T013a [US1] **A montagem, em `app/okr/[slug]/page.tsx`** — é a página que chama, porque
+- [X] T013a [US1] **A montagem, em `app/okr/[slug]/page.tsx`** — é a página que chama, porque
   `lib/ficha.mjs` é puro e recebe tudo pronto ([contracts/ficha-mjs.md](./contracts/ficha-mjs.md)).
   Para o **projeto único**, na ordem: coleta de `lib/okr-coleta.ts` (cliques, leads, vendas) →
   `montarFicha({ slug, perfil, coletado })` → `posicaoDeAtaque(ficha)` → `projetar({ ficha, meta,
@@ -142,7 +142,7 @@ como primeiro alvo.
   dessas quatro é reimplementada** (FR-030, FR-033): são as mesmas da 009 e da 010, chamadas com um
   projeto em vez de 40. Sem esta tarefa a T017 preenche níveis que nada alimenta — a ficha
   renderiza sete títulos sobre entrada vazia.
-- [ ] T014 [US1] `app/okr/page.tsx`: o `<h2 className="hero-name">{p.nome}</h2>` dos cards **com
+- [X] T014 [US1] `app/okr/page.tsx`: o `<h2 className="hero-name">{p.nome}</h2>` dos cards **com
   perfil declarado** passa a envolver um `<Link href={"/okr/" + p.slug}>`. Mesmo `<h2>`, mesma
   posição, mesmo texto. Card **sem** perfil fica intocado. É a **única** mudança permitida na
   `/okr` (FR-006, FR-032, SC-001).
@@ -166,32 +166,32 @@ o dado — e o deploy é consciente disso.
 **Teste independente**: numa ficha com meta, perfil e dois degraus apurados, conferir à mão que
 cada um dos sete níveis exibe estado e fonte, e que nenhum número aparece sem uma das duas.
 
-- [ ] T015 [US2] `avaliarN2(fatores, marcos, taxas, declaracoes)` em `lib/ficha.mjs`: fator de
+- [X] T015 [US2] `avaliarN2(fatores, marcos, taxas, declaracoes)` em `lib/ficha.mjs`: fator de
   cadeia é `nao-apurado` quando **qualquer** degrau da cobertura está não apurado — nunca a taxa do
   pedaço medido (FR-020). `erroDeDefinicao` quando as coberturas dos fatores **de cadeia** têm
   buraco no meio, sobreposição, ou não terminam no último marco; degraus **acima** do primeiro
   fator são a entrada da cadeia (N4) e **não** produzem erro; fatores de **valor** ficam fora da
   conferência por definição (FR-021). Veredito `nao-apurado` nomeando os faltantes, nunca um
   `✓ fecha` derivado de ausência (FR-022).
-- [ ] T016 [US2] `montarN4(canais, cliquesCelula, marcos)` em `lib/ficha.mjs`: `organico` recebe a
+- [X] T016 [US2] `montarN4(canais, cliquesCelula, marcos)` em `lib/ficha.mjs`: `organico` recebe a
   célula `cliques` do Search Console com o rótulo **orgânico** (nunca "tráfego", nunca
   "visitantes"); os outros cinco saem `nao-apurado` com a fonte a consultar (FR-023). `semElo`
   **derivado** — verdadeiro quando o canal não é denominador de nenhuma taxa de N3 (perfil C sai
   `sem elo` no `organico`) (FR-025). **Nenhum total, nenhuma soma**; a diferença entre canais
   medidos e a entrada da cadeia sai `nao-apurado` e nunca é atribuída a "direto" (FR-024).
-- [ ] T017 [US2] Preencher N1-N4 em `montarNiveis()`: **N1** contagem = último marco (apurado) e R$
+- [X] T017 [US2] Preencher N1-N4 em `montarNiveis()`: **N1** contagem = último marco (apurado) e R$
   = contagem × `meta.ticket` via `combinar()` → sai **declarado** (FR-010); sem ticket →
   `nao-apurado: sem ticket declarado`. **N2** = `avaliarN2()`, ou `nao-apurado: fatores do perfil
   ainda não declarados` nos perfis A/B/C (FR-019a). **N3** = os `marcos` e `taxas` de
   `montarFicha()` **intactos**, com a fração colada em toda razão (FR-011, R2). **N4** =
   `montarN4()`. Sem perfil: N1-N5 saem `nao-apurado: sem perfil declarado`, **zero** números.
-- [ ] T018 [US2] Em `test/ficha.test.mjs`: **G4** (fator com um degrau não apurado no trecho sai
+- [X] T018 [US2] Em `test/ficha.test.mjs`: **G4** (fator com um degrau não apurado no trecho sai
   `nao-apurado` mesmo com os outros apurados), **G5** (buraco/sobreposição → `erroDeDefinicao`;
   degraus acima do primeiro fator **não** produzem erro), **G6** (veredito nunca `fecha` com fator
   faltando), **G7** (N4 sem total nem soma; diferença `nao-apurado`; perfil C marca `organico` como
   `sem elo`), **G12** (sem perfil: N1-N5 `nao-apurado`, zero números, N0 e N6 válidos) e **G13**
   (perfil A/B/C: só N2 cai, os outros seis normais) — SC-006/007/008/012/017.
-- [ ] T019 [US2] `app/okr/[slug]/page.tsx`: renderizar N1-N4 — cada fator de N2 em linha própria com
+- [X] T019 [US2] `app/okr/[slug]/page.tsx`: renderizar N1-N4 — cada fator de N2 em linha própria com
   seu estado, o veredito da conta abaixo deles, os degraus de N3 com a fração colada, e os seis
   canais de N4 sem linha de total.
 
@@ -206,20 +206,20 @@ cada um dos sete níveis exibe estado e fonte, e que nenhum número aparece sem 
 **Teste independente**: dois projetos com gargalos de famílias diferentes exibem conjuntos de
 medidores diferentes, e nenhum dos dois exibe as quatro famílias.
 
-- [ ] T020 [US3] `escolherFamilia(veredito, ficha)` e `montarN5(familia, disponiveis)` em
+- [X] T020 [US3] `escolherFamilia(veredito, ficha)` e `montarN5(familia, disponiveis)` em
   `lib/ficha.mjs`, pela tabela do [data-model §6](./data-model.md): posição 1 → família do marco
   zerado; posição 2 → família do buraco escolhido; posição 3 → família do degrau de **menor taxa**;
   posição 0 → nenhuma, motivo `sem perfil declarado`. O motivo é **sempre** escrito (FR-027).
   `montarN5()` devolve os medidores de uma família só (FR-026); todo medidor fora de `disponiveis`
   sai `nao-apurado` **na lista**, nunca omitido — o medidor que falta é o entregável (FR-028); e
   `posicao-media-com-corte-pais` sai `nao-apurado` mesmo existindo na API (FR-029).
-- [ ] T021 [P] [US3] `lib/okr-coleta.ts`: expor `disponiveisN5` a partir do que **esta requisição**
+- [X] T021 [P] [US3] `lib/okr-coleta.ts`: expor `disponiveisN5` a partir do que **esta requisição**
   já carrega — `impressoes` da mesma série do GSC que já dá `cliques`, `lead-gravado` da célula de
   leads e `gateway-ligado` do campo `vendas` do card. **Nenhuma chamada nova, nenhuma env nova,
   nenhum número vindo de `/seo` ou `/infra`** (FR-028, FR-036, SC-019).
-- [ ] T022 [US3] Em `test/ficha.test.mjs`: **G8** — N5 devolve medidores de **uma** família só, e
+- [X] T022 [US3] Em `test/ficha.test.mjs`: **G8** — N5 devolve medidores de **uma** família só, e
   `posicao-media-com-corte-pais` sempre `nao-apurado` (SC-005, FR-029).
-- [ ] T023 [US3] `app/okr/[slug]/page.tsx`: renderizar N5 com a família nomeada, o motivo da escolha
+- [X] T023 [US3] `app/okr/[slug]/page.tsx`: renderizar N5 com a família nomeada, o motivo da escolha
   e a lista completa dos medidores dela — os não apurados inclusive.
 
 ---
@@ -231,7 +231,7 @@ medidores diferentes, e nenhum dos dois exibe as quatro famílias.
 **Teste independente**: declarar dois KRs, um sobre célula apurada e outro sobre célula não
 apurada, e conferir que só o segundo sai marcado como não verificável.
 
-- [ ] T024 [US4] `validarKrs(krs, espacos)` em `lib/ficha.mjs`, na ordem do
+- [X] T024 [US4] `validarKrs(krs, espacos)` em `lib/ficha.mjs`, na ordem do
   [data-model §8](./data-model.md): (1) `celula` sem prefixo `n3:`/`n4:`/`n5:` → `chave-invalida`;
   (2) prefixo válido e chave ausente **no espaço daquele nível** → `chave-invalida` nomeando a
   chave — **é proibido** procurar nos outros níveis, casar por nome parecido ou por posição
@@ -239,17 +239,17 @@ apurada, e conferir que só o segundo sai marcado como não verificável.
   o trabalho é apurar a célula, não perseguir o número` (FR-015); (4) `dono` ausente → `sem-dono`,
   KR **continua visível**, dono nunca inferido nem herdado (FR-016); (5) índice ≥ 3 → `excedente`,
   exibido, nunca truncado (FR-018).
-- [ ] T025 [US4] Preencher N0 em `montarNiveis()`: `ficha.objetivo` como célula **declarada** com a
+- [X] T025 [US4] Preencher N0 em `montarNiveis()`: `ficha.objetivo` como célula **declarada** com a
   data (`declaradaEm` ausente → `data não registrada`), mais os KRs de `validarKrs()` (FR-014).
   Sem campo `ficha` no card → `nao-apurado: sem declaração no card`, e os outros seis níveis
   seguem. Projeto que **perdeu o perfil** → objetivo e KRs continuam exibidos como declarados e a
   validação sai `nao-apurado: sem cadeia para validar a célula`.
-- [ ] T026 [US4] Em `test/ficha.test.mjs`: **G9** (KR sobre célula não apurada → `nao-verificavel`;
+- [X] T026 [US4] Em `test/ficha.test.mjs`: **G9** (KR sobre célula não apurada → `nao-verificavel`;
   sobre apurada → sem marca; **as duas no mesmo teste**), **G10** (chave inexistente no nível do
   prefixo → `chave-invalida` nomeando a chave, zero casamento por aproximação e zero busca nos
   outros níveis) e **G11** (KR sem dono marcado e visível; 4º KR `excedente` e visível). Incluir o
   caso da SC-020: a mesma chave `n4:`/`n5:` válida vira erro quando trocada de nível.
-- [ ] T027 [US4] `app/okr/[slug]/page.tsx`: renderizar N0 — a frase rotulada **declarada** com a
+- [X] T027 [US4] `app/okr/[slug]/page.tsx`: renderizar N0 — a frase rotulada **declarada** com a
   data, e a lista de KRs com as marcas visíveis (`não verificável`, `sem dono`, `erro de
   declaração`, `excedente`), nenhuma delas escondendo o KR.
 
@@ -263,21 +263,21 @@ apurada, e conferir que só o segundo sai marcado como não verificável.
 **Teste independente**: abrir `/agenda?projeto=atma` e `/okr/atma` lado a lado e comparar item a
 item, dono a dono.
 
-- [ ] T028 [US5] `listDonoDatas(): Promise<Map<string,string>>` em `lib/db.ts`, lendo
+- [X] T028 [US5] `listDonoDatas(): Promise<Map<string,string>>` em `lib/db.ts`, lendo
   `hub_acao_dono.atualizado` — coluna que **já existe**. Chave = a mesma `acaoKey(slug, acao)` que
   `acoesDoRanking()` monta. **Não altera `listDonos()`**: a assinatura dela é lida pela `/agenda` e
   a SC-018 exige que itens e donos da ficha sejam exatamente os de lá (FR-030a, decisão 6 do plano).
-- [ ] T029 [US5] Preencher N6 em `montarNiveis()` a partir de `itensAgenda`, `erroAgenda` e
+- [X] T029 [US5] Preencher N6 em `montarNiveis()` a partir de `itensAgenda`, `erroAgenda` e
   `datasDono`. `celulaQueMove` é **sempre** `"nao-declarada"` — inferir do texto é proibido, nem
   por busca de palavra, nem por parecença (FR-031). Data de cada item rotulada `dono definido em`;
   sem dono → `nao-apurado: a acao do card não é datada` (FR-030a). **Três textos que não se
   compartilham**: sem item → `sem ação declarada para este projeto`; fonte fora → `não apurado —
   banco indisponível (<código>)`; itens existem → a lista (FR-030b).
-- [ ] T030 [US5] Em `test/ficha.test.mjs`: **G14** (`itensAgenda: null` + `erroAgenda` →
+- [X] T030 [US5] Em `test/ficha.test.mjs`: **G14** (`itensAgenda: null` + `erroAgenda` →
   `nao-apurado` com o motivo; `[]` → `sem ação declarada`; textos **diferentes**) e **G15**
   (`celulaQueMove` continua `nao-declarada` mesmo quando o título do item cita literalmente o nome
   de um degrau).
-- [ ] T031 [US5] `app/okr/[slug]/page.tsx`: montar N6 pela **mesma composição** de
+- [X] T031 [US5] `app/okr/[slug]/page.tsx`: montar N6 pela **mesma composição** de
   [app/agenda/page.tsx:186-207](../../app/agenda/page.tsx#L186-L207), não só pela mesma função
   (FR-030, SC-018). Na ordem exata:
 
@@ -303,7 +303,7 @@ item, dono a dono.
 **Propósito**: rodar o [quickstart.md](./quickstart.md) inteiro, **no HTML servido pelo EasyPanel**.
 Conferência em `next dev` não vale para nenhum item desta fase.
 
-- [ ] T032 `npm test` verde, `test/ficha.test.mjs` na lista do `package.json`, suíte abaixo de ~2s
+- [X] T032 `npm test` verde, `test/ficha.test.mjs` na lista do `package.json`, suíte abaixo de ~2s
   (SC-016).
 - [ ] T033 Varredura do HTML servido em `/okr/atma`, num projeto **sem perfil** e num de perfil
   **A/B/C**: zero `<td></td>`, zero `<td>—</td>`, zero `0` de preguiça, e todo bloco `não apurado`
@@ -315,7 +315,7 @@ Conferência em `next dev` não vale para nenhum item desta fase.
   primeiro alvo, `/okr` em um acionamento, `/okr/atma` em dois, menu já aberto e marcado ao
   recarregar (SC-013) — e viewport de 390px com o menu aberto sem rolagem horizontal da página,
   conferido por `document.documentElement.scrollWidth <= clientWidth` (SC-014).
-- [ ] T036 N6 lado a lado: `$HUB/agenda?projeto=atma` e `$HUB/okr/atma`, item a item, dono a dono,
+- [X] T036 N6 lado a lado: `$HUB/agenda?projeto=atma` e `$HUB/okr/atma`, item a item, dono a dono,
   **e `#N · score` a `#N · score`**. Item extra, faltando, dono diferente ou rótulo de ranking
   diferente reprova. Conferir também um item marcado como **feito** na `/agenda`: ele não pode
   aparecer como pendente na ficha (SC-018, T031).
@@ -323,7 +323,7 @@ Conferência em `next dev` não vale para nenhum item desta fase.
   **nenhum `0` novo** aparece (SC-015). Em produção a env está ausente hoje — a ficha da `atma` lá
   tem a célula de leads em `não apurado` e a âncora da 010 recuada para `visitante`, e isso é o
   comportamento correto.
-- [ ] T038 Push **fora** de 23:30-01:00 e 08:00-08:45 BRT (Princípio IV — push é deploy).
+- [X] T038 Push **fora** de 23:30-01:00 e 08:00-08:45 BRT (Princípio IV — push é deploy).
 
 ---
 
