@@ -49,6 +49,15 @@ export type Project = {
    * (health, GSC, insights) e a `acao` fica guardada intacta para quando voltar. Por isso é campo
    * e não apagar a `acao`: apagar destrói a curadoria e zera o dono no banco. */
   standby?: string;
+  /** Declaração humana do §6 do template: o objetivo (N0) e os KRs. Curado à mão, como `perfil` e
+   *  `meta`. Rotulado como DECLARADO em toda exibição, com a data — declaração sem data apodrece
+   *  calada. Ausente é legítimo: a ficha (/okr/<slug>) abre com N0 em `não apurado` e os outros
+   *  seis níveis normais. */
+  ficha?: {
+    declaradaEm?: string;
+    objetivo?: string;
+    krs?: { kpi: string; baseline: number | null; meta: number; prazo: string; dono?: string; celula: string }[];
+  };
   /** false = repo do GitHub que ainda não tem receita/blockers/ação definidos à mão. */
   curated: boolean;
   repo: string | null;
@@ -63,4 +72,14 @@ export async function listProjects(): Promise<Project[]> {
 /** Repos vivos sem homepage — pendências de "todo projeto terá site". */
 export async function listReposSemSite(): Promise<{ name: string; url: string; pushedAt: string | null }[]> {
   return reposSemSite(curated as Curated[], await listRepos());
+}
+
+/** Só os projetos com `ficha` curada, para o menu da aba OKR. Lê a curadoria direto porque `ficha`
+ *  SÓ existe nela — repo vindo do GitHub nunca tem o campo, então esta lista e a de
+ *  `listProjects()` concordam por construção. Sem `listRepos()`: uma barra de navegação presente
+ *  em 12 telas não paga chamada de rede para se desenhar (Complexity Tracking do plano da 011). */
+export async function listFichas(): Promise<{ slug: string; nome: string }[]> {
+  return (curated as Curated[])
+    .filter((p) => p.ficha)
+    .map((p) => ({ slug: p.slug, nome: p.nome }));
 }
