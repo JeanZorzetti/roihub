@@ -1,0 +1,12 @@
+[
+  {
+    "data": "2026-09-01",
+    "alvo": "chrome de navegação — as 13 seções viraram coluna (app/tabs.tsx + bloco de nav do globals.css)",
+    "direcao": "corte-seco",
+    "eixos": { "materia": "geometria", "motor": "estado", "banda": "clara" },
+    "orcamento": { "js_kb": 0, "lcp_alvo": 1.8, "lcp_medido": null },
+    "deps": [],
+    "recusadas": ["regua-de-instrumento", "trilho-de-68px"],
+    "nota": "Aplicada ao chrome, não à página: a paleta do hub (design system light do admin ROI Labs) ficou de pé; o que a direção governa é a coluna — raio 0, sombra 0, transição 0, hover e ativo por inversão. Entrada e scroll declarados ausentes (chrome persistente não entra e não se move). lcp_medido null: só o dev server estava no ar, e medida local sob OneDrive não é evidência. CLS medido 0,0000 em 1440/1024/390."
+  }
+]

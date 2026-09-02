@@ -21,13 +21,64 @@ type Active =
   | "okr";
 
 /**
- * A aba OKR é um PAR: o link (`/okr`, FR-002 — um acionamento) e um `<details>` irmão cujo
+ * As 13 seções em 4 grupos, na ordem em que o trabalho acontece: o número chega (Medir), vira
+ * escolha (Decidir), vira trabalho (Executar), e a máquina que roda por baixo (Máquina).
+ *
+ * Uma faixa de 13 links planos não tinha ordem legível nenhuma — era só uma lista. O agrupamento
+ * é o que a coluna compra e a faixa não comprava; abaixo de 1024px o CSS devolve os itens à faixa
+ * horizontal de antes (`display: contents`), sem hambúrguer e sem JS de cliente.
+ */
+const GRUPOS: { id: string; titulo: string; itens: [Active, string, string][] }[] = [
+  {
+    id: "medir",
+    titulo: "Medir",
+    itens: [
+      ["home", "/", "Ranking"],
+      ["seo", "/seo", "SEO"],
+      ["infra", "/infra", "Infra"],
+      ["insights", "/insights", "Insights"],
+    ],
+  },
+  {
+    // OKR abre o grupo porque é dele que sai a pergunta "o que adianta fazer agora"; Agenda é o
+    // que já virou compromisso com data, e Resumo é o contexto de quem não lembra o que é o projeto.
+    id: "decidir",
+    titulo: "Decidir",
+    itens: [
+      ["okr", "/okr", "OKR"],
+      ["agenda", "/agenda", "Agenda"],
+      ["resumo", "/resumo", "Resumo"],
+    ],
+  },
+  {
+    id: "executar",
+    titulo: "Executar",
+    itens: [
+      ["marketing", "/marketing", "Marketing"],
+      ["ideias", "/ideias", "Ideias"],
+      ["crm", "/crm", "CRM"],
+    ],
+  },
+  {
+    // O hub cuidando de si: o índice que se pergunta, os empregados que gastam token e o cron.
+    id: "maquina",
+    titulo: "Máquina",
+    itens: [
+      ["busca", "/busca", "Busca"],
+      ["ia", "/ia", "IA"],
+      ["automacao", "/automacao", "Automação"],
+    ],
+  },
+];
+
+/**
+ * A entrada OKR é um PAR: o link (`/okr`, FR-002 — um acionamento) e um `<details>` irmão cujo
  * `<summary>` é o controle de expandir (FR-001). `<details>` nativo entrega foco, Enter/Espaço e
  * `aria-expanded` implícito de graça — nenhuma das 13 telas ganha `"use client"` por causa dele
  * (011, decisão D2/D3).
  *
- * Async porque `listFichas()` lê a curadoria — sem `listRepos()`, então as telas que hoje não
- * leem projeto (`/busca`, `/ia`, `/automacao`) não pagam chamada de rede só para desenhar o menu.
+ * Async porque `listFichas()` lê a curadoria (import estático do JSON curado — nenhuma chamada de
+ * rede, então o menu não custa nada às telas que não leem projeto).
  */
 export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: string }) {
   const fichas = await listFichas();
@@ -40,6 +91,41 @@ export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: stri
   const okrAberto = active === "okr";
   const naPortfolio = active === "okr" && !okrSlug;
 
+  const entrada = (key: Active, href: string, label: string) => {
+    // FR-005: sem ficha curada, a entrada OKR volta a ser link simples.
+    if (key !== "okr" || fichas.length === 0) return tab(key, href, label);
+    return (
+      <span className="tab-okr">
+        <Link href="/okr" className={naPortfolio ? "tab active" : "tab"} aria-current={naPortfolio ? "page" : undefined}>
+          OKR
+        </Link>
+        <details className="okr-menu" open={okrAberto}>
+          <summary aria-label="Fichas do OKR por projeto">
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <ul>
+            <li>
+              <Link href="/okr" className={naPortfolio ? "active" : undefined} aria-current={naPortfolio ? "page" : undefined}>
+                Portfólio
+              </Link>
+            </li>
+            {fichas.map((f) => (
+              <li key={f.slug}>
+                <Link
+                  href={`/okr/${f.slug}`}
+                  className={okrSlug === f.slug ? "active" : undefined}
+                  aria-current={okrSlug === f.slug ? "page" : undefined}
+                >
+                  {f.nome}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </span>
+    );
+  };
+
   return (
     <>
       {/* O alvo mora AQUI, logo depois da nav, e não em cada página: `Tabs` é a primeira coisa
@@ -48,55 +134,21 @@ export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: stri
       <a href="#conteudo" className="sr-only skip">
         Pular para o conteúdo
       </a>
-      <nav className="tabs" aria-label="Seções">
-        {tab("home", "/", "Ranking")}
-        {tab("seo", "/seo", "SEO")}
-        {tab("infra", "/infra", "Infra")}
-        {tab("insights", "/insights", "Insights")}
-        {tab("agenda", "/agenda", "Agenda")}
-        {/* Quadros vêm logo depois da Agenda porque é dela que se distinguem: a Agenda é
-            compromisso com data, o quadro é o que ainda não virou compromisso. */}
-        {tab("marketing", "/marketing", "Marketing")}
-        {tab("ideias", "/ideias", "Ideias")}
-        {tab("resumo", "/resumo", "Resumo")}
-        {tab("busca", "/busca", "Busca")}
-        {/* OKR fica depois do CRM porque é dele que sai o numerador: a árvore só mede o que o CRM
-            e o gateway já gravaram. Sem ficha curada (FR-005), a aba volta a ser link simples. */}
-        {fichas.length > 0 ? (
-          <span className="tab-okr">
-            <Link href="/okr" className={naPortfolio ? "tab active" : "tab"} aria-current={naPortfolio ? "page" : undefined}>
-              OKR
-            </Link>
-            <details className="okr-menu" open={okrAberto}>
-              <summary aria-label="Fichas do OKR por projeto">
-                <span aria-hidden="true">▾</span>
-              </summary>
-              <ul>
-                <li>
-                  <Link href="/okr" className={naPortfolio ? "active" : undefined} aria-current={naPortfolio ? "page" : undefined}>
-                    Portfólio
-                  </Link>
-                </li>
-                {fichas.map((f) => (
-                  <li key={f.slug}>
-                    <Link
-                      href={`/okr/${f.slug}`}
-                      className={okrSlug === f.slug ? "active" : undefined}
-                      aria-current={okrSlug === f.slug ? "page" : undefined}
-                    >
-                      {f.nome}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </span>
-        ) : (
-          tab("okr", "/okr", "OKR")
-        )}
-        {tab("crm", "/crm", "CRM")}
-        {tab("ia", "/ia", "IA")}
-        {tab("automacao", "/automacao", "Automação")}
+      <nav className="tabs nav-col" aria-label="Seções">
+        {GRUPOS.map((g) => (
+          <div className="nav-grupo" key={g.id}>
+            {/* `aria-labelledby` em vez de `aria-hidden` no título: em coluna os grupos SÃO
+                navegação nomeada, e quem usa leitor de tela ouve "Medir, lista de 4 itens". */}
+            <p className="nav-grupo-h" id={`nav-g-${g.id}`}>
+              {g.titulo}
+            </p>
+            <ul aria-labelledby={`nav-g-${g.id}`}>
+              {g.itens.map(([key, href, label]) => (
+                <li key={key}>{entrada(key, href, label)}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
       {/* `tabIndex={-1}` para o alvo receber o foco de fato: sem ele o navegador rola até a âncora
           e deixa o foco na barra, e o próximo Tab volta para a primeira aba. */}
