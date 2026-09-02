@@ -344,6 +344,23 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 /* Funil de N3 (spec 012) — direção corte-seco: raio 0, sombra 0, nenhuma opacity. */
 .ficha-funil { width: 100%; height: auto; display: block; margin: 0 0 10px; }
 .ficha-funil polygon { fill: var(--seq550); }
+
+/* ── ficha OKR: barras de canal (N4) ──────────────────────────────────────────
+   Um tom só — o comprimento já codifica a magnitude, sombrear por valor gastaria
+   hue à toa. Decorativas: as linhas de texto abaixo carregam rótulo, valor e fonte. */
+.ficha-canais { display: grid; gap: 8px; margin: 0 0 4px; }
+.ficha-canais .ficha-linha { margin: 0; }
+.ficha-barra-trilho { height: 6px; border-radius: 3px; background: var(--grid); margin-top: 3px; max-width: 520px; overflow: hidden; }
+.ficha-barra-preenche { height: 100%; border-radius: 3px; background: var(--seq550); }
+
+/* trilho do KR (N0) — sem rótulo próprio: o "hoje X · meta Y" fica logo acima */
+.ficha-kr-medidor { max-width: 320px; }
+
+/* ── ficha OKR: figura do N1 ────────────────────────────────────────────────── */
+.ficha-figura { display: flex; align-items: baseline; gap: 12px; margin: 0 0 10px; flex-wrap: wrap; }
+.ficha-figura > b { font-size: 48px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.ficha-figura > span { font-size: 15px; color: var(--ink2); }
+@media (max-width: 640px) { .ficha-figura > b { font-size: 38px; } }
 .ficha-funil line { stroke: var(--grid); }
 
 /* Nota do nível N4 (013) — declara que o total composto não é o `visitante` da cadeia. */

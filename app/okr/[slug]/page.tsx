@@ -7,6 +7,7 @@ import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listDone, listDonos, listDonoDatas } from "@/lib/db";
 import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
 import { montarNiveis } from "@/lib/ficha.mjs";
+import { canaisDoN4, razaoDoKr } from "@/lib/ficha-visual.mjs";
 import { Tabs } from "../../tabs";
 
 // Igual à `/okr`: número de OKR vindo do build é número de outra janela, e a R7 pede UMA janela
@@ -139,6 +140,44 @@ function FunilN3({ segmentos }: { segmentos: { estado: string; entrada?: number;
   );
 }
 
+/** Os canais do N4: a MESMA `Linha` das demais células — `Cel` continua o único caminho que
+ *  imprime valor (FR-009) — com um trilho embaixo. O trilho é `aria-hidden` porque o número está
+ *  logo acima dele; ele não é um segundo caminho até o dado, é a comparação entre canais que a
+ *  lista de texto não dá.
+ *
+ *  Um tom só: o comprimento já codifica a magnitude, sombrear por valor gastaria hue à toa.
+ *  Canal sem fonte não ganha trilho — vazio ao lado de "não apurado" leria como zero medido. */
+function CanaisN4({ canais }: { canais: { celula: CelulaFicha; fracao: number | null }[] }) {
+  return (
+    <div className="ficha-canais">
+      {canais.map(({ celula, fracao }) => (
+        <div key={celula.rotulo}>
+          <Linha c={celula} />
+          {fracao !== null && (
+            <div className="ficha-barra-trilho" aria-hidden="true">
+              <div className="ficha-barra-preenche" style={{ width: `${fracao * 100}%` }} />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** O número que a página inteira existe para responder sai em corpo de figura, e não no mesmo
+ *  15px de "Cliques no CTA". Só para célula APURADA — figura de valor declarado apresentaria
+ *  declaração como medição, a linha que `Cel` existe para não deixar borrar. */
+function HeroN1({ c }: { c: Extract<CelulaFicha, { estado: "apurado" }> }) {
+  return (
+    <p className="ficha-figura">
+      <b>{c.valor}</b>
+      <span>
+        {ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo} <span className="foot">({c.fonte})</span>
+      </span>
+    </p>
+  );
+}
+
 export default async function FichaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const projects = await listProjects();
@@ -249,16 +288,32 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
         </p>
       </section>
 
-      {niveis.map((n) => (
+      {niveis.map((n) => {
+        // A primeira célula do N1 é a contagem do último marco da cadeia (`montarN1`) — a única
+        // que vira figura, e só quando apurada e numérica (célula de taxa chega como string).
+        const primeira = n.celulas[0];
+        // N4 renderiza os canais com trilho e SÓ o resto (fora do catálogo, total composto,
+        // diferença, inferências) pelo caminho comum de agrupamento.
+        // Mesmo casting de `montarNiveis()` acima: o módulo é .mjs (para `node --test` importar
+        // sem transpilar), então o tipo entra aqui, na fronteira.
+        const n4 = (n.id === "N4" ? canaisDoN4(n.celulas) : null) as {
+          canais: { celula: CelulaFicha; fracao: number | null }[];
+          resto: CelulaFicha[];
+        } | null;
+        const heroN1 =
+          n.id === "N1" && primeira?.estado === "apurado" && typeof primeira.valor === "number" ? primeira : null;
+        return (
         <section className="card ag-section" aria-labelledby={n.id} key={n.id}>
           <h2 className="eyebrow" id={n.id}>{n.titulo}</h2>
           {n.id === "N4" && n.nota && <p className="foot ficha-nota-n4">{n.nota}</p>}
 
           {n.id === "N3" && n.funil && n.funil.length > 0 && <FunilN3 segmentos={n.funil} />}
+          {n4 && <CanaisN4 canais={n4.canais} />}
+          {heroN1 && <HeroN1 c={heroN1} />}
 
           {n.id === "N4" || n.id === "N5"
             ? (() => {
-                const { avulsas, grupos } = agruparPorMotivo(n.celulas);
+                const { avulsas, grupos } = agruparPorMotivo(n4 ? n4.resto : n.celulas);
                 return (
                   <>
                     {avulsas.map((c, i) => (
@@ -282,7 +337,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                   </>
                 );
               })()
-            : n.celulas.map((c, i) => <Linha key={i} c={c} />)}
+            : (heroN1 ? n.celulas.slice(1) : n.celulas).map((c, i) => <Linha key={i} c={c} />)}
 
           {n.id === "N0" && n.krs && n.krs.length > 0 && (
             <ul className="ficha-krs">
@@ -308,6 +363,17 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                       )}
                     </div>
                   )}
+                  {/* Quanto do caminho até a meta já foi andado. `razaoDoKr()` só devolve algo
+                      para célula apurada e numérica — o trilho é redundante com o "hoje X · meta Y"
+                      logo acima, por isso `aria-hidden` e sem rótulo próprio. */}
+                  {(() => {
+                    const r = razaoDoKr(k.celulaAlvo, k.kr.meta);
+                    return r ? (
+                      <div className="meter-track ficha-kr-medidor" aria-hidden="true">
+                        <div className="meter-fill" style={{ width: `${r.fracao * 100}%` }} />
+                      </div>
+                    ) : null;
+                  })()}
                   {k.texto && <div className="foot">{k.texto}</div>}
                 </li>
               ))}
@@ -354,7 +420,8 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
             </>
           )}
         </section>
-      ))}
+        );
+      })}
     </main>
   );
 }
