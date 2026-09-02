@@ -344,3 +344,24 @@ O screenshot do admin do GA4 traz o **fluxo** (`12127687264`) e o **measurement 
 2. adicionar a conta de serviço como **Visualizador** na propriedade GA4 da Atma;
 3. o **ID da propriedade** (Administrador → Detalhes da propriedade) — ou habilitar também a
    **Admin API**, e aí o número é descoberto sozinho.
+
+### T029 — o que foi provado, e o que não dá mais para provar
+
+O quickstart §2 pede o retrato `/tmp/antes.html` **antes** de tocar no código. Ele não foi tirado, e
+o deploy já substituiu o HTML anterior — então o `diff` byte a byte não é mais reconstruível sem
+buildar o commit antigo, o que a régua da casa não aceita como conferência (`next dev` não vale).
+
+O que **foi** provado no lugar, e cobre o que a SC-004/SC-010 realmente mede (valores, não markup):
+
+- **N3 idêntico com e sem GA4**, por `assert.deepEqual` das células de N3 em `test/ficha.test.mjs` —
+  prova estrutural, mais forte que um diff de uma ficha só porque vale para qualquer entrada.
+- **N4 de projeto sem GA4**: os 17 projetos com perfil continuam com `orgânico` apurado (ou não
+  apurado onde já era) e os cinco demais canais em `não apurado`, nenhum exibindo `0`.
+- **`montarN4()` com três argumentos** (a assinatura de antes) devolve o resultado de antes — T008.
+
+O que **mudou de propósito** no N4, e portanto nunca seria "idêntico": o texto do motivo dos quatro
+canais do GA4 (`sem coletor para este canal` → `sem propriedade GA4 configurada para este projeto`),
+mais as células novas (total composto, fora do catálogo quando houver, nota do nível). É a feature.
+
+**Lição de processo**: o retrato do "antes" é barato e só existe antes. Tirar por padrão no começo
+de qualquer feature que mexa em tela, não quando o quickstart lembra.
