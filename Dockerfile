@@ -1,6 +1,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+# o .npmrc entra junto: e ele que faz o npm ci aceitar o react do canal experimental
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
 FROM node:22-alpine AS build
