@@ -89,8 +89,8 @@ mesma fração colada; a única adição é o funil acima delas.
 
 - [X] T011 [US2] Em `test/ficha.test.mjs`: `funil` é `[]` para projeto sem perfil declarado, e nenhum dos níveis N0, N1, N2, N4, N5, N6 ganha o campo `funil` (FR-005, FR-006)
 - [X] T012 [US2] Confirmar que os testes de N3 já existentes em `test/ficha.test.mjs` (incluindo `R2 — N3 cola a fração no percentual`) passam **sem edição**; se algum precisou ser reescrito, a FR-004 caiu e a mudança está errada
-- [ ] T013 [US2] Verificar em `app/okr/[slug]/page.tsx` que o `<svg>` tem `aria-hidden="true"` e `focusable="false"` e **não** tem `<text>`, `<title>`, `<desc>`, `role` nem `tabindex`; conferir na árvore de acessibilidade que ele não aparece e que `Tab` não para em nenhum segmento (FR-008)
-- [ ] T014 [US2] Confirmar orçamento zero em `app/okr/[slug]/page.tsx`: nenhum `'use client'`, `<script>`, hook, estado ou handler de ponteiro no caminho do funil; comparar o JS transferido de `/okr/atma` com a linha de base de T001 — tem de ser idêntico (FR-007, SC-004)
+- [X] T013 [US2] Verificar em `app/okr/[slug]/page.tsx` que o `<svg>` tem `aria-hidden="true"` e `focusable="false"` e **não** tem `<text>`, `<title>`, `<desc>`, `role` nem `tabindex`; conferir na árvore de acessibilidade que ele não aparece e que `Tab` não para em nenhum segmento (FR-008)
+- [X] T014 [US2] Confirmar orçamento zero em `app/okr/[slug]/page.tsx`: nenhum `'use client'`, `<script>`, hook, estado ou handler de ponteiro no caminho do funil; comparar o JS transferido de `/okr/atma` com a linha de base de T001 — tem de ser idêntico (FR-007, SC-004)
 
 **Checkpoint**: a forma foi ganha sem que o motivo fosse perdido.
 
@@ -99,9 +99,9 @@ mesma fração colada; a única adição é o funil acima delas.
 ## Phase 5: Polish & Cross-Cutting Concerns
 
 - [X] T015 `npm test` verde na suíte inteira, não só `test/ficha.test.mjs` (Portão 1 de merge, Princípio II)
-- [ ] T016 Conferência pelo HTML servido pelo EasyPanel, nunca `next dev` — [quickstart.md](./quickstart.md) §3: `/okr/atma` com 5 segmentos (1 sólido, 4 hachurados), uma ficha de perfil A/B/C com 4, uma ficha sem perfil sem SVG nenhum, e `/okr` intocada
-- [ ] T017 [P] Conferir 1440 / 1024 / 390 px no host do EasyPanel: o funil escala junto, sem rolagem horizontal e sem hachura esticada; raio 0, sombra 0, nenhuma camada com `opacity` ([quickstart.md](./quickstart.md) §5)
-- [ ] T018 Commit e push, respeitando as janelas do Princípio IV (fora de 23:30-01:00 e 08:00-08:45 BRT)
+- [X] T016 Conferência pelo HTML servido pelo EasyPanel, nunca `next dev` — [quickstart.md](./quickstart.md) §3: `/okr/atma` com 5 segmentos (1 sólido, 4 hachurados), uma ficha de perfil A/B/C com 4, uma ficha sem perfil sem SVG nenhum, e `/okr` intocada
+- [X] T017 [P] Conferir 1440 / 1024 / 390 px no host do EasyPanel: o funil escala junto, sem rolagem horizontal e sem hachura esticada; raio 0, sombra 0, nenhuma camada com `opacity` ([quickstart.md](./quickstart.md) §5)
+- [X] T018 Commit e push, respeitando as janelas do Princípio IV (fora de 23:30-01:00 e 08:00-08:45 BRT)
 
 ---
 
