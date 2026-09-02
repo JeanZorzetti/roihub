@@ -1,12 +1,12 @@
 [
   {
     "data": "2026-09-01",
-    "alvo": "chrome de navegação — as 13 seções viraram coluna (app/tabs.tsx + bloco de nav do globals.css)",
+    "alvo": "chrome de navegação — as 13 seções viraram coluna, e a troca de rota ganhou o wipe (app/tabs.tsx, app/layout.tsx, bloco de nav + bloco de view-transition do globals.css)",
     "direcao": "corte-seco",
     "eixos": { "materia": "geometria", "motor": "estado", "banda": "clara" },
     "orcamento": { "js_kb": 0, "lcp_alvo": 1.8, "lcp_medido": null },
-    "deps": [],
+    "deps": ["react@experimental", "react-dom@experimental"],
     "recusadas": ["regua-de-instrumento", "trilho-de-68px"],
-    "nota": "Aplicada ao chrome, não à página: a paleta do hub (design system light do admin ROI Labs) ficou de pé; o que a direção governa é a coluna — raio 0, sombra 0, transição 0, hover e ativo por inversão. Entrada e scroll declarados ausentes (chrome persistente não entra e não se move). lcp_medido null: só o dev server estava no ar, e medida local sob OneDrive não é evidência. CLS medido 0,0000 em 1440/1024/390."
+    "nota": "Aplicada ao chrome, não à página: a paleta do hub (design system light do admin ROI Labs) ficou de pé; o que a direção governa é a coluna e a transição — raio 0, sombra 0, e zero opacity em qualquer camada. As 4 camadas: entrada AUSENTE (chrome persistente não entra), scroll AUSENTE (a coluna é fixed; não se mover é o ponto dela), ponteiro = inversão de cor em 0ms, transição = wipe por clip-path de 260ms no snapshot `conteudo`. deps: react/react-dom trocados para o canal experimental, não somados — é o único canal que exporta <ViewTransition>, e ele é o que impede o congelamento (as rotas deste hub levam 3-6s; um startViewTransition disparado no clique congelaria a tela velha esse tempo todo). lcp_medido null: só o dev server esteve no ar, e medida local sob OneDrive não é evidência. CLS medido 0,0000 em 1440/1024/390."
   }
 ]

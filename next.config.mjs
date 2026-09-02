@@ -7,6 +7,9 @@ const nextConfig = {
     "/busca": ["./data/protocolos/**", "./handoff/**", "./data/projects.json"],
   },
   turbopack: { root: import.meta.dirname },
+  // Corte Seco (.art/log.json): a transicao de rota e a 4a camada da direcao — o wipe de
+  // `::view-transition-*` no globals.css. A flag habilita o <ViewTransition> do React.
+  experimental: { viewTransition: true },
 };
 
 export default nextConfig;
