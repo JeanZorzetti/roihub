@@ -50,8 +50,14 @@ https://console.developers.google.com/apis/api/analyticsdata.googleapis.com/over
 
 São **três** passos distintos, e o 403 do primeiro se parece com o do terceiro:
 
-1. **habilitar a Google Analytics Data API** no projeto GCP ← é o que falta;
-2. adicionar a conta de serviço como **Visualizador** na propriedade GA4 da Atma (pode já estar);
+1. ~~habilitar a Google Analytics Data API no projeto GCP~~ — **FEITO em 02/09**, via
+   `POST serviceusage.googleapis.com/v1/projects/845396101677/services/analyticsdata.googleapis.com:enable`
+   com a própria conta de serviço (ela tem `serviceUsageAdmin` no projeto). Não precisou de console;
+2. adicionar a conta de serviço como **Visualizador** na propriedade GA4 da Atma ← **é o que falta**.
+   A sonda agora responde `User does not have sufficient permissions for this property`, que é o 403
+   do passo 2. Isto **não** dá para automatizar: a Admin API exige que quem chama já seja admin da
+   propriedade, e a conta não enxerga nenhuma. É manual em *GA4 → Administrador → Acesso à
+   propriedade → `+` → `nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com` → Visualizador*;
 3. o `propertyId` — **já resolvido**: `properties/504053080`, curado no card.
 
 ⚠️ O screenshot do admin do GA4 mostra `CÓDIGO DO FLUXO` (`12127687264`) e `ID DA MÉTRICA`
