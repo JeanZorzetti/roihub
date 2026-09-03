@@ -116,7 +116,10 @@ export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: stri
                   className={okrSlug === f.slug ? "active" : undefined}
                   aria-current={okrSlug === f.slug ? "page" : undefined}
                 >
-                  {f.nome}
+                  {/* achado 7 do design-review de 03/09: nome completo ("Atma Aligner — alinhadores
+                      invisíveis + infoproduto R$ 47") ocupava 3 linhas no menu — a mesma quebra de
+                      "nome curto vs. descrição" que o h1 da ficha já faz (page.tsx, nomeCurto). */}
+                  {f.nome.split(" — ")[0]}
                 </Link>
               </li>
             ))}

@@ -238,6 +238,11 @@ a:hover { text-decoration: underline; }
   font-size: 12px; font-weight: 700; color: var(--green-aa);
   margin: 0 0 6px;
 }
+/* achado 4 do design-review de 03/09: `.eyebrow` em `<h2>` (título de seção real, ex. N0-N6 da
+   ficha OKR) ficava a 12px contra 15px do corpo — título menor que o texto que ele introduz. O
+   uso como legenda pequena acima do `<h1>` é sempre `<p>` neste app; escopar por tag não pega
+   nenhum desses. */
+h2.eyebrow { font-size: 16px; text-transform: none; margin-bottom: 8px; }
 .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
 .hero-name { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
 .hero-url { font-size: 13px; color: var(--muted); }
@@ -436,6 +441,12 @@ details.ficha-linha > summary { cursor: pointer; font-size: 13px; color: var(--m
 .ficha-explicacao { margin: 2px 0; }
 .ficha-explicacao > summary { cursor: pointer; }
 .ficha-explicacao > p { margin: 4px 0 0; }
+
+/* Esqueleto de `app/okr/[slug]/loading.tsx` (achado 6) — mesmas 8 seções da ficha, sem texto. */
+.skeleton-card { display: flex; flex-direction: column; gap: 10px; }
+.skeleton-linha { height: 14px; border-radius: 4px; background: var(--grid); animation: skeleton-pulso 1.4s ease-in-out infinite; }
+@keyframes skeleton-pulso { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .skeleton-linha { animation: none; } }
 
 /* Célula `inferido` (013) — marca distinta de `apurado`: corte-seco (raio 0, sombra 0), borda
    sólida em vez de cor de fundo, para não competir com `.pill-warn` de KR. */

@@ -127,20 +127,27 @@ function Cel({ c }: { c: CelulaFicha }) {
   return <span className="foot">não apurado — {texto}</span>;
 }
 
-/** N4/N5 repetem o mesmo `motivo` em várias células "não apurado" (achado 4 do design-review: 9
- *  das 33 linhas da ficha). Agrupamento só de apresentação — `montarN4Nivel`/`montarN5` continuam
- *  devolvendo lista plana; célula apurada nunca entra num grupo. */
+/** Células "não apurado" repetem o mesmo motivo (achado 4 do design-review original: 9 das 33
+ *  linhas da ficha; achado 2 do design-review de 03/09: 8 disclosures idênticos na página inteira,
+ *  4 só em N3). Agrupamento só de apresentação — os `montarNX()` continuam devolvendo lista plana;
+ *  célula apurada nunca entra num grupo.
+ *
+ *  `razao()` (lib/funil.mjs) prefixa o motivo com `numerador:`/`denominador:` conforme o lado que
+ *  falta — duas taxas vizinhas de N3 citam o MESMO buraco (a célula que uma tem como numerador é
+ *  o denominador da outra) só com prefixo trocado. Agrupar sem o prefixo funde essas duas; o texto
+ *  exibido no `<summary>` mantém o motivo original (com prefixo) do primeiro item do grupo. */
 function agruparPorMotivo(celulas: CelulaFicha[]) {
   const avulsas: CelulaFicha[] = [];
-  const porMotivo = new Map<string, Extract<CelulaFicha, { estado: "nao-apurado" }>[]>();
+  const porMotivo = new Map<string, { motivo: string; itens: Extract<CelulaFicha, { estado: "nao-apurado" }>[] }>();
   for (const c of celulas) {
     if (c.estado !== "nao-apurado") {
       avulsas.push(c);
       continue;
     }
-    const grupo = porMotivo.get(c.motivo) ?? [];
-    grupo.push(c);
-    porMotivo.set(c.motivo, grupo);
+    const chave = c.motivo.replace(/^(numerador|denominador): /, "");
+    const grupo = porMotivo.get(chave) ?? { motivo: c.motivo, itens: [] };
+    grupo.itens.push(c);
+    porMotivo.set(chave, grupo);
   }
   return { avulsas, grupos: [...porMotivo.values()] };
 }
@@ -187,7 +194,9 @@ function CadeiaDiagrama({ marcos, taxas, veredito, janela }: { marcos: Marco[]; 
   const n = marcos.length;
   const passo = 150;
   const largura = passo * (n - 1) + 80;
-  const alturaSvg = 130;
+  // achado 5 do design-review de 03/09: conteúdo (rótulo em y=cy-10 até nó em cy+raio) ocupa
+  // ~y=21..60 — os 130px originais deixavam ~98px de área morta abaixo, medido no navegador.
+  const alturaSvg = 70;
   const cy = 40;
   const raio = 20;
   const x = (i: number) => 40 + i * passo;
@@ -301,6 +310,20 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
   // fichas curadas — projeto com perfil e sem curadoria abre a mesma página (contracts/rota-e-menu.md).
   if (!p) notFound();
 
+  // achado 6 do design-review de 03/09: `evaluateAll()`+`listDonos()`+`listDone()`+`listDonoDatas()`
+  // (bloco N6 abaixo) não dependem de NADA que a coleta produz — só de `slug`, já disponível aqui.
+  // Disparar antes da coleta e só resolver depois do `await` dela sobrepõe os dois custos de rede
+  // em vez de somá-los (TTFB medido em prod: 3,3s a frio). Mesmo try/catch de antes, só adiado.
+  const on = dbOn();
+  const agendaPromise = on
+    ? Promise.all([
+        evaluateAll().then((r) => r.filter((x) => x.curated)),
+        listDonos().catch(() => new Map<string, string>()),
+        listDone().catch(() => new Set<string>()),
+        listDonoDatas().catch(() => new Map<string, string>()),
+      ])
+    : null;
+
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
   const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
@@ -315,20 +338,14 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
   // ── N6 — a MESMA composição de app/agenda/page.tsx (FR-030, SC-018): a ordem de `evaluateAll()`
   // filtrada por `curated` é de onde sai o `#N · score`; passar `listProjects()` cru mudaria o
   // `meta` de todos os itens (o rótulo de ranking não é a ordem — já apagou ranking da tela antes).
-  const on = dbOn();
   let itensAgenda: ReturnType<typeof acoesDoRanking> | null = null;
   let erroAgenda: string | null = null;
   let datasDono = new Map<string, string>();
-  if (!on) {
+  if (!agendaPromise) {
     erroAgenda = "DATABASE_URL ausente";
   } else {
     try {
-      const [curados, donos, doneSet, datas] = await Promise.all([
-        evaluateAll().then((r) => r.filter((x) => x.curated)),
-        listDonos().catch(() => new Map<string, string>()),
-        listDone().catch(() => new Set<string>()),
-        listDonoDatas().catch(() => new Map<string, string>()),
-      ]);
+      const [curados, donos, doneSet, datas] = await agendaPromise;
       datasDono = datas;
       const todas = acoesDoRanking(curados, donos).filter((i: { projeto: string }) => i.projeto === slug);
       // Feito não é pendente: mesmo corte de `doneSet.has(key@occ)` que a `/agenda` faz, senão
@@ -491,7 +508,21 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
             </p>
           ) : proximoBuraco ? (
             <p>
-              Sem ação com dono agora. <a href="#N6">Ver a sugestão em N6</a>.
+              Sem ação com dono agora. <a href="#N6">Ver a sugestão em N6</a>
+              {/* achado 1 do design-review de 03/09: o veredito §7.1 (fator zerado) e a sugestão
+                  de N6 (1º buraco de medição) respondiam perguntas diferentes sem se citar — em
+                  atma, "tratamento INICIADO: 0 apurado" no topo contra "apurar contato feito"
+                  aqui embaixo lia como dois planos de ataque. Só entra quando os dois nomes
+                  divergem (posição 2/3 já apontam pro mesmo degrau/taxa). */}
+              {veredito.posicao === 1 && veredito.celula && veredito.celula !== proximoBuraco.nome ? (
+                <>
+                  : <strong>{proximoBuraco.nome}</strong> fecha um buraco de medição, mas não
+                  destrava <strong>{veredito.celula}</strong> — o fator zerado só sai de 0 com
+                  trabalho na etapa em que ele está.
+                </>
+              ) : (
+                "."
+              )}
             </p>
           ) : (
             <p className="foot">Sem ação pendente e sem dado a apurar na cadeia.</p>
@@ -546,7 +577,11 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
           {n4 && <CanaisN4 canais={n4.canais} />}
           {heroN1 && <HeroN1 c={heroN1} necessario={necessarioNaJanela} />}
 
-          {n.id === "N4" || n.id === "N5"
+          {/* N2 fica de fora: as células ali formam uma equação lida em sequência (Leads × CR1 ×
+              CR2 × Valor = "a conta fecha?") — agrupar reordenaria os não-apurados para depois dos
+              apurados/declarados e quebraria essa leitura. N3 é seguro: os 4 não-apurados já vêm
+              consecutivos, sem apurado no meio, então agrupar não reordena nada. */}
+          {n.id === "N3" || n.id === "N4" || n.id === "N5"
             ? (() => {
                 const { avulsas, grupos } = agruparPorMotivo(n4 ? n4.resto : n.celulas);
                 return (
@@ -555,18 +590,18 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                       <Linha key={`avulsa-${i}`} c={c} />
                     ))}
                     {grupos.map((grupo, i) =>
-                      grupo.length > 1 ? (
+                      grupo.itens.length > 1 ? (
                         <details key={`grupo-${i}`} className="ficha-linha">
                           <summary>
-                            {grupo.length} não apurados — {grupo[0].motivo}:{" "}
-                            {grupo.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
+                            {grupo.itens.length} não apurados — {grupo.motivo}:{" "}
+                            {grupo.itens.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
                           </summary>
-                          {grupo.map((c, j) => (
+                          {grupo.itens.map((c, j) => (
                             <Linha key={j} c={c} />
                           ))}
                         </details>
                       ) : (
-                        <Linha key={`grupo-${i}`} c={grupo[0]} />
+                        <Linha key={`grupo-${i}`} c={grupo.itens[0]} />
                       ),
                     )}
                   </>
