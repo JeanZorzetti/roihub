@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listProjects } from "@/lib/projects";
 import { montarFicha, posicaoDeAtaque, FAMILIAS } from "@/lib/okr.mjs";
@@ -109,9 +110,12 @@ function Cel({ c }: { c: CelulaFicha }) {
   const repetido = c.consultar && c.motivo.includes(c.consultar);
   const texto = repetido ? c.motivo : `${c.motivo} · consultar: ${c.consultar}`;
   if (texto.length > 110) {
+    // achado 3 do design-review de 03/09: 8 `<summary>` da página inteira liam "não apurado —
+    // como apurar isto" para quem navega por nome acessível (WCAG 2.4.6) — indistinguíveis fora
+    // do contexto visual da linha. O rótulo da própria célula (já traduzido acima) desambigua.
     return (
       <details className="ficha-explicacao">
-        <summary className="foot">não apurado — como apurar isto</summary>
+        <summary className="foot">não apurado — como apurar {ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo}</summary>
         <p className="foot">
           {c.motivo}
           {!repetido && (
@@ -300,6 +304,17 @@ function HeroN1({ c, necessario }: { c: Extract<CelulaFicha, { estado: "apurado"
       </span>
     </p>
   );
+}
+
+// achado 8 do design-review de 03/09: `document.title` era "ROI Hub" nas 40 fichas — aba e
+// histórico indistinguíveis. `fetch()` em `listProjects()`/`listRepos()` é deduplicado pelo Next
+// dentro da mesma requisição (mesma URL), então repetir a chamada aqui não dobra a rede.
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const projects = await listProjects();
+  const p = projects.find((x) => x.slug === slug);
+  const nomeCurto = p?.nome.split(" — ")[0] ?? slug;
+  return { title: `${nomeCurto} — OKR` };
 }
 
 export default async function FichaPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -508,21 +523,24 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
             </p>
           ) : proximoBuraco ? (
             <p>
-              Sem ação com dono agora. <a href="#N6">Ver a sugestão em N6</a>
+              {/* achado 7 do design-review de 03/09: "Sem ação com dono agora. Ver a sugestão em
+                  N6" empurrava quem lê 2.500px para achar a sugestão — que já está calculada
+                  aqui em cima (`proximoBuraco`). O link vira reforço, não o único caminho. */}
+              Sem ação com dono agora. Próximo dado a apurar: <strong>{proximoBuraco.nome}</strong> —
+              consultar {proximoBuraco.fonte}.
               {/* achado 1 do design-review de 03/09: o veredito §7.1 (fator zerado) e a sugestão
                   de N6 (1º buraco de medição) respondiam perguntas diferentes sem se citar — em
                   atma, "tratamento INICIADO: 0 apurado" no topo contra "apurar contato feito"
                   aqui embaixo lia como dois planos de ataque. Só entra quando os dois nomes
                   divergem (posição 2/3 já apontam pro mesmo degrau/taxa). */}
-              {veredito.posicao === 1 && veredito.celula && veredito.celula !== proximoBuraco.nome ? (
+              {veredito.posicao === 1 && veredito.celula && veredito.celula !== proximoBuraco.nome && (
                 <>
-                  : <strong>{proximoBuraco.nome}</strong> fecha um buraco de medição, mas não
-                  destrava <strong>{veredito.celula}</strong> — o fator zerado só sai de 0 com
-                  trabalho na etapa em que ele está.
+                  {" "}
+                  Isso fecha um buraco de medição, mas não destrava <strong>{veredito.celula}</strong> —
+                  o fator zerado só sai de 0 com trabalho na etapa em que ele está.
                 </>
-              ) : (
-                "."
-              )}
+              )}{" "}
+              <a href="#N6">Ver em N6</a>.
             </p>
           ) : (
             <p className="foot">Sem ação pendente e sem dado a apurar na cadeia.</p>

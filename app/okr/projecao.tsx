@@ -10,6 +10,11 @@ import { projetar } from "@/lib/projecao.mjs";
 /** Número com vírgula, 2 casas só quando não é inteiro — mesma régua de `pct()` de funil.mjs. */
 export const num = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(".", ","));
 
+/** Reais com separador de milhar (achado 6 do design-review de 03/09: "R$ 50000 em 4000 por
+ *  unidade" saía sem pontuação nenhuma, e o ticket sem o `R$` — os dois lêem como um número
+ *  qualquer, não como dinheiro). `num()` continua servindo às contagens (2,94 tratamentos). */
+const reais = (v: number) => `R$ ${v.toLocaleString("pt-BR")}`;
+
 type Meta = { valor?: number; ticket?: number; prazo?: string; declaradaEm?: string };
 type ProjecaoResultado = ReturnType<typeof projetar>;
 
@@ -26,7 +31,7 @@ export function Projecao({ meta, p }: { meta?: Meta; p: ProjecaoResultado }) {
   return (
     <div className="foot">
       <p>
-        Meta <strong>declarada</strong>: R$ {num(meta!.valor!)} em {num(meta!.ticket!)} por unidade
+        Meta <strong>declarada</strong>: {reais(meta!.valor!)} em {reais(meta!.ticket!)} por unidade
         (declarada em {meta!.declaradaEm ?? "data não registrada"}) · N1 necessário no prazo:{" "}
         <strong>{num((p.n1Total as { valor: number }).valor)}</strong>, na janela de {p.normalizacao!.janelaDias} dias:{" "}
         <strong>{num((p.n1Janela as { valor: number }).valor)}</strong>
