@@ -138,10 +138,14 @@ export async function coletarDoProjeto(
     ga4Canais(p.ga4?.propertyId, { inicio, fim }),
     ga4Eventos(p.ga4?.propertyId, { inicio, fim }),
   ]);
-  const totals = s ? totals28(s.days, fim) : null;
-  const cliques: Celula = totals ? apurado(totals.current.clicks) : naoApurado(`sem propriedade no GSC para ${p.url}`);
+  const totals = s && "days" in s ? totals28(s.days, fim) : null;
+  // `s` distingue fato real (`null`) de falha transitória (`{erro}`) — achado 1 do design-review
+  // de 03/09: colapsar os dois fazia "sem propriedade" mentir quando era só timeout, e o veredito
+  // (que lê esta frase pra classificar D1 vs D4 em okr.mjs) mudava sozinho a cada release.
+  const motivoGsc = s && "erro" in s ? `falhou agora — GSC indisponível (${s.erro})` : `sem propriedade no GSC para ${p.url}`;
+  const cliques: Celula = totals ? apurado(totals.current.clicks) : naoApurado(motivoGsc);
   // impressões — a MESMA série que dá cliques, sem chamada nova (FR-036, US3 disponiveisN5).
-  const impressoes: Celula = totals ? apurado(totals.current.impressions) : naoApurado(`sem propriedade no GSC para ${p.url}`);
+  const impressoes: Celula = totals ? apurado(totals.current.impressions) : naoApurado(motivoGsc);
 
   // leads — fonte própria primeiro (R4), CRM do hub depois.
   let leadsCel: Celula;

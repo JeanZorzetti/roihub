@@ -38,7 +38,9 @@ export default async function SeoPage() {
     Promise.all(
       projects.map(async (p): Promise<Row> => {
         const s = await gscSeries(p.url);
-        if (!s) return { ...p, weeks: [], t: null };
+        // `{erro}` (falha transitória) vira o mesmo estado vazio que `null` (fato real) aqui —
+        // esta tela não distingue os dois motivos, só `okr-coleta.ts` precisa (design-review 03/09).
+        if (!s || "erro" in s) return { ...p, weeks: [], t: null };
         return { ...p, weeks: bucketWeeks(s.days, end), t: totals28(s.days, end) };
       })
     ),

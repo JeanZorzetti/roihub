@@ -83,18 +83,38 @@ const GLOSSARIO: { termo: string; def: string }[] = [
   { termo: "R7", def: "regra fixa: uma janela de datas só, igual para a árvore inteira, para nenhum número comparar períodos diferentes." },
 ];
 
+// achado 2 do design-review de 03/09: buraco PERMANENTE ("sem coletor", "sem propriedade no GSC")
+// e falha TRANSITÓRIA (GSC/GA4/banco fora do ar por um instante) liam a mesma frase "não apurado
+// — ...". Toda fonte que falha por conexão já embute "indisponível (código)" no motivo (lib/gsc.ts,
+// lib/ga4.ts, lib/okr-coleta.ts); nenhum motivo estrutural usa essa palavra — checado nos 5 pontos
+// que constroem motivo hoje. O rótulo muda, o `estado` da célula continua sendo `nao-apurado`: não
+// é um 5º estado novo, é a mesma célula dizendo com mais precisão por que ela está vazia.
+const EH_FALHA_TRANSITORIA = /indispon[íi]vel/i;
+const rotuloBuraco = (motivo: string) => (EH_FALHA_TRANSITORIA.test(motivo) ? "falhou agora" : "não apurado");
+
+// achado 4: mesmo número em 3 formatos na mesma tela — "R$ 4.000" no hero (app/okr/projecao.tsx),
+// "4000" cru no N2 (esta célula), "0" sem cifrão no N1. Os dois rótulos abaixo são os ÚNICOS que
+// carregam dinheiro fora do hero — `${ficha.n1} em R$` (lib/ficha.mjs:621/626, todo perfil) e
+// "Valor do tratamento" (o único fator `tipo:"valor"` em lib/okr.mjs) — checado nos dois arquivos.
+const EH_ROTULO_MONETARIO = /em R\$$|^Valor do tratamento$/;
+const formatarCifra = (c: { valor: number | string; rotulo: string }) =>
+  typeof c.valor === "number" && EH_ROTULO_MONETARIO.test(c.rotulo) ? `R$ ${c.valor.toLocaleString("pt-BR")}` : c.valor;
+
 /** O único caminho que imprime valor (FR-009). Sem `0`, sem `—`, sem célula em branco. */
 function Cel({ c }: { c: CelulaFicha }) {
   if (c.estado === "apurado")
     return (
       <>
-        <strong>{c.valor}</strong> <span className="foot">({c.fonte})</span>
+        <strong>{formatarCifra(c)}</strong> <span className="foot">({c.fonte})</span>
       </>
     );
   if (c.estado === "declarado")
     return (
       <span className="cel-tag-declarado">
-        <strong>{c.valor}</strong> <span className="foot">declarado em {c.declaradoEm}</span>
+        {/* achado 6: `oQue` já vem calculado por `combinar()` (lib/ficha.mjs) e era descartado —
+            "declarado em 2026-09-01" sozinho lia como se alguém tivesse declarado um R$ 0, quando
+            é 0 × meta.ticket. */}
+        <strong>{formatarCifra(c)}</strong> <span className="foot">declarado em {c.declaradoEm} · {c.oQue}</span>
       </span>
     );
   if (c.estado === "inferido")
@@ -115,7 +135,7 @@ function Cel({ c }: { c: CelulaFicha }) {
     // do contexto visual da linha. O rótulo da própria célula (já traduzido acima) desambigua.
     return (
       <details className="ficha-explicacao">
-        <summary className="foot">não apurado — como apurar {ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo}</summary>
+        <summary className="foot">{rotuloBuraco(c.motivo)} — como apurar {ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo}</summary>
         <p className="foot">
           {c.motivo}
           {!repetido && (
@@ -128,7 +148,7 @@ function Cel({ c }: { c: CelulaFicha }) {
       </details>
     );
   }
-  return <span className="foot">não apurado — {texto}</span>;
+  return <span className="foot">{rotuloBuraco(c.motivo)} — {texto}</span>;
 }
 
 /** Células "não apurado" repetem o mesmo motivo (achado 4 do design-review original: 9 das 33
@@ -611,7 +631,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                       grupo.itens.length > 1 ? (
                         <details key={`grupo-${i}`} className="ficha-linha">
                           <summary>
-                            {grupo.itens.length} não apurados — {grupo.motivo}:{" "}
+                            {grupo.itens.length} {EH_FALHA_TRANSITORIA.test(grupo.motivo) ? "falharam agora" : "não apurados"} — {grupo.motivo}:{" "}
                             {grupo.itens.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
                           </summary>
                           {grupo.itens.map((c, j) => (

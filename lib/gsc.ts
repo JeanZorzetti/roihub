@@ -92,7 +92,11 @@ async function queryClicks(
 }
 
 export type GscDay = { date: string; clicks: number; impressions: number; position: number };
-export type GscSeries = { property: string; days: GscDay[] } | null;
+// `null` é fato real (env desligada ou host fora de toda propriedade — D1, conserto é domínio).
+// `{erro}` é falha transitória (timeout, credencial) — mesmo padrão de `LeituraGa4` em lib/ga4.ts.
+// Não colapsar os dois em `null`: um dá "sem propriedade no GSC", o outro mudava de resposta a
+// cada release (design-review de 03/09 — duas leituras da mesma URL, 15 min de diferença).
+export type GscSeries = { property: string; days: GscDay[] } | { erro: string } | null;
 
 // Mesmo endpoint do queryClicks, só acrescenta dimensions:["date"] → série diária.
 async function queryTimeseries(
@@ -225,18 +229,17 @@ export async function inspectUrl(
 }
 
 // Série diária dos últimos 84 dias (12 semanas fechando em D-3, GSC atrasa).
-// Qualquer falha → null e a aba SEO mostra o estado vazio (SEED).
 export async function gscSeries(siteUrl: string): Promise<GscSeries> {
+  const clientP = getClient();
+  if (!clientP) return null; // env desligada — fato real, sem tentar rede
   try {
-    const clientP = getClient();
-    if (!clientP) return null;
     const client = await clientP;
     const host = new URL(siteUrl).hostname;
     const property = resolveProperty(host, await listSites(client));
-    if (!property) return null;
+    if (!property) return null; // host fora de toda propriedade — fato real (D1)
     return { property, days: await queryTimeseries(client, property, host, isoDaysAgo(86), isoDaysAgo(3)) };
-  } catch {
-    return null;
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
   }
 }
 

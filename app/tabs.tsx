@@ -82,8 +82,12 @@ const GRUPOS: { id: string; titulo: string; itens: [Active, string, string][] }[
  */
 export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: string }) {
   const fichas = await listFichas();
+  // achado 3 do design-review de 03/09: as 13 seções são `force-dynamic` (batem GSC/GA4/Postgres
+  // no load) e o Link do App Router prefetcha por viewport, não por hover — a coluna de nav inteira
+  // fica visível de saída, então TODAS as 13 disparavam render completo em paralelo com a página
+  // atual. Medido em prod: 27 das 37 requisições da carga de /okr/atma eram esse prefetch.
   const tab = (key: string, href: string, label: string) => (
-    <Link href={href} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
+    <Link href={href} prefetch={false} className={active === key ? "tab active" : "tab"} aria-current={active === key ? "page" : undefined}>
       {label}
     </Link>
   );
@@ -96,7 +100,7 @@ export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: stri
     if (key !== "okr" || fichas.length === 0) return tab(key, href, label);
     return (
       <span className="tab-okr">
-        <Link href="/okr" className={naPortfolio ? "tab active" : "tab"} aria-current={naPortfolio ? "page" : undefined}>
+        <Link href="/okr" prefetch={false} className={naPortfolio ? "tab active" : "tab"} aria-current={naPortfolio ? "page" : undefined}>
           OKR
         </Link>
         <details className="okr-menu" open={okrAberto}>
@@ -105,7 +109,7 @@ export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: stri
           </summary>
           <ul>
             <li>
-              <Link href="/okr" className={naPortfolio ? "active" : undefined} aria-current={naPortfolio ? "page" : undefined}>
+              <Link href="/okr" prefetch={false} className={naPortfolio ? "active" : undefined} aria-current={naPortfolio ? "page" : undefined}>
                 Portfólio
               </Link>
             </li>
@@ -113,6 +117,7 @@ export async function Tabs({ active, okrSlug }: { active: Active; okrSlug?: stri
               <li key={f.slug}>
                 <Link
                   href={`/okr/${f.slug}`}
+                  prefetch={false}
                   className={okrSlug === f.slug ? "active" : undefined}
                   aria-current={okrSlug === f.slug ? "page" : undefined}
                 >

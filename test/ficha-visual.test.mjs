@@ -57,10 +57,12 @@ test("canal não apurado vem por último e sem trilho — nunca trilho de compri
   assert.equal(canais.find((c) => c.celula.rotulo === "pago").fracao, 0);
 });
 
-test("fração é relativa ao maior canal, e zero canal apurado não divide por zero", () => {
+test("fração é relativa ao TOTAL apurado (a mesma soma do total composto), e zero canal apurado não divide por zero", () => {
+  // achado 5 do design-review de 03/09: fração por MAIOR canal fazia orgânico (525) encher 100%
+  // do trilho enquanto "total composto" ao lado dizia 661 — lido como composição, mentia.
   const { canais } = canaisDoN4(celulasN4());
-  assert.equal(canais[0].fracao, 1);
-  assert.ok(Math.abs(canais[1].fracao - 130 / 525) < 1e-9);
+  assert.ok(Math.abs(canais[0].fracao - 525 / 661) < 1e-9);
+  assert.ok(Math.abs(canais[1].fracao - 130 / 661) < 1e-9);
   const secos = canaisDoN4([{ estado: "apurado", rotulo: "direto", valor: 0 }]);
   assert.equal(secos.canais[0].fracao, 0);
 });
