@@ -282,3 +282,56 @@ export async function gscTrend(siteUrl: string): Promise<GscTrend> {
     return null;
   }
 }
+
+export type GscPaginas =
+  | { paginas: { pagina: string; impressoes: number; cliques: number; posicao: number }[] }
+  | { erro: string }
+  | null;
+
+/**
+ * Impressões por PÁGINA na janela — a base da camada de entrega da 016 (`páginas necessárias =
+ * impressões que faltam ÷ média por página`).
+ *
+ * Função nova em vez de dimensão extra em `gscSeries()` (016, D6): aquela devolve série diária e é
+ * consumida por meia dúzia de lugares; trocar a forma do retorno mexeria em todos eles para servir
+ * um consumidor só. Mesma autenticação, mesmo filtro de host, mesma janela declarada (R7).
+ *
+ * `null` é "não há onde olhar" (env desligada ou host fora de toda propriedade) e `{erro}` é falha
+ * transitória — a mesma distinção que `gscSeries()` faz, e pelo mesmo motivo: colapsar as duas faz
+ * "sem propriedade" mentir quando era só timeout.
+ */
+export async function gscPaginas(siteUrl: string, janela: { inicio: string; fim: string }): Promise<GscPaginas> {
+  const clientP = getClient();
+  if (!clientP) return null;
+  try {
+    const client = await clientP;
+    const host = new URL(siteUrl).hostname;
+    const property = resolveProperty(host, await listSites(client));
+    if (!property) return null;
+    const res = await client.request<{
+      rows?: { keys: string[]; clicks: number; impressions: number; position: number }[];
+    }>({
+      url: `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
+      method: "POST",
+      data: {
+        startDate: janela.inicio,
+        endDate: janela.fim,
+        dimensions: ["page"],
+        dimensionFilterGroups: [
+          { filters: [{ dimension: "page", operator: "contains", expression: `https://${host}/` }] },
+        ],
+        rowLimit: 1000,
+      },
+    });
+    return {
+      paginas: (res.data.rows ?? []).map((r) => ({
+        pagina: r.keys[0],
+        impressoes: r.impressions,
+        cliques: r.clicks,
+        posicao: r.position,
+      })),
+    };
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+  }
+}

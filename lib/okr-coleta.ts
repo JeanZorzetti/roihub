@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { gscSeries, isoDaysAgo } from "@/lib/gsc";
+import { gscSeries, gscPaginas, isoDaysAgo, type GscPaginas } from "@/lib/gsc";
 import { totals28 } from "@/lib/series.mjs";
 import { apurado, naoApurado, ehApurado } from "@/lib/funil.mjs";
 import { pipelineDe, celulaDeLeads, celulasDeOrcamento } from "@/lib/okr.mjs";
@@ -126,6 +126,7 @@ export async function coletarDoProjeto(
   ga4: LeituraGa4;
   ga4ev: EventosGa4;
   orcamentosSemLead: { valor: number } | null;
+  paginas: GscPaginas;
 }> {
   // cliques — o GSC. Host de fornecedor (`*.vercel.app`) fica FORA de toda propriedade: isso NÃO
   // é "zero tráfego", é "não há onde olhar", e o conserto é domínio próprio, não SEO.
@@ -133,10 +134,13 @@ export async function coletarDoProjeto(
   // GA4 entra DUAS vezes no mesmo Promise.all (canais para N4, eventos para os medidores D3 do
   // N5) — duas queries independentes da mesma propriedade, sem somar latência e sem que a falha
   // de uma alcance a outra.
-  const [s, ga4, ga4ev] = await Promise.all([
+  // `gscPaginas` (016) entra no MESMO Promise.all: é a segunda query da mesma propriedade, para a
+  // camada de entrega, e falha dela não pode alcançar as outras três.
+  const [s, ga4, ga4ev, paginas] = await Promise.all([
     gscSeries(p.url),
     ga4Canais(p.ga4?.propertyId, { inicio, fim }),
     ga4Eventos(p.ga4?.propertyId, { inicio, fim }),
+    gscPaginas(p.url, { inicio, fim }),
   ]);
   const totals = s && "days" in s ? totals28(s.days, fim) : null;
   // `s` distingue fato real (`null`) de falha transitória (`{erro}`) — achado 1 do design-review
@@ -176,7 +180,7 @@ export async function coletarDoProjeto(
     ? apurado(p.vendas.filter((v) => v?.data && v.data >= inicio && v.data <= fim).length)
     : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
 
-  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead };
+  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead, paginas };
 }
 
 export { ehApurado };

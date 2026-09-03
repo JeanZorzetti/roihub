@@ -5,6 +5,7 @@ import { montarFicha, posicaoDeAtaque, FAMILIAS } from "@/lib/okr.mjs";
 import { ehApurado, pct } from "@/lib/funil.mjs";
 import { distanciaDoMercado, formatarRazao } from "@/lib/benchmark.mjs";
 import { projetar } from "@/lib/projecao.mjs";
+import { montarArvore, camadaDeEntrega, alavancaDePosicao } from "@/lib/arvore-metas.mjs";
 import { acoesDoRanking } from "@/lib/agenda.mjs";
 import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listDone, listDonos, listDonoDatas } from "@/lib/db";
@@ -12,6 +13,7 @@ import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/ok
 import { montarNiveis, medidoresDeEventos } from "@/lib/ficha.mjs";
 import { canaisDoN4, razaoDoKr } from "@/lib/ficha-visual.mjs";
 import { Projecao, num } from "../projecao";
+import { Arvore } from "../arvore";
 import { Tabs } from "../../tabs";
 
 // Igual à `/okr`: número de OKR vindo do build é número de outra janela, e a R7 pede UMA janela
@@ -385,7 +387,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead, paginas } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
   const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas, orcamentos, orcamentosAceitos } });
   const veredito = posicaoDeAtaque(ficha);
   // O SEGUNDO veredito, e ele é PARALELO: a §7 manda por fato apurado, a régua só dimensiona.
@@ -393,6 +395,38 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
   // benchmark, que é exatamente o que a R6 recusa.
   const mercado = distanciaDoMercado(ficha);
   const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
+
+  // ── Árvore de metas (016) — a descida que a 010 começa e para. `projetar()` divide a meta uma
+  // vez (`meta ÷ âncora`); `montarArvore()` continua até impressões, escolhendo o divisor de cada
+  // camada entre taxa apurada, ponte sobre buraco de medição e UMA faixa de mercado.
+  // O CTR sai da mesma série do GSC que já deu cliques e impressões — sem chamada nova (FR-008).
+  const cliquesV = ehApurado(cliques) ? (cliques as { valor: number }).valor : null;
+  const impressoesV = ehApurado(impressoes) ? (impressoes as { valor: number }).valor : null;
+  const ctr = cliquesV != null && impressoesV ? { valor: cliquesV / impressoesV, impressoes } : undefined;
+  // Mesmo casting de `montarNiveis()` abaixo: o módulo é .mjs (para `node --test` importar sem
+  // transpilar) e o TS não estreita `Celula` por `ehApurado()`.
+  const arvore = montarArvore({ ficha, projecao, ctr }) as {
+    camadas: {
+      chave: string;
+      nome: string;
+      necessario: { min: number; max: number };
+      hoje: { valor: number } | { naoApurado: string };
+      gap: { min: number; max: number } | null;
+      jaCobre?: boolean;
+      divisor: { origem: string; lo: number; hi: number; fonte: string; nota?: string; atravessa: string[] } | null;
+    }[];
+    parou: { nome?: string; motivo: string } | null;
+    bandaAberta: boolean;
+  };
+  const camadaImpressao = arvore.camadas.find((c) => c.chave === "impressao");
+  const camadaClique = arvore.camadas.find((c) => c.chave === "visitante");
+  const entrega = camadaDeEntrega(
+    camadaImpressao?.necessario ?? null,
+    paginas && "paginas" in paginas ? paginas.paginas : null,
+    impressoesV ?? 0,
+    projecao.normalizacao?.diasRestantes ?? 0,
+  );
+  const ctrAlvo = alavancaDePosicao(camadaClique?.necessario ?? null, impressoesV ?? 0);
 
   // ── N6 — a MESMA composição de app/agenda/page.tsx (FR-030, SC-018): a ordem de `evaluateAll()`
   // filtrada por `curated` é de onde sai o `#N · score`; passar `listProjects()` cru mudaria o
@@ -557,6 +591,13 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
           <h2 className="ficha-bloco-h">Quanto falta</h2>
           <Projecao meta={p.meta} p={projecao} />
         </div>
+
+        {(arvore.camadas.length > 1 || arvore.parou) && (
+          <div className="ficha-bloco">
+            <h2 className="ficha-bloco-h">Árvore de metas</h2>
+            <Arvore arvore={arvore} entrega={entrega} ctrAlvo={ctrAlvo} impressoesHoje={impressoes} />
+          </div>
+        )}
 
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">O que fazer</h2>
