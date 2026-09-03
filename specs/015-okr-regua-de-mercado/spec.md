@@ -119,8 +119,12 @@ DEVEM falhar (FR-002).
 
 ### Measurable Outcomes
 
-- **SC-001**: `/okr/atma` mostra `visitante→lead` como `acima da média` com razão `3,6×`,
-  fonte citada, e a §7.1 inalterada ao lado.
+- **SC-001**: `/okr/atma` mostra `visitante→lead` como `acima da média`, com razão, faixa e fonte
+  citadas, e a §7.1 inalterada ao lado. **Verificado em produção 03/09/2026**: 5,83% = **2,9× o
+  piso**, faixa 2,0-5,0%, elite a partir de 8,0%.
+  ⚠️ Os `535 → 39` do §9 do template são ILUSTRAÇÃO VELHA (dariam 3,6×). Produção na janela
+  04/08→31/08 diz **532 cliques → 31 leads**. O teste usa a ilustração como fixture de propósito —
+  fixture não é prod, e citar um pelo outro é o defeito `afirmado × apurado` que esta casa já nomeia.
 - **SC-002**: Dos **17** degraus dos 4 perfis (A:4, B:4, C:4, D:5), exatamente as **10** linhas com
   fonte publicada existem na tabela; as **7** restantes devolvem `sem régua`. Destas 10, uma
   (`trial→cobrança`) é condicional ao modelo de trial e devolve `sem régua` enquanto nenhum

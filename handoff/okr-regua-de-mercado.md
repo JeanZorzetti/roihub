@@ -110,7 +110,7 @@ dimensiona.
 
 ```
 posição de ataque  (§7, apurado)  →  §7.1 — fator ZERADO no fim da cadeia
-distância do mercado (régua)      →  visitante→lead: 7,29% = 3,6× o piso ✅ acima da média
+distância do mercado (régua)      →  visitante→lead: 5,83% = 2,9× o piso ✅ acima da média
                                      demais degraus: sem par apurado
 ```
 
@@ -136,11 +136,13 @@ Uma multiplicação só, contra denominador apurado. Nunca duas.
 
 ## 5. A leitura do `atma` hoje (o que muda na prática)
 
-Cadeia apurada, janela 01/08→29/08/2026: `535 cliques → 39 leads → 0 vendas`.
+**Verificado em produção 03/09/2026**, janela 04/08→31/08: `532 cliques → 31 leads → 0 tratamentos`
+(5 orçamentos enviados). ⚠️ O `535 → 39 → 0` do §9 do template é ilustração de uma janela anterior —
+sempre reconferir em `/okr/atma` antes de citar.
 
 | Degrau | Apurado | Mercado | Leitura |
 |---|---|---|---|
-| `visitante → lead` | **7,29%** | piso 2% · mediana 3,6% · elite 8–15% | ✅ **3,6× o piso**, a um passo da elite |
+| `visitante → lead` | **5,83%** | piso 2% · mediana 3,6% · elite 8–15% | ✅ **2,9× o piso**, acima da média |
 | `lead → contato feito` | não apurado | 39,9% | `sem par apurado` |
 | `orçamento → aceito` | não apurado | 25–35% | `sem par apurado` |
 | `→ tratamento` | **0** | — | fator zerado (§7.1) |
