@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { listProjects } from "@/lib/projects";
 import { montarFicha, posicaoDeAtaque, FAMILIAS } from "@/lib/okr.mjs";
+import { distanciaDoMercado, formatarRazao } from "@/lib/benchmark.mjs";
 import { projetar } from "@/lib/projecao.mjs";
 import { acoesDoRanking } from "@/lib/agenda.mjs";
 import { evaluateAll } from "@/lib/evaluate";
@@ -194,6 +195,10 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
   const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
   const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas, orcamentos, orcamentosAceitos } });
   const veredito = posicaoDeAtaque(ficha);
+  // O SEGUNDO veredito, e ele é PARALELO: a §7 manda por fato apurado, a régua só dimensiona.
+  // Nada aqui realimenta `posicaoDeAtaque` — se um dia realimentar, a §7 passa a decidir por
+  // benchmark, que é exatamente o que a R6 recusa.
+  const mercado = distanciaDoMercado(ficha);
   const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
 
   // ── N6 — a MESMA composição de app/agenda/page.tsx (FR-030, SC-018): a ordem de `evaluateAll()`
@@ -292,6 +297,30 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
           {veredito.celula && <strong>{veredito.celula}: </strong>}
           {veredito.motivo}
         </p>
+        {/* Régua de mercado (spec 015) — subordinada ao veredito acima, nunca no lugar dele. Sai
+            como diagnóstico (`3,6× o piso`), nunca como alvo: benchmark citado como meta de KR é
+            o que a R6 proíbe, e a linha inteira perde o direito de existir se virar prescrição. */}
+        {mercado.destaque ? (
+          <p className="foot">
+            <strong>Mercado</strong> · {mercado.destaque.de} → {mercado.destaque.para}:{" "}
+            <strong>{(mercado.destaque.apurado * 100).toFixed(2).replace(".", ",")}%</strong> ={" "}
+            <strong>{formatarRazao(mercado.destaque.razao)} o piso</strong> ({mercado.destaque.rotulo}).{" "}
+            Faixa da média {(mercado.destaque.faixa.media[0] * 100).toFixed(1).replace(".", ",")}–
+            {(mercado.destaque.faixa.media[1] * 100).toFixed(1).replace(".", ",")}% · elite a partir de{" "}
+            {(mercado.destaque.faixa.elite[0] * 100).toFixed(1).replace(".", ",")}%.
+            {mercado.destaque.buraco &&
+              ` Buraco: ${mercado.destaque.buraco.esperado} esperados no piso, ${mercado.destaque.buraco.apuradoEmUnidades} apurados — faltam ${mercado.destaque.buraco.faltam}.`}{" "}
+            <em>Fonte: {mercado.destaque.fonte}.</em>
+          </p>
+        ) : (
+          ficha.perfil && (
+            <p className="foot">
+              <strong>Mercado</strong> · nenhum degrau com régua e os dois lados apurados — a §7.2
+              (apurar antes de melhorar) manda antes da comparação. Benchmark não preenche buraco de
+              medição.
+            </p>
+          )
+        )}
         <Projecao meta={p.meta} p={projecao} />
         {n5?.familia && (
           <p className="ficha-veredito">

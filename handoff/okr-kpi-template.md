@@ -270,6 +270,10 @@ Tabela de mercado serve para saber QUAIS etapas existem, não que número você 
 Empilhar o percentil de elite em todas as etapas produz projeções dezenas de vezes acima da
 média — o mesmo tráfego vira 5 ou 300 clientes. **Nunca cite benchmark como meta de KR.**
 
+O que a R6 **permite** — e é o único uso permitido — é comparar UM degrau apurado contra a faixa
+dele, sem nunca compor duas: ver `handoff/okr-regua-de-mercado.md`, implementado em
+`lib/benchmark.mjs`. O defeito é a multiplicação, não a comparação.
+
 **R7 · Uma janela só, declarada, para a árvore inteira.**
 Numerador de agosto sobre denominador de 90 dias é uma taxa inventada. Se as fontes têm janelas
 diferentes, corte todas na menor e diga qual é.
