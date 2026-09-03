@@ -84,3 +84,42 @@ De 4 frases idênticas para 2 números apurados e 2 `não apurado` que nomeiam t
 - **`projecao` é calculada e descartada na ficha.** `app/okr/[slug]/page.tsx` chama `projetar()`
   e passa `projecao` a `montarNiveis()`, que **não desestrutura o campo**. Por isso a meta
   (`R$ 50000 em 4000 por unidade`) sai em `/okr` e não sai em `/okr/atma`. Bug da 010/011.
+
+---
+
+## Segunda leva (03/09/2026, mesma sessão) — o que o Jean pediu depois de ver a tela
+
+**FR-008 A ficha mostra tudo que a lista mostra.** `Projecao` era função local de
+`app/okr/page.tsx`; virou `app/okr/projecao.tsx`, importada pelas DUAS telas. A ficha ganha
+também o pill do veredito (`§7.1 — fator ZERADO no fim da cadeia`), a linha de perfil
+(`Perfil D — … · N1: … · Receita = …`) e o motivo completo do veredito. Quem abria a ficha de um
+projeto via MENOS do que quem passava os olhos na lista de 42 — e a pior ausência era a meta,
+porque `projetar()` rodava na ficha e o resultado morria sem renderizar.
+
+**FR-009 `cliques-cta` é o CTA de CONTATO, não link externo qualquer.** `DESTINO_CTA` aceita
+WhatsApp (`wa.me`, `*.whatsapp.com`), `tel:` e `mailto:`. A `atma` saía `30` com 18 em Instagram —
+clique em perfil social não é intenção de contato e um `30` solto é lido como se fosse. Agora
+sai **9**. Zero clique em CTA vira `não apurado` nomeando a armadilha: o `click` do GA4 só enxerga
+`<a href>` externo, então botão que abre WhatsApp por `window.open` sai igual a botão que ninguém
+apertou.
+
+**FR-010 `saida-checkout` não existe em perfil sem checkout.** Regra declarativa
+(`medidorCabeNoPerfil`): o medidor só aparece se a cadeia do perfil tem o marco `checkout` — hoje
+só o B (e-commerce). Numa clínica era linha permanente de "não apurado" sobre um checkout que não
+existe. **Não** é inferido do dado: zero evento na janela não prova ausência de checkout, e a R1
+não deixa confundir os dois.
+
+**FR-011 "Abandono por campo" virou "Formulário começado e não enviado".** O nome prometia quebra
+POR CAMPO, que o GA4 não dá, e sozinho não dizia o que era medido. O rótulo agora é a definição.
+
+### No repo da Atma (`JeanZorzetti/Atma`), mesma leva
+
+- `components/footer.tsx` — Instagram, Facebook e LinkedIn removidos. Levavam 21 dos 30 cliques
+  externos da janela: tráfego saindo sem virar contato.
+- `components/structured-data.tsx` — os três saem do `sameAs` junto. Ele não é decoração: é a
+  identidade que Google e mecanismos generativos seguem para descrever a marca, e o LinkedIn
+  apontava para uma página que não existe mais — um 404 assinado por nós.
+- `components/ui/floating-action-button.tsx` — `FloatingAction` ganhou `href`, e o WhatsApp/telefone
+  viraram `<a href>` de verdade em vez de `window.open`. **É o conserto que faz o FR-009 medir a
+  verdade:** no mobile, o botão de contato mais usado do site não emitia evento nenhum. Rótulo
+  agora é "Falar no WhatsApp", e os controles só-ícone ganharam `aria-label`.

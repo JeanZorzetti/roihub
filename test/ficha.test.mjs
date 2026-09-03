@@ -791,13 +791,25 @@ test("scroll interno NÃO entra no medidor de persuasão", () => {
   assert.match(m["scroll-ate-oferta"].fonte, /90% da PÁGINA/);
 });
 
-test("cliques-cta sai com a quebra por destino colada — clique em Instagram não é CTA de venda", () => {
+test("cliques-cta conta o CTA de contato e IGNORA perfil social", () => {
   const m = medidoresDeEventos(
-    leitura([ev("click", "/", 18, "https://www.instagram.com/atma.aligner/"), ev("click", "/pacientes/precos", 9, "https://wa.me/5562983443919")]),
+    leitura([
+      ev("click", "/", 18, "https://www.instagram.com/atma.aligner/"),
+      ev("click", "/", 1, "https://www.linkedin.com/company/atma-aligner/"),
+      ev("click", "/pacientes/precos", 9, "https://wa.me/5562983443919"),
+      ev("click", "/contato", 4, "tel:+5562983443919"),
+    ]),
   );
-  assert.equal(m["cliques-cta"].valor, 27);
-  assert.match(m["cliques-cta"].fonte, /instagram\.com 18/);
+  // 9 + 4, nunca 32: clique em perfil social não é intenção de contato.
+  assert.equal(m["cliques-cta"].valor, 13);
   assert.match(m["cliques-cta"].fonte, /wa\.me 9/);
+  assert.doesNotMatch(m["cliques-cta"].fonte, /instagram/);
+});
+
+test("zero clique em CTA é `não apurado` — `window.open` não emite evento nenhum", () => {
+  const m = medidoresDeEventos(leitura([ev("click", "/", 18, "https://www.instagram.com/atma.aligner/")]));
+  assert.equal(ehApurado(m["cliques-cta"]), false);
+  assert.match(m["cliques-cta"].naoApurado, /window\.open/);
 });
 
 test("form_submit ZERO é `não apurado`, NUNCA 100% de abandono", () => {
@@ -828,11 +840,19 @@ test("sem propriedade GA4 no card, o mapa é vazio — os medidores voltam a `se
 });
 
 test("montarN5 usa a fonte da célula — o aviso do medidor não pode virar 'coleta desta requisição'", () => {
-  const medidores = montarN5("D3", medidoresDeEventos(leitura([ev("scroll", "/", 66)])));
+  const medidores = montarN5("D3", medidoresDeEventos(leitura([ev("scroll", "/", 66)])), "D");
   const scroll = medidores.find((m) => m.id === "scroll-ate-oferta");
   assert.equal(scroll.celula.estado, "apurado");
   assert.match(scroll.celula.fonte, /90% da PÁGINA/);
   // e o não apurado leva a fonte para o `consultar`, não um rótulo genérico
-  const checkout = medidores.find((m) => m.id === "saida-checkout");
-  assert.match(checkout.celula.consultar, /existe checkout/);
+  const abandono = medidores.find((m) => m.id === "abandono-por-campo");
+  assert.match(abandono.celula.consultar, /encanamento, não copy/);
+});
+
+test("saida-checkout some em perfil sem checkout e continua em e-commerce", () => {
+  const semCheckout = montarN5("D3", {}, "D").map((m) => m.id);
+  assert.ok(!semCheckout.includes("saida-checkout"), "clínica não tem checkout — a linha era ruído permanente");
+  assert.ok(semCheckout.includes("scroll-ate-oferta"));
+  const comCheckout = montarN5("D3", {}, "B").map((m) => m.id);
+  assert.ok(comCheckout.includes("saida-checkout"), "e-commerce tem o degrau `checkout` na cadeia");
 });

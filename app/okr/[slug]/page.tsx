@@ -8,6 +8,7 @@ import { dbOn, listDone, listDonos, listDonoDatas } from "@/lib/db";
 import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
 import { montarNiveis, medidoresDeEventos } from "@/lib/ficha.mjs";
 import { canaisDoN4, razaoDoKr } from "@/lib/ficha-visual.mjs";
+import { Projecao } from "../projecao";
 import { Tabs } from "../../tabs";
 
 // Igual à `/okr`: número de OKR vindo do build é número de outra janela, e a R7 pede UMA janela
@@ -45,7 +46,9 @@ const ROTULOS_AMIGAVEIS: Record<string, string> = {
   certificado: "Certificado SSL",
   "scroll-ate-oferta": "Scroll até a oferta",
   "cliques-cta": "Cliques no CTA",
-  "abandono-por-campo": "Abandono por campo",
+  // "Abandono por campo" prometia quebra POR CAMPO, que o GA4 não dá — e o nome sozinho não
+  // dizia o que era medido. O rótulo agora é a definição da métrica.
+  "abandono-por-campo": "Formulário começado e não enviado",
   "saida-checkout": "Saída no checkout",
   "lead-gravado": "Lead gravado",
   "webhook-2xx": "Webhook respondendo",
@@ -271,7 +274,25 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
       <section className="card ag-section">
         <p className="eyebrow">OKR · ficha de {p.nome}</p>
-        <h1 className="ficha-nome">{p.nome}</h1>
+        <div className="hero-top okr-top">
+          <h1 className="ficha-nome">{p.nome}</h1>
+          <span className={veredito.posicao === 1 ? "pill pill-crit" : veredito.posicao === 2 ? "pill pill-warn" : "pill"}>
+            {veredito.posicao ? `§7.${veredito.posicao} — ${veredito.rotulo}` : veredito.rotulo}
+          </span>
+        </div>
+        {/* As três linhas abaixo e o bloco de projeção eram EXCLUSIVOS da lista: quem abria a ficha
+            de um projeto via menos sobre ele do que quem passava os olhos na lista de 42. A pior
+            ausência era a meta — `projetar()` rodava aqui e o resultado morria sem renderizar. */}
+        {ficha.perfil && (
+          <p className="foot">
+            Perfil {ficha.perfil} — {ficha.perfilNome} · N1: {ficha.n1} · <code>{ficha.n2}</code>
+          </p>
+        )}
+        <p>
+          {veredito.celula && <strong>{veredito.celula}: </strong>}
+          {veredito.motivo}
+        </p>
+        <Projecao meta={p.meta} p={projecao} />
         {n5?.familia && (
           <p className="ficha-veredito">
             A cadeia trava em{" "}
