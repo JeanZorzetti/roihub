@@ -20,6 +20,8 @@ import {
   GRUPOS_GA4,
   escolherFamilia,
   montarN5,
+  medidoresDeEventos,
+  PAGINA_INTERNA,
   validarKrs,
   montarNiveis,
   segmentosDoFunil,
@@ -770,4 +772,67 @@ test("escolherFamilia — zero na ENTRADA continua D1", () => {
   const ficha = montarFicha({ slug: "x", perfil: "D", coletado: { cliques: apurado(0), leads: apurado(0), vendas: apurado(0) } });
   const { familia } = escolherFamilia(posicaoDeAtaque(ficha), ficha);
   assert.equal(familia, "D1");
+});
+
+// ── 014 — medidores D3 lidos do GA4, sem instrumentar o site ────────────────
+
+const ev = (evento, pagina, contagem, link = "(not set)") => ({ evento, pagina, link, contagem });
+const leitura = (linhas) => ({ linhas, janela: { inicio: "2026-08-04", fim: "2026-08-31" }, propriedade: "properties/1" });
+
+test("PAGINA_INTERNA corta painel e login, e só eles", () => {
+  for (const p of ["/admin", "/admin/pacientes/lista", "/login", "/login?next=/"]) assert.ok(PAGINA_INTERNA.test(p), p);
+  for (const p of ["/", "/pacientes/precos", "/administradores", "/blog/login-do-paciente"]) assert.equal(PAGINA_INTERNA.test(p), false, p);
+});
+
+test("scroll interno NÃO entra no medidor de persuasão", () => {
+  // O caso real da atma em 03/09/2026: 52% do `scroll` era a equipe usando /admin.
+  const m = medidoresDeEventos(leitura([ev("scroll", "/admin/pacientes/lista", 327), ev("scroll", "/", 42), ev("scroll", "/quiz", 24)]));
+  assert.equal(m["scroll-ate-oferta"].valor, 66);
+  assert.match(m["scroll-ate-oferta"].fonte, /90% da PÁGINA/);
+});
+
+test("cliques-cta sai com a quebra por destino colada — clique em Instagram não é CTA de venda", () => {
+  const m = medidoresDeEventos(
+    leitura([ev("click", "/", 18, "https://www.instagram.com/atma.aligner/"), ev("click", "/pacientes/precos", 9, "https://wa.me/5562983443919")]),
+  );
+  assert.equal(m["cliques-cta"].valor, 27);
+  assert.match(m["cliques-cta"].fonte, /instagram\.com 18/);
+  assert.match(m["cliques-cta"].fonte, /wa\.me 9/);
+});
+
+test("form_submit ZERO é `não apurado`, NUNCA 100% de abandono", () => {
+  const m = medidoresDeEventos(leitura([ev("form_start", "/pacientes/encontre-doutor", 29), ev("form_start", "/login", 1)]));
+  assert.equal(ehApurado(m["abandono-por-campo"]), false);
+  assert.match(m["abandono-por-campo"].naoApurado, /`form_start` 29 e `form_submit` ZERO/);
+  // o conserto é encanamento no site, não copy — a fonte tem que dizer isso
+  assert.match(m["abandono-por-campo"].fonte, /encanamento, não copy/);
+});
+
+test("com o par completo, abandono é a diferença", () => {
+  const m = medidoresDeEventos(leitura([ev("form_start", "/x", 48), ev("form_submit", "/x", 30)]));
+  assert.equal(m["abandono-por-campo"].valor, 18);
+});
+
+test("GA4 fora não vira zero em medidor nenhum", () => {
+  const m = medidoresDeEventos({ erro: "PERMISSION_DENIED" });
+  for (const id of ["scroll-ate-oferta", "cliques-cta", "abandono-por-campo", "saida-checkout"]) {
+    assert.equal(ehApurado(m[id]), false, id);
+    assert.match(m[id].naoApurado, /PERMISSION_DENIED/);
+  }
+});
+
+test("sem propriedade GA4 no card, o mapa é vazio — os medidores voltam a `sem coletor`", () => {
+  assert.deepEqual(medidoresDeEventos(null), {});
+  const medidores = montarN5("D3", medidoresDeEventos(null));
+  assert.match(medidores.find((m) => m.id === "cliques-cta").celula.motivo, /sem coletor nesta requisição/);
+});
+
+test("montarN5 usa a fonte da célula — o aviso do medidor não pode virar 'coleta desta requisição'", () => {
+  const medidores = montarN5("D3", medidoresDeEventos(leitura([ev("scroll", "/", 66)])));
+  const scroll = medidores.find((m) => m.id === "scroll-ate-oferta");
+  assert.equal(scroll.celula.estado, "apurado");
+  assert.match(scroll.celula.fonte, /90% da PÁGINA/);
+  // e o não apurado leva a fonte para o `consultar`, não um rótulo genérico
+  const checkout = medidores.find((m) => m.id === "saida-checkout");
+  assert.match(checkout.celula.consultar, /existe checkout/);
 });

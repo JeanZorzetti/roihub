@@ -4,7 +4,7 @@ import { totals28 } from "@/lib/series.mjs";
 import { apurado, naoApurado, ehApurado } from "@/lib/funil.mjs";
 import { pipelineDe, celulaDeLeads, celulasDeOrcamento } from "@/lib/okr.mjs";
 import { dbOn, listLeads } from "@/lib/db";
-import { ga4Canais, type LeituraGa4 } from "@/lib/ga4";
+import { ga4Canais, ga4Eventos, type LeituraGa4, type EventosGa4 } from "@/lib/ga4";
 
 // A coleta das três células da 009 (cliques, leads, vendas), extraída de app/okr/page.tsx sem
 // mudar comportamento (011, decisão D5): "se aparecer uma segunda [entrada], isto vira `lib/`" —
@@ -124,12 +124,20 @@ export async function coletarDoProjeto(
   orcamentos: Celula;
   orcamentosAceitos: Celula;
   ga4: LeituraGa4;
+  ga4ev: EventosGa4;
   orcamentosSemLead: { valor: number } | null;
 }> {
   // cliques — o GSC. Host de fornecedor (`*.vercel.app`) fica FORA de toda propriedade: isso NÃO
   // é "zero tráfego", é "não há onde olhar", e o conserto é domínio próprio, não SEO.
   // GA4 (013) entra no MESMO Promise.all — duas fontes independentes, sem somar latência.
-  const [s, ga4] = await Promise.all([gscSeries(p.url), ga4Canais(p.ga4?.propertyId, { inicio, fim })]);
+  // GA4 entra DUAS vezes no mesmo Promise.all (canais para N4, eventos para os medidores D3 do
+  // N5) — duas queries independentes da mesma propriedade, sem somar latência e sem que a falha
+  // de uma alcance a outra.
+  const [s, ga4, ga4ev] = await Promise.all([
+    gscSeries(p.url),
+    ga4Canais(p.ga4?.propertyId, { inicio, fim }),
+    ga4Eventos(p.ga4?.propertyId, { inicio, fim }),
+  ]);
   const totals = s ? totals28(s.days, fim) : null;
   const cliques: Celula = totals ? apurado(totals.current.clicks) : naoApurado(`sem propriedade no GSC para ${p.url}`);
   // impressões — a MESMA série que dá cliques, sem chamada nova (FR-036, US3 disponiveisN5).
@@ -164,7 +172,7 @@ export async function coletarDoProjeto(
     ? apurado(p.vendas.filter((v) => v?.data && v.data >= inicio && v.data <= fim).length)
     : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
 
-  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, orcamentosSemLead };
+  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead };
 }
 
 export { ehApurado };

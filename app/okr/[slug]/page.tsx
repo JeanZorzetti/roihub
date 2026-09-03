@@ -6,7 +6,7 @@ import { acoesDoRanking } from "@/lib/agenda.mjs";
 import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listDone, listDonos, listDonoDatas } from "@/lib/db";
 import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
-import { montarNiveis } from "@/lib/ficha.mjs";
+import { montarNiveis, medidoresDeEventos } from "@/lib/ficha.mjs";
 import { canaisDoN4, razaoDoKr } from "@/lib/ficha-visual.mjs";
 import { Tabs } from "../../tabs";
 
@@ -188,7 +188,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, orcamentosSemLead } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
   const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas, orcamentos, orcamentosAceitos } });
   const veredito = posicaoDeAtaque(ficha);
   const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
@@ -221,11 +221,13 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
   }
 
   // ── N5 — só o que ESTA requisição já carrega (FR-028): impressões da mesma série do GSC que
-  // já dá cliques, lead-gravado da célula de leads, gateway-ligado do campo `vendas` do card.
-  const disponiveisN5: Record<string, { valor: number } | { naoApurado: string }> = {
+  // já dá cliques, lead-gravado da célula de leads, gateway-ligado do campo `vendas` do card, e
+  // os medidores D3 do GA4 (014) — enhanced measurement que já cai, sem instrumentar o site.
+  const disponiveisN5: Record<string, { valor: number; fonte?: string } | { naoApurado: string }> = {
     impressoes,
     "lead-gravado": leads,
     "gateway-ligado": vendas,
+    ...medidoresDeEventos(ga4ev),
   };
 
   const niveis = montarNiveis({

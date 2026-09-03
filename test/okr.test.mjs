@@ -25,7 +25,7 @@ test("degrau sem coletor é `não apurado` com a fonte a CONSULTAR — nunca 0",
   const contatado = f.marcos.find((m) => m.chave === "contatado");
   assert.equal(ehApurado(contatado.celula), false);
   // R4: a mensagem manda consultar a fonte que já existe, não escrever encanamento novo.
-  assert.match(contatado.celula.naoApurado, /sem coletor — consultar histórico de status/);
+  assert.match(contatado.celula.naoApurado, /sem coletor — consultar `status_historico`/);
 });
 
 test("projeto sem perfil NÃO cai em perfil padrão", () => {
