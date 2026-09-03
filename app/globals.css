@@ -333,6 +333,9 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
    (32px) quebra em até 5 linhas a 390px, antes de qualquer conteúdo. Classe própria porque
    `.okr-top .hero-name` está deliberadamente escopada à listagem `/okr`. */
 .ficha-nome { font-size: 22px; line-height: 1.25; margin: 0 0 8px; }
+/* Achado 8 do design-review (03/09): o nome do card carrega descrição inteira do produto — o
+   h1 mostra só o primeiro trecho (até " — "), o resto desce para legenda de `.foot`. */
+.ficha-subtitulo { margin: -4px 0 0; }
 /* O veredito de escolherFamilia() (lib/ficha.mjs) — "onde atacar" — antes vivia como a última
    linha `.foot` de 13px do card N5, com o mesmo peso das 24 linhas "não apurado" acima dele. */
 .ficha-veredito { font-size: 15px; margin: 0 0 10px; }
@@ -341,9 +344,58 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ficha-krs li { border-top: 1px solid var(--grid); padding-top: 8px; }
 .ficha-krs li:first-child { border-top: none; padding-top: 0; }
 
-/* Funil de N3 (spec 012) — direção corte-seco: raio 0, sombra 0, nenhuma opacity. */
-.ficha-funil { width: 100%; height: auto; display: block; margin: 0 0 10px; }
-.ficha-funil polygon { fill: var(--seq550); }
+/* Índice N0-N6 (achado 9) — reusa `.tabs`/`.tab` da nav lateral, não um componente novo. */
+.ficha-indice { margin: 0 0 20px; }
+
+/* Três blocos nomeados do topo da ficha (achado 4): Onde trava / Quanto falta / O que fazer.
+   Sem cartão próprio — a moldura já é o `.card` que os contém; o espaçamento e o título de
+   12px é o que separa uma pergunta da outra. */
+.ficha-bloco { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--grid); }
+.ficha-bloco:first-of-type { border-top: none; padding-top: 0; }
+.ficha-bloco-h {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin: 0 0 8px;
+}
+.ficha-bloco .foot { margin-top: 0; }
+
+/* Glossário (achado 5) — fechado por padrão, mesmo padrão de `<details>` que o resto do hub usa
+   para contexto opcional (`.ag-ctx`, `.q-anexos`). `dl`/`dt`/`dd` em vez de lista solta porque
+   termo e definição são um par, não dois níveis de hierarquia. */
+.ficha-glossario { margin-top: 14px; }
+.ficha-glossario > summary { cursor: pointer; }
+.ficha-glossario dl { margin: 8px 0 0; }
+.ficha-glossario-item { margin: 0 0 8px; }
+.ficha-glossario dt { font-weight: 600; color: var(--ink2); display: inline; }
+.ficha-glossario dd { display: inline; margin: 0; }
+.ficha-glossario dt::after { content: " — "; }
+
+/* Sugestão sem dono do N6 (achado 6) — mesma `.pill` de marca de KR, cor neutra: não é ação da
+   agenda (teria dono), é o que a própria árvore já sabia e não subia até aqui. */
+.ficha-sugestao { margin-top: 10px; font-size: 14px; }
+.ficha-sugestao .pill { margin-left: 0; margin-right: 6px; }
+
+/* ── Diagrama de cadeia do N3 (achado 3) — substitui o funil decorativo por nó+aresta lidos
+   direto de `ficha.marcos`/`ficha.taxas`. Direção corte-seco: raio 0 nos textos, traço sólido
+   ou tracejado no lugar de gradiente, `--crit` só na aresta/nó que `posicaoDeAtaque()` escolheu
+   — a MESMA célula do veredito em texto, nunca uma segunda leitura. */
+.ficha-cadeia { margin: 0 0 4px; }
+.ficha-cadeia-svg { width: 100%; height: auto; display: block; }
+.cadeia-no { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+.cadeia-no.nao-apurado { stroke: var(--grid); stroke-dasharray: 3 2; }
+.cadeia-no.trava { stroke: var(--crit-ink); stroke-width: 3; }
+.cadeia-no-valor { font-size: 12px; font-weight: 700; fill: var(--ink); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.cadeia-aresta { stroke: var(--ink2); stroke-width: 2; }
+.cadeia-aresta.nao-apurada { stroke: var(--grid); stroke-dasharray: 4 3; }
+.cadeia-aresta.trava { stroke: var(--crit-ink); stroke-width: 3; }
+.cadeia-aresta-rotulo { font-size: 11px; fill: var(--muted); text-anchor: middle; }
+.cadeia-aresta-rotulo.trava { fill: var(--crit-ink); font-weight: 700; }
+.ficha-cadeia-legenda { display: grid; gap: 4px; font-size: 11px; color: var(--muted); text-align: center; margin: 2px 0 8px; }
+.ficha-cadeia-legenda div.trava { color: var(--crit-ink); font-weight: 700; }
+.ficha-cadeia-legenda-texto { margin-top: 0; }
+/* Abaixo de 640px, 6 colunas de nome de marco (algumas com duas palavras) só se sobrepõem — o
+   `<figcaption>` logo abaixo já é a MESMA informação em prosa (a leitura que a acessibilidade
+   exige de qualquer forma, achado 10), então a grade unicamente visual sai, nunca o texto. */
+@media (max-width: 640px) { .ficha-cadeia-legenda { display: none; } }
 
 /* ── ficha OKR: barras de canal (N4) ──────────────────────────────────────────
    Um tom só — o comprimento já codifica a magnitude, sombrear por valor gastaria
@@ -361,10 +413,29 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ficha-figura > b { font-size: 48px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .ficha-figura > span { font-size: 15px; color: var(--ink2); }
 @media (max-width: 640px) { .ficha-figura > b { font-size: 38px; } }
-.ficha-funil line { stroke: var(--grid); }
 
 /* Nota do nível N4 (013) — declara que o total composto não é o `visitante` da cadeia. */
 .ficha-nota-n4 { margin-top: 0; margin-bottom: 10px; }
+
+/* Uma linha de célula, uma vez (achado 2 do design-review de 03/09: a classe era referenciada por
+   `.ficha-canais .ficha-linha` mas nunca definida — cada linha era um `<p>` sem estilo nenhum,
+   sem separação visual entre estados). A borda à esquerda é o estado, em TRAÇO, não em cor
+   sozinha: ausente para medido (o padrão, sem ruído), tracejada para declarado, pontilhada para
+   buraco. O estado `inferido` mantém a borda sólida colorida de `.ficha-inferido` abaixo. */
+.ficha-linha { padding: 4px 0 4px 10px; margin: 4px 0; border-left: 3px solid transparent; }
+.ficha-linha.cel-declarado { border-left-style: dashed; border-left-color: var(--ink2); }
+.ficha-linha.cel-nao-apurado { border-left-style: dotted; border-left-color: var(--grid); }
+details.ficha-linha { cursor: default; }
+details.ficha-linha > summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+
+/* Célula `declarado` inline (fora de `.ficha-linha`, ex.: dentro de KR) — mesmo traço tracejado,
+   só que como sublinhado, já que aqui não há linha inteira para carregar a borda. */
+.cel-tag-declarado strong { border-bottom: 2px dashed var(--ink2); padding-bottom: 1px; }
+
+/* Célula não apurada longa vira disclosure (achado 1) em vez de parágrafo corrido. */
+.ficha-explicacao { margin: 2px 0; }
+.ficha-explicacao > summary { cursor: pointer; }
+.ficha-explicacao > p { margin: 4px 0 0; }
 
 /* Célula `inferido` (013) — marca distinta de `apurado`: corte-seco (raio 0, sombra 0), borda
    sólida em vez de cor de fundo, para não competir com `.pill-warn` de KR. */
