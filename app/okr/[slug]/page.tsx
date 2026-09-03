@@ -284,20 +284,44 @@ function CadeiaDiagrama({ marcos, taxas, veredito, janela }: { marcos: Marco[]; 
  *  lista de texto não dá.
  *
  *  Um tom só: o comprimento já codifica a magnitude, sombrear por valor gastaria hue à toa.
- *  Canal sem fonte não ganha trilho — vazio ao lado de "não apurado" leria como zero medido. */
+ *  Canal sem fonte não ganha trilho — vazio ao lado de "não apurado" leria como zero medido.
+ *
+ *  Achado 7 do design-review de 03/09: canal sem fonte é SEMPRE `fracao: null` (nunca entra no
+ *  trilho — comentário acima), então os sem-fonte passam pelo MESMO `agruparPorMotivo` que N3/N5
+ *  já usam, em vez de repetir "não apurado — fonte GA4 indisponível (ETIMEDOUT)" uma vez por
+ *  canal. Fica um grupo só dentro de `.ficha-canais`, não misturado com "fora do catálogo"/"total
+ *  composto" do resto do nível — outbound continua lendo como canal, não como estatística derivada. */
 function CanaisN4({ canais }: { canais: { celula: CelulaFicha; fracao: number | null }[] }) {
+  const comTrilho = canais.filter((c) => c.fracao !== null);
+  const { avulsas, grupos } = agruparPorMotivo(canais.filter((c) => c.fracao === null).map((c) => c.celula));
   return (
     <div className="ficha-canais">
-      {canais.map(({ celula, fracao }) => (
+      {comTrilho.map(({ celula, fracao }) => (
         <div key={celula.rotulo}>
           <Linha c={celula} />
-          {fracao !== null && (
-            <div className="ficha-barra-trilho" aria-hidden="true">
-              <div className="ficha-barra-preenche" style={{ width: `${fracao * 100}%` }} />
-            </div>
-          )}
+          <div className="ficha-barra-trilho" aria-hidden="true">
+            <div className="ficha-barra-preenche" style={{ width: `${(fracao ?? 0) * 100}%` }} />
+          </div>
         </div>
       ))}
+      {avulsas.map((c, i) => (
+        <Linha key={`avulsa-${i}`} c={c} />
+      ))}
+      {grupos.map((grupo, i) =>
+        grupo.itens.length > 1 ? (
+          <details key={`grupo-${i}`} className="ficha-linha">
+            <summary>
+              {grupo.itens.length} {EH_FALHA_TRANSITORIA.test(grupo.motivo) ? "falharam agora" : "não apurados"} — {grupo.motivo}:{" "}
+              {grupo.itens.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
+            </summary>
+            {grupo.itens.map((c, j) => (
+              <Linha key={j} c={c} />
+            ))}
+          </details>
+        ) : (
+          <Linha key={`grupo-${i}`} c={grupo.itens[0]} />
+        ),
+      )}
     </div>
   );
 }
@@ -707,7 +731,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                 </ul>
               )}
               {n.itens.some((item) => item.descontinuado) && (
-                <details>
+                <details className="ficha-glossario">
                   <summary className="foot">decisões revogadas</summary>
                   <ul className="ficha-krs">
                     {n.itens

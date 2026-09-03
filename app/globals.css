@@ -29,6 +29,12 @@
 
 * { box-sizing: border-box; }
 
+/* achado 10 do design-review de 03/09: só `.okr-menu`, `.nav-col .tab` e `.tabela-rolavel` tinham
+   `:focus-visible` estilizado — todo o resto (os 14 disclosures da ficha, "Ver em N6", as âncoras
+   N0–N6, o skip link) caía no anel padrão do navegador, medido na passagem de Tab. Regra global,
+   ANTES das específicas acima — elas continuam ganhando por especificidade onde já existem. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 body {
   margin: 0;
   background: var(--page);
@@ -90,6 +96,15 @@ a:hover { text-decoration: underline; }
   border-radius: 999px;
   color: var(--ink2);
   font-size: 11px;
+  /* achado 9 do design-review de 03/09: medido em 17×19px — abaixo do alvo mínimo de 24px
+     (WCAG 2.2 · 2.5.8). Não é texto de sentença (exceção de "inline" do critério não vale aqui),
+     é o toggle sozinho do submenu OKR. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  box-sizing: border-box;
 }
 .okr-menu summary::-webkit-details-marker { display: none; }
 .okr-menu summary:hover { background: #f0f0ec; }
@@ -366,8 +381,10 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 /* Glossário (achado 5) — fechado por padrão, mesmo padrão de `<details>` que o resto do hub usa
    para contexto opcional (`.ag-ctx`, `.q-anexos`). `dl`/`dt`/`dd` em vez de lista solta porque
    termo e definição são um par, não dois níveis de hierarquia. */
+/* Também usada pelo `<details>` de "decisões revogadas" (N6) — mesma forma: bloco de conteúdo
+   extra recolhido dentro do card, sem a lista de definições do glossário abaixo. */
 .ficha-glossario { margin-top: 14px; }
-.ficha-glossario > summary { cursor: pointer; }
+.ficha-glossario > summary { cursor: pointer; padding: 2px 0; box-sizing: border-box; min-height: 24px; }
 .ficha-glossario dl { margin: 8px 0 0; }
 .ficha-glossario-item { margin: 0 0 8px; }
 .ficha-glossario dt { font-weight: 600; color: var(--ink2); display: inline; }
@@ -435,15 +452,23 @@ td.acao-cell { color: var(--ink2); max-width: 260px; }
 .ficha-linha.cel-declarado { border-left-style: dashed; border-left-color: var(--ink2); }
 .ficha-linha.cel-nao-apurado { border-left-style: dotted; border-left-color: var(--grid); }
 details.ficha-linha { cursor: default; }
-details.ficha-linha > summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+/* achado 9 do design-review de 03/09: 13px de fonte × 1.5 de line-height do body dá ~19,5px de
+   caixa — abaixo do alvo mínimo de 24px (WCAG 2.2 · 2.5.8). O padding some no clique, não sobra
+   espaço em branco visível: a caixa cresce, o texto continua colado na borda esquerda da linha. */
+details.ficha-linha > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 3px 0; box-sizing: border-box; min-height: 24px; }
 
 /* Célula `declarado` inline (fora de `.ficha-linha`, ex.: dentro de KR) — mesmo traço tracejado,
    só que como sublinhado, já que aqui não há linha inteira para carregar a borda. */
 .cel-tag-declarado strong { border-bottom: 2px dashed var(--ink2); padding-bottom: 1px; }
 
-/* Célula não apurada longa vira disclosure (achado 1) em vez de parágrafo corrido. */
-.ficha-explicacao { margin: 2px 0; }
-.ficha-explicacao > summary { cursor: pointer; }
+/* Célula não apurada longa vira disclosure (achado 1) em vez de parágrafo corrido. `<details>` é
+   bloco por padrão do UA — sem isto ele pulava pra própria linha, embaixo do rótulo, em vez de
+   continuar ao lado dele como toda outra célula de `.ficha-linha` (achado 8 do design-review de
+   03/09: 4 linhas do N2 assim, ~40px mortos cada). `inline-block` deixa fechado ao lado do rótulo
+   e ainda dá lugar pro `<p>` (bloco) da explicação quando abre, sem tocar `.ficha-linha` inteira. */
+.ficha-explicacao { display: inline-block; margin: 2px 0; }
+/* mesmo alvo mínimo do achado 9 acima — herda `.foot` (13px/1.7) ≈ 22px de caixa, falta pouco. */
+.ficha-explicacao > summary { cursor: pointer; padding: 2px 0; box-sizing: border-box; min-height: 24px; }
 .ficha-explicacao > p { margin: 4px 0 0; }
 
 /* Esqueleto de `app/okr/[slug]/loading.tsx` (achado 6) — mesmas 8 seções da ficha, sem texto. */
