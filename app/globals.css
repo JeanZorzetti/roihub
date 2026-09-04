@@ -769,3 +769,17 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(conteudo), ::view-transition-new(conteudo) { animation: none; }
 }
+
+/* Destaque do que a spec 016 acrescentou na ficha. É TEMPORÁRIO: existe para o Jean achar o bloco
+   novo sem caçar diff. Some tirando `ficha-bloco--novo` e o `<span class="pill">` no page.tsx.
+   ponytail: sem sistema de "novidades" — uma classe e um pill, um bloco só mudou. */
+.ficha-bloco--novo {
+  border-top-color: var(--accent);
+  border-left: 3px solid var(--accent);
+  background: #eaf1fd;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+  margin-left: -16px;
+}
+.ficha-bloco--novo .ficha-bloco-h { color: var(--accent); }
+.ficha-bloco--novo .pill { border-color: var(--accent); color: var(--accent); }

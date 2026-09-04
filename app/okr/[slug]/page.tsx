@@ -593,8 +593,10 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
         </div>
 
         {(arvore.camadas.length > 1 || arvore.parou) && (
-          <div className="ficha-bloco">
-            <h2 className="ficha-bloco-h">Árvore de metas</h2>
+          <div className="ficha-bloco ficha-bloco--novo">
+            <h2 className="ficha-bloco-h">
+              Árvore de metas <span className="pill">novo · spec 016</span>
+            </h2>
             <Arvore arvore={arvore} entrega={entrega} ctrAlvo={ctrAlvo} impressoesHoje={impressoes} />
           </div>
         )}
