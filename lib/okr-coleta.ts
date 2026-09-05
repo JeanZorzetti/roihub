@@ -2,7 +2,7 @@ import { Pool } from "pg";
 import { gscSeries, gscPaginas, isoDaysAgo, type GscPaginas } from "@/lib/gsc";
 import { totals28 } from "@/lib/series.mjs";
 import { apurado, naoApurado, ehApurado } from "@/lib/funil.mjs";
-import { pipelineDe, celulaDeLeads, celulasDeOrcamento } from "@/lib/okr.mjs";
+import { pipelineDe, celulaDeLeads, celulasDeOrcamento, celulaDeContato, motivosDoFunil } from "@/lib/okr.mjs";
 import { dbOn, listLeads } from "@/lib/db";
 import { ga4Canais, ga4Eventos, type LeituraGa4, type EventosGa4 } from "@/lib/ga4";
 
@@ -14,6 +14,12 @@ import { ga4Canais, ga4Eventos, type LeituraGa4, type EventosGa4 } from "@/lib/g
 // contém regra nenhuma (a regra — montarFicha, projetar, posicaoDeAtaque — fica na página).
 
 type Celula = { valor: number } | { naoApurado: string };
+
+// A palitagem — POR QUE o lead não avançou, quando a fonte própria grava um motivo por lead (hoje
+// só a Atma). `null` = fonte própria não devolve `motivo` (nada a mostrar); `motivos: []` = fonte
+// devolve o campo e nenhum lead real da janela tinha motivo — as duas coisas são estados
+// diferentes, mesma regra de sempre para não confundir "não apurado" com "zero real".
+type MotivosDoFunil = { motivos: { motivo: string; n: number }[]; semMotivo: number; total: number };
 
 // A mesma janela de scripts/funil.mjs e de totals28: 28 dias fechando em D-3, porque o Search
 // Console fecha o dia com ~3 dias de atraso. Uma janela só, declarada na tela (R7).
@@ -35,7 +41,11 @@ export const FONTES_PROPRIAS: Record<
   atma: {
     env: "ATMA_DATABASE_URL",
     tabela: "patient_leads",
-    sql: `SELECT nome, email, to_char(created_at, 'YYYY-MM-DD') AS criado FROM patient_leads ORDER BY created_at`,
+    // `status` e `motivo` entraram em 05/09/2026 (spec 017): as duas colunas sempre existiram, a
+    // query nunca tinha pedido os campos. `status` dá o degrau `contatado` sem coletor novo;
+    // `motivo` dá o "por quê" que o funil sozinho não responde. Ambas em lib/okr.mjs
+    // (`celulaDeContato()`, `motivosDoFunil()`).
+    sql: `SELECT nome, email, status, motivo, to_char(created_at, 'YYYY-MM-DD') AS criado FROM patient_leads ORDER BY created_at`,
     // Mesma conexão, segunda query: o degrau que a cadeia nova mede. A Atma deixou de prometer
     // "achamos um doutor perto de você" (saída do sócio comercial) e passou a competir em PREÇO —
     // o orçamento é o degrau real, e ele JÁ estava gravado enquanto a ficha dizia "sem coletor".
@@ -119,10 +129,11 @@ export async function coletarDoProjeto(
 ): Promise<{
   cliques: Celula;
   leads: Celula;
+  contatados: Celula;
   vendas: Celula;
   impressoes: Celula;
   orcamentos: Celula;
-  orcamentosAceitos: Celula;
+  motivos: MotivosDoFunil | null;
   ga4: LeituraGa4;
   ga4ev: EventosGa4;
   orcamentosSemLead: { valor: number } | null;
@@ -151,23 +162,38 @@ export async function coletarDoProjeto(
   // impressões — a MESMA série que dá cliques, sem chamada nova (FR-036, US3 disponiveisN5).
   const impressoes: Celula = totals ? apurado(totals.current.impressions) : naoApurado(motivoGsc);
 
-  // leads — fonte própria primeiro (R4), CRM do hub depois.
+  // leads — fonte própria primeiro (R4), CRM do hub depois. `contatados` só apura quando a fonte
+  // própria devolve `status` na mesma linha do lead (hoje só a Atma) — os outros projetos com
+  // perfil D ficam com este texto até declararem a própria fonte, nunca com "coletor não rodou"
+  // (o campo é sempre devolvido; ver `celulaDeContato()` em lib/okr.mjs pela regra).
   let leadsCel: Celula;
+  let contatadosCel: Celula = naoApurado("sem fonte própria declarada para este projeto — `contatado` depende da coluna `status`");
+  // `motivos` fica `null` (não `[]`) até a fonte própria confirmar que o campo existe — `[]` já
+  // significa "consultei e ninguém tinha motivo", e os dois não podem nascer iguais.
+  let motivosCel: MotivosDoFunil | null = null;
   const propria = await lerFontePropria(p.slug);
-  if (propria && "erro" in propria) leadsCel = naoApurado(`fonte própria indisponível (${propria.erro})`);
-  else if (propria)
-    leadsCel = celulaDeLeads(propria.rows, { inicio, fim, onde: `tabela \`${propria.tabela}\` do próprio projeto` }).celula;
-  else if (erroLeads) leadsCel = naoApurado(`banco indisponível (${erroLeads})`);
-  else leadsCel = celulaDeLeads(porPipeline.get(pipelineDe(p.slug)) ?? null, { inicio, fim, onde: `pipeline \`${pipelineDe(p.slug)}\`` }).celula;
+  if (propria && "erro" in propria) {
+    leadsCel = naoApurado(`fonte própria indisponível (${propria.erro})`);
+    contatadosCel = naoApurado(`fonte própria indisponível (${propria.erro})`);
+  } else if (propria) {
+    const { celula, reais } = celulaDeLeads(propria.rows, { inicio, fim, onde: `tabela \`${propria.tabela}\` do próprio projeto` });
+    leadsCel = celula;
+    contatadosCel = celulaDeContato(reais as { status?: string }[]);
+    motivosCel = motivosDoFunil(reais as { motivo?: string | null }[]);
+  } else if (erroLeads) {
+    leadsCel = naoApurado(`banco indisponível (${erroLeads})`);
+  } else {
+    leadsCel = celulaDeLeads(porPipeline.get(pipelineDe(p.slug)) ?? null, { inicio, fim, onde: `pipeline \`${pipelineDe(p.slug)}\`` }).celula;
+  }
 
-  // orçamentos — os dois degraus do meio da cadeia D. Projeto sem fonte de orçamento não recebe
-  // `0`: recebe o `não apurado` que `celulasDeOrcamento(null)` devolve, senão todo perfil D sem a
-  // tabela passaria a exibir uma cadeia zerada que ninguém mediu.
+  // orçamentos — o degrau do meio que sobrou da cadeia D depois que `aceito` saiu (017). Projeto
+  // sem fonte de orçamento não recebe `0`: recebe o `não apurado` que `celulasDeOrcamento(null)`
+  // devolve, senão todo perfil D sem a tabela passaria a exibir uma cadeia zerada que ninguém mediu.
   const linhasOrc =
     propria && !("erro" in propria) && propria.orcamentos && !("erro" in propria.orcamentos)
       ? (propria.orcamentos.rows as { criado: string; status: string; paciente_lead_id: string | null }[])
       : null;
-  const { enviados: orcamentos, aceitos: orcamentosAceitos } = celulasDeOrcamento(linhasOrc, { inicio, fim });
+  const { enviados: orcamentos } = celulasDeOrcamento(linhasOrc, { inicio, fim });
 
   // orçamentoSemLead (013, US3) — o vestígio do WhatsApp: a coluna paciente_lead_id JÁ vem no
   // SELECT acima e era descartada. `null` quando não há fonte de orçamento; nunca vira `0`.
@@ -180,7 +206,7 @@ export async function coletarDoProjeto(
     ? apurado(p.vendas.filter((v) => v?.data && v.data >= inicio && v.data <= fim).length)
     : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
 
-  return { cliques, leads: leadsCel, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead, paginas };
+  return { cliques, leads: leadsCel, contatados: contatadosCel, vendas, impressoes, orcamentos, motivos: motivosCel, ga4, ga4ev, orcamentosSemLead, paginas };
 }
 
 export { ehApurado };

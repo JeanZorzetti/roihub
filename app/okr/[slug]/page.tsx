@@ -387,8 +387,8 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, vendas, impressoes, orcamentos, orcamentosAceitos, ga4, ga4ev, orcamentosSemLead, paginas } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
-  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, vendas, orcamentos, orcamentosAceitos } });
+  const { cliques, leads, contatados, vendas, impressoes, orcamentos, motivos, ga4, ga4ev, orcamentosSemLead, paginas } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, contatados, vendas, orcamentos } });
   const veredito = posicaoDeAtaque(ficha);
   // O SEGUNDO veredito, e ele é PARALELO: a §7 manda por fato apurado, a régua só dimensiona.
   // Nada aqui realimenta `posicaoDeAtaque` — se um dia realimentar, a §7 passa a decidir por
@@ -598,6 +598,40 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
               Árvore de metas <span className="pill">novo · spec 016</span>
             </h2>
             <Arvore arvore={arvore} entrega={entrega} ctrAlvo={ctrAlvo} impressoesHoje={impressoes} />
+          </div>
+        )}
+
+        {/* A palitagem (017) — achado da sessão de 04-05/09/2026: o funil diz ONDE o lead parou,
+            a coluna `motivo` diz POR QUÊ, e nenhum arquivo do hub lia ela até aqui. Só aparece
+            quando a fonte própria confirma o campo E há pelo menos um motivo real na janela —
+            `motivos === null` (campo não existe) e `motivos.motivos.length === 0` (existe e
+            ninguém foi palitado ainda) são os dois estados em que a seção não tem o que dizer. */}
+        {motivos && motivos.motivos.length > 0 && (
+          <div className="ficha-bloco">
+            <h2 className="ficha-bloco-h">Por que não avançou</h2>
+            <p>
+              {motivos.motivos.map((m, i) => (
+                <span key={m.motivo}>
+                  {i > 0 && " · "}
+                  <strong>{m.n}</strong> {m.motivo.replace(/_/g, " ")}
+                </span>
+              ))}
+              {motivos.semMotivo > 0 && (
+                <span className="foot"> · {motivos.semMotivo} sem motivo registrado</span>
+              )}
+            </p>
+            <p className="foot">
+              {motivos.motivos[0].n / motivos.total >= 0.5 ? (
+                <>
+                  <strong>{motivos.motivos[0].motivo.replace(/_/g, " ")}</strong> sozinho é{" "}
+                  {Math.round((motivos.motivos[0].n / motivos.total) * 100)}% dos {motivos.total} leads
+                  reais da janela — não é taxonomia de família (D3/D4 é do degrau, não do motivo),
+                  mas um motivo dominando por larga margem lê como encanamento antes de oferta.
+                </>
+              ) : (
+                <>Palitagem do próprio projeto ({motivos.total} lead(s) reais na janela), sem classificação de família — a taxonomia é do cliente.</>
+              )}
+            </p>
           </div>
         )}
 

@@ -44,19 +44,19 @@ test("trava 1: a saída de uma leitura NÃO é aceita como entrada de outra", ()
 
   // Tentar realimentar a régua com o resultado dela mesma — o gesto exato que gerou a projeção
   // que a R6 recusa. Uma leitura não tem `celula`, então `ehApurado` recusa e a régua cala.
-  const realimentada = leituraDoDegrau("D", { de: "x", para: "y", celula: primeira, numerador: primeira, denominador: primeira }, "orcamento→aceito");
+  const realimentada = leituraDoDegrau("D", { de: "x", para: "y", celula: primeira, numerador: primeira, denominador: primeira }, "visitante→lead");
   assert.equal(realimentada.rotulo, "sem par apurado", "compor leitura com leitura DEVE calar");
   assert.equal(realimentada.razao, undefined);
 });
 
 test("trava 1: o buraco vem de UMA multiplicação, contra denominador apurado", () => {
-  // 39 leads apurados × 25% (piso do mercado) = ~10 esperados. Se o cálculo passasse por outra
-  // faixa (ex.: 39 × 39,9% × 25%), daria ~4 — e seria a pesquisa de volta.
-  const taxa = { de: "orçamento", para: "aceito", celula: apurado(0), numerador: apurado(0), denominador: apurado(39) };
-  const l = leituraDoDegrau("D", taxa, "orcamento→aceito");
-  assert.equal(l.buraco.esperado, 10);
-  assert.equal(l.buraco.base, 0.25, "a base do buraco é o piso da média DESTE degrau, e só");
-  assert.equal(l.buraco.faltam, 10);
+  // 535 visitantes apurados × 2% (piso do mercado) = ~11 esperados. Se o cálculo passasse por
+  // outra faixa, o resultado mudaria — e seria a pesquisa de volta.
+  const taxa = { de: "visitante", para: "lead", celula: apurado(0), numerador: apurado(0), denominador: apurado(535) };
+  const l = leituraDoDegrau("D", taxa, "visitante→lead");
+  assert.equal(l.buraco.esperado, 11);
+  assert.equal(l.buraco.base, 0.02, "a base do buraco é o piso da média DESTE degrau, e só");
+  assert.equal(l.buraco.faltam, 11);
 });
 
 // ---------------------------------------------------------------------------
@@ -89,11 +89,14 @@ test("toda linha tem fonte citável e faixa, nunca ponto solto (R8 + trava 3)", 
   }
 });
 
-test("cobertura declarada: 10 linhas em 17 degraus (SC-002)", () => {
+test("cobertura declarada: 9 linhas em 16 degraus (SC-002, atualizado na 017)", () => {
+  // Era 10/17 antes da 017: `aceito` saiu de PERFIS.D (deixou de ser degrau) e
+  // REGUA.D["orcamento→aceito"] saiu junto (não sobrevive linha sem par — ver o teste de
+  // contiguidade acima). -1 degrau, -1 linha.
   const degraus = Object.values(PERFIS).reduce((n, p) => n + p.marcos.length - 1, 0);
   const linhas = Object.values(REGUA).reduce((n, l) => n + Object.keys(l).length, 0);
-  assert.equal(degraus, 17);
-  assert.equal(linhas, 10);
+  assert.equal(degraus, 16);
+  assert.equal(linhas, 9);
 });
 
 // ---------------------------------------------------------------------------
@@ -168,14 +171,19 @@ test("nenhuma saída é prescritiva: só razão e faixa, nunca `meta` ou `alvo` 
 });
 
 test("linha marcada como não apurada por coletor ausente não vira 0", () => {
-  const l = degrauDe(fichaAtma(), "orcamento→aceito");
+  const l = degrauDe(fichaAtma(), "lead→contatado");
   assert.equal(l.rotulo, "sem par apurado");
   assert.ok(!("apurado" in l) || l.apurado === undefined);
 });
 
-test("PERFIS não foi tocado por esta feature (FR-012): D segue com 6 marcos", () => {
-  assert.equal(PERFIS.D.marcos.length, 6);
+test("FR-012 (015) só valia até a 017: D perdeu o marco `aceito`, de propósito", () => {
+  // O guard original dizia "PERFIS não foi tocado por esta feature — D segue com 6 marcos". A
+  // 017 tocou de propósito: `aceito` não tinha NENHUMA fonte de escrita (`orcamentos.status` só
+  // conheceu `enviado` em 5 semanas) e a cadeia canônica da Atma não tem esse degrau. O resto do
+  // perfil D é o mesmo de antes — só o marco morto saiu.
+  assert.equal(PERFIS.D.marcos.length, 5);
   assert.equal(PERFIS.D.marcos.at(-1).chave, "tratamento");
+  assert.ok(!PERFIS.D.marcos.some((m) => m.chave === "aceito"));
 });
 
 test("celula ausente é tratada como não apurada, não como zero", () => {

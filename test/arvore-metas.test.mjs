@@ -40,8 +40,9 @@ test("ponte atravessa o buraco e NOMEIA os degraus atravessados", () => {
 
 test("divisor apurado em 0 é recusado — nas três origens", () => {
   // `orcamento→tratamento` da `atma` é 0/5: apurado, e imprestável como divisor.
+  // Índice 4, não 5: `aceito` saiu de PERFIS.D na 017 e `tratamento` subiu um lugar.
   const marcos = marcosD({ visitante: 532, lead: 31, orcamento: 5, tratamento: 0 });
-  const d = divisorDe(marcos, 5, "D", false);
+  const d = divisorDe(marcos, 4, "D", false);
   assert.equal(d.origem, null, "0/5 não pode virar divisor");
   assert.ok(
     d.recusas.some((r) => /em 0 — não divide/.test(r)),

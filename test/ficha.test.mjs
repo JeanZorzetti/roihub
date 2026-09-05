@@ -31,7 +31,8 @@ import {
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** A cadeia real da atma: 535 cliques → 39 leads, os três degraus do meio sem coletor, 0 tratamentos. */
+/** A cadeia real da atma: 535 cliques → 39 leads, os dois degraus do meio sem coletor (fixture
+ * não passa `contatados` nem `orcamentos`), 0 tratamentos. `aceito` saiu do perfil D na 017. */
 const fichaAtma = () =>
   montarFicha({ slug: "atma", perfil: "D", coletado: { cliques: apurado(535), leads: apurado(39), vendas: apurado(0) } });
 
@@ -186,7 +187,7 @@ test("G5 — degraus acima do primeiro fator (a entrada) não produzem erro", ()
 // ── G6 — veredito de N2 nunca "fecha" derivado de ausência ──────────────────
 
 test("G6 — veredito nao-apurado nomeia os fatores faltando, nunca finge fechar", () => {
-  const ficha = fichaAtma(); // contatado sem coletor, aceito sem regra de aceite declarada
+  const ficha = fichaAtma(); // contatado e orçamento sem coletor no fixture
   const { veredito } = avaliarN2(PERFIS.D.fatores, ficha.marcos, ficha.taxas, { ticket: 4000 });
   assert.equal(veredito.estado, "nao-apurado");
   assert.match(veredito.motivo, /CR\(lead→orçamento\)/);
@@ -638,8 +639,8 @@ test("R2 — o 1º fator de cadeia de N2 é VOLUME (não taxa); os seguintes sã
   // "Leads" — 1º fator de cadeia: o count bruto de `lead` (39), não uma razão.
   assert.equal(fatores[0].estado, "apurado");
   assert.equal(fatores[0].valor, 39);
-  // "CR(orçamento→tratamento)" — tem que ser a TAXA tratamento/aceito, nunca o valor cru do marco
-  // (era o bug: virava "0" em vez de "0,00%").
+  // "CR(orçamento→tratamento)" — tem que ser a TAXA tratamento/orçamento, nunca o valor cru do
+  // marco (era o bug: virava "0" em vez de "0,00%").
   const crOrcamentoTratamento = fatores.find((f) => f.rotulo === "CR(orçamento→tratamento)");
   if (crOrcamentoTratamento.estado === "apurado") assert.match(String(crOrcamentoTratamento.valor), /%/);
 });
