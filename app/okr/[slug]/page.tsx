@@ -82,7 +82,12 @@ const GLOSSARIO: { termo: string; def: string }[] = [
   { termo: "D1–D4", def: "as 4 famílias de causa de um buraco: D1 Descoberta (o canal te encontra?), D2 Entrega (a página chega inteira?), D3 Persuasão (ela convence?), D4 Encanamento (o evento chega ao banco?)." },
   { termo: "CR(A→B)", def: "taxa de conversão de A para B — de cada 100 que chegam em A, quantos viram B." },
   { termo: "âncora", def: "o último degrau apurado da cadeia, de cima para baixo — é a partir dele que a meta é dividida para trás." },
-  { termo: "R7", def: "regra fixa: uma janela de datas só, igual para a árvore inteira, para nenhum número comparar períodos diferentes." },
+  // Auditoria de 05/09: esta entrada ainda ensinava a R7 ("uma janela de datas só, igual para a
+  // árvore inteira") a dez linhas do bloco que diz "Janela desta cadeia: 2026-07-31 → 2026-09-05".
+  // A 018 revogou a regra e o glossário continuou ensinando a versão morta — a tela se contradizia
+  // sozinha. O termo fica (aparece nos comentários e nas specs 009-017), mas dizendo o que vale.
+  { termo: "janela", def: "cada cadeia lê a janela que a fonte dela tem — Descoberta e Comportamento em 28 dias fechando em D-3, Conversão desde a época do projeto. Nenhuma taxa cruza duas janelas: seria dividir um período por outro. Substitui a R7 (\"uma janela só para a árvore inteira\"), revogada pela spec 018." },
+  { termo: "época", def: "a data a partir da qual os dados do projeto pertencem ao negócio de hoje. Na Atma é 31/07/2026, quando a sociedade foi desfeita e o banco com os leads anteriores foi perdido — antes disso o funil era de outra operação." },
 ];
 
 // achado 2 do design-review de 03/09: buraco PERMANENTE ("sem coletor", "sem propriedade no GSC")
@@ -103,8 +108,14 @@ const rotuloExibicaoBuraco = (c: { motivo: string; rotuloBuraco?: string }) => (
 // carregam dinheiro fora do hero — `${ficha.n1} em R$` (lib/ficha.mjs:621/626, todo perfil) e
 // "Valor do tratamento" (o único fator `tipo:"valor"` em lib/okr.mjs) — checado nos dois arquivos.
 const EH_ROTULO_MONETARIO = /em R\$$|^Valor do tratamento$/;
+// `style: "currency"` e não `R$ ${…}` à mão (auditoria de 05/09): o padrão do `toLocaleString` é
+// ATÉ 3 casas decimais, e a 018 trocou o ticket declarado (4000, inteiro) pelo apurado (uma
+// MÉDIA) — a tela publicou `R$ 4.932,337`, que não é uma quantia que exista. Enquanto o valor foi
+// digitado à mão o defeito não tinha como aparecer. Mesmo idioma de `app/crm/page.tsx:49`.
 const formatarCifra = (c: { valor: number | string; rotulo: string }) =>
-  typeof c.valor === "number" && EH_ROTULO_MONETARIO.test(c.rotulo) ? `R$ ${c.valor.toLocaleString("pt-BR")}` : c.valor;
+  typeof c.valor === "number" && EH_ROTULO_MONETARIO.test(c.rotulo)
+    ? c.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : c.valor;
 
 /** O único caminho que imprime valor (FR-009). Sem `0`, sem `—`, sem célula em branco. */
 function Cel({ c }: { c: CelulaFicha }) {

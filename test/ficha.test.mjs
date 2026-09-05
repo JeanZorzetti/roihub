@@ -375,6 +375,33 @@ test("T015/FR-010 (018) — janela do GA4 diferente da janela da cadeia NÃO é 
   assert.equal(organico.celula.valor, 535);
 });
 
+test("auditoria 05/09 — a nota do N4 nomeia o PRIMEIRO DEGRAU da cadeia, não `visitante` fixo", () => {
+  // O texto antigo cravava "este continua sendo só o orgânico" e chamava `visitante` de
+  // denominador de toda taxa do N3. Errado em 2 dos 4 perfis: o C começa em `contato` e o D
+  // passou a começar em `lead` na 018. Nenhum teste pegava porque nenhum olhava a nota.
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, { linhas: [], janela: JANELA, propriedade: "properties/1" }, JANELA);
+  for (const [degrau, perfil] of [
+    ["lead (form do site)", "D"],
+    ["contato", "C"],
+    ["visitante", "A/B"],
+  ]) {
+    const { nota } = montarN4Nivel(canais, { primeiroDegrau: degrau });
+    assert.ok(nota.includes(`\`${degrau}\``), `perfil ${perfil}: a nota não nomeia ${degrau}`);
+    assert.doesNotMatch(nota, /toda taxa do N3/);
+  }
+  // Perfil D não pode mais ser descrito como começando em `visitante`.
+  assert.doesNotMatch(montarN4Nivel(canais, { primeiroDegrau: "lead (form do site)" }).nota, /visitante/);
+});
+
+test("auditoria 05/09 — sem primeiro degrau conhecido a nota omite a frase, nunca chuta um nome", () => {
+  const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, { linhas: [], janela: JANELA, propriedade: "properties/1" }, JANELA);
+  const nota = montarN4Nivel(canais, {}).nota;
+  assert.doesNotMatch(nota, /visitante|denominador/);
+  assert.match(nota, /não é o primeiro degrau da cadeia\./);
+  // A parte que independe da cadeia continua lá.
+  assert.match(nota, /o orgânico vem do Search Console/);
+});
+
 test("T015 — montarN4Nivel(): total composto soma só apurados, rótulo declara cobertura, fonte é a junção", () => {
   const ga4 = { linhas: [{ grupo: "Direct", sessoes: 40 }], janela: JANELA, propriedade: "properties/1" };
   const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);

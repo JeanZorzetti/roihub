@@ -13,7 +13,11 @@ export const num = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2
 /** Reais com separador de milhar (achado 6 do design-review de 03/09: "R$ 50000 em 4000 por
  *  unidade" saía sem pontuação nenhuma, e o ticket sem o `R$` — os dois lêem como um número
  *  qualquer, não como dinheiro). `num()` continua servindo às contagens (2,94 tratamentos). */
-const reais = (v: number) => `R$ ${v.toLocaleString("pt-BR")}`;
+// `style: "currency"` e não `R$ ${…}` à mão: o padrão do `toLocaleString` é ATÉ 3 casas, e o
+// ticket apurado (média, não valor digitado) caía nelas — a tela publicou `R$ 4.932,337`, que não
+// é uma quantia que exista. Mesmo idioma de `app/crm/page.tsx:49`, o único lugar da casa que já
+// formatava dinheiro certo.
+const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 type Meta = { valor?: number; ticket?: number; prazo?: string; declaradaEm?: string };
 type ProjecaoResultado = ReturnType<typeof projetar>;
