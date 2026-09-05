@@ -104,6 +104,32 @@ Os dois passam a receber a **célula pronta** em vez de `{ticket, ticketDeclarad
 declarado. Com o ticket apurado entrando, a célula `"Tratamentos iniciados na janela em R$"` vira
 `apurado` sozinha — sem uma linha nova.
 
+## 4b. A unidade da média — documento, não pessoa (FR-021a, auditoria de 05/09/2026)
+
+A média é por **documento**; o degrau `orçamento` conta **pessoa** (`celulasDeOrcamento()`
+deduplica por `paciente_lead_id`). Na atma de 05/09 são **7 orçamentos de 4 pessoas** — 21 pediu 1
+e 22/44/51 pediram 2 cada.
+
+Os dois números não são intercambiáveis:
+
+| denominador | valor | quando estaria certo |
+|---|---|---|
+| por documento (7) | **R$ 4.932,34** | quem tem 2 orçamentos inicia **1** tratamento — a média por orçamento estima o preço de UM tratamento |
+| por pessoa (4) | R$ 8.631,59 | só se a pessoa fechasse **todos** os orçamentos que pediu |
+
+**Fica o por documento.** Uma pessoa com dois orçamentos escolhe um, não soma os dois — e a meta é
+dividida por "preço de um tratamento". Com R$ 8.631,59 a meta cairia de 10,1 para 5,8 tratamentos,
+que é o número de um negócio que não existe.
+
+🚩 **Viés conhecido:** quem pediu 2 orçamentos pesa o dobro na média (6 dos 7 documentos vêm de 3
+pessoas). Com n = 7 isso é material. Por isso `ticketDeOrcamentos()` devolve `docs` e `pessoas`
+junto do valor, e `resolverTicket()` os imprime no rótulo — *"média de 7 orçamentos de 4 pessoas da
+janela CONVERSAO, líquido de desconto"*. Sem os dois denominadores na tela o leitor divide a média
+pelo degrau e erra em 75%.
+
+Quando os contadores não chegam (chamador antigo, teste), o rótulo volta ao texto genérico *"média
+de orçamentos"* — nunca inventa um denominador.
+
 ## 5. Fora de escopo
 
 `sum(preco) = R$ 37.465,43` é **pipeline enviado**, não meta e não receita. Exibi-lo como "valor em

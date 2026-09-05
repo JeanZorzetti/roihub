@@ -1,6 +1,7 @@
 # A ficha da Atma chamava de buraco o que já estava medido
 
-**05/09/2026 — entendimento fechado, três specs abertas (018, 019, 020). Nenhum arquivo de código tocado ainda.**
+**05/09/2026 — entendimento fechado, três specs abertas (018, 019, 020).**
+**Atualizado 05/09 à noite: a 018 foi implementada (`4a36028`) e auditada — ver §12.**
 
 Documento de decisão para `/okr/atma`. Nasceu de uma sessão de grilling depois que **quatro rodadas
 de design-review** (`d010ab3`, `800e4e7`, `07e021e`, `cfccffd`) mais um redesenho (`c56f1d3`)
@@ -73,6 +74,12 @@ O colapso de jun-jul é a dissolução da sociedade (§3).
 | **responderam** | **21** | **41,2%** | apurado via `motivo` |
 | orçamentos enviados | 7 | 33,3% dos que responderam | apurado |
 | vendas | **0** | 0% | apurado |
+
+> ⚠️ **Duas linhas desta tabela mudaram depois da 018 (§12).** `orçamentos enviados` conta **pessoa**,
+> não documento: os 7 orçamentos são de **4 pessoas** (21 pediu 1; 22, 44 e 51 pediram 2 cada), e a
+> cadeia conta gente porque `lead` conta gente. E chegou 1 lead novo em 05/09 — são **52**, com 2 sem
+> `motivo`, então `respondeu` sai como `21 · piso {indeterminados: 2, teto: 23}`. Os "2 ainda vivos"
+> continuam valendo: ids 44 e 51.
 
 Motivos (`patient_leads.motivo`, preenchido em 50 de 51):
 
@@ -215,8 +222,8 @@ veredito com aparência de rigor.
 
 | spec | escopo | fecha quando |
 |---|---|---|
-| **018 · correção** | época e janelas por fonte · `contatado` fora da cadeia · `respondeu` dentro · ticket apurado · `form_submit` fora do catálogo · três rótulos de buraco | nenhum número exibido está errado |
-| **019 · estrutura** | primeira dobra nova · `/okr/atma/metodo` · `/okr/atma/aquisicao` · época como costura da 016 · pipeline como valor em risco | teste dos 30 segundos |
+| **018 · correção** ✅ | época · `contatado` fora da cadeia · `respondeu` dentro · ticket apurado · `form_submit` fora do catálogo · três rótulos de buraco | nenhum número exibido está errado |
+| **019 · estrutura** | primeira dobra nova · `/okr/atma/metodo` · `/okr/atma/aquisicao` · época como costura da 016 · pipeline como valor em risco · **+ alargar Descoberta e Comportamento (herdado da 018)** · **+ ler `status_historico`** | teste dos 30 segundos |
 | **020 · régua** | 6 benchmarks pesquisados com fonte · apagar `market_benchmarks` | as 6 réguas têm fonte clicável |
 
 **Nessa ordem, e separadas de propósito.** Se a correção vier junto do redesenho, não há como saber
@@ -303,6 +310,63 @@ der certo aqui. Três regras que já se sabe que viajam:
 3. **Uma janela única só é possível quando todas as fontes têm o mesmo tamanho.** Quando não têm,
    separar em cadeias é mais honesto que truncar ao menor — e a interseção, quando existe, é o
    único lugar onde a meta pode descer inteira.
+4. **Commit não é deploy.** Ver §12 — a 018 passou no critério de aceitação com o código certo e a
+   tela no ar continuou publicando os números velhos.
+
+---
+
+## 12. Auditoria da 018 — 05/09/2026
+
+Rodada com as funções reais contra o banco real (não lendo o código) e contra a tela no ar
+(`curl` autenticado com `HUB_USER`/`HUB_PASS`).
+
+### O que passou
+
+Seis células conferidas contra SQL na mesma janela, todas batendo: `lead` 52 · `respondeu` 21 com
+`piso {indeterminados:2, teto:23}` · `orçamento` 4 pessoas · ticket R$ 4.932,34 · nota de contato
+98% (51/52, calculada, não cravada em 100%) · janela CONVERSAO `2026-07-31 → 2026-09-05`.
+O ticket apurado chega mesmo em `projetar()` — a meta virou **10,1 tratamentos**, não 12,5.
+
+A árvore de metas tem **guarda explícita contra cruzar janelas**: a camada de impressões só entra
+se `marcos[0].chave === "visitante"`, e a cadeia D nova começa em `lead` (`lib/arvore-metas.mjs`).
+A taxa `impressão → lead` que cruzaria Descoberta com Conversão não pode nascer.
+
+### 🚨 O achado que anula os outros: a 018 não está no ar
+
+`origin/main` está em `4a36028`, mas `https://hub.roilabs.com.br/okr/atma` serve o build
+**anterior à 018**. A tela publica hoje: `visitante → lead (form do site)`, `CR(lead→orçamento)`,
+`Leads 20`, `Valor do tratamento R$ 4.000 declarado`, e o texto *"Janela única para a árvore
+inteira (R7): 2026-08-06 → 2026-09-02"*. Sem `respondeu`, sem época, sem ticket apurado.
+
+**Push está em dia; falta o deploy.** O repo tem `Dockerfile` e nenhum workflow de deploy — o
+rebuild é no EasyPanel. Enquanto ele não rodar, o critério de aceitação da 018 está satisfeito no
+código e falso na tela.
+
+### Corrigido nesta auditoria
+
+1. **Comentário falso sobre `status_historico`** (`lib/okr.mjs`) — afirmava "0 transições reais
+   gravadas". A tabela tem **82 transições de 52 leads, 01/08 → 05/09**. A migration rodou; o que
+   falta é o hub LER. Escrever afirmação sobre o dado sem consultar o dado é o defeito que esta
+   spec existe para matar, agora dentro dela mesma.
+2. **Unidade do ticket sem rótulo** — a média é por documento (7) e o degrau conta pessoa (4), 75%
+   de diferença. `ticketDeOrcamentos()` passa a devolver `docs` e `pessoas`, e o rótulo virou
+   *"média de 7 orçamentos de 4 pessoas da janela CONVERSAO, líquido de desconto"*. A escolha por
+   documento e o viés de peso estão em `contracts/ticket.md §4b`. **+4 testes** (615 no total).
+3. **Janelas longas transferidas para a 019** — registrado no §6. `janelas.mjs` nomeia as três mas
+   dá 28d a Descoberta e Comportamento, porque alargá-las mexeria na célula `visitante` dos 17
+   outros projetos e no ranking do portfólio. Razão boa; a grelha não a levantou porque escopou
+   para a Atma. A 019 herda.
+4. **Tabela de conversão do §2 datada** — orçamento por pessoa, 52 leads.
+
+### Pendente
+
+- **Rodar o deploy** e reconferir a tela.
+- **Uma resposta anômala**, não reproduzida: a primeira requisição autenticada a `/okr/atma` (16:56)
+  devolveu **68.031 bytes do site de marketing da Atma** — `<title>Atma Aligner - Alinhadores
+  Invisíveis…`, H1 "Transforme Seu Sorriso". As seis seguintes devolveram a ficha correta (66.442
+  bytes, estáveis). Pode ter sido cache de borda; pode ser o proxy servindo o upstream errado sob
+  concorrência, que é a classe de bug de [[nginx_shared_root_two_hosts_leaks_whole_site]]. Se
+  reaparecer, é incidente de roteamento, não de aplicação.
 
 ---
 

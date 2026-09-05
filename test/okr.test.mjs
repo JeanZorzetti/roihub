@@ -405,6 +405,42 @@ test("T031/US3-AC1 — ticketDeOrcamentos(): 7 orçamentos reais da atma devolve
   assert.equal(c.valor.toFixed(2), "4932.34");
 });
 
+test("auditoria 05/09 — o ticket carrega os DOIS denominadores: documento (média) e pessoa (degrau)", () => {
+  // Os 7 orçamentos reais da atma são de 4 pessoas: 21 pediu 1, e 22/44/51 pediram 2 cada.
+  // `celulasDeOrcamento` conta 4 (pessoa) e a média é sobre 7 (documento) — sem os dois números
+  // no valor, o rótulo não consegue dizer qual é qual e o leitor divide um pelo outro.
+  const janela = { inicio: "2026-07-31", fim: "2026-09-05" };
+  const rows = [
+    { criado: "2026-08-05", preco: 6355.93, desconto_vista: 0.1, paciente_lead_id: 21 },
+    { criado: "2026-08-05", preco: 5084.75, desconto_vista: 0.05, paciente_lead_id: 22 },
+    { criado: "2026-08-17", preco: 5084.75, desconto_vista: 0.05, paciente_lead_id: 22 },
+    { criado: "2026-08-17", preco: 5980.0, desconto_vista: 0.1, paciente_lead_id: 44 },
+    { criado: "2026-08-17", preco: 5980.0, desconto_vista: 0.05, paciente_lead_id: 44 },
+    { criado: "2026-09-01", preco: 4490.0, desconto_vista: 0.1, paciente_lead_id: 51 },
+    { criado: "2026-09-01", preco: 4490.0, desconto_vista: 0.1, paciente_lead_id: 51 },
+  ];
+  const c = ticketDeOrcamentos(rows, janela);
+  assert.equal(c.docs, 7);
+  assert.equal(c.pessoas, 4);
+  assert.equal(c.valor.toFixed(2), "4932.34");
+  // O degrau conta a MESMA coisa que `pessoas` — se um dia divergirem, o rótulo passa a mentir.
+  assert.equal(celulasDeOrcamento(rows, janela).enviados.valor, c.pessoas);
+});
+
+test("auditoria 05/09 — orçamento sem `paciente_lead_id` conta como pessoa própria (lead de WhatsApp)", () => {
+  const janela = { inicio: "2026-08-01", fim: "2026-08-31" };
+  const c = ticketDeOrcamentos(
+    [
+      { criado: "2026-08-05", preco: 1000, desconto_vista: 0, paciente_lead_id: 7 },
+      { criado: "2026-08-06", preco: 3000, desconto_vista: 0, paciente_lead_id: null },
+    ],
+    janela,
+  );
+  assert.equal(c.docs, 2);
+  assert.equal(c.pessoas, 2);
+  assert.equal(c.valor, 2000);
+});
+
 test("T031 — linha com `preco` ausente ou não numérico fica FORA da média, nunca vira 0", () => {
   const janela = { inicio: "2026-08-01", fim: "2026-08-31" };
   const comBuraco = ticketDeOrcamentos(

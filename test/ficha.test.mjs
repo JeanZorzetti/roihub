@@ -715,6 +715,17 @@ test("T033/US3-AC1 — resolverTicket(): apurado existe, vence o declarado, rót
   assert.doesNotMatch(c.fonte ?? "", /declarada \(D1\)/);
 });
 
+test("auditoria 05/09 — o rótulo do ticket nomeia os dois denominadores, não só 'média de orçamentos'", () => {
+  const c = resolverTicket({ valor: 4932.34, docs: 7, pessoas: 4 }, { ticket: 4000 });
+  assert.equal(c.estado, "apurado");
+  assert.match(c.fonte, /média de 7 orçamentos de 4 pessoas/);
+});
+
+test("auditoria 05/09 — singular no rótulo, e sem os contadores o texto volta ao genérico em vez de mentir", () => {
+  assert.match(resolverTicket({ valor: 500, docs: 1, pessoas: 1 }, null).fonte, /média de 1 orçamento de 1 pessoa /);
+  assert.match(resolverTicket(apurado(4932.34), null).fonte, /^média de orçamentos da janela/);
+});
+
 test("T033/US3-AC2 — resolverTicket(): sem apuração, com `meta.ticket`, cai para declarado", () => {
   const c = resolverTicket(naoApuradoF("sem orçamento na janela"), { ticket: 4000, declaradaEm: "2026-09-01" });
   assert.equal(c.estado, "declarado");
