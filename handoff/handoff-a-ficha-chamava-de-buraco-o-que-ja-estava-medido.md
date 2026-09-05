@@ -310,8 +310,8 @@ der certo aqui. Três regras que já se sabe que viajam:
 3. **Uma janela única só é possível quando todas as fontes têm o mesmo tamanho.** Quando não têm,
    separar em cadeias é mais honesto que truncar ao menor — e a interseção, quando existe, é o
    único lugar onde a meta pode descer inteira.
-4. **Commit não é deploy.** Ver §12 — a 018 passou no critério de aceitação com o código certo e a
-   tela no ar continuou publicando os números velhos.
+4. **Uma checagem só, cedo demais, prova o que você já teme.** Ver §12 — concluí que a 018 não
+   tinha subido porque conferi 14 min após o push; o deploy é automático e só demorou.
 
 ---
 
@@ -331,16 +331,50 @@ A árvore de metas tem **guarda explícita contra cruzar janelas**: a camada de 
 se `marcos[0].chave === "visitante"`, e a cadeia D nova começa em `lead` (`lib/arvore-metas.mjs`).
 A taxa `impressão → lead` que cruzaria Descoberta com Conversão não pode nascer.
 
-### 🚨 O achado que anula os outros: a 018 não está no ar
+### ⚠️ Um falso alarme meu, registrado porque a armadilha é reaproveitável
 
-`origin/main` está em `4a36028`, mas `https://hub.roilabs.com.br/okr/atma` serve o build
-**anterior à 018**. A tela publica hoje: `visitante → lead (form do site)`, `CR(lead→orçamento)`,
-`Leads 20`, `Valor do tratamento R$ 4.000 declarado`, e o texto *"Janela única para a árvore
-inteira (R7): 2026-08-06 → 2026-09-02"*. Sem `respondeu`, sem época, sem ticket apurado.
+Às **16:56** eu conferi a tela e ela servia o build **anterior à 018** — `visitante → lead`,
+`CR(lead→orçamento)`, `Leads 20`, ticket `R$ 4.000 declarado`, o texto da R7. Concluí "push está em
+dia, falta o deploy" e escrevi isso aqui.
 
-**Push está em dia; falta o deploy.** O repo tem `Dockerfile` e nenhum workflow de deploy — o
-rebuild é no EasyPanel. Enquanto ele não rodar, o critério de aceitação da 018 está satisfeito no
-código e falso na tela.
+**Errado.** O roihub **deploya sozinho no push**; o build é que demora. A 018 foi pushada às 16:42
+e apareceu na tela por volta das **17:05** — eu tinha checado **uma vez, 14 minutos depois**, e uma
+checagem única cedo demais produz exatamente a evidência que confirma a conclusão errada.
+
+A regra: depois de pushar, **esperar ~15 min e conferir duas vezes**, procurando uma string que só
+existe na versão nova. Não há workflow de deploy em `.github/workflows/`, o que reforça a leitura
+errada — o gatilho é webhook do EasyPanel, invisível no git.
+
+### Confirmado no ar às 17:07 (build `58e153f`)
+
+```
+Receita = Leads × CR(lead→respondeu) × CR(respondeu→orçamento) × CR(orçamento→tratamento) × Valor
+CR(lead→respondeu)      40,38% (21/52)
+CR(respondeu→orçamento) 19,05% (4/21)
+CR(orçamento→tratamento) 0,00% (0/4)
+Valor do tratamento     R$ 4.932,337 (média de 7 orçamentos de 4 pessoas, líquido de desconto)
+98% contatados (declarado pelo operador, 05/09/2026)
+Janela desta cadeia: 2026-07-31 → 2026-09-05 — sociedade desfeita; o banco … foi perdido
+cadeia: 52 → 21 → 4 → 0
+```
+
+Bate com o banco. **O critério de aceitação da 018 está satisfeito na tela**, não só no código.
+
+### Três defeitos que só a tela mostrou (entram na 019)
+
+1. **`R$ 4.932,337` — dinheiro com 3 casas.** `toLocaleString("pt-BR")` sem `minimumFractionDigits`
+   / `maximumFractionDigits` cai no padrão de até 3 dígitos. Tem que ser `R$ 4.932,34`.
+2. **O glossário ainda ensina a R7** — *"uma janela de datas só, igual para a árvore inteira"* — a
+   dez linhas de *"Janela desta cadeia: 2026-07-31 → 2026-09-05"*. A 018 matou a R7 e a tela se
+   contradiz sozinha.
+3. **N4 afirma que `visitante` "serve de denominador a toda taxa do N3"** — falso desde a 018: o N3
+   é `lead → respondeu → orçamento → tratamento` e `visitante` saiu da cadeia.
+
+E um quarto, de natureza diferente: **a projeção sai `não apurado — âncora zerada`**, então os
+**10,1 tratamentos** que a meta exige (R$ 50.000 ÷ R$ 4.932) nunca chegam à tela. Não é número
+errado, é o caminho feliz calado — mesma família de
+`validacao_so_fala_de_problema_cala_o_caminho_feliz`. `meta ÷ ticket` é bem definido mesmo com a
+âncora em zero; o que a âncora zerada impede é a divisão **para trás** pela cadeia.
 
 ### Corrigido nesta auditoria
 
