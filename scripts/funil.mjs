@@ -16,17 +16,20 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
-import { consultarGsc, diasAtras } from "../lib/gsc-consulta.mjs";
+import { consultarGsc } from "../lib/gsc-consulta.mjs";
 import { apurado, naoApurado, ehApurado, montarLinha, resumir, mostrar, pct, ehLeadDeTeste } from "../lib/funil.mjs";
 import { pipelineDe } from "../lib/okr.mjs";
+import { descoberta } from "../lib/janelas.mjs";
 
 const ver = process.argv.includes("--ver");
 const ler = (p) => JSON.parse(readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8"));
 const projetos = ler("../data/projects.json");
 const pipelines = ler("../data/pipelines.json");
 
-const INICIO = diasAtras(31);
-const FIM = diasAtras(3);
+// A janela canônica de lib/janelas.mjs (018, FR-001) — a cópia local (`diasAtras(31)`/`diasAtras(3)`)
+// morreu aqui: nenhuma outra definição de janela PODE existir no repo. Encolhe de 31 para 30 dias
+// de recuo; o rodapé abaixo passa a imprimir a janela de verdade, não mais a antiga.
+const { inicio: INICIO, fim: FIM } = descoberta();
 
 // O mapa de pipeline mudou de casa para `lib/okr.mjs` em 01/09: a `/okr` lê a MESMA pipeline que
 // este script, e duas cópias divergiriam na primeira pipeline nova sem ninguém ver.
@@ -41,7 +44,7 @@ const zerado = () => ({ total: 0, janela: 0, teste: 0, reais: [] });
 // testada (`ehLeadDeTeste`, com teste em `test/funil.test.mjs`), e o `--ver` precisa listar os
 // leads contados NOME A NOME. O volume é de dezenas — agrupar aqui sai mais barato que a segunda
 // query que a contagem no banco exigiria.
-function agrupar(rows, chaveDe) {
+function agrupar(rows, chaveDe, { propria = false } = {}) {
   const m = new Map();
   for (const r of rows) {
     const k = chaveDe(r);
@@ -49,7 +52,9 @@ function agrupar(rows, chaveDe) {
     if (!e) m.set(k, (e = zerado()));
     // 🚩 Lead nosso não é demanda. Sem esta linha, o critério de pronto deste subprojeto fecha
     // com um curl — foi o que aconteceu com o `polarisia 6,67% (2/30)`, dois testes do Jean.
-    if (ehLeadDeTeste(r)) {
+    // Fonte PRÓPRIA (018) não passa por aqui: só a tabela COMPARTILHADA do hub pode conter lead de
+    // teste do time — patient_leads e afins só têm paciente real, mesmo com e-mail placeholder.
+    if (!propria && ehLeadDeTeste(r)) {
       e.teste++;
       continue;
     }
@@ -117,7 +122,7 @@ async function lerFontesProprias() {
     }
     try {
       const rows = await comPool(url, async (pool) => (await pool.query(f.sql)).rows);
-      out.set(slug, { agregado: agrupar(rows, () => slug).get(slug) ?? zerado() });
+      out.set(slug, { agregado: agrupar(rows, () => slug, { propria: true }).get(slug) ?? zerado() });
     } catch (e) {
       out.set(slug, { erro: e?.code ?? String(e?.message ?? "erro").slice(0, 60) });
     }

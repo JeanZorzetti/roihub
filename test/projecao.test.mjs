@@ -274,6 +274,19 @@ test("US3: mesma meta com prazo de 28 e de 112 dias produz fatores na razão 4:1
   assert.ok(Math.abs(p28.fatorObrigatorio.valor / p112.fatorObrigatorio.valor - 4) < 0.001);
 });
 
+// ── T032/US3/SC-002 (018) — ticket apurado líquido muda o resultado da meta ─────────────────────
+
+test("T032/SC-002 — meta de R$ 50.000 com o ticket apurado (4.932,34) devolve 10,1 vendas, não 12,5", () => {
+  // `lib/projecao.mjs` continua sem regra nova (FR-034): recebe o ticket já resolvido em
+  // `meta.ticket`, exatamente como recebe hoje o declarado — só o VALOR muda.
+  const p = projetar({ ficha: fichaBase(), meta: { ...METABASE, ticket: 4932.34 }, hoje: HOJE });
+  assert.ok(Math.abs(p.n1Total.valor - 50000 / 4932.34) < 0.001);
+  assert.equal(p.n1Total.valor.toFixed(1), "10.1");
+  // Com o declarado (4.000), o mesmo cálculo dava 12,5 — o defeito que a 018 corrige.
+  const antigo = projetar({ ficha: fichaBase(), meta: { ...METABASE, ticket: 4000 }, hoje: HOJE });
+  assert.equal(antigo.n1Total.valor, 12.5);
+});
+
 test("US3: prazo restante menor que uma janela vira encurtada, e n1Janela > n1Total (direção da fórmula)", () => {
   const p = projetar({ ficha: fichaBase(), meta: { ...METABASE, prazo: "2026-09-08" }, hoje: HOJE }); // 7 dias
   assert.equal(p.normalizacao.diasRestantes, 7);

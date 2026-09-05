@@ -72,9 +72,11 @@ export type EventosGa4 =
   | { erro: string }
   | { linhas: { evento: string; pagina: string; link: string; contagem: number }[]; janela: { inicio: string; fim: string }; propriedade: string };
 
-/** Os eventos que os medidores D3 sabem ler. `form_submit` entra para poder sair ZERO: é a
- *  ausência dele que prova que o abandono não é derivável, e ausência só se vê perguntando. */
-export const EVENTOS_D3 = ["scroll", "click", "form_start", "form_submit", "begin_checkout"];
+/** Os eventos que os medidores D3 sabem ler. `form_submit` saiu (018, FR-032): disparou 1 vez em
+ *  12 meses e 0 na época, contra 51 leads gravados no banco — o banco é canônico para o degrau
+ *  `lead`, e duas fontes para o mesmo degrau só criam a chance de discordarem. O abandono agora
+ *  compara `form_start` (GA4) com `lead` (banco) — ver `medidoresDeEventos()` em lib/ficha.mjs. */
+export const EVENTOS_D3 = ["scroll", "click", "form_start", "begin_checkout"];
 
 export async function ga4Eventos(
   propertyId: string | undefined,

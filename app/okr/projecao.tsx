@@ -17,22 +17,39 @@ const reais = (v: number) => `R$ ${v.toLocaleString("pt-BR")}`;
 
 type Meta = { valor?: number; ticket?: number; prazo?: string; declaradaEm?: string };
 type ProjecaoResultado = ReturnType<typeof projetar>;
+/** Só os campos que este componente lê de `resolverTicket()` (lib/ficha.mjs) — `.ts`/`.tsx` não
+ *  atravessa a fronteira de tipos do `.mjs` (Princípio III), mesma convenção de `Celula` alhures. */
+type TicketCel = { estado: "apurado" | "declarado" | "nao-apurado" | "inferido"; fonte?: string };
 
 /**
  * Bloco de projeção invertida (010), abaixo do veredito da 009 na mesma seção do card (D6). Só a
  * `atma` tem `meta` hoje — os outros 39 caem na linha `.foot` (R-d, FR-013).
  */
-export function Projecao({ meta, p }: { meta?: Meta; p: ProjecaoResultado }) {
+export function Projecao({ meta, p, ticketCel }: { meta?: Meta; p: ProjecaoResultado; ticketCel?: TicketCel }) {
   if (p.veredito === "nao-apurado") {
     return <p className="foot">projeção: não apurado — {p.motivo}</p>;
   }
 
   const ancora = p.ancora as { nome: string; valor: number };
+  // 018/FR-023: o ticket apurado (média de orçamentos, líquido de desconto) NUNCA pode sair
+  // rotulado "declarada (D1)" — só o ticket que veio do card (`meta.ticket` sem apuração) é
+  // declarado de verdade.
+  const ticketApurado = ticketCel?.estado === "apurado";
   return (
     <div className="foot">
       <p>
-        Meta <strong>declarada</strong>: {reais(meta!.valor!)} em {reais(meta!.ticket!)} por unidade
-        (declarada em {meta!.declaradaEm ?? "data não registrada"}) · N1 necessário no prazo:{" "}
+        {ticketApurado ? (
+          <>
+            Meta: {reais(meta!.valor!)} em <strong>{reais(meta!.ticket!)}</strong> por unidade (ticket <strong>apurado</strong> —{" "}
+            {ticketCel!.fonte})
+          </>
+        ) : (
+          <>
+            Meta <strong>declarada</strong>: {reais(meta!.valor!)} em {reais(meta!.ticket!)} por unidade
+            (declarada em {meta!.declaradaEm ?? "data não registrada"})
+          </>
+        )}{" "}
+        · N1 necessário no prazo:{" "}
         <strong>{num((p.n1Total as { valor: number }).valor)}</strong>, na janela de {p.normalizacao!.janelaDias} dias:{" "}
         <strong>{num((p.n1Janela as { valor: number }).valor)}</strong>
         {p.normalizacao!.encurtada ? " — janela encurtada, prazo restante menor que uma janela cheia" : ""} —{" "}

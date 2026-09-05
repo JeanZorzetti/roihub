@@ -66,6 +66,17 @@ export type Project = {
     objetivo?: string;
     krs?: { kpi: string; baseline: number | null; meta: number; prazo: string; dono?: string; celula: string }[];
   };
+  /** Data escrita no card a partir da qual a cadeia de Conversão passa a valer (018, FR-004/FR-005).
+   *  Presente → `conversao()` de `lib/janelas.mjs` vira `data → hoje`, exibida com `porque` ao lado
+   *  do número. Ausente é o normal para os outros 16 projetos: `conversao()` cai para 28d/D-3, a
+   *  mesma janela de sempre (FR-006, SC-007) — o campo NÃO se espalha para quem não declarou. */
+  epoca?: { data: string; porque: string };
+  /** Declaração humana chaveada pela `chave` do marco (`tratamento`, não o nome de exibição — a
+   *  mesma razão de `REGUA` ser chaveada por `chave` em lib/benchmark.mjs). A ficha ANEXA este
+   *  texto à `fonte` do marco, não substitui (018, FR-025/FR-026/FR-027 — fecha a FR-004 da 017,
+   *  que citava a regra sem nomear quem declarou nem quando). Mora no card, não no perfil: `PERFIS.D`
+   *  é compartilhado com outros projetos e o nome do dono da Atma não pode vazar para eles. */
+  declaracoes?: Record<string, { quem: string; em: string; texto: string }>;
   /** false = repo do GitHub que ainda não tem receita/blockers/ação definidos à mão. */
   curated: boolean;
   repo: string | null;

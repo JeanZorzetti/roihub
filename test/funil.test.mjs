@@ -86,6 +86,18 @@ test("percentual com 2 casas — arredondar mata o sinal de um funil raso", () =
   assert.equal(pct(0), "0,00%");
 });
 
+// ── T039/US4/FR-028 — rótulo de buraco: opcional, SEM default ───────────────────────────────────
+
+test("T039/US4-AC1 — naoApurado(motivo) SEM rótulo devolve o objeto idêntico ao de hoje, byte a byte", () => {
+  assert.deepEqual(naoApurado("sem pipeline"), { naoApurado: "sem pipeline" });
+  assert.ok(!("rotuloBuraco" in naoApurado("sem pipeline")), "sem rótulo não pode ganhar a chave, nem undefined");
+});
+
+test("T039 — naoApurado(motivo, 'tela-nao-le') carrega o campo", () => {
+  const c = naoApurado("motivo x", "tela-nao-le");
+  assert.deepEqual(c, { naoApurado: "motivo x", rotuloBuraco: "tela-nao-le" });
+});
+
 test("lead que nós mesmos criamos não conta como demanda", () => {
   // Os 5 que o crm_leads tinha na vida inteira em 01/09/2026 — e de onde saía o único
   // CR(clique→lead) do portfólio. Se estes contarem, o critério do subprojeto fecha com um curl.

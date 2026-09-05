@@ -11,6 +11,7 @@ import {
   estadoDeApurado,
   declarada,
   naoApurada,
+  ehBuracoDeVerdade,
   inferida,
   combinar,
   avaliarN2,
@@ -25,16 +26,33 @@ import {
   validarKrs,
   montarNiveis,
   segmentosDoFunil,
+  resolverTicket,
   CANAIS,
   MEDIDORES,
 } from "../lib/ficha.mjs";
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** A cadeia real da atma: 535 cliques → 39 leads, os dois degraus do meio sem coletor (fixture
- * não passa `contatados` nem `orcamentos`), 0 tratamentos. `aceito` saiu do perfil D na 017. */
+/** A cadeia D estrutural (fixture herdada de antes da 018): 39 leads → 20 responderam, o degrau do
+ * meio (`orcamento`) sem coletor, 0 tratamentos. `visitante`/`contatado` saíram do perfil D na 018;
+ * `aceito` já tinha saído na 017. Só o PRIMEIRO segmento é apurado — é o que várias asserções de
+ * N3/funil abaixo esperam (padrão "buraco no meio", preservado pela mesma forma de antes). */
 const fichaAtma = () =>
-  montarFicha({ slug: "atma", perfil: "D", coletado: { cliques: apurado(535), leads: apurado(39), vendas: apurado(0) } });
+  montarFicha({ slug: "atma", perfil: "D", coletado: { leads: apurado(39), respondeu: apurado(20), vendas: apurado(0) } });
+
+/** A cadeia D pós-018, TODA apurada: lead 51 → respondeu 21 (piso, 1 indeterminado) → orcamento 4
+ * → tratamento 0 — os números reais da atma em 05/09/2026, para testar o piso e a nota de contato. */
+const fichaAtma018 = () =>
+  montarFicha({
+    slug: "atma",
+    perfil: "D",
+    coletado: {
+      leads: apurado(51),
+      respondeu: { valor: 21, piso: { indeterminados: 1, teto: 22 } },
+      orcamentos: apurado(4),
+      vendas: apurado(0),
+    },
+  });
 
 const entradaBase = (overrides = {}) => ({
   slug: "atma",
@@ -46,6 +64,7 @@ const entradaBase = (overrides = {}) => ({
   datasDono: new Map(),
   disponiveisN5: {},
   janela: { inicio: "2026-08-04", fim: "2026-08-29" },
+  cliques: apurado(535),
   ...overrides,
 });
 
@@ -187,10 +206,10 @@ test("G5 — degraus acima do primeiro fator (a entrada) não produzem erro", ()
 // ── G6 — veredito de N2 nunca "fecha" derivado de ausência ──────────────────
 
 test("G6 — veredito nao-apurado nomeia os fatores faltando, nunca finge fechar", () => {
-  const ficha = fichaAtma(); // contatado e orçamento sem coletor no fixture
+  const ficha = fichaAtma(); // orçamento sem coletor no fixture
   const { veredito } = avaliarN2(PERFIS.D.fatores, ficha.marcos, ficha.taxas, { ticket: 4000 });
   assert.equal(veredito.estado, "nao-apurado");
-  assert.match(veredito.motivo, /CR\(lead→orçamento\)/);
+  assert.match(veredito.motivo, /CR\(respondeu→orçamento\)/);
 });
 
 // ── G7 — N4 sem total, diferença nao-apurado, perfil C marca organico sem elo ─
@@ -343,12 +362,14 @@ test("T008 — montarN4() chamado com três argumentos (compatibilidade) continu
   }
 });
 
-test("T014/FR-006 — janela do GA4 diferente da janela da cadeia: canais do GA4 não apurado, organico intacto", () => {
+test("T015/FR-010 (018) — janela do GA4 diferente da janela da cadeia NÃO é mais defeito: canal continua apurado", () => {
+  // Com época, GA4 (COMPORTAMENTO, 28d/D-3) e a cadeia de Conversão têm tamanhos diferentes por
+  // CONSTRUÇÃO (research D8) — divergência de janela virou estado normal, não buraco.
   const ga4 = { linhas: [{ grupo: "Direct", sessoes: 10 }], janela: { inicio: "2026-07-01", fim: "2026-07-28" }, propriedade: "properties/1" };
   const canais = montarN4(CANAIS, apurado(535), MARCOS_VISITANTE, ga4, JANELA);
   const direto = canais.find((c) => c.id === "direto");
-  assert.equal(direto.celula.estado, "nao-apurado");
-  assert.match(direto.celula.motivo, /janela do GA4 \(2026-07-01→2026-07-28\) difere da janela da cadeia \(2026-08-04→2026-08-29\)/);
+  assert.equal(direto.celula.estado, "apurado");
+  assert.equal(direto.celula.valor, 10);
   const organico = canais.find((c) => c.id === "organico");
   assert.equal(organico.celula.estado, "apurado");
   assert.equal(organico.celula.valor, 535);
@@ -628,7 +649,7 @@ test("N6 — descontinuado vem do campo curado de data/projects.json, não do te
 test("R2 — N3 cola a fração no percentual, nunca devolve o número cru 0..1", () => {
   const niveis = montarNiveis(fichaCompleta());
   const n3 = niveis.find((n) => n.id === "N3");
-  const primeira = n3.celulas[0]; // visitante → lead: 39/535
+  const primeira = n3.celulas[0]; // lead → respondeu: 20/39
   assert.equal(primeira.estado, "apurado");
   assert.match(String(primeira.valor), /^\d+,\d\d% \(\d+\/\d+\)$/);
 });
@@ -643,6 +664,89 @@ test("R2 — o 1º fator de cadeia de N2 é VOLUME (não taxa); os seguintes sã
   // marco (era o bug: virava "0" em vez de "0,00%").
   const crOrcamentoTratamento = fatores.find((f) => f.rotulo === "CR(orçamento→tratamento)");
   if (crOrcamentoTratamento.estado === "apurado") assert.match(String(crOrcamentoTratamento.valor), /%/);
+});
+
+// ── T022/US2 — piso na taxa lead→respondeu, nota de contato, denominador 51 ─────────────────────
+
+test("T022/US2-AC2 — N3: lead→respondeu sai como PISO ('no mínimo N% (21/51) · 1 indeterminado, teto M%'), denominador 51 nunca 50", () => {
+  const niveis = montarNiveis(fichaCompleta({ ficha: fichaAtma018() }));
+  const n3 = niveis.find((n) => n.id === "N3");
+  const taxa = n3.celulas.find((c) => c.rotulo === "lead (form do site) → respondeu");
+  assert.equal(taxa.estado, "apurado");
+  assert.match(String(taxa.valor), /^no mínimo \d+,\d{2}% \(21\/51\) · 1 indeterminado, teto \d+,\d{2}%$/);
+});
+
+test("T022 — sem indeterminado, a taxa lead→respondeu sai como percentual normal, sem 'no mínimo'", () => {
+  const ficha = montarFicha({
+    slug: "x",
+    perfil: "D",
+    coletado: { cliques: apurado(100), leads: apurado(10), respondeu: apurado(10), orcamentos: apurado(0), vendas: apurado(0) },
+  });
+  const niveis = montarNiveis(fichaCompleta({ ficha }));
+  const n3 = niveis.find((n) => n.id === "N3");
+  const taxa = n3.celulas.find((c) => c.rotulo === "lead (form do site) → respondeu");
+  assert.doesNotMatch(String(taxa.valor), /no mínimo/);
+  assert.match(String(taxa.valor), /^\d+,\d{2}% \(10\/10\)$/);
+});
+
+test("T022/US2-AC5/FR-013 — a nota de contato existe, NÃO é marco e não entra em taxa nem em gargalo", () => {
+  const ficha = fichaAtma018();
+  assert.ok(!ficha.marcos.some((m) => m.chave === "contatado"), "contatado não pode ser marco (US2)");
+  assert.ok(!ficha.taxas.some((t) => /contatado/i.test(t.de) || /contatado/i.test(t.para)), "contatado não pode entrar em taxa nenhuma");
+});
+
+test("T022/FR-017 — projeto perfil D sem fonte que devolva `motivo` (ex.: aftercare) recebe não apurado nomeando a fonte, não herda a resposta da atma", () => {
+  const ficha = montarFicha({
+    slug: "aftercare",
+    perfil: "D",
+    coletado: { cliques: apurado(10), leads: apurado(5), respondeu: { naoApurado: "fonte própria não devolve `motivo` — consultar se a tabela do projeto grava esse campo" }, orcamentos: apurado(0), vendas: apurado(0) },
+  });
+  const respondeuMarco = ficha.marcos.find((m) => m.chave === "respondeu");
+  assert.equal(ehApurado(respondeuMarco.celula), false);
+  assert.match(respondeuMarco.celula.naoApurado, /motivo/);
+});
+
+// ── T033/US3 — resolverTicket(): apurado vence declarado, nunca zero ────────────────────────────
+
+test("T033/US3-AC1 — resolverTicket(): apurado existe, vence o declarado, rótulo NUNCA 'declarada (D1)'", () => {
+  const c = resolverTicket(apurado(4932.34), { ticket: 4000, declaradaEm: "2026-09-01" });
+  assert.equal(c.estado, "apurado");
+  assert.equal(c.valor, 4932.34);
+  assert.doesNotMatch(c.fonte ?? "", /declarada \(D1\)/);
+});
+
+test("T033/US3-AC2 — resolverTicket(): sem apuração, com `meta.ticket`, cai para declarado", () => {
+  const c = resolverTicket(naoApuradoF("sem orçamento na janela"), { ticket: 4000, declaradaEm: "2026-09-01" });
+  assert.equal(c.estado, "declarado");
+  assert.equal(c.valor, 4000);
+  assert.equal(c.declaradoEm, "2026-09-01");
+});
+
+test("T033/US3-AC3/AC4 — resolverTicket(): sem os dois, não apurado — nunca zero, nunca média de outra janela", () => {
+  const c = resolverTicket(naoApuradoF("sem orçamento na janela"), null);
+  assert.equal(ehApurado(c), false);
+  assert.notEqual(c.valor, 0);
+  const semMeta = resolverTicket(naoApuradoF("sem fonte de orçamento"), {});
+  assert.equal(ehApurado(semMeta), false);
+});
+
+// ── T040/US4/FR-028/FR-029 — rotuloBuraco na ficha: nome do campo, e quem some da lista ─────────
+
+test("T040 — naoApurada(): sem rotuloBuraco, objeto idêntico ao de hoje; com, carrega o campo (nome NÃO é `rotulo`)", () => {
+  const c1 = naoApurada("x", "consultar y", "orçamento ENVIADO");
+  assert.deepEqual(c1, { estado: "nao-apurado", rotulo: "orçamento ENVIADO", motivo: "x", consultar: "consultar y" });
+  assert.ok(!("rotuloBuraco" in c1));
+  const c2 = naoApurada("x", "consultar y", "orçamento ENVIADO", "tela-nao-le");
+  assert.equal(c2.rotuloBuraco, "tela-nao-le");
+  assert.equal(c2.rotulo, "orçamento ENVIADO", "rotulo continua sendo o TEXTO exibido, dois campos, dois nomes");
+});
+
+test("T040/US4-AC2 — ehBuracoDeVerdade(): célula `tela-nao-le` NÃO é buraco de verdade; sem rótulo e `falhou-agora` continuam sendo", () => {
+  assert.equal(ehBuracoDeVerdade(naoApurada("x", "y", "r", "tela-nao-le")), false);
+  assert.equal(ehBuracoDeVerdade(naoApurada("x", "y", "r")), true);
+  assert.equal(ehBuracoDeVerdade(naoApurada("x", "y", "r", "falhou-agora")), true, "falhou-agora continua separada do buraco permanente, mas ainda É buraco");
+  assert.equal(ehBuracoDeVerdade(naoApurada("x", "y", "r", "nao-mede")), true);
+  assert.equal(ehBuracoDeVerdade({ estado: "apurado", valor: 1, rotulo: "r", fonte: "f" }), false, "célula apurada nunca é buraco");
 });
 
 // ── N3 funil visual (spec 012) — segmentosDoFunil() e n3.funil ──────────────
@@ -660,7 +764,7 @@ test("T005 — funil.length é o mesmo de n3.celulas.length para os quatro perfi
 });
 
 test("T006 — funil[i].estado copia n3.celulas[i].estado; apurado tem entrada/saida em [0,1] com saida<=entrada; nao-apurado não tem nenhum", () => {
-  const niveis = montarNiveis(fichaCompleta()); // atma: 535 cliques → 39 leads, resto sem coletor
+  const niveis = montarNiveis(fichaCompleta()); // atma: 39 leads → 20 responderam, resto sem coletor
   const n3 = niveis.find((n) => n.id === "N3");
   for (let i = 0; i < n3.celulas.length; i++) {
     assert.equal(n3.funil[i].estado, n3.celulas[i].estado, `segmento ${i}`);
@@ -673,9 +777,9 @@ test("T006 — funil[i].estado copia n3.celulas[i].estado; apurado tem entrada/s
       assert.equal(n3.funil[i].saida, undefined);
     }
   }
-  // AS-1: o primeiro segmento (535→39) é o único apurado, quase cheio na entrada.
+  // AS-1: o primeiro segmento (39→20) é o único apurado, cheio na entrada.
   assert.equal(n3.funil[0].estado, "apurado");
-  assert.equal(n3.funil[0].entrada, 1); // 535 é o próprio maior marco apurado da cadeia — base
+  assert.equal(n3.funil[0].entrada, 1); // 39 é o próprio maior marco apurado da cadeia — base
   for (let i = 1; i < n3.funil.length; i++) assert.equal(n3.funil[i].estado, "nao-apurado");
 });
 
@@ -813,17 +917,44 @@ test("zero clique em CTA é `não apurado` — `window.open` não emite evento n
   assert.match(m["cliques-cta"].naoApurado, /window\.open/);
 });
 
-test("form_submit ZERO é `não apurado`, NUNCA 100% de abandono", () => {
-  const m = medidoresDeEventos(leitura([ev("form_start", "/pacientes/encontre-doutor", 29), ev("form_start", "/login", 1)]));
-  assert.equal(ehApurado(m["abandono-por-campo"]), false);
-  assert.match(m["abandono-por-campo"].naoApurado, /`form_start` 29 e `form_submit` ZERO/);
-  // o conserto é encanamento no site, não copy — a fonte tem que dizer isso
-  assert.match(m["abandono-por-campo"].fonte, /encanamento, não copy/);
+// ── T049/US5 — form_submit sai do catálogo; abandono = form_start (GA4) − lead (banco) ──────────
+//
+// A guarda exige o CONTRÁRIO do que parecia óbvio: o GA4 tem que COBRIR a época inteira, não
+// "caber dentro" dela. Achado em implementação (05/09/2026): com a guarda ao contrário, a janela
+// de hoje (COMPORTAMENTO, 28d) é MENOR que a época da atma (37d) — comparar form_start de 28 dias
+// com lead de 37 dava NEGATIVO (mais lead de WhatsApp que form_start no recorte curto). A guarda
+// certa cala em vez de compor períodos diferentes; só passa quando o GA4 é IGUAL OU MAIOR.
+
+const JANELA_GA4_HOJE = { inicio: "2026-08-06", fim: "2026-09-02" }; // COMPORTAMENTO, 28d/D-3 — MENOR que a época
+const EPOCA_ATMA = { inicio: "2026-07-31", fim: "2026-09-05" }; // CONVERSAO com época, 37d
+const JANELA_GA4_COBRE = { inicio: "2026-07-31", fim: "2026-09-05" }; // cenário 019: GA4 esticado cobrindo a época
+
+test("T049/SC-006/US5-AC1 — form_submit não aparece em nenhum catálogo de medidores (mesmo se o GA4 devolvesse a linha)", () => {
+  const m = medidoresDeEventos(leitura([ev("form_start", "/x", 63), ev("form_submit", "/x", 999)]), { lead: apurado(51), janelaGa4: JANELA_GA4_COBRE, epoca: EPOCA_ATMA });
+  // 999 de form_submit não pode influenciar o resultado — a conta não lê mais esse evento.
+  assert.equal(m["abandono-por-campo"].valor, 12);
 });
 
-test("com o par completo, abandono é a diferença", () => {
-  const m = medidoresDeEventos(leitura([ev("form_start", "/x", 48), ev("form_submit", "/x", 30)]));
-  assert.equal(m["abandono-por-campo"].valor, 18);
+test("T049/US5-AC2 — quando o GA4 COBRE a época inteira, abandono = form_start (63) − lead (51) = 12", () => {
+  const m = medidoresDeEventos(leitura([ev("form_start", "/pacientes/encontre-doutor", 60), ev("form_start", "/contato", 3)]), {
+    lead: apurado(51),
+    janelaGa4: JANELA_GA4_COBRE,
+    epoca: EPOCA_ATMA,
+  });
+  assert.equal(m["abandono-por-campo"].valor, 12);
+  assert.match(m["abandono-por-campo"].fonte, /form_start.*63.*lead.*51/s);
+});
+
+test("T049/US5-AC3/FR-033 — janela do GA4 MENOR que a época (o caso real de hoje) devolve não apurado, nunca um número negativo", () => {
+  const m = medidoresDeEventos(leitura([ev("form_start", "/x", 37)]), { lead: apurado(51), janelaGa4: JANELA_GA4_HOJE, epoca: EPOCA_ATMA });
+  assert.equal(ehApurado(m["abandono-por-campo"]), false);
+  assert.match(m["abandono-por-campo"].naoApurado, /não cobre a época inteira/);
+  assert.match(m["abandono-por-campo"].naoApurado, /2026-08-06/);
+});
+
+test("T049 — sem `lead` apurado, abandono é não apurado (nunca inventa denominador)", () => {
+  const m = medidoresDeEventos(leitura([ev("form_start", "/x", 63)]), { lead: naoApuradoF("sem fonte de lead"), janelaGa4: JANELA_GA4_HOJE, epoca: EPOCA_ATMA });
+  assert.equal(ehApurado(m["abandono-por-campo"]), false);
 });
 
 test("GA4 fora não vira zero em medidor nenhum", () => {
@@ -845,9 +976,10 @@ test("montarN5 usa a fonte da célula — o aviso do medidor não pode virar 'co
   const scroll = medidores.find((m) => m.id === "scroll-ate-oferta");
   assert.equal(scroll.celula.estado, "apurado");
   assert.match(scroll.celula.fonte, /90% da PÁGINA/);
-  // e o não apurado leva a fonte para o `consultar`, não um rótulo genérico
+  // e o não apurado leva a fonte para o `consultar`, não um rótulo genérico — sem `lead`/`epoca`
+  // passados, abandono cai no primeiro guard (T049).
   const abandono = medidores.find((m) => m.id === "abandono-por-campo");
-  assert.match(abandono.celula.consultar, /encanamento, não copy/);
+  assert.match(abandono.celula.consultar, /banco/);
 });
 
 test("saida-checkout some em perfil sem checkout e continua em e-commerce", () => {

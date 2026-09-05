@@ -3,7 +3,8 @@ import { listProjects } from "@/lib/projects";
 import { ehApurado, pct } from "@/lib/funil.mjs";
 import { montarFicha, posicaoDeAtaque, resumirPortfolio, POSICOES } from "@/lib/okr.mjs";
 import { projetar } from "@/lib/projecao.mjs";
-import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
+import { resolverTicket } from "@/lib/ficha.mjs";
+import { HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
 import { Tabs } from "../tabs";
 import { Projecao } from "./projecao";
 
@@ -40,12 +41,15 @@ export default async function OkrPage() {
 
   const linhas = await Promise.all(
     projects.map(async (p) => {
-      const { cliques, leads: leadsCel, contatados, vendas, orcamentos } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
+      const { cliques, leads: leadsCel, contatados, respondeu, ticket, vendas, orcamentos, janelas } = await coletarDoProjeto(p, { porPipeline, erroLeads });
       // SC-001: a lista e a ficha leem o MESMO `coletado`. Passar menos aqui faria a `/okr` julgar
       // a posição de ataque por uma cadeia mais curta que a que a ficha exibe.
-      const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, contatados, vendas, orcamentos } });
-      const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
-      return { p, ficha, v: posicaoDeAtaque(ficha), projecao };
+      const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, contatados, respondeu, vendas, orcamentos }, declaracoes: p.declaracoes });
+      // 018/FR-022/FR-034: mesma resolução da ficha — apurado vence declarado antes de projetar().
+      const ticketCel = resolverTicket(ticket, p.meta ?? null);
+      const metaComTicket = ticketCel.estado === "nao-apurado" ? (p.meta ?? null) : { ...p.meta, ticket: (ticketCel as { valor: number }).valor };
+      const projecao = projetar({ ficha, meta: metaComTicket, hoje: HOJE });
+      return { p, ficha, v: posicaoDeAtaque(ficha), projecao, janelas, ticketCel, metaComTicket };
     })
   );
 
@@ -69,11 +73,11 @@ export default async function OkrPage() {
         <h1>O que adianta fazer agora</h1>
         <p>
           Cada projeto entra na cadeia do <strong>perfil</strong> dele e sai com a posição de ataque
-          do §7 de <code>handoff/okr-kpi-template.md</code>. Janela única para a árvore inteira (R7):{" "}
-          <strong>
-            {INICIO} → {FIM}
-          </strong>{" "}
-          — 28 dias fechando em D-3, o atraso do Search Console.
+          do §7 de <code>handoff/okr-kpi-template.md</code>. A janela aparece em <strong>cada
+          linha</strong> abaixo, não uma só aqui (018 substitui a R7 — "cada cadeia lê a janela que
+          a fonte tem", nenhuma taxa cruza janelas): por padrão 28 dias fechando em D-3, o atraso do
+          Search Console; projeto que declara <code>época</code> no card usa <code>época → hoje</code>{" "}
+          para a parte da cadeia que ela cobre (hoje, só a Atma).
         </p>
         {/* Em ordem de índice a linha abria com `23 sem perfil declarado`, em cinza de rodapé: o
             primeiro número que se lia era a AUSÊNCIA de veredito, e o que decide o dia (quantos com
@@ -81,12 +85,15 @@ export default async function OkrPage() {
             em 40, senão a contagem mente sobre onde a perda acontece — mas por último. */}
         <p>
           {[1, 2, 3].map((i) => `${resumo.porPosicao[i]} ${POSICOES[i]}`).join(" · ")} · {resumo.porPosicao[0]} {POSICOES[0]} — soma{" "}
-          {resumo.porPosicao.reduce((a: number, b: number) => a + b, 0)} de {resumo.total}.
+          {resumo.porPosicao.reduce((a: number, b: number) => a + b, 0)} de {resumo.total}.{" "}
+          <span className="foot">
+            Soma projetos com janelas diferentes (FR-009) — quem declara época conta numa janela maior que os demais.
+          </span>
         </p>
         {erroLeads && <p className="banner">⚠️ A coluna de leads caiu inteira ({erroLeads}). Nenhuma linha vira 0 por isso — todas viram `não apurado`.</p>}
       </section>
 
-      {comVeredito.map(({ p, ficha, v, projecao }) => (
+      {comVeredito.map(({ p, ficha, v, projecao, janelas, ticketCel, metaComTicket }) => (
         <section className="card ag-section" key={p.slug}>
           {/* `<h2>`, não `<span>`: com 40 nomes em span a página inteira tinha UM heading, e quem
               navega por heading parava uma vez em 10886px. */}
@@ -106,12 +113,22 @@ export default async function OkrPage() {
               Perfil {ficha.perfil} — {ficha.perfilNome} · N1: {ficha.n1} · <code>{ficha.n2}</code>
             </p>
           )}
+          {/* FR-009 (018) — a janela desta linha, não uma no cabeçalho. `conversao` é a janela de
+              `lead`/`orcamento`/`tratamento`; quando ela diverge de `descoberta` (só a Atma hoje) é
+              porque o card declara `época` — `visitante` (cliques) continua na janela menor, e a
+              ficha (`/okr/<slug>`) detalha isso número a número. */}
+          <p className="foot">
+            Janela: <strong>{janelas.conversao.inicio} → {janelas.conversao.fim}</strong> — {janelas.conversao.porque}
+            {janelas.conversao.inicio !== janelas.descoberta.inicio && (
+              <> · visitante (cliques) em janela própria: {janelas.descoberta.inicio} → {janelas.descoberta.fim}</>
+            )}
+          </p>
           <p>
             {v.celula && <strong>{v.celula}: </strong>}
             {v.motivo}
           </p>
 
-          <Projecao meta={p.meta} p={projecao} />
+          <Projecao meta={metaComTicket ?? undefined} p={projecao} ticketCel={ticketCel} />
 
           {ficha.marcos.length > 0 && (
             // A rolagem horizontal vinha do `overflow-x` do próprio `.card` — que não é focável, e

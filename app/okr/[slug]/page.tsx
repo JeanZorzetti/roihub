@@ -9,8 +9,8 @@ import { montarArvore, camadaDeEntrega, alavancaDePosicao } from "@/lib/arvore-m
 import { acoesDoRanking } from "@/lib/agenda.mjs";
 import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listDone, listDonos, listDonoDatas } from "@/lib/db";
-import { FIM, INICIO, HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
-import { montarNiveis, medidoresDeEventos } from "@/lib/ficha.mjs";
+import { HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
+import { montarNiveis, medidoresDeEventos, estadoDeApurado, resolverTicket } from "@/lib/ficha.mjs";
 import { canaisDoN4, razaoDoKr } from "@/lib/ficha-visual.mjs";
 import { Projecao, num } from "../projecao";
 import { Arvore } from "../arvore";
@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 type CelulaFicha =
   | { estado: "apurado"; valor: number | string; rotulo: string; fonte: string }
   | { estado: "declarado"; valor: number | string; rotulo: string; declaradoEm: string; oQue: string }
-  | { estado: "nao-apurado"; rotulo: string; motivo: string; consultar: string }
+  | { estado: "nao-apurado"; rotulo: string; motivo: string; consultar: string; rotuloBuraco?: "nao-mede" | "falhou-agora" | "tela-nao-le" }
   | { estado: "inferido"; valor: number; rotulo: string; de: string; divida: string };
 
 type Marco = { chave: string; nome: string; celula: { valor: number } | { naoApurado: string }; fonte: string };
@@ -92,7 +92,11 @@ const GLOSSARIO: { termo: string; def: string }[] = [
 // que constroem motivo hoje. O rótulo muda, o `estado` da célula continua sendo `nao-apurado`: não
 // é um 5º estado novo, é a mesma célula dizendo com mais precisão por que ela está vazia.
 const EH_FALHA_TRANSITORIA = /indispon[íi]vel/i;
-const rotuloBuraco = (motivo: string) => (EH_FALHA_TRANSITORIA.test(motivo) ? "falhou agora" : "não apurado");
+// 018/FR-028, R2 do contrato rotulo-buraco.md — precedência: `c.rotuloBuraco` decide primeiro;
+// SÓ na ausência dele a regex de hoje continua sendo o comportamento (fallback, nunca definição).
+const ehFalhaTransitoria = (c: { motivo: string; rotuloBuraco?: string }) =>
+  c.rotuloBuraco ? c.rotuloBuraco === "falhou-agora" : EH_FALHA_TRANSITORIA.test(c.motivo);
+const rotuloExibicaoBuraco = (c: { motivo: string; rotuloBuraco?: string }) => (ehFalhaTransitoria(c) ? "falhou agora" : "não apurado");
 
 // achado 4: mesmo número em 3 formatos na mesma tela — "R$ 4.000" no hero (app/okr/projecao.tsx),
 // "4000" cru no N2 (esta célula), "0" sem cifrão no N1. Os dois rótulos abaixo são os ÚNICOS que
@@ -137,7 +141,7 @@ function Cel({ c }: { c: CelulaFicha }) {
     // do contexto visual da linha. O rótulo da própria célula (já traduzido acima) desambigua.
     return (
       <details className="ficha-explicacao">
-        <summary className="foot">{rotuloBuraco(c.motivo)} — como apurar {ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo}</summary>
+        <summary className="foot">{rotuloExibicaoBuraco(c)} — como apurar {ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo}</summary>
         <p className="foot">
           {c.motivo}
           {!repetido && (
@@ -150,7 +154,7 @@ function Cel({ c }: { c: CelulaFicha }) {
       </details>
     );
   }
-  return <span className="foot">{rotuloBuraco(c.motivo)} — {texto}</span>;
+  return <span className="foot">{rotuloExibicaoBuraco(c)} — {texto}</span>;
 }
 
 /** Células "não apurado" repetem o mesmo motivo (achado 4 do design-review original: 9 das 33
@@ -313,7 +317,7 @@ function CanaisN4({ canais }: { canais: { celula: CelulaFicha; fracao: number | 
         grupo.itens.length > 1 ? (
           <details key={`grupo-${i}`} className="ficha-linha">
             <summary>
-              {grupo.itens.length} {EH_FALHA_TRANSITORIA.test(grupo.motivo) ? "falharam agora" : "não apurados"} — {grupo.motivo}:{" "}
+              {grupo.itens.length} {ehFalhaTransitoria(grupo.itens[0]) ? "falharam agora" : "não apurados"} — {grupo.motivo}:{" "}
               {grupo.itens.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
             </summary>
             {grupo.itens.map((c, j) => (
@@ -387,14 +391,26 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, contatados, vendas, impressoes, orcamentos, motivos, ga4, ga4ev, orcamentosSemLead, paginas } = await coletarDoProjeto(p, { inicio: INICIO, fim: FIM, porPipeline, erroLeads });
-  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, contatados, vendas, orcamentos } });
+  const { cliques, leads, contatados, respondeu, ticket, vendas, impressoes, orcamentos, motivos, ga4, ga4ev, orcamentosSemLead, paginas, janelas } = await coletarDoProjeto(p, { porPipeline, erroLeads });
+  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, contatados, respondeu, vendas, orcamentos }, declaracoes: p.declaracoes });
+  // 018/FR-007/FR-011: a cadeia de Conversão só existe A PARTIR de `lead` — `visitante` é
+  // Descoberta e ligá-lo à cadeia seria taxa cruzando janelas. Enquanto `PERFIS.D.marcos` ainda
+  // começa em `visitante` (US2/T024 tira `visitante` e `contatado` de lá), a página filtra na
+  // exibição; perfil que não começa em `visitante` (ex.: C, que começa em `contato`) não perde nada.
+  const iniciaEmVisitante = ficha.marcos[0]?.chave === "visitante";
+  const marcosCadeia = iniciaEmVisitante ? ficha.marcos.slice(1) : ficha.marcos;
+  const taxasCadeia = iniciaEmVisitante ? ficha.taxas.slice(1) : ficha.taxas;
   const veredito = posicaoDeAtaque(ficha);
   // O SEGUNDO veredito, e ele é PARALELO: a §7 manda por fato apurado, a régua só dimensiona.
   // Nada aqui realimenta `posicaoDeAtaque` — se um dia realimentar, a §7 passa a decidir por
   // benchmark, que é exatamente o que a R6 recusa.
   const mercado = distanciaDoMercado(ficha);
-  const projecao = projetar({ ficha, meta: p.meta ?? null, hoje: HOJE });
+  // 018/FR-022/FR-034: resolverTicket() ANTES de projetar() — `lib/projecao.mjs` não ganha regra
+  // nova, só recebe o ticket já resolvido. `montarNiveis()` chama a MESMA função pura com os
+  // mesmos dois insumos (ticket, meta) para N1/N2 — o resultado é idêntico por construção.
+  const ticketCel = resolverTicket(ticket, p.meta ?? null);
+  const metaComTicket = ticketCel.estado === "nao-apurado" ? (p.meta ?? null) : { ...p.meta, ticket: (ticketCel as { valor: number }).valor };
+  const projecao = projetar({ ficha, meta: metaComTicket, hoje: HOJE });
 
   // ── Árvore de metas (016) — a descida que a 010 começa e para. `projetar()` divide a meta uma
   // vez (`meta ÷ âncora`); `montarArvore()` continua até impressões, escolhendo o divisor de cada
@@ -456,7 +472,9 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     impressoes,
     "lead-gravado": leads,
     "gateway-ligado": vendas,
-    ...medidoresDeEventos(ga4ev),
+    // 018/FR-032/FR-033: abandono compara form_start (GA4, janela COMPORTAMENTO) com lead (banco,
+    // janela CONVERSAO) — só quando a primeira cabe inteira dentro da segunda.
+    ...medidoresDeEventos(ga4ev, { lead: leads, janelaGa4: janelas.comportamento, epoca: janelas.conversao }),
   };
 
   const niveis = montarNiveis({
@@ -470,9 +488,17 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     erroAgenda,
     datasDono,
     disponiveisN5,
-    janela: { inicio: INICIO, fim: FIM },
+    // A janela do GA4 — a mesma que `coletarDoProjeto()` usou para buscá-lo (018, D8). Divergir da
+    // janela de Conversão deixou de ser defeito (FR-010); este parâmetro só serve para o N4 saber
+    // comparar contra a janela CERTA, não contra qualquer uma.
+    janela: { inicio: janelas.comportamento.inicio, fim: janelas.comportamento.fim },
     ga4,
     orcamentosSemLead,
+    // 018/FR-013: `contatados` alimenta a NOTA de N3 ("100% contatados..."), não mais um marco.
+    // `cliques` idem — N4 lê direto, sem depender de `visitante` existir em `ficha.marcos`.
+    contatados,
+    cliques,
+    ticketApurado: ticket,
   }) as Array<{
     id: string;
     titulo: string;
@@ -587,9 +613,24 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
           )}
         </div>
 
+        {iniciaEmVisitante && (
+          <div className="ficha-bloco">
+            <h2 className="ficha-bloco-h">Descoberta</h2>
+            {/* 018/FR-005/FR-007/FR-008/FR-011: `visitante` sai da cadeia de Conversão — é
+                Descoberta, janela própria, sem taxa ligando ao resto (a taxa `visitante→lead`
+                cruzaria janelas). O rodapé "janela única para a árvore inteira (R7)" saiu; cada
+                bloco agora carrega a janela que produziu os números dele. */}
+            <p className="foot">
+              Janela: <strong>{janelas.descoberta.inicio} → {janelas.descoberta.fim}</strong> — {janelas.descoberta.porque}.
+              Sem taxa ligando estes números à Conversão — são cadeias diferentes.
+            </p>
+            <Linha c={estadoDeApurado(cliques, "Search Console", "visitante")} />
+          </div>
+        )}
+
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Quanto falta</h2>
-          <Projecao meta={p.meta} p={projecao} />
+          <Projecao meta={metaComTicket ?? undefined} p={projecao} ticketCel={ticketCel} />
         </div>
 
         {(arvore.camadas.length > 1 || arvore.parou) && (
@@ -679,13 +720,6 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
             ))}
           </dl>
         </details>
-        <p className="foot">
-          Janela única para a árvore inteira (R7):{" "}
-          <strong>
-            {INICIO} → {FIM}
-          </strong>{" "}
-          — 28 dias fechando em D-3, o atraso do Search Console.
-        </p>
       </section>
 
       {niveis.map((n) => {
@@ -706,12 +740,24 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
         <section className="card ag-section" aria-labelledby={n.id} key={n.id}>
           <h2 className="eyebrow" id={n.id}>{n.titulo}</h2>
           {n.id === "N4" && n.nota && <p className="foot ficha-nota-n4">{n.nota}</p>}
+          {/* 018/FR-013: a nota de contato — `contatado` saiu de marco, e a leitura ("todo lead
+              fora de `novo` foi contatado") continua visível, só que fora da cadeia e do gargalo. */}
+          {n.id === "N3" && n.nota && <p className="foot ficha-nota-n4">{n.nota}</p>}
 
           {/* achado 3: substitui o funil decorativo (área proporcional a `aria-hidden`, sem
               rótulo, sem eixo) por um diagrama de cadeia com nó por marco e aresta por taxa —
-              lido diretamente de `ficha.marcos`/`ficha.taxas`, não do `n.funil` derivado. */}
-          {n.id === "N3" && ficha.marcos.length > 0 && (
-            <CadeiaDiagrama marcos={ficha.marcos} taxas={ficha.taxas} veredito={veredito} janela={{ inicio: INICIO, fim: FIM }} />
+              lido diretamente de `marcosCadeia`/`taxasCadeia` (018: sem `visitante`, que foi para
+              o bloco de Descoberta), não do `n.funil` derivado. */}
+          {n.id === "N3" && marcosCadeia.length > 0 && (
+            <>
+              {/* FR-005/FR-008 (018): a época aparece com o motivo declarado ao lado da janela de
+                  Conversão — `janelas.conversao.porque` já É esse motivo quando o card declara
+                  `epoca`, e "sem época declarada no card" quando não declara. */}
+              <p className="foot">
+                Janela desta cadeia: <strong>{janelas.conversao.inicio} → {janelas.conversao.fim}</strong> — {janelas.conversao.porque}
+              </p>
+              <CadeiaDiagrama marcos={marcosCadeia} taxas={taxasCadeia} veredito={veredito} janela={{ inicio: janelas.conversao.inicio, fim: janelas.conversao.fim }} />
+            </>
           )}
           {n4 && <CanaisN4 canais={n4.canais} />}
           {heroN1 && <HeroN1 c={heroN1} necessario={necessarioNaJanela} />}
@@ -722,7 +768,11 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
               consecutivos, sem apurado no meio, então agrupar não reordena nada. */}
           {n.id === "N3" || n.id === "N4" || n.id === "N5"
             ? (() => {
-                const { avulsas, grupos } = agruparPorMotivo(n4 ? n4.resto : n.celulas);
+                // N3 (018, FR-007): a primeira célula é a taxa `visitante→lead` quando a cadeia
+                // ainda começa em `visitante` — ela já saiu para o bloco de Descoberta, então some
+                // daqui também. `agruparPorMotivo` nunca vê essa célula.
+                const celulasN3 = n.id === "N3" && iniciaEmVisitante ? n.celulas.slice(1) : n.celulas;
+                const { avulsas, grupos } = agruparPorMotivo(n4 ? n4.resto : celulasN3);
                 return (
                   <>
                     {avulsas.map((c, i) => (
@@ -732,7 +782,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                       grupo.itens.length > 1 ? (
                         <details key={`grupo-${i}`} className="ficha-linha">
                           <summary>
-                            {grupo.itens.length} {EH_FALHA_TRANSITORIA.test(grupo.motivo) ? "falharam agora" : "não apurados"} — {grupo.motivo}:{" "}
+                            {grupo.itens.length} {ehFalhaTransitoria(grupo.itens[0]) ? "falharam agora" : "não apurados"} — {grupo.motivo}:{" "}
                             {grupo.itens.map((c) => ROTULOS_AMIGAVEIS[c.rotulo] ?? c.rotulo).join(", ")}
                           </summary>
                           {grupo.itens.map((c, j) => (

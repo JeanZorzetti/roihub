@@ -487,6 +487,17 @@
     "perfil": "D",
     "ga4": { "propertyId": "properties/504053080" },
     "meta": { "valor": 50000, "ticket": 4000, "prazo": "2026-12-31", "declaradaEm": "2026-09-01" },
+    "epoca": {
+      "data": "2026-07-31",
+      "porque": "sociedade desfeita; o banco com os leads anteriores foi perdido"
+    },
+    "declaracoes": {
+      "tratamento": {
+        "quem": "Jean",
+        "em": "2026-09-05",
+        "texto": "zero tratamentos iniciados — declarado pelo dono. O checkout do MercadoPago está descontinuado: nada registraria a próxima venda."
+      }
+    },
     "nome": "Atma Aligner — alinhadores invisíveis",
     "url": "https://atma.roilabs.com.br/",
     "repo": "Atma",
