@@ -183,9 +183,15 @@ lead → respondeu → orçamento → venda
   não pode valer para leads e não valer para dinheiro. Líquido porque o desconto foi concedido em
   100% dos casos — desconto que todo mundo recebe é o preço.
 - **`status_historico`** entra para passagem cumulativa, velocidade (8,3h médios até o contato,
-  34,9h no pior caso) e coorte.
+  34,9h no pior caso) e coorte. ⚠️ **Revisto em 05/09 (§14): vai para a 021, não para a 019.** A
+  passagem cumulativa existia para consertar `contatado: 6` contra 17 no log — e a 018 resolveu
+  isso por outro caminho, tirando `contatado` da cadeia e derivando `respondeu` do `motivo`. O
+  número que ela ia consertar não está mais na tela: não é adiamento, é necessidade extinta.
+  Velocidade e coorte sobrevivem como pedido, mas nenhuma é gargalo hoje (o gargalo é
+  `sem_resposta` 29) e são conteúdo **novo** numa spec cujo critério é a página dizer **menos**.
 - **Coorte com n < 20 sai como contagem crua, nunca como percentual.** Uma coorte de 4 leads só
-  produz 0%, 25%, 50%, 75% ou 100%.
+  produz 0%, 25%, 50%, 75% ou 100%. Com 51 leads em 3 meses (jul 4 · ago 39 · set 8) a regra deixa
+  dois dos três como contagem — mais uma razão para a coorte não ser a 019.
 
 ### Buracos — três rótulos
 
@@ -223,7 +229,8 @@ veredito com aparência de rigor.
 | spec | escopo | fecha quando |
 |---|---|---|
 | **018 · correção** ✅ | época · `contatado` fora da cadeia · `respondeu` dentro · ticket apurado · `form_submit` fora do catálogo · três rótulos de buraco | nenhum número exibido está errado |
-| **019 · estrutura** | primeira dobra nova · `/okr/atma/metodo` · `/okr/atma/aquisicao` · época como costura da 016 · pipeline como valor em risco · **+ alargar Descoberta e Comportamento (herdado da 018)** · **+ ler `status_historico`** | teste dos 30 segundos |
+| **019 · estrutura** | primeira dobra nova · `/okr/atma/metodo` · `/okr/atma/aquisicao` · época como costura da 016 · pipeline como valor em risco · **+ alargar Descoberta e Comportamento (herdado da 018)** | teste dos 30 segundos |
+| **021 · profundidade de funil** | velocidade (8,3h até o contato) · passagem cumulativa · coorte — tudo de `status_historico`, que hoje tem 82 transições e nada lê | ver §14 |
 | **020 · régua** | 6 benchmarks pesquisados com fonte · apagar `market_benchmarks` | as 6 réguas têm fonte clicável |
 
 **Nessa ordem, e separadas de propósito.** Se a correção vier junto do redesenho, não há como saber
@@ -404,7 +411,7 @@ errado, é o caminho feliz calado — mesma família de
 
 ---
 
-## 12. Linha de base da SC-000 (018, T001/T002) — 05/09/2026, ANTES de qualquer edição
+## 12b. Linha de base da SC-000 (018, T001/T002) — 05/09/2026, ANTES de qualquer edição
 
 Medido rodando `montarNiveis()` com coleta real (banco da Atma via `ATMA_DATABASE_URL`, GSC, GA4),
 no código de hoje, antes da primeira edição desta spec. Corrida manual e única — o script viveu em
@@ -473,7 +480,7 @@ racional completos em `specs/018-atma-numeros-certos/research.md`, D8, D11 e D12
    esticar o GA4. O "12 (19,1%)" citado segue correto — é `form_start` 64 medido nos 37 dias
    inteiros da época, o resultado esperado quando as janelas cobrirem uma a outra.
 
-## 14. Backlog de `status_historico` — não vira célula nesta spec (FR-031, T054)
+## 14. Backlog de `status_historico` — vira a spec 021, não a 019 (FR-031, T054)
 
 `status_historico` segue com dado gravado que nada lê, e criar célula só para escondê-la da lista
 seria scaffolding (mesmo argumento da FR-031 que já vale para o script de baseline do T001). Fica
