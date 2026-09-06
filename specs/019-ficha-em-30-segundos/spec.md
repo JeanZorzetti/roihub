@@ -448,8 +448,13 @@ outras estarem no lugar. Se cair, a spec ainda fecha.
   tela da dobra, com as três respostas apontadas nela.
 - **SC-002**: a lista de buracos reais da atma tem **duas ou menos** linhas, e nenhuma carrega
   `tela-nao-le`.
-- **SC-003**: `/okr/atma` exibe **10,1 tratamentos até 31/12/2026** e, na mesma tela, o motivo de a
-  meta não se dividir para trás. Hoje exibe só o segundo.
+- **SC-003**: `/okr/atma` exibe **`meta.valor ÷ ticket apurado` tratamentos até o prazo do card** e,
+  na mesma tela, o motivo de a meta não se dividir para trás. Hoje exibe só o segundo.
+  ⚠️ **Verificar rodando a conta, nunca contra constante** — mesma disciplina da SC-004 ao lado. A
+  redação original desta SC exigia "10,1 tratamentos", número de 05/09 quando o ticket apurado era
+  R$ 4.932,34; dois orçamentos depois ele é R$ 4.600,87 e a tela mostra **10,87**, corretamente.
+  Critério com número cravado apodrece igual a prosa com número cravado — é o que o
+  `scripts/validade.mjs` existe para impedir, e aconteceu aqui dentro (auditoria de 06/09).
 - **SC-004**: `/okr/atma` exibe `enviados · fechados · vivos` batendo com a query direta em
   `ATMA_DATABASE_URL` **no momento da verificação** (em 06/09/2026: R$ 44.945,43 · R$ 0 · 2 vivos,
   mais 1 órfão de R$ 4.490,00), com o órfão nomeado à parte, e em nenhum lugar da tela esse valor é

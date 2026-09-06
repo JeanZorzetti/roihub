@@ -60,7 +60,11 @@ export const MARCAS_AMIGAVEIS: Record<string, string> = {
  *  o vocabulário é do MÉTODO (handoff/okr-kpi-template.md), não do projeto. */
 export const GLOSSARIO: { termo: string; def: string }[] = [
   { termo: "§7.N", def: "a posição do veredito no método de ataque: 1 = fator zerado, 2 = falta apurar antes de melhorar, 3 = cadeia fechada (ataca a menor taxa)." },
-  { termo: "N0–N6", def: "os 7 níveis da árvore, do objetivo (N0) ao que fazer segunda (N6) — cada um responde uma pergunta diferente, nunca a mesma duas vezes." },
+  // Auditoria de 06/09: a 019 mandou N0–N6 para `/okr/<slug>/metodo`, e este verbete continuou
+  // descrevendo sete seções que não existem mais na ficha. Não sai da ficha: `N1` aparece nela
+  // duas vezes (a linha do perfil e "N1 necessário no prazo"), e sem o verbete fica sem tradução.
+  // O que muda é a última frase — o leitor precisa saber ONDE estão os sete níveis agora.
+  { termo: "N0–N6", def: "os 7 níveis da árvore, do objetivo (N0) ao que fazer segunda (N6) — cada um responde uma pergunta diferente, nunca a mesma duas vezes. Na ficha só aparece o N1 (quanto a meta vale em R$); os sete, com a derivação inteira, estão em método." },
   { termo: "D1–D4", def: "as 4 famílias de causa de um buraco: D1 Descoberta (o canal te encontra?), D2 Entrega (a página chega inteira?), D3 Persuasão (ela convence?), D4 Encanamento (o evento chega ao banco?)." },
   { termo: "CR(A→B)", def: "taxa de conversão de A para B — de cada 100 que chegam em A, quantos viram B." },
   { termo: "âncora", def: "o último degrau apurado da cadeia, de cima para baixo — é a partir dele que a meta é dividida para trás." },

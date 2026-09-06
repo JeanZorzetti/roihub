@@ -748,6 +748,17 @@ test("auditoria 05/09 — o rótulo do ticket nomeia os dois denominadores, não
   assert.match(c.fonte, /média de 7 orçamentos de 4 pessoas/);
 });
 
+test("auditoria 06/09 — com órfão, o rótulo decompõe para a conta fechar contra vivos+perdidos", () => {
+  // Na atma de 06/09: 9 documentos, 6 destinatários — 5 leads + 1 órfão. O bloco de valor em risco
+  // diz 2 vivos + 3 perdidos (= 5 pessoas) e nomeia o órfão à parte; sem a decomposição aqui, quem
+  // soma 2+3 e compara com 6 procura um erro que não existe.
+  const c = resolverTicket({ valor: 4600.87, docs: 9, pessoas: 6, orfaos: 1 }, null);
+  assert.match(c.fonte, /média de 9 orçamentos de 6 pessoas \(5 com lead \+ 1 sem\)/);
+  // Sem órfão o rótulo NÃO ganha parêntese — decomposição de "5 com lead + 0 sem" é ruído.
+  assert.match(resolverTicket({ valor: 100, docs: 5, pessoas: 5, orfaos: 0 }, null).fonte, /de 5 pessoas d/);
+  assert.doesNotMatch(resolverTicket({ valor: 100, docs: 5, pessoas: 5, orfaos: 0 }, null).fonte, /com lead/);
+});
+
 test("auditoria 05/09 — singular no rótulo, e sem os contadores o texto volta ao genérico em vez de mentir", () => {
   assert.match(resolverTicket({ valor: 500, docs: 1, pessoas: 1 }, null).fonte, /média de 1 orçamento de 1 pessoa /);
   assert.match(resolverTicket(apurado(4932.34), null).fonte, /^média de orçamentos da janela/);
