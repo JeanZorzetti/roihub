@@ -109,3 +109,56 @@ Fecha: 10.922,50 + 26.444,36 + 4.041,00 = 41.407,86.
 
 Palitagem `>= 2026-07-31` (query 2): `sem_resposta 29 · sem_interesse 9 · contato_futuro 8 ·
 enviou_documentacao 3 · perdido_concorrencia 1 · preco_alto 1 · sem motivo 1` = **52 leads**.
+
+---
+
+## T055 — o DEPOIS, medido no mesmo navegador
+
+Implementação em `bd0373e`, medida em `http://localhost:3001` (dev), mesmo script, mesma máquina.
+
+| viewport | antes | depois | |
+|---|---|---|---|
+| 1280×800 | 3.438px | **1.463px** | −57% |
+| 360×640 | 5.543px | **2.417px** | −56% |
+
+Posição das três respostas contra a dobra de 800px (borda inferior de cada elemento):
+
+| pergunta | y a 1280×800 | y a 360×640 |
+|---|---|---|
+| qual degrau é o pior (legenda do diagrama) | **500px** | 742px |
+| por quê (palitagem dominante) | **742px** | 1.252px |
+| o que fazer (linha `Fazer:`) | **779px** | 1.357px |
+
+As três cabem acima da dobra a 1280×800. A 360×640 a **ordem** é a mesma, dentro das duas primeiras
+rolagens.
+
+> O último ajuste que fez a SC-001 passar não foi cortar bloco: a linha `Fazer:` estava em **801px**,
+> 1px abaixo da dobra. O que a trouxe para 779px foi encurtar de três linhas para uma a prosa da
+> régua de mercado AUSENTE — texto que não responde nenhuma das três perguntas.
+
+Capturas: `v-_okr_atma-{360,768,1440}.png`, e o mesmo para `/metodo` e `/aquisicao`.
+
+## ui-verification — as 3 telas, no navegador
+
+| checagem | `/okr/atma` | `/okr/atma/metodo` | `/okr/atma/aquisicao` |
+|---|---|---|---|
+| headings / `h1` | 6 / **1** | 9 / **1** | 3 / **1** |
+| salto de nível de heading | nenhum | nenhum | nenhum |
+| link ou botão sem nome acessível | nenhum | nenhum | nenhum |
+| paradas de foco alcançáveis | 21 | 24 | 22 |
+| estouro horizontal a 360/768/1440 | nenhum | nenhum | nenhum |
+| console | **limpo** | **limpo** | **limpo** |
+| requisições com status ≥ 400 | 0 | 0 | 0 |
+| domínios de terceiro | nenhum | nenhum | nenhum |
+| CLS | 0,0000 | 0,0000 | 0,0000 |
+
+Dois achados apareceram nas **três** telas e foram rastreados até a origem: uma "imagem sem
+descrição" e um focável invisível. Os dois são o **overlay de dev do Next** (`nextjs-portal`, um
+`<svg>` 40×40 dentro do shadow root) — não existem em produção e não vieram desta spec. O `<svg>` do
+diagrama de cadeia está `aria-hidden="true"` com o `<figcaption>` carregando a mesma leitura em
+texto, e por isso **não** aparece como imagem sem nome na árvore.
+
+**Não verificado**: aparelho real (toque, teclado virtual, rede móvel), leitor de tela de verdade
+(NVDA/VoiceOver anunciam diferente do snapshot) e dado de campo. LCP local (4,1s na ficha, 1,6s na
+aquisição) é de **dev server sem build de produção**, com as chamadas reais de banco/GSC/GA4 — não
+serve de linha de base e não foi usado para decidir nada.
