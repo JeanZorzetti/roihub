@@ -170,3 +170,39 @@ Spec Kit `015-okr-regua-de-mercado`, seguindo a constituição (III: `.mjs` puro
 | `handoff/okr-kpi-template.md` | nota na R6 apontando para cá — a régua é o uso *permitido* de benchmark |
 
 `lib/okr.mjs` **não é tocado.** A §7 sai desta feature exatamente como entrou.
+
+---
+
+## 7. Dívida aberta pela 020 — as sete linhas sem link (06/09/2026)
+
+A **spec 020** passou a exigir `url`, `acessadoEm` e `recorte` em toda linha de régua (FR-002/FR-003)
+e deixou **sete linhas legadas de fora** de propósito (FR-002a): elas têm `fonte` como nome de
+veículo em texto solto, sem link e sem data de acesso.
+
+| perfil | degrau | fonte hoje |
+|---|---|---|
+| A | `visitante→signup` | ChartMogul; Orbix |
+| A | `trial→cobranca` | ChartMogul, SaaS Conversion Report |
+| B | `produto→carrinho` | Mida; Triple Whale; ChatBoq |
+| B | `carrinho→checkout` | ChatBoq; Growers |
+| B | `checkout→pago` | Littledata (Shopify); Blend Commerce |
+| C | `conversa→proposta` | Optifai, 939 empresas |
+| C | `proposta→contrato` | Pitchsite; Waco3; Flowcase |
+
+**Por que ficaram de fora**: a 020 é sobre a Atma (perfil D) e **nenhuma das sete aparece na ficha
+dela**. Re-verificar as sete multiplicaria a pesquisa por ~2,3 sem mover o leitor daquela spec.
+
+**Por que a dívida é real, e não teórica**: a Fase 0 da 020 abriu sete páginas candidatas e **duas
+não continham o número que a busca prometia** (navboost e cufinder), e uma terceira devolveu 403.
+Sem abrir o link, uma citação por nome de veículo é indistinguível de uma citação inventada — e
+`fonte: "A definir"` foi exatamente como as 12 linhas de `market_benchmarks` da Atma passaram 38 dias
+alimentando um veredito falso numa tela de admin.
+
+**O que a spec que herdar isto precisa fazer**: abrir cada uma das sete, confirmar que o número
+citado está na página, e então preencher `url`/`acessadoEm`/`recorte` — ou **remover a linha**, pela
+regra que já governa o arquivo (degrau sem fonte publicada não tem linha).
+
+⚠️ A lista das sete é **literal** em `test/benchmark.test.mjs` (constante `LEGADAS_015`), não
+derivada. Derivar ("toda linha sem url é legada") faria uma linha NOVA sem link se autoperdoar, que
+é justamente o que a trava 6 existe para pegar. Ao resolver a dívida, esvazie a constante — não
+acrescente exceções a ela.

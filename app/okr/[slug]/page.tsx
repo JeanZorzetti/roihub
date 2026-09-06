@@ -147,9 +147,39 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
               // A ausência de régua sai em UMA linha. Antes eram três de prosa explicando por que
               // não há comparação, e foi o que empurrou "o que fazer" para baixo da dobra a
               // 1280×800 (medido: 801px, 1px abaixo). O motivo continua dito; o parágrafo não.
+              //
+              // 020 — a MESMA linha, com texto melhor. Quando a recusa foi pesquisada, ela nomeia o
+              // degrau e diz por que aquele degrau não tem régua; a fonte descartada aparece com o
+              // número, porque é justamente o número que o leitor acharia sozinho e aplicaria errado.
+              // Sem recusa pesquisada (os outros 34 projetos), o texto genérico continua igual.
               <p className="foot">
-                <strong>Mercado</strong> · nenhum degrau com régua e os dois lados apurados — apurar
-                vem antes de comparar (§7.2).
+                <strong>Mercado</strong> ·{" "}
+                {mercado.recusaEmDestaque ? (
+                  <>
+                    <strong>
+                      {mercado.recusaEmDestaque.de} → {mercado.recusaEmDestaque.para}
+                    </strong>{" "}
+                    não tem régua: {mercado.recusaEmDestaque.motivo}.
+                    {mercado.recusaEmDestaque.descartadas?.[0] && (
+                      <>
+                        {" "}
+                        <em>
+                          Não confundir com{" "}
+                          {mercado.recusaEmDestaque.descartadas[0].url ? (
+                            <a href={mercado.recusaEmDestaque.descartadas[0].url} target="_blank" rel="noopener noreferrer">
+                              {mercado.recusaEmDestaque.descartadas[0].fonte}
+                            </a>
+                          ) : (
+                            mercado.recusaEmDestaque.descartadas[0].fonte
+                          )}{" "}
+                          ({mercado.recusaEmDestaque.descartadas[0].numero}), que mede outro degrau.
+                        </em>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>nenhum degrau com régua e os dois lados apurados — apurar vem antes de comparar (§7.2).</>
+                )}
               </p>
             )
           )}
