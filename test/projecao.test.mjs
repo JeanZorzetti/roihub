@@ -171,17 +171,89 @@ test("guarda 7 — sem âncora, nenhum degrau medido", () => {
   assertNadaApurado(p);
 });
 
-test("guarda 8 — âncora zerada, meta não se divide por volume nenhum (G5)", () => {
-  const ficha = fichaBase({
+// ---------------------------------------------------------------------------------------------
+// 019/US3 — a guarda 8 PARTIDA (contracts/projecao-guarda-8.md). A FR-011 revoga por escrito a
+// FR-034 da 018: `meta ÷ ticket` não toca a âncora e volta a sair apurada; `meta ÷ cadeia`
+// continua não apurada, nomeando a âncora zerada. O que muda é SÓ o ramo da âncora zerada.
+// ---------------------------------------------------------------------------------------------
+
+/** A cadeia que fecha em zero — o caso real da atma, sintético (nenhum número do banco aqui). */
+const ANCORA_ZERADA = fichaBase({
+  marcos: [
+    { chave: "visitante", nome: "visitante", celula: cel(0) },
+    { chave: "lead", nome: "lead", celula: na("sem coletor") },
+  ],
+});
+const MOTIVO_ANCORA_ZERADA = "âncora zerada — meta não se divide por volume nenhum";
+
+test("019/T020 caso 1 — âncora zerada: n1Total APURADO, e é a conta `meta ÷ ticket`, não uma constante", () => {
+  const p = projetar({ ficha: ANCORA_ZERADA, meta: METABASE, hoje: HOJE });
+  assert.equal(ehApurado(p.n1Total), true);
+  assert.equal(p.n1Total.valor, METABASE.valor / METABASE.ticket);
+});
+
+test("019/T020 caso 2 — âncora zerada: n1Janela apurado e `normalizacao.conta` legível", () => {
+  const p = projetar({ ficha: ANCORA_ZERADA, meta: METABASE, hoje: HOJE });
+  assert.equal(ehApurado(p.n1Janela), true);
+  assert.ok(p.normalizacao, "normalizacao preenchida — a conta é de CALENDÁRIO, não de cadeia");
+  assert.equal(p.normalizacao.janelaDias, 28);
+  assert.equal(p.normalizacao.diasRestantes, 28);
+  assert.match(p.normalizacao.conta, /=/);
+});
+
+test("019/T020 caso 3 — âncora zerada: fator e múltiplo NÃO apurados, e o motivo cita a âncora zerada", () => {
+  const p = projetar({ ficha: ANCORA_ZERADA, meta: METABASE, hoje: HOJE });
+  for (const campo of ["fatorObrigatorio", "multiploNecessario", "folga", "multiploDeVolume"]) {
+    assert.equal(ehApurado(p[campo]), false, `${campo} não pode sair apurado sem volume para dividir`);
+    assert.equal(p[campo].naoApurado, MOTIVO_ANCORA_ZERADA);
+  }
+  assert.deepEqual(p.degrausAMedir, []);
+  // FR-010: a tela precisa NOMEAR o degrau zerado — sem o objeto, não tem o nome.
+  assert.equal(p.ancora.chave, "visitante");
+  assert.equal(p.ancora.valor, 0);
+});
+
+test("019/T020 caso 4 — âncora zerada: veredito continua `nao-apurado` (a tela distingue por célula)", () => {
+  const p = projetar({ ficha: ANCORA_ZERADA, meta: METABASE, hoje: HOJE });
+  assert.equal(p.veredito, "nao-apurado");
+  assert.equal(p.motivo, MOTIVO_ANCORA_ZERADA);
+  assertVereditoValido(p);
+});
+
+test("019/T020 caso 5 — guardas 1–7 seguem devolvendo a projeção INTEIRA não apurada (16 projetos sem meta)", () => {
+  const semAncora = fichaBase({
     marcos: [
-      { chave: "visitante", nome: "visitante", celula: cel(0) },
+      { chave: "visitante", nome: "visitante", celula: na("sem coletor") },
       { chave: "lead", nome: "lead", celula: na("sem coletor") },
     ],
   });
-  const p = projetar({ ficha, meta: METABASE, hoje: HOJE });
-  assert.equal(p.veredito, "nao-apurado");
-  assert.equal(p.motivo, "âncora zerada — meta não se divide por volume nenhum");
-  assertNadaApurado(p);
+  const casos = [
+    [{ ficha: fichaBase({ semPerfil: na("sem perfil declarado no card"), marcos: [] }), meta: METABASE }, "sem perfil declarado no card"],
+    [{ ficha: fichaBase(), meta: null }, "sem meta declarada"],
+    [{ ficha: fichaBase(), meta: { ...METABASE, valor: 0 } }, "sem valor de meta declarado"],
+    [{ ficha: fichaBase(), meta: { ...METABASE, ticket: 0 } }, "sem ticket declarado — R$ não vira contagem sem valor por unidade"],
+    [{ ficha: fichaBase(), meta: { ...METABASE, prazo: "ontem" } }, "prazo ausente ou inválido"],
+    [{ ficha: fichaBase(), meta: { ...METABASE, prazo: "2026-08-01" } }, "prazo vencido em 2026-08-01"],
+    [{ ficha: semAncora, meta: METABASE }, "sem âncora — nenhum degrau medido para dividir"],
+  ];
+  for (const [entrada, motivo] of casos) {
+    const p = projetar({ ...entrada, hoje: HOJE });
+    assert.equal(p.motivo, motivo);
+    assert.equal(p.veredito, "nao-apurado");
+    // Byte a byte o de hoje: NADA apurado, e `ancora: null` — lá não há âncora nenhuma a nomear.
+    assertNadaApurado(p);
+    assert.equal(p.ancora, null);
+    assert.equal(p.normalizacao, null);
+  }
+});
+
+test("019/T020 caso 6 — âncora NÃO zerada: ramos de taxa e múltiplo inalterados", () => {
+  const taxa = projetar({ ficha: fichaBase(), meta: METABASE, hoje: HOJE });
+  assert.equal(ehApurado(taxa.fatorObrigatorio), true);
+  assert.equal(taxa.veredito, "cabe");
+  const multiplo = projetar({ ficha: CADEIA_FECHADA, meta: METABASE, hoje: HOJE });
+  assert.equal(ehApurado(multiplo.multiploNecessario), true);
+  assert.equal(multiplo.veredito, "multiplo");
 });
 
 test("G10 — declaradaEm nunca entra em conta nem invalida a meta", () => {

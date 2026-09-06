@@ -15,6 +15,8 @@ import {
   celulasDeOrcamento,
   ticketDeOrcamentos,
   motivosDoFunil,
+  buracosDeVerdade,
+  valorEmRisco,
 } from "../lib/okr.mjs";
 import { conversao } from "../lib/janelas.mjs";
 
@@ -466,4 +468,185 @@ test("T031 — tabela existe mas nenhuma linha na janela devolve não apurado, n
   const c = ticketDeOrcamentos([{ criado: "2026-01-01", preco: 500, desconto_vista: 0 }], { inicio: "2026-08-01", fim: "2026-08-31" });
   assert.equal(ehApurado(c), false);
   assert.match(c.naoApurado, /sem orçamento na janela/);
+});
+
+// ── 019/US2 — `buracosDeVerdade()`: a lista que a dobra mostra (contracts/buracos.md).
+// A mesma que `posicaoDeAtaque()` consome — duas listas de "onde falta dado" na mesma tela é a
+// segunda régua que a FR-002 proíbe.
+
+/** Marcos sintéticos com a forma que `montarFicha()` produz (celula + familiaDoBuraco). */
+const marcoBuraco = (chave, motivo, familia, rotuloBuraco) => ({
+  chave,
+  nome: chave,
+  fonte: `fonte de ${chave}`,
+  familia,
+  familiaDoBuraco: familia,
+  celula: rotuloBuraco ? { naoApurado: motivo, rotuloBuraco } : { naoApurado: motivo },
+});
+const marcoOk = (chave, valor) => ({ chave, nome: chave, fonte: `fonte de ${chave}`, familia: "D4", familiaDoBuraco: null, celula: apurado(valor) });
+
+test("019/T015 caso 1 — célula `tela-nao-le` NÃO entra na lista (dívida de leitura, não buraco)", () => {
+  const b = buracosDeVerdade([marcoOk("lead", 10), marcoBuraco("respondeu", "a tela não lê", "D4", "tela-nao-le")]);
+  assert.deepEqual(b.map((x) => x.chave), []);
+});
+
+test("019/T015 caso 2 — `falhou-agora` entra com transitorio: true", () => {
+  const b = buracosDeVerdade([marcoBuraco("lead", "fonte própria indisponível (ETIMEDOUT)", "D4", "falhou-agora")]);
+  assert.equal(b.length, 1);
+  assert.equal(b[0].transitorio, true);
+  assert.equal(b[0].fonte, "fonte de lead");
+  assert.equal(b[0].motivo, "fonte própria indisponível (ETIMEDOUT)");
+  assert.equal(b[0].familia, "D4");
+});
+
+test("019/T015 caso 3 — `nao-mede` e célula sem rótulo entram com transitorio: false", () => {
+  const b = buracosDeVerdade([
+    marcoBuraco("respondeu", "sem coletor", "D4", "nao-mede"),
+    marcoBuraco("orcamento", "sem fonte de orçamento", "D3"),
+  ]);
+  assert.deepEqual(b.map((x) => x.transitorio), [false, false]);
+  // Ordem PRESERVADA: é a ordem da cadeia. Quem prioriza D4 é `posicaoDeAtaque()`, do lado dela.
+  assert.deepEqual(b.map((x) => x.chave), ["respondeu", "orcamento"]);
+});
+
+test("019/T015 caso 4 — todos apurados devolve [], NUNCA null (vazio ≠ não calculado)", () => {
+  const b = buracosDeVerdade([marcoOk("lead", 10), marcoOk("respondeu", 4)]);
+  assert.deepEqual(b, []);
+  assert.notEqual(b, null);
+  // Sem marcos nenhum, idem.
+  assert.deepEqual(buracosDeVerdade([]), []);
+});
+
+test("019/T015 caso 5 — `posicaoDeAtaque()` e a lista NÃO divergem: a célula do veredito é o 1º D4, ou o 1º item", () => {
+  // Cadeia D real: lead apurado, respondeu D4 sem coletor, orcamento D3 sem fonte.
+  const f = ficha("D", { leads: apurado(31), respondeu: naoApurado("sem coletor"), orcamentos: naoApurado("sem fonte de orçamento"), vendas: apurado(0) });
+  const b = buracosDeVerdade(f.marcos);
+  const v = posicaoDeAtaque(f);
+  if (v.posicao === 2) {
+    const esperada = b.find((x) => x.familia === "D4") ?? b[0];
+    assert.equal(v.celula, esperada.nome);
+  }
+  // E a lista é EXATAMENTE a que o veredito filtra: mesmos degraus, mesma ordem.
+  assert.deepEqual(
+    b.map((x) => x.nome),
+    f.marcos.filter((m) => !ehApurado(m.celula) && m.celula?.rotuloBuraco !== "tela-nao-le").map((m) => m.nome),
+  );
+});
+
+// ── 019/US3 — `valorEmRisco()`: o pipeline somado (contracts/valor-em-risco.md).
+// TODAS as linhas são SINTÉTICAS. Nenhuma constante de contagem real (FR-016, SC-004): um teste
+// contra "9 orçamentos" reprovaria hoje mesmo — o handoff de ontem registrava 7, e a janela de
+// CONVERSAO cresce todo dia. Testa-se a REGRA; o banco é o oráculo, na hora da verificação.
+
+const JANELA_RISCO = { inicio: "2026-08-01", fim: "2026-08-31" };
+const PERDA = ["sem_resposta", "perdido_concorrencia"];
+const orc = (criado, lead, preco, desconto) => ({ criado, status: "enviado", paciente_lead_id: lead, preco, desconto_vista: desconto });
+const leads = (pares) => new Map(pares.map(([id, motivo]) => [String(id), { motivo }]));
+
+test("019/T027 caso 1 — 2 orçamentos do MESMO lead: enviados conta DOCUMENTO, vivos conta PESSOA", () => {
+  const r = valorEmRisco(
+    [orc("2026-08-05", 22, 1000, 0), orc("2026-08-17", 22, 1000, 0)],
+    leads([[22, "contato_futuro"]]),
+    JANELA_RISCO,
+    PERDA,
+    apurado(0),
+  );
+  assert.equal(r.enviados.n, 2);
+  assert.equal(r.enviados.valor, 2000);
+  assert.equal(r.vivos.pessoas, 1);
+  assert.equal(r.vivos.valor, 2000);
+});
+
+test("019/T027 caso 2 — lead com motivo NA lista de perda é perdido, não vivo", () => {
+  const r = valorEmRisco([orc("2026-08-05", 21, 1000, 0)], leads([[21, "sem_resposta"]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.equal(r.perdidos.pessoas, 1);
+  assert.equal(r.vivos.pessoas, 0);
+  assert.equal(r.perdidos.valor, 1000);
+});
+
+test("019/T027 caso 3 — lead com `motivo: null` é VIVO (quem não foi palitado não é perda)", () => {
+  const r = valorEmRisco([orc("2026-08-05", 90, 1000, 0)], leads([[90, null]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.equal(r.vivos.pessoas, 1);
+  assert.equal(r.perdidos.pessoas, 0);
+});
+
+test("019/T027 caso 4 — motivo FORA da lista declarada é vivo (a taxonomia é do cliente)", () => {
+  const r = valorEmRisco([orc("2026-08-05", 51, 1000, 0)], leads([[51, "enviou_documentacao"]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.equal(r.vivos.pessoas, 1);
+});
+
+test("019/T027 caso 5 — `paciente_lead_id: null` entra em enviados, sai em semLead, fora de vivos e perdidos", () => {
+  const r = valorEmRisco([orc("2026-08-05", null, 1000, 0)], leads([]), JANELA_RISCO, PERDA, apurado(0));
+  assert.equal(r.enviados.n, 1);
+  assert.equal(r.enviados.valor, 1000);
+  assert.equal(r.semLead.n, 1);
+  assert.equal(r.semLead.valor, 1000);
+  assert.equal(r.vivos.pessoas, 0);
+  assert.equal(r.perdidos.pessoas, 0);
+});
+
+test("019/T027 caso 6 — `motivosDePerda` null: vivos/perdidos saem null e `enviados` CONTINUA", () => {
+  const r = valorEmRisco([orc("2026-08-05", 21, 1000, 0)], leads([[21, "sem_resposta"]]), JANELA_RISCO, null, apurado(0));
+  assert.equal(r.vivos, null);
+  assert.equal(r.perdidos, null);
+  assert.equal(r.enviados.n, 1);
+  assert.equal(r.enviados.valor, 1000);
+});
+
+test("019/T027 caso 7 — `preco`/`desconto_vista` chegando como STRING (o que o `pg` devolve para numeric)", () => {
+  const r = valorEmRisco([orc("2026-08-05", 21, "6355.93", "0.1")], leads([[21, "contato_futuro"]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.equal(r.enviados.valor, 6355.93 * 0.9);
+});
+
+test("019/T027 caso 8 — `preco: null` fica FORA da soma, NUNCA vira 0", () => {
+  const r = valorEmRisco(
+    [orc("2026-08-05", 21, null, 0), orc("2026-08-06", 22, 500, 0)],
+    leads([[21, "contato_futuro"], [22, "contato_futuro"]]),
+    JANELA_RISCO,
+    PERDA,
+    apurado(0),
+  );
+  assert.equal(r.enviados.n, 1, "a linha sem preço numérico não conta como documento somado");
+  assert.equal(r.enviados.valor, 500);
+});
+
+test("019/T027 caso 9 — nenhuma linha na janela devolve null (o bloco não renderiza; `R$ 0,00` não existe)", () => {
+  assert.equal(valorEmRisco([], leads([]), JANELA_RISCO, PERDA, apurado(0)), null);
+  assert.equal(valorEmRisco(null, leads([]), JANELA_RISCO, PERDA, apurado(0)), null);
+});
+
+test("019/T027 caso 10 — linha FORA da janela é ignorada", () => {
+  const r = valorEmRisco(
+    [orc("2026-07-15", 21, 999, 0), orc("2026-08-05", 22, 500, 0), orc("2026-09-30", 23, 999, 0)],
+    leads([[21, null], [22, null], [23, null]]),
+    JANELA_RISCO,
+    PERDA,
+    apurado(0),
+  );
+  assert.equal(r.enviados.n, 1);
+  assert.equal(r.enviados.valor, 500);
+});
+
+test("019/T028/FR-013a — `fechados` vem do degrau `tratamento`, NUNCA de `orcamentos.status`", () => {
+  // Todas as linhas em `enviado` — a coluna que só conheceu um valor não separa nada. O degrau
+  // repassado é que manda, e ele pode ser `não apurado` sem contaminar o resto.
+  const r = valorEmRisco([orc("2026-08-05", 21, 1000, 0)], leads([[21, null]]), JANELA_RISCO, PERDA, naoApurado("sem coletor"));
+  assert.equal(ehApurado(r.fechados), false);
+  assert.equal(r.fechados.naoApurado, "sem coletor");
+  const fechado = valorEmRisco([orc("2026-08-05", 21, 1000, 0)], leads([[21, null]]), JANELA_RISCO, PERDA, apurado(3));
+  assert.equal(fechado.fechados.valor, 3);
+});
+
+test("019/T028 — `status` do lead não entra em nada: manda o `motivo` (contradição do id 44)", () => {
+  // O lead 44 está em `exames_enviados` com motivo `sem_interesse`. Esta spec, como a 018, não
+  // modela contradição — quem decide é o campo que o operador de fato preenche.
+  const r = valorEmRisco(
+    [orc("2026-08-17", 44, 1000, 0)],
+    new Map([["44", { motivo: "sem_interesse", status: "exames_enviados" }]]),
+    JANELA_RISCO,
+    ["sem_interesse"],
+    apurado(0),
+  );
+  assert.equal(r.perdidos.pessoas, 1);
+  assert.equal(r.vivos.pessoas, 0);
 });

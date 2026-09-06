@@ -229,7 +229,17 @@ export async function inspectUrl(
 }
 
 // Série diária dos últimos 84 dias (12 semanas fechando em D-3, GSC atrasa).
-export async function gscSeries(siteUrl: string): Promise<GscSeries> {
+//
+// 019/FR-025: `inicio`/`fim` entraram como parâmetros OPCIONAIS, com o default byte a byte o de
+// sempre — é ele que alimenta o portfólio inteiro, e trocá-lo moveria a célula `visitante` dos 17
+// projetos (SC-007). Um segundo `gscSerieLonga()` duplicaria autenticação, `resolveProperty` e
+// tratamento de erro só para trocar duas datas; `/okr/[slug]/aquisicao` passa a janela de 8 meses
+// aqui. `totals28()` continua fatiando 28 dias e não é tocada.
+export async function gscSeries(
+  siteUrl: string,
+  inicio: string = isoDaysAgo(86),
+  fim: string = isoDaysAgo(3),
+): Promise<GscSeries> {
   const clientP = getClient();
   if (!clientP) return null; // env desligada — fato real, sem tentar rede
   try {
@@ -237,7 +247,7 @@ export async function gscSeries(siteUrl: string): Promise<GscSeries> {
     const host = new URL(siteUrl).hostname;
     const property = resolveProperty(host, await listSites(client));
     if (!property) return null; // host fora de toda propriedade — fato real (D1)
-    return { property, days: await queryTimeseries(client, property, host, isoDaysAgo(86), isoDaysAgo(3)) };
+    return { property, days: await queryTimeseries(client, property, host, inicio, fim) };
   } catch (e) {
     return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
   }

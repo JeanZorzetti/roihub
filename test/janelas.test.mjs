@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { descoberta, comportamento, conversao, hoje } from "../lib/janelas.mjs";
+import { descoberta, comportamento, conversao, hoje, descobertaLonga, comportamentoLongo } from "../lib/janelas.mjs";
 
 const DIA = 864e5;
 const AGORA = Date.parse("2026-09-05T12:00:00Z");
@@ -92,4 +92,82 @@ test("T012 — projeto sem `epoca`: CONVERSAO é 28d/D-3 byte a byte; só ELA te
   assert.notDeepEqual(semEpoca, comEpoca, "só a CONVERSAO muda de tamanho quando o card declara época");
   assert.deepEqual(descoberta(AGORA), descoberta(AGORA));
   assert.deepEqual(comportamento(AGORA), comportamento(AGORA));
+});
+
+// ── 019/US5 — as JANELAS LONGAS (FR-023, FR-025, SC-007) ────────────────────────────────────────
+// Elas vivem SÓ em `/okr/[slug]/aquisicao`. A ficha e o ranking continuam nas curtas: esticar a
+// janela da ficha trocaria a célula `visitante` dos 17 projetos e o placar do portfólio inteiro.
+
+test("019/T037 — descobertaLonga() é 8 meses fechando em D-3, no MESMO formato das curtas", () => {
+  const d = descobertaLonga(AGORA);
+  assert.equal(d.nome, "DESCOBERTA_LONGA");
+  assert.equal(d.fim, new Date(AGORA - 3 * DIA).toISOString().slice(0, 10));
+  // 8 meses de CALENDÁRIO a partir do fim — nunca "240 dias", que não é o que a tela promete.
+  const fim = new Date(`${d.fim}T00:00:00Z`);
+  const esperado = new Date(Date.UTC(fim.getUTCFullYear(), fim.getUTCMonth() - 8, fim.getUTCDate()));
+  assert.equal(d.inicio, esperado.toISOString().slice(0, 10));
+  assert.ok(d.porque.length > 0, "toda janela declara POR QUE fecha onde fecha");
+});
+
+test("019/T037 — comportamentoLongo() é 12 meses fechando em D-3", () => {
+  const c = comportamentoLongo(AGORA);
+  assert.equal(c.nome, "COMPORTAMENTO_LONGO");
+  assert.equal(c.fim, new Date(AGORA - 3 * DIA).toISOString().slice(0, 10));
+  const fim = new Date(`${c.fim}T00:00:00Z`);
+  const esperado = new Date(Date.UTC(fim.getUTCFullYear() - 1, fim.getUTCMonth(), fim.getUTCDate()));
+  assert.equal(c.inicio, esperado.toISOString().slice(0, 10));
+});
+
+test("019/T037 — as longas CONTÊM as curtas, e são estritamente maiores", () => {
+  for (const [longa, curta] of [
+    [descobertaLonga(AGORA), descoberta(AGORA)],
+    [comportamentoLongo(AGORA), comportamento(AGORA)],
+  ]) {
+    assert.ok(longa.inicio < curta.inicio, "a longa começa antes");
+    assert.equal(longa.fim, curta.fim, "as duas fecham no mesmo D-3 — o atraso do GSC é o mesmo");
+  }
+});
+
+test("019/T037/SC-007 — as três janelas CURTAS saem byte a byte iguais às de antes da 019", () => {
+  // A trava da não-regressão dos 17 projetos: acrescentar as longas não pode mover as curtas.
+  assert.deepEqual(descoberta(AGORA), {
+    nome: "DESCOBERTA",
+    inicio: new Date(AGORA - 30 * DIA).toISOString().slice(0, 10),
+    fim: new Date(AGORA - 3 * DIA).toISOString().slice(0, 10),
+    porque: "o Search Console fecha o dia com ~3 dias de atraso",
+  });
+  assert.deepEqual(comportamento(AGORA), {
+    nome: "COMPORTAMENTO",
+    inicio: new Date(AGORA - 30 * DIA).toISOString().slice(0, 10),
+    fim: new Date(AGORA - 3 * DIA).toISOString().slice(0, 10),
+    porque: "mesma janela da Descoberta até a 019",
+  });
+  assert.deepEqual(conversao(AGORA, null), {
+    nome: "CONVERSAO",
+    inicio: new Date(AGORA - 30 * DIA).toISOString().slice(0, 10),
+    fim: new Date(AGORA - 3 * DIA).toISOString().slice(0, 10),
+    porque: "sem época declarada no card",
+  });
+});
+
+test("019/T037 — as longas são puras: mesmo `agora`, mesmo resultado; inicio <= fim sempre", () => {
+  for (const agora of [AGORA, AGORA - 400 * DIA, AGORA + 30 * DIA]) {
+    assert.deepEqual(descobertaLonga(agora), descobertaLonga(agora));
+    assert.deepEqual(comportamentoLongo(agora), comportamentoLongo(agora));
+    assert.ok(descobertaLonga(agora).inicio <= descobertaLonga(agora).fim);
+    assert.ok(comportamentoLongo(agora).inicio <= comportamentoLongo(agora).fim);
+  }
+});
+
+// ── 019/T045/FR-029/SC-008 — NENHUMA taxa cruza as duas séries de aquisição ─────────────────────
+// Cliques (Search Console, só orgânico) e sessões (GA4, todo canal) medem coisas diferentes: na
+// época da atma são 599 contra 1.140. Uma razão entre elas mede a diferença entre os INSTRUMENTOS,
+// não o negócio. Esta asserção é do mesmo tipo da I1 acima — lê o fonte, porque a regra é sobre o
+// que a tela NÃO pode conter, e `.tsx` não se testa sem subir o Next (Princípio III).
+test("019/T045 — a tela de aquisição não divide cliques (GSC) por sessões (GA4), nem o contrário", () => {
+  const bruto = readFileSync(fileURLToPath(new URL("../app/okr/[slug]/aquisicao/page.tsx", import.meta.url)), "utf8");
+  const src = bruto.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\/.*$/gm, "");
+  for (const proibida of [/cliques\s*\/\s*sess/i, /sess\w*\s*\/\s*cliques/i, /impressoes\s*\/\s*sess/i, /sess\w*\s*\/\s*impressoes/i]) {
+    assert.doesNotMatch(src, proibida, "razão cruzando GSC e GA4 — FR-029 proíbe");
+  }
 });

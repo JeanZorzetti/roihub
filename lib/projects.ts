@@ -71,6 +71,12 @@ export type Project = {
    *  do número. Ausente é o normal para os outros 16 projetos: `conversao()` cai para 28d/D-3, a
    *  mesma janela de sempre (FR-006, SC-007) — o campo NÃO se espalha para quem não declarou. */
   epoca?: { data: string; porque: string };
+  /** A taxonomia de PERDA é do CLIENTE, não do template (019, FR-015): os slugs de
+   *  `patient_leads.motivo` são livres e vivem no repo do projeto, não neste. Ausente = a ficha
+   *  exibe `enviados` e OMITE vivos/perdidos, nomeando o que falta declarar (FR-015b) — nunca
+   *  herda a lista da Atma de graça, que é o defeito que a 017 matou na palitagem.
+   *  Vivo é o COMPLEMENTO, `motivo === null` incluído: quem ainda não foi palitado não é perda. */
+  motivosDePerda?: string[];
   /** Declaração humana chaveada pela `chave` do marco (`tratamento`, não o nome de exibição — a
    *  mesma razão de `REGUA` ser chaveada por `chave` em lib/benchmark.mjs). A ficha ANEXA este
    *  texto à `fonte` do marco, não substitui (018, FR-025/FR-026/FR-027 — fecha a FR-004 da 017,

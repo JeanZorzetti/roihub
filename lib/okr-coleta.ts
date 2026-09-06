@@ -25,6 +25,10 @@ type Janela = { nome: string; inicio: string; fim: string; porque: string };
 // diferentes, mesma regra de sempre para não confundir "não apurado" com "zero real".
 type MotivosDoFunil = { motivos: { motivo: string; n: number }[]; semMotivo: number; total: number };
 
+// `pg` devolve `numeric` (preco, desconto_vista) como STRING e `integer` (id, paciente_lead_id)
+// como number — por isso os dois tipos em cada campo. Quem soma faz `Number()` (lib/okr.mjs).
+type LinhaOrcamento = { criado: string; status: string; paciente_lead_id: string | number | null; preco?: number | string | null; desconto_vista?: number | string | null };
+
 // Derivadas de lib/janelas.mjs (018, FR-001): a R7 ("uma janela só para a árvore inteira") foi
 // substituída pela 018 — cada cadeia lê a janela que a fonte tem (FR-007/FR-008). GSC e GA4
 // continuam em DESCOBERTA/COMPORTAMENTO (28d/D-3, inalteradas nesta spec); INICIO/FIM aqui
@@ -52,7 +56,10 @@ export const FONTES_PROPRIAS: Record<
     // query nunca tinha pedido os campos. `status` dá o degrau `contatado` sem coletor novo;
     // `motivo` dá o "por quê" que o funil sozinho não responde. Ambas em lib/okr.mjs
     // (`celulaDeContato()`, `motivosDoFunil()`).
-    sql: `SELECT nome, email, status, motivo, to_char(created_at, 'YYYY-MM-DD') AS criado FROM patient_leads ORDER BY created_at`,
+    // `id` entrou em 06/09/2026 (spec 019, FR-015): a coluna sempre existiu — confirmada no
+    // `information_schema` ANTES de escrever código (T004, precedente `tela_nao_le_nao_e_buraco_de_medicao`)
+    // — e sem ela `orcamentos.paciente_lead_id` não tem contraparte: "vivo" fica indecidível.
+    sql: `SELECT id, nome, email, status, motivo, to_char(created_at, 'YYYY-MM-DD') AS criado FROM patient_leads ORDER BY created_at`,
     // Mesma conexão, segunda query: o degrau que a cadeia nova mede. A Atma deixou de prometer
     // "achamos um doutor perto de você" (saída do sócio comercial) e passou a competir em PREÇO —
     // o orçamento é o degrau real, e ele JÁ estava gravado enquanto a ficha dizia "sem coletor".
@@ -150,6 +157,13 @@ export async function coletarDoProjeto(
   ga4: LeituraGa4;
   ga4ev: EventosGa4;
   orcamentosSemLead: { valor: number } | null;
+  // 019/FR-015: as linhas CRUAS de orçamento e o mapa `lead -> motivo`, para `valorEmRisco()`
+  // (puro, em lib/okr.mjs) somar o pipeline sem abrir conexão. Só a borda tem acesso às linhas.
+  // 019/FR-030/T051: a SÉRIE crua do GSC (84 dias) sobe junto. Fatiá-la pela época é o que produz
+  // um CTR na MESMA janela da cadeia sem uma chamada de rede nova — a de 84 dias já foi feita.
+  serieGsc: Awaited<ReturnType<typeof gscSeries>>;
+  linhasOrc: LinhaOrcamento[] | null;
+  leadsPorId: Map<string, { motivo: string | null }>;
   paginas: GscPaginas;
   janelas: { descoberta: Janela; comportamento: Janela; conversao: Janela };
 }> {
@@ -194,6 +208,10 @@ export async function coletarDoProjeto(
   // `motivos` fica `null` (não `[]`) até a fonte própria confirmar que o campo existe — `[]` já
   // significa "consultei e ninguém tinha motivo", e os dois não podem nascer iguais.
   let motivosCel: MotivosDoFunil | null = null;
+  // 019/FR-015: o mapa `lead -> motivo`, chaveado por STRING nos dois lados. `patient_leads.id` e
+  // `orcamentos.paciente_lead_id` sao os dois `integer`, mas normalizar para string aqui e o que
+  // impede a comparacao 44 === "44" falhar em silencio se um dos lados mudar de driver ou de tipo.
+  const leadsPorId = new Map<string, { motivo: string | null }>();
   const propria = await lerFontePropria(p.slug);
   if (propria && "erro" in propria) {
     // 018/FR-028: um dos três pontos revisados que ganham `falhou-agora` — erro de CONEXÃO em
@@ -207,6 +225,11 @@ export async function coletarDoProjeto(
     contatadosCel = celulaDeContato(reais as { status?: string }[]);
     respondeuCel = celulaDeResposta(reais as { motivo?: string | null }[]);
     motivosCel = motivosDoFunil(reais as { motivo?: string | null }[]);
+    // TODOS os leads da fonte, nao so os da janela: um orcamento DENTRO da janela pode ser de um
+    // lead criado ANTES dela, e sem a linha do lead o orcamento cairia em `semLead` por engano.
+    for (const l of propria.rows as { id?: string | number; motivo?: string | null }[]) {
+      if (l.id != null) leadsPorId.set(String(l.id), { motivo: l.motivo ?? null });
+    }
   } else if (erroLeads) {
     leadsCel = naoApurado(`banco indisponível (${erroLeads})`);
   } else {
@@ -219,7 +242,7 @@ export async function coletarDoProjeto(
   // cadeia zerada que ninguém mediu.
   const linhasOrc =
     propria && !("erro" in propria) && propria.orcamentos && !("erro" in propria.orcamentos)
-      ? (propria.orcamentos.rows as { criado: string; status: string; paciente_lead_id: string | null; preco?: number | null; desconto_vista?: number | null }[])
+      ? (propria.orcamentos.rows as LinhaOrcamento[])
       : null;
   const { enviados: orcamentos } = celulasDeOrcamento(linhasOrc, { inicio: janelaConversao.inicio, fim: janelaConversao.fim });
   // ticket (018, FR-020/FR-021) — mesma conexão, mesma query, zero chamada de rede nova. Só a
@@ -252,6 +275,9 @@ export async function coletarDoProjeto(
     ga4,
     ga4ev,
     orcamentosSemLead,
+    serieGsc: s,
+    linhasOrc,
+    leadsPorId,
     paginas,
     janelas: { descoberta: janelaDescoberta, comportamento: janelaComportamento, conversao: janelaConversao },
   };

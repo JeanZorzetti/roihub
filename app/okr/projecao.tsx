@@ -17,7 +17,7 @@ export const num = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(2
 // ticket apurado (média, não valor digitado) caía nelas — a tela publicou `R$ 4.932,337`, que não
 // é uma quantia que exista. Mesmo idioma de `app/crm/page.tsx:49`, o único lugar da casa que já
 // formatava dinheiro certo.
-const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+export const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 type Meta = { valor?: number; ticket?: number; prazo?: string; declaradaEm?: string };
 type ProjecaoResultado = ReturnType<typeof projetar>;
@@ -30,11 +30,16 @@ type TicketCel = { estado: "apurado" | "declarado" | "nao-apurado" | "inferido";
  * `atma` tem `meta` hoje — os outros 39 caem na linha `.foot` (R-d, FR-013).
  */
 export function Projecao({ meta, p, ticketCel }: { meta?: Meta; p: ProjecaoResultado; ticketCel?: TicketCel }) {
-  if (p.veredito === "nao-apurado") {
+  // 019/FR-012: o `return` cedo em `nao-apurado` SAIU. Ele jogava fora `n1Total` antes de olhar
+  // para ele — e `meta ÷ ticket` não toca a âncora (FR-008). O componente decide por CÉLULA:
+  // "o que a meta exige" sai sempre que apurado, e "por que a cadeia não a distribui" sai logo
+  // atrás. Projeto sem meta nenhuma cai no `if` abaixo, como sempre caiu: lá `n1Total` também não
+  // é apurado, porque a guarda que o suprimiu foi uma das 1–7.
+  if (!ehApurado(p.n1Total)) {
     return <p className="foot">projeção: não apurado — {p.motivo}</p>;
   }
 
-  const ancora = p.ancora as { nome: string; valor: number };
+  const ancora = p.ancora as { nome: string; valor: number } | null;
   // 018/FR-023: o ticket apurado (média de orçamentos, líquido de desconto) NUNCA pode sair
   // rotulado "declarada (D1)" — só o ticket que veio do card (`meta.ticket` sem apuração) é
   // declarado de verdade.
@@ -59,10 +64,16 @@ export function Projecao({ meta, p, ticketCel }: { meta?: Meta; p: ProjecaoResul
         {p.normalizacao!.encurtada ? " — janela encurtada, prazo restante menor que uma janela cheia" : ""} —{" "}
         <code>{p.normalizacao!.conta}</code>
       </p>
-      <p>
-        Âncora: <strong>{ancora.nome} = {num(ancora.valor)}</strong>
-        {p.ancora!.ehFinal && " (o próprio N1 — cadeia fechada)"}
-      </p>
+      {ancora && (
+        <p>
+          Âncora: <strong>{ancora.nome} = {num(ancora!.valor)}</strong>
+          {p.ancora!.ehFinal && " (o próprio N1 — cadeia fechada)"}
+        </p>
+      )}
+      {/* 019/FR-012: os DOIS lados na mesma tela — o que a meta exige (acima) e por que a cadeia
+          não a distribui (aqui). Só quando o veredito é `nao-apurado`: nos demais o `motivo` já
+          sai dentro do fator/múltiplo, e repeti-lo daria a mesma frase duas vezes. */}
+      {p.veredito === "nao-apurado" && <p>{p.motivo}</p>}
       {ehApurado(p.fatorObrigatorio) && (
         <p>
           <strong>fator obrigatório</strong>:{" "}
@@ -71,7 +82,7 @@ export function Projecao({ meta, p, ticketCel }: { meta?: Meta; p: ProjecaoResul
           ) : (
             <>
               <strong>
-                {pct((p.fatorObrigatorio as { valor: number }).valor)} ({num((p.n1Janela as { valor: number }).valor)}/{num(ancora.valor)})
+                {pct((p.fatorObrigatorio as { valor: number }).valor)} ({num((p.n1Janela as { valor: number }).valor)}/{num(ancora!.valor)})
               </strong>
               {p.veredito === "limite" && <> — {p.motivo}</>}
             </>
@@ -81,7 +92,7 @@ export function Projecao({ meta, p, ticketCel }: { meta?: Meta; p: ProjecaoResul
       {ehApurado(p.multiploNecessario) && (
         <p>
           <strong>múltiplo necessário</strong>: {num((p.multiploNecessario as { valor: number }).valor)}× (
-          {num((p.n1Janela as { valor: number }).valor)}/{num(ancora.valor)}) — {p.motivo}
+          {num((p.n1Janela as { valor: number }).valor)}/{num(ancora!.valor)}) — {p.motivo}
         </p>
       )}
       {ehApurado(p.folga) && (

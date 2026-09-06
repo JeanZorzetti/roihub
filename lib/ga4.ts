@@ -58,6 +58,55 @@ export async function ga4Canais(
 }
 
 /**
+ * Primeiro e último dia COM DADO dentro da janela pedida (019, FR-027).
+ *
+ * A Data API não devolve a data de criação da propriedade nem a retenção configurada. Sem esta
+ * sonda não há como cumprir a FR-027 e "12 meses" viraria rótulo sobre um dado de 3 — a janela
+ * PEDIDA exibida no lugar da RECEBIDA. Uma chamada a mais numa página servida por ISR de 1 h e
+ * lida uma vez por trimestre.
+ *
+ * NÃO se acrescenta `date` às dimensões de `ga4Canais()`: mudaria a forma do retorno para todos os
+ * consumidores atuais para servir um só (mesmo argumento que a 016 usou em `gscPaginas`).
+ *
+ * `null` = propriedade não configurada. `{erro}` = falha transitória. `{primeiro, ultimo}` = a
+ * janela que a fonte de fato deu — nunca a que foi pedida.
+ */
+export async function ga4Cobertura(
+  propertyId: string | undefined,
+  janela: { inicio: string; fim: string },
+): Promise<{ primeiro: string; ultimo: string } | { erro: string } | null> {
+  if (!propertyId) return null; // não configurado — sem tocar a rede
+  const clientP = getClient();
+  if (!clientP) return { erro: "GOOGLE_SERVICE_ACCOUNT_JSON ausente" }; // o nome, nunca o valor
+  const propriedade = normalizarPropriedade(propertyId);
+  try {
+    const client = await clientP;
+    const res = await client.request<{ rows?: { dimensionValues: { value: string }[]; metricValues: { value: string }[] }[] }>({
+      url: `https://analyticsdata.googleapis.com/v1beta/${propriedade}:runReport`,
+      method: "POST",
+      data: {
+        dateRanges: [{ startDate: janela.inicio, endDate: janela.fim }],
+        dimensions: [{ name: "date" }],
+        metrics: [{ name: "sessions" }],
+        limit: 400,
+      },
+    });
+    // Dia com 0 sessões não é dia COM DADO: ele existe na resposta e não prova cobertura.
+    const dias = (res.data.rows ?? [])
+      .filter((r) => Number(r.metricValues[0].value) > 0)
+      .map((r) => r.dimensionValues[0].value)
+      .sort();
+    if (!dias.length) return { erro: "nenhum dia com sessão na janela pedida" };
+    // `YYYYMMDD` → `YYYY-MM-DD`, o formato que o resto da casa usa para comparar data como string.
+    const iso = (d: string) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+    return { primeiro: iso(dias[0]), ultimo: iso(dias[dias.length - 1]) };
+  } catch (e) {
+    const err = e as { code?: string; message?: string };
+    return { erro: err?.code ?? String(err?.message ?? "erro").slice(0, 60) };
+  }
+}
+
+/**
  * Os eventos de comportamento da MESMA propriedade, para os medidores D3 do N5 (014). Uma
  * chamada só, três dimensões — `eventName` diz qual medidor, `pagePath` permite tirar o tráfego
  * interno e `linkUrl` é o que separa "clicou no WhatsApp" de "clicou no Instagram".

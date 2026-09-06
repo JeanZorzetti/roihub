@@ -491,6 +491,7 @@
       "data": "2026-07-31",
       "porque": "sociedade desfeita; o banco com os leads anteriores foi perdido"
     },
+    "motivosDePerda": ["sem_resposta", "sem_interesse", "perdido_concorrencia", "preco_alto"],
     "declaracoes": {
       "tratamento": {
         "quem": "Jean",

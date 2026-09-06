@@ -98,21 +98,32 @@ test("o gap é IDÊNTICO em todas as camadas quando nenhuma taxa muda", () => {
   assert.deepEqual([...new Set(gaps)], [2]);
 });
 
-test("a camada de impressões só existe quando a cadeia começa em `visitante` (018/FR-007) — perfil D não tem mais", () => {
+test("019/FR-031 — `ctr` SEM janela nunca ganha camada de impressões, começando em `visitante` ou não", () => {
+  // Era a trava de 018/FR-007 (decidia pelo NOME do primeiro marco). A 019 a substituiu pela
+  // coincidência de janela: sem janela no `ctr` não há coincidência a provar, e o resultado desta
+  // cadeia continua exatamente o mesmo.
   const r = arvore({ lead: 1000, respondeu: 50, orcamento: 20, tratamento: 4 }, 8, {
     ctr: { valor: 0.02, impressoes: apurado(50000) },
   });
-  assert.ok(!r.camadas.some((c) => c.chave === "impressao"), "cadeia D não começa em `visitante` desde a 018 — sem camada de impressões");
+  assert.ok(!r.camadas.some((c) => c.chave === "impressao"));
 });
 
-test("a camada de impressões usa o CTR e fecha a descida (perfil B, que ainda começa em `visitante`)", () => {
+test("a camada de impressões usa o CTR e fecha a descida (perfil B)", () => {
+  // 019/FR-031: o que destrava a camada deixou de ser o NOME do primeiro marco e passou a ser a
+  // coincidência de janela — por isso `ctr` agora carrega a janela que o produziu, e a entrada
+  // ganhou `janelaConversao`. A conta e o resultado NÃO mudam.
   const marcos = [
     { chave: "visitante", nome: "visitante", celula: apurado(1000) },
     { chave: "produto", nome: "produto", celula: apurado(50) },
     { chave: "carrinho", nome: "carrinho", celula: apurado(20) },
     { chave: "checkout", nome: "checkout", celula: apurado(4) },
   ];
-  const r = arvore(null, 8, { marcos, perfil: "B", ctr: { valor: 0.02, impressoes: apurado(50000) } });
+  const r = arvore(null, 8, {
+    marcos,
+    perfil: "B",
+    ctr: { valor: 0.02, impressoes: apurado(50000), janela: { inicio: "2026-06-01", fim: "2026-09-30" } },
+    janelaConversao: { inicio: "2026-08-01", fim: "2026-08-31" },
+  });
   const imp = r.camadas.at(-1);
   assert.equal(imp.chave, "impressao");
   assert.equal(Math.round(imp.necessario.max), 100000); // 2000 cliques ÷ 2%
@@ -171,7 +182,7 @@ test("T011 — cadeia que NÃO começa em `visitante` (perfil D novo, sem `visit
   assert.ok(!r.camadas.some((c) => c.chave === "impressao"), "cadeia sem `visitante` cruzaria Descoberta com Conversão");
 });
 
-test("T011 — cadeia que COMEÇA em `visitante` continua ganhando a camada de impressões (comportamento de hoje)", () => {
+test("T011 — cadeia que começa em `visitante` ganha a camada QUANDO as janelas coincidem (019 revoga a trava por nome)", () => {
   const marcos = [
     { chave: "visitante", nome: "visitante", celula: apurado(1000) },
     { chave: "lead", nome: "lead", celula: apurado(50) },
@@ -179,7 +190,130 @@ test("T011 — cadeia que COMEÇA em `visitante` continua ganhando a camada de i
   const r = montarArvore({
     ficha: { perfil: "D", marcos },
     projecao: { n1Janela: apurado(8) },
+    ctr: { valor: 0.02, impressoes: apurado(50000), janela: { inicio: "2026-06-01", fim: "2026-09-30" } },
+    janelaConversao: { inicio: "2026-08-01", fim: "2026-08-31" },
+  });
+  assert.ok(r.camadas.some((c) => c.chave === "impressao"));
+  // E o mesmo `visitante`, SEM janela no ctr, deixa de ganhar: o nome nunca provou nada (FR-031).
+  const semJanela = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
     ctr: { valor: 0.02, impressoes: apurado(50000) },
   });
-  assert.ok(r.camadas.some((c) => c.chave === "impressao"), "cadeia com `visitante` não pode perder a camada de hoje");
+  assert.ok(!semJanela.camadas.some((c) => c.chave === "impressao"));
+});
+
+// ── 019/US6 — a COSTURA DA ÉPOCA (contracts/rotas-e-janelas-longas.md §5, FR-030..FR-033) ───────
+// A guarda `marcos[0]?.chave === "visitante"` saiu. Nome de marco não prova que as janelas batem —
+// foi a trava certa na 018 porque era a única disponível. Agora a camada de impressões exige
+// COINCIDÊNCIA: a janela do `ctr` tem que CONTER a janela de Conversão. Isto REVOGA, de propósito,
+// os dois testes de 018/FR-007 acima que decidiam pelo nome do primeiro marco.
+
+const CONVERSAO_EPOCA = { inicio: "2026-07-31", fim: "2026-09-06" };
+const ctrCom = (janela) => ({ valor: 0.02, impressoes: apurado(50000), janela });
+
+test("019/T047 caso 1 — `ctr.janela` CONTENDO a de Conversão: a camada de impressões entra, na janela da época", () => {
+  const marcos = [
+    { chave: "lead", nome: "lead", celula: apurado(1000) },
+    { chave: "respondeu", nome: "respondeu", celula: apurado(50) },
+  ];
+  const r = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
+    // Contém: começa antes e termina depois. A cadeia não tem `visitante` — e ganha a camada
+    // mesmo assim, que é exatamente o que a FR-031 destravou.
+    ctr: ctrCom({ inicio: "2026-06-01", fim: "2026-09-30" }),
+    janelaConversao: CONVERSAO_EPOCA,
+  });
+  const imp = r.camadas.at(-1);
+  assert.equal(imp.chave, "impressao");
+  assert.equal(Math.round(imp.necessario.max), 8000); // 160 leads ÷ 2%
+  assert.equal(r.parou, null);
+});
+
+test("019/T047 caso 1b — igualdade EXATA de janela também contém (contém, não `contém estritamente`)", () => {
+  const marcos = [
+    { chave: "lead", nome: "lead", celula: apurado(1000) },
+    { chave: "respondeu", nome: "respondeu", celula: apurado(50) },
+  ];
+  const r = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
+    ctr: ctrCom({ ...CONVERSAO_EPOCA }),
+    janelaConversao: CONVERSAO_EPOCA,
+  });
+  assert.ok(r.camadas.some((c) => c.chave === "impressao"));
+});
+
+test("019/T047 caso 2 — projeto SEM época: a árvore para exatamente onde para hoje (FR-032)", () => {
+  // Sem `epoca` a borda não fatia a série, então `ctr` chega SEM `janela` — e a contenção falha
+  // por construção, onde já falhava. Nenhuma camada de impressões nova aparece para os 16.
+  const marcos = [
+    { chave: "visitante", nome: "visitante", celula: apurado(1000) },
+    { chave: "lead", nome: "lead", celula: apurado(50) },
+  ];
+  const semJanela = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
+    ctr: { valor: 0.02, impressoes: apurado(50000) },
+  });
+  assert.ok(!semJanela.camadas.some((c) => c.chave === "impressao"), "sem janela no ctr não há coincidência a provar");
+  // E sem `ctr` nenhum, idem — o comportamento de sempre.
+  const semCtr = montarArvore({ ficha: { perfil: "D", marcos }, projecao: { n1Janela: apurado(8) } });
+  assert.ok(!semCtr.camadas.some((c) => c.chave === "impressao"));
+  assert.equal(semCtr.parou, null, "sem ctr a árvore não `para` — ela simplesmente termina na cadeia");
+});
+
+test("019/T047 caso 3 — série começando DEPOIS do início da época: `parou` nomeia, e NENHUMA camada de impressões", () => {
+  // A bomba-relógio desta decisão: para a atma este vira o caso real em 2026-10-23, quando a época
+  // ultrapassar os 84 dias que `gscSeries()` busca.
+  const marcos = [
+    { chave: "lead", nome: "lead", celula: apurado(1000) },
+    { chave: "respondeu", nome: "respondeu", celula: apurado(50) },
+  ];
+  const r = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
+    ctr: ctrCom({ inicio: "2026-08-15", fim: "2026-09-06" }),
+    janelaConversao: CONVERSAO_EPOCA,
+  });
+  assert.ok(!r.camadas.some((c) => c.chave === "impressao"), "compor períodos diferentes seria inventar o dado");
+  assert.ok(r.parou, "a árvore PARA e NOMEIA — nunca some em silêncio");
+  assert.equal(r.parou.nome, "impressões");
+  assert.match(r.parou.motivo, /2026-08-15/);
+  assert.match(r.parou.motivo, /2026-07-31/);
+});
+
+test("019/T047 caso 3b — série que termina ANTES do fim da época também para e nomeia", () => {
+  const marcos = [
+    { chave: "lead", nome: "lead", celula: apurado(1000) },
+    { chave: "respondeu", nome: "respondeu", celula: apurado(50) },
+  ];
+  const r = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
+    // O caso REAL de hoje: o GSC fecha em D-3 e a janela de Conversão fecha em D-0.
+    ctr: ctrCom({ inicio: "2026-07-01", fim: "2026-09-03" }),
+    janelaConversao: CONVERSAO_EPOCA,
+  });
+  assert.ok(!r.camadas.some((c) => c.chave === "impressao"));
+  assert.equal(r.parou.nome, "impressões");
+  assert.match(r.parou.motivo, /2026-09-03/);
+});
+
+test("019/T047 caso 4 — na descida completa, no MÁXIMO uma faixa de mercado (trava da 016, R6)", () => {
+  const marcos = [
+    { chave: "lead", nome: "lead", celula: apurado(1000) },
+    { chave: "respondeu", nome: "respondeu", celula: apurado(50) },
+    { chave: "orcamento", nome: "orcamento", celula: apurado(20) },
+    { chave: "tratamento", nome: "tratamento", celula: apurado(4) },
+  ];
+  const r = montarArvore({
+    ficha: { perfil: "D", marcos },
+    projecao: { n1Janela: apurado(8) },
+    ctr: ctrCom({ inicio: "2026-06-01", fim: "2026-09-30" }),
+    janelaConversao: CONVERSAO_EPOCA,
+  });
+  const mercados = r.camadas.filter((c) => c.divisor?.origem === "mercado");
+  assert.ok(mercados.length <= 1, `a árvore compôs ${mercados.length} faixas de mercado — a R6 proíbe`);
 });
