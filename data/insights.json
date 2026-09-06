@@ -1,19 +1,18 @@
 {
-  "generatedAt": "2026-08-30",
-  "windowEnd": "2026-08-27",
+  "generatedAt": "2026-09-06",
+  "windowEnd": "2026-09-03",
   "projects": {
     "goiania": {
       "property": "sc-domain:goiania.roilabs.com.br",
-      "health": 60,
+      "health": 75,
       "reasons": [
-        "impressões 12sem subindo (+22,5%/sem): +15",
-        "crawl com desperdício (84,5% OK): -10",
-        "posição média melhorou (20,9→17,0): +5"
+        "impressões 12sem subindo (+19,5%/sem): +15",
+        "crawl saudável (85,7% OK): +10"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "insufficient-data",
-        "slopePctWeek": 22.5,
+        "slopePctWeek": 19.5,
         "windows": {
           "clicks": {
             "4w": {
@@ -32,98 +31,96 @@
           "impressions": {
             "4w": {
               "state": "improving",
-              "slopePctWeek": 12.3
+              "slopePctWeek": 13.2
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 22.5
+              "slopePctWeek": 19.5
             },
             "26w": {
               "state": "improving",
-              "slopePctWeek": 11.6
+              "slopePctWeek": 13.6
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-07-03",
+          "date": "2026-07-10",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 6482
+          "changePct": 1252
         }
       ],
       "anomalies": [],
       "crawl": {
-        "diagnosis": "crawl-waste",
-        "detail": "só 84,5% OK (14,4% redirect)"
+        "diagnosis": "ok",
+        "detail": "85,7% OK"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 129,
+        "lastWeek": 151,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 142,
-            "lo": 78,
-            "hi": 259
-          },
-          {
             "date": "2026-09-10",
-            "value": 151,
-            "lo": 63,
-            "hi": 364
+            "value": 161,
+            "lo": 92,
+            "hi": 284
           },
           {
             "date": "2026-09-17",
-            "value": 159,
-            "lo": 51,
-            "hi": 493
+            "value": 171,
+            "lo": 75,
+            "hi": 389
           },
           {
             "date": "2026-09-24",
-            "value": 166,
-            "lo": 42,
-            "hi": 653
+            "value": 179,
+            "lo": 62,
+            "hi": 517
           },
           {
             "date": "2026-10-01",
-            "value": 171,
-            "lo": 34,
-            "hi": 847
+            "value": 186,
+            "lo": 51,
+            "hi": 671
           },
           {
             "date": "2026-10-08",
-            "value": 176,
-            "lo": 28,
-            "hi": 1081
+            "value": 192,
+            "lo": 42,
+            "hi": 857
           },
           {
             "date": "2026-10-15",
-            "value": 180,
-            "lo": 23,
-            "hi": 1359
+            "value": 197,
+            "lo": 35,
+            "hi": 1076
           },
           {
             "date": "2026-10-22",
-            "value": 183,
-            "lo": 19,
-            "hi": 1685
+            "value": 200,
+            "lo": 29,
+            "hi": 1333
+          },
+          {
+            "date": "2026-10-29",
+            "value": 203,
+            "lo": 25,
+            "hi": 1630
           }
         ]
       },
       "gates": [],
-      "flags": [
-        "crawl-waste"
-      ],
-      "narrative": null
+      "flags": [],
+      "narrative": "As impressões aceleram há três janelas seguidas (12sem +19,5%/sem) com crawl saudável, mas ainda não há dados de clique — provável ranqueamento em posições que geram exibição sem clique ainda. Aproveite o momento para revisar title/meta description das páginas que mais ganharam impressão, buscando CTR mais competitivo."
     },
     "tapepro": {
       "property": "sc-domain:tapepro.roilabs.com.br",
       "health": 35,
       "reasons": [
         "impressões 12sem estáveis (+0,0%/sem): +5",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "flat",
@@ -164,59 +161,59 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros) com impressões estagnadas — crawl budget queimado"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros) com impressões estagnadas — crawl budget queimado"
       },
       "forecast": {
         "metric": "impressions",
         "lastWeek": 0,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 0,
-            "lo": 0,
-            "hi": 5
-          },
-          {
             "date": "2026-09-10",
             "value": 0,
             "lo": 0,
-            "hi": 12
+            "hi": 4
           },
           {
             "date": "2026-09-17",
             "value": 0,
             "lo": 0,
-            "hi": 27
+            "hi": 10
           },
           {
             "date": "2026-09-24",
             "value": 0,
             "lo": 0,
-            "hi": 56
+            "hi": 21
           },
           {
             "date": "2026-10-01",
             "value": 0,
             "lo": 0,
-            "hi": 113
+            "hi": 43
           },
           {
             "date": "2026-10-08",
             "value": 0,
             "lo": 0,
-            "hi": 223
+            "hi": 82
           },
           {
             "date": "2026-10-15",
             "value": 0,
             "lo": 0,
-            "hi": 431
+            "hi": 154
           },
           {
             "date": "2026-10-22",
             "value": 0,
             "lo": 0,
-            "hi": 813
+            "hi": 282
+          },
+          {
+            "date": "2026-10-29",
+            "value": 0,
+            "lo": 0,
+            "hi": 505
           }
         ]
       },
@@ -224,30 +221,31 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Impressões estagnadas (+0,0%/sem) com crawl crítico: só 51,1% das requisições retornam OK, e quase 39% se perdem em respostas que não geram indexação. Antes de qualquer ajuste de conteúdo, faça uma auditoria técnica de rastreamento (redirects e respostas quebradas) para destravar o crawl budget."
     },
     "sirius": {
       "property": "sc-domain:siriuscrm.com.br",
-      "health": 80,
+      "health": 85,
       "reasons": [
-        "impressões 12sem subindo (+9,2%/sem): +15",
+        "impressões 12sem subindo (+8,7%/sem): +15",
         "cliques 12sem subindo: +10",
-        "crawl saudável (89,9% OK): +10",
-        "posição média piorou (11,7→14,5): -5"
+        "semana anormalmente acima do normal: +5",
+        "crawl saudável (90,2% OK): +10",
+        "posição média piorou (11,9→13,6): -5"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "improving",
-        "slopePctWeek": 9.2,
+        "slopePctWeek": 8.7,
         "windows": {
           "clicks": {
             "4w": {
-              "state": "declining",
-              "slopePctWeek": -14.8
+              "state": "improving",
+              "slopePctWeek": 12.4
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 10.1
+              "slopePctWeek": 12.9
             },
             "26w": {
               "state": "improving",
@@ -257,226 +255,7 @@
           "impressions": {
             "4w": {
               "state": "improving",
-              "slopePctWeek": 10.6
-            },
-            "12w": {
-              "state": "improving",
-              "slopePctWeek": 9.2
-            },
-            "26w": {
-              "state": "improving",
-              "slopePctWeek": 10.0
-            }
-          }
-        }
-      },
-      "changepoints": [
-        {
-          "date": "2026-04-24",
-          "metric": "impressions",
-          "direction": "up",
-          "changePct": 4182
-        }
-      ],
-      "anomalies": [],
-      "crawl": {
-        "diagnosis": "ok",
-        "detail": "89,9% OK"
-      },
-      "forecast": {
-        "metric": "impressions",
-        "lastWeek": 742,
-        "weeks": [
-          {
-            "date": "2026-09-03",
-            "value": 744,
-            "lo": 467,
-            "hi": 1185
-          },
-          {
-            "date": "2026-09-10",
-            "value": 752,
-            "lo": 402,
-            "hi": 1408
-          },
-          {
-            "date": "2026-09-17",
-            "value": 759,
-            "lo": 356,
-            "hi": 1615
-          },
-          {
-            "date": "2026-09-24",
-            "value": 764,
-            "lo": 321,
-            "hi": 1815
-          },
-          {
-            "date": "2026-10-01",
-            "value": 768,
-            "lo": 292,
-            "hi": 2013
-          },
-          {
-            "date": "2026-10-08",
-            "value": 771,
-            "lo": 269,
-            "hi": 2211
-          },
-          {
-            "date": "2026-10-15",
-            "value": 774,
-            "lo": 248,
-            "hi": 2410
-          },
-          {
-            "date": "2026-10-22",
-            "value": 776,
-            "lo": 230,
-            "hi": 2610
-          }
-        ]
-      },
-      "gates": [],
-      "flags": [],
-      "narrative": null
-    },
-    "fabrica": {
-      "property": "sc-domain:estetia.estetiacrm.com.br",
-      "health": 75,
-      "reasons": [
-        "impressões 12sem subindo (+12,7%/sem): +15",
-        "crawl saudável (96,8% OK): +10"
-      ],
-      "trend": {
-        "impressions": "improving",
-        "clicks": "insufficient-data",
-        "slopePctWeek": 12.7,
-        "windows": {
-          "clicks": {
-            "4w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            },
-            "12w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            },
-            "26w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            }
-          },
-          "impressions": {
-            "4w": {
-              "state": "improving",
-              "slopePctWeek": 4.9
-            },
-            "12w": {
-              "state": "improving",
-              "slopePctWeek": 12.7
-            },
-            "26w": {
-              "state": "improving",
-              "slopePctWeek": 10.5
-            }
-          }
-        }
-      },
-      "changepoints": [],
-      "anomalies": [],
-      "crawl": {
-        "diagnosis": "ok",
-        "detail": "96,8% OK"
-      },
-      "forecast": {
-        "metric": "impressions",
-        "lastWeek": 11,
-        "weeks": [
-          {
-            "date": "2026-09-03",
-            "value": 12,
-            "lo": 5,
-            "hi": 28
-          },
-          {
-            "date": "2026-09-10",
-            "value": 12,
-            "lo": 4,
-            "hi": 30
-          },
-          {
-            "date": "2026-09-17",
-            "value": 12,
-            "lo": 4,
-            "hi": 34
-          },
-          {
-            "date": "2026-09-24",
-            "value": 12,
-            "lo": 3,
-            "hi": 39
-          },
-          {
-            "date": "2026-10-01",
-            "value": 12,
-            "lo": 3,
-            "hi": 46
-          },
-          {
-            "date": "2026-10-08",
-            "value": 12,
-            "lo": 2,
-            "hi": 55
-          },
-          {
-            "date": "2026-10-15",
-            "value": 12,
-            "lo": 2,
-            "hi": 66
-          },
-          {
-            "date": "2026-10-22",
-            "value": 12,
-            "lo": 1,
-            "hi": 80
-          }
-        ]
-      },
-      "gates": [],
-      "flags": [],
-      "narrative": null
-    },
-    "roilabs": {
-      "property": "sc-domain:roilabs.com.br",
-      "health": 45,
-      "reasons": [
-        "impressões 12sem subindo (+8,7%/sem): +15",
-        "crawl crítico (47,7% OK): -20"
-      ],
-      "trend": {
-        "impressions": "improving",
-        "clicks": "insufficient-data",
-        "slopePctWeek": 8.7,
-        "windows": {
-          "clicks": {
-            "4w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            },
-            "12w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            },
-            "26w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            }
-          },
-          "impressions": {
-            "4w": {
-              "state": "improving",
-              "slopePctWeek": 31.6
+              "slopePctWeek": 21.0
             },
             "12w": {
               "state": "improving",
@@ -484,336 +263,101 @@
             },
             "26w": {
               "state": "improving",
-              "slopePctWeek": 10.0
+              "slopePctWeek": 8.8
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-07-03",
+          "date": "2026-05-01",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 248
-        }
-      ],
-      "anomalies": [],
-      "crawl": {
-        "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
-      },
-      "forecast": {
-        "metric": "impressions",
-        "lastWeek": 30,
-        "weeks": [
-          {
-            "date": "2026-09-03",
-            "value": 23,
-            "lo": 6,
-            "hi": 84
-          },
-          {
-            "date": "2026-09-10",
-            "value": 24,
-            "lo": 5,
-            "hi": 97
-          },
-          {
-            "date": "2026-09-17",
-            "value": 24,
-            "lo": 5,
-            "hi": 111
-          },
-          {
-            "date": "2026-09-24",
-            "value": 25,
-            "lo": 4,
-            "hi": 127
-          },
-          {
-            "date": "2026-10-01",
-            "value": 25,
-            "lo": 4,
-            "hi": 146
-          },
-          {
-            "date": "2026-10-08",
-            "value": 25,
-            "lo": 3,
-            "hi": 167
-          },
-          {
-            "date": "2026-10-15",
-            "value": 25,
-            "lo": 3,
-            "hi": 190
-          },
-          {
-            "date": "2026-10-22",
-            "value": 25,
-            "lo": 2,
-            "hi": 215
-          }
-        ]
-      },
-      "gates": [],
-      "flags": [
-        "crawl-waste"
-      ],
-      "narrative": null
-    },
-    "polarisia": {
-      "property": "sc-domain:polarisia.com.br",
-      "health": 80,
-      "reasons": [
-        "impressões 12sem estáveis (-1,7%/sem): +5",
-        "cliques 12sem subindo: +10",
-        "crawl saudável (94,6% OK): +10",
-        "posição média melhorou (10,8→10,2): +5"
-      ],
-      "trend": {
-        "impressions": "flat",
-        "clicks": "improving",
-        "slopePctWeek": -1.7,
-        "windows": {
-          "clicks": {
-            "4w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            },
-            "12w": {
-              "state": "improving",
-              "slopePctWeek": 6.2
-            },
-            "26w": {
-              "state": "improving",
-              "slopePctWeek": 9.1
-            }
-          },
-          "impressions": {
-            "4w": {
-              "state": "improving",
-              "slopePctWeek": 2.7
-            },
-            "12w": {
-              "state": "flat",
-              "slopePctWeek": -1.7
-            },
-            "26w": {
-              "state": "improving",
-              "slopePctWeek": 7.0
-            }
-          }
-        }
-      },
-      "changepoints": [
-        {
-          "date": "2026-04-24",
-          "metric": "impressions",
-          "direction": "up",
-          "changePct": 19200
-        }
-      ],
-      "anomalies": [],
-      "crawl": {
-        "diagnosis": "ok",
-        "detail": "94,6% OK"
-      },
-      "forecast": {
-        "metric": "impressions",
-        "lastWeek": 155,
-        "weeks": [
-          {
-            "date": "2026-09-03",
-            "value": 161,
-            "lo": 110,
-            "hi": 237
-          },
-          {
-            "date": "2026-09-10",
-            "value": 162,
-            "lo": 96,
-            "hi": 273
-          },
-          {
-            "date": "2026-09-17",
-            "value": 162,
-            "lo": 86,
-            "hi": 305
-          },
-          {
-            "date": "2026-09-24",
-            "value": 162,
-            "lo": 78,
-            "hi": 336
-          },
-          {
-            "date": "2026-10-01",
-            "value": 163,
-            "lo": 72,
-            "hi": 367
-          },
-          {
-            "date": "2026-10-08",
-            "value": 163,
-            "lo": 66,
-            "hi": 397
-          },
-          {
-            "date": "2026-10-15",
-            "value": 163,
-            "lo": 62,
-            "hi": 428
-          },
-          {
-            "date": "2026-10-22",
-            "value": 163,
-            "lo": 58,
-            "hi": 459
-          }
-        ]
-      },
-      "gates": [],
-      "flags": [],
-      "narrative": null
-    },
-    "estetiacrm": {
-      "property": "sc-domain:estetiacrm.com.br",
-      "health": 75,
-      "reasons": [
-        "impressões 12sem subindo (+7,1%/sem): +15",
-        "cliques 12sem subindo: +10",
-        "semana anormalmente acima do normal: +5",
-        "crawl com desperdício (80,3% OK): -10",
-        "posição média melhorou (16,6→13,9): +5"
-      ],
-      "trend": {
-        "impressions": "improving",
-        "clicks": "improving",
-        "slopePctWeek": 7.1,
-        "windows": {
-          "clicks": {
-            "4w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
-            },
-            "12w": {
-              "state": "improving",
-              "slopePctWeek": 12.5
-            },
-            "26w": {
-              "state": "improving",
-              "slopePctWeek": 10.1
-            }
-          },
-          "impressions": {
-            "4w": {
-              "state": "improving",
-              "slopePctWeek": 20.2
-            },
-            "12w": {
-              "state": "improving",
-              "slopePctWeek": 7.1
-            },
-            "26w": {
-              "state": "improving",
-              "slopePctWeek": 11.8
-            }
-          }
-        }
-      },
-      "changepoints": [
-        {
-          "date": "2026-05-29",
-          "metric": "impressions",
-          "direction": "up",
-          "changePct": 967
+          "changePct": 1293
         }
       ],
       "anomalies": [
         {
           "metric": "impressions",
           "direction": "above",
-          "value": 588,
-          "expected": 269,
-          "z": 5.1
+          "value": 1783,
+          "expected": 458,
+          "z": 8.2
         }
       ],
       "crawl": {
-        "diagnosis": "crawl-waste",
-        "detail": "só 80,3% OK (11,8% redirect · 6,8% 404)"
+        "diagnosis": "ok",
+        "detail": "90,2% OK"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 588,
+        "lastWeek": 1783,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 626,
-            "lo": 435,
-            "hi": 901
-          },
-          {
             "date": "2026-09-10",
-            "value": 668,
-            "lo": 393,
-            "hi": 1135
+            "value": 1657,
+            "lo": 982,
+            "hi": 2795
           },
           {
             "date": "2026-09-17",
-            "value": 704,
-            "lo": 355,
-            "hi": 1394
+            "value": 1676,
+            "lo": 828,
+            "hi": 3391
           },
           {
             "date": "2026-09-24",
-            "value": 734,
-            "lo": 320,
-            "hi": 1681
+            "value": 1691,
+            "lo": 722,
+            "hi": 3954
           },
           {
             "date": "2026-10-01",
-            "value": 758,
-            "lo": 288,
-            "hi": 1996
+            "value": 1703,
+            "lo": 643,
+            "hi": 4509
           },
           {
             "date": "2026-10-08",
-            "value": 779,
-            "lo": 259,
-            "hi": 2339
+            "value": 1713,
+            "lo": 579,
+            "hi": 5065
           },
           {
             "date": "2026-10-15",
-            "value": 795,
-            "lo": 233,
-            "hi": 2710
+            "value": 1720,
+            "lo": 526,
+            "hi": 5626
           },
           {
             "date": "2026-10-22",
-            "value": 809,
-            "lo": 210,
-            "hi": 3110
+            "value": 1727,
+            "lo": 481,
+            "hi": 6196
+          },
+          {
+            "date": "2026-10-29",
+            "value": 1732,
+            "lo": 442,
+            "hi": 6778
           }
         ]
       },
       "gates": [],
-      "flags": [
-        "crawl-waste"
-      ],
-      "narrative": null
+      "flags": [],
+      "narrative": "Impressões e cliques sobem de forma consistente há 26 semanas, com pico anômalo na última (8,2 sigma acima do esperado) e crawl saudável — sinal de tração real, não ruído. A posição média piorando (11,9→13,6) sugere que páginas novas estão diluindo a média enquanto ganham força; revise internamente os links para reforçar as páginas-chave que já rankeavam bem."
     },
-    "reviewshield": {
-      "property": "sc-domain:reviewshield.nimblabs.com",
+    "fabrica": {
+      "property": "sc-domain:estetia.estetiacrm.com.br",
       "health": 75,
       "reasons": [
-        "impressões 12sem subindo (+8,1%/sem): +15",
-        "crawl saudável (96,6% OK): +10"
+        "impressões 12sem subindo (+12,6%/sem): +15",
+        "crawl saudável (97,0% OK): +10"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "insufficient-data",
-        "slopePctWeek": 8.1,
+        "slopePctWeek": 12.6,
         "windows": {
           "clicks": {
             "4w": {
@@ -832,15 +376,15 @@
           "impressions": {
             "4w": {
               "state": "improving",
-              "slopePctWeek": 23.0
+              "slopePctWeek": 24.2
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 8.1
+              "slopePctWeek": 12.6
             },
             "26w": {
               "state": "improving",
-              "slopePctWeek": 8.9
+              "slopePctWeek": 11.1
             }
           }
         }
@@ -849,59 +393,521 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "96,6% OK"
+        "detail": "97,0% OK"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 15,
+        "lastWeek": 17,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 11,
-            "lo": 4,
-            "hi": 27
-          },
-          {
             "date": "2026-09-10",
-            "value": 10,
-            "lo": 3,
-            "hi": 27
+            "value": 14,
+            "lo": 6,
+            "hi": 31
           },
           {
             "date": "2026-09-17",
-            "value": 10,
-            "lo": 3,
-            "hi": 28
+            "value": 15,
+            "lo": 6,
+            "hi": 35
           },
           {
             "date": "2026-09-24",
-            "value": 9,
-            "lo": 2,
-            "hi": 30
+            "value": 15,
+            "lo": 5,
+            "hi": 41
           },
           {
             "date": "2026-10-01",
-            "value": 9,
-            "lo": 2,
-            "hi": 34
+            "value": 16,
+            "lo": 5,
+            "hi": 48
           },
           {
             "date": "2026-10-08",
-            "value": 8,
-            "lo": 1,
-            "hi": 38
+            "value": 17,
+            "lo": 4,
+            "hi": 58
           },
           {
             "date": "2026-10-15",
-            "value": 8,
-            "lo": 1,
-            "hi": 44
+            "value": 17,
+            "lo": 4,
+            "hi": 71
           },
           {
             "date": "2026-10-22",
+            "value": 18,
+            "lo": 3,
+            "hi": 87
+          },
+          {
+            "date": "2026-10-29",
+            "value": 18,
+            "lo": 2,
+            "hi": 107
+          }
+        ]
+      },
+      "gates": [],
+      "flags": [],
+      "narrative": "Impressões em alta consistente (12sem +12,6%/sem, 26sem +11,1%/sem) com crawl quase perfeito (97%), mas ainda sem série de cliques mensurável. É o padrão de conteúdo novo ganhando visibilidade antes de conversão em clique; trabalhe title tags mais específicas para as queries que já geram impressão."
+    },
+    "roilabs": {
+      "property": "sc-domain:roilabs.com.br",
+      "health": 45,
+      "reasons": [
+        "impressões 12sem subindo (+5,6%/sem): +15",
+        "crawl crítico (51,1% OK): -20"
+      ],
+      "trend": {
+        "impressions": "improving",
+        "clicks": "insufficient-data",
+        "slopePctWeek": 5.6,
+        "windows": {
+          "clicks": {
+            "4w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            },
+            "12w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            },
+            "26w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            }
+          },
+          "impressions": {
+            "4w": {
+              "state": "improving",
+              "slopePctWeek": 26.8
+            },
+            "12w": {
+              "state": "improving",
+              "slopePctWeek": 5.6
+            },
+            "26w": {
+              "state": "improving",
+              "slopePctWeek": 8.6
+            }
+          }
+        }
+      },
+      "changepoints": [
+        {
+          "date": "2026-06-05",
+          "metric": "impressions",
+          "direction": "up",
+          "changePct": 272
+        }
+      ],
+      "anomalies": [],
+      "crawl": {
+        "diagnosis": "crawl-waste",
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
+      },
+      "forecast": {
+        "metric": "impressions",
+        "lastWeek": 16,
+        "weeks": [
+          {
+            "date": "2026-09-10",
+            "value": 20,
+            "lo": 5,
+            "hi": 71
+          },
+          {
+            "date": "2026-09-17",
+            "value": 20,
+            "lo": 5,
+            "hi": 80
+          },
+          {
+            "date": "2026-09-24",
+            "value": 20,
+            "lo": 4,
+            "hi": 91
+          },
+          {
+            "date": "2026-10-01",
+            "value": 20,
+            "lo": 3,
+            "hi": 103
+          },
+          {
+            "date": "2026-10-08",
+            "value": 20,
+            "lo": 3,
+            "hi": 116
+          },
+          {
+            "date": "2026-10-15",
+            "value": 21,
+            "lo": 2,
+            "hi": 132
+          },
+          {
+            "date": "2026-10-22",
+            "value": 21,
+            "lo": 2,
+            "hi": 149
+          },
+          {
+            "date": "2026-10-29",
+            "value": 21,
+            "lo": 2,
+            "hi": 167
+          }
+        ]
+      },
+      "gates": [],
+      "flags": [
+        "crawl-waste"
+      ],
+      "narrative": "Impressões sobem (12sem +5,6%/sem) mas o crawl está crítico (51,1% OK), o mesmo problema de desperdício de rastreamento do tapepro — aqui pesando ainda mais porque o crescimento já é mais lento. Priorize corrigir os redirects e respostas quebradas antes de investir em novo conteúdo, para não desperdiçar o crawl budget do Google."
+    },
+    "polarisia": {
+      "property": "sc-domain:polarisia.com.br",
+      "health": 80,
+      "reasons": [
+        "impressões 12sem estáveis (-0,1%/sem): +5",
+        "cliques 12sem subindo: +10",
+        "crawl saudável (96,9% OK): +10",
+        "posição média melhorou (11,3→10,8): +5"
+      ],
+      "trend": {
+        "impressions": "flat",
+        "clicks": "improving",
+        "slopePctWeek": -0.1,
+        "windows": {
+          "clicks": {
+            "4w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            },
+            "12w": {
+              "state": "improving",
+              "slopePctWeek": 7.4
+            },
+            "26w": {
+              "state": "improving",
+              "slopePctWeek": 9.2
+            }
+          },
+          "impressions": {
+            "4w": {
+              "state": "flat",
+              "slopePctWeek": 1.4
+            },
+            "12w": {
+              "state": "flat",
+              "slopePctWeek": -0.1
+            },
+            "26w": {
+              "state": "improving",
+              "slopePctWeek": 6.6
+            }
+          }
+        }
+      },
+      "changepoints": [
+        {
+          "date": "2026-05-01",
+          "metric": "impressions",
+          "direction": "up",
+          "changePct": 21725
+        }
+      ],
+      "anomalies": [],
+      "crawl": {
+        "diagnosis": "ok",
+        "detail": "96,9% OK"
+      },
+      "forecast": {
+        "metric": "impressions",
+        "lastWeek": 223,
+        "weeks": [
+          {
+            "date": "2026-09-10",
+            "value": 212,
+            "lo": 144,
+            "hi": 312
+          },
+          {
+            "date": "2026-09-17",
+            "value": 214,
+            "lo": 129,
+            "hi": 353
+          },
+          {
+            "date": "2026-09-24",
+            "value": 215,
+            "lo": 117,
+            "hi": 393
+          },
+          {
+            "date": "2026-10-01",
+            "value": 216,
+            "lo": 107,
+            "hi": 433
+          },
+          {
+            "date": "2026-10-08",
+            "value": 217,
+            "lo": 99,
+            "hi": 473
+          },
+          {
+            "date": "2026-10-15",
+            "value": 217,
+            "lo": 92,
+            "hi": 513
+          },
+          {
+            "date": "2026-10-22",
+            "value": 218,
+            "lo": 85,
+            "hi": 554
+          },
+          {
+            "date": "2026-10-29",
+            "value": 218,
+            "lo": 80,
+            "hi": 595
+          }
+        ]
+      },
+      "gates": [],
+      "flags": [],
+      "narrative": "Impressões estáveis no curto prazo mas crescendo em 26 semanas (+6,6%/sem), com cliques subindo e posição média melhorando (11,3→10,8) — sinal de consolidação real de ranking, não inflação de impressão vazia. Aproveite as páginas que subiram de posição para reforçar CTAs internos e capturar mais clique da mesma exibição."
+    },
+    "estetiacrm": {
+      "property": "sc-domain:estetiacrm.com.br",
+      "health": 75,
+      "reasons": [
+        "impressões 12sem subindo (+10,7%/sem): +15",
+        "cliques 12sem subindo: +10",
+        "semana anormalmente acima do normal: +5",
+        "crawl com desperdício (82,1% OK): -10",
+        "posição média melhorou (16,4→12,9): +5"
+      ],
+      "trend": {
+        "impressions": "improving",
+        "clicks": "improving",
+        "slopePctWeek": 10.7,
+        "windows": {
+          "clicks": {
+            "4w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            },
+            "12w": {
+              "state": "improving",
+              "slopePctWeek": 13.3
+            },
+            "26w": {
+              "state": "improving",
+              "slopePctWeek": 11.6
+            }
+          },
+          "impressions": {
+            "4w": {
+              "state": "improving",
+              "slopePctWeek": 11.9
+            },
+            "12w": {
+              "state": "improving",
+              "slopePctWeek": 10.7
+            },
+            "26w": {
+              "state": "improving",
+              "slopePctWeek": 11.5
+            }
+          }
+        }
+      },
+      "changepoints": [
+        {
+          "date": "2026-06-05",
+          "metric": "impressions",
+          "direction": "up",
+          "changePct": 444
+        }
+      ],
+      "anomalies": [
+        {
+          "metric": "impressions",
+          "direction": "above",
+          "value": 622,
+          "expected": 274,
+          "z": 5.6
+        }
+      ],
+      "crawl": {
+        "diagnosis": "crawl-waste",
+        "detail": "só 82,1% OK (11,1% redirect · 6,5% 404)"
+      },
+      "forecast": {
+        "metric": "impressions",
+        "lastWeek": 622,
+        "weeks": [
+          {
+            "date": "2026-09-10",
+            "value": 663,
+            "lo": 467,
+            "hi": 942
+          },
+          {
+            "date": "2026-09-17",
+            "value": 698,
+            "lo": 419,
+            "hi": 1163
+          },
+          {
+            "date": "2026-09-24",
+            "value": 727,
+            "lo": 376,
+            "hi": 1405
+          },
+          {
+            "date": "2026-10-01",
+            "value": 751,
+            "lo": 338,
+            "hi": 1670
+          },
+          {
+            "date": "2026-10-08",
+            "value": 771,
+            "lo": 303,
+            "hi": 1959
+          },
+          {
+            "date": "2026-10-15",
+            "value": 787,
+            "lo": 272,
+            "hi": 2272
+          },
+          {
+            "date": "2026-10-22",
+            "value": 801,
+            "lo": 245,
+            "hi": 2609
+          },
+          {
+            "date": "2026-10-29",
+            "value": 811,
+            "lo": 221,
+            "hi": 2970
+          }
+        ]
+      },
+      "gates": [],
+      "flags": [
+        "crawl-waste"
+      ],
+      "narrative": "Crescimento forte e sustentado em impressões e cliques (12sem ambos com dois dígitos), posição média melhorando (16,4→12,9) e pico anômalo na última semana — o ranking está de fato subindo. O ponto de atenção é o crawl com desperdício (82,1% OK, 11,1% redirect): limpe as cadeias de redirect antes que o crescimento acelere e sobrecarregue ainda mais o rastreamento."
+    },
+    "reviewshield": {
+      "property": "sc-domain:reviewshield.nimblabs.com",
+      "health": 65,
+      "reasons": [
+        "impressões 12sem estáveis (+1,6%/sem): +5",
+        "crawl saudável (97,4% OK): +10"
+      ],
+      "trend": {
+        "impressions": "flat",
+        "clicks": "insufficient-data",
+        "slopePctWeek": 1.6,
+        "windows": {
+          "clicks": {
+            "4w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            },
+            "12w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            },
+            "26w": {
+              "state": "insufficient-data",
+              "slopePctWeek": null
+            }
+          },
+          "impressions": {
+            "4w": {
+              "state": "flat",
+              "slopePctWeek": -1.5
+            },
+            "12w": {
+              "state": "flat",
+              "slopePctWeek": 1.6
+            },
+            "26w": {
+              "state": "improving",
+              "slopePctWeek": 7.8
+            }
+          }
+        }
+      },
+      "changepoints": [],
+      "anomalies": [],
+      "crawl": {
+        "diagnosis": "ok",
+        "detail": "97,4% OK"
+      },
+      "forecast": {
+        "metric": "impressions",
+        "lastWeek": 7,
+        "weeks": [
+          {
+            "date": "2026-09-10",
+            "value": 9,
+            "lo": 3,
+            "hi": 21
+          },
+          {
+            "date": "2026-09-17",
             "value": 8,
+            "lo": 3,
+            "hi": 20
+          },
+          {
+            "date": "2026-09-24",
+            "value": 7,
+            "lo": 2,
+            "hi": 20
+          },
+          {
+            "date": "2026-10-01",
+            "value": 6,
             "lo": 1,
-            "hi": 50
+            "hi": 21
+          },
+          {
+            "date": "2026-10-08",
+            "value": 6,
+            "lo": 1,
+            "hi": 23
+          },
+          {
+            "date": "2026-10-15",
+            "value": 6,
+            "lo": 1,
+            "hi": 26
+          },
+          {
+            "date": "2026-10-22",
+            "value": 6,
+            "lo": 0,
+            "hi": 29
+          },
+          {
+            "date": "2026-10-29",
+            "value": 5,
+            "lo": 0,
+            "hi": 33
           }
         ]
       },
@@ -911,11 +917,11 @@
           "date": "2026-09-02",
           "metric": "impressions",
           "threshold": 100,
-          "projected": 11,
-          "lo": 4,
-          "hi": 27,
-          "status": "nao-cruza",
-          "sentence": "no ritmo atual, o ReviewShield NÃO cruza o gate D+90 (100 imp/sem) em 02/09: ~11 imp/sem projetadas (4–27), hoje 15"
+          "projected": 7,
+          "lo": null,
+          "hi": null,
+          "status": "falhou",
+          "sentence": "D+90 venceu em 02/09: 7 imp/sem contra o gate de 100 — FALHOU"
         },
         {
           "gate": "D+180",
@@ -926,7 +932,7 @@
           "lo": null,
           "hi": null,
           "status": "distante",
-          "sentence": "D+180 em 01/12 (14 semanas): longe demais pra projetar — hoje são 0 cliques/sem contra o gate de 10"
+          "sentence": "D+180 em 01/12 (13 semanas): longe demais pra projetar — hoje são 0 cliques/sem contra o gate de 10"
         },
         {
           "gate": "D+270",
@@ -943,20 +949,20 @@
       "flags": [
         "kill-gate"
       ],
-      "narrative": null
+      "narrative": "Impressões estáveis e crawl saudável, mas o gate D+90 falhou (7 imp/sem contra meta de 100) e a projeção de 90 dias tende a cair, não subir. O padrão sugere conteúdo publicado que não está atraindo consultas novas; revise se as páginas indexadas respondem a termos de busca reais ou precisam de reformulação de foco temático."
     },
     "context": {
       "property": "sc-domain:context.nimblabs.com",
       "health": 70,
       "reasons": [
-        "impressões 12sem subindo (+22,1%/sem): +15",
-        "crawl saudável (92,0% OK): +10",
-        "posição média piorou (25,7→53,0): -5"
+        "impressões 12sem subindo (+17,1%/sem): +15",
+        "crawl saudável (92,3% OK): +10",
+        "posição média piorou (31,1→51,8): -5"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "insufficient-data",
-        "slopePctWeek": 22.1,
+        "slopePctWeek": 17.1,
         "windows": {
           "clicks": {
             "4w": {
@@ -974,84 +980,84 @@
           },
           "impressions": {
             "4w": {
-              "state": "improving",
-              "slopePctWeek": 17.6
+              "state": "flat",
+              "slopePctWeek": -0.7
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 22.1
+              "slopePctWeek": 17.1
             },
             "26w": {
-              "state": "flat",
-              "slopePctWeek": 0.0
+              "state": "improving",
+              "slopePctWeek": 7.5
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-07-03",
+          "date": "2026-07-10",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 3775
+          "changePct": 4325
         }
       ],
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "92,0% OK"
+        "detail": "92,3% OK"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 54,
+        "lastWeek": 44,
         "weeks": [
-          {
-            "date": "2026-09-03",
-            "value": 45,
-            "lo": 28,
-            "hi": 73
-          },
           {
             "date": "2026-09-10",
             "value": 46,
-            "lo": 28,
-            "hi": 75
+            "lo": 30,
+            "hi": 71
           },
           {
             "date": "2026-09-17",
             "value": 47,
-            "lo": 29,
-            "hi": 76
+            "lo": 30,
+            "hi": 73
           },
           {
             "date": "2026-09-24",
             "value": 48,
-            "lo": 30,
-            "hi": 78
+            "lo": 31,
+            "hi": 75
           },
           {
             "date": "2026-10-01",
             "value": 49,
-            "lo": 30,
-            "hi": 80
+            "lo": 31,
+            "hi": 77
           },
           {
             "date": "2026-10-08",
             "value": 50,
-            "lo": 31,
-            "hi": 83
+            "lo": 32,
+            "hi": 79
           },
           {
             "date": "2026-10-15",
-            "value": 52,
-            "lo": 31,
-            "hi": 85
+            "value": 51,
+            "lo": 33,
+            "hi": 81
           },
           {
             "date": "2026-10-22",
-            "value": 53,
-            "lo": 32,
-            "hi": 87
+            "value": 52,
+            "lo": 33,
+            "hi": 83
+          },
+          {
+            "date": "2026-10-29",
+            "value": 54,
+            "lo": 34,
+            "hi": 85
           }
         ]
       },
@@ -1062,10 +1068,10 @@
           "metric": "impressions",
           "threshold": 100,
           "projected": 46,
-          "lo": 28,
-          "hi": 75,
+          "lo": 30,
+          "hi": 71,
           "status": "nao-cruza",
-          "sentence": "no ritmo atual, o Context Keeper NÃO cruza o gate D+90 (100 imp/sem) em 10/09: ~46 imp/sem projetadas (28–75), hoje 54"
+          "sentence": "no ritmo atual, o Context Keeper NÃO cruza o gate D+90 (100 imp/sem) em 10/09: ~46 imp/sem projetadas (30–71), hoje 44"
         },
         {
           "gate": "D+180",
@@ -1076,7 +1082,7 @@
           "lo": null,
           "hi": null,
           "status": "distante",
-          "sentence": "D+180 em 09/12 (15 semanas): longe demais pra projetar — hoje são 0 cliques/sem contra o gate de 10"
+          "sentence": "D+180 em 09/12 (14 semanas): longe demais pra projetar — hoje são 0 cliques/sem contra o gate de 10"
         },
         {
           "gate": "D+270",
@@ -1093,20 +1099,20 @@
       "flags": [
         "kill-gate"
       ],
-      "narrative": null
+      "narrative": "Impressões em alta nas últimas 12 semanas (+17,1%/sem) mas a posição média piorou fortemente (31,1→51,8) e o gate D+90 não deve ser cruzado (~46 contra meta de 100) — impressão subindo com posição caindo é típico de página nova indexada em cauda longa, ainda não relevante o suficiente. Foque em aprofundar o conteúdo das páginas que já geram impressão para subir de posição antes de esperar volume."
     },
     "aftercare": {
       "property": "sc-domain:aftercare.nimblabs.com",
       "health": 70,
       "reasons": [
-        "impressões 12sem subindo (+18,1%/sem): +15",
-        "crawl saudável (98,9% OK): +10",
-        "posição média piorou (57,5→60,8): -5"
+        "impressões 12sem subindo (+14,4%/sem): +15",
+        "crawl saudável (99,0% OK): +10",
+        "posição média piorou (57,2→62,0): -5"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "insufficient-data",
-        "slopePctWeek": 18.1,
+        "slopePctWeek": 14.4,
         "windows": {
           "clicks": {
             "4w": {
@@ -1124,84 +1130,84 @@
           },
           "impressions": {
             "4w": {
-              "state": "improving",
-              "slopePctWeek": 23.6
+              "state": "declining",
+              "slopePctWeek": -25.2
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 18.1
+              "slopePctWeek": 14.4
             },
             "26w": {
               "state": "improving",
-              "slopePctWeek": 3.2
+              "slopePctWeek": 5.4
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-07-03",
+          "date": "2026-07-10",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 8235
+          "changePct": 3297
         }
       ],
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "98,9% OK"
+        "detail": "99,0% OK"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 476,
+        "lastWeek": 220,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 514,
-            "lo": 148,
-            "hi": 1785
-          },
-          {
             "date": "2026-09-10",
-            "value": 531,
-            "lo": 86,
-            "hi": 3256
+            "value": 216,
+            "lo": 62,
+            "hi": 742
           },
           {
             "date": "2026-09-17",
-            "value": 545,
-            "lo": 52,
-            "hi": 5653
+            "value": 199,
+            "lo": 32,
+            "hi": 1200
           },
           {
             "date": "2026-09-24",
-            "value": 557,
-            "lo": 32,
-            "hi": 9492
+            "value": 186,
+            "lo": 17,
+            "hi": 1890
           },
           {
             "date": "2026-10-01",
-            "value": 566,
-            "lo": 20,
-            "hi": 15498
+            "value": 176,
+            "lo": 10,
+            "hi": 2935
           },
           {
             "date": "2026-10-08",
-            "value": 573,
-            "lo": 12,
-            "hi": 24678
+            "value": 169,
+            "lo": 5,
+            "hi": 4497
           },
           {
             "date": "2026-10-15",
-            "value": 580,
-            "lo": 8,
-            "hi": 38401
+            "value": 163,
+            "lo": 3,
+            "hi": 6802
           },
           {
             "date": "2026-10-22",
-            "value": 584,
-            "lo": 5,
-            "hi": 58497
+            "value": 159,
+            "lo": 2,
+            "hi": 10150
+          },
+          {
+            "date": "2026-10-29",
+            "value": 156,
+            "lo": 1,
+            "hi": 14942
           }
         ]
       },
@@ -1211,11 +1217,11 @@
           "date": "2026-08-30",
           "metric": "impressions",
           "threshold": 100,
-          "projected": 476,
+          "projected": 220,
           "lo": null,
           "hi": null,
           "status": "passou",
-          "sentence": "o Aftercare já cruzou o gate D+90 (100 imp/sem) antes de 30/08: 476 imp na última semana"
+          "sentence": "D+90 venceu em 30/08: 220 imp/sem contra o gate de 100 — passou"
         },
         {
           "gate": "D+180",
@@ -1226,7 +1232,7 @@
           "lo": null,
           "hi": null,
           "status": "distante",
-          "sentence": "D+180 em 28/11 (14 semanas): longe demais pra projetar — hoje são 0 cliques/sem contra o gate de 10"
+          "sentence": "D+180 em 28/11 (13 semanas): longe demais pra projetar — hoje são 0 cliques/sem contra o gate de 10"
         },
         {
           "gate": "D+270",
@@ -1241,20 +1247,20 @@
         }
       ],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões oscilam bastante (4sem -25,2%/sem após forte alta em 12sem) e a posição média piorou (57,2→62,0), embora o gate D+90 já tenha passado (220 contra meta de 100). A banda de projeção é muito larga, refletindo incerteza real, não tendência de queda; vale investigar quais páginas perderam posição recentemente e reforçar sua relevância temática."
     },
     "nimblabs": {
       "property": "sc-domain:nimblabs.com",
       "health": 80,
       "reasons": [
-        "impressões 12sem subindo (+5,4%/sem): +15",
-        "crawl saudável (96,6% OK): +10",
-        "posição média melhorou (72,0→67,0): +5"
+        "impressões 12sem subindo (+2,2%/sem): +15",
+        "crawl saudável (97,4% OK): +10",
+        "posição média melhorou (71,6→66,2): +5"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "insufficient-data",
-        "slopePctWeek": 5.4,
+        "slopePctWeek": 2.2,
         "windows": {
           "clicks": {
             "4w": {
@@ -1273,96 +1279,96 @@
           "impressions": {
             "4w": {
               "state": "improving",
-              "slopePctWeek": 8.5
+              "slopePctWeek": 3.6
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 5.4
+              "slopePctWeek": 2.2
             },
             "26w": {
               "state": "improving",
-              "slopePctWeek": 5.7
+              "slopePctWeek": 6.2
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-07-03",
+          "date": "2026-06-05",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 322
+          "changePct": 6762
         }
       ],
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "96,6% OK"
+        "detail": "97,4% OK"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 34,
+        "lastWeek": 40,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 32,
-            "lo": 9,
-            "hi": 109
-          },
-          {
             "date": "2026-09-10",
-            "value": 30,
-            "lo": 5,
-            "hi": 154
+            "value": 38,
+            "lo": 11,
+            "hi": 124
           },
           {
             "date": "2026-09-17",
-            "value": 29,
-            "lo": 3,
-            "hi": 221
+            "value": 38,
+            "lo": 7,
+            "hi": 195
           },
           {
             "date": "2026-09-24",
-            "value": 28,
-            "lo": 2,
-            "hi": 321
+            "value": 38,
+            "lo": 4,
+            "hi": 301
           },
           {
             "date": "2026-10-01",
-            "value": 27,
-            "lo": 1,
-            "hi": 463
+            "value": 38,
+            "lo": 2,
+            "hi": 459
           },
           {
             "date": "2026-10-08",
-            "value": 27,
-            "lo": 0,
-            "hi": 664
+            "value": 38,
+            "lo": 1,
+            "hi": 690
           },
           {
             "date": "2026-10-15",
-            "value": 26,
-            "lo": 0,
-            "hi": 944
+            "value": 38,
+            "lo": 1,
+            "hi": 1020
           },
           {
             "date": "2026-10-22",
-            "value": 26,
+            "value": 38,
             "lo": 0,
-            "hi": 1328
+            "hi": 1486
+          },
+          {
+            "date": "2026-10-29",
+            "value": 38,
+            "lo": 0,
+            "hi": 2129
           }
         ]
       },
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Crescimento de impressões modesto mas constante em todas as janelas, crawl saudável e posição média melhorando (71,6→66,2) — evolução lenta e genuína, sem sinal de ruído. Como a posição ainda é baixa (fora da primeira página), o próximo passo é fortalecer conteúdo e links internos nas páginas que já aparecem para consolidar entrada na segunda página de resultados."
     },
     "orcaobra": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1403,21 +1409,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes de impressão ou clique para qualquer leitura de tendência, e o crawl está crítico (51,1% OK) — não dá para saber se falta conteúdo indexável ou se o problema é o próprio rastreamento impedindo a indexação. Corrija primeiro os problemas de crawl (redirects e respostas quebradas) para permitir que o Google sequer colete dados de desempenho."
     },
     "cardiorisk": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1458,21 +1464,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem série de impressões ou cliques (insufficient-data) e crawl crítico (51,1% OK) — não é queda, é ausência de histórico combinada a um problema técnico de rastreamento. Priorize sanar os erros de crawl antes de qualquer ação de conteúdo, já que hoje o site pode nem estar sendo indexado de forma consistente."
     },
     "tapevision": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1513,21 +1519,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes de desempenho em nenhuma janela e crawl crítico (51,1% OK) — quadro típico de site ainda não estabelecido nos resultados, agravado por desperdício de rastreamento. Corrija os redirects e páginas com erro para abrir caminho à indexação antes de esperar tráfego orgânico."
     },
     "potencialarquitetado": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1568,21 +1574,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Nenhuma métrica de impressão ou clique mensurável ainda e crawl crítico (51,1% OK) — insuficiência de dados aqui reflete falta de histórico, não perda de tráfego. Ajuste primeiro os problemas de rastreamento (redirect/erros) para dar ao Google uma base saudável de páginas a indexar."
     },
     "matchfios": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1623,21 +1629,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes em impressões e cliques e o mesmo padrão crítico de crawl (51,1% OK) visto em outros projetos do portfólio. Trate a causa técnica comum — respostas quebradas e redirects — antes de qualquer investimento em conteúdo novo."
     },
     "verticemarketing": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1678,21 +1684,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Nenhuma série de impressão ou clique disponível ainda, com crawl crítico (51,1% OK); é ausência de histórico, não regressão. Resolva o desperdício de crawl budget para permitir que o site comece a gerar dados de indexação mensuráveis."
     },
     "whatsmeow": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1733,21 +1739,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes de impressões ou cliques e crawl crítico (51,1% OK) — projeto ainda sem pegada de indexação mensurável. Corrija os erros de rastreamento antes de avaliar qualquer estratégia de conteúdo."
     },
     "claudeloop": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1788,21 +1794,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem histórico de impressões ou cliques e crawl crítico (51,1% OK), quadro comum a vários projetos com o mesmo problema de infraestrutura de rastreamento. Ajuste redirects e respostas quebradas para abrir espaço à indexação orgânica."
     },
     "swarm": {
       "property": "sc-domain:nimblabs.com",
       "health": 60,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl saudável (96,6% OK): +10"
+        "crawl saudável (97,4% OK): +10"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -1843,136 +1849,127 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "96,6% OK"
+        "detail": "97,4% OK"
       },
       "forecast": null,
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Sem dados suficientes de impressão ou clique, mas o crawl está saudável (97,4% OK) — aqui o gargalo não é técnico, é falta de histórico de busca acumulado. Publique e promova internamente páginas-alvo específicas para começar a gerar impressões mensuráveis."
     },
     "atma": {
       "property": "sc-domain:roilabs.com.br",
-      "health": 55,
+      "health": 60,
       "reasons": [
-        "impressões 12sem subindo (+11,0%/sem): +15",
+        "impressões 12sem subindo (+23,1%/sem): +15",
         "cliques 12sem subindo: +10",
-        "semana anormalmente acima do normal: +5",
-        "crawl crítico (47,7% OK): -20",
-        "posição média piorou (5,3→7,6): -5"
+        "crawl crítico (51,1% OK): -20",
+        "posição média melhorou (8,8→7,5): +5"
       ],
       "trend": {
         "impressions": "improving",
         "clicks": "improving",
-        "slopePctWeek": 11.0,
+        "slopePctWeek": 23.1,
         "windows": {
           "clicks": {
             "4w": {
               "state": "improving",
-              "slopePctWeek": 19.8
+              "slopePctWeek": 3.3
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 12.8
+              "slopePctWeek": 18.5
             },
             "26w": {
               "state": "declining",
-              "slopePctWeek": -3.8
+              "slopePctWeek": -3.9
             }
           },
           "impressions": {
             "4w": {
-              "state": "improving",
-              "slopePctWeek": 15.9
+              "state": "declining",
+              "slopePctWeek": -5.7
             },
             "12w": {
               "state": "improving",
-              "slopePctWeek": 11.0
+              "slopePctWeek": 23.1
             },
             "26w": {
               "state": "declining",
-              "slopePctWeek": -7.3
+              "slopePctWeek": -7.8
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-01-09",
+          "date": "2026-01-16",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 1125412
+          "changePct": 2327
         },
         {
-          "date": "2026-05-29",
+          "date": "2026-06-05",
           "metric": "impressions",
           "direction": "down",
-          "changePct": -85
+          "changePct": -91
         }
       ],
-      "anomalies": [
-        {
-          "metric": "impressions",
-          "direction": "above",
-          "value": 9945,
-          "expected": 1236,
-          "z": 5.0
-        }
-      ],
+      "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": {
         "metric": "impressions",
-        "lastWeek": 9945,
+        "lastWeek": 4995,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 13040,
-            "lo": 3874,
-            "hi": 43892
-          },
-          {
             "date": "2026-09-10",
-            "value": 15704,
-            "lo": 2678,
-            "hi": 92071
+            "value": 5679,
+            "lo": 1686,
+            "hi": 19125
           },
           {
             "date": "2026-09-17",
-            "value": 18222,
-            "lo": 1860,
-            "hi": 178482
+            "value": 5828,
+            "lo": 993,
+            "hi": 34195
           },
           {
             "date": "2026-09-24",
-            "value": 20524,
-            "lo": 1288,
-            "hi": 326742
+            "value": 5950,
+            "lo": 606,
+            "hi": 58338
           },
           {
             "date": "2026-10-01",
-            "value": 22573,
-            "lo": 892,
-            "hi": 570683
+            "value": 6049,
+            "lo": 379,
+            "hi": 96423
           },
           {
             "date": "2026-10-08",
-            "value": 24359,
-            "lo": 619,
-            "hi": 957384
+            "value": 6130,
+            "lo": 241,
+            "hi": 155196
           },
           {
             "date": "2026-10-15",
-            "value": 25889,
-            "lo": 431,
-            "hi": 1550684
+            "value": 6195,
+            "lo": 156,
+            "hi": 243889
           },
           {
             "date": "2026-10-22",
-            "value": 27182,
-            "lo": 302,
-            "hi": 2435317
+            "value": 6248,
+            "lo": 103,
+            "hi": 374920
+          },
+          {
+            "date": "2026-10-29",
+            "value": 6290,
+            "lo": 69,
+            "hi": 564715
           }
         ]
       },
@@ -1980,14 +1977,14 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Impressões e cliques em forte alta em 12 semanas (+23,1%/+18,5%) com posição média melhorando (8,8→7,5), mas o crawl está crítico (51,1% OK) e a variação de curto prazo é negativa — o ranking está subindo apesar do desperdício técnico, não por causa dele. Corrigir os erros de crawl agora provavelmente destrava ainda mais crescimento sobre uma base que já está performando."
     },
     "aprovai": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2028,21 +2025,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes de impressão ou clique e crawl crítico (51,1% OK) — ausência de histórico associada a rastreamento comprometido. Resolva os erros técnicos de crawl antes de esperar qualquer sinal orgânico."
     },
     "moderador": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2083,21 +2080,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Nenhuma métrica de busca mensurável ainda e crawl crítico (51,1% OK), o mesmo padrão estrutural repetido no portfólio. Ajuste redirects e páginas com erro para viabilizar a indexação."
     },
     "meridian": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2138,21 +2135,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem série de impressões ou cliques e crawl crítico (51,1% OK) — falta de dado, não perda de posição. Priorize o conserto do rastreamento antes de qualquer ação de conteúdo."
     },
     "seo-forecaster": {
       "property": "sc-domain:nimblabs.com",
       "health": 60,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl saudável (96,6% OK): +10"
+        "crawl saudável (97,4% OK): +10"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2193,19 +2190,19 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "96,6% OK"
+        "detail": "97,4% OK"
       },
       "forecast": null,
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Sem dados suficientes de busca, mas crawl saudável (97,4% OK) — o site está bem servido tecnicamente, falta apenas volume de histórico. Publique conteúdo direcionado a termos específicos para começar a acumular impressões mensuráveis."
     },
     "cannibal_scan": {
       "property": "sc-domain:nimblabs.com",
       "health": 60,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl saudável (96,6% OK): +10"
+        "crawl saudável (97,4% OK): +10"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2246,19 +2243,19 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "96,6% OK"
+        "detail": "97,4% OK"
       },
       "forecast": null,
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Nenhuma métrica de impressão ou clique disponível ainda, com crawl saudável (97,4% OK) — infraestrutura pronta, faltando apenas tempo e conteúdo indexado. Foque em publicar páginas-alvo para gerar as primeiras impressões mensuráveis."
     },
     "roi-labs-links": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2299,21 +2296,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes de busca e crawl crítico (51,1% OK) — combinação de baixo histórico com desperdício de rastreamento. Corrija os erros técnicos antes de investir em conteúdo."
     },
     "lumina": {
       "property": "sc-domain:estetiacrm.com.br",
       "health": 40,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl com desperdício (80,3% OK): -10"
+        "crawl com desperdício (82,1% OK): -10"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2354,21 +2351,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 80,3% OK (11,8% redirect · 6,8% 404)"
+        "detail": "só 82,1% OK (11,1% redirect · 6,5% 404)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem série de impressões ou cliques e crawl com desperdício (82,1% OK, 11,1% redirect, 6,5% 404) — nível intermediário de problema técnico que já limita a indexação. Limpe os redirects e páginas 404 para abrir caminho a um histórico de busca mensurável."
     },
     "cyberspace": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2409,21 +2406,21 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Nenhum dado de impressão ou clique ainda e crawl crítico (51,1% OK), quadro típico de projeto sem histórico de busca estabelecido. Resolva os erros de rastreamento antes de qualquer estratégia de conteúdo."
     },
     "compass": {
       "property": "sc-domain:polarisia.com.br",
       "health": 60,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl saudável (94,6% OK): +10"
+        "crawl saudável (96,9% OK): +10"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2464,24 +2461,24 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "ok",
-        "detail": "94,6% OK"
+        "detail": "96,9% OK"
       },
       "forecast": null,
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Sem dados suficientes de busca, mas crawl saudável (96,9% OK) — a base técnica está pronta, falta apenas conteúdo indexado gerando impressões. Publique páginas voltadas a termos específicos para começar a acumular histórico mensurável."
     },
     "orion": {
       "property": "sc-domain:roilabs.com.br",
-      "health": 15,
+      "health": 35,
       "reasons": [
-        "impressões 12sem caindo (-9,5%/sem): -15",
-        "crawl crítico (47,7% OK): -20"
+        "impressões 12sem estáveis (+0,0%/sem): +5",
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
-        "impressions": "declining",
+        "impressions": "flat",
         "clicks": "insufficient-data",
-        "slopePctWeek": -9.5,
+        "slopePctWeek": 0.0,
         "windows": {
           "clicks": {
             "4w": {
@@ -2503,12 +2500,12 @@
               "slopePctWeek": null
             },
             "12w": {
-              "state": "declining",
-              "slopePctWeek": -9.5
+              "state": "flat",
+              "slopePctWeek": 0.0
             },
             "26w": {
               "state": "declining",
-              "slopePctWeek": -7.2
+              "slopePctWeek": -7.8
             }
           }
         }
@@ -2517,80 +2514,79 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros) com impressões estagnadas — crawl budget queimado"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros) com impressões estagnadas — crawl budget queimado"
       },
       "forecast": {
         "metric": "impressions",
         "lastWeek": 3,
         "weeks": [
           {
-            "date": "2026-09-03",
-            "value": 3,
-            "lo": 0,
-            "hi": 9
-          },
-          {
             "date": "2026-09-10",
             "value": 3,
-            "lo": 0,
-            "hi": 13
+            "lo": 1,
+            "hi": 9
           },
           {
             "date": "2026-09-17",
             "value": 3,
             "lo": 0,
-            "hi": 17
+            "hi": 14
           },
           {
             "date": "2026-09-24",
             "value": 3,
             "lo": 0,
-            "hi": 22
+            "hi": 18
           },
           {
             "date": "2026-10-01",
             "value": 3,
             "lo": 0,
-            "hi": 27
+            "hi": 23
           },
           {
             "date": "2026-10-08",
             "value": 3,
             "lo": 0,
-            "hi": 33
+            "hi": 28
           },
           {
             "date": "2026-10-15",
             "value": 3,
             "lo": 0,
-            "hi": 40
+            "hi": 34
           },
           {
             "date": "2026-10-22",
             "value": 3,
             "lo": 0,
-            "hi": 47
+            "hi": 41
+          },
+          {
+            "date": "2026-10-29",
+            "value": 3,
+            "lo": 0,
+            "hi": 48
           }
         ]
       },
       "gates": [],
       "flags": [
-        "crawl-waste",
-        "declining"
+        "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Impressões estagnadas (+0,0%/sem em 12sem, -7,8%/sem em 26sem) com crawl crítico (51,1% OK) classificado como desperdício de budget — o site provavelmente não cresce porque o Google gasta parte do rastreamento em respostas quebradas. Corrija redirects e erros antes de esperar qualquer movimento nas impressões."
     },
     "qprime": {
       "property": "sc-domain:qprime.roilabs.com.br",
-      "health": 60,
+      "health": 75,
       "reasons": [
-        "impressões 12sem: sem dados suficientes",
+        "impressões 12sem subindo (+18,8%/sem): +15",
         "crawl saudável (90,4% OK): +10"
       ],
       "trend": {
-        "impressions": "insufficient-data",
+        "impressions": "improving",
         "clicks": "insufficient-data",
-        "slopePctWeek": null,
+        "slopePctWeek": 18.8,
         "windows": {
           "clicks": {
             "4w": {
@@ -2608,16 +2604,16 @@
           },
           "impressions": {
             "4w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
+              "state": "improving",
+              "slopePctWeek": 53.3
             },
             "12w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
+              "state": "improving",
+              "slopePctWeek": 18.8
             },
             "26w": {
-              "state": "insufficient-data",
-              "slopePctWeek": null
+              "state": "flat",
+              "slopePctWeek": 0.0
             }
           }
         }
@@ -2628,10 +2624,63 @@
         "diagnosis": "ok",
         "detail": "90,4% OK"
       },
-      "forecast": null,
+      "forecast": {
+        "metric": "impressions",
+        "lastWeek": 18,
+        "weeks": [
+          {
+            "date": "2026-09-10",
+            "value": 24,
+            "lo": 11,
+            "hi": 52
+          },
+          {
+            "date": "2026-09-17",
+            "value": 35,
+            "lo": 11,
+            "hi": 108
+          },
+          {
+            "date": "2026-09-24",
+            "value": 50,
+            "lo": 11,
+            "hi": 222
+          },
+          {
+            "date": "2026-10-01",
+            "value": 70,
+            "lo": 10,
+            "hi": 453
+          },
+          {
+            "date": "2026-10-08",
+            "value": 99,
+            "lo": 10,
+            "hi": 928
+          },
+          {
+            "date": "2026-10-15",
+            "value": 138,
+            "lo": 9,
+            "hi": 1914
+          },
+          {
+            "date": "2026-10-22",
+            "value": 190,
+            "lo": 8,
+            "hi": 3967
+          },
+          {
+            "date": "2026-10-29",
+            "value": 261,
+            "lo": 7,
+            "hi": 8268
+          }
+        ]
+      },
       "gates": [],
       "flags": [],
-      "narrative": null
+      "narrative": "Impressões em forte aceleração (4sem +53,3%/sem, 12sem +18,8%/sem) com crawl saudável, embora ainda sem série de cliques mensurável — sinal claro de conteúdo novo ganhando visibilidade rápido. Monitore quais páginas puxam esse crescimento e reforce internamente os links para elas consolidarem posição."
     },
     "portfolio": {
       "property": null,
@@ -2661,7 +2710,7 @@
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2693,81 +2742,81 @@
             },
             "26w": {
               "state": "declining",
-              "slopePctWeek": -5.8
+              "slopePctWeek": -4.9
             }
           }
         }
       },
       "changepoints": [
         {
-          "date": "2026-01-09",
+          "date": "2026-01-16",
           "metric": "impressions",
           "direction": "up",
-          "changePct": 3050
+          "changePct": 3575
         },
         {
-          "date": "2026-04-24",
+          "date": "2026-03-27",
           "metric": "impressions",
           "direction": "down",
-          "changePct": -94
+          "changePct": -79
         }
       ],
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": {
         "metric": "impressions",
         "lastWeek": 0,
         "weeks": [
           {
-            "date": "2026-09-03",
+            "date": "2026-09-10",
             "value": 0,
             "lo": 0,
             "hi": 1
           },
           {
-            "date": "2026-09-10",
+            "date": "2026-09-17",
             "value": 0,
             "lo": 0,
             "hi": 2
           },
           {
-            "date": "2026-09-17",
+            "date": "2026-09-24",
             "value": 0,
             "lo": 0,
             "hi": 3
           },
           {
-            "date": "2026-09-24",
+            "date": "2026-10-01",
             "value": 0,
             "lo": 0,
             "hi": 4
           },
           {
-            "date": "2026-10-01",
+            "date": "2026-10-08",
             "value": 0,
             "lo": 0,
             "hi": 6
           },
           {
-            "date": "2026-10-08",
+            "date": "2026-10-15",
             "value": 0,
             "lo": 0,
             "hi": 8
           },
           {
-            "date": "2026-10-15",
-            "value": 0,
-            "lo": 0,
-            "hi": 11
-          },
-          {
             "date": "2026-10-22",
             "value": 0,
             "lo": 0,
-            "hi": 14
+            "hi": 10
+          },
+          {
+            "date": "2026-10-29",
+            "value": 0,
+            "lo": 0,
+            "hi": 13
           }
         ]
       },
@@ -2775,14 +2824,14 @@
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Praticamente sem impressões (última semana 0) e crawl crítico (51,1% OK), com um pico isolado em janeiro seguido de queda de 79% — o site perdeu tração e hoje o desperdício de rastreamento agrava o quadro. Corrija os erros técnicos de crawl e avalie se o conteúdo que gerou o pico ainda existe e está acessível."
     },
     "pathfinder": {
       "property": "sc-domain:roilabs.com.br",
       "health": 30,
       "reasons": [
         "impressões 12sem: sem dados suficientes",
-        "crawl crítico (47,7% OK): -20"
+        "crawl crítico (51,1% OK): -20"
       ],
       "trend": {
         "impressions": "insufficient-data",
@@ -2823,14 +2872,15 @@
       "anomalies": [],
       "crawl": {
         "diagnosis": "crawl-waste",
-        "detail": "só 47,7% OK (7,8% redirect · 41,0% outros)"
+        "detail": "só 51,1% OK (8,0% redirect · 38,7% outros)"
       },
       "forecast": null,
       "gates": [],
       "flags": [
         "crawl-waste"
       ],
-      "narrative": null
+      "narrative": "Sem dados suficientes de impressão ou clique e crawl crítico (51,1% OK) — ausência de histórico de busca somada a rastreamento comprometido. Resolva os erros técnicos de crawl antes de qualquer investimento em conteúdo."
     }
-  }
+  },
+  "narratedAt": "2026-09-06"
 }

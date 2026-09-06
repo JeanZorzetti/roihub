@@ -1,0 +1,5 @@
+Response,Total requests ratio
+OK (200),0.9671
+Not found (404),0.0272
+Not modified (304),0.0029
+Moved permanently (301),0.0029
