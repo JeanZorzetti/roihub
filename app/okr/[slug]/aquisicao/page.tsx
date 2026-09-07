@@ -85,7 +85,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     // Striking Distance com 8 meses misturaria posição de fevereiro com a de hoje e a lista de
     // trabalho apontaria para páginas que já subiram ou já caíram — uma fila de trabalho velha
     // é pior que fila nenhuma. A janela sai declarada no bloco, como manda a FR-026 da 019.
-    gscConsultas(p.url, curtaGsc),
+    // Fora de `SLUGS_DE_BUSCA` a chamada nem sai: os KPIs do board são da Atma, e este bloco era
+    // o último pedaço da 021 que ainda servia os 35 — porque lê ao vivo no render, sem passar
+    // pela corrida que já foi restringida.
+    SLUGS_DE_BUSCA.includes(slug) ? gscConsultas(p.url, curtaGsc) : null,
     // 022: a indexação vem do BANCO, apurada pela corrida das 05:47. Zero chamada à URL Inspection
     // API aqui — ver `lerApuracao`.
     lerApuracao(slug),
@@ -186,7 +189,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             períodos diferentes e não se dividem um pelo outro.
           </p>
 
-          {kpis === null ? (
+          {!SLUGS_DE_BUSCA.includes(slug) ? (
+            /* Escopo, não ausência: sem esta linha o `kpis === null` abaixo diria "sem propriedade
+               no GSC", que é uma afirmação sobre o projeto — e a única coisa verdadeira aqui é que
+               ninguém perguntou. */
+            <p className="foot">
+              <strong>Fora do escopo da medição.</strong> Os KPIs do board são apurados só para{" "}
+              {SLUGS_DE_BUSCA.join(", ")} — o board de busca é de lá. Nada foi perguntado ao Search
+              Console sobre este projeto: isto é decisão, não ausência de dado.
+            </p>
+          ) : kpis === null ? (
             /* FR-010: três telas diferentes, nunca uma lista vazia sem explicação. `null` é
                ausência estrutural (o conserto é domínio próprio); `{erro}` é falha de agora. */
             <p className="foot">
