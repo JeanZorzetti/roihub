@@ -224,6 +224,51 @@ test("celulasDeOrcamento: paciente_lead_id NULL conta uma vez POR LINHA, nunca c
   assert.deepEqual(enviados, apurado(2), "dois pacientes anônimos do WhatsApp não são o mesmo paciente");
 });
 
+test("020/auditoria — órfão cujo NOME já entrou com id é a mesma pessoa, não uma a mais", () => {
+  // O caso da Maiara: id 11 sem `paciente_lead_id` e id 12 com lead 53, mesmo nome. A soma
+  // `pessoas.size + semLead` a contava nos dois lados e punha a atma em `orçamento = 6` com o
+  // banco dizendo 5. A cadeia real de 07/09, com os 9 documentos:
+  const rows = [
+    { criado: "2026-08-05", paciente_lead_id: "21", paciente_nome: "Kailane Rayssa da Costa Santos" },
+    { criado: "2026-08-05", paciente_lead_id: "22", paciente_nome: "Túlio Gonçalves da Fonseca" },
+    { criado: "2026-08-17", paciente_lead_id: "22", paciente_nome: "Túlio Gonçalves da Fonseca" },
+    { criado: "2026-08-17", paciente_lead_id: "44", paciente_nome: "Juliana Rocha Carnaúba da Costa" },
+    { criado: "2026-08-17", paciente_lead_id: "44", paciente_nome: "Juliana Rocha Carnaúba da Costa" },
+    { criado: "2026-09-01", paciente_lead_id: "51", paciente_nome: "Larissa Lima Carvalho Farias" },
+    { criado: "2026-09-01", paciente_lead_id: "51", paciente_nome: "Larissa Lima Carvalho Farias" },
+    { criado: "2026-09-05", paciente_lead_id: null, paciente_nome: "Maiara Fernanda Hermann" },
+    { criado: "2026-09-05", paciente_lead_id: "53", paciente_nome: "Maiara Fernanda Hermann" },
+  ];
+  const { enviados } = celulasDeOrcamento(rows, { inicio: "2026-07-31", fim: "2026-09-07" });
+  assert.deepEqual(enviados, apurado(5), "9 documentos, 5 pessoas — a Maiara entra uma vez só");
+});
+
+test("020/auditoria — órfão com nome que NÃO aparece com id continua sendo pessoa própria", () => {
+  // O `semLead` existe porque orçamento sem vínculo ainda é gente a quem se mandou preço. A
+  // correção do caso da Maiara não pode transformar todo órfão em duplicata.
+  const rows = [
+    { criado: "2026-08-05", paciente_lead_id: "21", paciente_nome: "Kailane" },
+    { criado: "2026-08-06", paciente_lead_id: null, paciente_nome: "Alguém do WhatsApp" },
+    { criado: "2026-08-07", paciente_lead_id: null, paciente_nome: "" },
+    { criado: "2026-08-08", paciente_lead_id: null },
+  ];
+  const { enviados } = celulasDeOrcamento(rows, { inicio: "2026-08-01", fim: "2026-08-31" });
+  assert.deepEqual(enviados, apurado(4), "1 com id + 3 órfãos irreconhecíveis; nome vazio/ausente nunca casa");
+});
+
+test("020/auditoria — o casamento por nome ignora caixa e espaço, e só vale dentro da janela", () => {
+  const rows = [
+    { criado: "2026-08-05", paciente_lead_id: "53", paciente_nome: "  Maiara Fernanda HERMANN " },
+    { criado: "2026-08-06", paciente_lead_id: null, paciente_nome: "maiara fernanda hermann" },
+    // Mesmo nome, mas o par com id está FORA da janela: aqui o órfão é a única linha da pessoa,
+    // e contá-lo como 1 é o certo — não há com quem colapsar.
+    { criado: "2026-07-01", paciente_lead_id: "99", paciente_nome: "Fulano de Tal" },
+    { criado: "2026-08-07", paciente_lead_id: null, paciente_nome: "Fulano de Tal" },
+  ];
+  const { enviados } = celulasDeOrcamento(rows, { inicio: "2026-08-01", fim: "2026-08-31" });
+  assert.deepEqual(enviados, apurado(2), "Maiara colapsa (1) + Fulano órfão sozinho na janela (1)");
+});
+
 test("celulasDeOrcamento: fora da janela não conta, mesmo pertencendo à mesma pessoa que uma linha dentro", () => {
   const rows = [
     { criado: "2026-07-01", paciente_lead_id: "1" }, // fora
@@ -427,6 +472,20 @@ test("auditoria 05/09 — o ticket carrega os DOIS denominadores: documento (mé
   assert.equal(c.valor.toFixed(2), "4932.34");
   // O degrau conta a MESMA coisa que `pessoas` — se um dia divergirem, o rótulo passa a mentir.
   assert.equal(celulasDeOrcamento(rows, janela).enviados.valor, c.pessoas);
+
+  // 🚩 A asserção acima passou por sorte até 07/09: este fixture não tem órfão, então as duas somas
+  // ingênuas (que eram cópias uma da outra) concordavam. O conserto do caso da Maiara pegou só
+  // `celulasDeOrcamento`, e a trava não acusou. Amarrar as duas exige o caso que as separa.
+  const comOrfao = [
+    ...rows,
+    { criado: "2026-09-05", preco: 4490, desconto_vista: 0.1, paciente_lead_id: null, paciente_nome: "Maiara Fernanda Hermann" },
+    { criado: "2026-09-05", preco: 2990, desconto_vista: 0.05, paciente_lead_id: 53, paciente_nome: "Maiara Fernanda Hermann" },
+  ];
+  const t = ticketDeOrcamentos(comOrfao, janela);
+  assert.equal(t.docs, 9, "9 documentos");
+  assert.equal(t.pessoas, 5, "5 pessoas — a Maiara entra uma vez, não duas");
+  assert.equal(t.orfaos, 0, "o órfão foi resolvido pelo nome, então não sobra órfão a decompor");
+  assert.equal(celulasDeOrcamento(comOrfao, janela).enviados.valor, t.pessoas, "degrau e ticket contam a MESMA coisa");
 });
 
 test("auditoria 05/09 — orçamento sem `paciente_lead_id` conta como pessoa própria (lead de WhatsApp)", () => {
@@ -542,6 +601,33 @@ const JANELA_RISCO = { inicio: "2026-08-01", fim: "2026-08-31" };
 const PERDA = ["sem_resposta", "perdido_concorrencia"];
 const orc = (criado, lead, preco, desconto) => ({ criado, status: "enviado", paciente_lead_id: lead, preco, desconto_vista: desconto });
 const leads = (pares) => new Map(pares.map(([id, motivo]) => [String(id), { motivo }]));
+
+test("020/auditoria — o órfão resolvido pelo NOME entra no balde da pessoa dele, não num 'sem lead' à parte", () => {
+  // Antes de 07/09 o bloco publicava "1 orçamento sem lead vinculado" ao lado de um degrau que já
+  // contava aquela pessoa pelo id — vivos + perdidos + semLead dava um a mais que o degrau.
+  const rows = [
+    { criado: "2026-08-05", status: "enviado", paciente_lead_id: 53, paciente_nome: "Maiara Fernanda Hermann", preco: 3000, desconto_vista: 0 },
+    { criado: "2026-08-06", status: "enviado", paciente_lead_id: null, paciente_nome: "maiara fernanda hermann", preco: 1000, desconto_vista: 0 },
+    { criado: "2026-08-07", status: "enviado", paciente_lead_id: 21, paciente_nome: "Kailane", preco: 500, desconto_vista: 0 },
+  ];
+  const r = valorEmRisco(rows, leads([[53, "enviou_documentacao"], [21, "sem_resposta"]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.equal(r.semLead, null, "o órfão foi reconhecido — não sobra balde de 'sem lead'");
+  assert.deepEqual(r.vivos, { pessoas: 1, valor: 4000 }, "os dois orçamentos da Maiara somam no balde dela");
+  assert.deepEqual(r.perdidos, { pessoas: 1, valor: 500 });
+  // A conta fecha contra o degrau e contra o total enviado — as três leituras da mesma pessoa.
+  assert.equal(r.vivos.pessoas + r.perdidos.pessoas, celulasDeOrcamento(rows, JANELA_RISCO).enviados.valor);
+  assert.equal(r.vivos.valor + r.perdidos.valor, r.enviados.valor);
+});
+
+test("020/auditoria — órfão irreconhecível continua no 'sem lead', fora de vivos e perdidos", () => {
+  const rows = [
+    { criado: "2026-08-05", status: "enviado", paciente_lead_id: 21, paciente_nome: "Kailane", preco: 500, desconto_vista: 0 },
+    { criado: "2026-08-06", status: "enviado", paciente_lead_id: null, paciente_nome: "Anônimo do WhatsApp", preco: 900, desconto_vista: 0 },
+  ];
+  const r = valorEmRisco(rows, leads([[21, "sem_resposta"]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.deepEqual(r.semLead, { n: 1, valor: 900 }, "sem pessoa identificada não há motivo a consultar — chutar balde inventaria dado");
+  assert.equal(r.vivos.pessoas + r.perdidos.pessoas + r.semLead.n, celulasDeOrcamento(rows, JANELA_RISCO).enviados.valor);
+});
 
 test("019/T027 caso 1 — 2 orçamentos do MESMO lead: enviados conta DOCUMENTO, vivos conta PESSOA", () => {
   const r = valorEmRisco(

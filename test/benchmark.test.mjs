@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { REGUA, ROTULOS, leituraDoDegrau, distanciaDoMercado, formatarRazao, faixaDoSpan } from "../lib/benchmark.mjs";
+import { REGUA, ROTULOS, leituraDoDegrau, distanciaDoMercado, formatarRazao, faixaDoSpan, AQUISICAO } from "../lib/benchmark.mjs";
 import { PERFIS, montarFicha } from "../lib/okr.mjs";
 import { apurado, naoApurado, razao } from "../lib/funil.mjs";
 
@@ -327,4 +327,38 @@ test("020: projeto sem recusa pesquisada não ganha `recusaEmDestaque` — os ou
   // O perfil C não tem recusa nenhuma em REGUA: a tela dele continua caindo no texto genérico.
   const ficha = montarFicha({ slug: "x", perfil: "C", coletado: {} });
   assert.equal(distanciaDoMercado(ficha).recusaEmDestaque, null);
+});
+
+// ── 020/auditoria de 07/09 — os vereditos de AQUISIÇÃO existem em dado, não só em prosa ──────────
+
+test("020/auditoria — os três degraus de aquisição têm veredito no código, não só no handoff", () => {
+  // A 020 pesquisou SEIS degraus; três (os de aquisição) só existiam no banco da Atma e em
+  // markdown. `grep -rl Zuko lib/ app/ data/` devolvia zero, e a 022 teria que re-derivar de prosa.
+  assert.deepEqual(Object.keys(AQUISICAO).sort(), ["clique→form_start", "form_start→lead", "impressao→clique"]);
+  // Todo degrau termina com faixa OU recusa OU condicional — nunca em silêncio.
+  for (const [chave, v] of Object.entries(AQUISICAO)) {
+    assert.ok(v.recusa || v.condicional || Array.isArray(v.media), `${chave} não tem veredito`);
+  }
+});
+
+test("020/auditoria — a única linha publicável carrega faixa, fonte, URL e data de acesso (FR-002/FR-003)", () => {
+  const l = AQUISICAO["form_start→lead"];
+  assert.deepEqual(l.media, [0.66, 0.68]);
+  assert.match(l.url, /^https:\/\//);
+  assert.match(l.acessoEm, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(l.recorte, "faixa sem recorte não diz o que está sendo comparado");
+  // FR-006: elite NÃO verificado fica `null`, nunca um teto inventado para a faixa ficar simétrica.
+  assert.equal(l.elite, null);
+});
+
+test("020/auditoria — recusa estrutural não finge ter fonte, e a condicional diz o que falta", () => {
+  // `clique→form_start` é decisão de modelagem (GA4 × GSC), não pesquisa malfeita: citar uma URL
+  // daria ar de "não achei" a algo que não vira régua nem com fonte publicada.
+  const r = AQUISICAO["clique→form_start"].recusa;
+  assert.ok(!r.url, "recusa estrutural não tem o que citar");
+  assert.match(r.motivo, /estrutural/i);
+  // A condicional é o oposto: tem fonte boa e nomeia o que falta para virar linha.
+  const c = AQUISICAO["impressao→clique"].condicional;
+  assert.match(c.url, /^https:\/\//);
+  assert.match(c.motivo, /posição/i);
 });

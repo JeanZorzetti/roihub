@@ -115,7 +115,7 @@ A recusa ganhou um booleano `armadilha`, com critério estreito: marca-se quando
 
 ---
 
-## 5. 🚨 Defeito ACHADO e NÃO consertado — a ficha conta um orçamento a mais
+## 5. ✅ Defeito achado na 020, CONSERTADO em 07/09 — a ficha contava um orçamento a mais
 
 Verificando a SC-006 (que nenhum número apurado mudou), a cadeia na tela apareceu como
 `52 → 22 → 6 → 0`. O banco diz **5** pessoas com orçamento, não 6.
@@ -169,10 +169,29 @@ contando como pessoa própria (`'orfao-'||id`), que é a intenção original do 
 Limite conhecido: se um órfão tiver o nome duplicado, o `ORDER BY l.id LIMIT 1` escolhe um dos dois
 arbitrariamente. **Não afeta a contagem** (a pessoa é uma só de qualquer forma), afeta a atribuição.
 
-**O conserto de raiz é outro e fica na Atma**: preencher `paciente_lead_id` no id 11. A regra acima
-é a rede que o roihub arma para o histórico que já nasceu torto — [[conserto_do_fluxo_nao_conserta_o_historico]].
-O teste continua sendo o caso da Maiara, agora com o resultado esperado **5**, e um segundo caso que
-prova que dois leads homônimos NÃO colapsam.
+**O conserto de raiz é outro e fica na Atma**: preencher `paciente_lead_id` no id 11 — ainda
+pendente, e é ele que impede o defeito de voltar por uma linha nova. A regra acima é a rede que o
+roihub arma para o histórico que já nasceu torto — [[conserto_do_fluxo_nao_conserta_o_historico]].
+
+### ✅ Consertado no roihub em 07/09
+
+A regra virou `pessoasDeOrcamento()` (`lib/okr.mjs`), **uma função só**, porque a soma ingênua estava
+copiada em TRÊS lugares e o primeiro conserto pegou um: `celulasDeOrcamento` passou a dar 5 enquanto
+`ticketDeOrcamentos` seguia dizendo "de 6 pessoas" e `valorEmRisco` publicava "1 orçamento sem lead
+vinculado" — três leituras da mesma pessoa discordando na mesma dobra.
+
+Medido contra o banco depois do conserto:
+
+```
+cadeia:  52 → 22 → 5 → 0        (antes: → 6 →)
+CR(respondeu→orçamento) 22,73%   (antes: 27,27%)
+degrau 5 · ticket.pessoas 5 · vivos 2 + perdidos 3 = 5    ✓ fecham
+dinheiro: R$ 14.963,50 + R$ 26.444,36 = R$ 41.407,86 = enviados   ✓ fecha
+```
+
+O dinheiro da Maiara (R$ 4.041,00) saiu do balde "sem lead" e entrou no dela, que é `vivo`.
+**5 testes novos**, incluindo o caso que separa as duas somas — a trava anterior (`ticket.pessoas ===
+degrau`) passava por sorte, porque o fixture não tinha órfão.
 
 ⚠️ Isto **não** foi causado pela 020 — é anterior, e só apareceu porque a verificação de "nada mudou"
 foi feita contra o banco em vez de contra a tela.
@@ -264,8 +283,8 @@ só existe na versão nova.
 | # | o que | onde |
 |---|---|---|
 | 1 | ✅ **feito** — migration aplicada, push nos dois repos, deploy do roihub confirmado 2× | — |
-| 2 | **Orçamento contado a mais** — precisa de DOIS consertos: backfill no banco da Atma **e** dedup por nome no roihub | §5 — spec própria |
-| 3 | Exibir as réguas de aquisição em `/okr/atma/aquisicao` | spec **022**; a pesquisa está pronta em `research.md §D4/D5/D6` — **mas leia o §9 antes**: ela não está em dado nenhum do roihub |
+| 2 | ✅ **roihub consertado** (`pessoasDeOrcamento()`, cadeia 52→22→5→0). Falta o **backfill do `paciente_lead_id`** na Atma — sem ele, linha nova sem vínculo reintroduz o erro | §5 |
+| 3 | Exibir as réguas de aquisição em `/okr/atma/aquisicao` | spec **022** — a pesquisa agora está em `lib/benchmark.mjs` (`AQUISICAO`), não só em prosa (§9) |
 | 4 | Achar o número de **elite** de `form_start→lead` | `research.md §D6` — a Zuko publica média, não quartil superior |
 | 5 | As **7 linhas legadas** de A/B/C sem URL | `handoff/okr-regua-de-mercado.md §7`, nomeadas uma a uma |
 | 6 | `status_historico` — velocidade, passagem cumulativa, coorte | spec **021** |
@@ -305,7 +324,18 @@ na tabela de réguas") vale só para 3 dos 4 recusados.
 É a assimetria que a 018 e a 019 vinham fechando, invertida: antes o dado estava no banco e a tela
 não lia; agora o dado está no banco do cliente e o **hub** não tem onde guardá-lo.
 
-**Antes de a 022 exibir qualquer coisa**, decidir onde os vereditos de aquisição moram no roihub —
-uma segunda chave em `REGUA` (`AQUISICAO`, fora dos perfis), um módulo próprio, ou leitura do banco
-da Atma. Enquanto isso não existir, "a pesquisa está pronta" é verdade sobre o markdown, não sobre
-o código — e [[nao_e_lida_e_verdade_sobre_o_repo_nao_sobre_o_produto]] é a lição gêmea desta.
+### ✅ Resolvido em 07/09 — `AQUISICAO` em `lib/benchmark.mjs`
+
+Os três vereditos ganharam casa própria **fora de `REGUA`**, porque `REGUA` é chaveada por
+`perfil → degrau da cadeia` e aquisição não é cadeia de perfil nenhum — enfiá-los em `REGUA.D`
+recriaria a taxa que a FR-029 da 019 baniu. Transcrição literal de `market_benchmarks` (migration
+024), com faixa/recusa/condicional, fonte, URL e data de acesso.
+
+`grep -rl 'Zuko' lib/ app/ data/` agora devolve `lib/benchmark.mjs`. **Nada lê isto ainda** — a
+exibição continua sendo a 022; o que mudou é o dado ter deixado de morar só no banco do cliente.
+3 testes novos: todo degrau termina com veredito, a linha publicável carrega os quatro campos, e
+`elite: null` fica `null` (FR-006 — teto inventado para a faixa ficar simétrica é o que ela proíbe).
+
+**A lição, que vale para toda spec de pesquisa:** ao fechar, rodar `grep` no repo pelo número que a
+spec produziu. Se só o handoff devolver, a pesquisa foi **anotada**, não entregue — gêmea de
+[[nao_e_lida_e_verdade_sobre_o_repo_nao_sobre_o_produto]].
