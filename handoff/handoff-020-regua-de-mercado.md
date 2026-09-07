@@ -134,8 +134,45 @@ está ali, idêntico nas duas linhas.
 
 **Por que não foi consertado aqui**: a FR-018 da 020 proíbe alterar qualquer número apurado, e
 misturar correção de cadeia com pesquisa de régua repetiria exatamente a confusão que a 018 e a 019
-separaram de propósito. **Vira spec própria.** O conserto provável é deduplicar por
-`coalesce(paciente_lead_id::text, lower(trim(paciente_nome)))`, e o teste é o caso da Maiara.
+separaram de propósito. **Vira spec própria.**
+
+### ⚠️ Corrigido na auditoria de 07/09 — a fórmula proposta aqui NÃO conserta o caso
+
+A redação original propunha deduplicar por `coalesce(paciente_lead_id::text, lower(trim(paciente_nome)))`.
+**Rodada contra o banco, ela devolve 6 — o mesmo número errado.** O órfão (id 11) vira a chave
+`'maiara fernanda hermann'` e a linha dela com lead (id 12) vira `'53'`: chaves diferentes, mesma
+pessoa. O `coalesce` só olha o nome quando o id falta, então as duas linhas nunca se encontram.
+
+Medido em 07/09, janela `>= 2026-07-31`:
+
+| regra | resultado |
+|---|---|
+| hoje na tela (`pessoas.size + semLead`) | **6** ❌ |
+| `coalesce(id, nome)` — a proposta original | **6** ❌ |
+| só por nome | 5 ✅ *mas inseguro, ver abaixo* |
+| **órfão resolvido contra `patient_leads` pelo nome** | **5** ✅ |
+
+```sql
+count(DISTINCT coalesce(
+  o.paciente_lead_id::text,
+  (SELECT l.id::text FROM patient_leads l
+    WHERE lower(trim(l.nome)) = lower(trim(o.paciente_nome)) ORDER BY l.id LIMIT 1),
+  'orfao-' || o.id))
+```
+
+**Por que não deduplicar só por nome:** `patient_leads` já tem **1 nome repetido entre dois `id`
+distintos**. Chavear por nome colapsaria dois leads reais num só — trocaria um erro de +1 por um
+erro de −1, que é pior porque some em silêncio. A regra acima só recorre ao nome para a linha que
+**não tem id**, então nunca funde dois leads identificados; e órfão sem nome correspondente continua
+contando como pessoa própria (`'orfao-'||id`), que é a intenção original do `semLead`.
+
+Limite conhecido: se um órfão tiver o nome duplicado, o `ORDER BY l.id LIMIT 1` escolhe um dos dois
+arbitrariamente. **Não afeta a contagem** (a pessoa é uma só de qualquer forma), afeta a atribuição.
+
+**O conserto de raiz é outro e fica na Atma**: preencher `paciente_lead_id` no id 11. A regra acima
+é a rede que o roihub arma para o histórico que já nasceu torto — [[conserto_do_fluxo_nao_conserta_o_historico]].
+O teste continua sendo o caso da Maiara, agora com o resultado esperado **5**, e um segundo caso que
+prova que dois leads homônimos NÃO colapsam.
 
 ⚠️ Isto **não** foi causado pela 020 — é anterior, e só apareceu porque a verificação de "nada mudou"
 foi feita contra o banco em vez de contra a tela.
@@ -228,7 +265,7 @@ só existe na versão nova.
 |---|---|---|
 | 1 | ✅ **feito** — migration aplicada, push nos dois repos, deploy do roihub confirmado 2× | — |
 | 2 | **Orçamento contado a mais** — precisa de DOIS consertos: backfill no banco da Atma **e** dedup por nome no roihub | §5 — spec própria |
-| 3 | Exibir as réguas de aquisição em `/okr/atma/aquisicao` | spec **022**; a pesquisa está pronta em `research.md §D4/D5/D6` |
+| 3 | Exibir as réguas de aquisição em `/okr/atma/aquisicao` | spec **022**; a pesquisa está pronta em `research.md §D4/D5/D6` — **mas leia o §9 antes**: ela não está em dado nenhum do roihub |
 | 4 | Achar o número de **elite** de `form_start→lead` | `research.md §D6` — a Zuko publica média, não quartil superior |
 | 5 | As **7 linhas legadas** de A/B/C sem URL | `handoff/okr-regua-de-mercado.md §7`, nomeadas uma a uma |
 | 6 | `status_historico` — velocidade, passagem cumulativa, coorte | spec **021** |
@@ -238,3 +275,37 @@ só existe na versão nova.
 14 minutos após o push já produziu uma conclusão errada na auditoria da 018.
 
 ⚠️ Janela de push proibida (Princípio IV): **23:30–01:00** e **08:00–08:45 BRT**.
+
+---
+
+## 9. 🚨 Metade da pesquisa não está em dado do roihub — achado da auditoria de 07/09
+
+Os seis vereditos existem. **Três deles só existem em prosa.**
+
+| degrau | veredito | em `REGUA` | no banco da Atma | em markdown |
+|---|---|---|---|---|
+| `lead→respondeu` | recusa | ✅ | ✅ | ✅ |
+| `respondeu→orçamento` | recusa | ✅ | ✅ | ✅ |
+| `orçamento→tratamento` | recusa | ✅ | ✅ | ✅ |
+| `impressão→clique` | condicional | ❌ | ✅ | ✅ |
+| `clique→form_start` | recusa estrutural | ❌ | ✅ | ✅ |
+| **`form_start→lead`** — a **única linha publicável** | linha (Zuko 66%) | ❌ | ✅ | ✅ |
+
+`grep -rl 'Zuko\|form_start→lead\|AWR' lib/ app/ data/` no roihub devolve **zero arquivos**.
+
+**Há razão estrutural**: `REGUA` é chaveada por `perfil → degrau da cadeia`, e os três de aquisição
+não são degraus de cadeia nenhuma — a 019 os separou de propósito (FR-029). Eles não têm onde morar
+na forma atual. Não é desleixo; é uma forma que não previu o caso.
+
+**Mas a consequência é concreta e cara:** o único produto de pesquisa desta spec — a linha de 66%
+com fonte, URL e data de acesso — mora no banco de um **cliente** e num markdown. A 022, que vai
+exibi-la, vai ter que re-derivá-la do handoff, e a FR-001a ("a recusa é entrada de primeira classe
+na tabela de réguas") vale só para 3 dos 4 recusados.
+
+É a assimetria que a 018 e a 019 vinham fechando, invertida: antes o dado estava no banco e a tela
+não lia; agora o dado está no banco do cliente e o **hub** não tem onde guardá-lo.
+
+**Antes de a 022 exibir qualquer coisa**, decidir onde os vereditos de aquisição moram no roihub —
+uma segunda chave em `REGUA` (`AQUISICAO`, fora dos perfis), um módulo próprio, ou leitura do banco
+da Atma. Enquanto isso não existir, "a pesquisa está pronta" é verdade sobre o markdown, não sobre
+o código — e [[nao_e_lida_e_verdade_sobre_o_repo_nao_sobre_o_produto]] é a lição gêmea desta.
