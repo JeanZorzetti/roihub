@@ -221,7 +221,7 @@ com o motivo** quando o denominador não foi apurado.
 - [ ] **T039** Abrir `/okr/<slug>/aquisicao` em **quatro** projetos — sitemap pequeno, sitemap
       grande amostrado, sem sitemap, host fora do GSC — e conferir cada tela do passo 5 do
       `quickstart.md`. Sem conferir a tela, não está pronto.
-- [ ] **T040** Push respeitando a janela do Princípio IV (nunca 23:30–01:00 nem 08:00–08:45 BRT).
+- [X] **T040** Push respeitando a janela do Princípio IV (nunca 23:30–01:00 nem 08:00–08:45 BRT).
       Handoff co-localizado em `handoff/`, com o placar do board atualizado de 7 para 11 de 28.
 
 ---
