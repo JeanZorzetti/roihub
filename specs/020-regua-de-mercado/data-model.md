@@ -103,8 +103,15 @@ Não entra em `REGUA.D` — não há marcos para essas chaves, e criar marco fan
 ## 4. `market_benchmarks` (base da Atma) — o que a tabela passa a conter
 
 **Estado hoje (medido 06/09/2026)**: 12 linhas, 12/12 com `source = "A definir - aguardando pesquisa
-de mercado"`, valores redondos inventados. Lida por `GET /api/market-benchmarks` e pela tela
-`/admin/benchmark-mercado`, que gera comparações contra o funil real.
+de mercado"`, valores redondos inventados. Lida por `GET /api/market-benchmarks` e por **duas** telas
+do admin da Atma:
+
+1. `/admin/benchmark-mercado` — gera comparações contra o funil real;
+2. `/admin/configuracoes` — monta `<BenchmarkEditor />` (`page.tsx:1244`), que lê, edita e faz
+   `bulk-update`.
+
+⚠️ A segunda só apareceu no inventário de consumidores rodado imediatamente antes da migration
+(07/09). Até ali, esta seção dizia "a tela", no singular.
 
 **Decisão** — a D1 mandou *substituir*, e a pesquisa devolveu **um** número publicável. Não existem 12
 linhas certas para pôr no lugar de 12 erradas. A tabela passa a guardar **os seis vereditos**, não

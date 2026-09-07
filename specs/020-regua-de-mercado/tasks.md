@@ -114,7 +114,7 @@ toda linha exibida abre numa URL, e a tela não quebra.
 - [X] T022 [US2] Implementar a guarda de escrita em `atma/backend/src/routes/marketBenchmarks.js` — `PUT /:id` e `POST /bulk-update` recusam com `400` quando `source` está vazio, contém "A definir" (sem diferenciar maiúsculas) ou não tem `http://`/`https://`; a resposta diz **qual regra** falhou e nunca ecoa valor de ambiente (`contracts/regua.md §6`, Princípio V)
 - [X] T023 [P] [US2] Ajustar `atma/admin/src/app/admin/benchmark-mercado/page.tsx` para não quebrar com `metric_value NULL`: linha de recusa mostra o motivo em vez de comparação, e `generateComparisons()` **pula** linha sem valor em vez de comparar contra `null`
 - [X] T024 [P] [US2] Ajustar `atma/admin/src/components/benchmark-editor.tsx` para o mesmo — editar linha sem valor não pode gravar `NaN`, e a UI mostra a fonte como link
-- [ ] T025 [US2] Rodar a migration contra `ATMA_DATABASE_URL` e validar com o Passo 6 de `specs/020-regua-de-mercado/quickstart.md` — esperado **0** linhas sem fonte verificável, contra a base de 12
+- [X] T025 [US2] Rodar a migration contra `ATMA_DATABASE_URL` e validar com o Passo 6 de `specs/020-regua-de-mercado/quickstart.md` — esperado **0** linhas sem fonte verificável, contra a base de 12
 
 **Checkpoint US2**: Passo 6, 7 e 8 do quickstart passam. `/admin/benchmark-mercado` carrega e não
 compara contra número inventado.
@@ -146,8 +146,8 @@ de recusa. Nenhuma tela de aquisição alterada.
 - [X] T035 Rodar os 9 passos de `specs/020-regua-de-mercado/quickstart.md` e registrar o resultado de cada um
 - [X] T036 Confirmar a SC-006 — nenhum número apurado mudou: cadeia `52 → 21 → 4 → 0`, ticket R$ 4.932,34, janela `2026-07-31 → 2026-09-05`, `98% contatados (declarado)`
 - [X] T037 Medir a dobra a 1280×800 e confirmar que *"o que fazer"* continua **acima de 800px** — a 019 mediu 801px com três linhas de prosa, e é a margem real
-- [ ] T038 Commit e push em `roihub/`, **fora** das janelas 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
-- [ ] T039 Esperar ~15 min e conferir a tela no ar **duas** vezes, procurando a string `"consulta presencial"`, que só existe na versão nova ⚠️ uma checagem única 14 min após o push já "provou" uma conclusão errada na auditoria da 018
+- [X] T038 Commit e push em `roihub/`, **fora** das janelas 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
+- [X] T039 Esperar ~15 min e conferir a tela no ar **duas** vezes, procurando a string `"consulta presencial"`, que só existe na versão nova ⚠️ uma checagem única 14 min após o push já "provou" uma conclusão errada na auditoria da 018
 - [X] T040 Escrever `roihub/handoff/handoff-020-regua-de-mercado.md` com o resultado da pesquisa, o que ficou para a 022 (exibição de aquisição) e o que ficou para a spec da dívida das 7 legadas
 
 ---

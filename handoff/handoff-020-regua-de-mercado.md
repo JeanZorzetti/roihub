@@ -1,6 +1,7 @@
 # A régua que não existe, e por que dizer isso vale mais que inventá-la
 
-**06/09/2026 — spec 020 implementada no roihub; a parte da Atma escrita e não aplicada.**
+**06-07/09/2026 — spec 020 fechada nos dois repositórios.**
+roihub `1ace589` (deploy confirmado em duas checagens) · app da Atma `ddc0562` (migration aplicada).
 
 A 020 nasceu de uma linha do handoff anterior: *"6 benchmarks pesquisados com fonte · apagar
 `market_benchmarks` · fecha quando as 6 réguas têm fonte clicável"*. Duas das três premissas dessa
@@ -19,6 +20,16 @@ O handoff dizia *"não é lida por [ninguém] e é apagada pela 020"*. O `grep` 
 montada em `server.js:305`) e a tela `/admin/benchmark-mercado`, que busca as 12 linhas, busca o funil
 real e chama `generateComparisons()` — **rendendo um veredito que compara o desempenho real da Atma
 contra doze números que ninguém pesquisou.**
+
+⚠️ **E não era uma tela, eram duas.** O `grep -rn "market_benchmarks" C:\dev\atma` rodado imediatamente
+antes de aplicar a migration revelou um segundo consumidor: `<BenchmarkEditor />` também é montado em
+`admin/src/app/admin/configuracoes/page.tsx:1244`. Toda a documentação desta spec dizia "a tela
+`/admin/benchmark-mercado`", no singular, até esse momento.
+
+Não mudou a decisão — o editor já tinha sido deixado NULL-safe — mas mudou o que se sabia. A lição é
+específica: **o inventário de consumidores é o primeiro comando antes de um `DELETE`, não uma
+formalidade depois de decidir.** Custou dez segundos e corrigiu uma afirmação que já estava escrita em
+quatro arquivos.
 
 O medo escrito no handoff anterior — *"benchmark sem fonte produz veredito com aparência de rigor"* —
 não era um risco a evitar. Estava no ar havia 38 dias, numa tela que ninguém desta família de specs
@@ -129,6 +140,38 @@ separaram de propósito. **Vira spec própria.** O conserto provável é dedupli
 ⚠️ Isto **não** foi causado pela 020 — é anterior, e só apareceu porque a verificação de "nada mudou"
 foi feita contra o banco em vez de contra a tela.
 
+### O lado da Atma já tem meio conserto — e é por isso que o defeito continua
+
+Ao pushar a 020 no repo da Atma (07/09), o remoto tinha **4 commits** que este trabalho não conhecia.
+Um deles é exatamente sobre isto:
+
+```
+9c78ec5 fix(orcamento): vincula o lead pelo nome, e mostra quando nao vinculou
+```
+
+Alguém já atacou o mesmo sintoma pelo outro lado: o app da Atma passou a vincular o lead pelo nome ao
+gravar um orçamento. **Mas ele conserta o fluxo daqui para a frente e não fez backfill** — a linha
+`id=11` (Maiara) continua com `paciente_lead_id` NULL, conferido no banco depois do rebase:
+
+```
+docs=9 | NULL=1 | lead_id distintos=5 | nomes distintos=5
+celulasDeOrcamento() daria: 5 + 1 = 6   (verdade = 5)
+```
+
+Ou seja: **o conserto existe, foi feito, e o número errado continua na tela** — porque o dado velho
+não foi migrado e porque o roihub soma `pessoas.size + semLead` sem conferir se aquela pessoa já
+entrou pelo outro lado.
+
+São **dois** consertos, e a spec futura precisa dos dois:
+
+1. **Atma** — backfill do `paciente_lead_id` das linhas antigas (só a id=11, hoje).
+2. **roihub** — `celulasDeOrcamento()` deduplicar por nome quando o `lead_id` for nulo. Sem isso, a
+   próxima linha sem vínculo reintroduz o erro, mesmo com o fluxo novo funcionando.
+
+> A lição, que vale além deste bug: **conserto do fluxo não conserta o histórico**, e uma função que
+> soma dois conjuntos sem checar interseção erra em silêncio — não estoura, só publica um número a
+> mais.
+
 ---
 
 ## 6. O que ficou pronto e o que não
@@ -143,9 +186,10 @@ foi feita contra o banco em vez de contra a tela.
 - Dobra medida a 1280×800: *"POR QUE NÃO AVANÇOU, E O QUE FAZER"* em **647px**, 153px de folga. A
   linha de Mercado ocupa 2 linhas visuais (44px) e não empurra nada.
 
-### Escrito, **não aplicado** (app da Atma, `C:\dev\atma`)
+### Aplicado no app da Atma (`C:\dev\atma`, commit `ddc0562`)
 
-Tudo compila e a guarda foi testada em 10 casos, mas **nada foi gravado no banco da Atma**:
+Migration **rodada em 07/09**, depois do inventário de consumidores. Antes: 12 linhas, 12/12 com
+"A definir". Depois: **6 linhas, 0 sem fonte verificável**, e nenhum dos 7 degraus proibidos de volta.
 
 - `backend/migrations/024_regua_pesquisada.sql` — `DROP NOT NULL` em `metric_value`, `DELETE` das 12,
   `INSERT` dos seis vereditos.
@@ -157,7 +201,9 @@ Tudo compila e a guarda foi testada em 10 casos, mas **nada foi gravado no banco
 - `admin/.../benchmark-editor.tsx` — campo vazio grava `NULL`, não `NaN`; e um `400` da API agora
   mostra toast em vez de não fazer nada.
 
-**Falta**: rodar a migration (T025) e dar push nos dois repositórios.
+**Feito**: migration aplicada e push nos dois repositórios (`roihub 1ace589`, `atma ddc0562`).
+O deploy do roihub foi confirmado em **duas** checagens, procurando `"pós-consulta"` — string que
+só existe na versão nova.
 
 ---
 
@@ -180,8 +226,8 @@ Tudo compila e a guarda foi testada em 10 casos, mas **nada foi gravado no banco
 
 | # | o que | onde |
 |---|---|---|
-| 1 | Rodar a migration 024 e dar push nos dois repos | T025, T038 de `specs/020-regua-de-mercado/tasks.md` |
-| 2 | **Orçamento contado a mais** (Maiara, `semLead` + `pessoas`) | §5 — spec própria |
+| 1 | ✅ **feito** — migration aplicada, push nos dois repos, deploy do roihub confirmado 2× | — |
+| 2 | **Orçamento contado a mais** — precisa de DOIS consertos: backfill no banco da Atma **e** dedup por nome no roihub | §5 — spec própria |
 | 3 | Exibir as réguas de aquisição em `/okr/atma/aquisicao` | spec **022**; a pesquisa está pronta em `research.md §D4/D5/D6` |
 | 4 | Achar o número de **elite** de `form_start→lead` | `research.md §D6` — a Zuko publica média, não quartil superior |
 | 5 | As **7 linhas legadas** de A/B/C sem URL | `handoff/okr-regua-de-mercado.md §7`, nomeadas uma a uma |
