@@ -169,8 +169,8 @@ contando como pessoa própria (`'orfao-'||id`), que é a intenção original do 
 Limite conhecido: se um órfão tiver o nome duplicado, o `ORDER BY l.id LIMIT 1` escolhe um dos dois
 arbitrariamente. **Não afeta a contagem** (a pessoa é uma só de qualquer forma), afeta a atribuição.
 
-**O conserto de raiz é outro e fica na Atma**: preencher `paciente_lead_id` no id 11 — ainda
-pendente, e é ele que impede o defeito de voltar por uma linha nova. A regra acima é a rede que o
+**O conserto de raiz é outro e ficava na Atma**: preencher `paciente_lead_id` no id 11.
+**✅ Aplicado em 07/09** — ver abaixo. A regra acima é a rede que o
 roihub arma para o histórico que já nasceu torto — [[conserto_do_fluxo_nao_conserta_o_historico]].
 
 ### ✅ Consertado no roihub em 07/09
@@ -192,6 +192,29 @@ dinheiro: R$ 14.963,50 + R$ 26.444,36 = R$ 41.407,86 = enviados   ✓ fecha
 O dinheiro da Maiara (R$ 4.041,00) saiu do balde "sem lead" e entrou no dela, que é `vivo`.
 **5 testes novos**, incluindo o caso que separa as duas somas — a trava anterior (`ticket.pessoas ===
 degrau`) passava por sorte, porque o fixture não tinha órfão.
+
+### ✅ E o conserto de RAIZ, na Atma, em 07/09
+
+Levantamento antes de escrever: **1 órfão em toda a história** (orçamento id 11), casando com
+**exatamente 1 lead** por nome — 53, `maiarafernandahermann@gmail.com`, criado no mesmo dia. Sem
+ambiguidade. O nome que se repete entre leads é `'desconhecido - wpp'` (ids 45 e 47), placeholder de
+WhatsApp, e nenhum dos dois tem orçamento — o risco de homônimo existe no esquema e não toca este caso.
+
+```sql
+-- aplicado em transação, com guarda tripla: só a linha 11, só se AINDA órfã,
+-- e só se o nome casar com exatamente UM lead. rowCount != 1 → ROLLBACK.
+UPDATE orcamentos o SET paciente_lead_id = l.id FROM patient_leads l
+ WHERE o.id = 11 AND o.paciente_lead_id IS NULL
+   AND lower(trim(l.nome)) = lower(trim(o.paciente_nome))
+   AND (SELECT count(*) FROM patient_leads x
+         WHERE lower(trim(x.nome)) = lower(trim(o.paciente_nome))) = 1;
+
+-- reversão: UPDATE orcamentos SET paciente_lead_id = NULL WHERE id = 11;
+```
+
+**O número NÃO mudou** — cadeia segue `52 → 22 → 5 → 0`, 0 órfãos no banco. É esse o resultado que
+se queria: a rede do roihub e o conserto de raiz **concordam**. Se a cadeia tivesse se mexido depois
+do backfill, um dos dois estaria errado. A rede continua valendo para a próxima linha sem vínculo.
 
 ⚠️ Isto **não** foi causado pela 020 — é anterior, e só apareceu porque a verificação de "nada mudou"
 foi feita contra o banco em vez de contra a tela.
@@ -283,7 +306,7 @@ só existe na versão nova.
 | # | o que | onde |
 |---|---|---|
 | 1 | ✅ **feito** — migration aplicada, push nos dois repos, deploy do roihub confirmado 2× | — |
-| 2 | ✅ **roihub consertado** (`pessoasDeOrcamento()`, cadeia 52→22→5→0). Falta o **backfill do `paciente_lead_id`** na Atma — sem ele, linha nova sem vínculo reintroduz o erro | §5 |
+| 2 | ✅ **fechado dos dois lados** — `pessoasDeOrcamento()` no roihub e backfill do id 11 na Atma | §5 |
 | 3 | Exibir as réguas de aquisição em `/okr/atma/aquisicao` | spec **022** — a pesquisa agora está em `lib/benchmark.mjs` (`AQUISICAO`), não só em prosa (§9) |
 | 4 | Achar o número de **elite** de `form_start→lead` | `research.md §D6` — a Zuko publica média, não quartil superior |
 | 5 | As **7 linhas legadas** de A/B/C sem URL | `handoff/okr-regua-de-mercado.md §7`, nomeadas uma a uma |
