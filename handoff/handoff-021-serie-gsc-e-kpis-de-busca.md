@@ -91,3 +91,20 @@ de fora), mais o histórico que destrava os de crescimento em ~90 dias.
 Merge para `main` é **deploy** (Princípio IV) e ainda não foi feito — a branch está pushada e o
 merge é decisão de quem lê isto. Depois do merge, conferir a primeira corrida automática de
 05:17 BRT e que `serie-gsc.yml` tem `HUB_URL` e `HUB_CRON_SECRET` nos secrets do repositório.
+
+## Fechamento (07/09, 14:44 BRT)
+
+Merged em `main` pelo PR #5 às 14:34. `HUB_URL` e `HUB_CRON_SECRET` conferidos nos secrets do
+repositório. A corrida de 05:17 BRT só acontece em 08/09, então disparei o `workflow_dispatch`
+para provar o gatilho hoje: **42 projetos · 34 linhas · 8 sem propriedade · zero falhas · 15 s**,
+`backfills: []` — o backfill de 238 dias já estava gravado, então a corrida diária custa 15 s e
+não os 50 s da primeira.
+
+Tela conferida em `/okr/atma/aquisicao`: 1.024 consultas únicas, 871 no Top 20, **22,3% no Top 3**
+e Striking distance renderizando. O bloco de CTR Gap não aparece — é o zero de 4 URLs avaliadas
+descrito acima, não regressão.
+
+`/okr/atma/aquisicao` **não é órfã**: `/okr/atma` linka para ela no rodapé de método
+(`app/okr/[slug]/page.tsx:281`), e `/okr/atma/metodo` também. O link do bloco de Descoberta
+(linha 271) nunca renderiza para a atma — é `iniciaEmVisitante`, perfis A/B só. Uma entrada em
+nota de rodapé é pouco para uma aba com 6 KPIs, mas é entrada.
