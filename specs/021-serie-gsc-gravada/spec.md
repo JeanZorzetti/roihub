@@ -237,6 +237,9 @@ o par aparece; conferir que uma consulta com URL única nunca aparece.
   imprime e não grava; esta feature não o altera nem depende dele.
 - A credencial do Search Console já usada pela `/okr` (`GOOGLE_SERVICE_ACCOUNT_JSON`) cobre os
   projetos desta feature. Nenhuma credencial nova.
-- Os projetos considerados são os mesmos que a `/okr` já lê; esta spec não muda a curadoria.
+- **Escopo: só a Atma.** ⚠️ CORRIGIDO em 07/09/2026, depois do merge: esta spec nasceu
+  percorrendo os 35 projetos e o objetivo era outro — o board de OKR de busca é da Atma, e é
+  ela, sozinha, que a corrida grava. A lista viva é `SLUGS_DE_BUSCA` em `lib/projects.ts`.
+  A curadoria não muda; muda quem a corrida percorre.
 - Marca versus não-marca fica **fora** desta spec: exige uma lista de termos de marca por projeto
   e um corte por país que ninguém definiu ainda. É a primeira candidata à spec seguinte.

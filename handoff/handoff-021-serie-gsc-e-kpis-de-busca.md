@@ -108,3 +108,18 @@ descrito acima, não regressão.
 (`app/okr/[slug]/page.tsx:281`), e `/okr/atma/metodo` também. O link do bloco de Descoberta
 (linha 271) nunca renderiza para a atma — é `iniciaEmVisitante`, perfis A/B só. Uma entrada em
 nota de rodapé é pouco para uma aba com 6 KPIs, mas é entrada.
+
+## ⚠️ Escopo corrigido em 07/09/2026 — a corrida é só da Atma
+
+O objetivo original era servir a **Atma primeiro, e só ela**; esta spec nasceu gravando os 35.
+`/api/gsc-serie` agora percorre `projetosDeBusca()` (`SLUGS_DE_BUSCA` em `lib/projects.ts`, hoje
+`["atma"]`). Consequências:
+
+- **O histórico só se acumula para a Atma.** A US1 vale pelo relógio: o dia que não é gravado não
+  volta. Se um segundo projeto entrar na lista depois, a série dele começa do backfill daquele dia,
+  não de hoje — o `janelaDaCorrida(ultimo)` já trata `null` como backfill da janela longa.
+- **A corrida encurta para ~1 requisição.** O `maxDuration 300` e o retry do workflow ficam como
+  estão: margem larga não custa nada e é o que absorve o hub intermitente da madrugada.
+- **Os KPIs da aba não dependem disso.** Eles saem de `gscConsultas()` ao vivo no render, não do
+  banco — por isso continuam desenhando em qualquer `/okr/<slug>/aquisicao` que alguém abra. Só a
+  série gravada (e a indexação da 022) ficaram restritas.

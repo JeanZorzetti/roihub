@@ -80,3 +80,25 @@ Rodando o inventário contra os projetos reais desta máquina em 07/09/2026:
 `goianiacadeiras.com.br` responde 302 no `curl` mas dá `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` no Node
 (store de CA do Windows). Pode ser só esta máquina — mas se for DNS de verdade, é bem maior que
 esta spec e vale conferir de outra rede antes de olhar código.
+
+## ⚠️ Escopo corrigido em 07/09/2026 — a corrida é só da Atma
+
+O Jean apontou, depois do merge, que o objetivo original das duas frentes de busca (021 e 022) era
+**servir a Atma primeiro, e só ela** — não os 35 projetos. `/api/indexacao` agora percorre
+`projetosDeBusca()`, que filtra por `SLUGS_DE_BUSCA` (`lib/projects.ts`, hoje `["atma"]`).
+
+O que isso muda de verdade:
+
+- **A quota deixa de ser o gargalo.** A restrição que moldou esta spec inteira (2.000 inspeções/dia
+  divididas por 21 subdomínios de `roilabs.com.br`) só aperta com 21 projetos na fila. Com um, a
+  Atma cabe inteira dentro do `INSPECOES_POR_CORRIDA` sem amostragem — o sitemap dela declara ~36
+  URLs.
+- **Rodízio, repartição e amostra continuam no código.** Não foram arrancados de propósito: são o
+  que faz abrir para o segundo projeto custar um slug na lista, em vez de uma spec nova. Com uma
+  fila de um item eles simplesmente nunca cortam nada.
+- **A aba dos outros 34 passa a dizer a verdade.** `/okr/<slug>/aquisicao` mostrava "ainda não teve
+  a vez no rodízio" para todo projeto sem apuração — que agora seria uma promessa que nunca chega.
+  Fora de `SLUGS_DE_BUSCA` a tela diz **"fora do escopo da medição"**: decisão, não pendência.
+- **O que NÃO mudou:** os blocos de 8 meses e de consultas (021) são leitura AO VIVO do GSC no
+  render da página, não corrida gravada — continuam desenhando para qualquer projeto que alguém
+  abra. Se a intenção for esconder a aba inteira fora da Atma, isso é um passo separado.

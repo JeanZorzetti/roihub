@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { listProjects } from "@/lib/projects";
+import { listProjects, SLUGS_DE_BUSCA } from "@/lib/projects";
 import { lerIndexacao, dbOn, type Apuracao } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
@@ -383,7 +383,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             pela corrida das 05:47 e LIDA do banco. */}
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Indexação — quanto do que o site declara está no índice</h2>
-          {indexacao === null ? (
+          {indexacao === null && !SLUGS_DE_BUSCA.includes(slug) ? (
+            /* Escopo, não fila: a corrida percorre só `SLUGS_DE_BUSCA`. Dizer "ainda não teve a
+               vez" aqui prometeria uma apuração que nunca vem — a mesma mentira de tratar ausência
+               declarada como pendência. */
+            <p className="foot">
+              <strong>Fora do escopo da medição.</strong> A corrida de indexação roda só para{" "}
+              {SLUGS_DE_BUSCA.join(", ")} — o board de busca é de lá. Este projeto não é apurado, e
+              isso é decisão, não pendência nem falha.
+            </p>
+          ) : indexacao === null ? (
             <p className="foot">
               <strong>Ainda não apurado.</strong> A corrida de indexação roda às 05:47 e percorre os
               projetos por rodízio — do que está há mais tempo sem apuração para o mais recente.

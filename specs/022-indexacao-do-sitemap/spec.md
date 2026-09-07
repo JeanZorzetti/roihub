@@ -35,6 +35,11 @@ da lista, em vez do primeiro item.
 
 ## ⚠️ A restrição que molda a feature inteira
 
+> ⚠️ **Vale para o escopo com que a spec nasceu (os 35 projetos).** Em 07/09/2026 o escopo
+> foi corrigido para **só a Atma** (ver Assumptions): com um projeto na fila, nada abaixo
+> aperta. O texto fica porque descreve o teto que volta a valer no dia em que o segundo slug
+> entrar em `SLUGS_DE_BUSCA`.
+
 A quota da URL Inspection API é de **~2.000 inspeções por dia por propriedade** — e
 **21 dos 35 projetos são subdomínios de `roilabs.com.br`**, todos resolvidos para a mesma
 propriedade `sc-domain:roilabs.com.br`. Os 21 **dividem a mesma quota**, não têm 2.000 cada.
@@ -215,7 +220,12 @@ apurado.
   credencial nova: a mesma do Search Console que a 021 já usa.
 - Reusa o padrão de corrida da 021 (cron dispara endpoint autenticado, trabalho no servidor,
   escrita idempotente), fora das janelas do Princípio IV.
-- Os projetos considerados são os mesmos que `listProjects()` devolve com `url`.
+- **Escopo: só a Atma** (`SLUGS_DE_BUSCA` em `lib/projects.ts`). ⚠️ CORRIGIDO em 07/09/2026,
+  depois do merge: esta spec nasceu percorrendo os 35 projetos e o objetivo original era
+  servir a Atma primeiro. Isso **desarma a restrição que moldou a feature inteira** — a quota
+  compartilhada por 21 subdomínios só aperta quando 21 projetos entram na fila. O rodízio, a
+  repartição de orçamento e a amostra estável continuam no código: são o que permite abrir
+  para o segundo projeto acrescentando um slug, e é por isso que não foram arrancados.
 - O número "~2.000 inspeções/dia por propriedade" é a cota pública documentada pelo Google e
   **deve ser confirmada contra o comportamento real na primeira corrida** — a feature trata o
   teto como configurável, não como constante de fé.

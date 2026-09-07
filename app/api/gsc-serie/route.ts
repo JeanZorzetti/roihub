@@ -7,7 +7,7 @@
 // Rota própria em vez de mais um coletor em `/api/estado`: aquela roda na janela que o Princípio
 // IV declara intocável, e uma indisponibilidade do GSC passaria a poder derrubar o card noturno.
 import { gscSeries } from "@/lib/gsc";
-import { listProjects } from "@/lib/projects";
+import { projetosDeBusca } from "@/lib/projects";
 import { gravarDiasGsc, ultimoDiaGsc, dbOn } from "@/lib/db";
 import { janelaDaCorrida, diasParaGravar } from "@/lib/serie-gsc.mjs";
 
@@ -25,8 +25,10 @@ export async function POST() {
   ].filter(Boolean);
   if (faltando.length) return Response.json({ error: "ambiente incompleto", faltando }, { status: 503 });
 
-  // Princípio I: os projetos vêm de `listProjects()`, nunca de `data/projects.json`.
-  const projetos = (await listProjects()).filter((p) => p.url);
+  // Princípio I: os projetos vêm de `listProjects()`, nunca de `data/projects.json` — e a corrida
+  // percorre SÓ os de `SLUGS_DE_BUSCA` (hoje, a Atma). O board de busca é dela; varrer os 35 era
+  // escopo errado, não escopo generoso.
+  const projetos = await projetosDeBusca();
 
   const gravados: Record<string, number> = {};
   const backfills: string[] = [];

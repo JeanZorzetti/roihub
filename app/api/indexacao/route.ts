@@ -7,7 +7,7 @@
 // PROPRIEDADE, e 21 dos 35 projetos resolvem para `sc-domain:roilabs.com.br`. Por isso a corrida
 // PLANEJA antes de gastar — resolve a propriedade de todo mundo, monta a fila do rodízio e reparte
 // o orçamento — em vez de sair inspecionando e descobrir o teto no 429.
-import { listProjects } from "@/lib/projects";
+import { projetosDeBusca } from "@/lib/projects";
 import { gravarIndexacao, ultimasApuracoes, dbOn } from "@/lib/db";
 import { buscar, urlDoSitemap } from "@/lib/conformidade.mjs";
 import { lerSitemap } from "@/lib/sitemap.mjs";
@@ -63,8 +63,10 @@ export async function POST() {
   const tetoCorrida = num("INSPECOES_POR_CORRIDA", 400);
   const dia = new Date().toISOString().slice(0, 10);
 
-  // Princípio I: os projetos vêm de `listProjects()`, nunca de `data/projects.json`.
-  const projetos = (await listProjects()).filter((p) => p.url);
+  // Princípio I: os projetos vêm de `listProjects()`, nunca de `data/projects.json` — e a corrida
+  // percorre SÓ os de `SLUGS_DE_BUSCA` (hoje, a Atma). Com um projeto só, o planejamento abaixo
+  // (rodízio + repartição de orçamento) continua correto e simplesmente nunca precisa cortar.
+  const projetos = await projetosDeBusca();
 
   const cliente = await clienteGsc();
   const sites = await propriedades(cliente);
