@@ -362,3 +362,21 @@ exibição continua sendo a 022; o que mudou é o dado ter deixado de morar só 
 **A lição, que vale para toda spec de pesquisa:** ao fechar, rodar `grep` no repo pelo número que a
 spec produziu. Se só o handoff devolver, a pesquisa foi **anotada**, não entregue — gêmea de
 [[nao_e_lida_e_verdade_sobre_o_repo_nao_sobre_o_produto]].
+
+### 🚩 E ela também não aparece na tela da Atma — conferido no navegador em 07/09
+
+Com a SC-004 finalmente verificada **na segunda superfície** (login feito, página renderizada):
+
+- ✅ A seção **"Sem régua de mercado"** aparece, com os **5** degraus recusados/condicionais, cada um
+  com o motivo específico e a fonte descartada linkada quando existe. Nenhuma quebra com
+  `metric_value` NULL.
+- ✅ A tabela de comparação está **vazia** — *"Nenhuma comparação disponível para o período
+  selecionado"*, com `Total de Métricas: 0`. **Zero comparações contra número sem fonte**, que é
+  exatamente o que a SC-004 pede.
+- 🚩 **Mas `form_start→lead` (Zuko 66%) não aparece em lugar nenhum da página.** Testado em 15 e em
+  90 dias: a tabela segue vazia e o texto "Zuko"/"66" não existe no DOM. Ela não está na seção "Sem
+  régua" (que só lista os sem valor) nem na comparação (que o admin não sabe montar para este degrau).
+
+**Somando com o que já se sabia:** a única linha publicável das seis está no banco da Atma, agora
+também em `lib/benchmark.mjs` — e **é exibida em zero telas**. A 022 continua sendo quem a mostra;
+o que mudou é que agora está claro que a Atma também não a mostra, e ninguém tinha olhado.
