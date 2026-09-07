@@ -258,6 +258,40 @@ function ensure(): Promise<unknown> {
         criado TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (projeto, dia)
       );
+      -- Apuracao de indexacao: uma linha por PROJETO POR DIA (022). O agregado, nunca a URL —
+      -- 35 projetos x milhares de URLs x diario responde perguntas que a spec nao faz.
+      --
+      -- inspecionadas e SEMPRE <= declaradas: a quota da URL Inspection API e ~2000/dia POR
+      -- PROPRIEDADE e 21 dos 35 projetos resolvem para a mesma sc-domain:roilabs.com.br. Guardar
+      -- os dois numeros e o que permite a tela dizer "200 de 1200" em vez de publicar a fracao da
+      -- amostra como se fosse a do site.
+      --
+      -- falhas fica FORA do numerador e do denominador da taxa. Erro de quota contado como
+      -- nao-indexacao inverte o sinal: quanto mais o sistema falha, pior o site pareceria.
+      --
+      -- Sem coluna de taxa, pelo mesmo motivo do CTR acima: ela e indexadas/(inspecionadas-falhas),
+      -- exata sempre, e uma coluna gravada so cria a chance de divergir da propria divisao.
+      -- Denominador zero e taxa NULA (nao apurado), nunca zero por cento.
+      --
+      -- motivo NULL = apurou. Os quatro motivos sao estados DIFERENTES e nao podem virar o mesmo
+      -- "0%": sem_sitemap aponta o build do site, sem_propriedade aponta dominio proprio,
+      -- sitemap_vazio e uma declaracao do site, sem_orcamento e "nao perguntei nesta rodada".
+      -- A coluna projeto e o SLUG, nunca o rotulo de exibicao.
+      CREATE TABLE IF NOT EXISTS hub_indexacao (
+        projeto TEXT NOT NULL,
+        dia DATE NOT NULL,
+        propriedade TEXT,
+        declaradas INT NOT NULL,
+        inspecionadas INT NOT NULL,
+        indexadas INT NOT NULL,
+        rastreadas_nao_indexadas INT NOT NULL,
+        descobertas_nao_indexadas INT NOT NULL,
+        outras INT NOT NULL,
+        falhas INT NOT NULL,
+        motivo TEXT,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, dia)
+      );
       -- Quadros de Marketing e Ideias. Nada aqui atravessa para hub_tasks ou para o ranking:
       -- o isolamento é o requisito central da feature, não um efeito colateral do desenho.
       -- Coluna é TABELA e não enum no .mjs (ao contrário de tipo/canal): FR-012 exige que o
@@ -841,6 +875,107 @@ export async function lerDiasGsc(projeto: string, inicio?: string, fim?: string)
     [projeto, inicio ?? null, fim ?? null]
   );
   return r.rows;
+}
+
+// ── Indexação do sitemap (hub_indexacao) — 022 ──────────────────────────────
+
+export type Apuracao = {
+  dia: string; // YYYY-MM-DD
+  propriedade: string | null;
+  declaradas: number;
+  inspecionadas: number;
+  indexadas: number;
+  rastreadasNaoIndexadas: number;
+  descobertasNaoIndexadas: number;
+  outras: number;
+  falhas: number;
+  motivo: string | null; // null = apurou | sem_sitemap | sitemap_vazio | sem_propriedade | sem_orcamento
+};
+
+/**
+ * Grava (ou regrava) a apuração de um projeto num dia. Idempotente pela PK (projeto, dia): rodar a
+ * corrida duas vezes no mesmo dia gasta quota de novo, mas não duplica linha.
+ *
+ * Uma linha por chamada, sem o INSERT em lote de `gravarDiasGsc`: aqui é 1 linha por projeto por
+ * corrida (35/dia), não 487 de backfill — lote seria complexidade sem viagem de rede economizada.
+ */
+export async function gravarIndexacao(projeto: string, a: Apuracao): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_indexacao (projeto, dia, propriedade, declaradas, inspecionadas, indexadas,
+       rastreadas_nao_indexadas, descobertas_nao_indexadas, outras, falhas, motivo)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (projeto, dia) DO UPDATE SET
+       propriedade = EXCLUDED.propriedade,
+       declaradas = EXCLUDED.declaradas,
+       inspecionadas = EXCLUDED.inspecionadas,
+       indexadas = EXCLUDED.indexadas,
+       rastreadas_nao_indexadas = EXCLUDED.rastreadas_nao_indexadas,
+       descobertas_nao_indexadas = EXCLUDED.descobertas_nao_indexadas,
+       outras = EXCLUDED.outras,
+       falhas = EXCLUDED.falhas,
+       motivo = EXCLUDED.motivo,
+       criado = now()`,
+    [
+      projeto,
+      a.dia,
+      a.propriedade,
+      a.declaradas,
+      a.inspecionadas,
+      a.indexadas,
+      a.rastreadasNaoIndexadas,
+      a.descobertasNaoIndexadas,
+      a.outras,
+      a.falhas,
+      a.motivo,
+    ]
+  );
+}
+
+/** A ÚLTIMA apuração de um projeto, ou `null` se nunca houve. `dia` sai junto porque a tela é
+ *  obrigada a datar o número: um inventário de semanas atrás não pode se apresentar como o estado
+ *  de hoje, e um número sem data sempre parece de hoje. */
+export async function lerIndexacao(projeto: string): Promise<Apuracao | null> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, propriedade, declaradas, inspecionadas, indexadas,
+            rastreadas_nao_indexadas, descobertas_nao_indexadas, outras, falhas, motivo
+       FROM hub_indexacao
+      WHERE projeto = $1
+      ORDER BY dia DESC
+      LIMIT 1`,
+    [projeto]
+  );
+  const l = r.rows[0];
+  if (!l) return null;
+  return {
+    dia: l.dia,
+    propriedade: l.propriedade,
+    declaradas: l.declaradas,
+    inspecionadas: l.inspecionadas,
+    indexadas: l.indexadas,
+    rastreadasNaoIndexadas: l.rastreadas_nao_indexadas,
+    descobertasNaoIndexadas: l.descobertas_nao_indexadas,
+    outras: l.outras,
+    falhas: l.falhas,
+    motivo: l.motivo,
+  };
+}
+
+/**
+ * A data da última apuração de cada projeto — a fila do rodízio.
+ *
+ * Derivada da PRÓPRIA tabela, sem cursor: um ponteiro guardado à parte pode divergir do que foi de
+ * fato gravado (corrida que morre no meio deixa o cursor adiantado e pula um projeto para sempre).
+ * Ordenar pelo dado é auto-corretivo — projeto que falhou continua sendo o mais antigo e volta a
+ * ser o primeiro da próxima corrida.
+ */
+export async function ultimasApuracoes(): Promise<Record<string, string>> {
+  await ensure();
+  const r = await pool().query<{ projeto: string; dia: string }>(
+    `SELECT projeto, to_char(max(dia), 'YYYY-MM-DD') AS dia FROM hub_indexacao GROUP BY projeto`
+  );
+  return Object.fromEntries(r.rows.map((l) => [l.projeto, l.dia]));
 }
 
 // ── Quadros de Marketing e Ideias (hub_pauta*) ──────────────────────────────
