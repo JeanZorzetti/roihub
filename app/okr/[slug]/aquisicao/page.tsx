@@ -383,6 +383,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             pela corrida das 05:47 e LIDA do banco. */}
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Indexação — quanto do que o site declara está no índice</h2>
+          {/* Linha morta: a corrida das 05:47 varreu os 35 projetos antes da correção de escopo,
+              então há apuração gravada para projetos que não são mais percorridos. A data já sai
+              embaixo (FR-014), mas data velha sozinha lê como atraso, não como fim. */}
+          {indexacao !== null && !SLUGS_DE_BUSCA.includes(slug) && (
+            <p className="foot">
+              ⚠️ <strong>Fora do escopo da medição.</strong> A corrida de indexação roda só para{" "}
+              {SLUGS_DE_BUSCA.join(", ")}. O número abaixo é de uma corrida antiga e{" "}
+              <strong>não será atualizado</strong>.
+            </p>
+          )}
           {indexacao === null && !SLUGS_DE_BUSCA.includes(slug) ? (
             /* Escopo, não fila: a corrida percorre só `SLUGS_DE_BUSCA`. Dizer "ainda não teve a
                vez" aqui prometeria uma apuração que nunca vem — a mesma mentira de tratar ausência
