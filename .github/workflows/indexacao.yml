@@ -22,13 +22,15 @@ jobs:
       # 🚩 O hub fica INTERMITENTEMENTE INACESSÍVEL na madrugada e o Actions atrasa o agendamento
       # em ~1h40 — este job pode acabar caindo perto daquela janela mesmo marcado para 05:47.
       #
-      # Retry SÓ em falha de conexão, nunca em erro HTTP: sem resposta HTTP o trabalho não começou,
-      # então repetir é de graça. Um 500 repetido re-executaria a corrida e GASTARIA A QUOTA DE
-      # NOVO — aqui isso custa mais caro que na série, porque a quota é o recurso escasso da
-      # feature. A corrida é idempotente no banco (PK (projeto, dia) com DO UPDATE).
+      # Retry SÓ quando o trabalho comprovadamente NÃO começou. Diferente de `serie-gsc.yml`, aqui
+      # o TIMEOUT (28) está FORA da lista de repetição, e isso é a lição da primeira corrida
+      # (07/09/2026): aquela série termina em segundos, então um timeout lá é "não começou"; esta
+      # corrida pode legitimamente passar do `--max-time`, e ali o timeout é "está rodando e
+      # demorou". Repetir gastaria a quota DE NOVO, numa corrida que continua viva no servidor —
+      # e a quota é o recurso escasso desta feature, compartilhada por 21 projetos.
       #
       # --max-time 780 abaixo do maxDuration 800 da rota: o curl desiste DEPOIS do servidor, senão
-      # o Actions reportaria falha de conexão numa corrida que terminou bem.
+      # o Actions reportaria falha numa corrida que terminou bem.
       - name: Dispara a corrida e falha se o hub recusar
         run: |
           for tentativa in 1 2 3 4 5; do
@@ -36,9 +38,12 @@ jobs:
               -H "authorization: Bearer $HUB_CRON_SECRET" \
               -w '\n%{http_code}' --max-time 780) && break
             saida=$?
-            # 7 couldn't connect · 28 timeout · 35 TLS · 52 vazio · 56 recv falhou
+            # 7 couldn't connect · 35 TLS · 52 vazio — o hub não atendeu, nada rodou.
+            # 28 (timeout) NÃO entra: ver o comentário acima. 56 (recv falhou) também não — a
+            # conexão foi aceita, então a corrida já estava em andamento do outro lado.
             case $saida in
-              7|28|35|52|56) ;;
+              7|35|52) ;;
+              28) echo "::error::curl expirou em 780s — a corrida pode estar VIVA no servidor. Não repete: conferir hub_indexacao antes de disparar de novo"; exit 1 ;;
               *) echo "::error::curl saiu $saida — não é falha de conexão, não repete"; exit 1 ;;
             esac
             [ "$tentativa" = "5" ] && { echo "::error::hub inacessível em 5 tentativas"; exit 1; }

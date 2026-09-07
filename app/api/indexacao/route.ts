@@ -28,6 +28,26 @@ const num = (nome: string, padrao: number) => {
   return Number.isFinite(v) && v > 0 ? v : padrao;
 };
 
+/**
+ * Aplica `fn` em lotes de `n`, preservando a ordem de entrada.
+ *
+ * MEDIDO na primeira corrida (07/09/2026): o planejamento em série levou 9min22s e o `maxDuration`
+ * matou a corrida com 2 projetos de 35 apurados — ANTES de gastar a primeira inspeção. A causa é o
+ * timeout de 15 s de `conformidade.mjs`: cada host que não resolve (tapepro, atma) custava 15 s
+ * parado, e são 35 projetos × (robots + sitemap + filhos do índice).
+ *
+ * Ler sitemap é HTTP contra 35 hosts DIFERENTES e não custa quota do GSC — é o oposto da inspeção,
+ * que continua em série logo abaixo porque ali são requisições ao MESMO endpoint do Google com a
+ * mesma credencial, e disparar dezenas de uma vez é o caminho mais curto para um 429.
+ */
+async function emLotes<T, R>(itens: T[], n: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const saida: R[] = [];
+  for (let i = 0; i < itens.length; i += n) {
+    saida.push(...(await Promise.all(itens.slice(i, i + n).map(fn))));
+  }
+  return saida;
+}
+
 export async function POST() {
   // Princípio V: valida na ENTRADA e responde só com os NOMES do que falta.
   const faltando = [
@@ -54,29 +74,32 @@ export async function POST() {
   const inventarios = new Map<string, Awaited<ReturnType<typeof lerSitemap>>>();
   const candidatos = [];
   const falhas: { projeto: string; erro: string }[] = [];
-  for (const p of projetos) {
+  const planos = await emLotes(projetos, 8, async (p) => {
     try {
       const base = p.url.replace(/\/+$/, "");
       // O robots diz ONDE o sitemap mora; adivinhar `/sitemap.xml` reprovaria o tapepro, que serve
       // `sitemap-index.xml`. Sem robots alcançável, `urlDoSitemap` cai no caminho convencional.
       const robots = await buscar(`${base}/robots.txt`);
       const inv = await lerSitemap(urlDoSitemap(robots.corpo, base), buscar);
-      if (inv.erro) {
-        // Rede caída lendo o sitemap é FALHA do projeto, não `sem_sitemap`: gravar "não perguntei"
-        // como "não há" é a mesma inversão de sinal que a FR-008 proíbe do lado da inspeção.
-        falhas.push({ projeto: p.slug, erro: inv.erro.slice(0, 60) });
-        continue;
-      }
-      inventarios.set(p.slug, inv);
-      candidatos.push({
-        slug: p.slug,
-        propriedade: melhorPropriedade(new URL(p.url).hostname, sites),
-        declaradas: inv.urls.length,
-        ultimaApuracao: apuradas[p.slug] ?? null,
-      });
+      return { p, inv, erro: "" };
     } catch (e) {
-      falhas.push({ projeto: p.slug, erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) });
+      return { p, inv: null, erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
     }
+  });
+  for (const { p, inv, erro } of planos) {
+    // Rede caída lendo o sitemap é FALHA do projeto, não `sem_sitemap`: gravar "não perguntei" como
+    // "não há" é a mesma inversão de sinal que a FR-008 proíbe do lado da inspeção.
+    if (erro || !inv || inv.erro) {
+      falhas.push({ projeto: p.slug, erro: (erro || inv?.erro || "").slice(0, 60) });
+      continue;
+    }
+    inventarios.set(p.slug, inv);
+    candidatos.push({
+      slug: p.slug,
+      propriedade: melhorPropriedade(new URL(p.url).hostname, sites),
+      declaradas: inv.urls.length,
+      ultimaApuracao: apuradas[p.slug] ?? null,
+    });
   }
 
   const fatias = repartir(filaDoDia(candidatos), tetoPropriedade, tetoCorrida);
