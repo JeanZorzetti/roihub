@@ -235,6 +235,29 @@ function ensure(): Promise<unknown> {
         mapa JSONB NOT NULL,
         criado TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      -- 021: a série diária do Search Console, que até aqui era lida ao vivo e DESCARTADA.
+      -- Todo KPI de crescimento do board (+10-20%/trimestre, 5-10% MoM) é impossível sem isto,
+      -- e a falta não é de cálculo, é de calendário: só existe meses depois de começar a gravar.
+      --
+      -- PK (projeto, dia) pelo mesmo motivo do run_date acima: a corrida repete de propósito
+      -- os ~3 últimos dias, que o GSC ainda não fechou. No atma o dia 30/07 saiu com 30
+      -- impressões e fechou em 827 — gravação insert-only deixaria o provisório para sempre e
+      -- toda série teria uma cratera falsa na ponta.
+      --
+      -- A coluna projeto é o SLUG, nunca o rótulo de exibição: rótulo não é chave.
+      -- Sem coluna de CTR de propósito — ele é cliques/impressoes, exato sempre, e uma coluna
+      -- gravada só cria a chance de divergir da própria divisão.
+      -- (Sem crase em nenhum comentário desta seção, pela razão escrita 60 linhas abaixo: isto
+      -- é um template literal do JS e uma crase aqui FECHA a string.)
+      CREATE TABLE IF NOT EXISTS hub_gsc_dia (
+        projeto TEXT NOT NULL,
+        dia DATE NOT NULL,
+        impressoes INT NOT NULL,
+        cliques INT NOT NULL,
+        posicao REAL,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, dia)
+      );
       -- Quadros de Marketing e Ideias. Nada aqui atravessa para hub_tasks ou para o ranking:
       -- o isolamento é o requisito central da feature, não um efeito colateral do desenho.
       -- Coluna é TABELA e não enum no .mjs (ao contrário de tipo/canal): FR-012 exige que o
@@ -759,6 +782,65 @@ export async function gravarEstado(runDate: string, mapa: Record<string, string>
      ON CONFLICT (run_date) DO UPDATE SET mapa = EXCLUDED.mapa, criado = now()`,
     [runDate, JSON.stringify(mapa)]
   );
+}
+
+// ── Série diária do Search Console (hub_gsc_dia) — 021 ──────────────────────
+
+export type DiaGsc = { dia: string; impressoes: number; cliques: number; posicao: number | null };
+
+/**
+ * Grava (ou regrava) os dias de um projeto. Regravar é REQUISITO, não tolerância: os ~3 últimos
+ * dias do GSC são provisórios e sobem quando ele fecha a contagem.
+ *
+ * Um único INSERT com todas as linhas em vez de um por dia: o backfill traz ~487 dias, e 487
+ * viagens ao banco por projeto transformariam a primeira corrida em minutos de rede.
+ */
+export async function gravarDiasGsc(projeto: string, dias: DiaGsc[]): Promise<number> {
+  if (!dias.length) return 0;
+  await ensure();
+  const valores: unknown[] = [];
+  const tuplas = dias.map((d, i) => {
+    const base = i * 5;
+    valores.push(projeto, d.dia, d.impressoes, d.cliques, d.posicao);
+    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`;
+  });
+  const r = await pool().query(
+    `INSERT INTO hub_gsc_dia (projeto, dia, impressoes, cliques, posicao)
+     VALUES ${tuplas.join(", ")}
+     ON CONFLICT (projeto, dia) DO UPDATE SET
+       impressoes = EXCLUDED.impressoes,
+       cliques = EXCLUDED.cliques,
+       posicao = EXCLUDED.posicao,
+       criado = now()`,
+    valores
+  );
+  return r.rowCount ?? 0;
+}
+
+/** O dia mais recente já gravado, ou `null` se o projeto nunca entrou. É o que decide entre
+ *  backfill longo e janela curta — sem isso a corrida repediria 16 meses todo dia. */
+export async function ultimoDiaGsc(projeto: string): Promise<string | null> {
+  await ensure();
+  const r = await pool().query<{ dia: string }>(
+    `SELECT to_char(max(dia), 'YYYY-MM-DD') AS dia FROM hub_gsc_dia WHERE projeto = $1`,
+    [projeto]
+  );
+  return r.rows[0]?.dia ?? null;
+}
+
+/** A série gravada de um projeto, em ordem cronológica. */
+export async function lerDiasGsc(projeto: string, inicio?: string, fim?: string): Promise<DiaGsc[]> {
+  await ensure();
+  const r = await pool().query<{ dia: string; impressoes: number; cliques: number; posicao: number | null }>(
+    `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, impressoes, cliques, posicao
+       FROM hub_gsc_dia
+      WHERE projeto = $1
+        AND ($2::date IS NULL OR dia >= $2::date)
+        AND ($3::date IS NULL OR dia <= $3::date)
+      ORDER BY dia`,
+    [projeto, inicio ?? null, fim ?? null]
+  );
+  return r.rows;
 }
 
 // ── Quadros de Marketing e Ideias (hub_pauta*) ──────────────────────────────

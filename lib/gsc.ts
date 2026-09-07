@@ -121,7 +121,10 @@ async function queryTimeseries(
       dimensionFilterGroups: [
         { filters: [{ dimension: "page", operator: "contains", expression: `https://${host}/` }] },
       ],
-      rowLimit: 500,
+      // 2000 e não 500 desde a 021: o backfill da série pede os 16 meses que o GSC guarda
+      // (~487 linhas, uma por dia) e 500 deixava 13 de folga. Um teto que quase encosta trunca
+      // sem erro — a série nasceria curta e ninguém veria.
+      rowLimit: 2000,
     },
   });
   return (res.data.rows ?? []).map((r) => ({
@@ -132,7 +135,18 @@ async function queryTimeseries(
   }));
 }
 
-async function queryPageWindow(
+// Teto de linhas por requisição da API. Constante nomeada desde a 021 porque `gscConsultas`
+// precisa COMPARAR contra ele para saber se o resultado veio cortado: um `25000` repetido em dois
+// lugares sairia de sincronia no dia em que um deles mudasse, e o sintoma seria um `truncado`
+// que nunca dispara.
+const TETO_LINHAS = 25000;
+
+// Exportada desde a 021: aquela feature precisa de UMA janela — a de `descoberta()` — e não do
+// par que `gscQueryPages` monta. Chamar `gscQueryPages` ali traria a janela hardcoded em D-31
+// (contra D-30 da descoberta) e uma segunda requisição para a janela anterior, que nenhum dos
+// KPIs de busca usa: um dia de divergência entre o total de cima da aba e a lista de baixo,
+// pago em rede dobrada.
+export async function queryPageWindow(
   client: RequestClient,
   property: string,
   host: string,
@@ -341,6 +355,53 @@ export async function gscPaginas(siteUrl: string, janela: { inicio: string; fim:
         posicao: r.position,
       })),
     };
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+  }
+}
+
+/** Uma linha de `query`+`page` da janela, com os nomes do domínio em vez de `keys[0]`/`keys[1]`. */
+export type LinhaBusca = { query: string; page: string; cliques: number; impressoes: number; posicao: number };
+export type GscConsultas = { linhas: LinhaBusca[]; truncado: boolean } | { erro: string } | null;
+
+/**
+ * As consultas da janela, para os KPIs de busca da 021.
+ *
+ * UMA chamada, com a janela que o chamador passa — `descoberta()`, no caso da aba de aquisição.
+ * `gscQueryPages` não serve aqui: a janela dela é fixa em D-31→D-3 (um dia mais larga que a
+ * descoberta, o que faria a lista não fechar com o total exibido acima dela) e ela gasta uma
+ * segunda requisição na janela anterior, que nenhum KPI desta feature lê.
+ *
+ * `truncado` existe porque `TETO_LINHAS` é um corte silencioso da API: sem o sinal, um projeto
+ * grande exibiria o teto como se fosse o fim dos dados (FR-011).
+ *
+ * `null` = não há onde olhar (env desligada ou host fora de toda propriedade); `{erro}` = falha
+ * transitória. Mesma distinção de `gscSeries()` e `gscPaginas()`, e pelo mesmo motivo.
+ */
+export async function gscConsultas(
+  siteUrl: string,
+  janela: { inicio: string; fim: string },
+  options: GscClientOptions = {},
+): Promise<GscConsultas> {
+  const clientP = options.client ? Promise.resolve(options.client) : getClient();
+  if (!clientP) return null;
+  try {
+    const client = await clientP;
+    const host = new URL(siteUrl).hostname;
+    const property = resolveProperty(host, await listSites(client));
+    if (!property) return null;
+    const rows = await queryPageWindow(client, property, host, janela.inicio, janela.fim);
+    // `query` ou `page` vazio não é linha de busca — mesma guarda de `mergeGscWindows`.
+    const linhas = rows
+      .filter((r) => r.keys[0] && r.keys[1])
+      .map((r) => ({
+        query: r.keys[0],
+        page: r.keys[1],
+        cliques: r.clicks,
+        impressoes: r.impressions,
+        posicao: r.position,
+      }));
+    return { linhas, truncado: rows.length >= TETO_LINHAS };
   } catch (e) {
     return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
   }
