@@ -2,10 +2,15 @@ import { NextResponse, type NextRequest } from "next/server.js";
 import { authorized } from "./lib/autopublish-core.mjs";
 
 export function middleware(req: NextRequest) {
-  // As duas rotas de cron dividem o CRON_SECRET: quem já pode publicar artigo em 10 repos não
-  // ganha nada novo podendo gravar um card de agenda. Segredo próprio é para capacidade
+  // As três rotas de cron dividem o CRON_SECRET: quem já pode publicar artigo em 10 repos não
+  // ganha nada novo podendo gravar um card de agenda ou uma linha de série do GSC — todas leem
+  // o mesmo Search Console que o autopublish já lê. Segredo próprio é para capacidade
   // MAIOR (é o caso do CRM abaixo), não para cada rota.
-  if (req.nextUrl.pathname === "/api/seo/autopublish" || req.nextUrl.pathname === "/api/estado") {
+  if (
+    req.nextUrl.pathname === "/api/seo/autopublish" ||
+    req.nextUrl.pathname === "/api/estado" ||
+    req.nextUrl.pathname === "/api/gsc-serie"
+  ) {
     return authorized(req.headers.get("authorization"), process.env.CRON_SECRET ?? "")
       ? NextResponse.next()
       : NextResponse.json({ error: "unauthorized" }, { status: 401 });
