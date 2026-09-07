@@ -15,6 +15,8 @@ import {
   ctrGap,
   canibalizacao,
   kpisDeBusca,
+  activeIndexRatio,
+  queryToPageRatio,
 } from "../lib/kpis-busca.mjs";
 
 const l = (query, page, impressoes, cliques, posicao) => ({ query, page, impressoes, cliques, posicao });
@@ -191,4 +193,32 @@ test("lista vazia não estoura em nenhum KPI", () => {
   assert.deepEqual(k.strikingDistance, []);
   assert.equal(k.ctrGap, null);
   assert.deepEqual(k.canibalizacao, []);
+});
+
+// ── 022: as duas razões que estavam capadas por falta de denominador ─────────────────────────
+test("activeIndexRatio é URLs com impressão ÷ indexadas", () => {
+  const linhas = [l("a", "/1", 10, 1, 5), l("b", "/1", 5, 0, 8), l("c", "/2", 3, 0, 9)];
+  assert.equal(activeIndexRatio(linhas, 4), 2 / 4);
+});
+
+// FR-011: sem denominador a tela volta à CONTAGEM com o motivo. Uma razão com denominador chutado
+// é falha, não detalhe — foi por isso que a 021 deixou este KPI como contagem.
+test("sem denominador, as duas razões são null e nunca um número inventado", () => {
+  const linhas = [l("a", "/1", 10, 1, 5)];
+  for (const d of [0, null, undefined, -3, NaN]) {
+    assert.equal(activeIndexRatio(linhas, d), null, `activeIndexRatio inventou razão com indexadas=${d}`);
+    assert.equal(queryToPageRatio(linhas, d), null, `queryToPageRatio inventou razão com indexadas=${d}`);
+  }
+});
+
+test("queryToPageRatio carrega o piso — o GSC omite as consultas raras", () => {
+  const linhas = [l("a", "/1", 10, 1, 5), l("b", "/1", 5, 0, 8), l("a", "/2", 2, 0, 9)];
+  const r = queryToPageRatio(linhas, 4);
+  assert.equal(r.valor, 2 / 4);
+  assert.equal(r.piso, true, "sem a flag a tela publica o piso como se fosse a razão real");
+});
+
+test("lista de linhas vazia com denominador válido é zero, não null — nada foi visto, mas foi medido", () => {
+  assert.equal(activeIndexRatio([], 10), 0);
+  assert.equal(queryToPageRatio([], 10).valor, 0);
 });
