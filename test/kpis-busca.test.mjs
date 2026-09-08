@@ -13,6 +13,7 @@ import {
   strikingDistance,
   ctrPorConsulta,
   ctrGap,
+  termoPrincipal,
   canibalizacao,
   kpisDeBusca,
   activeIndexRatio,
@@ -221,4 +222,28 @@ test("queryToPageRatio carrega o piso — o GSC omite as consultas raras", () =>
 test("lista de linhas vazia com denominador válido é zero, não null — nada foi visto, mas foi medido", () => {
   assert.equal(activeIndexRatio([], 10), 0);
   assert.equal(queryToPageRatio([], 10).valor, 0);
+});
+
+// ── 024/D10: o termo principal da URL ───────────────────────────────────────
+
+test("o termo é a consulta de maior IMPRESSÃO, não a de mais cliques nem a primeira da lista", () => {
+  const linhas = [
+    l("alinhador goiania", "/precos", 10, 9, 3),
+    l("preco alinhador", "/precos", 900, 2, 8),
+    l("clinica", "/precos", 50, 0, 12),
+  ];
+  assert.equal(termoPrincipal(linhas, "/precos"), "preco alinhador");
+});
+
+test("URL sem impressão devolve null — 'sem termo apurado', nunca 'termo ausente do título'", () => {
+  const linhas = [l("a", "/precos", 10, 1, 5), l("b", "/blog", 0, 0, 40)];
+  assert.equal(termoPrincipal(linhas, "/blog"), null, "impressão 0 não é termo");
+  assert.equal(termoPrincipal(linhas, "/nao-existe"), null);
+  assert.equal(termoPrincipal([], "/precos"), null);
+});
+
+test("empate de impressões resolve de forma determinística", () => {
+  const linhas = [l("zebra", "/x", 10, 0, 5), l("abelha", "/x", 10, 0, 5)];
+  assert.equal(termoPrincipal(linhas, "/x"), "abelha");
+  assert.equal(termoPrincipal([...linhas].reverse(), "/x"), "abelha", "a ordem da lista mudou o termo");
 });

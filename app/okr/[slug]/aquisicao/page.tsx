@@ -1,11 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listProjects, SLUGS_DE_BUSCA } from "@/lib/projects";
-import { lerIndexacao, dbOn, type Apuracao } from "@/lib/db";
+import { lerIndexacao, lerCrawlDePagina, dbOn, type Apuracao, type CrawlDePagina, type PaginaCrawl } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
-import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl } from "@/lib/kpis-busca.mjs";
+import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal } from "@/lib/kpis-busca.mjs";
+import { posicaoDoTermo } from "@/lib/pagina.mjs";
+import {
+  canonizar,
+  taxaIntegridadeDoTitulo,
+  taxaAlinhamento,
+  taxaCobertura,
+  cadencia,
+  ordemDaPeriferia,
+  TITULO_PX_MIN,
+  TITULO_PX_MAX,
+  TERMO_ATE,
+  LINKS_CONTEXTUAIS_MIN,
+  PROFUNDIDADE_MAX,
+  CADENCIA_MESES,
+} from "@/lib/grafo.mjs";
 import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
 import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
@@ -58,6 +73,22 @@ async function lerApuracao(slug: string): Promise<Apuracao | { erro: string } | 
 }
 
 /**
+ * 024 — a última corrida do crawl de página, no mesmo idioma de três estados de `lerApuracao()`.
+ *
+ * A tela LÊ O GRAVADO E NUNCA BUSCA: com `revalidate = 3600`, uma página que crawleasse ao carregar
+ * transformaria cada visita numa varredura do site do cliente — e a corrida semanal existe
+ * exatamente para isso não acontecer.
+ */
+async function lerCrawl(slug: string): Promise<CrawlDePagina | { erro: string } | null> {
+  if (!dbOn()) return null;
+  try {
+    return await lerCrawlDePagina(slug);
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+  }
+}
+
+/**
  * 023/US3 — o Core Web Vitals Pass Rate do board, sobre as URLs PRIORITÁRIAS: as de maior
  * impressão na janela curta, cortadas em `CAP_URLS_PASS_RATE`. Sem a ordenação o corte sortearia o
  * denominador; as que ficam de fora entram no texto como NÃO CONSULTADAS, nunca como reprovadas.
@@ -102,7 +133,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   // Duas fontes independentes, sem somar latência — mesmo padrão de `coletarDoProjeto()`. A falha
   // de uma nunca alcança a outra.
-  const [serie, canais, cobertura, consultas, indexacao] = await Promise.all([
+  const [serie, canais, cobertura, consultas, indexacao, crawl] = await Promise.all([
     gscSeries(p.url, janelaGsc.inicio, janelaGsc.fim),
     ga4Canais(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }),
     ga4Cobertura(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }),
@@ -117,12 +148,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     // 022: a indexação vem do BANCO, apurada pela corrida das 05:47. Zero chamada à URL Inspection
     // API aqui — ver `lerApuracao`.
     lerApuracao(slug),
+    // 024: o crawl de página vem do BANCO, apurado pela corrida de segunda 06:17. Ver `lerCrawl`.
+    lerCrawl(slug),
   ]);
   const linhasBusca = consultas && "linhas" in consultas ? consultas.linhas : null;
   const kpis = linhasBusca ? kpisDeBusca(linhasBusca) : null;
   const vitais = await lerPassRate(slug, linhasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   const br = (n: number) => n.toLocaleString("pt-BR");
+  // Só encurta a URL para caber na linha: a chave continua sendo a canônica da D3.
+  const caminho = (u: string) => u.replace(p.url.replace(/\/+$/, ""), "") || "/";
 
   // A apuração de verdade: motivo `null` E alguma inspeção que não falhou.
   const idx = indexacao && !("erro" in indexacao) && !indexacao.motivo ? indexacao : null;
@@ -145,6 +180,35 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const denomIdx = idx && !amostrado ? idx.indexadas : null;
   const ativas = linhasBusca && denomIdx ? activeIndexRatio(linhasBusca, denomIdx) : null;
   const porPagina = linhasBusca && denomIdx ? queryToPageRatio(linhasBusca, denomIdx) : null;
+
+  // ── 024: as seis medidas do crawl ────────────────────────────────────────
+  //
+  // NENHUMA conta aqui: `taxa*`, `cadencia` e `ordemDaPeriferia` moram em `lib/grafo.mjs` e
+  // `posicaoDoTermo` em `lib/pagina.mjs` — o que dá para testar sem subir o Next nasce em `.mjs`
+  // (Princípio III). Esta seção só chama e passa adiante.
+  const paginado = crawl && !("erro" in crawl) && !crawl.motivo ? crawl : null;
+  // As URLs do GSC vêm na forma que o Google guarda; as do crawl são a chave canônica da D3.
+  // Sem canonizar dos dois lados, `/precos` e `/precos/` seriam páginas diferentes e TODA página
+  // apareceria como "sem termo apurado".
+  const linhasCanon =
+    linhasBusca?.map((l) => ({ ...l, page: canonizar(l.page, p.url) ?? l.page })) ?? null;
+  const impressoesPorUrl = new Map<string, number>(
+    linhasCanon ? porUrl(linhasCanon).map((u: { url: string; impressoes: number }) => [u.url, u.impressoes]) : []
+  );
+  const termoPorUrl = new Map<string, string | null>(
+    (paginado?.paginas ?? []).map((pg) => [pg.url, linhasCanon ? termoPrincipal(linhasCanon, pg.url) : null])
+  );
+  const posicaoPorUrl = new Map<string, number | null>(
+    (paginado?.paginas ?? []).map((pg) => [pg.url, posicaoDoTermo(pg.titulo, termoPorUrl.get(pg.url) ?? null)])
+  );
+  const integridade = paginado ? taxaIntegridadeDoTitulo(paginado.paginas, posicaoPorUrl) : null;
+  const alinhamento = paginado ? taxaAlinhamento(paginado.paginas) : null;
+  const cobertura024 = paginado ? taxaCobertura(paginado.paginas) : null;
+  const atualizacao = paginado ? cadencia(paginado.paginas, paginado.dia) : null;
+  const periferia = paginado ? ordemDaPeriferia(paginado.paginas, impressoesPorUrl) : [];
+  // FR-013: URL do sitemap que responde erro ou redireciona é ACHADO — o sitemap declarando uma
+  // URL morta é a informação, não um buraco na medição.
+  const achadosDoSitemap = (paginado?.paginas ?? []).filter((pg) => pg.noSitemap && (pg.erro || pg.redirecionada));
 
   const dias = serie && "days" in serie ? serie.days : null;
   // FR-027, lado GSC: a janela real sai da PRÓPRIA série — `days[0].date` / `days.at(-1).date`.
@@ -618,6 +682,234 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   )}
                 </>
               )}
+            </>
+          )}
+        </div>
+
+        {/* 024 — o que há DENTRO das páginas. Bloco abaixo de Indexação de propósito: a 022 diz
+            QUANTO do site está no índice, e este diz o que existe nas páginas que sobraram fora.
+            Fonte: a corrida de segunda 06:17, LIDA do banco — a tela nunca crawleia. */}
+        <div className="ficha-bloco">
+          <h2 className="ficha-bloco-h">Dentro das páginas — seis medidas de um crawl só</h2>
+          {crawl === null ? (
+            <p className="foot">
+              não apurado —{" "}
+              {dbOn() ? "a corrida de crawl ainda não passou por este projeto." : "o hub está sem banco."}
+            </p>
+          ) : "erro" in crawl ? (
+            <p className="foot">
+              <strong>A leitura falhou agora</strong> ({crawl.erro}) — distinto de não haver crawl. O
+              bloco volta na próxima leitura desta página.
+            </p>
+          ) : crawl.motivo ? (
+            /* Os três motivos são estados DIFERENTES e nunca somam num "0 páginas". */
+            <p className="foot">
+              <strong>Sem apuração em {crawl.dia}</strong> —{" "}
+              {crawl.motivo === "sem_sitemap"
+                ? "o site não serve sitemap; o conserto é no build do site."
+                : crawl.motivo === "sitemap_vazio"
+                  ? "o sitemap existe e está vazio; é uma declaração do próprio site."
+                  : "a home não respondeu, e sem home não há origem para a travessia — toda página do sitemap sairia órfã por causa de um timeout, então nenhuma linha foi gravada."}
+            </p>
+          ) : (
+            <>
+              {/* FR-015: número sem data sempre parece de hoje. */}
+              <p className="foot">
+                Apurado em <strong>{crawl.dia}</strong> · {br(crawl.visitadas)} página(s) visitada(s)
+                de {br(crawl.declaradas)} declarada(s) no sitemap · {br(crawl.linksNavegacao)} link(s)
+                classificado(s) como navegação (menu e rodapé, fora da densidade contextual)
+                {crawl.falhas > 0 && <> · {br(crawl.falhas)} falha(s) de rede, fora de todo numerador</>}
+              </p>
+              {crawl.tetoAtingido && (
+                /* FR-012: número cortado que não se declara é número errado. */
+                <p className="foot">
+                  ⚠️ <strong>A travessia parou no teto</strong> — os números abaixo estão{" "}
+                  <strong>incompletos</strong> e valem só para as páginas alcançadas.
+                </p>
+              )}
+
+              {/* US1 — para onde vai a autoridade interna. */}
+              <p>
+                <strong>{br(crawl.orfas)}</strong> página(s) órfã(s){" "}
+                <span className="foot">
+                  declaradas no sitemap que <strong>nenhum link interno alcança</strong> ·{" "}
+                  {br(crawl.linkadasNaoDeclaradas)} alcançada(s) por link e ausente(s) do sitemap
+                </span>
+              </p>
+              <ul className="ficha-krs">
+                {periferia.slice(0, 15).map((pg) => (
+                  <li key={pg.url}>
+                    <strong>{caminho(pg.url)}</strong>{" "}
+                    <span className="foot">
+                      {pg.erro ? (
+                        <>
+                          falhou na busca ({pg.erro}) — <strong>não</strong> é órfã, é erro de rede
+                        </>
+                      ) : pg.profundidade === null && pg.noSitemap ? (
+                        <>
+                          <strong>órfã</strong> — nenhum link interno chega aqui
+                        </>
+                      ) : (
+                        <>profundidade {br(pg.profundidade ?? 0)} clique(s)</>
+                      )}
+                      {!pg.erro && (
+                        <>
+                          {" · "}
+                          {br(pg.linksContextuais)} link(s) contextual(is)
+                          {pg.linksContextuais < LINKS_CONTEXTUAIS_MIN && (
+                            <> (abaixo dos {LINKS_CONTEXTUAIS_MIN} do board)</>
+                          )}
+                          {" · "}
+                          {impressoesPorUrl.get(pg.url)
+                            ? `${br(impressoesPorUrl.get(pg.url)!)} impressões em 28 d`
+                            : "zero impressão no Search Console"}
+                          {pg.conteudoEstado === "js-dependente" && (
+                            <>
+                              {" "}
+                              · conteúdo só existe depois do JS — <strong>atrasa</strong> a indexação,
+                              não a impede
+                            </>
+                          )}
+                        </>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {periferia.length > 15 && (
+                <p className="foot">
+                  {br(periferia.length - 15)} página(s) a mais, fora do topo da lista — ordenadas por
+                  periferia (órfã → profundidade ≥ {PROFUNDIDADE_MAX} → menos de{" "}
+                  {LINKS_CONTEXTUAIS_MIN} links contextuais) e, dentro do empate, por impressões.
+                </p>
+              )}
+
+              {/* US2 — o título, que já tem evidência contra si (CTR Gap de 0% na 021). */}
+              {integridade && (
+                <>
+                  <p>
+                    <strong>{pct(integridade.fracao)}</strong> de integridade do título{" "}
+                    <span className="foot">
+                      ({br(integridade.avaliadas)} URL(s) com título e termo apurado · meta do board:{" "}
+                      <strong>100%</strong>) — largura <strong>estimada</strong> entre {TITULO_PX_MIN}{" "}
+                      e {TITULO_PX_MAX} px E o termo principal nos primeiros {TERMO_ATE} caracteres.
+                      {integridade.semTermo > 0 && (
+                        <>
+                          {" "}
+                          {br(integridade.semTermo)} URL(s) ficam fora por{" "}
+                          <strong>sem termo apurado</strong> — o Search Console não tem impressão
+                          delas, o que não é o mesmo que título errado.
+                        </>
+                      )}
+                    </span>
+                  </p>
+                  <ul className="ficha-krs">
+                    {integridade.fora.slice(0, 10).map((pg: PaginaCrawl) => (
+                      <li key={pg.url}>
+                        <strong>{pg.titulo}</strong>{" "}
+                        <span className="foot">
+                          {/* FR-005/SC-004: o método viaja com o número até aqui. Um pixel solto é
+                              indistinguível de uma medição, e vai ser lido como uma. */}
+                          {pg.tituloPx} px (<strong>estimativa</strong>, método {pg.tituloMetodo}) ·{" "}
+                          {posicaoPorUrl.get(pg.url) === null
+                            ? "sem termo apurado"
+                            : posicaoPorUrl.get(pg.url)! < 0
+                              ? `o termo "${termoPorUrl.get(pg.url)}" NÃO aparece no título`
+                              : `termo "${termoPorUrl.get(pg.url)}" a partir do caractere ${br(posicaoPorUrl.get(pg.url)!)}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {alinhamento && (
+                <p>
+                  <strong>{pct(alinhamento.fracao)}</strong> de alinhamento de intenção{" "}
+                  <span className="foot">
+                    ({br(alinhamento.avaliadas)} título(s) avaliado(s)) — título com modificador
+                    explícito, informacional ou comercial.
+                    {alinhamento.ausentes.length > 0 && (
+                      <>
+                        {" "}
+                        Sem modificador:{" "}
+                        {alinhamento.ausentes
+                          .slice(0, 6)
+                          .map((pg: PaginaCrawl) => caminho(pg.url))
+                          .join(", ")}
+                        .
+                      </>
+                    )}
+                  </span>
+                </p>
+              )}
+
+              {/* US3 — dados estruturados: presentes, ausentes ou QUEBRADOS. */}
+              {cobertura024 && (
+                <p>
+                  <strong>{pct(cobertura024.fracao)}</strong> de cobertura de dados estruturados{" "}
+                  <span className="foot">
+                    ({br(cobertura024.validas)} de {br(cobertura024.avaliadas)} página(s) com JSON-LD
+                    válido · meta do board: <strong>100%</strong> e <strong>0 erro crítico</strong>) —{" "}
+                    <strong>{br(cobertura024.invalidas.length)} inválida(s)</strong> (o schema existe e
+                    estoura no parse: achar a vírgula) e{" "}
+                    <strong>{br(cobertura024.ausentes.length)} ausente(s)</strong> (não há schema
+                    nenhum: escrever). São consertos diferentes, e a soma dos dois não é um número.
+                  </span>
+                </p>
+              )}
+
+              {/* US4 — há quanto tempo o conteúdo não é tocado. */}
+              {atualizacao && (
+                <p>
+                  {atualizacao.fracao === null ? (
+                    <span className="foot">
+                      <strong>Cadência de atualização não apurada</strong> — nenhuma das{" "}
+                      {br(atualizacao.semData.length)} página(s) declara data. Sem data declarada{" "}
+                      <strong>não é</strong> desatualizada: é ausência de declaração.
+                    </span>
+                  ) : (
+                    <>
+                      <strong>{pct(atualizacao.fracao)}</strong> dentro da cadência{" "}
+                      <span className="foot">
+                        ({br(atualizacao.avaliadas)} página(s) que <strong>declaram</strong> data ·
+                        auditoria a cada {CADENCIA_MESES} meses) — {br(atualizacao.vencidas.length)}{" "}
+                        passaram de {CADENCIA_MESES} meses. As {br(atualizacao.semData.length)} sem
+                        data declarada ficam fora do numerador <strong>e</strong> do denominador.
+                      </span>
+                    </>
+                  )}
+                </p>
+              )}
+
+              {/* FR-013 — o sitemap declarando URL morta ou redirecionada é o achado. */}
+              {achadosDoSitemap.length > 0 && (
+                <>
+                  <p className="foot">
+                    <strong>{br(achadosDoSitemap.length)} URL(s) do sitemap com achado</strong> — o
+                    sitemap declara, e o site responde outra coisa:
+                  </p>
+                  <ul className="ficha-krs">
+                    {achadosDoSitemap.slice(0, 8).map((pg) => (
+                      <li key={pg.url}>
+                        <strong>{caminho(pg.url)}</strong>{" "}
+                        <span className="foot">
+                          {pg.erro ? pg.erro : `redireciona (HTTP ${pg.status ?? "?"}) — o destino é que conta`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {/* Risco aceito do plano, DECLARADO na tela: sem esta frase o leitor conclui sozinho
+                  que a órfã é a página recusada pelo Googlebot. */}
+              <p className="foot">
+                <strong>Esta lista não cruza página a página com as URLs fora do índice.</strong> A
+                apuração de indexação acima grava só o agregado do dia, sem veredito por URL — então
+                não dá para dizer qual órfã é também uma das recusadas. O que está marcado aqui é quem
+                tem <strong>zero impressão</strong> no Search Console. Cruzar as duas exige a corrida
+                de indexação persistir por URL: spec nova, não esta.
+              </p>
             </>
           )}
         </div>

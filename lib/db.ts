@@ -292,6 +292,71 @@ function ensure(): Promise<unknown> {
         criado TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (projeto, dia)
       );
+      -- Crawl de pagina (024): uma linha por CORRIDA de um projeto num dia.
+      --
+      -- motivo NULL = apurou. Os tres motivos sao estados DIFERENTES e nunca somam num "0 paginas":
+      -- sem_sitemap aponta o build do site, sitemap_vazio e declaracao do proprio site, e
+      -- home_inacessivel significa que NAO HA ORIGEM para a travessia — sem home, toda pagina do
+      -- sitemap sairia orfa por causa de um ETIMEDOUT, entao nesse caso nenhuma linha de
+      -- hub_pagina e gravada.
+      --
+      -- teto_atingido: a travessia parou no teto e o numero esta INCOMPLETO (FR-012). A tela e
+      -- obrigada a dizer isso — numero cortado que nao se declara e numero errado.
+      CREATE TABLE IF NOT EXISTS hub_pagina_corrida (
+        projeto TEXT NOT NULL,
+        dia DATE NOT NULL,
+        declaradas INT NOT NULL,
+        visitadas INT NOT NULL,
+        falhas INT NOT NULL,
+        orfas INT NOT NULL,
+        linkadas_nao_declaradas INT NOT NULL,
+        links_navegacao INT NOT NULL,
+        teto_atingido BOOLEAN NOT NULL,
+        motivo TEXT,
+        criado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, dia)
+      );
+      -- Uma linha por URL POR CORRIDA (024/D8). Ao contrario da 022, o detalhe por URL E
+      -- persistido: a SC-006 pergunta QUAIS paginas sao orfas ou perifericas, e agregado nao
+      -- responde isso. Sao ~36 linhas por semana, nao 35 projetos x milhares de URLs por dia.
+      --
+      -- NENHUM campo ausente vira zero, e as colunas anulaveis sao a regra, nao tolerancia:
+      --   profundidade NULL = ORFA (jamais 0 — 0 e a home)
+      --   titulo NULL = a pagina nao serve title; titulo vazio = serve um vazio. Sao diferentes.
+      --   titulo_px NULL = nao ha titulo. 0 px seria um titulo que cabe na SERP.
+      --   data_declarada NULL = a pagina NAO DECLARA, e fica fora do numerador E do denominador
+      --     da cadencia (FR-009). "Sem data" nunca e "desatualizada".
+      --   status NULL = nem respondeu. erro NULL = buscou bem.
+      --
+      -- titulo_metodo viaja com titulo_px ate a tela (FR-005): um numero de pixels sem o rotulo do
+      -- metodo e indistinguivel de uma medicao, e vai ser lido como uma.
+      --
+      -- Escrita: DELETE por (projeto, dia) e INSERT multi-linha, NAO ON CONFLICT — uma URL que
+      -- saiu do site precisa sumir da corrida do dia, e o upsert a deixaria como fantasma
+      -- indistinguivel de uma pagina viva.
+      --
+      -- Sem indice extra: (projeto, dia) ja e prefixo da PK, e e so isso que a tela le.
+      CREATE TABLE IF NOT EXISTS hub_pagina (
+        projeto TEXT NOT NULL,
+        dia DATE NOT NULL,
+        url TEXT NOT NULL,
+        no_sitemap BOOLEAN NOT NULL,
+        profundidade INT,
+        links_contextuais INT NOT NULL,
+        titulo TEXT,
+        titulo_px INT,
+        titulo_metodo TEXT,
+        intencao TEXT,
+        schema_estado TEXT NOT NULL,
+        schema_tipos TEXT,
+        data_declarada DATE,
+        palavras INT,
+        conteudo_estado TEXT NOT NULL,
+        status INT,
+        redirecionada BOOLEAN NOT NULL,
+        erro TEXT,
+        PRIMARY KEY (projeto, dia, url)
+      );
       -- Quadros de Marketing e Ideias. Nada aqui atravessa para hub_tasks ou para o ranking:
       -- o isolamento é o requisito central da feature, não um efeito colateral do desenho.
       -- Coluna é TABELA e não enum no .mjs (ao contrário de tipo/canal): FR-012 exige que o
@@ -976,6 +1041,191 @@ export async function ultimasApuracoes(): Promise<Record<string, string>> {
     `SELECT projeto, to_char(max(dia), 'YYYY-MM-DD') AS dia FROM hub_indexacao GROUP BY projeto`
   );
   return Object.fromEntries(r.rows.map((l) => [l.projeto, l.dia]));
+}
+
+// ── Crawl de página (hub_pagina_corrida + hub_pagina) — 024 ─────────────────
+
+/** Uma URL de uma corrida. Os `null` aqui são significado, não ausência de cuidado — ver os
+ *  comentários das colunas no `ensure()`. */
+export type PaginaCrawl = {
+  url: string;
+  noSitemap: boolean;
+  profundidade: number | null;
+  linksContextuais: number;
+  titulo: string | null;
+  tituloPx: number | null;
+  tituloMetodo: string | null;
+  intencao: string | null;
+  schemaEstado: string;
+  schemaTipos: string | null;
+  dataDeclarada: string | null;
+  palavras: number | null;
+  conteudoEstado: string;
+  status: number | null;
+  redirecionada: boolean;
+  erro: string | null;
+};
+
+export type CorridaDePagina = {
+  dia: string; // YYYY-MM-DD
+  declaradas: number;
+  visitadas: number;
+  falhas: number;
+  orfas: number;
+  linkadasNaoDeclaradas: number;
+  linksNavegacao: number;
+  tetoAtingido: boolean;
+  motivo: string | null;
+};
+
+export type CrawlDePagina = CorridaDePagina & { paginas: PaginaCrawl[] };
+
+/**
+ * Grava (ou regrava) a corrida de um projeto num dia.
+ *
+ * `DELETE` + `INSERT` multi-linha em `hub_pagina`, e não `ON CONFLICT`: uma URL que SAIU do site
+ * precisa sumir da corrida do dia, e o upsert a deixaria para trás como fantasma indistinguível de
+ * uma página viva. O lote chega já deduplicado por `dedupPorUrl()` — a PK `(projeto, dia, url)`
+ * estoura o INSERT inteiro se a mesma URL vier duas vezes, e aí a corrida cai por completo.
+ */
+export async function gravarCrawlDePagina(
+  projeto: string,
+  corrida: CorridaDePagina,
+  paginas: PaginaCrawl[]
+): Promise<void> {
+  await ensure();
+  const cliente = await pool().connect();
+  try {
+    await cliente.query("BEGIN");
+    await cliente.query(
+      `INSERT INTO hub_pagina_corrida (projeto, dia, declaradas, visitadas, falhas, orfas,
+         linkadas_nao_declaradas, links_navegacao, teto_atingido, motivo)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (projeto, dia) DO UPDATE SET
+         declaradas = EXCLUDED.declaradas,
+         visitadas = EXCLUDED.visitadas,
+         falhas = EXCLUDED.falhas,
+         orfas = EXCLUDED.orfas,
+         linkadas_nao_declaradas = EXCLUDED.linkadas_nao_declaradas,
+         links_navegacao = EXCLUDED.links_navegacao,
+         teto_atingido = EXCLUDED.teto_atingido,
+         motivo = EXCLUDED.motivo,
+         criado = now()`,
+      [
+        projeto,
+        corrida.dia,
+        corrida.declaradas,
+        corrida.visitadas,
+        corrida.falhas,
+        corrida.orfas,
+        corrida.linkadasNaoDeclaradas,
+        corrida.linksNavegacao,
+        corrida.tetoAtingido,
+        corrida.motivo,
+      ]
+    );
+    await cliente.query(`DELETE FROM hub_pagina WHERE projeto = $1 AND dia = $2`, [projeto, corrida.dia]);
+    if (paginas.length) {
+      const valores: unknown[] = [];
+      const tuplas = paginas.map((p, i) => {
+        const b = i * 18;
+        valores.push(
+          projeto,
+          corrida.dia,
+          p.url,
+          p.noSitemap,
+          p.profundidade,
+          p.linksContextuais,
+          p.titulo,
+          p.tituloPx,
+          p.tituloMetodo,
+          p.intencao,
+          p.schemaEstado,
+          p.schemaTipos,
+          p.dataDeclarada,
+          p.palavras,
+          p.conteudoEstado,
+          p.status,
+          p.redirecionada,
+          p.erro
+        );
+        return `(${Array.from({ length: 18 }, (_, k) => `$${b + k + 1}`).join(", ")})`;
+      });
+      await cliente.query(
+        `INSERT INTO hub_pagina (projeto, dia, url, no_sitemap, profundidade, links_contextuais,
+           titulo, titulo_px, titulo_metodo, intencao, schema_estado, schema_tipos, data_declarada,
+           palavras, conteudo_estado, status, redirecionada, erro)
+         VALUES ${tuplas.join(", ")}`,
+        valores
+      );
+    }
+    await cliente.query("COMMIT");
+  } catch (e) {
+    await cliente.query("ROLLBACK");
+    throw e;
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
+ * A ÚLTIMA corrida de um projeto, ou `null` se nunca houve.
+ *
+ * `dia` sai junto porque um crawl de semanas atrás não pode se apresentar como o estado de hoje
+ * (FR-015) — número sem data sempre parece de hoje. As páginas já vêm ordenadas por PERIFERIA:
+ * órfã primeiro, depois profundidade decrescente, depois URL.
+ */
+export async function lerCrawlDePagina(projeto: string): Promise<CrawlDePagina | null> {
+  await ensure();
+  const c = await pool().query(
+    `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, declaradas, visitadas, falhas, orfas,
+            linkadas_nao_declaradas, links_navegacao, teto_atingido, motivo
+       FROM hub_pagina_corrida
+      WHERE projeto = $1
+      ORDER BY dia DESC
+      LIMIT 1`,
+    [projeto]
+  );
+  const l = c.rows[0];
+  if (!l) return null;
+  const r = await pool().query(
+    `SELECT url, no_sitemap, profundidade, links_contextuais, titulo, titulo_px, titulo_metodo,
+            intencao, schema_estado, schema_tipos, to_char(data_declarada, 'YYYY-MM-DD') AS data_declarada,
+            palavras, conteudo_estado, status, redirecionada, erro
+       FROM hub_pagina
+      WHERE projeto = $1 AND dia = $2::date
+      ORDER BY (profundidade IS NULL) DESC, profundidade DESC, url`,
+    [projeto, l.dia]
+  );
+  return {
+    dia: l.dia,
+    declaradas: l.declaradas,
+    visitadas: l.visitadas,
+    falhas: l.falhas,
+    orfas: l.orfas,
+    linkadasNaoDeclaradas: l.linkadas_nao_declaradas,
+    linksNavegacao: l.links_navegacao,
+    tetoAtingido: l.teto_atingido,
+    motivo: l.motivo,
+    paginas: r.rows.map((p) => ({
+      url: p.url,
+      noSitemap: p.no_sitemap,
+      profundidade: p.profundidade,
+      linksContextuais: p.links_contextuais,
+      titulo: p.titulo,
+      tituloPx: p.titulo_px,
+      tituloMetodo: p.titulo_metodo,
+      intencao: p.intencao,
+      schemaEstado: p.schema_estado,
+      schemaTipos: p.schema_tipos,
+      dataDeclarada: p.data_declarada,
+      palavras: p.palavras,
+      conteudoEstado: p.conteudo_estado,
+      status: p.status,
+      redirecionada: p.redirecionada,
+      erro: p.erro,
+    })),
+  };
 }
 
 // ── Quadros de Marketing e Ideias (hub_pauta*) ──────────────────────────────
