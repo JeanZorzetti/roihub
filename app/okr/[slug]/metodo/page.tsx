@@ -108,6 +108,9 @@ export default async function MetodoPage({ params }: { params: Promise<{ slug: s
           {/* 018/FR-013: a nota de contato — `contatado` saiu de marco, e a leitura ("todo lead
               fora de `novo` foi contatado") continua visível, só que fora da cadeia e do gargalo. */}
           {n.id === "N3" && n.nota && <p className="foot ficha-nota-n4">{n.nota}</p>}
+          {/* 023/FR-002b: o N5 pode trazer DUAS famílias — a do gargalo e a Entrega, que é
+              pré-condição. Sem esta linha o leitor vê dois grupos de medidores e não sabe por quê. */}
+          {n.id === "N5" && n.nota && <p className="foot ficha-nota-n4">{n.nota}</p>}
 
           {/* achado 3: substitui o funil decorativo (área proporcional a `aria-hidden`, sem
               rótulo, sem eixo) por um diagrama de cadeia com nó por marco e aresta por taxa —

@@ -5,7 +5,9 @@ import { lerIndexacao, dbOn, type Apuracao } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
-import { kpisDeBusca, activeIndexRatio, queryToPageRatio } from "@/lib/kpis-busca.mjs";
+import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl } from "@/lib/kpis-busca.mjs";
+import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
+import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
 
 // AQUISIÇÃO (019, FR-022..FR-029): o que tem relógio de TRIMESTRE sai da tela que se lê na
@@ -55,6 +57,29 @@ async function lerApuracao(slug: string): Promise<Apuracao | { erro: string } | 
   }
 }
 
+/**
+ * 023/US3 — o Core Web Vitals Pass Rate do board, sobre as URLs PRIORITÁRIAS: as de maior
+ * impressão na janela curta, cortadas em `CAP_URLS_PASS_RATE`. Sem a ordenação o corte sortearia o
+ * denominador; as que ficam de fora entram no texto como NÃO CONSULTADAS, nunca como reprovadas.
+ *
+ * Em SÉRIE, pelo mesmo motivo de `app/api/gsc-serie/route.ts:36-38`: um punhado de POSTs
+ * simultâneos ao mesmo endpoint do Google com a mesma chave é o caminho mais curto para o 429 que
+ * transformaria a leitura inteira em falha por pressa. Só para `SLUGS_DE_CAMPO` (FR-014), e a
+ * falha segue o idioma de `lerApuracao()`: não derruba a aba.
+ */
+async function lerPassRate(slug: string, linhas: Parameters<typeof porUrl>[0] | null) {
+  if (!SLUGS_DE_CAMPO.includes(slug) || !linhas) return null;
+  const urls = porUrl(linhas).sort((a, b) => b.impressoes - a.impressoes);
+  const prioritarias = urls.slice(0, CAP_URLS_PASS_RATE);
+  try {
+    const leituras = new Map();
+    for (const u of prioritarias) leituras.set(u.url, await lerCampo({ tipo: "url", valor: u.url }));
+    return { ...passRate(leituras, prioritarias.length), naoConsultadas: urls.length - prioritarias.length };
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const projects = await listProjects();
@@ -95,6 +120,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   ]);
   const linhasBusca = consultas && "linhas" in consultas ? consultas.linhas : null;
   const kpis = linhasBusca ? kpisDeBusca(linhasBusca) : null;
+  const vitais = await lerPassRate(slug, linhasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   const br = (n: number) => n.toLocaleString("pt-BR");
 
@@ -595,6 +621,43 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </>
           )}
         </div>
+
+        {/* 023/US3 — o Pass Rate de campo. Bloco separado porque a fonte é outra (CrUX, dado de
+            CAMPO do Chrome) e o alvo é outro: aqui é URL, e URL não se soma com origem. A origem
+            aparece na ficha, no N5/Entrega. */}
+        {vitais && (
+          <div className="ficha-bloco">
+            <h2 className="ficha-bloco-h">Core Web Vitals — quantas URLs passam</h2>
+            {"erro" in vitais ? (
+              <p className="foot">
+                <strong>A apuração falhou agora</strong> ({vitais.erro}) — distinto de não haver
+                dado. A fração volta na próxima leitura desta página.
+              </p>
+            ) : vitais.fracao === null ? (
+              <p className="foot">{vitais.motivo}</p>
+            ) : (
+              <p>
+                <strong>{pct(vitais.fracao)}</strong> das URLs prioritárias com &quot;Bom&quot; nos
+                três vitais{" "}
+                <span className="foot">
+                  ({vitais.passam} de {vitais.comDado} URLs com dado de campo · meta do board:{" "}
+                  <strong>90%</strong>) — LCP ≤ 2,5 s, INP ≤ 200 ms e CLS ≤ 0,1 no p75. O TTFB fica
+                  fora: é experimental na fonte e não entra na definição de &quot;Bom&quot;.
+                </span>
+              </p>
+            )}
+            {!("erro" in vitais) && (
+              <p className="foot">
+                {vitais.consultadas} URL(s) consultada(s) por impressão decrescente
+                {vitais.naoConsultadas > 0 && (
+                  <> · {vitais.naoConsultadas} não consultada(s) (teto de {CAP_URLS_PASS_RATE}) — <strong>não</strong> reprovadas</>
+                )}{" "}
+                · p75 de campo, todos os dispositivos, na janela que a CrUX cobre — que não é a
+                janela desta página.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Comportamento — GA4, 12 meses</h2>
