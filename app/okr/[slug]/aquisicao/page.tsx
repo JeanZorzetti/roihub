@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listProjects, SLUGS_DE_BUSCA } from "@/lib/projects";
-import { lerIndexacao, lerCrawlDePagina, dbOn, type Apuracao, type CrawlDePagina, type PaginaCrawl } from "@/lib/db";
+import {
+  lerIndexacao,
+  lerCrawlDePagina,
+  lerDiasGsc,
+  dbOn,
+  type Apuracao,
+  type CrawlDePagina,
+  type PaginaCrawl,
+  type DiaSeparado,
+} from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
+import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
 import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal } from "@/lib/kpis-busca.mjs";
@@ -89,6 +99,28 @@ async function lerCrawl(slug: string): Promise<CrawlDePagina | { erro: string } 
 }
 
 /**
+ * 025 — a série gravada com a separação marca / não-marca, no mesmo idioma de três estados das duas
+ * de cima.
+ *
+ * A tela lê o BANCO e nunca o Search Console (D11): as três pernas custam três requisições e são
+ * pedidas UMA vez por dia pela corrida das 05:17. Buscá-las no render triplicaria a rede a cada
+ * visita para exibir o mesmo número — e, pior, um número sem data, que finge ser de hoje.
+ *
+ * Primeiro consumidor de `lerDiasGsc()`: a função existe desde a 021 e ninguém a chamava.
+ */
+async function lerSerieSeparada(
+  slug: string,
+  janela: { inicio: string; fim: string },
+): Promise<DiaSeparado[] | { erro: string } | null> {
+  if (!dbOn()) return null;
+  try {
+    return await lerDiasGsc(slug, janela.inicio, janela.fim);
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+  }
+}
+
+/**
  * 023/US3 — o Core Web Vitals Pass Rate do board, sobre as URLs PRIORITÁRIAS: as de maior
  * impressão na janela curta, cortadas em `CAP_URLS_PASS_RATE`. Sem a ordenação o corte sortearia o
  * denominador; as que ficam de fora entram no texto como NÃO CONSULTADAS, nunca como reprovadas.
@@ -133,7 +165,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   // Duas fontes independentes, sem somar latência — mesmo padrão de `coletarDoProjeto()`. A falha
   // de uma nunca alcança a outra.
-  const [serie, canais, cobertura, consultas, indexacao, crawl] = await Promise.all([
+  const [serie, canais, cobertura, consultas, indexacao, crawl, serieSeparada] = await Promise.all([
     gscSeries(p.url, janelaGsc.inicio, janelaGsc.fim),
     ga4Canais(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }),
     ga4Cobertura(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }),
@@ -150,11 +182,27 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     lerApuracao(slug),
     // 024: o crawl de página vem do BANCO, apurado pela corrida de segunda 06:17. Ver `lerCrawl`.
     lerCrawl(slug),
+    // 025: a separação marca / não-marca também vem do BANCO. Ver `lerSerieSeparada`.
+    lerSerieSeparada(slug, janelaGsc),
   ]);
   const linhasBusca = consultas && "linhas" in consultas ? consultas.linhas : null;
-  const kpis = linhasBusca ? kpisDeBusca(linhasBusca) : null;
+
+  // ── 025: a declaração de marca, que serve os DOIS blocos desta página ─────────────────────
+  //
+  // Uma fonte só (D3): o mesmo padrão que a corrida mandou ao Search Console volta aqui para
+  // filtrar a canibalização. Duas construções divergiriam na primeira variante nova, e a tela
+  // exibiria uma lista de termos (FR-012) que não é a que classificou os números.
+  const decl = marcaDeclarada(p);
+  const ehMarca = decl.motivo ? null : (q: string) => new RegExp(decl.padrao, "i").test(q);
+  const kpis = linhasBusca ? kpisDeBusca(linhasBusca, ehMarca) : null;
   const vitais = await lerPassRate(slug, linhasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+  // 025: acima de 10× o `pct` vira armadilha de leitura. Em pt-BR o separador de milhar é o PONTO,
+  // então um crescimento de 4195% sai "4.195%" — que, ao lado de uma meta de "5% a 10%", lê como
+  // 4,195% e inverte o veredito para quem bate o olho. Medido em 08/09: julho da atma colapsou para
+  // 342 impressões não-marca e agosto voltou a 14.689, uma recuperação real de 42×.
+  const variacao = (f: number) =>
+    Math.abs(f) >= 10 ? `${(f + 1).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}×` : pct(f);
   const br = (n: number) => n.toLocaleString("pt-BR");
   // Só encurta a URL para caber na linha: a chave continua sendo a canônica da D3.
   const caminho = (u: string) => u.replace(p.url.replace(/\/+$/, ""), "") || "/";
@@ -216,6 +264,28 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const recebidaGsc = dias && dias.length ? { inicio: dias[0].date, fim: dias[dias.length - 1].date } : null;
   const cliques = dias?.reduce((t, d) => t + d.clicks, 0) ?? null;
   const impressoes = dias?.reduce((t, d) => t + d.impressions, 0) ?? null;
+  // ── 025: as duas medidas do board que não existiam ───────────────────────────────────────
+  //
+  // NENHUMA conta aqui: `completude`, `crescimentoNaoMarca` e `razaoDeMarca` moram em
+  // `lib/marca.mjs`, testadas sem subir o Next (Princípio III). Esta seção só chama.
+  //
+  // ⚠️ `hoje` é o dia de VERDADE, não o `fim` da janela (que já é D-3). É dele que sai a folga de
+  // três dias da D9 — e o mês precisa dos três depois de fechar no calendário, porque o GSC ainda
+  // sobe a ponta (30/07 da atma saiu com 30 impressões e fechou em 827).
+  const diasSeparados = Array.isArray(serieSeparada) ? serieSeparada : null;
+  const hojeIso = new Date().toISOString().slice(0, 10);
+  const comp = diasSeparados ? completude(diasSeparados) : null;
+  const crescimento = diasSeparados ? crescimentoNaoMarca(diasSeparados, hojeIso) : null;
+  const razao = diasSeparados ? razaoDeMarca(diasSeparados) : null;
+  // A janela que a SEPARAÇÃO cobre, tirada dos próprios dias medidos — e não a pedida. A
+  // `conferencia` da corrida soma os 480 dias inteiros, então tela e log podem divergir de veredito
+  // LEGITIMAMENTE; sem a janela escrita ao lado, a divergência lê como bug e alguém caça um defeito
+  // que não existe.
+  const diasComMarca = (diasSeparados ?? []).filter((d) => typeof d.impressoesMarca === "number");
+  const janelaMarca = diasComMarca.length
+    ? { inicio: diasComMarca[0].dia, fim: diasComMarca[diasComMarca.length - 1].dia }
+    : null;
+
   const recebidaGa4 = cobertura && "primeiro" in cobertura ? { inicio: cobertura.primeiro, fim: cobertura.ultimo } : null;
   const sessoes = canais && "linhas" in canais ? canais.linhas.reduce((t, l) => t + l.sessoes, 0) : null;
 
@@ -265,6 +335,136 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 : `sem propriedade no GSC para ${p.url}`}
               .
             </p>
+          )}
+        </div>
+
+        {/* 025 — as duas medidas do board que não existiam: crescimento de impressões NÃO-MARCA e
+            proporção de buscas de marca. Vêm do BANCO, gravadas pela corrida das 05:17 (D11).
+            Não-marca é MEDIDA, nunca `total − marca`: o total inclui as consultas anonimizadas e a
+            fatia de marca não, então a subtração devolveria não-marca MAIS o resto anonimizado —
+            inflando exatamente o KPI que se quer ver crescer (5 contra 33 medidos no tapepro). */}
+        <div className="ficha-bloco">
+          <h2 className="ficha-bloco-h">Marca e não-marca — a demanda que já é sua e a que ainda não é</h2>
+
+          {decl.motivo ? (
+            /* FR-004/FR-013: "não declarada" NUNCA vira 0%. Os três motivos saem NOMEADOS porque
+               pedem consertos diferentes — e um número inventado aqui seria uma afirmação sobre o
+               site que ninguém mediu. */
+            <p className="foot">
+              <strong>Marca não declarada</strong> para este projeto ({decl.motivo}).{" "}
+              {decl.motivo === "ausente"
+                ? "O card não tem lista de termos de marca. Sem ela o hub não sabe quais consultas são busca pelo NOME, e as duas medidas não existem — o que não é o mesmo que zero busca de marca."
+                : decl.motivo === "sem-termos"
+                  ? "O card declara `marca` com a lista de termos vazia. Uma lista vazia não classifica nada; declarar é escrever as variantes pelas quais as pessoas procuram o projeto."
+                  : "O card declara os termos mas não o corte de país. Sem ele o total do Search Console é mundial e a fatia de marca não seria comparável com ele — a razão sairia contaminada, e meia-medição é pior que ausência porque parece medida."}
+            </p>
+          ) : !janelaMarca ? (
+            <p className="foot">
+              não apurado —{" "}
+              {serieSeparada && !Array.isArray(serieSeparada) && "erro" in serieSeparada
+                ? `banco indisponível (${serieSeparada.erro})`
+                : diasSeparados
+                  ? "a série está gravada, mas nenhum dia desta janela tem a separação medida ainda. A corrida das 05:17 preenche a janela inteira na próxima passagem."
+                  : "sem banco configurado para o hub"}
+              .
+            </p>
+          ) : (
+            <>
+              <p className="foot">
+                Janela da separação: <strong>{janelaMarca.inicio} → {janelaMarca.fim}</strong> —{" "}
+                {diasComMarca.length} dia(s) com marca e não-marca medidas. ⚠️ A corrida confere a
+                janela inteira de <strong>480 dias</strong>; esta tela confere só os dias acima,
+                então os dois vereditos podem divergir <strong>legitimamente</strong>.
+              </p>
+
+              <ul className="ficha-krs">
+                <li>
+                  {/* FR-008/FR-009: os dois meses saem NOMEADOS, nenhum é o corrente, e o primeiro
+                      mês fechado é "ainda não apurável" — nunca 0%, que leria como estagnação
+                      medida e mandaria consertar um problema que não existe. */}
+                  <strong>
+                    {crescimento === null ? "ainda não apurável" : variacao(crescimento.valor)}
+                  </strong>{" "}
+                  de crescimento de impressões não-marca{" "}
+                  <span className="foot">
+                    {crescimento === null ? (
+                      <>
+                        — ainda não há <strong>dois meses fechados</strong> nesta janela.{" "}
+                        <strong>Não é 0%</strong>: um zero aqui seria estagnação medida, e o que
+                        existe é ausência de medição. Um mês só entra quando tem o calendário
+                        completo <strong>e</strong> três dias de folga depois do fim — o Search
+                        Console ainda sobe a ponta (30/07 da atma saiu com 30 impressões e fechou em
+                        827).
+                      </>
+                    ) : (
+                      <>
+                        (<strong>{crescimento.de} → {crescimento.para}</strong>, dois meses{" "}
+                        <strong>fechados</strong> — nenhum deles é o mês corrente) · meta do board:{" "}
+                        <strong>5% a 10%/mês</strong> —{" "}
+                        {crescimento.valor >= 0.05 && crescimento.valor <= 0.1
+                          ? "dentro da faixa."
+                          : crescimento.valor > 0.1
+                            ? "acima da faixa."
+                            : "abaixo: a demanda que ainda não é sua não está crescendo no ritmo pedido."}
+                      </>
+                    )}
+                  </span>
+                </li>
+                <li>
+                  <strong>{razao === null ? "não apurado" : pct(razao)}</strong> de buscas de marca{" "}
+                  <span className="foot">
+                    (impressões de marca ÷ total do corte <code>{decl.pais}</code>, em{" "}
+                    {janelaMarca.inicio} → {janelaMarca.fim}). O denominador é o total{" "}
+                    <strong>dentro do corte de país</strong>, não o site inteiro: o total sem corte é
+                    mundial e a fatia de marca não é, então dividir um pelo outro mediria o corte.
+                  </span>
+                </li>
+              </ul>
+
+              {/* FR-006/FR-007: o rótulo de completude. `contradicao` é ALARME e não ressalva
+                  educada — resíduo negativo é defeito de filtro, e o conserto é oposto ao de um
+                  piso. Colapsar os dois faria um bug de regex se disfarçar de limitação da fonte. */}
+              {comp?.estado === "fecha" ? (
+                <p className="foot">
+                  ✅ <strong>A soma fecha</strong> nesta janela: marca + não-marca ={" "}
+                  {br(comp.impressoesPais!)} impressões, exatamente o total do corte. O filtro por
+                  consulta preserva as raras, então as duas medidas acima são{" "}
+                  <strong>completas</strong> — não são pisos.
+                </p>
+              ) : comp?.estado === "piso" ? (
+                <p className="foot">
+                  ⚠️ <strong>Os dois números acima são PISO, não total.</strong> Marca + não-marca
+                  somam {br(comp.impressoesMarca! + comp.impressoesNaoMarca!)} contra{" "}
+                  {br(comp.impressoesPais!)} do total do corte: faltam {br(comp.residuo!)} impressões
+                  ({comp.fracao === null ? "fração não apurada" : pct(comp.fracao)} do total) que o
+                  Search Console não atribui a consulta nenhuma. O real é maior dos dois lados, e
+                  quanto maior não é observável.
+                </p>
+              ) : comp?.estado === "contradicao" ? (
+                <p className="foot">
+                  🚨 <strong>Contradição, e isto é defeito — não limitação da fonte.</strong> Marca
+                  + não-marca somam {br(comp.impressoesMarca! + comp.impressoesNaoMarca!)}, que é{" "}
+                  {br(-comp.residuo!)} <strong>a mais</strong> que o total do corte (
+                  {br(comp.impressoesPais!)}). O filtro de exclusão não é o complemento exato do de
+                  inclusão: os números acima não devem ser lidos até isso ser consertado.
+                </p>
+              ) : null}
+
+              {/* FR-005/FR-012: a lista e o corte na tela. É o que permite a quem lê DESCONFIAR da
+                  classificação — e a única defesa contra a lista pobre, cujo erro é favorável e
+                  por isso perigoso: uma variante esquecida infla o não-marca. */}
+              <p className="foot">
+                <strong>Termos de marca em uso</strong> ({decl.termos.length}):{" "}
+                {decl.termos.map((t) => (
+                  <code key={t}>{t} </code>
+                ))}{" "}
+                · corte de país: <code>{decl.pais}</code>
+                {decl.declaradaEm ? <> · declarados em {decl.declaradaEm}</> : null}. Casamento por{" "}
+                <strong>palavra inteira</strong>: <code>atmasfera</code> não conta como marca. Termo
+                que falte nesta lista cai em <strong>não-marca</strong> e infla o número que se quer
+                ver crescer — é curadoria, e por isso a lista fica aqui em vez de escondida no card.
+              </p>
+            </>
           )}
         </div>
 
@@ -443,24 +643,37 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               )}
 
               <h3 className="ficha-bloco-h">Canibalização</h3>
-              {/* Medido na atma em 07/09: `atma aligner` lista 8 URLs e NÃO é canibalização —
-                  busca de marca traz o site inteiro por construção. Separar marca de não-marca
-                  exige uma lista de termos de marca por projeto e um corte por país, que esta
-                  feature não tem; enquanto não tiver, o rótulo fica com o leitor em vez de a
-                  lista fingir que toda linha é trabalho. */}
-              <p className="foot">
-                Consultas de <strong>marca</strong> aparecem aqui e quase nunca são problema: buscar
-                o nome da empresa traz o site inteiro, e é assim que deve ser. A linha que importa é
-                a consulta genérica com duas URLs suas disputando — aí a autoridade está dividida.
-              </p>
-              {kpis.canibalizacao.length === 0 ? (
+              {/* 025: a ressalva de 07/09 virou FILTRO. Medido na atma: `atma aligner` listava 8
+                  URLs e não é canibalização nenhuma — busca de marca traz o site inteiro por
+                  construção. Com a lista de termos declarada no card, a linha sai da lista em vez
+                  de o leitor ter que ignorá-la a cada leitura.
+                  Sem lista declarada, o parágrafo e o comportamento de sempre ficam intactos. */}
+              {kpis.canibalizacao.removidas === null ? (
+                <p className="foot">
+                  Consultas de <strong>marca</strong> aparecem aqui e quase nunca são problema:
+                  buscar o nome da empresa traz o site inteiro, e é assim que deve ser. A linha que
+                  importa é a consulta genérica com duas URLs suas disputando — aí a autoridade está
+                  dividida. <strong>Este projeto não declarou lista de termos de marca</strong>, então
+                  o rótulo fica com quem lê.
+                </p>
+              ) : (
+                /* FR-011: sumir em SILÊNCIO é indistinguível de um filtro largo demais que também
+                   comeu consulta genérica. A contagem é o que permite desconfiar do próprio filtro. */
+                <p className="foot">
+                  <strong>{br(kpis.canibalizacao.removidas)} consulta(s) de marca removida(s)</strong>{" "}
+                  desta lista — buscar o nome da empresa traz o site inteiro por construção e não é
+                  canibalização. O filtro usa os {decl.motivo ? 0 : decl.termos.length} termos
+                  declarados no card, exibidos no bloco de marca acima.
+                </p>
+              )}
+              {kpis.canibalizacao.lista.length === 0 ? (
                 <p className="foot">
                   Nenhuma consulta atendida por duas URLs suas nesta janela — que é a meta do board
                   (zero páginas competindo pela mesma palavra-chave).
                 </p>
               ) : (
                 <ul className="ficha-krs">
-                  {kpis.canibalizacao.slice(0, 10).map((c) => (
+                  {kpis.canibalizacao.lista.slice(0, 10).map((c) => (
                     <li key={c.consulta}>
                       <strong>{c.consulta}</strong>{" "}
                       <span className="foot">

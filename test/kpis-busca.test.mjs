@@ -169,19 +169,20 @@ test("URLs com impressão é CONTAGEM — o denominador de indexadas não existe
 
 // ── canibalização ───────────────────────────────────────────────────────────────────────────
 test("consulta em 2+ URLs aparece na canibalização", () => {
-  const c = canibalizacao([l("preco", "/a", 100, 1, 6.0), l("preco", "/b", 50, 0, 14.0)]);
-  assert.equal(c.length, 1);
-  assert.equal(c[0].consulta, "preco");
-  assert.equal(c[0].urls.length, 2);
-  assert.equal(c[0].urls[0].url, "/a", "a URL com mais impressões vem primeiro");
+  const { lista, removidas } = canibalizacao([l("preco", "/a", 100, 1, 6.0), l("preco", "/b", 50, 0, 14.0)]);
+  assert.equal(lista.length, 1);
+  assert.equal(lista[0].consulta, "preco");
+  assert.equal(lista[0].urls.length, 2);
+  assert.equal(lista[0].urls[0].url, "/a", "a URL com mais impressões vem primeiro");
+  assert.equal(removidas, null, "sem lista de marca declarada, `removidas` é null e nunca 0");
 });
 
 test("consulta com URL única NÃO aparece na canibalização", () => {
-  assert.deepEqual(canibalizacao([l("preco", "/a", 100, 1, 6.0)]), []);
+  assert.deepEqual(canibalizacao([l("preco", "/a", 100, 1, 6.0)]).lista, []);
 });
 
 test("a mesma URL repetida na mesma consulta não é canibalização", () => {
-  assert.deepEqual(canibalizacao([l("preco", "/a", 100, 1, 6.0), l("preco", "/a", 20, 0, 7.0)]), []);
+  assert.deepEqual(canibalizacao([l("preco", "/a", 100, 1, 6.0), l("preco", "/a", 20, 0, 7.0)]).lista, []);
 });
 
 // ── agregador ───────────────────────────────────────────────────────────────────────────────
@@ -193,7 +194,7 @@ test("lista vazia não estoura em nenhum KPI", () => {
   assert.equal(k.urlsComImpressao, 0);
   assert.deepEqual(k.strikingDistance, []);
   assert.equal(k.ctrGap, null);
-  assert.deepEqual(k.canibalizacao, []);
+  assert.deepEqual(k.canibalizacao.lista, []);
 });
 
 // ── 022: as duas razões que estavam capadas por falta de denominador ─────────────────────────
@@ -246,4 +247,67 @@ test("empate de impressões resolve de forma determinística", () => {
   const linhas = [l("zebra", "/x", 10, 0, 5), l("abelha", "/x", 10, 0, 5)];
   assert.equal(termoPrincipal(linhas, "/x"), "abelha");
   assert.equal(termoPrincipal([...linhas].reverse(), "/x"), "abelha", "a ordem da lista mudou o termo");
+});
+
+// ── 025: a canibalização para de acusar a própria marca ─────────────────────────────────────
+// Medido na atma em 07/09: `atma aligner` lista 8 URLs e NÃO é canibalização — busca de marca traz
+// o site inteiro por construção. Sem o filtro, a lista de trabalho aponta para um trabalho que não
+// existe; sem a CONTAGEM do que saiu, sumir em silêncio é indistinguível de filtro largo demais.
+const marcadas = [
+  l("atma aligner", "/a", 100, 5, 2.0),
+  l("atma aligner", "/b", 80, 1, 6.0),
+  l("alinhador invisivel preco", "/x", 60, 2, 5.0),
+  l("alinhador invisivel preco", "/y", 40, 0, 9.0),
+];
+const ehMarca = (q) => /\b(atma aligner|atma)\b/i.test(q);
+
+test("sem `ehMarca`, a lista fica INTACTA e removidas é null (FR-013)", () => {
+  const r = canibalizacao(marcadas);
+  assert.equal(r.lista.length, 2);
+  assert.equal(r.removidas, null, "null é nao-declarada, e nao declarada-e-nada-casou");
+});
+
+test("com `ehMarca`, a consulta de marca sai da lista e vira CONTAGEM", () => {
+  const r = canibalizacao(marcadas, ehMarca);
+  assert.deepEqual(
+    r.lista.map((c) => c.consulta),
+    ["alinhador invisivel preco"],
+  );
+  assert.equal(r.removidas, 1);
+});
+
+// A consulta genérica com duas URLs é a linha que IMPORTA — se o filtro a levasse junto, a feature
+// teria trocado uma ressalva por um apagamento.
+test("consulta genérica com duas URLs CONTINUA na lista", () => {
+  const r = canibalizacao(marcadas, ehMarca);
+  assert.ok(r.lista.some((c) => c.consulta === "alinhador invisivel preco"));
+  assert.equal(r.lista[0].urls.length, 2);
+});
+
+// `0` e `null` dizem coisas opostas: um é "curei a lista e nada casou", o outro é "ninguém curou".
+test("removidas 0 (declarada, nada casou) NÃO é removidas null (não declarada)", () => {
+  const semMarcaNaLista = [l("preco", "/a", 100, 1, 6.0), l("preco", "/b", 50, 0, 14.0)];
+  assert.equal(canibalizacao(semMarcaNaLista, ehMarca).removidas, 0);
+  assert.equal(canibalizacao(semMarcaNaLista).removidas, null);
+  assert.notEqual(canibalizacao(semMarcaNaLista, ehMarca).removidas, canibalizacao(semMarcaNaLista).removidas);
+});
+
+test("a ordenação por impressões não muda com o filtro ligado", () => {
+  const linhas = [
+    l("b", "/1", 10, 0, 5),
+    l("b", "/2", 10, 0, 6),
+    l("a", "/3", 500, 0, 5),
+    l("a", "/4", 500, 0, 6),
+  ];
+  assert.deepEqual(
+    canibalizacao(linhas, ehMarca).lista.map((c) => c.consulta),
+    ["a", "b"],
+  );
+});
+
+test("kpisDeBusca repassa o `ehMarca` em vez de filtrar por conta própria", () => {
+  const k = kpisDeBusca(marcadas, ehMarca);
+  assert.equal(k.canibalizacao.removidas, 1);
+  assert.equal(k.canibalizacao.lista.length, 1);
+  assert.equal(kpisDeBusca(marcadas).canibalizacao.removidas, null);
 });
