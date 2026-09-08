@@ -154,11 +154,13 @@ lib/
 ├── crux.mjs                      # NOVO — puro: VITAIS, SLUGS_DE_CAMPO, medirRecord,
 │                                 #   formatarValor, rodape, celulasDeVitais, passRate
 ├── crux.ts                       # NOVO — borda: cruxOn(), lerCampo(), 3 estados
-├── ficha.mjs                     # montarN5() propaga `rotuloBuraco` (D6, ~3 linhas)
+├── ficha.mjs                     # montarN5() propaga `rotuloBuraco` (D6, ~3 linhas);
+│                                 #   montarNiveis() exibe D2 quando há medida (D11)
 └── ficha-dados.ts                # disponiveisN5 recebe os 4 vitais quando slug ∈ SLUGS_DE_CAMPO
 
 app/okr/[slug]/
-└── aquisicao/page.tsx            # Pass Rate (US3), ao lado dos KPIs da 021/022
+├── aquisicao/page.tsx            # Pass Rate (US3), ao lado dos KPIs da 021/022
+└── metodo/page.tsx               # renderiza a nota de N5 (D11, 1 linha)
 
 test/
 └── crux.test.mjs                 # NOVO — registrado em package.json NO MESMO COMMIT
@@ -176,6 +178,8 @@ nenhuma rota nova.**
 
 | Risco | Contenção |
 |---|---|
+| **A família D2 nunca é escolhida** — descoberto na análise cruzada, depois deste plano | [D11](./research.md): `montarNiveis()` exibe D2 quando há medida. Sem isso a US1 inteira é código correto que ninguém vê. FR-002a/FR-002b, tarefas T009a/T009b. |
+| Exibir D2 sempre poluir as outras 34 fichas | A condição é **haver medida**, não o slug: `MEDIDORES.D2.some(id => id in disponiveis)`. Projeto sem coletor não ganha bloco nenhum — mesmo raciocínio de `medidorCabeNoPerfil()`. |
 | A CrUX não serve `experimental_time_to_first_byte` | FR-008: os quatro vitais são lidos com acesso opcional cada. TTFB some, os outros três aparecem. Fixado em teste. |
 | O `404` significar outra coisa além de "sem amostra" | Passo 1 do [quickstart](./quickstart.md) mede o corpo real **antes** de a tela existir. Se for outra coisa, muda a tradução em `crux.ts` — o módulo puro não muda. |
 | A CrUX normalizar a URL silenciosamente | `urlNormalizationDetails` é lido e conferido no Passo 1. Medir outra página sem dizer seria a confusão de alvo que a spec proíbe. |

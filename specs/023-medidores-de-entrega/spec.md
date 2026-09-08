@@ -13,8 +13,15 @@ Atma"
 
 A ficha da Atma **já declara** a família de causa **D2 — "Entrega: a página chega inteira?"**, e
 `MEDIDORES.D2` em `lib/ficha.mjs` lista oito medidores: `lcp`, `inp`, `cls`, `ttfb`, `uptime`,
-`taxa-5xx`, `build`, `certificado`. Qualquer KR pode apontar para `n5:lcp` hoje e a chave é
-válida.
+`taxa-5xx`, `build`, `certificado`.
+
+> **Correção de 07/09 (decisão [D11](./research.md), achada na análise cruzada).** Esta seção
+> afirmava que "qualquer KR pode apontar para `n5:lcp` hoje e a chave é válida". **É falso**: o
+> espaço de chaves de `n5:` é montado só a partir da família **exibida**
+> (`lib/ficha.mjs:667`), e a família D2 **nunca é escolhida** — nenhum perfil declara
+> `familia: "D2"` e todos os caminhos de `escolherFamilia()` devolvem D1, D3 ou D4. Hoje
+> `n5:lcp` sai como `chave-invalida`, e a família de Entrega, declarada desde a 011, nunca teve
+> como aparecer na tela. A D11 conserta isso e é o que torna a FR-002 observável.
 
 **Nenhum dos oito é apurado.** `montarN5()` devolve, para cada um,
 `naoApurada("sem coletor nesta requisição", "apuração manual de <id>")`. A família inteira é uma
@@ -165,6 +172,12 @@ o caso de uma URL só produz a explicação, não "100%".
   de LCP, INP, CLS e TTFB.
 - **FR-002**: Os quatro medidores MUST aparecer na família D2 do N5 da ficha, substituindo o
   estado "sem coletor nesta requisição".
+- **FR-002a**: A família de Entrega MUST ser exibida no N5 **sempre que houver medida de Entrega
+  para o projeto**, independentemente de qual família a cadeia elegeu como gargalo — Entrega é
+  pré-condição, não degrau de funil. Projeto **sem** medida de Entrega MUST NOT ganhar o bloco:
+  oito linhas permanentes de "não apurado" são ruído com cara de pendência.
+- **FR-002b**: Quando o N5 exibir duas famílias, a tela MUST declarar qual delas é o gargalo da
+  cadeia e por que a outra está ali.
 - **FR-003**: O sistema MUST distinguir três estados por medidor: **apurado**, **sem amostra
   suficiente na fonte** e **falhou agora** — nunca colapsando os dois últimos.
 - **FR-004**: Nenhum medidor sem dado MUST ser exibido como zero, como aprovado ou como

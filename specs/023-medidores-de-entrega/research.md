@@ -218,6 +218,59 @@ chamada e sem subir o Next**.
 
 ---
 
+## D11 — A família D2 **nunca era escolhida**: N5 passa a exibi-la quando houver medida
+
+**Achado que corrige a spec, o segundo desta pesquisa** (o primeiro é o D8). Encontrado pela
+análise cruzada de 07/09, **depois** do plano e das tarefas.
+
+`montarN5()` recebe **uma** família — a que `escolherFamilia()` devolve (`lib/ficha.mjs:623-624`)
+— e `n5.celulas` exibe só ela (`lib/ficha.mjs:663`). Rastreando os caminhos possíveis:
+
+| origem | valores possíveis |
+|---|---|
+| `escolherFamilia()` (`lib/ficha.mjs:379-407`) | `null`, `"D1"`, `"D3"`, `"D4"`, ou `marco.familiaDoBuraco` |
+| `familiaDe()` (`lib/okr.mjs:476-481`) | `null`, `"D1"`, `"D4"`, ou `marco.familia` |
+| `marco.familia` nos quatro perfis (`lib/okr.mjs:384-447`) | **só `D1`, `D3` e `D4`** |
+
+**`"D2"` é inalcançável.** A família de Entrega existe no catálogo `MEDIDORES` desde a 011 e nunca
+teve como ser renderizada. Sem consertar isto, as quatro células seriam computadas, entrariam em
+`disponiveisN5` e `montarN5()` as descartaria — código correto que ninguém vê, e a FR-002, a US1
+inteira, a SC-002 e o Passo 2 do quickstart não observáveis.
+
+Corrige junto a segunda premissa falsa da spec: o Contexto afirma que "qualquer KR pode apontar
+para `n5:lcp` hoje e a chave é válida". `espacosKr["n5:"]` é montado **só dos medidores da família
+exibida** (`lib/ficha.mjs:667`), então `n5:lcp` sai hoje como `chave-invalida` — não como
+"inverificável", que é o que a spec supõe.
+
+**Decisão**: `montarNiveis()` acrescenta a família D2 às células de N5 **quando houver medida de
+Entrega em `disponiveisN5`**, e a família escolhida não for ela própria. Entrega é
+**pré-condição, não gargalo de cadeia**: "a página chega inteira?" vale independente de onde o
+funil trava, e por isso não deve competir pela vaga única do gargalo.
+
+**A condição é a presença de medida, não o slug** — por dois motivos:
+
+1. **Princípio III**: `lib/ficha.mjs` é puro e não conhece slug. `MEDIDORES.D2.some(id => id in
+   disponiveis)` responde a mesma pergunta sem importar `SLUGS_DE_CAMPO`.
+2. **Zero diff para os outros 34, de novo.** Exibir D2 incondicionalmente acrescentaria **8 linhas
+   permanentes de "não apurado"** a cada uma das outras fichas — exatamente o ruído com cara de
+   pendência que `medidorCabeNoPerfil()` (`lib/ficha.mjs:520-521`) já rejeitou para o
+   `saida-checkout` de quem não tem checkout. Projeto sem coletor de campo continua sem o bloco.
+
+**Alternativa rejeitada — `escolherFamilia()` passar a poder devolver `"D2"`** quando um vital
+estiver fora da meta: a Entrega tomaria a vaga do gargalo real. Um LCP de 2,6 s esconderia o
+degrau que está matando a conversão, e o N5 responderia à pergunta errada.
+
+**Alternativa rejeitada — mover os vitais para a aba de aquisição** e emendar a FR-002: deixaria a
+família D2 da ficha com os 8 medidores mudos, que é o problema que esta spec nasceu para resolver.
+
+**Consequência na tela**: as células novas passam por `agruparPorMotivo()`
+(`app/okr/[slug]/metodo/page.tsx:139`) como as demais — apuradas saem avulsas, e os 4 medidores de
+D2 fora do escopo (`uptime`, `taxa-5xx`, `build`, `certificado`) colapsam num `<details>` "4 não
+apurados — sem coletor nesta requisição". A nota do nível diz qual família é o gargalo e que
+Entrega aparece por ser pré-condição — sem ela, o leitor não sabe por que há dois grupos.
+
+---
+
 ## Quota — a confirmar na primeira corrida
 
 A documentação da CrUX cita um limite por minuto por chave. Como a 022 fez com a quota da URL

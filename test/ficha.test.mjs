@@ -532,6 +532,54 @@ test("G8 — posicao-media-com-corte-pais é sempre nao-apurado, mesmo disponív
   assert.equal(m.celula.estado, "nao-apurado");
 });
 
+// ── 023 — Entrega (D2) é pré-condição, não degrau: entra no N5 quando HÁ medida ──
+
+test("023/T008 — montarN5() propaga rotuloBuraco da célula disponível", () => {
+  // Sem isto a tela lê "não apurado" onde a fonte FALHOU AGORA, e a distinção da FR-003 morre na
+  // borda. O campo é repassado; nunca inferido do texto do motivo.
+  const comRotulo = montarN5("D2", { lcp: { naoApurado: "CrUX indisponível (HTTP 429)", fonte: "CrUX API", rotuloBuraco: "falhou-agora" } }, "D");
+  assert.equal(comRotulo.find((m) => m.id === "lcp").celula.rotuloBuraco, "falhou-agora");
+  const semRotulo = montarN5("D2", { lcp: { naoApurado: "CRUX_API_KEY ausente", fonte: "CrUX API" } }, "D");
+  assert.equal(semRotulo.find((m) => m.id === "lcp").celula.rotuloBuraco, undefined);
+});
+
+test("023/T009 — célula de vital chega FORMATADA (string) e mantém a fonte no rodapé", () => {
+  const medidores = montarN5("D2", { lcp: { valor: "2,4 s", fonte: "p75 de campo · origem x" } }, "D");
+  const c = medidores.find((m) => m.id === "lcp").celula;
+  assert.equal(c.estado, "apurado");
+  assert.equal(c.valor, "2,4 s");
+  assert.equal(c.fonte, "p75 de campo · origem x");
+});
+
+test("023/T009a — COM medida de Entrega o N5 traz as duas famílias e `n5:lcp` é chave válida", () => {
+  const krs = [{ kpi: "LCP no p75", baseline: null, meta: 2500, prazo: "2026-12-31", dono: "jean", celula: "n5:lcp" }];
+  const niveis = montarNiveis(
+    fichaCompleta({
+      disponiveisN5: { lcp: { valor: "2,4 s", fonte: "p75 de campo" }, inp: { naoApurado: "sem amostra", fonte: "CrUX API" } },
+      declarada: { declaradaEm: "2026-09-01", objetivo: "objetivo", krs },
+    }),
+  );
+  const n5 = niveis.find((n) => n.id === "N5");
+  const rotulos = n5.celulas.map((c) => c.rotulo);
+  for (const id of MEDIDORES.D2) assert.ok(rotulos.includes(id), `${id} fora do N5`);
+  // A família do gargalo continua lá — Entrega ENTRA, não substitui.
+  assert.ok(rotulos.some((r) => MEDIDORES[n5.familia].includes(r)), "a família do gargalo sumiu do N5");
+  assert.notEqual(n5.familia, "D2", "Entrega nunca é eleita gargalo por escolherFamilia()");
+  // FR-002b: a nota diz qual é o gargalo e por que a Entrega está junto.
+  assert.match(n5.nota, /gargalo/);
+  assert.match(n5.nota, /pré-condição/);
+  // O que torna `n5:lcp` verificável de verdade: a chave existe no espaço de KR.
+  assert.equal(niveis.find((n) => n.id === "N0").krs[0].marca, null);
+});
+
+test("023/T009a — SEM medida de Entrega o N5 sai idêntico ao de hoje", () => {
+  // 8 linhas permanentes de "não apurado" nas outras 34 fichas seriam ruído com cara de pendência.
+  const n5 = montarNiveis(fichaCompleta()).find((n) => n.id === "N5");
+  for (const c of n5.celulas) assert.ok(MEDIDORES[n5.familia].includes(c.rotulo), `${c.rotulo} não é da família do gargalo`);
+  for (const id of MEDIDORES.D2) assert.ok(!n5.celulas.some((c) => c.rotulo === id), `${id} apareceu sem medida de Entrega`);
+  assert.equal(n5.nota, undefined);
+});
+
 // ── G9 — KR sobre célula apurada x não apurada ───────────────────────────────
 
 test("G9 — KR sobre célula não apurada vira nao-verificavel; sobre apurada, sem marca", () => {

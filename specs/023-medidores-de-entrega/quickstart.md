@@ -74,8 +74,13 @@ npm run dev
 Abrir **`/okr/atma/metodo`** (a 019 mandou N0–N6 para lá) e descer até **N5**, família
 **D2 — Entrega**.
 
+⚠️ **Antes de conferir número nenhum, conferir que o bloco EXISTE.** A família D2 nunca foi
+escolhida por `escolherFamilia()` — ver [D11](./research.md). Se o bloco de Entrega não aparecer
+ao lado da família do gargalo, a T009a não foi feita e não há o que medir aqui.
+
 | conferir | esperado |
 |---|---|
+| o bloco de Entrega | aparece **junto** com a família do gargalo, com a nota dizendo qual é qual (FR-002b) |
 | LCP, INP, CLS, TTFB | valor **com unidade**, não "sem coletor nesta requisição" |
 | CLS | `0,08` — **sem `s`, sem `ms`** (FR-013) |
 | LCP | `2,4 s` — segundos, uma casa |
@@ -155,8 +160,9 @@ cobriu os dois ramos sem depender de qual foi o dia.
 open http://localhost:3000/okr/goiania/metodo
 ```
 
-**Esperado**: os quatro medidores de Entrega continuam exatamente como antes — "sem coletor nesta
-requisição". Zero diff de comportamento, e **zero chamada de rede gasta** por eles.
+**Esperado**: **nenhum bloco de Entrega** — a D11 condiciona a exibição à presença de medida, não
+ao slug, justamente para não pôr 8 linhas permanentes de "não apurado" em 34 fichas. O N5 sai
+idêntico ao de antes desta feature, e **zero chamada de rede** é gasta.
 
 Conferir na aba Network do navegador que **nenhum** POST para `chromeuxreport.googleapis.com` sai
 nesse render. Escopo que só existe no texto não é escopo.

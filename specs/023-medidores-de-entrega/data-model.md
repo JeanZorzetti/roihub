@@ -94,9 +94,15 @@ inclusivo porque o board diz "≤".
 O contrato que **já existe** em `lib/ficha-dados.ts:187`. Esta feature não o estende (D4):
 
 ```
-{ valor: string, fonte: string }                       // apurado
-| { naoApurado: string, rotuloBuraco?: "falhou-agora" } // ausente ou falho
+{ valor: string, fonte: string }                                    // apurado
+| { naoApurado: string, fonte: string, rotuloBuraco?: "falhou-agora" } // ausente ou falho
 ```
+
+**`fonte` está nos DOIS ramos, e não é simetria decorativa.** `montarN5()` repassa
+`celula.fonte ?? "coleta desta requisição"` como o `consultar` da célula não apurada
+(`lib/ficha.mjs:538` → `lib/ficha.mjs:27`). Sem `fonte` no ramo ausente, a célula
+`CRUX_API_KEY ausente` sairia mandando "consultar: coleta desta requisição" — a instrução errada,
+e a R4 cumprida só na forma. No ramo ausente, `fonte` = `CrUX API para <alvo>`.
 
 **`valor`** — o número **já formatado**, e é aqui que a FR-013 acontece:
 

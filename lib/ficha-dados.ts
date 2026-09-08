@@ -9,6 +9,8 @@ import { evaluateAll } from "@/lib/evaluate";
 import { dbOn, listDone, listDonos, listDonoDatas } from "@/lib/db";
 import { HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
 import { montarNiveis, medidoresDeEventos, resolverTicket } from "@/lib/ficha.mjs";
+import { SLUGS_DE_CAMPO, celulasDeVitais } from "@/lib/crux.mjs";
+import { lerCampo, type Alvo } from "@/lib/crux";
 
 // A composição da ficha, UMA vez só. Existe porque a FR-021 (019) exige que a ação citada na dobra
 // e a citada em N6 venham da MESMA chamada de `evaluateAll()` — três telas (`/okr/[slug]`,
@@ -80,6 +82,17 @@ export async function dadosDaFicha(slug: string) {
         listDone().catch(() => new Set<string>()),
         listDonoDatas().catch(() => new Map<string, string>()),
       ])
+    : null;
+
+  // ── 023/T014: os Core Web Vitals de CAMPO. Fora de `SLUGS_DE_CAMPO` a chamada nem acontece
+  // (FR-014) e os quatro medidores seguem dizendo "sem coletor nesta requisição", que é verdade.
+  // Iniciada AQUI e aguardada só na composição de `disponiveisN5`: a ficha é `force-dynamic` e já
+  // paga GSC + GA4 + Postgres por request; mais um `await` em fila é latência somada à toa. O
+  // `.catch` é a FR-012 em uma linha — `lerCampo()` não lança, e mesmo assim a ficha não pode
+  // virar erro por causa de um medidor.
+  const alvoCrux: Alvo | null = SLUGS_DE_CAMPO.includes(slug) ? { tipo: "origem", valor: p.url } : null;
+  const cruxPromise = alvoCrux
+    ? lerCampo(alvoCrux).catch((e) => ({ estado: "falhou" as const, erro: e instanceof Error ? e.message.slice(0, 60) : "leitura de campo falhou" }))
     : null;
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
@@ -184,13 +197,18 @@ export async function dadosDaFicha(slug: string) {
   // ── N5 — só o que ESTA requisição já carrega (FR-028): impressões da mesma série do GSC que
   // já dá cliques, lead-gravado da célula de leads, gateway-ligado do campo `vendas` do card, e
   // os medidores D3 do GA4 (014) — enhanced measurement que já cai, sem instrumentar o site.
-  const disponiveisN5: Record<string, { valor: number; fonte?: string } | { naoApurado: string }> = {
+  // 023/T009: `valor` também `string` (a célula de vital já chega FORMATADA — "2,4 s", "0,08")
+  // e `fonte` também no ramo ausente, porque é ela que vira o `consultar` da R4 em montarN5().
+  const disponiveisN5: Record<string, { valor: number | string; fonte?: string } | { naoApurado: string; fonte?: string; rotuloBuraco?: "falhou-agora" }> = {
     impressoes,
     "lead-gravado": leads,
     "gateway-ligado": vendas,
     // 018/FR-032/FR-033: abandono compara form_start (GA4, janela COMPORTAMENTO) com lead (banco,
     // janela CONVERSAO) — só quando a primeira cabe inteira dentro da segunda.
     ...medidoresDeEventos(ga4ev, { lead: leads, janelaGa4: janelas.comportamento, epoca: janelas.conversao }),
+    // 023: os quatro vitais de campo. `celulasDeVitais()` SEMPRE devolve as quatro chaves —
+    // é a presença delas que faz `montarNiveis()` exibir a família de Entrega (FR-002a).
+    ...(alvoCrux && cruxPromise ? celulasDeVitais(await cruxPromise, alvoCrux) : {}),
   };
 
   const niveis = montarNiveis({
