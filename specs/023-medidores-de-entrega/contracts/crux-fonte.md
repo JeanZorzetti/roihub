@@ -13,7 +13,7 @@ puro consome. Nenhuma regra de negócio mora aqui — nem formatação, nem vere
 POST https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=<CRUX_API_KEY>
 Content-Type: application/json
 
-{ "origin": "https://www.atma.com.br" }     // ou { "url": "https://…/pagina" }
+{ "origin": "https://atma.roilabs.com.br" }     // ou { "url": "https://…/pagina" }
 ```
 
 `formFactor` **omitido** de propósito = agregado de todos os dispositivos (FR-010, D2). Um POST

@@ -187,14 +187,14 @@ const leituras = (...p75s) => new Map(p75s.map((p, i) => [`u${i}`, p === null ? 
 test("comDado 0 devolve motivo, nunca fração", () => {
   const r = passRate(leituras(null, null), 2);
   assert.equal(r.fracao, null);
-  assert.match(r.motivo, /das 2 URLs consultadas, 0 têm dado de campo/);
+  assert.match(r.motivo, /das 2 URLs consultadas, 0 têm os três vitais medidos/);
 });
 
 test("comDado 1 devolve MOTIVO, nunca 1 (US3-AC2)", () => {
   const r = passRate(leituras(bom, null), 2);
   assert.equal(r.comDado, 1);
   assert.equal(r.fracao, null);
-  assert.match(r.motivo, /1 tem dado de campo/);
+  assert.match(r.motivo, /1 tem os três vitais medidos/);
   assert.match(r.motivo, /das 2 URLs consultadas/);
 });
 
@@ -210,6 +210,23 @@ test("XOR: fração e motivo nunca ambos, nunca nenhum", () => {
   for (const r of [passRate(leituras(), 0), passRate(leituras(bom), 1), passRate(leituras(bom, bom), 2)]) {
     assert.equal((r.fracao === null) !== (r.motivo === null), true, "exatamente um dos dois");
   }
+});
+
+test("record PARCIAL não vira ausência: aparece contado no motivo (medido na atma, URL sem INP)", () => {
+  // 07/09/2026: a URL do blog responde 200 com LCP e CLS e SEM `interaction_to_next_paint`.
+  // Dizer "não tem dado de campo" colapsaria "não respondeu" com "respondeu parcial".
+  const r = passRate(leituras({ lcp: 1849, cls: 0.0, ttfb: 542 }, null), 2);
+  assert.equal(r.comDado, 0);
+  assert.equal(r.parciais, 1);
+  assert.match(r.motivo, /1 respondeu com dado PARCIAL/);
+});
+
+test("falha não se disfarça de ausência no motivo (FR-003)", () => {
+  const m = new Map([["a", { estado: "falhou", erro: "HTTP 429" }], ["b", { estado: "falhou", erro: "HTTP 429" }]]);
+  const r = passRate(m, 2);
+  assert.equal(r.falharam, 2);
+  assert.equal(r.comDado, 0);
+  assert.match(r.motivo, /2 falharam agora/);
 });
 
 test("URL com só TTFB não conta como comDado — o TTFB não define Bom", () => {

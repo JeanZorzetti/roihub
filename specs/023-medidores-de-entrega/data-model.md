@@ -146,8 +146,8 @@ o certo — a variável não está configurada, e isso não se conserta esperand
 Duas formas, e a spec proíbe explicitamente misturá-las numa média:
 
 ```
-{ tipo: "origem", valor: "https://www.atma.com.br" }
-| { tipo: "url",  valor: "https://www.atma.com.br/blog/quanto-custa-alinhador-invisivel" }
+{ tipo: "origem", valor: "https://atma.roilabs.com.br" }
+| { tipo: "url",  valor: "https://atma.roilabs.com.br/blog/quanto-custa-alinhador-invisivel" }
 ```
 
 O `Alvo` aparece **no texto** de toda célula (apurada ou não): é ele que impede a leitura errada

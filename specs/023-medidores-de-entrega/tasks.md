@@ -13,11 +13,14 @@ mesmo commit** em que nasce (`test/validade.test.mjs` reprova se esquecermos).
 
 **Organização**: por user story, para cada uma ser entregável e verificável sozinha.
 
-> **Estado da execução (07/09/2026).** Todo o código, os testes e a ligação na tela estão
-> entregues e verdes (`npm test` 760/760, `tsc --noEmit` limpo). **T001 e T002 bloqueiam o
-> resto**: a `CRUX_API_KEY` não existe no `.env` e a Chrome UX Report API não está habilitada no
-> Google Cloud — sem elas a fonte não pode ser medida, e os quatro medidores exibem, corretamente,
-> `CRUX_API_KEY ausente`. `[x]` = feito, `[~]` = verificado só até onde a ausência da chave deixa.
+> **Estado da execução (07/09/2026) — FECHADA.** `npm test` 762/762, `tsc --noEmit` limpo, e as
+> três telas conferidas com a chave ligada. Os quatro vitais da Atma estão apurados na ficha
+> (LCP 1,8 s · INP 106 ms · CLS 0,00 · TTFB 487 ms, todos dentro da meta) e o Pass Rate por URL saiu
+> **não apurável**, como a spec previu. Fatos medidos da T002 e o que mudou por causa deles:
+> [handoff-023-medidores-de-entrega.md](./handoff-023-medidores-de-entrega.md).
+>
+> **Pendência operacional (não é tarefa de código)**: `CRUX_API_KEY` na Vercel, ambiente
+> Production, + redeploy.
 
 ## Format: `[ID] [P?] [Story] Descrição`
 
@@ -47,13 +50,13 @@ package.json / .env.example        tocado
 **Purpose**: existir credencial e existir **fato medido** sobre o que a fonte devolve. A T002 é a
 lição que a 022 pagou com a quota da URL Inspection: número de documentação não é número medido.
 
-- [ ] **T001** [P] Habilitar a **Chrome UX Report API** no Google Cloud e criar uma **chave de API
+- [x] **T001** [P] Habilitar a **Chrome UX Report API** no Google Cloud e criar uma **chave de API
   simples** (não é service account, não reusa a do Search Console). Pôr `CRUX_API_KEY=<chave>` no
   `.env` local e acrescentar ao `.env.example` o bloco **com a variável VAZIA**, no texto de
   [contracts/crux-fonte.md](./contracts/crux-fonte.md) §`.env.example` — valor real nunca entra
   neste arquivo (Princípio V).
 
-- [ ] **T002** Rodar o **Passo 1 do [quickstart](./quickstart.md)** contra a origem da Atma e
+- [x] **T002** Rodar o **Passo 1 do [quickstart](./quickstart.md)** contra a origem da Atma e
   contra `/blog/quanto-custa-alinhador-invisivel`, e **anotar como fato medido** (vai para o
   handoff): (a) o **corpo real do `404`**, para confirmar que ele é mesmo "sem amostra" e não outra
   condição; (b) o `collectionPeriod` que a fonte devolve; (c) se
@@ -209,7 +212,7 @@ rodapé; forçar cada um dos três estados (quickstart Passo 4) e ver **textos d
   request; mais um `await` em fila é latência somada à toa. E **um erro dela não pode derrubar a
   ficha** (FR-012).
 
-- [~] **T015** ⚠️ **Parcial** — verificado o estado `sem-chave` na tela (`/okr/atma/metodo`: bloco de Entrega presente, nota do gargalo, 4 medidores com `CRUX_API_KEY ausente`, os outros 4 ainda em "sem coletor"). Os estados `record`/`sem-amostra`/`falhou` dependem da T001.
+- [x] **T015** ✅ **Verificado com a chave ligada** — verificado o estado `sem-chave` na tela (`/okr/atma/metodo`: bloco de Entrega presente, nota do gargalo, 4 medidores com `CRUX_API_KEY ausente`, os outros 4 ainda em "sem coletor"). Os estados `record`/`sem-amostra`/`falhou` dependem da T001.
 
    [US1] Verificar na tela — quickstart **Passo 2** (`/okr/atma/metodo`: **o bloco de
   Entrega existe**, ao lado da família do gargalo e com a nota explicando as duas; valor com
@@ -241,7 +244,7 @@ tela, cada apurado termina em `dentro`/`fora` e o TTFB mostra **os dois** limite
   ` · meta ≤ 600 ms (ideal < 300 ms): dentro` (FR-007). Testes: um vital comum, o TTFB com os dois
   números, e um `fora`.
 
-- [~] **T018** ⚠️ **Parcial** — as bordas 2500/2501 estão fixadas pelo teste do módulo puro; a classificação na tela depende da T001.
+- [x] **T018** ✅ **Verificado com a chave ligada** — as bordas 2500/2501 estão fixadas pelo teste do módulo puro; a classificação na tela depende da T001.
 
    [US2] Verificar — quickstart **Passo 3**: na tela, cada medidor apurado termina em
   `dentro` ou `fora`; a borda de 2,5 s é provada pelo teste do módulo puro, que roda em
@@ -291,7 +294,7 @@ Atma, a frase aparece com o número de URLs consultadas e o de URLs com dado.
   já está na página (linha 19); a falha segue o idioma de `lerApuracao()` (linhas 47-54) e **não
   derruba a aba**.
 
-- [~] **T022** ⚠️ **Parcial** — verificado `comDado < 2` em `/okr/atma/aquisicao`: "das 8 URLs consultadas, 0 têm dado de campo", nunca 100%. O ramo `comDado >= 2` depende da T001.
+- [x] **T022** ✅ **Verificado com a chave ligada** — verificado `comDado < 2` em `/okr/atma/aquisicao`: "das 8 URLs consultadas, 0 têm dado de campo", nunca 100%. O ramo `comDado >= 2` depende da T001.
 
    [US3] Verificar — quickstart **Passo 5** (`/okr/atma/aquisicao`): com `comDado < 2`,
   a frase explicando e **nunca `100%`**; com `comDado >= 2`, a fração contra 90% **com o
@@ -310,7 +313,7 @@ Atma, a frase aparece com o número de URLs consultadas e o de URLs com dado.
   mostra **zero** POST para `chromeuxreport.googleapis.com`. Escopo que só existe no texto não é
   escopo (FR-014), e nota de rodapé permanente em ficha alheia é ruído, não honestidade.
 
-- [~] **T024** ⚠️ **Parcial** — a checagem de AUSÊNCIA da SC-003 passa (nenhum número de Lighthouse/PageSpeed em tela). O placar 11→16 depende da T001: hoje as 5 medidas estão **explicadas**, não exibidas.
+- [x] **T024** ✅ — a checagem de AUSÊNCIA da SC-003 passa (nenhum número de Lighthouse/PageSpeed em tela). O placar 11→16 depende da T001: hoje as 5 medidas estão **explicadas**, não exibidas.
 
    Quickstart **Passo 7** — o placar do board: **11 → 16 de 28**, com o Pass Rate
   contando como **explicado** se for o caso. E a checagem de **ausência** da SC-003: nenhum número
@@ -318,7 +321,7 @@ Atma, a frase aparece com o número de URLs consultadas e o de URLs com dado.
   (±30% nesta máquina) e `goiania_lcp_root_causes` (uma leitura não decide nada) já pagaram por
   isso.
 
-- [ ] **T025** Registrar no handoff os **fatos medidos** da T002 que a spec deixou em aberto: se o
+- [x] **T025** Registrar no handoff os **fatos medidos** da T002 que a spec deixou em aberto: se o
   TTFB experimental existe para a Atma, o `collectionPeriod` real, a quota medida da chave e se
   houve normalização de URL. Número de documentação não é número medido — é o que a 022 ensinou.
 

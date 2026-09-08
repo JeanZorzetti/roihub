@@ -90,7 +90,7 @@ export async function dadosDaFicha(slug: string) {
   // paga GSC + GA4 + Postgres por request; mais um `await` em fila é latência somada à toa. O
   // `.catch` é a FR-012 em uma linha — `lerCampo()` não lança, e mesmo assim a ficha não pode
   // virar erro por causa de um medidor.
-  const alvoCrux: Alvo | null = SLUGS_DE_CAMPO.includes(slug) ? { tipo: "origem", valor: p.url } : null;
+  const alvoCrux: Alvo | null = SLUGS_DE_CAMPO.includes(slug) ? { tipo: "origem", valor: p.url.replace(/\/+$/, "") } : null;
   const cruxPromise = alvoCrux
     ? lerCampo(alvoCrux).catch((e) => ({ estado: "falhou" as const, erro: e instanceof Error ? e.message.slice(0, 60) : "leitura de campo falhou" }))
     : null;

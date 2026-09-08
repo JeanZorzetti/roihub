@@ -38,7 +38,7 @@ fez com a quota da URL Inspection.
 curl -s -X POST \
   "https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=$CRUX_API_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"origin":"https://www.atma.com.br"}' | head -60
+  -d '{"origin":"https://atma.roilabs.com.br"}' | head -60
 ```
 
 **Esperado**: `200` com `record.metrics` contendo `largest_contentful_paint`,
@@ -58,7 +58,7 @@ E o caso oposto, que é o que a US3 prevê:
 curl -s -o /dev/null -w '%{http_code}\n' -X POST \
   "https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=$CRUX_API_KEY" \
   -H 'Content-Type: application/json' \
-  -d '{"url":"https://www.atma.com.br/blog/quanto-custa-alinhador-invisivel"}'
+  -d '{"url":"https://atma.roilabs.com.br/blog/quanto-custa-alinhador-invisivel"}'
 ```
 
 **`404` aqui é resultado, não erro** — é a ausência de amostra que molda a spec inteira.

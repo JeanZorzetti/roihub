@@ -38,7 +38,7 @@ primeira, cacheada por uma hora na segunda.
 
 ```
 POST https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=$CRUX_API_KEY
-{ "origin": "https://www.atma.com.br" }
+{ "origin": "https://atma.roilabs.com.br" }
 ```
 
 `formFactor` **omitido** de propósito = agregado de todos os dispositivos (FR-010, e a Assumption
