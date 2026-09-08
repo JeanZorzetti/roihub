@@ -2,15 +2,20 @@ import { NextResponse, type NextRequest } from "next/server.js";
 import { authorized } from "./lib/autopublish-core.mjs";
 
 export function middleware(req: NextRequest) {
-  // As quatro rotas de cron dividem o CRON_SECRET: quem já pode publicar artigo em 10 repos não
+  // As cinco rotas de cron dividem o CRON_SECRET: quem já pode publicar artigo em 10 repos não
   // ganha nada novo podendo gravar um card de agenda, uma linha de série do GSC ou uma apuração de
   // indexação — todas leem o mesmo Search Console que o autopublish já lê. Segredo próprio é para
   // capacidade MAIOR (é o caso do CRM abaixo), não para cada rota.
+  //
+  // `/api/paginas` (024) entra aqui pela MESMA razão levada ao extremo: ela nem fala com o Google,
+  // só baixa HTML público de um site da casa. É a MENOR capacidade do conjunto — segredo próprio
+  // para ela seria uma chave a mais para guardar sem nada a mais protegido.
   if (
     req.nextUrl.pathname === "/api/seo/autopublish" ||
     req.nextUrl.pathname === "/api/estado" ||
     req.nextUrl.pathname === "/api/gsc-serie" ||
-    req.nextUrl.pathname === "/api/indexacao"
+    req.nextUrl.pathname === "/api/indexacao" ||
+    req.nextUrl.pathname === "/api/paginas"
   ) {
     return authorized(req.headers.get("authorization"), process.env.CRON_SECRET ?? "")
       ? NextResponse.next()

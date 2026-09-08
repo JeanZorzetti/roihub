@@ -13,6 +13,7 @@ import {
   primeiraPaginaInterna,
   temPainel,
   urlDoSitemap,
+  buscar,
 } from "../lib/conformidade.mjs";
 
 test("aplicaSe casa por interseção e * casa com tudo", () => {
@@ -123,4 +124,59 @@ test("temPainel separa landing de app com porta de entrada", () => {
   assert.equal(temPainel('<a href="/login">Entrar</a>'), true);
   assert.equal(temPainel('<a href="https://app.x.com/dashboard">Painel</a>'), true);
   assert.equal(temPainel('<a href="/precos">Preços</a>'), false);
+});
+
+// ── 024/D13: `url` e `redirecionada` no retorno de buscar() ─────────────────
+//
+// O crawl de página grava `redirecionada BOOLEAN NOT NULL`, e uma URL do sitemap que redireciona
+// é ACHADO, não buraco (FR-013). Os dois campos já existiam no `Response` do fetch e eram
+// descartados — o teste existe para que continuem saindo, inclusive no caminho de erro, onde
+// `undefined` gravado numa coluna NOT NULL seria ausência disfarçada de negativa.
+const comFetch = async (resposta, fn) => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => resposta;
+  try {
+    return await fn();
+  } finally {
+    globalThis.fetch = original;
+  }
+};
+
+const resposta = ({ status = 200, url, redirected = false, corpo = "<html></html>" }) => ({
+  status,
+  url,
+  redirected,
+  headers: new Headers({ "content-type": "text/html" }),
+  text: async () => corpo,
+});
+
+test("resposta direta: redirecionada false e url igual à pedida", async () => {
+  const r = await comFetch(resposta({ url: "https://a.com/precos" }), () => buscar("https://a.com/precos"));
+  assert.equal(r.redirecionada, false);
+  assert.equal(r.url, "https://a.com/precos");
+  assert.equal(r.status, 200);
+});
+
+test("resposta redirecionada: url é a de DESTINO, não a pedida", async () => {
+  const r = await comFetch(
+    resposta({ url: "https://a.com/pacientes/precos", redirected: true }),
+    () => buscar("https://a.com/precos"),
+  );
+  assert.equal(r.redirecionada, true);
+  assert.equal(r.url, "https://a.com/pacientes/precos", "gravar a URL pedida esconderia o achado da FR-013");
+});
+
+test("erro de rede ainda devolve url e redirecionada — nunca undefined", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => {
+    throw Object.assign(new Error("falhou"), { cause: { code: "ETIMEDOUT" } });
+  };
+  try {
+    const r = await buscar("https://a.com/morta");
+    assert.equal(r.erro, "ETIMEDOUT");
+    assert.equal(r.url, "https://a.com/morta");
+    assert.equal(r.redirecionada, false, "undefined numa coluna NOT NULL é ausência disfarçada de negativa");
+  } finally {
+    globalThis.fetch = original;
+  }
 });

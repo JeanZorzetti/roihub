@@ -1,0 +1,52 @@
+name: Crawl de página
+
+on:
+  schedule:
+    # 06:17 BRT (9:17 UTC, sem horário de verão) — FORA das duas janelas do Princípio IV:
+    # 23:30-01:00 BRT (estado noturno + autopublish) e 08:00-08:45 BRT (cron do autopublish).
+    # 30 min depois da corrida de indexação (05:47) de propósito, para as duas não dividirem o
+    # container.
+    #
+    # SEMANAL, e a segunda-feira é a escolha certa: estrutura interna de links e título mudam por
+    # DEPLOY, não por hora. Rodar diariamente gastaria a rede do cliente para reescrever o mesmo
+    # número.
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  paginas:
+    runs-on: ubuntu-latest
+    steps:
+      # Sem checkout e sem Node: o trabalho é server-side porque o runner do GitHub não tem
+      # DATABASE_URL. Aqui é só o gatilho.
+      #
+      # Retry SÓ quando o trabalho comprovadamente NÃO começou. O TIMEOUT (28) fica FORA da lista
+      # pela mesma lição da 022: aqui timeout significa "está rodando e demorou", e repetir buscaria
+      # as 36 páginas de novo enquanto a primeira corrida ainda escreve — duas corridas gravando o
+      # mesmo (projeto, dia) produzem um número que ninguém consegue explicar.
+      #
+      # --max-time 780 abaixo do maxDuration 800 da rota: o curl desiste DEPOIS do servidor, senão
+      # o Actions reportaria falha numa corrida que terminou bem.
+      - name: Dispara a corrida e falha se o hub recusar
+        run: |
+          for tentativa in 1 2 3 4 5; do
+            corpo=$(curl -sS -X POST "$HUB_URL/api/paginas" \
+              -H "authorization: Bearer $HUB_CRON_SECRET" \
+              -w '\n%{http_code}' --max-time 780) && break
+            saida=$?
+            # 7 couldn't connect · 35 TLS · 52 vazio — o hub não atendeu, nada rodou.
+            case $saida in
+              7|35|52) ;;
+              28) echo "::error::curl expirou em 780s — a corrida pode estar VIVA no servidor. Não repete: conferir hub_pagina_corrida antes de disparar de novo"; exit 1 ;;
+              *) echo "::error::curl saiu $saida — não é falha de conexão, não repete"; exit 1 ;;
+            esac
+            [ "$tentativa" = "5" ] && { echo "::error::hub inacessível em 5 tentativas"; exit 1; }
+            echo "tentativa $tentativa: curl saiu $saida (hub fora do ar), esperando 120s"
+            sleep 120
+          done
+          codigo=$(printf '%s' "$corpo" | tail -n1)
+          printf '%s\n' "$corpo" | sed '$d'
+          [ "$codigo" = "200" ] || { echo "::error::hub devolveu HTTP $codigo"; exit 1; }
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          HUB_CRON_SECRET: ${{ secrets.HUB_CRON_SECRET }}
