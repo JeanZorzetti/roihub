@@ -94,6 +94,24 @@ export async function listProjects(): Promise<Project[]> {
   return mergeProjects(curated as Curated[], await listRepos()) as Project[];
 }
 
+/** Escopo das corridas de busca (021 série do GSC · 022 indexação do sitemap): **só a Atma**.
+ *
+ *  Decisão do Jean (07/09/2026), corrigindo o escopo com que as duas specs nasceram: o board de
+ *  OKR de busca é da Atma, e as corridas estavam varrendo os 35 projetos. Não é otimização — é o
+ *  objetivo original. De quebra some a restrição que MOLDOU a 022 inteira (a quota de ~2000
+ *  inspeções/dia dividida por 21 subdomínios de `roilabs.com.br`): com um projeto só, o rodízio e
+ *  a amostra continuam no código mas nunca disparam.
+ *
+ *  Lista e não constante porque "primeiras servidas" é sequência, não exclusão permanente: abrir
+ *  para o segundo projeto é acrescentar um slug aqui, sem tocar em rota nenhuma. */
+export const SLUGS_DE_BUSCA = ["atma"];
+
+/** Os projetos que as corridas de busca percorrem. Filtra por `url` como antes — quem não tem site
+ *  não tem o que inspecionar. */
+export async function projetosDeBusca(): Promise<Project[]> {
+  return (await listProjects()).filter((p) => p.url && SLUGS_DE_BUSCA.includes(p.slug));
+}
+
 /** Repos vivos sem homepage — pendências de "todo projeto terá site". */
 export async function listReposSemSite(): Promise<{ name: string; url: string; pushedAt: string | null }[]> {
   return reposSemSite(curated as Curated[], await listRepos());

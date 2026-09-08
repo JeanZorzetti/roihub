@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { listProjects } from "@/lib/projects";
+import { listProjects, SLUGS_DE_BUSCA } from "@/lib/projects";
 import { lerIndexacao, dbOn, type Apuracao } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
@@ -85,7 +85,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     // Striking Distance com 8 meses misturaria posição de fevereiro com a de hoje e a lista de
     // trabalho apontaria para páginas que já subiram ou já caíram — uma fila de trabalho velha
     // é pior que fila nenhuma. A janela sai declarada no bloco, como manda a FR-026 da 019.
-    gscConsultas(p.url, curtaGsc),
+    // Fora de `SLUGS_DE_BUSCA` a chamada nem sai: os KPIs do board são da Atma, e este bloco era
+    // o último pedaço da 021 que ainda servia os 35 — porque lê ao vivo no render, sem passar
+    // pela corrida que já foi restringida.
+    SLUGS_DE_BUSCA.includes(slug) ? gscConsultas(p.url, curtaGsc) : null,
     // 022: a indexação vem do BANCO, apurada pela corrida das 05:47. Zero chamada à URL Inspection
     // API aqui — ver `lerApuracao`.
     lerApuracao(slug),
@@ -186,7 +189,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             períodos diferentes e não se dividem um pelo outro.
           </p>
 
-          {kpis === null ? (
+          {!SLUGS_DE_BUSCA.includes(slug) ? (
+            /* Escopo, não ausência: sem esta linha o `kpis === null` abaixo diria "sem propriedade
+               no GSC", que é uma afirmação sobre o projeto — e a única coisa verdadeira aqui é que
+               ninguém perguntou. */
+            <p className="foot">
+              <strong>Fora do escopo da medição.</strong> Os KPIs do board são apurados só para{" "}
+              {SLUGS_DE_BUSCA.join(", ")} — o board de busca é de lá. Nada foi perguntado ao Search
+              Console sobre este projeto: isto é decisão, não ausência de dado.
+            </p>
+          ) : kpis === null ? (
             /* FR-010: três telas diferentes, nunca uma lista vazia sem explicação. `null` é
                ausência estrutural (o conserto é domínio próprio); `{erro}` é falha de agora. */
             <p className="foot">
@@ -383,7 +395,26 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             pela corrida das 05:47 e LIDA do banco. */}
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Indexação — quanto do que o site declara está no índice</h2>
-          {indexacao === null ? (
+          {/* Linha morta: a corrida das 05:47 varreu os 35 projetos antes da correção de escopo,
+              então há apuração gravada para projetos que não são mais percorridos. A data já sai
+              embaixo (FR-014), mas data velha sozinha lê como atraso, não como fim. */}
+          {indexacao !== null && !SLUGS_DE_BUSCA.includes(slug) && (
+            <p className="foot">
+              ⚠️ <strong>Fora do escopo da medição.</strong> A corrida de indexação roda só para{" "}
+              {SLUGS_DE_BUSCA.join(", ")}. O número abaixo é de uma corrida antiga e{" "}
+              <strong>não será atualizado</strong>.
+            </p>
+          )}
+          {indexacao === null && !SLUGS_DE_BUSCA.includes(slug) ? (
+            /* Escopo, não fila: a corrida percorre só `SLUGS_DE_BUSCA`. Dizer "ainda não teve a
+               vez" aqui prometeria uma apuração que nunca vem — a mesma mentira de tratar ausência
+               declarada como pendência. */
+            <p className="foot">
+              <strong>Fora do escopo da medição.</strong> A corrida de indexação roda só para{" "}
+              {SLUGS_DE_BUSCA.join(", ")} — o board de busca é de lá. Este projeto não é apurado, e
+              isso é decisão, não pendência nem falha.
+            </p>
+          ) : indexacao === null ? (
             <p className="foot">
               <strong>Ainda não apurado.</strong> A corrida de indexação roda às 05:47 e percorre os
               projetos por rodízio — do que está há mais tempo sem apuração para o mais recente.
