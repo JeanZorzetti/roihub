@@ -46,7 +46,7 @@ própria — tratá-las como 4 itens escondia 10 medidas.
 | 1 | % de Impressões no Top 3 | ✅ | — (meta 40-50% na tela) |
 | 2 | Taxa de Penetração no Top 3 | ❌ | denominador: lista de termos estratégicos monitorados |
 | 3 | Striking Distance | ✅ | — |
-| 4 | Crescimento de Impressões Não-Marca | ❌ | lista de marca por projeto + série separando marca |
+| 4 | Crescimento de Impressões Não-Marca | ✅ | — (025, na aba [/okr/atma/aquisicao](/okr/atma/aquisicao); meta 5-10%/mês) |
 
 ### CLIQUE
 
@@ -71,7 +71,7 @@ própria — tratá-las como 4 itens escondia 10 medidas.
 | 4 | Click Depth | ❌ | crawl em largura a partir da home |
 | 4 | Densidade de Links Internos | ❌ | mesmo crawl |
 | 4 | Referring Domains Velocity | ❌ | fonte de backlinks paga |
-| 4 | Brand Demand Ratio | ❌ | lista de marca por projeto |
+| 4 | Brand Demand Ratio | ✅ | — (025, na aba [/okr/atma/aquisicao](/okr/atma/aquisicao), com a lista de termos e o corte de país na tela) |
 
 ## O que já existe no repo e NÃO deve ser reconstruído
 
@@ -144,15 +144,38 @@ visitada. Corrida própria, com teto de páginas por projeto declarado na tela.
 
 **Destrava:** Brand Demand Ratio e Crescimento de Impressões Não-Marca.
 
-**A ideia barata:** em vez de gravar `query` por dia (~25 mil linhas/dia/projeto, rejeitado na
-021), a corrida diária faz **uma requisição a mais por projeto**, com filtro de `query` contendo
-o termo de marca, e grava **duas colunas** em `hub_gsc_dia`: impressões totais e impressões de
-marca. Não-marca é a subtração. Custo: +1 requisição por projeto por dia, zero linha nova.
+**ENTREGUE pela 025 em 08/09/2026 — e a receita abaixo era a errada.** O que este handoff
+propunha (duas colunas, não-marca por **subtração**) infla o próprio KPI que se quer ver crescer:
+o total vem SEM dimensão de consulta e **inclui** as consultas anonimizadas, a fatia de marca vem
+COM e as **exclui**, então `total − marca` devolve não-marca **mais** o resto anonimizado. Já
+estava medido na casa antes desta spec — 5 contra 33 no tapepro.
+
+**O que a 025 fez:** a corrida pede **três pernas** por projeto, todas com `dimensions: ["date"]`,
+na mesma corrida e na mesma janela de 480 dias — total do corte de país, `query includingRegex` e
+`query excludingRegex`. **Não-marca é MEDIDA, nunca subtraída.** Grava **sete colunas** em
+`hub_gsc_dia` (`pais` + os pares de impressões/cliques de país, marca e não-marca), todas nulas
+onde não há declaração — `NULL` é "não declarada", nunca "zero buscas de marca".
+
+**E a soma FECHA.** Primeira corrida, atma, 08/09/2026: 177.431 impressões no corte `bra`,
+9.964 de marca e 167.467 de não-marca, **resíduo 0**. Filtrar por consulta sem PEDIR a dimensão
+`query` preserva as consultas raras — as duas medidas são completas, não pisos. A conferência sai
+na resposta da rota em quatro estados (`fecha`, `piso`, `contradicao`, `nao-declarada`) e o
+rótulo vai para a tela.
+
+Custo: +3 requisições por projeto por dia, zero linha nova, zero tabela nova.
 
 🚩 **Sem corte por país o número mente** — `gsc_branded_position_polluted_by_country` já registra
-isso.
+isso. A 025 tornou `pais` **obrigatório** na declaração: termos sem país são declaração inválida,
+tratada como não declarada com o motivo nomeado.
 
-**Depende de você, não de código:** a lista de termos de marca por projeto.
+⛔ **Não há urgência de calendário aqui, ao contrário do que este handoff dizia.** As pernas de
+marca puxam a janela de 480 dias **toda corrida**, então esperar não custa histórico — e uma lista
+de termos nova reclassifica a história inteira na corrida seguinte, em vez de deixar dois períodos
+com réguas diferentes.
+
+**Depende de você, não de código:** a lista de termos de marca por projeto. A da atma está no card
+(`data/projects.json`) e aparece **na tela** — é a única defesa contra a lista pobre, cujo erro é
+favorável e por isso perigoso: variante esquecida cai em não-marca e infla o número.
 
 ## O que NÃO vou propor construir
 

@@ -405,6 +405,19 @@ as **15** de `estado` são **apuradas na hora da medição**.
   `lib/evaluate.ts` (flag de robô entra com `humano: false`) e `app/page.tsx`.
 - **Impressão pede `dimensions: []`; clique não-branded pede `query`.** Com a dimensão `query` o
   GSC omite as raras e a soma vira piso: 5 contra 33 no tapepro. Trocar os dois inventa quedas.
+- **FILTRAR por `query` não é PEDIR a dimensão `query` — e só a segunda perde as raras.** Medido em
+  08/09/2026 (spec 025), primeira corrida da atma no corte `bra`, janela de 480 dias:
+  **177.431 impressões no total do país, 9.964 de marca, 167.467 de não-marca, resíduo 0** —
+  `veredito: "fecha"`, idempotente em duas corridas às 13:54 UTC. Três pernas com
+  `dimensions: ["date"]` (total do corte, `query includingRegex`, `query excludingRegex`) somam
+  EXATAMENTE o total. Era a pergunta que a 025 não conseguiu responder em documentação nenhuma, e a
+  resposta muda o projeto: as duas medidas de marca/não-marca são **completas, não pisos**.
+  ⚠️ Ler `impressoesMarca > 0` ANTES do veredito — marca zerada com resíduo 0 diria `fecha` e
+  estaria errado.
+- **Não-marca é MEDIDA, nunca `total − marca`.** O total vem sem dimensão de consulta e INCLUI as
+  anonimizadas; a fatia de marca vem com filtro e as exclui. A subtração devolveria não-marca MAIS
+  o resto anonimizado — inflando exatamente o KPI que se quer ver crescer. O
+  `handoff-os-28-do-board-o-que-falta.md` receitava a subtração até 08/09; foi corrigido.
 - **A janela do GSC desliza na meia-noite UTC** — o mesmo fim de tarde deu 33 e depois 42.
   `apurado_em` é carimbado em BRT como todo o resto da casa.
 - **`(hoje N)` não se escreve em prosa.** Alvo e data do gate são curadoria e ficam escritos; o
