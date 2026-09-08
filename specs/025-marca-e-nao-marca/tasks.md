@@ -261,7 +261,7 @@ consulta genérica atendida por duas URLs continua aparecendo.
   presente, e o parágrafo de ressalva **fora** da tela; e `/okr/sirius/aquisicao` com o comportamento
   de hoje **intacto** — ressalva presente, canibalização sem filtro, os dois KPIs novos como **não
   declarada** com o motivo nomeado, nunca `0%`.
-- [ ] **T022** Deploy: push em `main` **fora das duas janelas proibidas do Princípio IV**. Push é
+- [X] **T022** Deploy: push em `main` **fora das duas janelas proibidas do Princípio IV**. Push é
   deploy, o hub leva ~15 min para subir, e a corrida das 05:17 é a próxima prova.
 - [X] **T023** [P] Corrigir `handoff/handoff-os-28-do-board-o-que-falta.md` — **é o documento que a
   própria spec cita como fonte do erro, e continua sendo a primeira leitura de quem chega**:
