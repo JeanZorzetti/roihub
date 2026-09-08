@@ -484,6 +484,11 @@
   },
   {
     "slug": "atma",
+    "marca": {
+      "termos": ["atma", "atma aligner", "atma alinhadores"],
+      "pais": "bra",
+      "declaradaEm": "2026-09-08"
+    },
     "perfil": "D",
     "ga4": { "propertyId": "properties/504053080" },
     "meta": { "valor": 50000, "ticket": 4000, "prazo": "2026-12-31", "declaradaEm": "2026-09-01" },

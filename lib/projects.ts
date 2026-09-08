@@ -77,6 +77,13 @@ export type Project = {
    *  herda a lista da Atma de graça, que é o defeito que a 017 matou na palitagem.
    *  Vivo é o COMPLEMENTO, `motivo === null` incluído: quem ainda não foi palitado não é perda. */
   motivosDePerda?: string[];
+  /** Curadoria humana: as variantes pelas quais as pessoas procuram o projeto pelo NOME, e o
+   *  corte de país sob o qual a classificação vale (025). AUSENTE é o estado padrão dos outros 34
+   *  projetos — "não declarada", NUNCA "zero buscas de marca": as duas sairiam iguais na tela, e a
+   *  segunda é uma afirmação sobre o site que ninguém mediu. `pais` é obrigatório porque sem corte
+   *  a razão sai contaminada — o total do GSC é mundial e a fatia de marca não teria o mesmo
+   *  denominador. Quem lê é `listProjects()`, nunca `data/projects.json` direto (Princípio I). */
+  marca?: { termos: string[]; pais: string; declaradaEm?: string };
   /** Declaração humana chaveada pela `chave` do marco (`tratamento`, não o nome de exibição — a
    *  mesma razão de `REGUA` ser chaveada por `chave` em lib/benchmark.mjs). A ficha ANEXA este
    *  texto à `fonte` do marco, não substitui (018, FR-025/FR-026/FR-027 — fecha a FR-004 da 017,

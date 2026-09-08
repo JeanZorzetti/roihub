@@ -258,6 +258,32 @@ function ensure(): Promise<unknown> {
         criado TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (projeto, dia)
       );
+      -- 025: a separacao marca / nao-marca, sete colunas ao lado do total.
+      --
+      -- impressoes, cliques e posicao acima NAO mudam de significado: continuam o site inteiro
+      -- SEM corte de pais, e sao elas que alimentam a tela de 8 meses e a celula visitante da
+      -- ficha. Mexer nelas moveria numeros de outra feature.
+      --
+      -- Nenhum NOT NULL e nenhum DEFAULT 0 de proposito: um default de zero transformaria 480
+      -- dias de "nunca perguntei" em "nenhuma busca de marca", que e a inversao exata que a
+      -- FR-004 proibe. NULL = nao declarada; zero = declarada e nao houve busca. As sete andam
+      -- juntas: ou todas preenchidas para aquele dia, ou todas NULL.
+      --
+      -- nao_marca e MEDIDA, nunca total menos marca: o total inclui as consultas anonimizadas e
+      -- a fatia de marca nao, entao a subtracao devolveria nao-marca MAIS o resto anonimizado --
+      -- inflando o KPI que se quer ver crescer (5 contra 33 medidos no tapepro).
+      --
+      -- Sem coluna de razao, de residuo nem de crescimento, pela mesma razao do CTR ausente
+      -- acima: sao divisoes exatas destas colunas, e coluna gravada so cria a chance de divergir
+      -- da propria conta.
+      -- (Sem crase em nenhum comentario desta secao: isto e um template literal do JS.)
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS pais TEXT;
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS impressoes_pais INT;
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS cliques_pais INT;
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS impressoes_marca INT;
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS cliques_marca INT;
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS impressoes_nao_marca INT;
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS cliques_nao_marca INT;
       -- Apuracao de indexacao: uma linha por PROJETO POR DIA (022). O agregado, nunca a URL —
       -- 35 projetos x milhares de URLs x diario responde perguntas que a spec nao faz.
       --
@@ -927,11 +953,93 @@ export async function ultimoDiaGsc(projeto: string): Promise<string | null> {
   return r.rows[0]?.dia ?? null;
 }
 
-/** A série gravada de um projeto, em ordem cronológica. */
-export async function lerDiasGsc(projeto: string, inicio?: string, fim?: string): Promise<DiaGsc[]> {
+/** 025 — o dia da série com as sete colunas de marca, nos nomes do domínio. `null` em todas é
+ *  "não declarada": os dias que nasceram antes desta feature, e os projetos sem lista de termos. */
+export type DiaSeparado = DiaGsc & {
+  pais: string | null;
+  impressoesPais: number | null;
+  cliquesPais: number | null;
+  impressoesMarca: number | null;
+  cliquesMarca: number | null;
+  impressoesNaoMarca: number | null;
+  cliquesNaoMarca: number | null;
+};
+
+/** 025 — a fatia de marca de um projeto, dia a dia, no dia que a corrida acabou de medir. */
+export type DiaDeMarca = {
+  dia: string;
+  impressoesPais: number;
+  cliquesPais: number;
+  impressoesMarca: number;
+  cliquesMarca: number;
+  impressoesNaoMarca: number;
+  cliquesNaoMarca: number;
+};
+
+/**
+ * 025 — grava as sete colunas de marca sobre os dias que JÁ TÊM total.
+ *
+ * `UPDATE`, nunca `INSERT` (D6): reusar `gravarDiasGsc` obrigaria a passar `impressoes`/`cliques`,
+ * que esta chamada não tem — e o `ON CONFLICT DO UPDATE` dela sobrescreveria o total de ~477 dias
+ * com os números do CORTE DE PAÍS, movendo a série de 8 meses e a célula `visitante` da ficha.
+ *
+ * Dia sem linha de total é PULADO e volta contado em `semLinhaDeTotal`: dia sem total não tem
+ * denominador, e inventar a linha criaria um dia com fatia e sem site. Alto na primeira corrida é
+ * o esperado — a janela de marca pede 480 dias e a série do total só existe desde 11/01/2026.
+ *
+ * Um único UPDATE ... FROM (VALUES ...) pelo mesmo motivo do INSERT em lote acima: 480 viagens ao
+ * banco por projeto transformariam a corrida em minutos de rede.
+ */
+export async function gravarMarcaGsc(
+  projeto: string,
+  pais: string,
+  dias: DiaDeMarca[]
+): Promise<{ atualizados: number; semLinhaDeTotal: number }> {
+  if (!dias.length) return { atualizados: 0, semLinhaDeTotal: 0 };
   await ensure();
-  const r = await pool().query<{ dia: string; impressoes: number; cliques: number; posicao: number | null }>(
-    `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, impressoes, cliques, posicao
+  const valores: unknown[] = [projeto, pais];
+  const tuplas = dias.map((d, i) => {
+    const b = i * 7 + 2;
+    valores.push(
+      d.dia,
+      d.impressoesPais,
+      d.cliquesPais,
+      d.impressoesMarca,
+      d.cliquesMarca,
+      d.impressoesNaoMarca,
+      d.cliquesNaoMarca
+    );
+    return `($${b + 1}::date, $${b + 2}::int, $${b + 3}::int, $${b + 4}::int, $${b + 5}::int, $${b + 6}::int, $${b + 7}::int)`;
+  });
+  const r = await pool().query(
+    `UPDATE hub_gsc_dia AS g SET
+       pais = $2,
+       impressoes_pais = v.impressoes_pais,
+       cliques_pais = v.cliques_pais,
+       impressoes_marca = v.impressoes_marca,
+       cliques_marca = v.cliques_marca,
+       impressoes_nao_marca = v.impressoes_nao_marca,
+       cliques_nao_marca = v.cliques_nao_marca
+     FROM (VALUES ${tuplas.join(", ")})
+       AS v(dia, impressoes_pais, cliques_pais, impressoes_marca, cliques_marca,
+            impressoes_nao_marca, cliques_nao_marca)
+     WHERE g.projeto = $1 AND g.dia = v.dia`,
+    valores
+  );
+  const atualizados = r.rowCount ?? 0;
+  return { atualizados, semLinhaDeTotal: dias.length - atualizados };
+}
+
+/** A série gravada de um projeto, em ordem cronológica. Assinatura inalterada desde a 021; desde a
+ *  025 o retorno traz também as sete colunas de marca, todas `null` para quem não tem lista. */
+export async function lerDiasGsc(projeto: string, inicio?: string, fim?: string): Promise<DiaSeparado[]> {
+  await ensure();
+  const r = await pool().query<DiaSeparado>(
+    `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, impressoes, cliques, posicao,
+            pais,
+            impressoes_pais AS "impressoesPais", cliques_pais AS "cliquesPais",
+            impressoes_marca AS "impressoesMarca", cliques_marca AS "cliquesMarca",
+            impressoes_nao_marca AS "impressoesNaoMarca", cliques_nao_marca AS "cliquesNaoMarca"
        FROM hub_gsc_dia
       WHERE projeto = $1
         AND ($2::date IS NULL OR dia >= $2::date)

@@ -267,6 +267,78 @@ export async function gscSeries(
   }
 }
 
+/** O corte de consulta de uma perna da 025. Ausente = a perna do TOTAL do país. */
+export type CorteDeConsulta = { modo: "inclui" | "exclui"; padrao: string };
+
+/**
+ * 025 — a série diária com corte de PAÍS e filtro de consulta opcional. As três pernas de
+ * marca/não-marca saem daqui, todas na mesma corrida e na mesma janela (D13).
+ *
+ * Função nova em vez de mais dois parâmetros em `gscSeries()`: aquela alimenta o portfólio inteiro
+ * (a célula `visitante` dos 17 projetos), e um parâmetro a mais numa função com dois defaults
+ * posicionais é o tipo de mudança que move números de outra feature sem ninguém pedir.
+ *
+ * O corte de país vale para as TRÊS pernas (D2). Com o total sem corte a soma jamais fecharia, e a
+ * diferença mediria o próprio corte em vez da anonimização — que é o que se quer saber.
+ *
+ * Mesmo contrato de erro da 021, e não colapsar os dois: `null` é ausência estrutural (env
+ * desligada ou host fora de toda propriedade, conserto é domínio) e `{erro}` é falha transitória.
+ */
+export async function gscSerieFiltrada(
+  siteUrl: string,
+  pais: string,
+  janela: { inicio: string; fim: string },
+  corte?: CorteDeConsulta,
+): Promise<GscSeries> {
+  const clientP = getClient();
+  if (!clientP) return null;
+  try {
+    const client = await clientP;
+    const host = new URL(siteUrl).hostname;
+    const property = resolveProperty(host, await listSites(client));
+    if (!property) return null;
+    const filters: { dimension: string; operator: string; expression: string }[] = [
+      { dimension: "page", operator: "contains", expression: `https://${host}/` },
+      { dimension: "country", operator: "equals", expression: pais },
+    ];
+    // `(?i)` prefixado aqui e não gravado no padrão: o RE2 do Search Console não aceita flags
+    // externas, e a tela precisa do mesmo padrão SEM elas para o `new RegExp(padrao, "i")` da D3.
+    if (corte)
+      filters.push({
+        dimension: "query",
+        operator: corte.modo === "inclui" ? "includingRegex" : "excludingRegex",
+        expression: `(?i)${corte.padrao}`,
+      });
+    const res = await client.request<{
+      rows?: { keys: string[]; clicks: number; impressions: number; position: number }[];
+    }>({
+      url: `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
+      method: "POST",
+      data: {
+        startDate: janela.inicio,
+        endDate: janela.fim,
+        dimensions: ["date"],
+        dimensionFilterGroups: [{ filters }],
+        // 2000 pelo mesmo motivo da `queryTimeseries`: a janela de marca pede os 480 dias que o
+        // GSC guarda, e um teto que quase encosta trunca sem erro — a perna nasceria curta e a
+        // conferência acusaria um resíduo que é do teto, não da anonimização.
+        rowLimit: 2000,
+      },
+    });
+    return {
+      property,
+      days: (res.data.rows ?? []).map((r) => ({
+        date: r.keys[0],
+        clicks: r.clicks,
+        impressions: r.impressions,
+        position: r.position,
+      })),
+    };
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+  }
+}
+
 export type GscStatus =
   | { state: "off" }
   | { state: "error"; message: string }
