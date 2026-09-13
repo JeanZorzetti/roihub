@@ -1,0 +1,8 @@
+File type,Total requests ratio
+JavaScript,0.3589
+Other file type,0.2440
+HTML,0.1633
+Image,0.1331
+JSON,0.0484
+CSS,0.0323
+Unknown (failed requests),0.0202

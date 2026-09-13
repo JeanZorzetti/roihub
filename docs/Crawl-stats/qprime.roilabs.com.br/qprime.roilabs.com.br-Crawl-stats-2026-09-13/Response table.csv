@@ -1,0 +1,4 @@
+Response,Total requests ratio
+OK (200),0.8846
+Not found (404),0.0962
+Not modified (304),0.0192
