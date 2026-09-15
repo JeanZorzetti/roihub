@@ -147,8 +147,8 @@ cliente); o e-mail de novo ticket continua chegando.
 
 ### Key Entities
 
-- **Aviso**: mensagem ao dono disparada por um evento. Atributos: tipo (lead novo | ticket aberto
-  | resposta do cliente), produto de origem, conteúdo resumido, link para agir. Não é gravado.
+- **Aviso**: mensagem ao dono disparada por um evento. Atributos: tipo (lead novo | ticket novo |
+  cliente respondeu), produto de origem, conteúdo resumido, link para agir. Não é gravado.
 - **Lead** (já existe no hub): pipeline, origem, nome, e-mail, telefone e o identificador externo
   que detecta reenvio.
 - **Ticket de suporte** (já existe em cada produto): assunto, categoria, prioridade, organização
