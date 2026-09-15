@@ -24,7 +24,10 @@ export function middleware(req: NextRequest) {
 
   // Ingestão de leads: mesmo padrão do autopublish, segredo PRÓPRIO. Reusar o
   // CRON_SECRET daria a quem publica artigo o direito de gravar lead.
-  if (req.nextUrl.pathname === "/api/crm/leads") {
+  //
+  // `/api/avisos/ticket` (026) divide este segredo pela regra de cima: quem já grava lead no CRM não
+  // ganha nada novo podendo mandar uma mensagem ao dono, e sirius e estetia já o têm para o lead.
+  if (req.nextUrl.pathname === "/api/crm/leads" || req.nextUrl.pathname === "/api/avisos/ticket") {
     return authorized(req.headers.get("authorization"), process.env.CRM_INGEST_SECRET ?? "")
       ? NextResponse.next()
       : NextResponse.json({ error: "unauthorized" }, { status: 401 });
