@@ -87,3 +87,8 @@ ficou aberta no Technical Context.
   falta env" — o "entregue" é falso e é corrigido no mesmo trabalho.
 - **Alternatives considered**: reescrever o helper de lead da Sirius no `main` atual — o commit
   existe, tem 101 linhas e é o mesmo da Estetia; reescrever só arrisca divergir.
+- **Achado na execução (15/09)**: o cherry-pick conflitou em
+  `app/api/leads/capture-calculator/route.ts`, apagada no `main` da Sirius em 24/08 (`cbc3f32`,
+  "rotas de API sem chamador"). Nada no `main` chama essa rota, e a captação pública é só
+  `/api/contact`. A remoção foi mantida e só o lead de contato entrou (`bcb2c86`). Na Estetia a
+  calculadora tem chamador (`components/lead-capture-modal.tsx`) e segue avisando.

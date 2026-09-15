@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-15
 
-**Status**: Draft
+**Status**: Em produção desde 15/09/2026 — falta o bot e o ambiente (T021) e a verificação do quickstart (T022)
 
 **Input**: User description: "Quero criar uma nova feature no hub para chegar notificações no meu telegram acerca dos projetos" — escopo fechado na conversa: "Lead novo, ticket de suporte, da sirius e da estetia"
 
@@ -15,7 +15,7 @@ dois chega a ele na hora:
 
 | Evento | Onde nasce | Como o dono fica sabendo hoje |
 |---|---|---|
-| Lead novo | formulário de contato e calculadora de ROI dos sites | abrindo o CRM do hub — **e nem isso, ver abaixo** |
+| Lead novo | formulário de contato (Sirius e Estetia) e calculadora de ROI (Estetia) | abrindo o CRM do hub — **e nem isso, ver abaixo** |
 | Ticket de suporte | área de suporte do cliente logado, dentro de cada produto | e-mail para `suporte@roilabs.com.br` |
 
 O hub já é o destino dos leads da casa (ingestão autenticada, pipelines `sirius` e `estetiacrm`
@@ -31,7 +31,8 @@ foi escrito em 01/09 nos dois produtos e **nunca foi para a produção**.
   só no clone local, 1 commit à frente do `origin/main`.
 - **Sirius** — o commit equivalente `9a0b5e81` está só em `C:\dev\sirius`, um clone 27 commits
   atrás do `origin/main`. O clone em uso (`CRM/crm-project`, em dia com o `origin`) não tem esse
-  código.
+  código. E nesses 27 commits a rota da calculadora da Sirius saiu como código morto, sem chamador
+  (`cbc3f32`, 24/08): na Sirius o lead nasce só no formulário de contato.
 
 Consequência direta: um aviso de lead construído só no hub **nasce mudo** — passaria em todo
 teste local e nunca tocaria em produção, porque não há lead dessas pipelines para avisar. Levar
@@ -41,7 +42,7 @@ esses dois commits à produção é **pré-requisito da história 1**, não deta
 
 ### User Story 1 — Lead novo chega no Telegram (Priority: P1)
 
-Um visitante preenche o formulário de contato ou a calculadora de ROI no site da Sirius ou da
+Um visitante preenche o formulário de contato da Sirius ou da Estetia, ou a calculadora de ROI da
 Estetia. Em menos de um minuto o dono recebe no Telegram de qual produto e de qual formulário o
 lead veio, o nome, o e-mail, o telefone quando houver e o caminho para o CRM do hub — o
 suficiente para responder sem abrir outra tela.
@@ -50,8 +51,9 @@ suficiente para responder sem abrir outra tela.
 ambos depende de responder enquanto o visitante ainda lembra que preencheu. É também a história
 com o buraco maior: hoje o lead não chega nem ao hub.
 
-**Independent Test**: enviar um lead de teste por cada formulário dos dois sites em produção
-(4 envios) e conferir 4 mensagens no Telegram e 4 cards no CRM do hub.
+**Independent Test**: enviar um lead de teste por cada formulário em produção — contato na
+Sirius; contato e calculadora na Estetia (3 envios) — e conferir 3 mensagens no Telegram e 3 cards
+no CRM do hub.
 
 **Acceptance Scenarios**:
 
@@ -125,8 +127,9 @@ cliente); o e-mail de novo ticket continua chegando.
 - **FR-003**: O sistema NÃO DEVE enviar mensagem de lead de nenhuma outra pipeline.
 - **FR-004**: A mensagem de lead DEVE conter produto, origem, nome, e-mail, telefone (quando
   houver) e o caminho para o CRM do hub.
-- **FR-005**: Os sites da Sirius e da Estetia DEVEM entregar em produção os leads de contato e da
-  calculadora de ROI ao CRM do hub (pré-requisito da FR-001, hoje não atendido).
+- **FR-005**: Os sites DEVEM entregar em produção ao CRM do hub os leads do formulário de contato
+  (Sirius e Estetia) e da calculadora de ROI (Estetia) — pré-requisito da FR-001, que não era
+  atendido até 15/09.
 - **FR-006**: A abertura de um ticket de suporte na Sirius ou na Estetia DEVE gerar uma mensagem
   com produto, organização, assunto, categoria, prioridade e link para o ticket no painel de
   staff do produto.
@@ -159,8 +162,8 @@ cliente); o e-mail de novo ticket continua chegando.
 
 ### Measurable Outcomes
 
-- **SC-001**: Dos 4 leads de teste enviados em produção (contato e calculadora, nos dois sites),
-  chegam exatamente 4 mensagens — nenhuma faltando, nenhuma duplicada.
+- **SC-001**: Dos 3 leads de teste enviados em produção (contato na Sirius; contato e calculadora
+  na Estetia), chegam exatamente 3 mensagens — nenhuma faltando, nenhuma duplicada.
 - **SC-002**: Cada mensagem chega em até 60 segundos depois do envio do formulário ou da
   abertura do ticket.
 - **SC-003**: Com o envio de avisos quebrado de propósito (credencial inválida), 100% dos leads e

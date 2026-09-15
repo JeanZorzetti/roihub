@@ -100,7 +100,7 @@ instrumentação com "0 leads" de um projeto instrumentado fabrica uma taxa com 
 | Handoff recursivo no corpus (esta pasta é buscável) | `lib/corpus.mjs` | ENTREGUE |
 | Filtro de lead de teste (`ehLeadDeTeste`) | `lib/funil.mjs` + teste | ENTREGUE 01/09 |
 | Leitura do banco da Atma (`FONTES_PROPRIAS`) | `scripts/funil.mjs` | ENTREGUE 01/09 |
-| POST ao CRM do hub no sirius e no estetiacrm | `lib/roihub-crm.ts` dos 2 repos | ENTREGUE 01/09 · **falta env** |
+| POST ao CRM do hub no sirius e no estetiacrm | `lib/roihub-crm.ts` dos 2 repos | commitado 01/09 e **nunca publicado** (medido no git em 15/09); no ar desde 15/09 pela spec 026 — estetia `88352ee`, sirius `bcb2c86` · **falta env** |
 | Plano até o fim, com critério de pronto | `02-plano-ate-o-fim.md` | É O QUE FALTA |
 
 Comando:
@@ -144,8 +144,8 @@ pipeline foi TRABALHADO e mesmo assim fechou zero. Não é um zero de "ninguém 
 | projeto | captação | grava? | o que faltava de verdade |
 |---|---|---|---|
 | `atma` (535 cliques) | funil de paciente | ✅ `patient_leads`, 43 reais | **o hub LER** — feito |
-| `sirius` (56) | `/api/contact` + calculadora | ❌ só e-mail / Resend | POST ao hub — feito, falta env |
-| `estetiacrm` (23) | as mesmas duas (fork) | ❌ só e-mail / Resend | POST ao hub — feito, falta env |
+| `sirius` (56) | `/api/contact` — a rota da calculadora saiu como código morto, sem chamador, em 24/08 (`cbc3f32`) | ❌ só e-mail / Resend | POST ao hub — no ar desde 15/09, falta env |
+| `estetiacrm` (23) | as mesmas duas (fork) | ❌ só e-mail / Resend | POST ao hub — no ar desde 15/09, falta env |
 
 ## As armadilhas já pagas — não pise de novo
 

@@ -36,7 +36,11 @@ Princípio IV (23:30–01:00 e 08:00–08:45 BRT).
 npm test
 ```
 
-Esperado: tudo verde, com `test/avisos.test.mjs` na contagem.
+Esperado: tudo verde, com `test/avisos.test.mjs` na contagem (873 testes em 15/09).
+
+Para bater nas rotas localmente, suba o `next dev` **pelo PowerShell**. Pelo Git Bash
+(`/c/Users/...`) o servidor devolveu 404 em toda rota de API — inclusive na `/api/crm/leads`, que
+funciona em produção. Medido em 15/09; pelo PowerShell as mesmas chamadas responderam certo.
 
 ## 3. Rota de ticket, direto (sem produto)
 
@@ -55,9 +59,10 @@ Invoke-RestMethod -Method Post https://hub.roilabs.com.br/api/avisos/ticket -Hea
 
 ## 4. Lead — SC-001 e SC-004
 
-1. Envie um lead por formulário — contato e calculadora de ROI, na Sirius e na Estetia — com nome
-   começando por `TESTE 026`. **Esperado**: 4 mensagens "Lead novo" e 4 cards no CRM do hub
-   (`node --env-file=.env scripts/funil.mjs --ver`).
+1. Envie um lead por formulário — contato na Sirius; contato e calculadora de ROI na Estetia — com
+   nome começando por `TESTE 026`. **Esperado**: 3 mensagens "Lead novo" e 3 cards no CRM do hub
+   (`node --env-file=.env scripts/funil.mjs --ver`). A Sirius não tem calculadora que capte lead:
+   a rota saiu como código morto em 24/08.
 2. Reenvio: repita um `POST /api/crm/leads` com o mesmo `external_id`. **Esperado**:
    `200 { created: false }`, nenhuma mensagem.
 3. Outra pipeline: `POST /api/crm/leads` com `"pipeline":"atma"`. **Esperado**: `201`, nenhuma

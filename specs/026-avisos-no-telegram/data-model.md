@@ -25,8 +25,8 @@ Derivado do `SupportTicket` recém-criado no produto, recebido em `POST /api/avi
 |---|---|---|
 | produto | `produto` do payload | `sirius` ou `estetiacrm`; outro valor → 400 |
 | ticket_id | `ticket.id` | 1–64 caracteres `[A-Za-z0-9-]`; outro valor → 400 |
-| organização | `ticket.organization.name` | obrigatória, até 200 caracteres |
-| assunto | `ticket.subject` | obrigatório, até 200 caracteres (o produto já limita a 5–200) |
+| organização | `ticket.organization.name` | obrigatória; cortada em 200 caracteres |
+| assunto | `ticket.subject` | obrigatório; cortado em 200 caracteres (o produto já limita a 5–200) |
 | categoria | `ticket.category` | rótulo do painel; valor desconhecido sai cru |
 | prioridade | `ticket.priority` | `HIGH`/`URGENT` vão para o título; `LOW`/`NORMAL` ficam no corpo |
 

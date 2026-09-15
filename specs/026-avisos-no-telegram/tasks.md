@@ -29,7 +29,7 @@ description: "Task list — 026 avisos no Telegram"
 
 **Purpose**: ambiente declarado e vocabulário fixado
 
-- [ ] T001 hub: declarar `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` sem valor em `.env.example`, com comentário do porquê (avisos da 026; sem elas o lead continua gravando e a rota de ticket responde 503)
+- [X] T001 hub: declarar `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` sem valor em `.env.example`, com comentário do porquê (avisos da 026; sem elas o lead continua gravando e a rota de ticket responde 503)
 - [x] T002 [P] hub: `GLOSSARIO.md` com os termos dos avisos (entregue na fase de plano, skill ux-writing)
 
 ---
@@ -40,8 +40,8 @@ description: "Task list — 026 avisos no Telegram"
 
 **⚠️ CRITICAL**: nenhuma rota do hub chama o Telegram antes desta fase
 
-- [ ] T003 hub: escrever `test/avisos.test.mjs` (deve falhar) cobrindo `escaparHtml` (`&`, `<`, `>`), `faltandoTelegram(env)` (ausente, vazio, só espaços → nomes) e `enviarTelegram(texto, env, fetchImpl)`: corpo com `chat_id`, `parse_mode: "HTML"` e prévia de link desligada; `{ ok: false, erro: "telegram 401" }` quando a Bot API recusa; `{ ok: false, erro: "telegram indisponível" }` quando o `fetch` lança ou estoura 8 s; `{ ok: false, erro }` com os nomes quando falta ambiente, sem chamar o `fetch`; e **nenhum `erro` contendo o token**. Registrar o arquivo na lista de `test` do `package.json`
-- [ ] T004 hub: implementar `escaparHtml`, `faltandoTelegram` e `enviarTelegram` em `lib/avisos.mjs` até T003 passar (R5, R6)
+- [X] T003 hub: escrever `test/avisos.test.mjs` (deve falhar) cobrindo `escaparHtml` (`&`, `<`, `>`), `faltandoTelegram(env)` (ausente, vazio, só espaços → nomes) e `enviarTelegram(texto, env, fetchImpl)`: corpo com `chat_id`, `parse_mode: "HTML"` e prévia de link desligada; `{ ok: false, erro: "telegram 401" }` quando a Bot API recusa; `{ ok: false, erro: "telegram indisponível" }` quando o `fetch` lança ou estoura 8 s; `{ ok: false, erro }` com os nomes quando falta ambiente, sem chamar o `fetch`; e **nenhum `erro` contendo o token**. Registrar o arquivo na lista de `test` do `package.json`
+- [X] T004 hub: implementar `escaparHtml`, `faltandoTelegram` e `enviarTelegram` em `lib/avisos.mjs` até T003 passar (R5, R6)
 
 **Checkpoint**: `npm test` verde com `test/avisos.test.mjs` na contagem
 
@@ -51,21 +51,21 @@ description: "Task list — 026 avisos no Telegram"
 
 **Goal**: todo lead novo de `sirius` e `estetiacrm` gravado no hub vira uma mensagem "Lead novo"
 
-**Independent Test**: quickstart §4 — 4 leads pelos formulários dos dois sites, 4 mensagens, 4 cards; reenvio e outra pipeline sem mensagem
+**Independent Test**: quickstart §4 — 3 leads (contato na Sirius; contato e calculadora na Estetia), 3 mensagens, 3 cards; reenvio e outra pipeline sem mensagem
 
 ### Pré-requisito nos produtos (os leads precisam chegar ao hub)
 
-- [ ] T005 [P] [US1] estetia: publicar o commit `88352ee` (`lib/roihub-crm.ts`, `app/api/contact/route.ts`, `app/api/leads/capture-calculator/route.ts`, `.env.example`) — `git push origin main`, depois de conferir que segue 1 à frente e 0 atrás (R9)
-- [ ] T006 [P] [US1] sirius: `git fetch C:\dev\sirius main` e `git cherry-pick 9a0b5e81` no `main` do `CRM/crm-project`; resolver conflito em `app/api/contact/route.ts` e `app/api/leads/capture-calculator/route.ts` se houver; conferir que o commit leva só os 4 arquivos do original; checar tipos só dos arquivos tocados (o CI já estava vermelho antes); `git push origin main` (R9)
+- [X] T005 [P] [US1] estetia: publicar o commit `88352ee` (`lib/roihub-crm.ts`, `app/api/contact/route.ts`, `app/api/leads/capture-calculator/route.ts`, `.env.example`) — `git push origin main`, depois de conferir que segue 1 à frente e 0 atrás (R9)
+- [X] T006 [P] [US1] sirius: `git fetch C:\dev\sirius main` e `git cherry-pick 9a0b5e81` no `main` do `CRM/crm-project`; resolver conflito em `app/api/contact/route.ts` e `app/api/leads/capture-calculator/route.ts` se houver; conferir que o commit leva só os 4 arquivos do original; checar tipos só dos arquivos tocados (o CI já estava vermelho antes); `git push origin main` (R9). **Executado**: conflito em `capture-calculator/route.ts`, apagada como código morto em `cbc3f32` — remoção mantida, entrou só o contato (`bcb2c86`); `tsc` do projeto com 0 erros
 
 ### Testes (devem falhar antes da implementação)
 
-- [ ] T007 [US1] hub: acrescentar a `test/avisos.test.mjs` os casos de `avisoDeLead(lead, pipelines)`: `null` para pipeline fora de `["sirius", "estetiacrm"]`; título "🟢 <b>Lead novo · Sirius CRM</b>" e "· Estetia CRM" (nome da pipeline sem o parêntese); canal "pelo formulário de contato", "pela calculadora de ROI" e "via <valor>" para origem desconhecida; linhas de e-mail e telefone omitidas quando nulas; nome com `<b>&` escapado; link "Abrir no CRM do hub" (contracts/avisos.md §2)
+- [X] T007 [US1] hub: acrescentar a `test/avisos.test.mjs` os casos de `avisoDeLead(lead, pipelines)`: `null` para pipeline fora de `["sirius", "estetiacrm"]`; título "🟢 <b>Lead novo · Sirius CRM</b>" e "· Estetia CRM" (nome da pipeline sem o parêntese); canal "pelo formulário de contato", "pela calculadora de ROI" e "via <valor>" para origem desconhecida; linhas de e-mail e telefone omitidas quando nulas; nome com `<b>&` escapado; link "Abrir no CRM do hub" (contracts/avisos.md §2)
 
 ### Implementação
 
-- [ ] T008 [US1] hub: implementar `avisoDeLead` em `lib/avisos.mjs` até T007 passar (R1, R7, R8)
-- [ ] T009 [US1] hub: em `app/api/crm/leads/route.ts`, quando `created` for `true`, montar `avisoDeLead(parsed.lead, pipelines)` e, se houver texto, enviar dentro de `after()` de `next/server`; falha vira `console.error("[avisos] " + erro)` — nunca muda o status da resposta nem devolve 503 por falta de `TELEGRAM_*` (Complexity Tracking do plano)
+- [X] T008 [US1] hub: implementar `avisoDeLead` em `lib/avisos.mjs` até T007 passar (R1, R7, R8)
+- [X] T009 [US1] hub: em `app/api/crm/leads/route.ts`, quando `created` for `true`, montar `avisoDeLead(parsed.lead, pipelines)` e, se houver texto, enviar dentro de `after()` de `next/server`; falha vira `console.error("[avisos] " + erro)` — nunca muda o status da resposta nem devolve 503 por falta de `TELEGRAM_*` (Complexity Tracking do plano)
 
 **Checkpoint**: US1 completa no código; prova em produção depende de T020–T022
 
@@ -79,20 +79,20 @@ description: "Task list — 026 avisos no Telegram"
 
 ### Testes (devem falhar antes da implementação)
 
-- [ ] T010 [US2] hub: acrescentar a `test/avisos.test.mjs` os casos de `parseAvisoTicket(body)` — `produto` fora de `sirius`/`estetiacrm`, `tipo` fora de `novo`/`resposta`, `ticket_id` fora de `[A-Za-z0-9-]{1,64}`, `assunto` e `organizacao` vazios ou acima de 200 depois de aparar → `{ ok: false, erro }`; categoria e prioridade opcionais — e de `avisoDeTicket(aviso, pipelines)`: normal ("🎫 <b>Ticket novo · Estetia CRM</b>" e corpo "Dúvida · prioridade normal"), alta ("🟠 <b>Prioridade alta · …"), urgente ("🔴 <b>Urgente · …", corpo só com a categoria), resposta ("💬 <b>Cliente respondeu · …", sem categoria nem prioridade), enum desconhecido sai cru, assunto entre aspas curvas e escapado, link `https://siriuscrm.com.br/admin/support/<id>` e `https://estetiacrm.com.br/admin/support/<id>` com o texto "Responder no painel" (contracts/avisos.md §1–2)
+- [X] T010 [US2] hub: acrescentar a `test/avisos.test.mjs` os casos de `parseAvisoTicket(body)` — `produto` fora de `sirius`/`estetiacrm`, `tipo` fora de `novo`/`resposta`, `ticket_id` fora de `[A-Za-z0-9-]{1,64}`, `assunto` e `organizacao` vazios depois de aparar → `{ ok: false, erro }` (acima de 200 são cortados, como no `parseLead`); categoria e prioridade opcionais — e de `avisoDeTicket(aviso, pipelines)`: normal ("🎫 <b>Ticket novo · Estetia CRM</b>" e corpo "Dúvida · prioridade normal"), alta ("🟠 <b>Prioridade alta · …"), urgente ("🔴 <b>Urgente · …", corpo só com a categoria), resposta ("💬 <b>Cliente respondeu · …", sem categoria nem prioridade), enum desconhecido sai cru, assunto entre aspas curvas e escapado, link `https://siriuscrm.com.br/admin/support/<id>` e `https://estetiacrm.com.br/admin/support/<id>` com o texto "Responder no painel" (contracts/avisos.md §1–2)
 
 ### Implementação — hub
 
-- [ ] T011 [US2] hub: implementar `parseAvisoTicket` e `avisoDeTicket` em `lib/avisos.mjs` até T010 passar (R4, R8)
-- [ ] T012 [US2] hub: criar `app/api/avisos/ticket/route.ts` (`runtime = "nodejs"`, `dynamic = "force-dynamic"`): JSON inválido → 400; `parseAvisoTicket` falhou → 400 `{ error }`; `faltandoTelegram(process.env)` → 503 `{ error: "missing-env", fields }`; `enviarTelegram` → 200 `{ enviado: true }` ou 502 `{ error }`
-- [ ] T013 [US2] hub: incluir `/api/avisos/ticket` no bloco do `CRM_INGEST_SECRET` em `middleware.ts`, com o porquê de não ter segredo próprio (R3: capacidade menor que gravar lead)
+- [X] T011 [US2] hub: implementar `parseAvisoTicket` e `avisoDeTicket` em `lib/avisos.mjs` até T010 passar (R4, R8)
+- [X] T012 [US2] hub: criar `app/api/avisos/ticket/route.ts` (`runtime = "nodejs"`, `dynamic = "force-dynamic"`): JSON inválido → 400; `parseAvisoTicket` falhou → 400 `{ error }`; `faltandoTelegram(process.env)` → 503 `{ error: "missing-env", fields }`; `enviarTelegram` → 200 `{ enviado: true }` ou 502 `{ error }`
+- [X] T013 [US2] hub: incluir `/api/avisos/ticket` no bloco do `CRM_INGEST_SECRET` em `middleware.ts`, com o porquê de não ter segredo próprio (R3: capacidade menor que gravar lead)
 
 ### Implementação — produtos (dependem de T006 na sirius)
 
-- [ ] T014 [P] [US2] sirius: acrescentar `avisarTicketNoRoihub(input)` a `lib/roihub-crm.ts` — mesmo molde de `sendLeadToRoihub` (`after()`, lê `ROIHUB_CRM_URL`/`ROIHUB_CRM_SECRET`, `POST /api/avisos/ticket` com `Authorization: Bearer`, nunca lança, loga só o status)
-- [ ] T015 [US2] sirius: chamar `avisarTicketNoRoihub` em `app/api/support/tickets/route.ts` depois do `create` (`tipo: "novo"`, `ticket_id`, `assunto`, `organizacao: ticket.organization.name`, `categoria`, `prioridade`) e em `app/api/support/tickets/[id]/messages/route.ts` depois da transação, só quando `!ctx.isRoiLabsStaff` (`tipo: "resposta"`)
-- [ ] T016 [P] [US2] estetia: o mesmo de T014 em `lib/roihub-crm.ts`
-- [ ] T017 [US2] estetia: o mesmo de T015 em `app/api/support/tickets/route.ts` e `app/api/support/tickets/[id]/messages/route.ts`
+- [X] T014 [P] [US2] sirius: acrescentar `avisarTicketNoRoihub(input)` a `lib/roihub-crm.ts` — mesmo molde de `sendLeadToRoihub` (`after()`, lê `ROIHUB_CRM_URL`/`ROIHUB_CRM_SECRET`, `POST /api/avisos/ticket` com `Authorization: Bearer`, nunca lança, loga só o status)
+- [X] T015 [US2] sirius: chamar `avisarTicketNoRoihub` em `app/api/support/tickets/route.ts` depois do `create` (`tipo: "novo"`, `ticket_id`, `assunto`, `organizacao: ticket.organization.name`, `categoria`, `prioridade`) e em `app/api/support/tickets/[id]/messages/route.ts` depois da transação, só quando `!ctx.isRoiLabsStaff` (`tipo: "resposta"`)
+- [X] T016 [P] [US2] estetia: o mesmo de T014 em `lib/roihub-crm.ts`
+- [X] T017 [US2] estetia: o mesmo de T015 em `app/api/support/tickets/route.ts` e `app/api/support/tickets/[id]/messages/route.ts`
 
 **Checkpoint**: US2 completa no código; e-mails de ticket intocados (FR-013)
 
@@ -100,9 +100,9 @@ description: "Task list — 026 avisos no Telegram"
 
 ## Phase 5: Polish & entrega
 
-- [ ] T018 [P] hub: corrigir `handoff/funil-seo/00-LEIA-PRIMEIRO.md` (linhas da tabela de entregas e do funil de `sirius`/`estetiacrm`): o "ENTREGUE 01/09" era falso — o código só subiu em 15/09 (T005, T006); segue faltando o ambiente
-- [ ] T019 hub: `npm test` verde (suíte inteira) e revisão dos portões — teste registrado, nenhum import de `data/projects.json`, nenhum `console.*` que imprima URL da Bot API, token, chat id ou objeto de erro do `fetch`
-- [ ] T020 publicar na ordem do plano: hub (fora de 23:30–01:00 e 08:00–08:45 BRT), depois sirius e estetia com T014–T017
+- [X] T018 [P] hub: corrigir `handoff/funil-seo/00-LEIA-PRIMEIRO.md` (linhas da tabela de entregas e do funil de `sirius`/`estetiacrm`): o "ENTREGUE 01/09" era falso — o código só subiu em 15/09 (T005, T006); segue faltando o ambiente
+- [X] T019 hub: `npm test` verde (suíte inteira) e revisão dos portões — teste registrado, nenhum import de `data/projects.json`, nenhum `console.*` que imprima URL da Bot API, token, chat id ou objeto de erro do `fetch`
+- [X] T020 publicar na ordem do plano: hub (fora de 23:30–01:00 e 08:00–08:45 BRT), depois sirius e estetia com T014–T017
 - [ ] T021 **dono**: criar o bot e preencher o ambiente dos 3 serviços no EasyPanel (quickstart §1) — antes disso, rodar quickstart §6 (SC-003)
 - [ ] T022 rodar quickstart §2–5 e marcar SC-001, SC-002, SC-004 e SC-005
 
@@ -177,3 +177,7 @@ Task: "T016 estetia: avisarTicketNoRoihub em lib/roihub-crm.ts"
 - 22 tarefas: 2 de setup (1 já feita), 2 fundacionais, 5 da US1, 8 da US2, 5 de polish
 - Commit por grupo lógico, em inglês, com a linha de coautoria
 - Na sirius, nunca `git add -A`: o clone tem `handoff.md` apagado e `.specify/`, `.claude/skills/` e `docs/screenshots/` não rastreados, que são do dono
+- **Publicado em 15/09**: hub `bf50e54`; estetia `88352ee` + `7cf28cf` + `3c1845a`; sirius `bcb2c86` + `78971cd`
+- O CI da estetia ficou vermelho no `7cf28cf`: `lib/logger.test.ts` proíbe `console.*` em código de runtime, e o `lib/roihub-crm.ts` (o helper de lead de 01/09 e o de ticket copiado dele) usava `console.error`. Corrigido em `3c1845a` com o `logger` do repo. O job de build, que é a trava do deploy, tinha passado
+- ⚠️ O `main` da sirius tem regra de "mudança só por pull request" e check obrigatório "All Checks Passed". O push de 15/09 passou porque a conta do dono pode ignorar a regra — o GitHub registrou o bypass
+- Verificação local da rota: `next dev` pelo PowerShell (pelo Git Bash toda rota de API deu 404); sem segredo, segredo errado, produto fora do contrato, JSON quebrado e chamada válida com token falso responderam 401, 401, 400, 400 e 502 (`telegram 401: Unauthorized`), como no contrato, e o token falso não apareceu no log

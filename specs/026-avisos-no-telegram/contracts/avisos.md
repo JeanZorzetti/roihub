@@ -12,8 +12,8 @@ segredo de `POST /api/crm/leads`. Sem ele: `401 { "error": "unauthorized" }`.
 | `produto` | string | sim | `"sirius"` ou `"estetiacrm"` |
 | `tipo` | string | sim | `"novo"` ou `"resposta"` |
 | `ticket_id` | string | sim | 1–64 caracteres, `[A-Za-z0-9-]` |
-| `assunto` | string | sim | aparado; 1–200 caracteres |
-| `organizacao` | string | sim | aparado; 1–200 caracteres |
+| `assunto` | string | sim | aparado; vazio → 400; acima de 200 caracteres é cortado (como no `parseLead`) |
+| `organizacao` | string | sim | aparado; vazio → 400; acima de 200 caracteres é cortado |
 | `categoria` | string | não | enum `TicketCategory`; ignorado em `resposta` |
 | `prioridade` | string | não | enum `TicketPriority`; ignorado em `resposta` |
 
@@ -38,7 +38,7 @@ Exemplo:
 | 200 | `{ "enviado": true }` | Telegram aceitou a mensagem |
 | 400 | `{ "error": "<motivo>" }` | JSON inválido ou campo fora da regra |
 | 401 | `{ "error": "unauthorized" }` | segredo ausente ou errado |
-| 502 | `{ "error": "telegram <status>" }` ou `{ "error": "telegram indisponível" }` | Telegram recusou, caiu ou passou de 8 s |
+| 502 | `{ "error": "telegram <status>: <description do Telegram>" }` ou `{ "error": "telegram indisponível" }` | Telegram recusou (ex.: `telegram 400: Bad Request: chat not found`), caiu ou passou de 8 s |
 | 503 | `{ "error": "missing-env", "fields": ["TELEGRAM_BOT_TOKEN", …] }` | ambiente do bot ausente, vazio ou só espaços |
 
 Nenhuma resposta ecoa token, chat id ou segredo.
