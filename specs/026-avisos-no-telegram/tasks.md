@@ -103,8 +103,15 @@ description: "Task list — 026 avisos no Telegram"
 - [X] T018 [P] hub: corrigir `handoff/funil-seo/00-LEIA-PRIMEIRO.md` (linhas da tabela de entregas e do funil de `sirius`/`estetiacrm`): o "ENTREGUE 01/09" era falso — o código só subiu em 15/09 (T005, T006); segue faltando o ambiente
 - [X] T019 hub: `npm test` verde (suíte inteira) e revisão dos portões — teste registrado, nenhum import de `data/projects.json`, nenhum `console.*` que imprima URL da Bot API, token, chat id ou objeto de erro do `fetch`
 - [X] T020 publicar na ordem do plano: hub (fora de 23:30–01:00 e 08:00–08:45 BRT), depois sirius e estetia com T014–T017
-- [ ] T021 **dono**: criar o bot e preencher o ambiente dos 3 serviços no EasyPanel (quickstart §1) — antes disso, rodar quickstart §6 (SC-003)
-- [ ] T022 rodar quickstart §2–5 e marcar SC-001, SC-002, SC-004 e SC-005
+- [X] T021 **dono**: criar o bot e preencher o ambiente dos 3 serviços no EasyPanel (quickstart §1) — antes disso, rodar quickstart §6 (SC-003)
+- [X] T022 rodar quickstart §2–5 e marcar SC-001, SC-002, SC-004 e SC-005. **16/09, em produção:**
+  - SC-001: os leads de contato da Sirius e de contato e calculadora da Estetia chegaram ao hub
+  - SC-002: aviso de ticket aceito pela Bot API em 1,06 s
+  - SC-003: com a Sirius ainda sem `ROIHUB_CRM_*`, o formulário respondeu 200 e o log trouxe só os nomes das variáveis
+  - SC-004: o reenvio (`created: false`) e o lead da pipeline `atma` não geraram aviso
+  - SC-005: o dono abriu e respondeu tickets nos dois produtos, sem nenhuma falha de aviso nos logs de hub, sirius e estetia
+  - Chamada sem segredo → 401. Linhas `TESTE 026` apagadas do CRM
+  - O T021 só se cumpriu por inteiro depois: na primeira verificação a Sirius estava sem `ROIHUB_CRM_URL`/`ROIHUB_CRM_SECRET`
 
 ---
 

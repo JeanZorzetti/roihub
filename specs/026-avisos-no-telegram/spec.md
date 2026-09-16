@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-15
 
-**Status**: Em produção desde 15/09/2026 — falta o bot e o ambiente (T021) e a verificação do quickstart (T022)
+**Status**: Em produção e verificado em 16/09/2026 (quickstart §2–6; resultados em tasks.md, T022)
 
 **Input**: User description: "Quero criar uma nova feature no hub para chegar notificações no meu telegram acerca dos projetos" — escopo fechado na conversa: "Lead novo, ticket de suporte, da sirius e da estetia"
 
