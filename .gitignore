@@ -8,3 +8,6 @@ next-env.d.ts
 .cache/
 __pycache__/
 .pytest_cache/
+# vigia (027): secrets do `wrangler dev` e cache local — o Telegram real mora aqui
+vigia/.dev.vars
+vigia/.wrangler/

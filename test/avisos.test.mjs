@@ -8,6 +8,8 @@ import {
   avisoDeLead,
   parseAvisoTicket,
   avisoDeTicket,
+  parseAvisoEvento,
+  avisoDeEvento,
 } from "../lib/avisos.mjs";
 
 const pipelines = JSON.parse(readFileSync(new URL("../data/pipelines.json", import.meta.url), "utf8"));
@@ -221,4 +223,102 @@ test("avisoDeTicket: enum desconhecido sai cru — inclusive 'constructor' — e
     pipelines,
   ).split("\n");
   assert.deepEqual(linhas.slice(1, 4), ["A &amp; B", "“&lt;script&gt;&amp;”", "constructor · prioridade CRITICAL"]);
+});
+
+test("avisoDeLead: Vértice avisa, sem o parêntese de 'Vértice Marketing (agência)'", () => {
+  assert.equal(
+    avisoDeLead({ ...lead, pipeline: "verticemarketing", origem: "verticemarketing:contato" }, pipelines),
+    [
+      "🟢 <b>Lead novo · Vértice Marketing</b>",
+      "Maria Souza, pelo formulário de contato",
+      "maria@exemplo.com",
+      "11 99999-0000",
+      '<a href="https://hub.roilabs.com.br/crm">Abrir no CRM do hub</a>',
+    ].join("\n"),
+  );
+});
+
+// Corpo como Atma, ROI Labs e Coopluz mandam a POST /api/avisos/evento (027, contracts/avisos.md §1).
+const corpoEvento = {
+  projeto: "atma",
+  titulo: "  🟢 Lead novo ",
+  texto: "\nMaria Souza, paciente\nmaria@exemplo.com\n",
+  caminho: "/admin/pacientes",
+};
+
+test("parseAvisoEvento aceita o contrato, apara e mantém as quebras de linha", () => {
+  assert.deepEqual(parseAvisoEvento(corpoEvento), {
+    ok: true,
+    aviso: {
+      projeto: "atma",
+      titulo: "🟢 Lead novo",
+      texto: "Maria Souza, paciente\nmaria@exemplo.com",
+      caminho: "/admin/pacientes",
+      acao: "Abrir no painel",
+    },
+  });
+});
+
+test("parseAvisoEvento recusa o que foge do contrato", () => {
+  const erro = (corpo) => parseAvisoEvento(corpo).ok;
+  assert.equal(erro(null), false);
+  assert.equal(erro({ ...corpoEvento, projeto: "sirius" }), false);
+  assert.equal(erro({ ...corpoEvento, projeto: "constructor" }), false);
+  assert.equal(erro({ ...corpoEvento, titulo: "   " }), false);
+  assert.equal(erro({ ...corpoEvento, titulo: 42 }), false);
+  // O domínio do link é do hub; o caminho não pode trocá-lo nem carregar query.
+  for (const caminho of ["//evil.com", "https://evil.com", "admin", "/admin?x=1", "/admin/<b>", `/${"a".repeat(200)}`]) {
+    assert.equal(erro({ ...corpoEvento, caminho }), false, caminho);
+  }
+  assert.equal(erro({ ...corpoEvento, caminho: `/${"a".repeat(199)}` }), true);
+});
+
+test("parseAvisoEvento corta título em 120 e texto em 3.500 com reticências; texto, caminho e ação são opcionais", () => {
+  const r = parseAvisoEvento({ projeto: "roilabs", titulo: "t".repeat(130), texto: "x".repeat(4000), acao: "a".repeat(50) });
+  assert.equal(r.aviso.titulo.length, 120);
+  assert.ok(r.aviso.texto.length <= 3500 && r.aviso.texto.endsWith("…"));
+  assert.equal(r.aviso.caminho, "");
+  assert.equal(r.aviso.acao, "a".repeat(40));
+  assert.deepEqual(parseAvisoEvento({ projeto: "coopluz", titulo: "t" }).aviso, {
+    projeto: "coopluz",
+    titulo: "t",
+    texto: "",
+    caminho: "",
+    acao: "Abrir no painel",
+  });
+});
+
+test("avisoDeEvento: título com o projeto, texto e link na base fixa do projeto", () => {
+  assert.equal(
+    avisoDeEvento(parseAvisoEvento(corpoEvento).aviso),
+    [
+      "<b>🟢 Lead novo · Atma</b>",
+      "Maria Souza, paciente",
+      "maria@exemplo.com",
+      '<a href="https://atmaadmin.roilabs.com.br/admin/pacientes">Abrir no painel</a>',
+    ].join("\n"),
+  );
+  assert.equal(
+    avisoDeEvento({ projeto: "coopluz", titulo: "🟢 Lead novo", texto: "", caminho: "/leads", acao: "Abrir no painel" }),
+    '<b>🟢 Lead novo · Coopluz</b>\n<a href="https://admin.autogestor.roilabs.com.br/leads">Abrir no painel</a>',
+  );
+});
+
+test("avisoDeEvento: não repete o projeto que já está no título e some com o link sem caminho", () => {
+  assert.equal(
+    avisoDeEvento({ projeto: "roilabs", titulo: "📊 Semana ROI Labs", texto: "12 pedidos", caminho: "", acao: "Abrir no admin" }),
+    "<b>📊 Semana ROI Labs</b>\n12 pedidos",
+  );
+});
+
+test("avisoDeEvento: título, texto e ação de fora são escapados", () => {
+  assert.equal(
+    avisoDeEvento({ projeto: "roilabs", titulo: "💰 <b>", texto: "A & B\n<i>x</i>", caminho: "/admin/pedidos", acao: "<Abrir>" }),
+    [
+      "<b>💰 &lt;b&gt; · ROI Labs</b>",
+      "A &amp; B",
+      "&lt;i&gt;x&lt;/i&gt;",
+      '<a href="https://app.roilabs.com.br/admin/pedidos">&lt;Abrir&gt;</a>',
+    ].join("\n"),
+  );
 });

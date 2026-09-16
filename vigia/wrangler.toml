@@ -1,0 +1,19 @@
+# Vigia do backend da Atma (spec 027). Publicação: quickstart §1, `npx wrangler deploy` nesta pasta.
+name = "roihub-vigia"
+main = "worker.mjs"
+compatibility_date = "2026-09-01"
+
+# 2 min, e não 1: uma escrita no KV leva alguns segundos para aparecer em outra região, e duas
+# execuções muito próximas poderiam mandar a mesma queda duas vezes (research R7).
+[triggers]
+crons = ["*/2 * * * *"]
+
+[vars]
+ALVO_URL = "https://atmaapi.roilabs.com.br/api/system/health"
+
+# TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID são secrets (`npx wrangler secret put`), nunca deste arquivo.
+
+[[kv_namespaces]]
+binding = "VIGIA"
+# Trocar pelo id que `npx wrangler kv namespace create VIGIA` devolver (quickstart §1).
+id = "PREENCHER_COM_O_ID_DO_KV"
