@@ -136,9 +136,11 @@ mensagens. Provocar uma renovação aprovada e conferir nenhuma.
 3. **Given** um pedido pago, **When** o pagamento é devolvido, **Then** chega uma mensagem de
    reembolso com o cliente e o valor.
 4. **Given** uma assinatura ativa, **When** a cobrança de renovação é recusada, **Then** chega uma
-   mensagem com o cliente, o item e o prazo até o cancelamento automático.
-5. **Given** uma assinatura ativa ou inadimplente, **When** ela é cancelada, **Then** chega uma
-   mensagem dizendo quem cancelou: o cliente ou o sistema, por falta de pagamento.
+   mensagem com o cliente, o item e a data do cancelamento automático. **When** o gateway tenta de
+   novo e recusa outra vez, **Then** nenhuma segunda mensagem é enviada.
+5. **Given** uma assinatura ativa ou inadimplente, **When** o cliente a cancela ou o sistema a
+   cancela por falta de pagamento, **Then** chega uma mensagem dizendo qual dos dois cancelou.
+   **When** a equipe a cancela pelo painel, **Then** nenhuma mensagem é enviada.
 6. **Given** uma assinatura ativa, **When** a renovação é aprovada, **Then** nenhuma mensagem é
    enviada.
 7. **Given** um alerta interno do ROI Labs que já sai por e-mail ou push (frete quebrado, carteira
@@ -159,6 +161,8 @@ mensagens. Provocar uma renovação aprovada e conferir nenhuma.
 - **Lead de paciente vindo do bot do WhatsApp**: avisa como qualquer lead de paciente. A Atma não
   grava de onde o lead veio (os dois formulários do site e o bot chegam iguais), então a mensagem
   não diz a origem.
+- **Paciente cadastrado à mão no painel da Atma**: usa a mesma entrada do formulário, mas não
+  avisa. Quem cadastrou é o próprio time.
 - **Backend da Atma oscilando**: o contêiner reinicia sob limite de CPU e volta em menos de 2
   minutos. Isso não é queda para esta feature.
 - **Backend responde, mas sem banco**: conta como fora. O formulário falha do mesmo jeito.
@@ -183,8 +187,9 @@ mensagens. Provocar uma renovação aprovada e conferir nenhuma.
 - **FR-002**: Um lead **novo** da Coopluz DEVE gerar uma mensagem que diz qual formulário foi
   usado (Coopluz ou Parceiro Coopluz). O reenvio que a Coopluz trata como duplicado NÃO DEVE
   gerar mensagem.
-- **FR-003**: Um lead de paciente **criado** na Atma DEVE gerar uma mensagem com nome, contato e
-  cidade (quando houver). A mensagem NÃO DEVE conter as observações do paciente.
+- **FR-003**: Um lead de paciente **criado** na Atma pelo site ou pelo bot DEVE gerar uma mensagem
+  com nome, contato e cidade (quando houver). A mensagem NÃO DEVE conter as observações do
+  paciente. Um lead cadastrado pelo painel NÃO DEVE gerar mensagem.
 - **FR-004**: Um pedido de parceria **criado** na Atma DEVE gerar uma mensagem com nome, clínica,
   cidade e contato.
 - **FR-005**: Uma candidatura a cadeira **criada** no ROI Labs DEVE gerar uma mensagem com nome,
@@ -208,12 +213,16 @@ mensagens. Provocar uma renovação aprovada e conferir nenhuma.
   itens e link para o pedido, dizendo quando o pedido abre uma assinatura. A confirmação repetida
   NÃO DEVE gerar mensagem.
 - **FR-011**: Um pagamento devolvido DEVE gerar uma mensagem com cliente e valor.
-- **FR-012**: Uma renovação de assinatura recusada DEVE gerar uma mensagem com cliente, item e
-  prazo até o cancelamento automático. Uma renovação aprovada NÃO DEVE gerar mensagem.
-- **FR-013**: Uma assinatura cancelada DEVE gerar uma mensagem que diz se quem cancelou foi o
-  cliente ou o sistema, por falta de pagamento.
+- **FR-012**: A primeira recusa de renovação de uma sequência DEVE gerar uma mensagem com cliente,
+  item e data do cancelamento automático. As novas tentativas recusadas dentro da mesma sequência
+  NÃO DEVEM gerar mensagem, como já acontece com o e-mail ao cliente. Uma renovação aprovada NÃO
+  DEVE gerar mensagem.
+- **FR-013**: Uma assinatura cancelada pelo cliente ou pelo sistema (por falta de pagamento) DEVE
+  gerar uma mensagem que diz qual dos dois cancelou. O cancelamento feito pela equipe no painel
+  NÃO DEVE gerar mensagem.
 - **FR-014**: Todo alerta interno do ROI Labs que hoje sai por e-mail ou push DEVE sair também no
-  Telegram. O e-mail e o push NÃO DEVEM mudar.
+  Telegram, e os alertas que já existem continuam saindo por e-mail e push como hoje. Os eventos
+  novos desta spec (FR-011 a FR-013) também saem nos três canais.
 
 **Transversais**
 
