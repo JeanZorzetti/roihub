@@ -783,3 +783,97 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 }
 .ficha-bloco--novo .ficha-bloco-h { color: var(--accent); }
 .ficha-bloco--novo .pill { border-color: var(--accent); color: var(--accent); }
+
+/* information-design · coluna semanal + cifras · responde: a Atma é encontrada por quem não a
+   conhece, e esse volume está subindo ou caindo agora? · fonte: hub_gsc_dia · 2026-09-18 */
+
+/* O ÚNICO bloco de nível 1 de /okr/[slug]/aquisicao. Os onze blocos abaixo dele são `.ficha-bloco`,
+   com título de 12px em cinza — a diferença de peso é o que faz existir uma resposta e não onze
+   parágrafos do mesmo tamanho. Se algum dia um segundo bloco ganhar este tratamento, a tela volta
+   a não ter nível 1. */
+[data-info="aquisicao-nao-marca"] {
+  --nm-barra: var(--seq450);
+  --nm-zero: var(--ink2);
+  margin: 4px 0 22px;
+  padding: 16px 18px 14px;
+  background: var(--page);
+  border: 1px solid var(--grid);
+  border-left: 4px solid var(--nm-barra);
+  border-radius: 10px;
+}
+[data-info="aquisicao-nao-marca"] .nm-h {
+  font-size: 20px; line-height: 1.3; font-weight: 700;
+  color: var(--ink); margin: 0 0 14px; text-transform: none; letter-spacing: -0.01em;
+}
+/* G27 — NÃO é uma fileira de tiles iguais: a primeira cifra é a resposta e tem coluna maior
+   e número dois degraus acima; as outras duas qualificam. Três tiles do mesmo tamanho seriam
+   nível 1 três vezes, ou seja, nível nenhum. */
+[data-info="aquisicao-nao-marca"] .nm-cifras {
+  display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px 20px; margin-bottom: 16px;
+  align-items: start;
+}
+[data-info="aquisicao-nao-marca"] .nm-cifra-2 { border-left: 1px solid var(--grid); padding-left: 18px; }
+[data-info="aquisicao-nao-marca"] .nm-cifra-2 .nm-valor { font-size: 19px; font-weight: 600; }
+[data-info="aquisicao-nao-marca"] .nm-contra { color: var(--muted); font-weight: 400; font-size: 15px; }
+[data-info="aquisicao-nao-marca"] .nm-rotulo {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted); margin-bottom: 2px;
+}
+/* Proporcional e não `tabular-nums`, seguindo a nota de `.stat-value`: são três unidades lado a
+   lado, sem nenhuma coluna vertical de número para alinhar. */
+[data-info="aquisicao-nao-marca"] .nm-valor { font-size: 28px; font-weight: 700; line-height: 1.1; }
+[data-info="aquisicao-nao-marca"] .nm-valor + .foot { margin-top: 4px; font-size: 12px; line-height: 1.5; }
+[data-info="aquisicao-nao-marca"] .nm-grafico { margin: 0 0 12px; }
+/* SEM `max-height`: com `width:100%` e `height:auto`, um teto de altura encolhe a LARGURA
+   junto, e o gráfico caía para ~60% do bloco, centralizado, com os rótulos do eixo (12/01 e
+   15/09) ancorados nas bordas do CONTAINER e não nas do gráfico — apontando para semanas que
+   não estão ali. A razão 248×76 do viewBox já dá a proporção. */
+[data-info="aquisicao-nao-marca"] .nm-grafico .wk-chart svg { width: 100%; height: auto; }
+
+/* A legenda dos TRÊS estados do gráfico. Cada chave é uma FORMA diferente e não uma cor diferente:
+   impressa em cinza, ou para quem não separa azul de cinza, barra cheia / traço pontilhado /
+   contorno vazio continuam se distinguindo. */
+[data-info="aquisicao-nao-marca"] .nm-legenda {
+  list-style: none; margin: 6px 0 0; padding: 0;
+  display: grid; grid-template-columns: auto auto auto; justify-content: start; gap: 6px 22px;
+  font-size: 12px; color: var(--muted);
+}
+/* O `li` NÃO é flex: com `display:flex` cada nó de texto e cada `<strong>` vira um item
+   separado, e a 360px a linha quebrava DENTRO da frase — "zero impressão" descia sozinho e lia
+   como um quarto estado que não existe. Inline deixa o texto fluir como texto. */
+[data-info="aquisicao-nao-marca"] .nm-legenda li { line-height: 1.5; }
+[data-info="aquisicao-nao-marca"] .nm-k {
+  display: inline-block; width: 14px; height: 12px; margin-right: 6px; vertical-align: -1px;
+}
+[data-info="aquisicao-nao-marca"] .nm-k-barra { background: var(--nm-barra); border-radius: 2px 2px 0 0; }
+[data-info="aquisicao-nao-marca"] .nm-k-zero {
+  height: 0; border-top: 2px dotted var(--nm-zero); align-self: center;
+}
+[data-info="aquisicao-nao-marca"] .nm-k-vazio { border: 1px dashed var(--grid); border-radius: 2px; }
+[data-info="aquisicao-nao-marca"] .nm-veredito { font-size: 15px; line-height: 1.6; margin: 0; }
+[data-info="aquisicao-nao-marca"] .nm-veredito .foot { display: block; margin-top: 6px; }
+/* O aviso de dado velho não pode ser só a cor vermelha: leva o ⚠ e a palavra, e continua
+   legível impresso em cinza. */
+[data-info="aquisicao-nao-marca"] .nm-velho { color: var(--crit-ink); }
+
+/* G24 — o bloco ocupa a MESMA faixa nos dois estados. Sem o piso, a tela inteira sobe quando a
+   série não é apurável, e os onze blocos abaixo trocam de lugar entre uma visita e outra. */
+[data-info="aquisicao-nao-marca"] { min-height: 420px; }
+@media (max-width: 640px) { [data-info="aquisicao-nao-marca"] { min-height: 520px; } }
+
+/* 360px: três cifras lado a lado viram 90px cada e o número de 28px estoura. Empilha. */
+@media (max-width: 640px) {
+  [data-info="aquisicao-nao-marca"] { padding: 14px; }
+  [data-info="aquisicao-nao-marca"] .nm-cifras { grid-template-columns: 1fr; gap: 12px; }
+  [data-info="aquisicao-nao-marca"] .nm-cifra-2 { border-left: none; padding-left: 0; border-top: 1px solid var(--grid); padding-top: 10px; }
+  [data-info="aquisicao-nao-marca"] .nm-h { font-size: 18px; }
+  [data-info="aquisicao-nao-marca"] .nm-valor { font-size: 24px; }
+  /* Um item de legenda por linha. Com `flex-wrap` a 360px a quebra caía no MEIO do item — o
+     "zero impressão" descia sozinho e lia como um quarto estado que não existe. */
+  [data-info="aquisicao-nao-marca"] .nm-legenda { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* `WeekChart`: zero MEDIDO. Pontilhado e abaixo da linha de base — ver o comentário em viz.tsx.
+   `--ink2` (#52514e) sobre `--surface` dá 8,1:1, muito acima do 3:1 que elemento gráfico que
+   carrega informação exige. */
+.wk-chart .wk-zero { stroke: var(--ink2); stroke-width: 2; stroke-dasharray: 2 2; }

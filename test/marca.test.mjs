@@ -10,6 +10,8 @@ import {
   mesesFechados,
   crescimentoNaoMarca,
   razaoDeMarca,
+  semanasNaoMarca,
+  ritmoNaoMarca,
 } from "../lib/marca.mjs";
 
 const casa = (termos, consulta) => new RegExp(regexDeMarca(termos), "i").test(consulta);
@@ -303,4 +305,103 @@ test("módulo é puro: sem process.env, sem relógio interno, sem import", () =>
   assert.doesNotMatch(src, /Date\.now\(\)/, "módulo puro não pode ler relógio");
   assert.doesNotMatch(src, /new Date\(\)/, "`new Date()` sem argumento é relógio interno");
   assert.doesNotMatch(src, /^import /m, "módulo puro não importa nada");
+});
+
+// ── a FORMA da série: semanas e ritmo (information-design, 18/09) ────────────────────────────
+// Cada teste aqui é uma frase falsa que a tela não vai exibir.
+
+/** Dias sintéticos a partir de um `YYYY-MM-DD` inicial, um valor por dia. */
+const diasDe = (inicio, valores) =>
+  valores.map((v, i) => ({
+    dia: new Date(Date.parse(inicio + "T00:00:00Z") + i * 864e5).toISOString().slice(0, 10),
+    impressoesNaoMarca: v,
+    cliquesNaoMarca: 0,
+    posicao: 5,
+  }));
+
+test("a semana começa na SEGUNDA, não no dia em que a série começa", () => {
+  // 2026-01-11 é um domingo: ele pertence à semana que começou em 05/01.
+  const s = semanasNaoMarca(diasDe("2026-01-11", [10, 20]));
+  assert.equal(s.length, 2);
+  assert.equal(s[0].inicio, "2026-01-05");
+  assert.equal(s[1].inicio, "2026-01-12");
+});
+
+test("semana de ponta é PARCIAL, nunca soma com as de 7 dias", () => {
+  const s = semanasNaoMarca(diasDe("2026-01-12", [1, 1, 1, 1, 1, 1, 1, 9, 9]));
+  assert.equal(s[0].completa, true);
+  assert.equal(s[0].dias, 7);
+  assert.equal(s[1].completa, false);
+  assert.equal(s[1].dias, 2);
+});
+
+test("a ponta parcial NÃO fabrica queda no ritmo", () => {
+  // Sete semanas iguais (700) e uma ponta de 2 dias (200). Somada, a ponta leria como -71%.
+  const r = ritmoNaoMarca(diasDe("2026-01-05", [...Array(49).fill(100), 100, 100]));
+  assert.equal(r.semanasCompletas, 7);
+  assert.equal(r.parciaisIgnoradas, 1);
+  assert.equal(r.ultima.impressoesNaoMarca, 700);
+  assert.equal(r.fracaoDoPico, 1);
+});
+
+test("dia com ZERO medido entra na semana; dia SEM a coluna não entra", () => {
+  const s = semanasNaoMarca([
+    { dia: "2026-01-05", impressoesNaoMarca: 0 },
+    { dia: "2026-01-06", impressoesNaoMarca: null },
+    { dia: "2026-01-07", impressoesNaoMarca: 5 },
+  ]);
+  assert.equal(s[0].dias, 2, "o dia sem medida não conta como medido");
+  assert.equal(s[0].impressoesNaoMarca, 5);
+  assert.equal(s[0].completa, false);
+});
+
+test("`quedasConsecutivas` é 0 quando a última semana SOBE — a tela não pode dizer 'caindo'", () => {
+  // O caso real da atma: quatro semanas de recuo e a última subindo (1.449 → 1.492).
+  const semanas = [4129, 4121, 3447, 1449, 1492];
+  const r = ritmoNaoMarca(diasDe("2026-01-05", semanas.flatMap((v) => Array(7).fill(v / 7))));
+  assert.equal(r.quedasConsecutivas, 0);
+});
+
+test("`quedasConsecutivas` conta só o recuo que chega ATÉ a última semana", () => {
+  const semanas = [100, 900, 800, 700, 600];
+  const r = ritmoNaoMarca(diasDe("2026-01-05", semanas.flatMap((v) => Array(7).fill(v / 7))));
+  assert.equal(r.quedasConsecutivas, 3, "para no 100 → 900, que é subida");
+});
+
+test("o pico é o PRIMEIRO máximo — repetir o pico não reescreve a data dele", () => {
+  const r = ritmoNaoMarca(diasDe("2026-01-05", [...Array(7).fill(10), ...Array(7).fill(10), ...Array(7).fill(1)]));
+  assert.equal(r.pico.inicio, "2026-01-05");
+});
+
+test("`fracaoDoPico` mede a última contra o pico, e não contra a semana anterior", () => {
+  const r = ritmoNaoMarca(diasDe("2026-01-05", [...Array(7).fill(100), ...Array(7).fill(10), ...Array(7).fill(20)]));
+  assert.equal(r.ultima.impressoesNaoMarca, 140);
+  assert.equal(r.pico.impressoesNaoMarca, 700);
+  assert.equal(r.fracaoDoPico, 0.2);
+});
+
+test("menos de duas semanas completas é `null`, nunca um veredito sobre nada", () => {
+  assert.equal(ritmoNaoMarca(diasDe("2026-01-05", Array(7).fill(1))), null);
+  assert.equal(ritmoNaoMarca([]), null);
+  assert.equal(ritmoNaoMarca(null), null);
+});
+
+// ── a base interrompida: a razão mensal que mede a VOLTA, não o crescimento ──────────────────
+
+test("mês-base com um terço dos dias em zero marca `baseInterrompida`", () => {
+  // Julho da atma: 27 dias de zero em 31, seguido de agosto cheio.
+  const julho = diasDe("2026-07-01", [...Array(27).fill(0), ...Array(4).fill(85)]);
+  const agosto = diasDe("2026-08-01", Array(31).fill(474));
+  const c = crescimentoNaoMarca([...julho, ...agosto], "2026-09-10");
+  assert.equal(c.baseInterrompida, true);
+  assert.equal(c.diasZeroDe, 27);
+  assert.equal(c.diasDe, 31);
+});
+
+test("mês-base normal NÃO é interrompido — um dia de zero não cala a medida", () => {
+  const julho = diasDe("2026-07-01", [...Array(1).fill(0), ...Array(30).fill(100)]);
+  const agosto = diasDe("2026-08-01", Array(31).fill(110));
+  const c = crescimentoNaoMarca([...julho, ...agosto], "2026-09-10");
+  assert.equal(c.baseInterrompida, false);
+  assert.equal(c.diasZeroDe, 1);
 });

@@ -22,9 +22,9 @@ function barPath(x: number, y: number, w: number, h: number): string {
 }
 
 const CW = 248;
-const CH = 72;
 const PLOT_TOP = 14; // reserva pro rótulo do endpoint
-const BASE = CH - 2;
+const BASE = 70; // a linha de base
+const CH = 76; // +6 ABAIXO da base: a faixa onde o zero medido se declara
 
 export function WeekChart({
   title,
@@ -47,14 +47,25 @@ export function WeekChart({
         <line x1="0" y1={BASE} x2={CW} y2={BASE} className="axis" />
         {points.map((p, i) => {
           const v = p.value;
-          const h = max > 0 && v ? Math.round((v / max) * (BASE - PLOT_TOP)) : 0;
+          // `Math.max(1, …)`: qualquer valor MEDIDO e positivo desenha pelo menos 1px. Sem o piso,
+          // 2 impressões contra um pico de 17.020 arredondam para altura 0 e some — ficando
+          // idêntico ao zero medido logo abaixo, que é justamente a distinção que este bloco faz.
+          const h = max > 0 && v ? Math.max(1, Math.round((v / max) * (BASE - PLOT_TOP))) : 0;
           return (
             // ponytail: tooltip = <title> nativo do SVG (hover, sem JS no cliente);
             // a tabela-gêmea cobre teclado — upgrade pra tooltip JS se fizer falta
             <g key={p.end} className="wk">
-              <title>{`${fmtDay(p.start)}–${fmtDay(p.end)}: ${v === null ? "sem dados" : fmt(v)}`}</title>
-              <rect x={i * slot} y="0" width={slot} height={BASE} fill="transparent" />
+              <title>{`${fmtDay(p.start)}–${fmtDay(p.end)}: ${v === null ? "sem dados" : v === 0 ? `${fmt(0)} — medido` : fmt(v)}`}</title>
+              <rect x={i * slot} y="0" width={slot} height={CH} fill="transparent" />
               {h > 0 && <path className="bar" d={barPath(i * slot + 1, BASE - h, slot - 2, h)} />}
+              {/* ZERO MEDIDO ≠ SEM DADO. Os dois davam barra de altura 0 e só se distinguiam no
+                  tooltip — ou seja, não se distinguiam para quem lê o gráfico, imprime ou usa
+                  teclado. O traço pontilhado fica ABAIXO da linha de base de propósito: lá ele
+                  nunca compete em altura com a menor das barras, e a leitura "a fonte respondeu, e
+                  a resposta foi nenhuma impressão" fica separada de "a fonte não respondeu". */}
+              {v === 0 && (
+                <line className="wk-zero" x1={i * slot + 1} y1={BASE + 3} x2={(i + 1) * slot - 1} y2={BASE + 3} />
+              )}
             </g>
           );
         })}

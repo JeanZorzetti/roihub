@@ -12,7 +12,7 @@ import {
   type DiaSeparado,
 } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
-import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca } from "@/lib/marca.mjs";
+import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoNaoMarca } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
 import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal } from "@/lib/kpis-busca.mjs";
@@ -34,6 +34,7 @@ import {
 import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
 import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
+import { WeekChart, type WeekPoint } from "../../../viz";
 
 // AQUISIÇÃO (019, FR-022..FR-029): o que tem relógio de TRIMESTRE sai da tela que se lê na
 // segunda-feira e ganha a janela longa que a 018 adiou — 8 meses de Search Console, 12 de GA4.
@@ -288,6 +289,48 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // `conferencia` da corrida soma os 480 dias inteiros, então tela e log podem divergir de veredito
   // LEGITIMAMENTE; sem a janela escrita ao lado, a divergência lê como bug e alguém caça um defeito
   // que não existe.
+  // ── NÍVEL 1 (information-design, 18/09): a resposta da tela ────────────────────────────────
+  //
+  // Esta página tinha ONZE blocos do mesmo peso e nenhum que respondesse a pergunta que ela existe
+  // para responder. Pior: o número mais destacado dela era o `43×` de jul→ago aprovado contra a
+  // faixa do board — uma razão medida a partir de 27 dias de zero. A série real vai de 17.020
+  // impressões não-marca na melhor semana a 1.492 na última, e nada na tela mostrava isso.
+  //
+  // O bloco abaixo é o único de nível 1. Ele responde com a FORMA da série (35 semanas) e com duas
+  // cifras, e todos os outros blocos passam a ser evidência dele.
+  const ritmo = diasSeparados ? ritmoNaoMarca(diasSeparados) : null;
+  // A fatia sai das somas que `completude` já conferiu — a mesma conta que assina o ✅ do bloco de
+  // marca. Recalcular aqui abriria a porta para os dois números divergirem na tela.
+  // Uma variável ESTREITADA, não um `comp!` na marcação: `nao-declarada` não tem as somas, e um
+  // `!` faria o TypeScript parar de cobrar justamente o estado que existe para ser tratado.
+  const somasMarca = comp && comp.estado !== "nao-declarada" && comp.impressoesPais > 0 ? comp : null;
+  const fatiaNaoMarca = somasMarca ? somasMarca.impressoesNaoMarca / somasMarca.impressoesPais : null;
+  // As semanas PARCIAIS das duas pontas entram no gráfico com `value: null` — "sem dado" e não um
+  // valor menor. Desenhá-las pelo que mediram encolheria a última coluna por calendário e pintaria
+  // uma queda de 63% que não existe (a ponta da atma tem 2 dias dos 7).
+  const semanas = diasSeparados ? semanasNaoMarca(diasSeparados) : [];
+  const pontos: WeekPoint[] = semanas.map((w) => ({
+    start: w.inicio,
+    end: w.fim,
+    value: w.completa ? w.impressoesNaoMarca : null,
+  }));
+  // G3/G25 — procedência e frescor. `criado` é quando a corrida GRAVOU; `ultimoDiaMedido` é o
+  // último dia que o Search Console cobriu. A distância entre o último dia medido e HOJE é a idade
+  // real: a fonte promete D-3, e acima disso a corrida parou ou a fonte atrasou. Um número velho
+  // sem esta linha é indistinguível de um número de hoje — e é o defeito que mais ilude, porque o
+  // painel continua bonito e continua errado.
+  const ultimoDiaMedido = diasSeparados?.length ? diasSeparados[diasSeparados.length - 1].dia : null;
+  const gravadoEm = diasSeparados?.length
+    ? diasSeparados.map((d) => d.criado).filter((c): c is string => !!c).sort().at(-1) ?? null
+    : null;
+  const ATRASO_PROMETIDO_DIAS = 3; // o D-3 do Search Console
+  const FOLGA_DIAS = 2; // a corrida é diária; dois dias cobrem um fim de semana de falha
+  const idadeDoDado =
+    ultimoDiaMedido !== null
+      ? Math.round((Date.parse(hojeIso + "T00:00:00Z") - Date.parse(ultimoDiaMedido + "T00:00:00Z")) / 864e5)
+      : null;
+  const dadoVelho = idadeDoDado !== null && idadeDoDado > ATRASO_PROMETIDO_DIAS + FOLGA_DIAS;
+
   const diasComMarca = (diasSeparados ?? []).filter((d) => typeof d.impressoesMarca === "number");
   const janelaMarca = diasComMarca.length
     ? { inicio: diasComMarca[0].dia, fim: diasComMarca[diasComMarca.length - 1].dia }
@@ -415,6 +458,175 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           </p>
         ) : null}
 
+        {/* ── NÍVEL 1 · a resposta ────────────────────────────────────────────────────────────
+            Um bloco, e só um. Os onze abaixo são evidência dele e por isso ficam mais fracos.
+            A forma responde o que a razão mensal não responde: o FORMATO dos oito meses. */}
+        {ritmo && somasMarca && fatiaNaoMarca !== null ? (
+          <div className="nm-resposta" data-info="aquisicao-nao-marca" id="nao-marca">
+            {/* G5: nada de `?? 0` aqui. `fracaoDoPico` é null quando TODA semana completa deu
+                zero — e "0% do pico" afirmaria sobre o site o que é ausência de pico. */}
+            <h2 className="nm-h">
+              {ritmo.fracaoDoPico === null ? (
+                <>
+                  {nomeCurto} é encontrada por quem não a conhece — mas não há pico na série para
+                  medir o volume contra
+                </>
+              ) : (
+                <>
+                  {nomeCurto} é encontrada por quem não a conhece — e o volume disso está em{" "}
+                  <strong>{pct(ritmo.fracaoDoPico)}</strong> do pico
+                </>
+              )}
+            </h2>
+
+            {/* G27: NÃO é uma fileira de tiles iguais. A primeira cifra é a resposta ao "está
+                sendo encontrada por quem não a conhece?" e domina; as duas seguintes qualificam o
+                volume e são deliberadamente menores. A fração do pico não se repete aqui — ela já
+                é o número do título, e repeti-la seria o donut com o número que a legenda já diz. */}
+            <div className="nm-cifras">
+              <div className="nm-cifra-1">
+                <div className="nm-rotulo">Impressões de quem não busca a marca</div>
+                <div className="nm-valor">{pct(fatiaNaoMarca)}</div>
+                <div className="foot">
+                  {br(somasMarca.impressoesNaoMarca)} de {br(somasMarca.impressoesPais)} impressões
+                  {janelaMarca ? <> · {janelaMarca.inicio} → {janelaMarca.fim}</> : null}
+                  {decl.motivo === null ? <> · corte <code>{decl.pais}</code></> : null}
+                </div>
+              </div>
+              <div className="nm-cifra-2">
+                <div className="nm-rotulo">Última semana completa · melhor semana</div>
+                <div className="nm-valor">
+                  {br(ritmo.ultima.impressoesNaoMarca)} <span className="nm-contra">de</span>{" "}
+                  {br(ritmo.pico.impressoesNaoMarca)}
+                </div>
+                <div className="foot">
+                  impressões não-marca em {ritmo.ultima.inicio} → {ritmo.ultima.fim}, contra{" "}
+                  {ritmo.pico.inicio} → {ritmo.pico.fim}
+                </div>
+              </div>
+              <div className="nm-cifra-2">
+                <div className="nm-rotulo">Posição média · melhor semana → última</div>
+                <div className="nm-valor">
+                  {ritmo.pico.posicao === null
+                    ? "—"
+                    : ritmo.pico.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+                  <span className="nm-contra"> → </span>
+                  {ritmo.ultima.posicao === null
+                    ? "—"
+                    : ritmo.ultima.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+                </div>
+                <div className="foot">média das posições diárias · menor é melhor</div>
+              </div>
+            </div>
+
+            <div className="nm-grafico">
+              <WeekChart
+                title={`Impressões não-marca por semana · ${ritmo.semanasCompletas} semanas completas`}
+                points={pontos}
+                fmt={(v) => `${br(v)} impressões`}
+              />
+              {/* A legenda é obrigatória porque o gráfico tem TRÊS estados e dois deles não são
+                  barra. Sem ela, o traço do zero medido lê como sujeira e a coluna ausente lê
+                  como zero — invertendo justamente o achado de julho. */}
+              <ul className="nm-legenda">
+                <li><span className="nm-k nm-k-barra" aria-hidden /> barra: impressões da semana</li>
+                <li><span className="nm-k nm-k-zero" aria-hidden /> traço abaixo da linha: semana <strong>medida</strong>, zero impressão</li>
+                <li><span className="nm-k nm-k-vazio" aria-hidden /> coluna vazia: semana <strong>parcial</strong>, fora da leitura ({ritmo.parciaisIgnoradas} nas pontas)</li>
+              </ul>
+            </div>
+
+            {/* O veredito em texto. Ele NÃO pode dizer "caindo" de graça: a última semana da atma
+                subiu (1.449 → 1.492) depois de quatro de recuo, e `quedasConsecutivas` é quem
+                decide a frase. Trocar um veredito falso por outro não teria consertado nada. */}
+            <p className="nm-veredito">
+              {ritmo.quedasConsecutivas >= 2 ? (
+                <>
+                  <strong>Caindo.</strong> São {ritmo.quedasConsecutivas} semanas completas de recuo
+                  consecutivo até {ritmo.ultima.fim}.
+                </>
+              ) : ritmo.fracaoDoPico !== null && ritmo.fracaoDoPico < 0.5 ? (
+                <>
+                  <strong>Estacionado bem abaixo do pico.</strong> A última semana completa não vem
+                  caindo ({ritmo.quedasConsecutivas === 0 ? "ela subiu contra a anterior" : "recuou uma semana só"}),
+                  mas vale {pct(ritmo.fracaoDoPico)} da melhor semana da série. O que falta não é
+                  retomar o crescimento a partir de agora — é reconquistar o volume que já existiu.
+                </>
+              ) : (
+                <>
+                  <strong>No nível do pico.</strong> A última semana completa vale{" "}
+                  {pct(ritmo.fracaoDoPico ?? 0)} da melhor da série.
+                </>
+              )}{" "}
+              <span className="foot">
+                Só semanas de 7 dias entram nesta leitura. Fonte: <code>hub_gsc_dia</code>, série
+                gravada pela corrida diária — o domínio <strong>antigo</strong>, {diasSeparados!.length}{" "}
+                dias. As cifras de busca do resto da tela vêm do domínio novo e{" "}
+                <strong>não se comparam</strong> com estas.
+                <br />
+                {/* G3/G25 — os três que fazem de um número informação: DE QUANDO, DE ONDE, e sobre
+                    qual total. O total está nas cifras acima; os outros dois estão aqui. */}
+                Último dia medido: <strong>{ultimoDiaMedido}</strong>
+                {idadeDoDado !== null ? <> (há {idadeDoDado} dia(s))</> : null}
+                {gravadoEm ? <> · gravado em <strong>{gravadoEm}</strong></> : null} · o Search
+                Console entrega com <strong>{ATRASO_PROMETIDO_DIAS} dias</strong> de atraso.
+                {dadoVelho ? (
+                  <>
+                    {" "}
+                    <strong className="nm-velho">
+                      ⚠ Dado velho: a promessa de D-{ATRASO_PROMETIDO_DIAS} estourou
+                    </strong>{" "}
+                    — a corrida diária parou ou a fonte atrasou. Os números acima seguem certos para{" "}
+                    {ultimoDiaMedido}, e não dizem nada sobre os {idadeDoDado! - ATRASO_PROMETIDO_DIAS}{" "}
+                    dia(s) desde então.
+                  </>
+                ) : null}
+              </span>
+            </p>
+          </div>
+        ) : (
+          <div className="nm-resposta" data-info="aquisicao-nao-marca" id="nao-marca">
+            <h2 className="nm-h">A resposta desta tela ainda não é apurável</h2>
+            {/* TRÊS ausências, três consertos diferentes. Colapsar as três em "não apurado" faria
+                "ninguém declarou os termos de marca" (conserto: editar o card, 2 minutos) parecer
+                com "a série é curta demais" (conserto: esperar semanas) — e 34 dos 35 projetos
+                caem na primeira, não na segunda. Um motivo genérico manda esperar por algo que
+                nunca vai chegar sozinho. */}
+            <p className="foot">
+              {!diasSeparados ? (
+                <>
+                  <strong>não apurado</strong> — a série de{" "}
+                  <code>hub_gsc_dia</code> não foi lida: banco fora do ar, ou este projeto ainda não
+                  entrou na corrida diária.
+                </>
+              ) : decl.motivo !== null ? (
+                <>
+                  <strong>não apurado</strong> — {nomeCurto} tem{" "}
+                  <strong>{diasSeparados.length} dia(s)</strong> de série, mas nenhum com a
+                  separação marca / não-marca: o card não declara os termos de marca{" "}
+                  (<code>{decl.motivo}</code>). Sem saber quais buscas são o nome da empresa, não há
+                  como dizer quanto da demanda vem de quem ainda não a conhece.{" "}
+                  <strong>O conserto é declarar os termos em <code>data/projects.json</code></strong>,
+                  não esperar mais dados.
+                </>
+              ) : !diasComMarca.length ? (
+                <>
+                  <strong>não apurado</strong> — os termos de marca estão declarados, mas a corrida
+                  ainda não gravou nenhum dia com a separação. Ela roda diariamente; o primeiro dia
+                  aparece aqui na próxima.
+                </>
+              ) : (
+                <>
+                  <strong>não apurado</strong> — a série tem{" "}
+                  <strong>{diasComMarca.length} dia(s)</strong> com a separação, e menos de{" "}
+                  <strong>duas semanas completas</strong> de 7 dias. Uma semana só não tem forma
+                  para ler, e uma fração aqui seria um veredito sobre nada.
+                </>
+              )}{" "}
+              Não é <strong>zero</strong>: o que falta é medição, não demanda.
+            </p>
+          </div>
+        )}
+
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Descoberta — Search Console, 8 meses</h2>
           <p className="foot">
@@ -515,13 +727,32 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                           {crescimento.paraImpressoes.toLocaleString("pt-BR")}
                         </strong>{" "}
                         impressões não-marca, dois meses <strong>fechados</strong> — nenhum deles é
-                        o mês corrente) · meta do board:{" "}
-                        <strong>5% a 10%/mês</strong> —{" "}
-                        {crescimento.valor >= 0.05 && crescimento.valor <= 0.1
-                          ? "dentro da faixa."
-                          : crescimento.valor > 0.1
-                            ? "acima da faixa."
-                            : "abaixo: a demanda que ainda não é sua não está crescendo no ritmo pedido."}
+                        o mês corrente){" "}
+                        {/* A faixa do board só se aplica quando o mês-base foi MEDIDO o mês
+                            inteiro. Com 27 dias de zero em julho, a razão mede a volta do índice e
+                            não o ritmo de aquisição — e aprovar "acima da faixa" premiaria o site
+                            justamente por ter quebrado antes. O veredito vira a leitura de forma,
+                            que é o bloco de nível 1 no topo. */}
+                        {crescimento.baseInterrompida ? (
+                          <>
+                            · <strong>a faixa do board não se aplica aqui.</strong> O mês-base
+                            ({crescimento.de}) tem <strong>{crescimento.diasZeroDe} dos{" "}
+                            {crescimento.diasDe} dias com zero impressão não-marca</strong>: a razão
+                            é aritmeticamente certa e mede a <strong>volta</strong> do índice, não o
+                            crescimento da aquisição. Comparar isto com a meta de 5% a 10%/mês
+                            aprovaria um mês de retomada como se fosse um mês bom. O veredito de
+                            verdade é a <a href="#nao-marca">forma da série, no topo desta tela</a>.
+                          </>
+                        ) : (
+                          <>
+                            · meta do board: <strong>5% a 10%/mês</strong> —{" "}
+                            {crescimento.valor >= 0.05 && crescimento.valor <= 0.1
+                              ? "dentro da faixa."
+                              : crescimento.valor > 0.1
+                                ? "acima da faixa."
+                                : "abaixo: a demanda que ainda não é sua não está crescendo no ritmo pedido."}
+                          </>
+                        )}
                       </>
                     )}
                   </span>
@@ -705,7 +936,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               ) : (
                 <ul className="ficha-krs">
                   {kpis.strikingDistance.slice(0, 15).map((c) => (
-                    <li key={`${c.query} ${c.page}`}>
+                    <li key={`${c.query}\u0000${c.page}`}>
                       <strong>{c.query}</strong>{" "}
                       <span className="foot">
                         posição {c.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ·{" "}

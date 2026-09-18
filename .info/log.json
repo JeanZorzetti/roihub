@@ -9,11 +9,38 @@
       "fonte": "roihub_db:5445 · hub_gsc_dia, hub_pagina, hub_pagina_corrida, hub_indexacao · GSC sc-domain:roilabs.com.br · GA4 properties/504053080",
       "granularidade": "dia (GSC), corrida (crawl)",
       "latencia": "D-3 no GSC; crawl de 14/09 (4 dias)",
-      "estados": ["com dado", "não apurado", "erro na fonte", "dado velho"],
+      "estados": [
+        "com dado",
+        "não apurado",
+        "erro na fonte",
+        "dado velho"
+      ],
       "pior_caso": "35 páginas no crawl, 244 dias de série GSC, 903 consultas únicas",
       "gates": "30/32 — G26 (um-nivel-um) e G28 (forma-derivada) ABERTOS por escopo; G31 (cinco-segundos) REPROVA. G3 passou só depois de ganhar a cláusula de SUJEITO, escrita nesta corrida.",
       "migracao": "url trocada para https://usealigner.com/ em 18/09, depois que a conta de serviço nimblabs@review-dispute-agent-498311 ganhou acesso a sc-domain:usealigner.com. A propriedade nova tem dado desde 11/09 (5 dias, 5 cliques, 63 impressões) contra 244 dias e 371.189 impressões da antiga — por isso a troca exigiu o campo `dominioAnterior`, senão a queda leria como colapso de tráfego.",
       "obs": "Três achados do Passo 2, nenhum visível antes de ler a fonte. (1) A tela juntava dois sites: crawl em usealigner.com, busca em atma.roilabs.com.br via sc-domain:roilabs.com.br — a Atma migrou de domínio entre 08/09 e 14/09 e o hub não foi atualizado. (2) As '35 páginas órfãs' eram falha de extração: links_navegacao=0 e links_contextuais=0 em 35/35, logo orfas===visitadas por construção; a corrida de 08/09 no domínio antigo dava 0 órfãs e 14 links de navegação. (3) O '43× de crescimento' compara 342 (jul) com 14.689 (ago), e julho é o fundo da desindexação de junho — 31/07 é o dia exato da reindexação (30 → 827 impressões). Consertos: banner de migração guiado por dado (some sozinho quando projects.json for corrigido), absolutos ao lado da razão, e o bloco de órfãs virou 'não apurado' com a periferia suprimida. PENDENTE E HUMANO: criar a propriedade de usealigner.com no Search Console ANTES de trocar a url em data/projects.json:508 — trocar antes apaga a metade de busca da tela sem pôr nada no lugar. PENDENTE: o rastreador não enxerga link em usealigner.com (Next.js, provável render no cliente)."
+    },
+    {
+      "data": "2026-09-18",
+      "rota": "/okr/[slug]/aquisicao",
+      "corrida": "2ª do dia — a 1ª consertou o DADO e deixou a FORMA aberta (G26, G28 abertos; G31 reprovava). Esta fecha a forma.",
+      "pergunta": "A Atma é encontrada por quem ainda não a conhece, e esse volume está subindo ou caindo agora?",
+      "forma": "Coluna semanal de impressões não-marca, 34 semanas completas, reusando `WeekChart` de app/viz.tsx (SVG, server component, zero JS no cliente) + 3 cifras hierarquizadas. Virou o ÚNICO bloco de nível 1; os 11 blocos existentes passaram a evidência sem reescrita.",
+      "descartada": "(a) a razão mês-a-mês que já estava na tela — é cega aos últimos 15 dias por construção e ancorou no fundo de um colapso; (b) linha de posição em 2º eixo Y, proposta no Passo 3 e NÃO executada: G12 exigiria as duas unidades escritas e a posição cabe em texto (2,8 → 8,3) sem custar eixo nenhum.",
+      "fonte": "roihub_db:5445 · hub_gsc_dia (248 dias, 11/01→15/09, zero nulo, gravado 18/09 12:59). GSC via corrida diária no domínio ANTIGO (atma.roilabs.com.br).",
+      "granularidade": "dia; agregado em semana ISO (segunda). Só semanas de 7 dias entram no veredito.",
+      "latencia": "D-3 do Search Console. Último dia medido 15/09, idade 3 dias — dentro da promessa.",
+      "estados": [
+        "com dado",
+        "zero real (2 semanas de julho)",
+        "não apurado (4 causas nomeadas)",
+        "dado velho (implementado, não disparou)"
+      ],
+      "pior_caso": "36 slots no gráfico (34 completas + 2 parciais); 32 barras; menor barra 1px (com o piso de Math.max(1,…) — sem ele sumiria); largura renderizada 926px em 1280.",
+      "gates": "32/32. Corrigidos nesta corrida: G3+G25 (faltava horário de apuração → `criado` entrou em lerDiasGsc), G5 (`?? 0` virava 'não apurável' em '0% do pico'), G22 (estado `dado velho` inexistente), G24 (bloco encolhia entre estados → min-height), G27 (fileira de 3 tiles idênticos → hierarquia 1.4fr + 19px vs 28px). G20/G21 rodados com validador próprio: barra 4,19:1 e traço de zero 7,53:1 sobre --page, grade 1,26:1 (contexto). G31 e G32 passam na imagem.",
+      "achado": "O número mais destacado da tela era FALSO como veredito. [page.tsx:523] escrevia '43× de crescimento · meta do board 5% a 10%/mês — ACIMA DA FAIXA', ou seja, aprovação. Os 43× são jul→ago medidos a partir de 27 dias de ZERO em 31 (a desindexação). A série real: pico de 17.020 impressões não-marca na semana de 06/04, colapso em 20/04 (16.225→6.454 numa semana, posição 3,1→6,1), decaimento até zero em julho, retomada em agosto (4.129) e platô em 1.492 — 8,8% do pico. Posição média piorou de 2,8 para 8,3. A faixa do board premiava o site por ter quebrado antes.",
+      "cuidado_com_o_veredito_novo": "A primeira redação dizia 'caindo há 4 semanas'. FALSO: a última semana completa SUBIU (1.449→1.492). `quedasConsecutivas` existe para impedir isso, e o veredito exibido é 'Estacionado bem abaixo do pico'. Trocar um veredito falso por outro não teria consertado nada.",
+      "obs": "Reuso, não código novo: `WeekChart` já existia e servia /seo e /infra. Duas correções entraram nele e alcançam as três telas — zero MEDIDO vira traço pontilhado abaixo da linha de base (antes era barra de altura 0, idêntica a 'sem dado', com a diferença só no tooltip) e barra positiva ganhou piso de 1px (2 impressões contra 17.020 arredondava para 0 e sumia). Também removido um byte NUL LITERAL em page.tsx:708, dentro de um `key` — inofensivo em runtime, mas fazia o arquivo ler como BINÁRIO para grep, file e diff; virou o escape \u0000. PENDENTE: 34 dos 35 projetos não declaram `marca` em data/projects.json, então o bloco de nível 1 cai em 'não apurado' neles — a mensagem agora nomeia essa causa e o conserto (declarar os termos), em vez de mandar esperar mais dados que nunca chegariam."
     }
   ]
 }

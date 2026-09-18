@@ -956,6 +956,10 @@ export async function ultimoDiaGsc(projeto: string): Promise<string | null> {
 /** 025 — o dia da série com as sete colunas de marca, nos nomes do domínio. `null` em todas é
  *  "não declarada": os dias que nasceram antes desta feature, e os projetos sem lista de termos. */
 export type DiaSeparado = DiaGsc & {
+  /** Quando a corrida GRAVOU a linha. Distinto de `dia`, que é o dia MEDIDO: a diferença entre
+   *  os dois é a IDADE do dado, e sem ela a tela não sabe dizer se a promessa de D-3 do Search
+   *  Console ainda está de pé — só que o número existe. */
+  criado: string | null;
   pais: string | null;
   impressoesPais: number | null;
   cliquesPais: number | null;
@@ -1036,6 +1040,7 @@ export async function lerDiasGsc(projeto: string, inicio?: string, fim?: string)
   await ensure();
   const r = await pool().query<DiaSeparado>(
     `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, impressoes, cliques, posicao,
+            to_char(criado, 'YYYY-MM-DD HH24:MI') AS criado,
             pais,
             impressoes_pais AS "impressoesPais", cliques_pais AS "cliquesPais",
             impressoes_marca AS "impressoesMarca", cliques_marca AS "cliquesMarca",
