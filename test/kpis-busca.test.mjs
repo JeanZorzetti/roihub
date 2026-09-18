@@ -84,18 +84,50 @@ test("striking distance pega 4,0 a 10,9 e exclui as bordas de fora", () => {
     l("d", "/d", 100, 1, 11.0),
   ];
   assert.deepEqual(
-    strikingDistance(linhas).map((x) => x.query),
+    strikingDistance(linhas).lista.map((x) => x.query),
     ["b", "c"]
   );
 });
 
 test("striking distance ordena por impressões, não por posição", () => {
   const linhas = [l("pouca", "/a", 10, 0, 4.1), l("muita", "/b", 900, 2, 9.8)];
-  assert.equal(strikingDistance(linhas)[0].query, "muita");
+  assert.equal(strikingDistance(linhas).lista[0].query, "muita");
 });
 
 test("striking distance sem candidata devolve lista vazia (a tela precisa distinguir do erro)", () => {
-  assert.deepEqual(strikingDistance([l("a", "/a", 100, 1, 2.0)]), []);
+  assert.deepEqual(strikingDistance([l("a", "/a", 100, 1, 2.0)]).lista, []);
+});
+
+// 027 — A FILA DE TRABALHO NÃO MANDA TRABALHAR A PRÓPRIA MARCA.
+//
+// Medido na atma em 18/09, propriedade nova de usealigner.com: a ÚNICA linha da faixa 4,0–10,9 era
+// "atma aligner" (posição 4,2, 6 impressões), encabeçando uma lista que se apresenta como "a que
+// rende mais". A guarda já existia em canibalizacao() desde a 025 e não tinha sido dada à irmã.
+test("striking distance tira a MARCA da fila e conta quantas saíram", () => {
+  const r = strikingDistance(marcadas, ehMarca);
+  // A fila é por query+page — a mesma consulta em duas URLs são DUAS linhas de trabalho, ao
+  // contrário de canibalizacao(), que agrupa por consulta. Das 3 linhas na faixa, uma é marca.
+  assert.equal(r.lista.length, 2);
+  assert.ok(
+    r.lista.every((c) => !ehMarca(c.query)),
+    "só as genéricas sobram: reforço de conteúdo não move o próprio nome",
+  );
+  assert.equal(r.removidas, 1);
+});
+
+test("striking distance sem `ehMarca` fica INTACTA e removidas é null", () => {
+  const r = strikingDistance(marcadas);
+  assert.equal(r.lista.length, 3, "as 3 linhas da faixa, marca inclusa");
+  assert.equal(r.removidas, null, "null é não-declarada, e não declarada-e-nada-casou");
+});
+
+// O caso REAL da atma: a faixa inteira era marca, e a lista esvazia. A tela precisa poder dizer
+// "eram todas de marca" em vez de "o site não tem posição nenhuma" — dois diagnósticos opostos.
+test("faixa que era SÓ marca esvazia a lista com removidas > 0, não com removidas 0", () => {
+  const soMarca = [l("atma aligner", "/", 6, 0, 4.2)];
+  const r = strikingDistance(soMarca, ehMarca);
+  assert.deepEqual(r.lista, []);
+  assert.equal(r.removidas, 1, "0 aqui diria 'nenhuma na faixa', que é outra causa");
 });
 
 // ── ctrPorConsulta / ctrGap ─────────────────────────────────────────────────────────────────
@@ -194,7 +226,8 @@ test("lista vazia não estoura em nenhum KPI", () => {
   assert.equal(k.noTop20, 0);
   assert.equal(k.impressoesNoTop3, null);
   assert.equal(k.urlsComImpressao, 0);
-  assert.deepEqual(k.strikingDistance, []);
+  assert.deepEqual(k.strikingDistance.lista, []);
+  assert.equal(k.strikingDistance.removidas, null);
   assert.equal(k.ctrGap, null);
   assert.deepEqual(k.canibalizacao.lista, []);
 });
@@ -312,6 +345,18 @@ test("kpisDeBusca repassa o `ehMarca` em vez de filtrar por conta própria", () 
   assert.equal(k.canibalizacao.removidas, 1);
   assert.equal(k.canibalizacao.lista.length, 1);
   assert.equal(kpisDeBusca(marcadas).canibalizacao.removidas, null);
+});
+
+// 027 — o repasse tem que alcançar as DUAS listas de trabalho. Dar o filtro a uma só foi como a
+// marca voltou a encabeçar o Striking distance depois de já ter sido tirada da vizinha.
+test("kpisDeBusca repassa `ehMarca` para as DUAS listas, não só para canibalizacao", () => {
+  const k = kpisDeBusca(marcadas, ehMarca);
+  assert.equal(k.strikingDistance.removidas, 1, "a fila também é lista de trabalho");
+  assert.equal(k.canibalizacao.removidas, 1);
+  assert.ok(
+    k.strikingDistance.lista.every((c) => !ehMarca(c.query)),
+    "nenhuma consulta de marca pode sobrar na fila",
+  );
 });
 
 // ── 026: o piso de impressões do veredito do Top 3 ──────────────────────────────────────────

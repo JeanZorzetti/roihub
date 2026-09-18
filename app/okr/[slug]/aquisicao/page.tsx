@@ -1090,14 +1090,54 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 Consultas entre as posições 4,0 e 10,9: já rankeiam, e reforço de conteúdo ou link
                 interno as move. Ordenadas por impressões — a primeira linha é a que rende mais.
               </p>
-              {kpis.strikingDistance.length === 0 ? (
+              {/* 027 — a marca sai da FILA DE TRABALHO, como já saía da lista vizinha. A contagem
+                  fica na tela pelo mesmo motivo que lá: sumir em silêncio é indistinguível de um
+                  filtro largo demais que também comeu consulta genérica. */}
+              {kpis.strikingDistance.removidas ? (
                 <p className="foot">
-                  Nenhuma consulta na faixa 4,0–10,9 nesta janela. Isso não é falha de medição: o
-                  site tem consultas, nenhuma delas está nessa posição.
+                  <strong>
+                    {br(kpis.strikingDistance.removidas)} consulta(s) de marca removida(s)
+                  </strong>{" "}
+                  desta fila — estar bem posicionado no próprio nome não é trabalho a fazer, e nem
+                  conteúdo nem link interno movem a marca. O filtro usa os{" "}
+                  {decl.motivo ? 0 : decl.termos.length} termos declarados no card, exibidos no bloco
+                  de marca acima.
+                </p>
+              ) : null}
+              {kpis.strikingDistance.lista.length === 0 ? (
+                /* TRÊS ausências com consertos diferentes, e a antiga frase única ("o site tem
+                   consultas, nenhuma delas está nessa posição") afirmava a terceira nas três. */
+                <p className="foot">
+                  {kpis.strikingDistance.removidas ? (
+                    <>
+                      <strong>Nada a empurrar nesta janela.</strong> As consultas que estavam na
+                      faixa 4,0–10,9 eram todas de <strong>marca</strong> e saíram acima — não é
+                      que o site não tenha posição, é que a posição que ele tem é no próprio nome.
+                    </>
+                  ) : baseCurta === 0 ? (
+                    <>
+                      <strong>sem base</strong> — a janela não teve impressão nenhuma, então não há
+                      consulta para posicionar. Isto <strong>não</strong> é &quot;nenhuma na faixa&quot;.
+                    </>
+                  ) : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
+                    <>
+                      <strong>não apurável</strong> — a janela tem {br(baseCurta)} impressões em{" "}
+                      {br(kpis.consultasUnicas.valor)} consulta(s), e o Search Console omite as raras
+                      da dimensão <code>query</code>. Sobre uma lista que a própria tela chama de{" "}
+                      <strong>piso</strong>, &quot;nenhuma na faixa&quot; é o que ainda não foi
+                      medido — não o que não existe. A faixa volta a ter leitura a partir de{" "}
+                      <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões.
+                    </>
+                  ) : (
+                    <>
+                      Nenhuma consulta na faixa 4,0–10,9 nesta janela. Isso não é falha de medição:
+                      o site tem consultas, nenhuma delas está nessa posição.
+                    </>
+                  )}
                 </p>
               ) : (
                 <ul className="ficha-krs">
-                  {kpis.strikingDistance.slice(0, 15).map((c) => (
+                  {kpis.strikingDistance.lista.slice(0, 15).map((c) => (
                     <li key={`${c.query}\u0000${c.page}`}>
                       <strong>{c.query}</strong>{" "}
                       <span className="foot">
@@ -1177,8 +1217,31 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               )}
               {kpis.canibalizacao.lista.length === 0 ? (
                 <p className="foot">
-                  Nenhuma consulta atendida por duas URLs suas nesta janela — que é a meta do board
-                  (zero páginas competindo pela mesma palavra-chave).
+                  {baseCurta === 0 ? (
+                    <>
+                      <strong>sem base</strong> — a janela não teve impressão nenhuma. Nenhuma
+                      consulta pode ter duas URLs quando nenhuma teve uma.
+                    </>
+                  ) : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
+                    /* 027 — AUSÊNCIA NÃO É APROVAÇÃO. A meta do board é zero, e declará-la atingida
+                       sobre uma lista de consultas que a própria tela chama de piso transforma "não
+                       deu para ver" em "está certo". É o mesmo defeito do 43× (2ª corrida) e da
+                       fração do Top 3 (4ª), entrando pela terceira porta. */
+                    <>
+                      <strong>não apurável</strong> — nenhuma consulta com duas URLs foi{" "}
+                      <strong>vista</strong> nas {br(baseCurta)} impressões desta janela, e isso{" "}
+                      <strong>não é</strong> a meta do board atingida. Canibalização exige duas URLs
+                      medidas na MESMA consulta; com a janela neste tamanho, e com o Search Console
+                      omitindo as consultas raras, a lista não tem como mostrar o par mesmo que ele
+                      exista. A régua do board volta a valer a partir de{" "}
+                      <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões.
+                    </>
+                  ) : (
+                    <>
+                      Nenhuma consulta atendida por duas URLs suas nesta janela — que é a meta do
+                      board (zero páginas competindo pela mesma palavra-chave).
+                    </>
+                  )}
                 </p>
               ) : (
                 <ul className="ficha-krs">
