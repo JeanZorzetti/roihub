@@ -914,3 +914,117 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
    `--ink2` (#52514e) sobre `--surface` dá 8,1:1, muito acima do 3:1 que elemento gráfico que
    carrega informação exige. */
 .wk-chart .wk-zero { stroke: var(--ink2); stroke-width: 2; stroke-dasharray: 2 2; }
+
+/* information-design · tabela de procedência + lista de leituras com selo · responde: a Atma é
+   encontrada por quem não a conhece, e esse volume está subindo ou caindo? · fonte: hub_gsc_dia,
+   hub_pagina, hub_indexacao, GSC/GA4/CrUX ao vivo · 2026-09-18
+   ─────────────────────────────────────────────────────────────────────────────────────────────
+   6ª corrida. As cinco anteriores conquistaram cada ressalva por medição e a escreveram ONDE ela
+   foi descoberta — o resultado é que a evidência passou a ser mais comprida que a resposta:
+   `Consultas` 782px e `Dentro das páginas` 850px contra 686px do nível 1, medidos em 1280.
+   G26 pede que o nível 1 tenha o DOBRO da área de um nível 2, ou seja, nenhum bloco de evidência
+   acima de 343px. Nada aqui apaga ressalva: ela sobe UMA vez para a tabela de procedência, e cada
+   leitura fica com o selo que diz em que estado está. */
+[data-info="aquisicao"] .inst { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+[data-info="aquisicao"] .inst th {
+  text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--muted); padding: 0 10px 6px 0; border-bottom: 1px solid var(--grid);
+}
+[data-info="aquisicao"] .inst td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--grid); vertical-align: top; line-height: 1.5; }
+[data-info="aquisicao"] .inst tr:last-child td { border-bottom: none; }
+[data-info="aquisicao"] .inst .inst-n { font-weight: 700; color: var(--ink); white-space: nowrap; }
+[data-info="aquisicao"] .inst .inst-q { color: var(--ink2); }
+/* `tabular-nums`: a coluna de datas é a que se compara na vertical, e sem isto 11/09 e 16/09
+   ganham larguras diferentes. */
+[data-info="aquisicao"] .inst .inst-d { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ── O selo ──────────────────────────────────────────────────────────────────
+   TRÊS portadores, nunca só a cor: o símbolo, a palavra e a cor. Impresso em cinza, ou lido por
+   quem não distingue matiz, o selo continua dizendo a mesma coisa — piso da skill. */
+[data-info="aquisicao"] .selo {
+  display: inline-block; font-size: 11px; font-weight: 700; line-height: 1.5;
+  padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap;
+}
+[data-info="aquisicao"] .selo::before { margin-right: 5px; }
+/* Medidos sobre --surface (#fcfcfb), o fundo do `.card`: #166534 = 6,95:1 */
+[data-info="aquisicao"] .selo-dado { color: var(--green-aa); }
+[data-info="aquisicao"] .selo-dado::before { content: "●"; }
+/* #52514e = 7,73:1 */
+[data-info="aquisicao"] .selo-fim { color: var(--ink2); }
+[data-info="aquisicao"] .selo-fim::before { content: "▣"; }
+/* #72706a = 4,82:1. Ausência NÃO usa a cor semântica: não apurado não é ruim,
+   é desconhecido — por isso o neutro, e não o vermelho. */
+[data-info="aquisicao"] .selo-piso,
+[data-info="aquisicao"] .selo-sem { color: var(--muted); }
+[data-info="aquisicao"] .selo-piso::before { content: "◐"; }
+[data-info="aquisicao"] .selo-sem::before { content: "○"; }
+/* #b91c1c = 6,30:1. Vermelho só para o instrumento QUEBRADO — uma falha que tem
+   conserto e dono, distinta de "não temos esse dado". */
+[data-info="aquisicao"] .selo-cega { color: var(--crit-ink); }
+[data-info="aquisicao"] .selo-cega::before { content: "✕"; }
+
+/* ── A linha de leitura ──────────────────────────────────────────────────────
+   Substitui o parágrafo por leitura. O valor sai na frente, em coluna de largura fixa e
+   `tabular-nums`, para que catorze leituras se comparem na vertical sem o olho recomeçar. */
+[data-info="aquisicao"] .lts { list-style: none; margin: 10px 0 0; padding: 0; }
+[data-info="aquisicao"] .lt {
+  display: grid; grid-template-columns: 96px 1fr; gap: 0 12px; align-items: baseline;
+  padding: 6px 0; border-top: 1px solid var(--grid);
+}
+[data-info="aquisicao"] .lt:first-child { border-top: none; }
+[data-info="aquisicao"] .lt-v {
+  font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; color: var(--ink);
+  text-align: right; line-height: 1.4;
+}
+/* Ausência ocupa o MESMO espaço do valor e não encolhe a linha — 11px para caber "não apurado"
+   na coluna de 96px sem quebrar a grade. */
+[data-info="aquisicao"] .lt-v.lt-v-sem { font-size: 11px; font-weight: 700; color: var(--muted); }
+[data-info="aquisicao"] .lt-r { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+[data-info="aquisicao"] .lt-r .selo { margin-left: 8px; vertical-align: 1px; }
+
+/* ── A ressalva, uma vez por bloco ───────────────────────────────────────────
+   Nível 3 do SKILL: o contexto que só quem já leu os dois primeiros níveis quer. `<details>`
+   nativo — zero JS, e o resumo diz QUANTAS leituras estão lá dentro, para ninguém precisar abrir
+   para descobrir se vale. */
+[data-info="aquisicao"] .ress { margin-top: 10px; }
+[data-info="aquisicao"] .ress > summary {
+  cursor: pointer; font-size: 12px; color: var(--muted); padding: 4px 0;
+  list-style: revert;
+}
+[data-info="aquisicao"] .ress > summary::marker { color: var(--muted); }
+[data-info="aquisicao"] .ress[open] > summary { font-weight: 700; color: var(--ink2); }
+[data-info="aquisicao"] .ress .foot { margin-top: 8px; }
+[data-info="aquisicao"] .ress dt { font-size: 12px; font-weight: 700; color: var(--ink2); margin-top: 10px; }
+[data-info="aquisicao"] .ress dt:first-child { margin-top: 0; }
+[data-info="aquisicao"] .ress dd { margin: 3px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+@media (max-width: 640px) {
+  /* Em 360px a coluna FIXA de 96px come mais de um terço da largura útil (278px). Ela vira `auto`:
+     o valor ocupa o que precisa e o rótulo fica ao lado, em vez de descer para uma linha própria.
+     Empilhar custava ~180px por bloco de 7 leituras e não melhorava nada — a coluna comum de
+     `tabular-nums` continua alinhando, porque `auto` é uma largura só para a lista inteira. */
+  [data-info="aquisicao"] .lt { grid-template-columns: auto 1fr; gap: 0 8px; }
+  /* A tabela de 4 colunas vira DUAS linhas por fonte, não quatro: empilhar os 4 td dava 742px de
+     bloco em 360px — mais que a metade do nível 1 (1.181px), ou seja, a mesma inversão de
+     hierarquia que esta corrida está desfazendo, reaparecendo na largura pequena.
+     Linha 1: o nome e o selo, que é o par que se lê de relance.
+     Linha 2: o que mede e desde quando, que é a procedência. */
+  /* `table` e `tbody` também precisam sair do modelo de tabela. Deixar `tbody` como
+     `table-row-group` com os `tr` em grid faz o navegador gerar uma caixa anônima de tabela em
+     volta de cada linha: a tabela renderizou só a PRIMEIRA linha e deixou ~3.700px de página em
+     branco embaixo. O `scrollHeight` continuava certo, então só a imagem denunciou. */
+  [data-info="aquisicao"] .inst,
+  [data-info="aquisicao"] .inst tbody { display: block; }
+  [data-info="aquisicao"] .inst thead { display: none; }
+  [data-info="aquisicao"] .inst tr {
+    display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: baseline;
+    padding: 7px 0; border-bottom: 1px solid var(--grid);
+  }
+  [data-info="aquisicao"] .inst td { display: block; border-bottom: none; padding: 0; }
+  [data-info="aquisicao"] .inst .inst-n { grid-column: 1; white-space: normal; }
+  [data-info="aquisicao"] .inst .inst-s { grid-column: 2; grid-row: 1; }
+  /* `min-width: 0` + `overflow-wrap`: o `<code>` do host é uma palavra só e estoura 278px sem
+     isto — foi assim que `usealigner.com` empurrou a linha para fora em 360. */
+  [data-info="aquisicao"] .inst .inst-q { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
+  [data-info="aquisicao"] .inst .inst-d { grid-column: 1 / -1; font-size: 12px; white-space: normal; }
+}

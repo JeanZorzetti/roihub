@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   canonizar,
   ehInterna,
+  hostDaTravessia,
   navegacao,
   profundidades,
   densidades,
@@ -47,6 +48,32 @@ test("subdomínio NÃO é interno", () => {
   assert.equal(ehInterna("https://x.com/a", "x.com"), true);
   assert.equal(ehInterna("https://blog.x.com/a", "x.com"), false, "contar subdomínio infla a densidade");
   assert.equal(ehInterna("https://outro.com/a", "x.com"), false);
+});
+
+// ── A troca de domínio: o host da travessia sai da home ALCANÇADA ───────────
+// Cenário real da atma em 2026-09-14. O card declarava `atma.roilabs.com.br`, a home respondeu 301
+// para `usealigner.com`, e os 13 links internos do HTML foram todos descartados como externos.
+
+test("host da travessia vem da home resolvida, não da declarada", () => {
+  const declarado = "atma.roilabs.com.br";
+  const home = "https://usealigner.com/";
+  const links = ["https://usealigner.com/blog", "https://usealigner.com/pacientes/precos"];
+
+  assert.equal(
+    links.filter((l) => ehInterna(l, declarado)).length,
+    0,
+    "é este zero que gravou 35 órfãs falsas: a declaração velha rejeita o site inteiro",
+  );
+
+  const host = hostDaTravessia(home, declarado);
+  assert.equal(host, "usealigner.com");
+  assert.equal(links.filter((l) => ehInterna(l, host)).length, links.length);
+});
+
+test("sem redirecionamento e com home ilegível, a declaração continua valendo", () => {
+  assert.equal(hostDaTravessia("https://X.com/", "x.com"), "x.com", "host normalizado em minúsculas");
+  assert.equal(hostDaTravessia("nao-e-url", "x.com"), "x.com");
+  assert.equal(hostDaTravessia(null, "X.com"), "x.com");
 });
 
 // ── SC-003: o menu está fora da conta, POR CONSTRUÇÃO ───────────────────────

@@ -15,6 +15,7 @@ import { extrair } from "@/lib/pagina.mjs";
 import {
   canonizar,
   ehInterna,
+  hostDaTravessia,
   navegacao,
   profundidades,
   densidades,
@@ -99,7 +100,9 @@ export async function POST() {
   for (const p of projetos) {
     try {
       const base = p.url.replace(/\/+$/, "");
-      const host = new URL(p.url).hostname.toLowerCase();
+      // Valor de partida. Vira o host da home RESOLVIDA assim que ela responde — ver
+      // `hostDaTravessia`. `let` porque `registrar()` fecha sobre ele e precisa do valor corrigido.
+      let host = new URL(p.url).hostname.toLowerCase();
       const home = canonizar(`${base}/`, `${base}/`)!;
 
       // O robots diz ONDE o sitemap mora: adivinhar `/sitemap.xml` reprova quem serve
@@ -167,6 +170,9 @@ export async function POST() {
         falhas.push({ projeto: p.slug, url: home, erro: inicial.erro });
         continue;
       }
+      // ANTES do primeiro `registrar()`: é ele que aplica `ehInterna`, e a home é justamente a
+      // página cujos links o host errado descartaria por inteiro.
+      host = hostDaTravessia(inicial.url, host);
       registrar(inicial);
 
       let aVisitar: string[] = fronteira(arestas, vistas);

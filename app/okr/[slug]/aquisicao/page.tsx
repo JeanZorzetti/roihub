@@ -67,6 +67,57 @@ function Recebida({ pedida, recebida }: { pedida: { inicio: string; fim: string 
 }
 
 /**
+ * 028 — o selo de estado de uma leitura. TRÊS portadores: o símbolo (no `::before` do CSS), a
+ * palavra e a cor. O piso da skill proíbe cor como portador único, e esta tela vira PDF de reunião
+ * trimestral — impressa em cinza ela continua dizendo qual leitura tem veredito e qual não tem.
+ *
+ * `cega` é o único vermelho, e é deliberado: instrumento quebrado tem conserto e dono. `sem` e
+ * `piso` são neutros porque ausência não é ruim, é desconhecida.
+ */
+type Selo = "dado" | "fim" | "piso" | "sem" | "cega";
+const PALAVRA_DO_SELO: Record<Selo, string> = {
+  dado: "com dado",
+  fim: "encerrada",
+  piso: "abaixo do piso",
+  sem: "sem amostra",
+  cega: "cega",
+};
+function SeloEstado({ tipo, palavra }: { tipo: Selo; palavra?: string }) {
+  return <span className={`selo selo-${tipo}`}>{palavra ?? PALAVRA_DO_SELO[tipo]}</span>;
+}
+
+/**
+ * Uma leitura: valor à esquerda em coluna fixa, rótulo e selo à direita.
+ *
+ * Substitui o parágrafo-por-leitura que crescia a cada corrida. O valor ocupa a MESMA coluna
+ * quando é ausência (`sem`), porque bloco que encolhe sem dado reorganiza a página e o leitor
+ * perde a posição — e a palavra do estado nunca é `0`, `—` nem `N/A`.
+ */
+function Leitura({
+  valor,
+  sem,
+  children,
+  selo,
+  palavra,
+}: {
+  valor?: string;
+  sem?: string;
+  children: React.ReactNode;
+  selo?: Selo;
+  palavra?: string;
+}) {
+  return (
+    <li className="lt">
+      <span className={sem ? "lt-v lt-v-sem" : "lt-v"}>{sem ?? valor}</span>
+      <span className="lt-r">
+        {children}
+        {selo ? <SeloEstado tipo={selo} palavra={palavra} /> : null}
+      </span>
+    </li>
+  );
+}
+
+/**
  * 022 — a última apuração de indexação, em três estados como o resto da página: `null` é ausência
  * estrutural (nunca apurado, ou hub sem banco) e `{erro}` é falha de agora. Uma falha do Postgres
  * não pode derrubar a aba inteira, e também não pode se disfarçar de "não apurado".
@@ -469,11 +520,121 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const fora = canais && "linhas" in canais ? (canais.fora ?? []) : [];
   const foraTotal = fora.reduce((t, f) => t + f.sessoes, 0);
 
+  // ── 028 · A PROCEDÊNCIA DA TELA INTEIRA, UMA VEZ ────────────────────────────────────────────
+  //
+  // Seis fontes alimentam os onze blocos abaixo, e em 18/09 CINCO delas estavam afetadas pela
+  // mesma coisa: a troca de domínio de 11/09. As cinco corridas anteriores descobriram isso uma
+  // fonte por vez e escreveram a ressalva onde a acharam — doze parágrafos contando pedaços da
+  // mesma história, nenhum contando a história. Medido: `Consultas` 782px e `Dentro das páginas`
+  // 850px contra 686px do bloco de nível 1.
+  //
+  // Esta tabela é o lugar único da história. Cada bloco abaixo perde a sua versão e fica com um
+  // selo que aponta para cá. Não é ressalva nova: é a mesma, hasteada.
+  const instrumentos: { nome: string; mede: string; desde: string; selo: Selo; nota: string }[] = [];
+  if (diasSeparados?.length) {
+    // `hostDoVeredito` sai do SEGMENTO que o veredito usa, e ele só existe quando há separação
+    // marca / não-marca — ou seja, em 1 dos 35 projetos. Cair em "host não identificado" nos
+    // outros 34 seria inventar uma ausência: `hub_gsc_dia.host` está preenchido em 5.840 de 5.840
+    // linhas desde o backfill de 18/09. O último dia da série sabe de que site ele veio.
+    const hostDaSerie =
+      hostDoVeredito ?? [...diasSeparados].reverse().find((d) => d.host)?.host ?? null;
+    instrumentos.push({
+      nome: "Série gravada",
+      mede: hostDaSerie ?? "host não gravado nesta série",
+      desde: ultimoDiaMedido ? `até ${ultimoDiaMedido}` : "—",
+      selo: serieEncerrada ? "fim" : "dado",
+      nota: serieEncerrada
+        ? `${leitura ? leitura.segmento.dias.length : diasSeparados.length} dia(s) preservados; não crescem mais. O site passou a ser medido em ${segmentosDepois[segmentosDepois.length - 1]?.host ?? "outro host"}, que ainda não tem semana completa.`
+        : `${diasSeparados.length} dia(s) em hub_gsc_dia, gravados pela corrida diária.`,
+    });
+  }
+  if (propriedadeGsc) {
+    const estreita = baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO;
+    instrumentos.push({
+      nome: "Consultas ao vivo",
+      mede: propriedadeGsc,
+      desde: recebidaGsc ? `desde ${recebidaGsc.inicio}` : "—",
+      selo: baseCurta === 0 ? "sem" : estreita ? "piso" : "dado",
+      nota:
+        baseCurta === 0
+          ? "A janela não teve impressão nenhuma: não há base para fração nem para régua."
+          : estreita
+            ? `${br(baseCurta!)} impressões em ${diasRecebidosCurta ?? "?"} dos 28 dias pedidos. A faixa do board tem 10 pontos de largura e cada impressão vale ${(100 / baseCurta!).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} deles — a régua só passa a valer a partir de ${br(PISO_IMPRESSOES_VEREDITO)}.`
+            : /* G5: `?? 0` aqui publicaria "0 impressões na janela" quando a consulta não
+                 respondeu — ausência virando zero real, na mesma tabela que existe para dizer em
+                 que estado cada fonte está. */
+              baseCurta === null
+              ? "A consulta respondeu, mas o total de impressões da janela não foi apurado."
+              : `${br(baseCurta)} impressões na janela de 28 dias.`,
+    });
+  }
+  if (indexacao) {
+    const cega = !!idx && idx.inspecionadas > 0 && idx.falhas === idx.inspecionadas;
+    instrumentos.push({
+      nome: "Indexação",
+      mede: (indexacao && !("erro" in indexacao) ? indexacao.propriedade : null) ?? "—",
+      desde: idx ? idx.dia : "—",
+      selo: "erro" in indexacao ? "cega" : cega ? "cega" : idx ? "dado" : "sem",
+      nota:
+        "erro" in indexacao
+          ? `A leitura da apuração falhou agora (${indexacao.erro}).`
+          : cega
+            ? `${br(idx!.falhas)} de ${br(idx!.inspecionadas)} inspeções falham${propriedadeForaDoSite ? `: a propriedade não cobre ${hostDeclarado ?? p.url}, e a API de inspeção recusa toda URL fora da propriedade. O conserto é na corrida, não nesta tela.` : "."}`
+            : idx
+              ? `${br(idx.inspecionadas)} URL(s) inspecionadas de ${br(idx.declaradas)} declaradas.`
+              : "Nenhuma apuração gravada para este projeto.",
+    });
+  }
+  if (crawl) {
+    instrumentos.push({
+      nome: "Crawl de página",
+      mede: paginado?.paginas?.[0] ? (() => { try { return new URL(paginado.paginas[0].url).hostname; } catch { return p.url; } })() : p.url,
+      desde: paginado ? paginado.dia : "—",
+      selo: "erro" in crawl ? "cega" : crawlSemLinks ? "cega" : paginado ? "dado" : "sem",
+      nota:
+        "erro" in crawl
+          ? `A leitura da corrida falhou agora (${crawl.erro}).`
+          : crawlSemLinks
+            ? "A corrida casou os links contra o domínio ANTIGO, que o 301 da home já tinha desmentido, e descartou todos como externos: zero aresta. Por isso as órfãs, a periferia, a profundidade e a densidade contextual ficam sem veredito — e as órfãs exibidas seriam falsas. Corrigido no hub em 18/09; a próxima corrida de segunda mede certo."
+            : paginado
+              ? `${br(paginado.visitadas)} página(s) visitadas de ${br(paginado.declaradas)} declaradas no sitemap.`
+              : "Nenhuma corrida completa gravada.",
+    });
+  }
+  if (vitais) {
+    instrumentos.push({
+      nome: "Campo (CrUX)",
+      mede: hostDeclarado ?? p.url,
+      desde: "janela da CrUX",
+      selo: "erro" in vitais ? "cega" : vitais.fracao === null ? "sem" : "dado",
+      nota:
+        "erro" in vitais
+          ? `A consulta falhou agora (${vitais.erro}).`
+          : vitais.fracao === null
+            ? `Origem nova não tem amostra de campo: a CrUX só publica o que passou do limiar de tráfego dela, e responde 404 até lá. Isto não é site lento — é site ainda não medido.`
+            : `${vitais.comDado} de ${vitais.consultadas} URL(s) consultadas têm os três vitais.`,
+    });
+  }
+  if (p.ga4?.propertyId) {
+    instrumentos.push({
+      nome: "Comportamento",
+      mede: hostsDoSite.length ? hostsDoSite.join(" + ") : p.url,
+      desde: recebidaGa4 ? `desde ${recebidaGa4.inicio}` : "—",
+      selo: canais && "erro" in canais ? "cega" : sessoes !== null ? "dado" : "sem",
+      nota:
+        canais && "erro" in canais
+          ? `A consulta ao GA4 falhou agora (${canais.erro}).`
+          : foraTotal > 0
+            ? `A propriedade ${p.ga4.propertyId} conta qualquer coisa que carregue a tag. ${br(foraTotal)} sessão(ões) de ${fora.length} outro(s) host(s) ficam FORA das cifras deste bloco, nomeadas nele.`
+            : `Propriedade ${p.ga4.propertyId}; nenhuma sessão medida fora dos hosts declarados.`,
+    });
+  }
+
   return (
     <main className="page">
       <Tabs active="okr" okrSlug={slug} />
 
-      <section className="card ag-section">
+      <section className="card ag-section" data-info="aquisicao">
         <p className="eyebrow">OKR · aquisição de {nomeCurto}</p>
         <h1 className="ficha-nome">Descoberta e Comportamento em janela longa</h1>
         {/* FR-028: o leitor tem que saber que esta NÃO é uma tela de segunda-feira. */}
@@ -484,58 +645,23 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           <a href={`/okr/${slug}/metodo`}>método</a>.
         </p>
 
-        {/* O site mudou de domínio e a medição não foi junto. Enquanto isso for verdade, é o
-            primeiro fato da tela: sem ele o leitor soma um crawl do site NOVO com números de busca
-            do site VELHO achando que os dois falam do mesmo lugar. */}
+        {/* 028 — A TROCA DE DOMÍNIO SAIU DAQUI.
+            Os dois parágrafos que ficavam neste ponto contavam, em 14 linhas de prosa, o que a
+            tabela de instrumentos abaixo diz em 6 linhas com selo: qual fonte mede qual host, desde
+            quando, e em que estado está. Ficando ACIMA do bloco de nível 1, eram a primeira coisa
+            lida numa tela cuja primeira coisa deveria ser a resposta — ressalva ocupando o lugar da
+            conclusão. O `porque`, o histórico preservado e a exceção do bloco de marca foram para o
+            `<details>` da tabela, que é onde o leitor vai quando o selo o manda ir.
+            O que sobra aqui é a única linha que a tabela NÃO diz: que o hub está desatualizado e o
+            conserto é editar `data/projects.json`. Ela some sozinha quando a URL for corrigida. */}
         {migrou ? (
           <p className="foot" style={{ borderLeft: "3px solid var(--borda)", paddingLeft: "0.75rem" }}>
-            <strong>Dois sites nesta tela.</strong> O crawl de <strong>{migrou.dia ?? "—"}</strong>{" "}
-            visitou <code>{migrou.para}</code>, mas o hub ainda declara{" "}
-            <code>{migrou.de}</code> em <code>data/projects.json</code> — o antigo responde{" "}
-            <strong>301</strong> para o novo, e o rastreador seguiu o redirecionamento.{" "}
-            {propriedadeGsc ? (
-              <>
-                Os blocos de <strong>busca</strong> abaixo (Descoberta, Marca, Consultas,
-                Striking distance, Canibalização, Indexação) saem de{" "}
-                <code>{propriedadeGsc}</code> filtrada por <code>{migrou.de}</code>:{" "}
-                <strong>medem o domínio antigo</strong>.{" "}
-                {novoHostCoberto
-                  ? null
-                  : `Não há propriedade no Search Console que cubra ${migrou.para}, então o domínio novo ainda não tem nenhuma medição de busca — o que não é o mesmo que não ter tráfego.`}
-              </>
-            ) : (
-              <>Os blocos de busca abaixo estão sem propriedade no Search Console.</>
-            )}{" "}
-            Só o bloco <strong>Dentro das páginas</strong> mede <code>{migrou.para}</code>. Este
-            aviso some sozinho quando a URL do projeto for corrigida.
-          </p>
-        ) : null}
-
-        {/* A migração já declarada no card: o hub está certo, e o que falta dizer é por que a série
-            encurtou. Sem isto, 371.189 → 40 impressões lê como colapso de tráfego. */}
-        {migracao ? (
-          <p className="foot" style={{ borderLeft: "3px solid var(--borda)", paddingLeft: "0.75rem" }}>
-            <strong>Mudança de domínio em {migracao.data}.</strong> Este projeto media{" "}
-            <code>{migracao.hostAnterior}</code> e passou a medir <code>{hostDeclarado}</code> —{" "}
-            {migracao.porque}.
-            <br />
-            Os blocos que consultam o Search Console <strong>ao vivo</strong> já saem de{" "}
-            <code>{propriedadeGsc ?? "—"}</code>, que tem dado só a partir de{" "}
-            <strong>{recebidaGsc!.inicio}</strong>: a janela vem truncada e o volume é baixo porque o
-            instrumento é novo, <strong>não</strong> porque o tráfego caiu.{" "}
-            {migracao.historico ? <>O histórico anterior não se perdeu — {migracao.historico}.</> : null}
-            <br />
-            {/* G3: bloco que mede outro SUJEITO declara. Marca/não-marca lê a série GRAVADA em
-                `hub_gsc_dia`, apurada no domínio antigo — não a propriedade nova. Sem esta linha a
-                tela volta a somar dois sites, que é exatamente o defeito que a migração criou. */}
-            {diasSeparados?.length ? (
-              <>
-                <strong>Exceção — Marca e não-marca:</strong> esse bloco lê a série{" "}
-                <strong>gravada</strong> ({diasSeparados.length} dia(s) em <code>hub_gsc_dia</code>),
-                apurada no domínio <strong>antigo</strong>. Os números dele e os do resto desta tela
-                medem <strong>sites diferentes</strong> e não se comparam entre si.
-              </>
-            ) : null}
+            <strong>O card está desatualizado.</strong> O crawl de{" "}
+            <strong>{migrou.dia ?? "—"}</strong> visitou <code>{migrou.para}</code>, e{" "}
+            <code>data/projects.json</code> ainda declara <code>{migrou.de}</code> — o antigo
+            responde <strong>301</strong> para o novo. Enquanto isso for verdade, a tabela abaixo
+            mostra fontes medindo <strong>sites diferentes</strong>. Este aviso some sozinho quando a
+            URL do projeto for corrigida.
           </p>
         ) : null}
 
@@ -659,10 +785,20 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   mas vale {pct(ritmo.fracaoDoPico)} da melhor semana da série. O que falta não é
                   retomar o crescimento a partir de agora — é reconquistar o volume que já existiu.
                 </>
+              ) : ritmo.fracaoDoPico === null ? (
+                /* G5 — `?? 0` aqui dizia "No nível do pico. A última semana completa vale 0% da
+                   melhor da série" sobre uma série em que TODA semana completa deu zero: não há
+                   pico, e "no nível do pico" é o veredito mais otimista possível sobre o pior dado
+                   possível. Nulo virando zero, e o zero virando aprovação. */
+                <>
+                  <strong>Sem pico para medir contra.</strong> Toda semana completa desta série deu{" "}
+                  <strong>zero</strong> impressão não-marca — não há melhor semana, e por isso não
+                  há fração. Isto <strong>não</strong> é estar no nível do pico.
+                </>
               ) : (
                 <>
                   <strong>No nível do pico.</strong> A última semana completa vale{" "}
-                  {pct(ritmo.fracaoDoPico ?? 0)} da melhor da série.
+                  {pct(ritmo.fracaoDoPico)} da melhor da série.
                 </>
               )}{" "}
               <span className="foot">
@@ -745,38 +881,128 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           </div>
         )}
 
+        {/* ── NÍVEL 2 · o primeiro da evidência, e o que dá sentido aos outros ──────────────────
+            Seis fontes, uma linha cada: o que mede HOJE, desde quando, e em que estado está. É a
+            procedência da tela inteira num lugar só (janela · fonte · apuração, como manda o
+            gate G3/G32) e é o que permite a cada bloco abaixo ficar com o número e o selo. */}
+        {instrumentos.length > 0 && (
+          <div className="ficha-bloco">
+            <h2 className="ficha-bloco-h">O instrumento — o que cada fonte mede hoje</h2>
+            <table className="inst">
+              <thead>
+                <tr>
+                  <th scope="col">Fonte</th>
+                  <th scope="col">Mede</th>
+                  <th scope="col">Apuração</th>
+                  <th scope="col">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {instrumentos.map((i) => (
+                  <tr key={i.nome}>
+                    <td className="inst-n">{i.nome}</td>
+                    <td className="inst-q"><code>{i.mede}</code></td>
+                    <td className="inst-d">{i.desde}</td>
+                    <td className="inst-s"><SeloEstado tipo={i.selo} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <details className="ress">
+              <summary>
+                {(() => {
+                  const cegas = instrumentos.filter((i) => i.selo !== "dado").length;
+                  return cegas === 0
+                    ? `As ${instrumentos.length} fontes estão com dado — de onde cada número vem`
+                    : `Por que ${cegas} das ${instrumentos.length} fontes não dão veredito cheio`;
+                })()}
+              </summary>
+              <dl>
+                {/* A troca de domínio é a causa COMUM dos selos abaixo, então vem primeiro e uma
+                    vez só. Ela ocupava dois parágrafos acima do bloco de nível 1 — ressalva no
+                    lugar da conclusão. */}
+                {migracao ? (
+                  <>
+                    <dt>A troca de domínio, em {migracao.data}</dt>
+                    <dd>
+                      O projeto media <code>{migracao.hostAnterior}</code> e passou a medir{" "}
+                      <code>{hostDeclarado}</code> — {migracao.porque}. As fontes que consultam o
+                      Search Console <strong>ao vivo</strong> já saem de{" "}
+                      <code>{propriedadeGsc ?? "—"}</code>, que tem dado só a partir de{" "}
+                      <strong>{recebidaGsc?.inicio ?? "—"}</strong>: a janela vem truncada e o
+                      volume é baixo porque o <strong>instrumento</strong> é novo,{" "}
+                      <strong>não</strong> porque o tráfego caiu.
+                      {migracao.historico ? (
+                        <> O histórico anterior não se perdeu — {migracao.historico}.</>
+                      ) : null}
+                      {/* G3: bloco que mede outro SUJEITO declara. Marca/não-marca lê a série
+                          GRAVADA em `hub_gsc_dia`, apurada no domínio antigo — não a propriedade
+                          nova. Sem esta linha a tela volta a somar dois sites. */}
+                      {diasSeparados?.length ? (
+                        <>
+                          {" "}
+                          <strong>Exceção — Marca e não-marca:</strong> esse bloco lê a série{" "}
+                          <strong>gravada</strong> ({diasSeparados.length} dia(s) em{" "}
+                          <code>hub_gsc_dia</code>), apurada no domínio <strong>antigo</strong>. Os
+                          números dele e os das fontes ao vivo medem <strong>sites diferentes</strong>{" "}
+                          e não se comparam entre si.
+                        </>
+                      ) : null}
+                    </dd>
+                  </>
+                ) : null}
+                {instrumentos.map((i) => (
+                  <div key={i.nome}>
+                    <dt>{i.nome}</dt>
+                    <dd>{i.nota}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          </div>
+        )}
+
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Descoberta — Search Console, 8 meses</h2>
           <p className="foot">
-            Janela pedida: <strong>{janelaGsc.inicio} → {janelaGsc.fim}</strong> — {janelaGsc.porque}.
+            {janelaGsc.inicio} → {janelaGsc.fim}
             <Recebida pedida={janelaGsc} recebida={recebidaGsc} />
           </p>
-          {/* FR-026: cada tela cita a outra PELO NOME e pela janela, para ninguém comparar dois
-              números que medem períodos diferentes achando que medem o mesmo. */}
-          <p className="foot">
-            <strong>8 meses</strong> — a célula <code>visitante</code> da{" "}
-            <a href={`/okr/${slug}`}>ficha</a> usa <strong>28 dias</strong> ({curtaGsc.inicio} →{" "}
-            {curtaGsc.fim}). São a mesma fonte em janelas diferentes: os números NÃO se dividem um
-            pelo outro.
-          </p>
           {cliques != null && impressoes != null ? (
-            <p>
-              <strong>{cliques.toLocaleString("pt-BR")}</strong> cliques ·{" "}
-              <strong>{impressoes.toLocaleString("pt-BR")}</strong> impressões{" "}
-              <span className="foot">
-                ({dias!.length} dia(s) com dado — Search Console
-                {serie && "property" in serie ? `, propriedade ${serie.property}` : ""})
-              </span>
-            </p>
+            <ul className="lts">
+              <Leitura valor={br(cliques)}>cliques em {dias!.length} dia(s) com dado</Leitura>
+              <Leitura valor={br(impressoes)}>impressões</Leitura>
+            </ul>
           ) : (
-            <p className="foot">
-              não apurado —{" "}
-              {serie && "erro" in serie
-                ? `Search Console indisponível (${serie.erro})`
-                : `sem propriedade no GSC para ${p.url}`}
-              .
-            </p>
+            <ul className="lts">
+              <Leitura
+                sem="não apurado"
+                selo={serie && "erro" in serie ? "cega" : "sem"}
+                palavra={
+                  serie && "erro" in serie
+                    ? `Search Console indisponível (${serie.erro})`
+                    : `sem propriedade no GSC para ${p.url}`
+                }
+              >
+                cliques e impressões em 8 meses
+              </Leitura>
+            </ul>
           )}
+          <details className="ress">
+            <summary>Por que 8 meses, e por que não se divide pela janela da ficha</summary>
+            <dl>
+              <dt>A janela</dt>
+              <dd>{janelaGsc.porque}.</dd>
+              {/* FR-026: cada tela cita a outra PELO NOME e pela janela, para ninguém comparar dois
+                  números que medem períodos diferentes achando que medem o mesmo. */}
+              <dt>A outra janela, na ficha</dt>
+              <dd>
+                A célula <code>visitante</code> da <a href={`/okr/${slug}`}>ficha</a> usa{" "}
+                <strong>28 dias</strong> ({curtaGsc.inicio} → {curtaGsc.fim}). São a mesma fonte em
+                janelas diferentes: os números NÃO se dividem um pelo outro.
+              </dd>
+            </dl>
+          </details>
         </div>
 
         {/* 025 — as duas medidas do board que não existiam: crescimento de impressões NÃO-MARCA e
@@ -812,100 +1038,69 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           ) : (
             <>
               <p className="foot">
-                Janela da separação: <strong>{janelaMarca.inicio} → {janelaMarca.fim}</strong> —{" "}
-                {diasComMarca.length} dia(s) com marca e não-marca medidas. ⚠️ A corrida confere a
-                janela inteira de <strong>480 dias</strong>; esta tela confere só os dias acima,
-                então os dois vereditos podem divergir <strong>legitimamente</strong>.
+                {janelaMarca.inicio} → {janelaMarca.fim} · {diasComMarca.length} dia(s) com a
+                separação medida
               </p>
 
-              <ul className="ficha-krs">
-                <li>
-                  {/* FR-008/FR-009: os dois meses saem NOMEADOS, nenhum é o corrente, e o primeiro
-                      mês fechado é "ainda não apurável" — nunca 0%, que leria como estagnação
-                      medida e mandaria consertar um problema que não existe. */}
-                  <strong>
-                    {crescimento === null ? "ainda não apurável" : variacao(crescimento.valor)}
-                  </strong>{" "}
-                  de crescimento de impressões não-marca{" "}
-                  <span className="foot">
-                    {crescimento === null ? (
-                      <>
-                        — ainda não há <strong>dois meses fechados</strong> nesta janela.{" "}
-                        <strong>Não é 0%</strong>: um zero aqui seria estagnação medida, e o que
-                        existe é ausência de medição. Um mês só entra quando tem o calendário
-                        completo <strong>e</strong> três dias de folga depois do fim — o Search
-                        Console ainda sobe a ponta (30/07 da atma saiu com 30 impressões e fechou em
-                        827).
-                      </>
-                    ) : (
-                      <>
-                        (<strong>{crescimento.de} → {crescimento.para}</strong>:{" "}
-                        <strong>
-                          {crescimento.deImpressoes.toLocaleString("pt-BR")} →{" "}
-                          {crescimento.paraImpressoes.toLocaleString("pt-BR")}
-                        </strong>{" "}
-                        impressões não-marca, dois meses <strong>fechados</strong> — nenhum deles é
-                        o mês corrente){" "}
-                        {/* A faixa do board só se aplica quando o mês-base foi MEDIDO o mês
-                            inteiro. Com 27 dias de zero em julho, a razão mede a volta do índice e
-                            não o ritmo de aquisição — e aprovar "acima da faixa" premiaria o site
-                            justamente por ter quebrado antes. O veredito vira a leitura de forma,
-                            que é o bloco de nível 1 no topo. */}
-                        {crescimento.baseInterrompida ? (
-                          <>
-                            · <strong>a faixa do board não se aplica aqui.</strong> O mês-base
-                            ({crescimento.de}) tem <strong>{crescimento.diasZeroDe} dos{" "}
-                            {crescimento.diasDe} dias com zero impressão não-marca</strong>: a razão
-                            é aritmeticamente certa e mede a <strong>volta</strong> do índice, não o
-                            crescimento da aquisição. Comparar isto com a meta de 5% a 10%/mês
-                            aprovaria um mês de retomada como se fosse um mês bom. O veredito de
-                            verdade é a <a href="#nao-marca">forma da série, no topo desta tela</a>.
-                          </>
-                        ) : (
-                          <>
-                            · meta do board: <strong>5% a 10%/mês</strong> —{" "}
-                            {crescimento.valor >= 0.05 && crescimento.valor <= 0.1
-                              ? "dentro da faixa."
-                              : crescimento.valor > 0.1
-                                ? "acima da faixa."
-                                : "abaixo: a demanda que ainda não é sua não está crescendo no ritmo pedido."}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </span>
-                </li>
-                <li>
-                  <strong>{razao === null ? "não apurado" : pct(razao)}</strong> de buscas de marca{" "}
-                  <span className="foot">
-                    (impressões de marca ÷ total do corte <code>{decl.pais}</code>, em{" "}
-                    {janelaMarca.inicio} → {janelaMarca.fim}). O denominador é o total{" "}
-                    <strong>dentro do corte de país</strong>, não o site inteiro: o total sem corte é
-                    mundial e a fatia de marca não é, então dividir um pelo outro mediria o corte.
-                  </span>
-                </li>
+              <ul className="lts">
+                {/* FR-008/FR-009: os dois meses saem NOMEADOS, nenhum é o corrente, e o primeiro
+                    mês fechado é "ainda não apurável" — nunca 0%, que leria como estagnação medida
+                    e mandaria consertar um problema que não existe. */}
+                {crescimento === null ? (
+                  <Leitura sem="não apurável" selo="sem" palavra="não é 0%">
+                    de crescimento de impressões não-marca — ainda não há dois meses fechados nesta
+                    janela
+                  </Leitura>
+                ) : (
+                  <Leitura
+                    valor={variacao(crescimento.valor)}
+                    selo={
+                      crescimento.baseInterrompida
+                        ? "piso"
+                        : crescimento.valor >= 0.05 && crescimento.valor <= 0.1
+                          ? "dado"
+                          : undefined
+                    }
+                    palavra={
+                      crescimento.baseInterrompida
+                        ? "a faixa do board não se aplica"
+                        : crescimento.valor >= 0.05 && crescimento.valor <= 0.1
+                          ? "dentro da faixa do board"
+                          : undefined
+                    }
+                  >
+                    de crescimento de impressões não-marca ({crescimento.de} → {crescimento.para}:{" "}
+                    {br(crescimento.deImpressoes)} → {br(crescimento.paraImpressoes)})
+                    {crescimento.baseInterrompida ? null : <> · meta do board: 5% a 10%/mês</>}
+                  </Leitura>
+                )}
+
+                {razao === null ? (
+                  <Leitura sem="não apurado" selo="sem">
+                    de buscas de marca
+                  </Leitura>
+                ) : (
+                  <Leitura
+                    valor={pct(razao)}
+                    selo={comp?.estado === "piso" ? "piso" : comp?.estado === "contradicao" ? "cega" : undefined}
+                    palavra={
+                      comp?.estado === "piso"
+                        ? "piso, não total"
+                        : comp?.estado === "contradicao"
+                          ? "a soma não fecha"
+                          : undefined
+                    }
+                  >
+                    de buscas de marca (impressões de marca ÷ total do corte{" "}
+                    <code>{decl.pais}</code>)
+                  </Leitura>
+                )}
               </ul>
 
-              {/* FR-006/FR-007: o rótulo de completude. `contradicao` é ALARME e não ressalva
-                  educada — resíduo negativo é defeito de filtro, e o conserto é oposto ao de um
-                  piso. Colapsar os dois faria um bug de regex se disfarçar de limitação da fonte. */}
-              {comp?.estado === "fecha" ? (
-                <p className="foot">
-                  ✅ <strong>A soma fecha</strong> nesta janela: marca + não-marca ={" "}
-                  {br(comp.impressoesPais!)} impressões, exatamente o total do corte. O filtro por
-                  consulta preserva as raras, então as duas medidas acima são{" "}
-                  <strong>completas</strong> — não são pisos.
-                </p>
-              ) : comp?.estado === "piso" ? (
-                <p className="foot">
-                  ⚠️ <strong>Os dois números acima são PISO, não total.</strong> Marca + não-marca
-                  somam {br(comp.impressoesMarca! + comp.impressoesNaoMarca!)} contra{" "}
-                  {br(comp.impressoesPais!)} do total do corte: faltam {br(comp.residuo!)} impressões
-                  ({comp.fracao === null ? "fração não apurada" : pct(comp.fracao)} do total) que o
-                  Search Console não atribui a consulta nenhuma. O real é maior dos dois lados, e
-                  quanto maior não é observável.
-                </p>
-              ) : comp?.estado === "contradicao" ? (
+              {/* A contradição é ALARME, não ressalva educada: resíduo negativo é defeito de filtro
+                  e o conserto é oposto ao de um piso. Fica FORA do `<details>` porque diz para não
+                  ler os números de cima — uma instrução que não pode depender de um clique. */}
+              {comp?.estado === "contradicao" ? (
                 <p className="foot">
                   🚨 <strong>Contradição, e isto é defeito — não limitação da fonte.</strong> Marca
                   + não-marca somam {br(comp.impressoesMarca! + comp.impressoesNaoMarca!)}, que é{" "}
@@ -915,20 +1110,95 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </p>
               ) : null}
 
-              {/* FR-005/FR-012: a lista e o corte na tela. É o que permite a quem lê DESCONFIAR da
-                  classificação — e a única defesa contra a lista pobre, cujo erro é favorável e
-                  por isso perigoso: uma variante esquecida infla o não-marca. */}
-              <p className="foot">
-                <strong>Termos de marca em uso</strong> ({decl.termos.length}):{" "}
-                {decl.termos.map((t) => (
-                  <code key={t}>{t} </code>
-                ))}{" "}
-                · corte de país: <code>{decl.pais}</code>
-                {decl.declaradaEm ? <> · declarados em {decl.declaradaEm}</> : null}. Casamento por{" "}
-                <strong>palavra inteira</strong>: <code>atmasfera</code> não conta como marca. Termo
-                que falte nesta lista cai em <strong>não-marca</strong> e infla o número que se quer
-                ver crescer — é curadoria, e por isso a lista fica aqui em vez de escondida no card.
-              </p>
+              <details className="ress">
+                <summary>
+                  Os {decl.termos.length} termos de marca em uso, e se a soma fecha com o total
+                </summary>
+                <dl>
+                  {/* FR-005/FR-012: a lista e o corte na tela. É o que permite a quem lê DESCONFIAR
+                      da classificação — e a única defesa contra a lista pobre, cujo erro é favorável
+                      e por isso perigoso: uma variante esquecida infla o não-marca. */}
+                  <dt>Termos em uso ({decl.termos.length})</dt>
+                  <dd>
+                    {decl.termos.map((t) => (
+                      <code key={t}>{t} </code>
+                    ))}{" "}
+                    · corte de país: <code>{decl.pais}</code>
+                    {decl.declaradaEm ? <> · declarados em {decl.declaradaEm}</> : null}. Casamento
+                    por <strong>palavra inteira</strong>: <code>atmasfera</code> não conta como
+                    marca. Termo que falte nesta lista cai em <strong>não-marca</strong> e infla o
+                    número que se quer ver crescer — é curadoria, e por isso a lista fica aqui em vez
+                    de escondida no card.
+                  </dd>
+
+                  {/* FR-006/FR-007: o rótulo de completude. */}
+                  {comp?.estado === "fecha" ? (
+                    <>
+                      <dt>A soma fecha</dt>
+                      <dd>
+                        ✅ Marca + não-marca = {br(comp.impressoesPais!)} impressões, exatamente o
+                        total do corte. O filtro por consulta preserva as raras, então as duas
+                        medidas acima são <strong>completas</strong> — não são pisos.
+                      </dd>
+                    </>
+                  ) : comp?.estado === "piso" ? (
+                    <>
+                      <dt>Por que são piso</dt>
+                      <dd>
+                        Marca + não-marca somam{" "}
+                        {br(comp.impressoesMarca! + comp.impressoesNaoMarca!)} contra{" "}
+                        {br(comp.impressoesPais!)} do total do corte: faltam {br(comp.residuo!)}{" "}
+                        impressões (
+                        {comp.fracao === null ? "fração não apurada" : pct(comp.fracao)} do total)
+                        que o Search Console não atribui a consulta nenhuma. O real é maior dos dois
+                        lados, e quanto maior não é observável.
+                      </dd>
+                    </>
+                  ) : null}
+
+                  <dt>O denominador</dt>
+                  <dd>
+                    É o total <strong>dentro do corte de país</strong>, não o site inteiro: o total
+                    sem corte é mundial e a fatia de marca não é, então dividir um pelo outro mediria
+                    o corte.
+                  </dd>
+
+                  {crescimento === null ? (
+                    <>
+                      <dt>Por que ainda não há crescimento apurável</dt>
+                      <dd>
+                        <strong>Não é 0%</strong>: um zero aqui seria estagnação medida, e o que
+                        existe é ausência de medição. Um mês só entra quando tem o calendário
+                        completo <strong>e</strong> três dias de folga depois do fim — o Search
+                        Console ainda sobe a ponta (30/07 da atma saiu com 30 impressões e fechou em
+                        827).
+                      </dd>
+                    </>
+                  ) : crescimento.baseInterrompida ? (
+                    <>
+                      <dt>Por que a faixa do board não se aplica</dt>
+                      <dd>
+                        O mês-base ({crescimento.de}) tem{" "}
+                        <strong>
+                          {crescimento.diasZeroDe} dos {crescimento.diasDe} dias com zero impressão
+                          não-marca
+                        </strong>
+                        : a razão é aritmeticamente certa e mede a <strong>volta</strong> do índice,
+                        não o crescimento da aquisição. Comparar isto com a meta de 5% a 10%/mês
+                        aprovaria um mês de retomada como se fosse um mês bom. O veredito de verdade
+                        é a <a href="#nao-marca">forma da série, no topo desta tela</a>.
+                      </dd>
+                    </>
+                  ) : null}
+
+                  <dt>Esta tela e a corrida podem divergir</dt>
+                  <dd>
+                    A corrida confere a janela inteira de <strong>480 dias</strong>; esta tela
+                    confere só os {diasComMarca.length} dia(s) da janela acima, então os dois
+                    vereditos podem divergir <strong>legitimamente</strong>.
+                  </dd>
+                </dl>
+              </details>
             </>
           )}
         </div>
@@ -937,27 +1207,20 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             propósito: aquele é de leitura trimestral, este é a fila de trabalho da semana. */}
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Consultas — Search Console, 28 dias</h2>
+          {/* 028 — a janela pedida, a recebida e o porquê da diferença desceram para o `<details>`
+              do fim do bloco; o estado de cada leitura agora é o selo dela. Esta linha é a única
+              procedência que fica em cima, porque é o recorte que o leitor precisa ANTES de ler o
+              primeiro número. */}
           <p className="foot">
-            Janela pedida: <strong>{curtaGsc.inicio} → {curtaGsc.fim}</strong> — a mesma da célula{" "}
-            <code>visitante</code> da <a href={`/okr/${slug}`}>ficha</a>, e{" "}
-            <strong>não</strong> a de 8 meses do bloco acima. Os números dos dois blocos medem
-            períodos diferentes e não se dividem um pelo outro.
+            {curtaGsc.inicio} → {curtaGsc.fim}
+            {recebidaGsc && recebidaGsc.inicio > curtaGsc.inicio ? (
+              <>
+                {" "}
+                · recebido <strong>{diasRecebidosCurta} dos 28 dias</strong> ({recebidaGsc.inicio} →{" "}
+                {curtaGsc.fim})
+              </>
+            ) : null}
           </p>
-          {/* 026 — a janela RECEBIDA também aqui, não só no bloco de 8 meses. `gscConsultas` não
-              traz a dimensão `date`, então a janela real sai da série que já está na página: é a
-              MESMA propriedade, e o primeiro dia dela é o primeiro dia que existe nesta também.
-              Zero requisição a mais. Sem esta linha, o bloco promete 28 dias e entrega 5 — foi o
-              que a migração de domínio produziu: a propriedade nova começou em 11/09. */}
-          {recebidaGsc && recebidaGsc.inicio > curtaGsc.inicio && (
-            <p className="foot">
-              ⚠️ <strong>Janela recebida: {recebidaGsc.inicio} → {curtaGsc.fim}</strong> —{" "}
-              <strong>truncada</strong>. A propriedade de <code>{p.url}</code> no Search Console não
-              tem dado antes de {recebidaGsc.inicio}, então os números abaixo cobrem{" "}
-              <strong>{diasRecebidosCurta}</strong> dos 28 dias pedidos. Eles{" "}
-              <strong>não</strong> são comparáveis com uma janela cheia de 28 dias, e a queda em
-              relação a qualquer leitura anterior é da JANELA, não do site.
-            </p>
-          )}
 
           {!SLUGS_DE_BUSCA.includes(slug) ? (
             /* Escopo, não ausência: sem esta linha o `kpis === null` abaixo diria "sem propriedade
@@ -980,270 +1243,238 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </p>
           ) : (
             <>
-              <ul className="ficha-krs">
-                <li>
-                  <strong>{kpis.consultasUnicas.valor.toLocaleString("pt-BR")}</strong> consultas únicas{" "}
-                  {/* FR-009: o rótulo de piso é para o LEITOR, não um comentário no código. */}
-                  <span className="foot">
-                    — <strong>piso, não total</strong>: o Search Console omite as consultas raras da
-                    dimensão <code>query</code>, então o número real é maior e não é observável.
-                  </span>
-                </li>
-                <li>
-                  <strong>{kpis.noTop20.toLocaleString("pt-BR")}</strong> consultas no Top 20{" "}
-                  <span className="foot">(posições 1,0 a 20,0)</span>
-                </li>
+              <ul className="lts">
+                {/* FR-009: o rótulo de piso é para o LEITOR, não um comentário no código — e
+                    continua na tela, agora como selo em vez de parágrafo. */}
+                <Leitura valor={br(kpis.consultasUnicas.valor)} selo="piso" palavra="piso, não total">
+                  consultas únicas
+                </Leitura>
+                <Leitura valor={br(kpis.noTop20)}>consultas no Top 20 (posições 1,0 a 20,0)</Leitura>
                 {/* 026 — fração SEMPRE com a base ao lado, e o veredito do board só acima do
                     piso. Com as 26 impressões que a propriedade nova tinha em 18/09, uma única
                     impressão move a fração 3,8 pontos e três atravessam a faixa inteira de 10:
                     exibir "dentro da faixa" ali seria aprovar ruído, o mesmo defeito do `43×`. */}
-                <li>
-                  <strong>{kpis.impressoesNoTop3 === null ? "não apurado" : pct(kpis.impressoesNoTop3)}</strong>{" "}
-                  das impressões no Top 3{" "}
-                  {kpis.impressoesNoTop3 !== null && baseCurta !== null && (
-                    <span className="foot">
-                      ({br(Math.round(kpis.impressoesNoTop3 * baseCurta))} de {br(baseCurta)}{" "}
-                      impressões na janela)
-                    </span>
-                  )}{" "}
-                  {baseCurta === 0 ? (
-                    /* G4 — zero impressões é um ESTADO, não um denominador. Dividir por ele daria
-                       "Infinity pontos" na tela, que é o zero disfarçado de número que este piso
-                       existe para não produzir. */
-                    <span className="foot">
-                      — <strong>sem base</strong>: a janela não teve impressão nenhuma, então não há
-                      fração nem régua. Isto não é 0% no Top 3.
-                    </span>
-                  ) : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
-                    <span className="foot">
-                      — <strong>sem veredito do board</strong>: a faixa de referência é 40% a 50%,
-                      dez pontos de largura, e com {br(baseCurta)} impressões cada uma vale{" "}
-                      {(100 / baseCurta).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}{" "}
-                      pontos. A régua só passa a valer a partir de{" "}
-                      <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões na janela.
-                    </span>
-                  ) : (
-                    <span className="foot">(meta do board: 40% a 50%)</span>
-                  )}
-                </li>
+                {/* G4 — zero impressões é um ESTADO, não um denominador. E abaixo do piso a fração
+                    existe mas a RÉGUA não: o selo diz qual dos dois é o caso, sem fabricar
+                    reprovação nem aprovação. */}
+                {baseCurta === 0 ? (
+                  <Leitura sem="sem base" selo="sem" palavra="não é 0% no Top 3">
+                    impressões no Top 3 — a janela não teve impressão nenhuma
+                  </Leitura>
+                ) : (
+                  <Leitura
+                    valor={kpis.impressoesNoTop3 === null ? undefined : pct(kpis.impressoesNoTop3)}
+                    sem={kpis.impressoesNoTop3 === null ? "não apurado" : undefined}
+                    selo={
+                      baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? "piso" : undefined
+                    }
+                    palavra={
+                      baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                        ? "sem veredito do board"
+                        : undefined
+                    }
+                  >
+                    das impressões no Top 3
+                    {kpis.impressoesNoTop3 !== null && baseCurta !== null ? (
+                      <>
+                        {" "}
+                        ({br(Math.round(kpis.impressoesNoTop3 * baseCurta))} de {br(baseCurta)})
+                      </>
+                    ) : null}
+                    {baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO ? (
+                      <> · meta do board: 40% a 50%</>
+                    ) : null}
+                  </Leitura>
+                )}
                 {/* 022/FR-011: com denominador apurado isto vira a RAZÃO que o board pede; sem ele
-                    volta a ser contagem COM O MOTIVO. Razão de denominador chutado é falha. */}
+                    volta a ser contagem, e o selo é que diz qual dos dois está na tela. Razão de
+                    denominador chutado é falha. */}
                 {ativas === null ? (
-                  <li>
-                    <strong>{br(kpis.urlsComImpressao)}</strong> URLs com impressão{" "}
-                    <span className="foot">
-                      — contagem, não o Active Index Ratio do board.{" "}
-                      {denomIdx === null && amostrado ? (
-                        <>
-                          A indexação foi apurada por <strong>amostra</strong> ({br(idx!.inspecionadas)}{" "}
-                          de {br(idx!.declaradas)} URLs): o numerador acima é do site inteiro e
-                          dividi-lo por um denominador de amostra daria uma razão que não mede nada.
-                          Para a razão existir aqui, a apuração precisa cobrir o sitemap inteiro.
-                        </>
-                      ) : (
-                        <>
-                          O total de URLs indexadas ainda não foi apurado para este projeto — ver o
-                          bloco de indexação abaixo. Sem denominador a razão seria inventada.
-                        </>
-                      )}
-                    </span>
-                  </li>
+                  <Leitura valor={br(kpis.urlsComImpressao)} selo="sem" palavra="contagem, não razão">
+                    URLs com impressão
+                  </Leitura>
                 ) : (
                   <>
-                    <li>
-                      <strong>{pct(ativas)}</strong> de Active Index Ratio{" "}
-                      <span className="foot">
-                        ({br(kpis.urlsComImpressao)} URLs com impressão ÷ {br(denomIdx!)} indexadas,
-                        apuradas em {idx!.dia}) · meta do board: <strong>≥ 70%</strong> —{" "}
-                        {ativas >= 0.7 ? "atingida." : "abaixo: há páginas no índice que ninguém vê."}
-                      </span>
-                    </li>
+                    <Leitura valor={pct(ativas)} selo={ativas >= 0.7 ? "dado" : undefined}>
+                      de Active Index Ratio ({br(kpis.urlsComImpressao)} ÷ {br(denomIdx!)} indexadas,{" "}
+                      {idx!.dia}) · meta do board: ≥ 70%
+                    </Leitura>
                     {porPagina && (
-                      <li>
-                        <strong>
-                          {porPagina.valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
-                        </strong>{" "}
-                        consultas por URL indexada{" "}
-                        <span className="foot">
-                          — <strong>piso, não total</strong>, pela mesma omissão das consultas raras
-                          da linha acima. Faixas do board: <strong>30 a 80</strong> para artigo/blog,{" "}
-                          <strong>10 a 25</strong> para produto/landing. O hub não sabe qual é o tipo
-                          de cada URL deste projeto, então quem lê escolhe a faixa — inventar o tipo
-                          para poder pintar um veredito seria pior que não pintar.
-                        </span>
-                      </li>
+                      <Leitura
+                        valor={porPagina.valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+                        selo="piso"
+                        palavra="piso, não total"
+                      >
+                        consultas por URL indexada
+                      </Leitura>
                     )}
                   </>
                 )}
+
+                {/* O truncamento da API saiu daqui: ele é uma SEGUNDA razão para o mesmo selo
+                    `piso, não total` que as linhas já carregam, e o `<details>` abaixo já o diz.
+                    Repetir num parágrafo próprio era a mesma ressalva em dois lugares. */}
+
+                {/* ── A FILA DE TRABALHO ───────────────────────────────────────────────────────
+                    Três leituras que antes eram três sub-blocos com h3, parágrafo de definição e
+                    parágrafo de ressalva cada — 9 parágrafos para 3 números. Agora são 3 linhas na
+                    MESMA lista das de cima (a separação em duas listas era herança dos h3, e
+                    custava um respiro sem separar nada); a definição e a ressalva vivem no
+                    `<details>` do fim do bloco. Nenhuma frase foi apagada: saíram de 9 lugares e
+                    foram para 1. */}
+                {kpis.strikingDistance.lista.length > 0 ? (
+                  <Leitura valor={br(kpis.strikingDistance.lista.length)}>
+                    consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
+                    {kpis.strikingDistance.removidas
+                      ? ` · ${br(kpis.strikingDistance.removidas)} de marca removida(s)`
+                      : ""}
+                  </Leitura>
+                ) : (
+                  /* QUATRO ausências com consertos diferentes. A frase única que existia antes
+                     ("o site tem consultas, nenhuma delas está nessa posição") afirmava a quarta
+                     nas quatro — inclusive quando a causa era a própria janela. */
+                  <Leitura
+                    sem={
+                      kpis.strikingDistance.removidas
+                        ? "nada a empurrar"
+                        : baseCurta === 0
+                          ? "sem base"
+                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "não apurável"
+                            : "zero real"
+                    }
+                    selo={
+                      kpis.strikingDistance.removidas
+                        ? "sem"
+                        : baseCurta === 0
+                          ? "sem"
+                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "piso"
+                            : "dado"
+                    }
+                    palavra={
+                      kpis.strikingDistance.removidas
+                        ? `${br(kpis.strikingDistance.removidas)} era(m) de marca`
+                        : baseCurta === 0
+                          ? "nenhuma impressão na janela"
+                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "não é &ldquo;nenhuma na faixa&rdquo;"
+                            : "nenhuma nesta faixa"
+                    }
+                  >
+                    consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
+                  </Leitura>
+                )}
+
+                {kpis.ctrGap === null ? (
+                  <Leitura sem="sem base" selo="sem" palavra="não é 0%">
+                    das URLs atingem o CTR mínimo da própria posição
+                  </Leitura>
+                ) : (
+                  <Leitura
+                    valor={pct(kpis.ctrGap.fracao)}
+                    selo={kpis.ctrGap.fracao >= 0.75 ? "dado" : undefined}
+                  >
+                    das URLs atingem o CTR mínimo da posição ({kpis.ctrGap.avaliadas} avaliada(s)) ·
+                    meta do board: 75% a 80%
+                  </Leitura>
+                )}
+
+                {kpis.canibalizacao.lista.length > 0 ? (
+                  <Leitura valor={br(kpis.canibalizacao.lista.length)}>
+                    consulta(s) com duas URLs suas disputando · meta do board: zero
+                    {kpis.canibalizacao.removidas
+                      ? ` · ${br(kpis.canibalizacao.removidas)} de marca removida(s)`
+                      : ""}
+                  </Leitura>
+                ) : (
+                  /* 027 — AUSÊNCIA NÃO É APROVAÇÃO. Declarar a meta do board atingida sobre uma
+                     lista que a própria tela chama de piso transforma "não deu para ver" em "está
+                     certo". Abaixo do piso o selo diz `não apurável`, nunca `meta atingida`. */
+                  <Leitura
+                    sem={
+                      baseCurta === 0
+                        ? "sem base"
+                        : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                          ? "não apurável"
+                          : "zero real"
+                    }
+                    selo={
+                      baseCurta === 0
+                        ? "sem"
+                        : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                          ? "piso"
+                          : "dado"
+                    }
+                    palavra={
+                      baseCurta === 0
+                        ? "nenhuma impressão na janela"
+                        : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                          ? "não é a meta do board atingida"
+                          : "meta do board atingida"
+                    }
+                  >
+                    consulta(s) com duas URLs suas disputando
+                  </Leitura>
+                )}
               </ul>
 
-              {consultas && "truncado" in consultas && consultas.truncado && (
-                <p className="foot">
-                  ⚠️ <strong>Resultado truncado</strong> no teto de linhas da API do Search Console:
-                  há mais consultas do que as listadas, e os números acima são piso por essa segunda
-                  razão além da omissão das raras.
-                </p>
-              )}
-
-              <h3 className="ficha-bloco-h">Striking distance — a um empurrão do Top 3</h3>
-              <p className="foot">
-                Consultas entre as posições 4,0 e 10,9: já rankeiam, e reforço de conteúdo ou link
-                interno as move. Ordenadas por impressões — a primeira linha é a que rende mais.
-              </p>
-              {/* 027 — a marca sai da FILA DE TRABALHO, como já saía da lista vizinha. A contagem
-                  fica na tela pelo mesmo motivo que lá: sumir em silêncio é indistinguível de um
-                  filtro largo demais que também comeu consulta genérica. */}
-              {kpis.strikingDistance.removidas ? (
-                <p className="foot">
-                  <strong>
-                    {br(kpis.strikingDistance.removidas)} consulta(s) de marca removida(s)
-                  </strong>{" "}
-                  desta fila — estar bem posicionado no próprio nome não é trabalho a fazer, e nem
-                  conteúdo nem link interno movem a marca. O filtro usa os{" "}
-                  {decl.motivo ? 0 : decl.termos.length} termos declarados no card, exibidos no bloco
-                  de marca acima.
-                </p>
-              ) : null}
-              {kpis.strikingDistance.lista.length === 0 ? (
-                /* TRÊS ausências com consertos diferentes, e a antiga frase única ("o site tem
-                   consultas, nenhuma delas está nessa posição") afirmava a terceira nas três. */
-                <p className="foot">
-                  {kpis.strikingDistance.removidas ? (
-                    <>
-                      <strong>Nada a empurrar nesta janela.</strong> As consultas que estavam na
-                      faixa 4,0–10,9 eram todas de <strong>marca</strong> e saíram acima — não é
-                      que o site não tenha posição, é que a posição que ele tem é no próprio nome.
-                    </>
-                  ) : baseCurta === 0 ? (
-                    <>
-                      <strong>sem base</strong> — a janela não teve impressão nenhuma, então não há
-                      consulta para posicionar. Isto <strong>não</strong> é &quot;nenhuma na faixa&quot;.
-                    </>
-                  ) : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
-                    <>
-                      <strong>não apurável</strong> — a janela tem {br(baseCurta)} impressões em{" "}
-                      {br(kpis.consultasUnicas.valor)} consulta(s), e o Search Console omite as raras
-                      da dimensão <code>query</code>. Sobre uma lista que a própria tela chama de{" "}
-                      <strong>piso</strong>, &quot;nenhuma na faixa&quot; é o que ainda não foi
-                      medido — não o que não existe. A faixa volta a ter leitura a partir de{" "}
-                      <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões.
-                    </>
-                  ) : (
-                    <>
-                      Nenhuma consulta na faixa 4,0–10,9 nesta janela. Isso não é falha de medição:
-                      o site tem consultas, nenhuma delas está nessa posição.
-                    </>
-                  )}
-                </p>
-              ) : (
+              {/* NÍVEL 3 — mesma regra do bloco do crawl: a LEITURA (número + selo) é nível 2, a
+                  LISTA de itens é nível 3. Hoje as três estão vazias; quando `usealigner.com`
+                  passar do piso elas voltam a ter dezenas de linhas, e é aí que a regra paga. O
+                  resumo carrega as contagens: nada fica escondido. */}
+              <details className="ress">
+                <summary>
+                  {[
+                    kpis.strikingDistance.lista.length > 0
+                      ? `${br(kpis.strikingDistance.lista.length)} a um empurrão do Top 3`
+                      : null,
+                    kpis.ctrGap && kpis.ctrGap.abaixo.length > 0
+                      ? `${br(kpis.ctrGap.abaixo.length)} abaixo do benchmark de CTR`
+                      : null,
+                    kpis.canibalizacao.lista.length > 0
+                      ? `${br(kpis.canibalizacao.lista.length)} em canibalização`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Nenhuma lista de trabalho nesta janela"}
+                  {` — e o que cada selo quer dizer (${curtaGsc.inicio} → ${curtaGsc.fim})`}
+                </summary>
+              {kpis.strikingDistance.lista.length > 0 && (
                 <ul className="ficha-krs">
                   {kpis.strikingDistance.lista.slice(0, 15).map((c) => (
-                    <li key={`${c.query}\u0000${c.page}`}>
+                    <li key={`${c.query}|${c.page}`}>
                       <strong>{c.query}</strong>{" "}
                       <span className="foot">
                         posição {c.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ·{" "}
-                        {c.impressoes.toLocaleString("pt-BR")} impressões · {c.cliques.toLocaleString("pt-BR")}{" "}
-                        cliques · {c.page}
+                        {br(c.impressoes)} impressões · {br(c.cliques)} cliques · {c.page}
                       </span>
                     </li>
                   ))}
                 </ul>
               )}
 
-              <h3 className="ficha-bloco-h">CTR contra o benchmark da posição</h3>
-              {kpis.ctrGap === null ? (
-                <p className="foot">
-                  Sem URL avaliável: o board só define CTR mínimo até a posição 10,9, e nenhuma URL
-                  desta janela está nessa faixa com impressão. Sem denominador não há fração —
-                  exibir 0% aqui seria inventar uma reprovação.
-                </p>
-              ) : (
+              {kpis.ctrGap !== null && kpis.ctrGap.abaixo.length > 0 && (
                 <>
-                  <p>
-                    <strong>{pct(kpis.ctrGap.fracao)}</strong> das URLs atingem o CTR mínimo da
-                    própria posição{" "}
-                    <span className="foot">
-                      ({kpis.ctrGap.avaliadas} URL(s) avaliada(s) · meta do board: 75% a 80%). URLs
-                      acima da posição 10,9 ficam fora da conta: o board não define piso lá, e
-                      contá-las como reprovadas faria toda cauda longa parecer quebrada.
-                    </span>
+                  <p className="foot">
+                    Abaixo do benchmark — aqui o problema é o <strong>título</strong>, não a posição:
                   </p>
-                  {kpis.ctrGap.abaixo.length > 0 && (
-                    <>
-                      <p className="foot">
-                        Abaixo do benchmark — aqui o problema é o <strong>título</strong>, não a
-                        posição:
-                      </p>
-                      <ul className="ficha-krs">
-                        {kpis.ctrGap.abaixo.slice(0, 10).map((u) => (
-                          <li key={u.url}>
-                            <strong>{u.url}</strong>{" "}
-                            <span className="foot">
-                              posição {u.posicao!.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ·
-                              CTR {pct(u.ctr!)} contra {pct(u.benchmark!)} esperado ·{" "}
-                              {u.impressoes.toLocaleString("pt-BR")} impressões
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
+                  <ul className="ficha-krs">
+                    {kpis.ctrGap.abaixo.slice(0, 10).map((u) => (
+                      <li key={u.url}>
+                        <strong>{u.url}</strong>{" "}
+                        <span className="foot">
+                          posição {u.posicao!.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ·
+                          CTR {pct(u.ctr!)} contra {pct(u.benchmark!)} esperado · {br(u.impressoes)}{" "}
+                          impressões
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </>
               )}
 
-              <h3 className="ficha-bloco-h">Canibalização</h3>
-              {/* 025: a ressalva de 07/09 virou FILTRO. Medido na atma: `atma aligner` listava 8
-                  URLs e não é canibalização nenhuma — busca de marca traz o site inteiro por
-                  construção. Com a lista de termos declarada no card, a linha sai da lista em vez
-                  de o leitor ter que ignorá-la a cada leitura.
-                  Sem lista declarada, o parágrafo e o comportamento de sempre ficam intactos. */}
-              {kpis.canibalizacao.removidas === null ? (
-                <p className="foot">
-                  Consultas de <strong>marca</strong> aparecem aqui e quase nunca são problema:
-                  buscar o nome da empresa traz o site inteiro, e é assim que deve ser. A linha que
-                  importa é a consulta genérica com duas URLs suas disputando — aí a autoridade está
-                  dividida. <strong>Este projeto não declarou lista de termos de marca</strong>, então
-                  o rótulo fica com quem lê.
-                </p>
-              ) : (
-                /* FR-011: sumir em SILÊNCIO é indistinguível de um filtro largo demais que também
-                   comeu consulta genérica. A contagem é o que permite desconfiar do próprio filtro. */
-                <p className="foot">
-                  <strong>{br(kpis.canibalizacao.removidas)} consulta(s) de marca removida(s)</strong>{" "}
-                  desta lista — buscar o nome da empresa traz o site inteiro por construção e não é
-                  canibalização. O filtro usa os {decl.motivo ? 0 : decl.termos.length} termos
-                  declarados no card, exibidos no bloco de marca acima.
-                </p>
-              )}
-              {kpis.canibalizacao.lista.length === 0 ? (
-                <p className="foot">
-                  {baseCurta === 0 ? (
-                    <>
-                      <strong>sem base</strong> — a janela não teve impressão nenhuma. Nenhuma
-                      consulta pode ter duas URLs quando nenhuma teve uma.
-                    </>
-                  ) : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
-                    /* 027 — AUSÊNCIA NÃO É APROVAÇÃO. A meta do board é zero, e declará-la atingida
-                       sobre uma lista de consultas que a própria tela chama de piso transforma "não
-                       deu para ver" em "está certo". É o mesmo defeito do 43× (2ª corrida) e da
-                       fração do Top 3 (4ª), entrando pela terceira porta. */
-                    <>
-                      <strong>não apurável</strong> — nenhuma consulta com duas URLs foi{" "}
-                      <strong>vista</strong> nas {br(baseCurta)} impressões desta janela, e isso{" "}
-                      <strong>não é</strong> a meta do board atingida. Canibalização exige duas URLs
-                      medidas na MESMA consulta; com a janela neste tamanho, e com o Search Console
-                      omitindo as consultas raras, a lista não tem como mostrar o par mesmo que ele
-                      exista. A régua do board volta a valer a partir de{" "}
-                      <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões.
-                    </>
-                  ) : (
-                    <>
-                      Nenhuma consulta atendida por duas URLs suas nesta janela — que é a meta do
-                      board (zero páginas competindo pela mesma palavra-chave).
-                    </>
-                  )}
-                </p>
-              ) : (
+              {kpis.canibalizacao.lista.length > 0 && (
                 <ul className="ficha-krs">
                   {kpis.canibalizacao.lista.slice(0, 10).map((c) => (
                     <li key={c.consulta}>
@@ -1261,6 +1492,139 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   ))}
                 </ul>
               )}
+
+                {/* A ressalva, uma vez. Tudo o que as cinco corridas anteriores conquistaram por
+                    medição, agrupado: cada `dt` é uma leitura da lista de cima. */}
+                <dl>
+                  <dt>A janela</dt>
+                  <dd>
+                    Pedida: {curtaGsc.inicio} → {curtaGsc.fim} — a mesma da célula{" "}
+                    <code>visitante</code> da <a href={`/okr/${slug}`}>ficha</a>, e{" "}
+                    <strong>não</strong> a de 8 meses do bloco acima: os dois medem períodos
+                    diferentes e não se dividem um pelo outro.
+                    {recebidaGsc && recebidaGsc.inicio > curtaGsc.inicio ? (
+                      <>
+                        {" "}
+                        Recebida: {recebidaGsc.inicio} → {curtaGsc.fim}, ou seja{" "}
+                        <strong>{diasRecebidosCurta} dos 28 dias</strong> — a propriedade de{" "}
+                        <code>{p.url}</code> não tem dado antes de {recebidaGsc.inicio}. A queda em
+                        relação a qualquer leitura anterior é da JANELA, não do site.
+                      </>
+                    ) : null}
+                  </dd>
+
+                  <dt>piso, não total</dt>
+                  <dd>
+                    O Search Console omite as consultas raras da dimensão <code>query</code>: o
+                    número real é maior e não é observável.
+                    {consultas && "truncado" in consultas && consultas.truncado ? (
+                      <>
+                        {" "}
+                        <strong>E há truncamento</strong> no teto de linhas da API — os números são
+                        piso por essa segunda razão, além da omissão das raras.
+                      </>
+                    ) : null}
+                  </dd>
+
+                  {baseCurta !== null && baseCurta > 0 && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
+                    <>
+                      <dt>abaixo do piso</dt>
+                      <dd>
+                        A janela tem <strong>{br(baseCurta)} impressões</strong>. A faixa de
+                        referência do board tem 10 pontos de largura, e cada impressão vale{" "}
+                        {(100 / baseCurta).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}{" "}
+                        deles — três atravessam a faixa inteira. A régua só passa a valer a partir de{" "}
+                        <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões, e abaixo disso a
+                        ausência de achado não é achado nenhum: não é &ldquo;nenhuma na faixa&rdquo;
+                        nem &ldquo;meta do board atingida&rdquo;, é <strong>não medido</strong>.
+                      </dd>
+                    </>
+                  ) : null}
+
+                  <dt>Striking distance</dt>
+                  <dd>
+                    Consultas entre as posições 4,0 e 10,9: já rankeiam, e reforço de conteúdo ou
+                    link interno as move. Ordenadas por impressões — a primeira linha rende mais.
+                    {kpis.strikingDistance.removidas ? (
+                      <>
+                        {" "}
+                        <strong>
+                          {br(kpis.strikingDistance.removidas)} consulta(s) de marca saíram desta
+                          fila
+                        </strong>
+                        : estar bem posicionado no próprio nome não é trabalho a fazer, e nem
+                        conteúdo nem link interno movem a marca. O filtro usa os{" "}
+                        {decl.motivo ? 0 : decl.termos.length} termos declarados no card. A contagem
+                        fica na tela porque sumir em silêncio é indistinguível de um filtro largo
+                        demais que também comeu consulta genérica.
+                      </>
+                    ) : null}
+                  </dd>
+
+                  <dt>CTR contra o benchmark</dt>
+                  <dd>
+                    O board só define CTR mínimo até a posição 10,9. URLs acima dela ficam fora da
+                    conta — contá-las como reprovadas faria toda cauda longa parecer quebrada. Sem
+                    URL na faixa não há denominador, e exibir 0% seria inventar uma reprovação.
+                  </dd>
+
+                  <dt>Canibalização</dt>
+                  <dd>
+                    {kpis.canibalizacao.removidas === null ? (
+                      <>
+                        Consultas de <strong>marca</strong> aparecem aqui e quase nunca são
+                        problema: buscar o nome da empresa traz o site inteiro, e é assim que deve
+                        ser. A linha que importa é a consulta genérica com duas URLs suas
+                        disputando.{" "}
+                        <strong>Este projeto não declarou lista de termos de marca</strong>, então o
+                        rótulo fica com quem lê.
+                      </>
+                    ) : (
+                      <>
+                        <strong>
+                          {br(kpis.canibalizacao.removidas)} consulta(s) de marca removida(s)
+                        </strong>{" "}
+                        desta lista — buscar o nome da empresa traz o site inteiro por construção e
+                        não é canibalização. Filtro pelos {decl.motivo ? 0 : decl.termos.length}{" "}
+                        termos declarados no card.
+                      </>
+                    )}
+                  </dd>
+
+                  {ativas === null ? (
+                    <>
+                      <dt>contagem, não razão</dt>
+                      <dd>
+                        {denomIdx === null && amostrado ? (
+                          <>
+                            A indexação foi apurada por <strong>amostra</strong> (
+                            {br(idx!.inspecionadas)} de {br(idx!.declaradas)} URLs): o numerador é do
+                            site inteiro e dividi-lo por um denominador de amostra daria uma razão
+                            que não mede nada. Para a razão existir, a apuração precisa cobrir o
+                            sitemap inteiro.
+                          </>
+                        ) : (
+                          <>
+                            O total de URLs indexadas ainda não foi apurado — ver{" "}
+                            <strong>Indexação</strong> abaixo e a linha dele na tabela de
+                            instrumentos. Sem denominador a razão seria inventada.
+                          </>
+                        )}
+                      </dd>
+                    </>
+                  ) : porPagina ? (
+                    <>
+                      <dt>Consultas por URL indexada</dt>
+                      <dd>
+                        Faixas do board: <strong>30 a 80</strong> para artigo/blog,{" "}
+                        <strong>10 a 25</strong> para produto/landing. O hub não sabe o tipo de cada
+                        URL deste projeto, então quem lê escolhe a faixa — inventar o tipo para
+                        poder pintar um veredito seria pior que não pintar.
+                      </dd>
+                    </>
+                  ) : null}
+                </dl>
+              </details>
             </>
           )}
         </div>
@@ -1350,148 +1714,187 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                propriedade gravada continuava `sc-domain:roilabs.com.br` — a URL Inspection API
                recusa toda URL fora da propriedade. Nem rede, nem quota. O que a tela sabe é a
                propriedade usada e o site declarado; quando os dois divergem, isso É a causa. */
-            <p className="foot">
-              não apurado — as <strong>{br(indexacao!.inspecionadas)}</strong> inspeções desta
-              corrida <strong>falharam</strong>, todas. Falha de inspeção não é não-indexação, então
-              não há fração a exibir.
-              <br />
-              A corrida usou a propriedade <code>{indexacao!.propriedade ?? "—"}</code> e o card
-              declara o site em <code>{p.url}</code>.{" "}
-              {propriedadeForaDoSite ? (
-                <>
-                  <strong>Os dois não batem</strong>: a API de inspeção só responde sobre URLs{" "}
-                  <strong>dentro</strong> da propriedade, então toda inspeção é recusada antes de
-                  olhar o índice. É o rastro de uma troca de domínio — o sitemap acompanha o
-                  redirecionamento e passa a declarar o site novo antes de a propriedade dele
-                  entrar na corrida. O conserto é a propriedade do host atual no Search Console,
-                  não uma nova tentativa.
-                </>
-              ) : (
-                <>
-                  Os dois batem, então a causa <strong>não é</strong> a propriedade — e a tela não
-                  tem como distinguir rede de quota daqui. Quem investiga olha o retorno da corrida
-                  das 05:47.
-                </>
-              )}
-              <br />
-              Apurado em <strong>{indexacao!.dia}</strong>.
-            </p>
+            <>
+              <p className="foot">Apurado em {indexacao!.dia} · {indexacao!.propriedade ?? "—"}</p>
+              <ul className="lts">
+                <Leitura
+                  sem="não apurado"
+                  selo="cega"
+                  palavra={`${br(indexacao!.inspecionadas)} de ${br(indexacao!.inspecionadas)} inspeções falharam`}
+                >
+                  das URLs inspecionadas estão no índice — falha de inspeção{" "}
+                  <strong>não é</strong> não-indexação, então não há fração a exibir
+                </Leitura>
+              </ul>
+              <details className="ress">
+                <summary>
+                  {propriedadeForaDoSite
+                    ? "A propriedade da corrida não cobre o site declarado — é essa a causa"
+                    : "O que a tela sabe, e o que ela não tem como saber daqui"}
+                </summary>
+                <dl>
+                  <dt>A propriedade usada e o site declarado</dt>
+                  <dd>
+                    A corrida usou <code>{indexacao!.propriedade ?? "—"}</code>; o card declara o
+                    site em <code>{p.url}</code>.{" "}
+                    {propriedadeForaDoSite ? (
+                      <>
+                        <strong>Os dois não batem</strong>: a API de inspeção só responde sobre URLs{" "}
+                        <strong>dentro</strong> da propriedade, então toda inspeção é recusada antes
+                        de olhar o índice. É o rastro de uma troca de domínio — o sitemap acompanha
+                        o redirecionamento e passa a declarar o site novo antes de a propriedade
+                        dele entrar na corrida. O conserto é a propriedade do host atual no Search
+                        Console, não uma nova tentativa.
+                      </>
+                    ) : (
+                      <>
+                        Os dois batem, então a causa <strong>não é</strong> a propriedade — e a tela
+                        não tem como distinguir rede de quota daqui. Quem investiga olha o retorno
+                        da corrida das 05:47.
+                      </>
+                    )}
+                  </dd>
+                </dl>
+              </details>
+            </>
           ) : (
             <>
-              {/* FR-007 / SC-002: o tamanho da amostra e o total declarado ficam na MESMA frase da
+              {/* FR-007 / SC-002: o tamanho da amostra e o total declarado ficam na MESMA linha da
                   fração, nunca em nota de rodapé. Uma taxa de 200 URLs apresentada como "a taxa do
-                  site" é a armadilha que esta feature existe para não repetir. */}
-              <p>
-                <strong>{pct(taxaIdx)}</strong> das URLs inspecionadas estão no índice do Google —{" "}
-                <strong>{br(idx!.indexadas)}</strong> de <strong>{br(base)}</strong>
-                {amostrado ? (
-                  <>
-                    , e essas <strong>{br(idx!.inspecionadas)}</strong> são uma amostra das{" "}
-                    <strong>{br(idx!.declaradas)}</strong> que o sitemap declara:{" "}
-                    <strong>a fração vale para a amostra, não para o site inteiro</strong>.
-                  </>
-                ) : (
-                  <>
-                    , que é o sitemap <strong>inteiro</strong> ({br(idx!.declaradas)} URL(s)
-                    declarada(s)) — sem amostragem.
-                  </>
-                )}
-              </p>
-              {/* FR-014: um inventário de semanas atrás não pode se apresentar como o estado de
-                  hoje. A data vem do banco justamente porque um número buscado ao vivo não teria. */}
+                  site" é a armadilha que esta feature existe para não repetir — e é por isso que o
+                  selo `amostra` fica na própria leitura, não no `<details>`. */}
               <p className="foot">
                 Apurado em <strong>{idx!.dia}</strong>
-                {idx!.propriedade ? <> · propriedade {idx!.propriedade}</> : null}
-                {idx!.falhas > 0 && (
-                  <>
-                    {" "}
-                    · <strong>{br(idx!.falhas)}</strong> inspeção(ões) falharam e ficaram FORA da
-                    conta, dos dois lados da divisão — falha não é não-indexação.
-                  </>
-                )}
-                {amostrado && (
-                  <>
-                    {" "}
-                    · a amostra é o <strong>começo do sitemap</strong>, na ordem em que o próprio
-                    site declara: estável entre corridas (a fração não se move por troca de amostra)
-                    e enviesada para o que o site trata como prioritário.
-                  </>
-                )}
-              </p>
-              {/* FR-010: a taxa contra a meta do board, na linha da própria taxa. */}
-              <p className="foot">
-                Meta do board: <strong>95%</strong> —{" "}
-                {taxaIdx >= 0.95 ? (
-                  <>atingida.</>
-                ) : (
-                  <>faltam {pct(0.95 - taxaIdx)} para chegar lá.</>
-                )}
+                {idx!.propriedade ? <> · {idx!.propriedade}</> : null}
               </p>
 
-              {/* US2 / SC-006 — o leitor tem que responder em 30 segundos se o problema é "o Google
-                  não conhece as páginas" ou "o Google conhece e recusou". Por isso o RÓTULO é o
-                  diagnóstico em português e o termo do Search Console fica em segundo plano: quem
-                  lê esta tela decide trabalho, e "Crawled - currently not indexed" não é uma
-                  decisão. Os dois baldes NUNCA somam num "não indexadas" único — os prognósticos
-                  são incompatíveis e o conserto de um não move o outro. */}
-              {idx!.rastreadasNaoIndexadas + idx!.descobertasNaoIndexadas + idx!.outras > 0 && (
-                <>
-                  <h3 className="ficha-bloco-h">Por que as que faltam não entraram</h3>
-                  {idx!.rastreadasNaoIndexadas !== idx!.descobertasNaoIndexadas && (
-                    <p>
-                      {idx!.rastreadasNaoIndexadas > idx!.descobertasNaoIndexadas ? (
-                        <>
-                          O problema deste site é <strong>conteúdo</strong>: o Google leu a maior
-                          parte das páginas que ficaram de fora e recusou.
-                        </>
-                      ) : (
-                        <>
-                          O problema deste site é <strong>rastreio</strong>: o Google nem chegou a
-                          ler a maior parte das páginas que ficaram de fora.
-                        </>
-                      )}
-                    </p>
+              <ul className="lts">
+                <Leitura
+                  valor={pct(taxaIdx)}
+                  selo={amostrado ? "piso" : taxaIdx >= 0.95 ? "dado" : undefined}
+                  palavra={
+                    amostrado
+                      ? `amostra de ${br(idx!.inspecionadas)} das ${br(idx!.declaradas)} declaradas`
+                      : taxaIdx >= 0.95
+                        ? "meta do board atingida"
+                        : undefined
+                  }
+                >
+                  das URLs inspecionadas estão no índice ({br(idx!.indexadas)} de {br(base)}) · meta
+                  do board: 95%
+                  {taxaIdx >= 0.95 ? null : <> — faltam {pct(0.95 - taxaIdx)}</>}
+                </Leitura>
+
+                {/* US2 / SC-006 — o leitor tem que responder em 30 segundos se o problema é "o
+                    Google não conhece as páginas" ou "o Google conhece e recusou". Por isso o
+                    RÓTULO é o diagnóstico em português e o termo do Search Console fica no
+                    `<details>`: quem lê esta tela decide trabalho, e "Crawled - currently not
+                    indexed" não é uma decisão. Os dois baldes NUNCA somam num "não indexadas"
+                    único — os prognósticos são incompatíveis e o conserto de um não move o
+                    outro. */}
+                {idx!.rastreadasNaoIndexadas + idx!.descobertasNaoIndexadas + idx!.outras > 0 && (
+                  <>
+                    <Leitura valor={br(idx!.rastreadasNaoIndexadas)}>
+                      o Google leu e recusou — trabalho <strong>editorial</strong>
+                    </Leitura>
+                    <Leitura valor={br(idx!.descobertasNaoIndexadas)}>
+                      o Google nem leu — trabalho de <strong>link interno e sitemap</strong>
+                    </Leitura>
+                    <Leitura valor={br(idx!.outras)}>
+                      outros motivos: redirect, canonical, <code>noindex</code>
+                    </Leitura>
+                    {rejeicao !== null && (
+                      <Leitura
+                        valor={pct(rejeicao)}
+                        selo={rejeicao < 0.05 ? "dado" : undefined}
+                        palavra={rejeicao < 0.05 ? "meta do board atingida" : undefined}
+                      >
+                        de rejeição de rastreio (as duas primeiras ÷ {br(base)}) · meta do board:
+                        abaixo de 5%
+                        {rejeicao < 0.05 ? null : " — acima do teto"}
+                      </Leitura>
+                    )}
+                  </>
+                )}
+              </ul>
+
+              {/* O diagnóstico em uma frase fica FORA do `<details>`: é a leitura que decide qual
+                  dos dois trabalhos começa, e não pode depender de um clique. */}
+              {idx!.rastreadasNaoIndexadas !== idx!.descobertasNaoIndexadas &&
+                idx!.rastreadasNaoIndexadas + idx!.descobertasNaoIndexadas > 0 && (
+                  <p className="foot">
+                    {idx!.rastreadasNaoIndexadas > idx!.descobertasNaoIndexadas ? (
+                      <>
+                        O problema deste site é <strong>conteúdo</strong>: o Google leu a maior
+                        parte das páginas que ficaram de fora e recusou.
+                      </>
+                    ) : (
+                      <>
+                        O problema deste site é <strong>rastreio</strong>: o Google nem chegou a ler
+                        a maior parte das páginas que ficaram de fora.
+                      </>
+                    )}
+                  </p>
+                )}
+
+              <details className="ress">
+                <summary>O que cada balde quer dizer, e o que a amostra não cobre</summary>
+                <dl>
+                  <dt>O Google leu e recusou</dt>
+                  <dd>
+                    No Search Console: <em>rastreada, atualmente não indexada</em>. Ele buscou a
+                    página e decidiu que ela não vale uma vaga no índice.{" "}
+                    <strong>Nenhum conserto técnico move isto</strong> — é trabalho editorial:
+                    profundidade, originalidade, a intenção que a página atende.
+                  </dd>
+                  <dt>O Google nem leu</dt>
+                  <dd>
+                    No Search Console: <em>descoberta, atualmente não indexada</em>. Ele sabe que a
+                    URL existe e não gastou rastreio nela. Aqui o conteúdo não é a questão: é{" "}
+                    <strong>link interno, profundidade de cliques e sitemap</strong>. Os dois baldes
+                    ficam separados porque pedem trabalhos diferentes — a soma só aparece como
+                    placar na linha de rejeição.
+                  </dd>
+                  <dt>Outros motivos</dt>
+                  <dd>
+                    Redirect, canonical apontando para outra página, <code>noindex</code>. Cada uma é
+                    um caso — abra a URL no Search Console para ver qual.
+                  </dd>
+
+                  {amostrado ? (
+                    <>
+                      <dt>A amostra</dt>
+                      <dd>
+                        As <strong>{br(idx!.inspecionadas)}</strong> inspecionadas são uma amostra
+                        das <strong>{br(idx!.declaradas)}</strong> que o sitemap declara:{" "}
+                        <strong>a fração vale para a amostra, não para o site inteiro</strong>. A
+                        amostra é o <strong>começo do sitemap</strong>, na ordem em que o próprio
+                        site declara: estável entre corridas (a fração não se move por troca de
+                        amostra) e enviesada para o que o site trata como prioritário.
+                      </dd>
+                    </>
+                  ) : (
+                    <>
+                      <dt>A cobertura</dt>
+                      <dd>
+                        As {br(base)} inspecionadas são o sitemap <strong>inteiro</strong> (
+                        {br(idx!.declaradas)} URL(s) declarada(s)) — sem amostragem.
+                      </dd>
+                    </>
                   )}
-                  <ul className="ficha-krs">
-                    <li>
-                      <strong>{br(idx!.rastreadasNaoIndexadas)}</strong> — o Google leu e recusou{" "}
-                      <span className="foot">
-                        (no Search Console: <em>rastreada, atualmente não indexada</em>). Ele buscou
-                        a página e decidiu que ela não vale uma vaga no índice.{" "}
-                        <strong>Nenhum conserto técnico move isto</strong> — é trabalho editorial:
-                        profundidade, originalidade, a intenção que a página atende.
-                      </span>
-                    </li>
-                    <li>
-                      <strong>{br(idx!.descobertasNaoIndexadas)}</strong> — o Google nem leu{" "}
-                      <span className="foot">
-                        (no Search Console: <em>descoberta, atualmente não indexada</em>). Ele sabe
-                        que a URL existe e não gastou rastreio nela. Aqui o conteúdo não é a
-                        questão: é <strong>link interno, profundidade de cliques e sitemap</strong>.
-                      </span>
-                    </li>
-                    <li>
-                      <strong>{br(idx!.outras)}</strong> — outros motivos{" "}
-                      <span className="foot">
-                        redirect, canonical apontando para outra página, <code>noindex</code>. Cada
-                        uma é um caso — abra a URL no Search Console para ver qual.
-                      </span>
-                    </li>
-                  </ul>
-                  {rejeicao !== null && (
-                    <p>
-                      <strong>{pct(rejeicao)}</strong> de rejeição de rastreio{" "}
-                      <span className="foot">
-                        (as duas primeiras linhas somadas ÷ {br(base)} inspecionadas com resposta) ·
-                        meta do board: <strong>abaixo de 5%</strong> —{" "}
-                        {rejeicao < 0.05 ? "atingida." : "acima do teto."} A soma aparece só aqui,
-                        como placar: as duas linhas acima continuam separadas porque pedem trabalhos
-                        diferentes.
-                      </span>
-                    </p>
+
+                  {idx!.falhas > 0 && (
+                    <>
+                      <dt>As inspeções que falharam</dt>
+                      <dd>
+                        <strong>{br(idx!.falhas)}</strong> inspeção(ões) falharam e ficaram FORA da
+                        conta, <strong>dos dois lados da divisão</strong> — falha não é
+                        não-indexação, e contá-la como tal inverteria o sinal da medição.
+                      </dd>
+                    </>
                   )}
-                </>
-              )}
+                </dl>
+              </details>
             </>
           )}
         </div>
@@ -1523,225 +1926,311 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </p>
           ) : (
             <>
-              {/* FR-015: número sem data sempre parece de hoje. */}
+              {/* FR-015: número sem data sempre parece de hoje. O resto da procedência (quantas
+                  visitadas, quantos links de navegação, falhas de rede) desceu para o `<details>`:
+                  é contexto da medição, não a medição. */}
               <p className="foot">
-                Apurado em <strong>{crawl.dia}</strong> · {br(crawl.visitadas)} página(s) visitada(s)
-                de {br(crawl.declaradas)} declarada(s) no sitemap · {br(crawl.linksNavegacao)} link(s)
-                classificado(s) como navegação (menu e rodapé, fora da densidade contextual)
-                {crawl.falhas > 0 && <> · {br(crawl.falhas)} falha(s) de rede, fora de todo numerador</>}
+                Apurado em <strong>{crawl.dia}</strong> · {br(crawl.visitadas)} de{" "}
+                {br(crawl.declaradas)} página(s) do sitemap
+                {crawl.tetoAtingido && (
+                  <>
+                    {" "}
+                    · <strong>parou no teto</strong>: os números abaixo valem só para as alcançadas
+                  </>
+                )}
               </p>
-              {crawl.tetoAtingido && (
-                /* FR-012: número cortado que não se declara é número errado. */
-                <p className="foot">
-                  ⚠️ <strong>A travessia parou no teto</strong> — os números abaixo estão{" "}
-                  <strong>incompletos</strong> e valem só para as páginas alcançadas.
-                </p>
-              )}
 
-              {/* US1 — para onde vai a autoridade interna.
-                  ⚠️ Antes de publicar a contagem, o caso 100%: corrida que visitou páginas e não
-                  extraiu UM link — nem de navegação, nem contextual — não mediu um site sem links
-                  internos, ela não leu link nenhum. Aí `orfas` é igual a `visitadas` por
-                  construção, e publicar "N órfãs" afirma sobre o site um defeito que é do
-                  rastreador. É erro na fonte, e erro na fonte nunca vira número. */}
-              {crawlSemLinks ? (
-                <p>
-                  <strong>não apurado</strong> — a corrida visitou{" "}
-                  <strong>{br(crawl.visitadas)}</strong> página(s) e extraiu{" "}
-                  <strong>zero link interno</strong> (nenhum de navegação, nenhum contextual).{" "}
-                  <span className="foot">
-                    Site sem nenhum link interno não existe; o que houve foi o rastreador não
-                    enxergar os links — página renderizada no cliente é a causa comum. Por isso as{" "}
-                    {br(crawl.orfas)} "órfãs" não são exibidas como achado: elas são{" "}
-                    <strong>iguais às visitadas por construção</strong>, e um número assim afirma
-                    sobre o site um defeito que é da medição. As seis medidas abaixo que dependem de
-                    link interno (periferia, profundidade, links contextuais) ficam igualmente sem
-                    veredito nesta corrida.
-                  </span>
-                </p>
-              ) : (
-                <p>
-                  <strong>{br(crawl.orfas)}</strong> página(s) órfã(s){" "}
-                  <span className="foot">
-                    declaradas no sitemap que <strong>nenhum link interno alcança</strong> ·{" "}
-                    {br(crawl.linkadasNaoDeclaradas)} alcançada(s) por link e ausente(s) do sitemap
-                  </span>
-                </p>
-              )}
-              <ul className="ficha-krs" hidden={periferia.length === 0}>
-                {periferia.slice(0, 15).map((pg) => (
-                  <li key={pg.url}>
-                    <strong>{caminho(pg.url)}</strong>{" "}
-                    <span className="foot">
-                      {pg.erro ? (
-                        <>
-                          falhou na busca ({pg.erro}) — <strong>não</strong> é órfã, é erro de rede
-                        </>
-                      ) : pg.profundidade === null && pg.noSitemap ? (
-                        <>
-                          <strong>órfã</strong> — nenhum link interno chega aqui
-                        </>
-                      ) : (
-                        <>profundidade {br(pg.profundidade ?? 0)} clique(s)</>
-                      )}
-                      {!pg.erro && (
-                        <>
-                          {" · "}
-                          {br(pg.linksContextuais)} link(s) contextual(is)
-                          {pg.linksContextuais < LINKS_CONTEXTUAIS_MIN && (
-                            <> (abaixo dos {LINKS_CONTEXTUAIS_MIN} do board)</>
-                          )}
-                          {" · "}
-                          {impressoesPorUrl.get(pg.url)
-                            ? `${br(impressoesPorUrl.get(pg.url)!)} impressões em 28 d`
-                            : "zero impressão no Search Console"}
-                          {pg.conteudoEstado === "js-dependente" && (
-                            <>
-                              {" "}
-                              · conteúdo só existe depois do JS — <strong>atrasa</strong> a indexação,
-                              não a impede
-                            </>
-                          )}
-                        </>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {periferia.length > 15 && (
-                <p className="foot">
-                  {br(periferia.length - 15)} página(s) a mais, fora do topo da lista — ordenadas por
-                  periferia (órfã → profundidade ≥ {PROFUNDIDADE_MAX} → menos de{" "}
-                  {LINKS_CONTEXTUAIS_MIN} links contextuais) e, dentro do empate, por impressões.
-                </p>
-              )}
+              <ul className="lts">
+                {/* US1 — para onde vai a autoridade interna.
+                    ⚠️ O caso 100%: corrida que visitou páginas e não extraiu UM link não mediu um
+                    site sem links internos — ela não leu link nenhum. Aí `orfas === visitadas` por
+                    construção, e publicar "N órfãs" afirma sobre o site um defeito que é do
+                    rastreador. Erro na fonte nunca vira número. */}
+                {crawlSemLinks ? (
+                  <Leitura sem="não apurado" selo="cega" palavra="crawl cego">
+                    página(s) órfã(s) — a corrida leu zero link interno em{" "}
+                    {br(crawl.visitadas)} página(s), então periferia, profundidade e densidade
+                    contextual ficam sem veredito
+                  </Leitura>
+                ) : (
+                  <Leitura valor={br(crawl.orfas)}>
+                    página(s) órfã(s): declaradas no sitemap que nenhum link interno alcança ·{" "}
+                    {br(crawl.linkadasNaoDeclaradas)} alcançada(s) por link e fora do sitemap
+                  </Leitura>
+                )}
 
-              {/* US2 — o título, que já tem evidência contra si (CTR Gap de 0% na 021). */}
-              {integridade && (
-                <>
-                  <p>
-                    <strong>{pct(integridade.fracao)}</strong> de integridade do título{" "}
-                    <span className="foot">
-                      ({br(integridade.avaliadas)} URL(s) com título e termo apurado · meta do board:{" "}
-                      <strong>100%</strong>) — largura <strong>estimada</strong> entre {TITULO_PX_MIN}{" "}
-                      e {TITULO_PX_MAX} px E o termo principal nos primeiros {TERMO_ATE} caracteres.
-                      {integridade.semTermo > 0 && (
-                        <>
-                          {" "}
-                          {br(integridade.semTermo)} URL(s) ficam fora por{" "}
-                          <strong>sem termo apurado</strong> — o Search Console não tem impressão
-                          delas, o que não é o mesmo que título errado.
-                        </>
-                      )}
-                    </span>
-                  </p>
-                  <ul className="ficha-krs">
-                    {integridade.fora.slice(0, 10).map((pg: PaginaCrawl) => (
-                      <li key={pg.url}>
-                        <strong>{pg.titulo}</strong>{" "}
-                        <span className="foot">
-                          {/* FR-005/SC-004: o método viaja com o número até aqui. Um pixel solto é
-                              indistinguível de uma medição, e vai ser lido como uma. */}
-                          {pg.tituloPx} px (<strong>estimativa</strong>, método {pg.tituloMetodo}) ·{" "}
-                          {posicaoPorUrl.get(pg.url) === null
-                            ? "sem termo apurado"
-                            : posicaoPorUrl.get(pg.url)! < 0
-                              ? `o termo "${termoPorUrl.get(pg.url)}" NÃO aparece no título`
-                              : `termo "${termoPorUrl.get(pg.url)}" a partir do caractere ${br(posicaoPorUrl.get(pg.url)!)}`}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-              {alinhamento && (
-                <p>
-                  <strong>{pct(alinhamento.fracao)}</strong> de alinhamento de intenção{" "}
-                  <span className="foot">
-                    ({br(alinhamento.avaliadas)} título(s) avaliado(s)) — título com modificador
-                    explícito, informacional ou comercial.
-                    {alinhamento.ausentes.length > 0 && (
-                      <>
-                        {" "}
-                        Sem modificador:{" "}
-                        {alinhamento.ausentes
-                          .slice(0, 6)
-                          .map((pg: PaginaCrawl) => caminho(pg.url))
-                          .join(", ")}
-                        .
-                      </>
-                    )}
-                  </span>
-                </p>
-              )}
+                {/* US2 — o título, que já tem evidência contra si (CTR Gap de 0% na 021). */}
+                {integridade && (
+                  <Leitura
+                    valor={pct(integridade.fracao)}
+                    selo={
+                      integridade.fracao >= 1
+                        ? "dado"
+                        : integridade.semTermo > integridade.avaliadas
+                          ? "piso"
+                          : undefined
+                    }
+                    palavra={
+                      integridade.semTermo > integridade.avaliadas
+                        ? `${br(integridade.semTermo)} sem termo apurado`
+                        : undefined
+                    }
+                  >
+                    de integridade do título ({br(integridade.avaliadas)} URL(s) avaliada(s)) · meta
+                    do board: 100%
+                  </Leitura>
+                )}
 
-              {/* US3 — dados estruturados: presentes, ausentes ou QUEBRADOS. */}
-              {cobertura024 && (
-                <p>
-                  <strong>{pct(cobertura024.fracao)}</strong> de cobertura de dados estruturados{" "}
-                  <span className="foot">
-                    ({br(cobertura024.validas)} de {br(cobertura024.avaliadas)} página(s) com JSON-LD
-                    válido · meta do board: <strong>100%</strong> e <strong>0 erro crítico</strong>) —{" "}
-                    <strong>{br(cobertura024.invalidas.length)} inválida(s)</strong> (o schema existe e
-                    estoura no parse: achar a vírgula) e{" "}
-                    <strong>{br(cobertura024.ausentes.length)} ausente(s)</strong> (não há schema
-                    nenhum: escrever). São consertos diferentes, e a soma dos dois não é um número.
-                  </span>
-                </p>
-              )}
+                {alinhamento && (
+                  <Leitura valor={pct(alinhamento.fracao)}>
+                    de alinhamento de intenção ({br(alinhamento.avaliadas)} título(s))
+                  </Leitura>
+                )}
 
-              {/* US4 — há quanto tempo o conteúdo não é tocado. */}
-              {atualizacao && (
-                <p>
-                  {atualizacao.fracao === null ? (
-                    <span className="foot">
-                      <strong>Cadência de atualização não apurada</strong> — nenhuma das{" "}
-                      {br(atualizacao.semData.length)} página(s) declara data. Sem data declarada{" "}
-                      <strong>não é</strong> desatualizada: é ausência de declaração.
-                    </span>
+                {/* US3 — dados estruturados: presentes, ausentes ou QUEBRADOS. */}
+                {cobertura024 && (
+                  <Leitura
+                    valor={pct(cobertura024.fracao)}
+                    selo={cobertura024.fracao >= 1 ? "dado" : undefined}
+                  >
+                    de cobertura de dados estruturados ({br(cobertura024.validas)} de{" "}
+                    {br(cobertura024.avaliadas)} com JSON-LD válido) · meta do board: 100%
+                  </Leitura>
+                )}
+
+                {/* US4 — há quanto tempo o conteúdo não é tocado. */}
+                {atualizacao &&
+                  (atualizacao.fracao === null ? (
+                    <Leitura sem="não apurado" selo="sem" palavra="nenhuma declara data">
+                      dentro da cadência de {CADENCIA_MESES} meses ({br(atualizacao.semData.length)}{" "}
+                      página(s) sem data declarada)
+                    </Leitura>
                   ) : (
-                    <>
-                      <strong>{pct(atualizacao.fracao)}</strong> dentro da cadência{" "}
+                    <Leitura valor={pct(atualizacao.fracao)}>
+                      dentro da cadência ({br(atualizacao.avaliadas)} que declaram data ·{" "}
+                      {br(atualizacao.vencidas.length)} passaram de {CADENCIA_MESES} meses)
+                    </Leitura>
+                  ))}
+
+                {/* FR-013 — o sitemap declarando URL morta ou redirecionada é o achado. */}
+                {achadosDoSitemap.length > 0 && (
+                  <Leitura valor={br(achadosDoSitemap.length)}>
+                    URL(s) do sitemap com achado: o sitemap declara e o site responde outra coisa
+                  </Leitura>
+                )}
+              </ul>
+
+              {/* NÍVEL 3 — as listas de itens E o método, num `<details>` só.
+                  A regra que este bloco passou a seguir: a LEITURA (número + selo) é nível 2; a
+                  LISTA de itens que a produziu é nível 3. Sem isso o bloco cresce com o dado —
+                  15 URLs de periferia sozinhas passam de 300px — e a evidência volta a ficar maior
+                  que a resposta, que é o defeito que esta corrida existe para remover.
+                  O resumo carrega as contagens, então nada fica escondido: dá para saber que há 4
+                  títulos a consertar sem abrir. */}
+              <details className="ress">
+                <summary>
+                  {[
+                    periferia.length > 0 ? `${br(periferia.length)} na periferia` : null,
+                    integridade && integridade.fora.length > 0
+                      ? `${br(integridade.fora.length)} título(s) fora do padrão`
+                      : null,
+                    achadosDoSitemap.length > 0
+                      ? `${br(achadosDoSitemap.length)} achado(s) de sitemap`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Nada a listar nesta corrida"}
+                  {" — e como cada uma das seis é medida"}
+                </summary>
+              {periferia.length > 0 && (
+                <ul className="ficha-krs">
+                  {periferia.slice(0, 15).map((pg) => (
+                    <li key={pg.url}>
+                      <strong>{caminho(pg.url)}</strong>{" "}
                       <span className="foot">
-                        ({br(atualizacao.avaliadas)} página(s) que <strong>declaram</strong> data ·
-                        auditoria a cada {CADENCIA_MESES} meses) — {br(atualizacao.vencidas.length)}{" "}
-                        passaram de {CADENCIA_MESES} meses. As {br(atualizacao.semData.length)} sem
-                        data declarada ficam fora do numerador <strong>e</strong> do denominador.
+                        {pg.erro ? (
+                          <>
+                            falhou na busca ({pg.erro}) — <strong>não</strong> é órfã, é erro de rede
+                          </>
+                        ) : pg.profundidade === null && pg.noSitemap ? (
+                          <>
+                            <strong>órfã</strong> — nenhum link interno chega aqui
+                          </>
+                        ) : (
+                          <>profundidade {br(pg.profundidade ?? 0)} clique(s)</>
+                        )}
+                        {!pg.erro && (
+                          <>
+                            {" · "}
+                            {br(pg.linksContextuais)} link(s) contextual(is)
+                            {pg.linksContextuais < LINKS_CONTEXTUAIS_MIN && (
+                              <> (abaixo dos {LINKS_CONTEXTUAIS_MIN} do board)</>
+                            )}
+                            {" · "}
+                            {impressoesPorUrl.get(pg.url)
+                              ? `${br(impressoesPorUrl.get(pg.url)!)} impressões em 28 d`
+                              : "zero impressão no Search Console"}
+                            {pg.conteudoEstado === "js-dependente" && (
+                              <>
+                                {" "}
+                                · conteúdo só existe depois do JS — <strong>atrasa</strong> a
+                                indexação, não a impede
+                              </>
+                            )}
+                          </>
+                        )}
                       </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {integridade && integridade.fora.length > 0 && (
+                <ul className="ficha-krs">
+                  {integridade.fora.slice(0, 10).map((pg: PaginaCrawl) => (
+                    <li key={pg.url}>
+                      <strong>{pg.titulo}</strong>{" "}
+                      <span className="foot">
+                        {/* FR-005/SC-004: o método viaja com o número até aqui. Um pixel solto é
+                            indistinguível de uma medição, e vai ser lido como uma. */}
+                        {pg.tituloPx} px (<strong>estimativa</strong>, método {pg.tituloMetodo}) ·{" "}
+                        {posicaoPorUrl.get(pg.url) === null
+                          ? "sem termo apurado"
+                          : posicaoPorUrl.get(pg.url)! < 0
+                            ? `o termo "${termoPorUrl.get(pg.url)}" NÃO aparece no título`
+                            : `termo "${termoPorUrl.get(pg.url)}" a partir do caractere ${br(posicaoPorUrl.get(pg.url)!)}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {achadosDoSitemap.length > 0 && (
+                <ul className="ficha-krs">
+                  {achadosDoSitemap.slice(0, 8).map((pg) => (
+                    <li key={pg.url}>
+                      <strong>{caminho(pg.url)}</strong>{" "}
+                      <span className="foot">
+                        {pg.erro ? pg.erro : `redireciona (HTTP ${pg.status ?? "?"}) — o destino é que conta`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+                <dl>
+                  <dt>A corrida</dt>
+                  <dd>
+                    {br(crawl.visitadas)} página(s) visitada(s) de {br(crawl.declaradas)}{" "}
+                    declarada(s) no sitemap · {br(crawl.linksNavegacao)} link(s) classificado(s) como
+                    navegação (menu e rodapé, fora da densidade contextual)
+                    {crawl.falhas > 0 && (
+                      <> · {br(crawl.falhas)} falha(s) de rede, fora de todo numerador</>
+                    )}
+                    . A tela lê o gravado e nunca crawleia: a corrida é de segunda, 06:17.
+                  </dd>
+
+                  {crawlSemLinks ? (
+                    <>
+                      <dt>Por que o crawl está cego</dt>
+                      <dd>
+                        A corrida casou os links contra o domínio <strong>declarado</strong>, e a
+                        home já tinha respondido <strong>301</strong> para outro — todos os links
+                        saíram como externos e sobraram zero arestas. Não é site sem link interno, e
+                        não é página renderizada no cliente: é o host da travessia vindo de uma
+                        declaração que o próprio redirecionamento desmentiu. Por isso as{" "}
+                        {br(crawl.orfas)} &ldquo;órfãs&rdquo; não viram achado —{" "}
+                        <strong>são iguais às visitadas por construção</strong>. Corrigido no hub em
+                        2026-09-18; a próxima corrida de segunda mede certo.
+                      </dd>
+                    </>
+                  ) : null}
+
+                  {integridade && (
+                    <>
+                      <dt>Integridade do título</dt>
+                      <dd>
+                        Largura <strong>estimada</strong> entre {TITULO_PX_MIN} e {TITULO_PX_MAX} px{" "}
+                        <strong>E</strong> o termo principal nos primeiros {TERMO_ATE} caracteres.
+                        {integridade.semTermo > 0 && (
+                          <>
+                            {" "}
+                            {br(integridade.semTermo)} URL(s) ficam fora por{" "}
+                            <strong>sem termo apurado</strong> — o Search Console não tem impressão
+                            delas, o que não é o mesmo que título errado.
+                          </>
+                        )}
+                      </dd>
                     </>
                   )}
-                </p>
-              )}
 
-              {/* FR-013 — o sitemap declarando URL morta ou redirecionada é o achado. */}
-              {achadosDoSitemap.length > 0 && (
-                <>
-                  <p className="foot">
-                    <strong>{br(achadosDoSitemap.length)} URL(s) do sitemap com achado</strong> — o
-                    sitemap declara, e o site responde outra coisa:
-                  </p>
-                  <ul className="ficha-krs">
-                    {achadosDoSitemap.slice(0, 8).map((pg) => (
-                      <li key={pg.url}>
-                        <strong>{caminho(pg.url)}</strong>{" "}
-                        <span className="foot">
-                          {pg.erro ? pg.erro : `redireciona (HTTP ${pg.status ?? "?"}) — o destino é que conta`}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
+                  {alinhamento && (
+                    <>
+                      <dt>Alinhamento de intenção</dt>
+                      <dd>
+                        Título com modificador explícito, informacional ou comercial.
+                        {alinhamento.ausentes.length > 0 && (
+                          <>
+                            {" "}
+                            Sem modificador:{" "}
+                            {alinhamento.ausentes
+                              .slice(0, 6)
+                              .map((pg: PaginaCrawl) => caminho(pg.url))
+                              .join(", ")}
+                            .
+                          </>
+                        )}
+                      </dd>
+                    </>
+                  )}
 
-              {/* Risco aceito do plano, DECLARADO na tela: sem esta frase o leitor conclui sozinho
-                  que a órfã é a página recusada pelo Googlebot. */}
-              <p className="foot">
-                <strong>Esta lista não cruza página a página com as URLs fora do índice.</strong> A
-                apuração de indexação acima grava só o agregado do dia, sem veredito por URL — então
-                não dá para dizer qual órfã é também uma das recusadas. O que está marcado aqui é quem
-                tem <strong>zero impressão</strong> no Search Console. Cruzar as duas exige a corrida
-                de indexação persistir por URL: spec nova, não esta.
-              </p>
+                  {cobertura024 && (
+                    <>
+                      <dt>Dados estruturados</dt>
+                      <dd>
+                        <strong>{br(cobertura024.invalidas.length)} inválida(s)</strong> — o schema
+                        existe e estoura no parse: achar a vírgula. E{" "}
+                        <strong>{br(cobertura024.ausentes.length)} ausente(s)</strong> — não há
+                        schema nenhum: escrever. São consertos diferentes, e a soma dos dois não é um
+                        número. Meta do board: 100% e <strong>0 erro crítico</strong>.
+                      </dd>
+                    </>
+                  )}
+
+                  {atualizacao && atualizacao.fracao !== null && (
+                    <>
+                      <dt>Cadência</dt>
+                      <dd>
+                        As {br(atualizacao.semData.length)} página(s) sem data declarada ficam fora
+                        do numerador <strong>e</strong> do denominador. Sem data declarada{" "}
+                        <strong>não é</strong> desatualizada: é ausência de declaração.
+                      </dd>
+                    </>
+                  )}
+
+                  {periferia.length > 15 && (
+                    <>
+                      <dt>A lista de periferia está cortada</dt>
+                      <dd>
+                        {br(periferia.length - 15)} página(s) a mais, fora do topo — ordenadas por
+                        periferia (órfã → profundidade ≥ {PROFUNDIDADE_MAX} → menos de{" "}
+                        {LINKS_CONTEXTUAIS_MIN} links contextuais) e, no empate, por impressões.
+                      </dd>
+                    </>
+                  )}
+
+                  {/* Risco aceito do plano, DECLARADO na tela: sem esta frase o leitor conclui
+                      sozinho que a órfã é a página recusada pelo Googlebot. */}
+                  <dt>O que esta lista NÃO cruza</dt>
+                  <dd>
+                    Não há cruzamento página a página com as URLs fora do índice: a apuração de
+                    indexação grava só o agregado do dia, sem veredito por URL, então não dá para
+                    dizer qual órfã é também uma das recusadas. O que está marcado aqui é quem tem{" "}
+                    <strong>zero impressão</strong> no Search Console. Cruzar as duas exige a corrida
+                    de indexação persistir por URL: spec nova, não esta.
+                  </dd>
+                </dl>
+              </details>
             </>
           )}
         </div>
@@ -1752,103 +2241,175 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
         {vitais && (
           <div className="ficha-bloco">
             <h2 className="ficha-bloco-h">Core Web Vitals — quantas URLs passam</h2>
-            {"erro" in vitais ? (
-              <p className="foot">
-                <strong>A apuração falhou agora</strong> ({vitais.erro}) — distinto de não haver
-                dado. A fração volta na próxima leitura desta página.
-              </p>
-            ) : vitais.fracao === null ? (
-              <p className="foot">{vitais.motivo}</p>
-            ) : (
-              <p>
-                <strong>{pct(vitais.fracao)}</strong> das URLs prioritárias com &quot;Bom&quot; nos
-                três vitais{" "}
-                <span className="foot">
-                  ({vitais.passam} de {vitais.comDado} URLs com dado de campo · meta do board:{" "}
-                  <strong>90%</strong>) — LCP ≤ 2,5 s, INP ≤ 200 ms e CLS ≤ 0,1 no p75. O TTFB fica
-                  fora: é experimental na fonte e não entra na definição de &quot;Bom&quot;.
-                </span>
-              </p>
-            )}
+            <ul className="lts">
+              {"erro" in vitais ? (
+                <Leitura sem="não apurado" selo="cega" palavra={`a consulta falhou (${vitais.erro})`}>
+                  das URLs prioritárias com &quot;Bom&quot; nos três vitais — a fração volta na
+                  próxima leitura desta página
+                </Leitura>
+              ) : vitais.fracao === null ? (
+                /* 027 deixou pendente: o bloco NÃO mentia ("0 das 5 URLs têm os três vitais"), mas
+                   não NOMEAVA a causa. Ela é a mesma dos outros selos — origem nova, a CrUX ainda
+                   não acumulou amostra — e agora está na tabela de instrumentos e no selo. */
+                <Leitura sem="não apurável" selo="sem" palavra="a CrUX não tem amostra desta origem">
+                  das URLs prioritárias com &quot;Bom&quot; nos três vitais — {vitais.motivo}
+                </Leitura>
+              ) : (
+                <Leitura
+                  valor={pct(vitais.fracao)}
+                  selo={vitais.fracao >= 0.9 ? "dado" : undefined}
+                  palavra={vitais.fracao >= 0.9 ? "meta do board atingida" : undefined}
+                >
+                  das URLs prioritárias com &quot;Bom&quot; nos três vitais ({vitais.passam} de{" "}
+                  {vitais.comDado} com dado de campo) · meta do board: 90%
+                </Leitura>
+              )}
+            </ul>
             {!("erro" in vitais) && (
-              <p className="foot">
-                {vitais.consultadas} URL(s) consultada(s) por impressão decrescente
-                {vitais.naoConsultadas > 0 && (
-                  <> · {vitais.naoConsultadas} não consultada(s) (teto de {CAP_URLS_PASS_RATE}) — <strong>não</strong> reprovadas</>
-                )}{" "}
-                · p75 de campo, todos os dispositivos, na janela que a CrUX cobre — que não é a
-                janela desta página.
-              </p>
+              <details className="ress">
+                <summary>O que entra na conta, e quantas URLs foram consultadas</summary>
+                <dl>
+                  <dt>A definição de &quot;Bom&quot;</dt>
+                  <dd>
+                    LCP ≤ 2,5 s, INP ≤ 200 ms e CLS ≤ 0,1 no p75. O TTFB fica fora: é experimental
+                    na fonte e não entra na definição.
+                  </dd>
+                  <dt>A amostra</dt>
+                  <dd>
+                    {vitais.consultadas} URL(s) consultada(s) por impressão decrescente
+                    {vitais.naoConsultadas > 0 && (
+                      <>
+                        {" "}
+                        · {vitais.naoConsultadas} não consultada(s) (teto de {CAP_URLS_PASS_RATE}) —{" "}
+                        <strong>não</strong> reprovadas
+                      </>
+                    )}
+                    . p75 de campo, todos os dispositivos, na janela que a CrUX cobre — que{" "}
+                    <strong>não</strong> é a janela desta página.
+                  </dd>
+                </dl>
+              </details>
             )}
           </div>
         )}
 
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Comportamento — GA4, 12 meses</h2>
+          {/* 028 — a procedência (propriedade, hosts contados, janela recebida, exclusões) subiu
+              para a tabela de instrumentos e desceu para o `<details>`. Aqui fica só o recorte. */}
           <p className="foot">
-            Janela pedida: <strong>{janelaGa4.inicio} → {janelaGa4.fim}</strong> — {janelaGa4.porque}.
+            {janelaGa4.inicio} → {janelaGa4.fim}
             <Recebida pedida={janelaGa4} recebida={recebidaGa4} />
-            {cobertura && "erro" in cobertura && (
-              <> — a sonda de cobertura falhou ({cobertura.erro}); a janela recebida fica não apurada.</>
-            )}
-          </p>
-          <p className="foot">
-            <strong>12 meses</strong> — o N4 da <a href={`/okr/${slug}/metodo`}>derivação</a> usa{" "}
-            <strong>28 dias</strong> ({curtaGa4.inicio} → {curtaGa4.fim}).
           </p>
           {canais && "linhas" in canais ? (
             <>
-              <p>
-                <strong>{sessoes!.toLocaleString("pt-BR")}</strong> sessões{" "}
-                <span className="foot">
-                  (GA4, propriedade {canais.propriedade}
-                  {/* 026 — a procedência do número é a propriedade E os hosts. Sem os hosts
-                      escritos aqui, "sessões" é uma cifra sobre um recorte que ninguém declarou. */}
-                  {hostsDoSite.length > 0 && (
+              <ul className="lts">
+                <Leitura valor={br(sessoes!)}>
+                  sessões nos hosts declarados
+                  {fora.length > 0 && sessoes! + foraTotal > 0 ? (
                     <>
-                      {" "}· contando só{" "}
-                      <strong>{hostsDoSite.map((h) => <code key={h}>{h}</code>).reduce((a, b) => <>{a}, {b}</>)}</strong>
+                      {" "}
+                      · {br(foraTotal)} ({pct(foraTotal / (sessoes! + foraTotal))}) de outros hosts
+                      ficaram fora
                     </>
-                  )}
-                  )
-                </span>
-              </p>
-              <ul className="ficha-krs">
+                  ) : null}
+                </Leitura>
                 {[...canais.linhas]
                   .sort((a, b) => b.sessoes - a.sessoes)
                   .map((l) => (
-                    <li key={l.grupo}>
-                      <strong>{l.grupo}</strong>{" "}
-                      <span className="foot">{l.sessoes.toLocaleString("pt-BR")} sessões</span>
-                    </li>
+                    /* `Unassigned` é o grupo do GA4 para a sessão cuja origem ele NÃO conseguiu
+                       atribuir. A contagem é real; o canal é que não existe. Sem o selo ele lê
+                       como um canal ao lado de Organic Search — e ninguém investe em "Unassigned",
+                       mas alguém pode tentar entender por que ele não cresce. */
+                    <Leitura
+                      key={l.grupo}
+                      valor={br(l.sessoes)}
+                      selo={l.grupo === "Unassigned" ? "sem" : undefined}
+                      palavra={l.grupo === "Unassigned" ? "origem não atribuída pelo GA4" : undefined}
+                    >
+                      {l.grupo}
+                    </Leitura>
                   ))}
               </ul>
-              {/* 026 — a exclusão é informação, não faxina. Filtrar em silêncio encolheria o total
-                  em 13,7% sem uma linha dizendo por quê, e isso lê como queda de tráfego. O que a
-                  propriedade mede sem ser o site sai NOMEADO, com o peso. */}
-              {fora.length > 0 && (
-                <p className="foot">
-                  ⚠️ <strong>{br(foraTotal)}</strong> sessões da mesma propriedade{" "}
-                  <strong>não entraram</strong> nos números acima (
-                  {sessoes! + foraTotal > 0 ? pct(foraTotal / (sessoes! + foraTotal)) : "não apurável"} do
-                  que a propriedade mediu na janela):
-                  elas são de hosts que este card <strong>não declara</strong> como sendo o site.
-                  Painel administrativo, <code>localhost</code> de desenvolvimento e preview de
-                  deploy carregam a mesma tag do GA4 — e nenhum deles é alguém{" "}
-                  <strong>encontrando</strong> o produto, que é a pergunta desta tela.
-                  <br />
-                  {fora.map((f, i) => (
-                    <span key={f.host}>
-                      {i > 0 && " · "}
-                      <code>{f.host}</code> {br(f.sessoes)}
-                    </span>
-                  ))}
-                  <br />
-                  Host que passar a ser do site entra aqui declarando-o em{" "}
-                  <code>data/projects.json</code> (<code>url</code> ou{" "}
-                  <code>dominioAnterior.url</code>) — a lista acima nunca é chute do hub.
-                </p>
-              )}
+
+              <details className="ress">
+                <summary>
+                  De onde vem este número
+                  {fora.length > 0
+                    ? ` — e por que ${br(foraTotal)} sessão(ões) de ${fora.length} outro(s) host(s) não entraram`
+                    : ""}
+                </summary>
+                <dl>
+                  <dt>A propriedade e os hosts</dt>
+                  <dd>
+                    GA4, propriedade <code>{canais.propriedade}</code>
+                    {hostsDoSite.length > 0 ? (
+                      <>
+                        , contando só{" "}
+                        {hostsDoSite
+                          .map((h) => <code key={h}>{h}</code>)
+                          .reduce((a, b) => (
+                            <>
+                              {a}, {b}
+                            </>
+                          ))}
+                      </>
+                    ) : null}
+                    . Janela de <strong>12 meses</strong>; o N4 da{" "}
+                    <a href={`/okr/${slug}/metodo`}>derivação</a> usa <strong>28 dias</strong> (
+                    {curtaGa4.inicio} → {curtaGa4.fim}) — os dois não se dividem um pelo outro.
+                    {cobertura && "erro" in cobertura ? (
+                      <>
+                        {" "}
+                        A sonda de cobertura falhou ({cobertura.erro}); a janela recebida fica não
+                        apurada.
+                      </>
+                    ) : null}
+                  </dd>
+
+                  {/* 026 — a exclusão é informação, não faxina. Filtrar em silêncio encolheria o
+                      total sem uma linha dizendo por quê, e isso lê como queda de tráfego. */}
+                  {fora.length > 0 && (
+                    <>
+                      <dt>O que ficou fora, e por quê</dt>
+                      <dd>
+                        <strong>{br(foraTotal)}</strong> sessões da mesma propriedade não entraram
+                        nos números acima (
+                        {sessoes! + foraTotal > 0
+                          ? pct(foraTotal / (sessoes! + foraTotal))
+                          : "não apurável"}{" "}
+                        do que a propriedade mediu na janela): são de hosts que este card{" "}
+                        <strong>não declara</strong> como sendo o site. Painel administrativo,{" "}
+                        <code>localhost</code> de desenvolvimento e preview de deploy carregam a
+                        mesma tag do GA4 — e nenhum deles é alguém <strong>encontrando</strong> o
+                        produto, que é a pergunta desta tela.
+                        <br />
+                        {fora.map((f, i) => (
+                          <span key={f.host}>
+                            {i > 0 && " · "}
+                            <code>{f.host}</code> {br(f.sessoes)}
+                          </span>
+                        ))}
+                        <br />
+                        Host que passar a ser do site entra aqui declarando-o em{" "}
+                        <code>data/projects.json</code> (<code>url</code> ou{" "}
+                        <code>dominioAnterior.url</code>) — a lista acima nunca é chute do hub.
+                      </dd>
+                    </>
+                  )}
+
+                  {/* FR-029/SC-008: NENHUMA taxa entre `cliques` (GSC) e `sessões` (GA4). Na época
+                      da atma são 599 contra 1.140 — o GSC vê só busca orgânica, o GA4 vê todo
+                      canal. Dividir um pelo outro produz um número que não mede nada. */}
+                  <dt>Cliques (Search Console) e sessões (GA4) não se dividem</dt>
+                  <dd>
+                    São cadeias diferentes: o GSC conta o clique na SERP e só vê busca orgânica; o
+                    GA4 conta a sessão carregada, de qualquer canal. Não existe nesta página nenhuma
+                    razão entre as duas séries — uma taxa assim mediria a diferença entre os
+                    instrumentos, não o negócio.
+                  </dd>
+                </dl>
+              </details>
             </>
           ) : (
             <p className="foot">
@@ -1858,16 +2419,6 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </p>
           )}
         </div>
-
-        {/* FR-029/SC-008: NENHUMA taxa entre `cliques` (GSC) e `sessões` (GA4). Na época da atma são
-            599 contra 1.140 — o GSC vê só busca orgânica, o GA4 vê todo canal. Dividir um pelo
-            outro produz um número que não mede nada, e a tela não o exibe em lugar nenhum. */}
-        <p className="foot">
-          <strong>Cliques (Search Console) e sessões (GA4) não se dividem.</strong> São cadeias
-          diferentes: o GSC conta o clique na SERP e só vê busca orgânica; o GA4 conta a sessão
-          carregada, de qualquer canal. Não existe nesta página nenhuma razão entre as duas séries —
-          uma taxa assim mediria a diferença entre os instrumentos, não o negócio.
-        </p>
       </section>
     </main>
   );
