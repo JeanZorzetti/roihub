@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { janelaDaCorrida, diasParaGravar, DIAS_BACKFILL } from "../lib/serie-gsc.mjs";
+import { janelaDaCorrida, diasParaGravar, mesesDaSerie, DIAS_BACKFILL } from "../lib/serie-gsc.mjs";
 
 const AGORA = Date.parse("2026-09-07T12:00:00Z");
 const HOJE = "2026-09-07";
@@ -75,4 +75,98 @@ test("linha sem data é descartada", () => {
 
 test("série vazia devolve lista vazia, sem estourar", () => {
   assert.deepEqual(diasParaGravar([]), []);
+});
+
+// ── mesesDaSerie (028 · a forma dos 8 meses de Descoberta) ──────────────────────────────────
+test("só o mês inteiramente coberto pela janela recebe valor — as pontas saem `coberto: false`", () => {
+  // Janela real da tela: 2026-01-15 → 2026-09-15. Janeiro e setembro são pontas.
+  const janela = { inicio: "2026-01-15", fim: "2026-09-15" };
+  const meses = mesesDaSerie(
+    [
+      { date: "2026-01-20", impressions: 10, clicks: 1 },
+      { date: "2026-02-03", impressions: 5, clicks: 0 },
+      { date: "2026-02-28", impressions: 7, clicks: 2 },
+      { date: "2026-09-11", impressions: 63, clicks: 5 },
+    ],
+    janela,
+  );
+  assert.deepEqual(
+    meses.map((m) => [m.mes, m.coberto, m.impressoes]),
+    [
+      ["2026-01", false, 10],
+      ["2026-02", true, 12],
+      ["2026-09", false, 63],
+    ],
+  );
+  // fevereiro de 2026 tem 28 dias, e o mês fechou com 2 dias de linha: segue COBERTO.
+  assert.equal(meses[1].fim, "2026-02-28");
+  assert.equal(meses[1].diasComLinha, 2);
+  assert.equal(meses[1].cliques, 2);
+});
+
+test("mês coberto com zero impressão é ZERO MEDIDO, não ausência — o valor sai 0 e `coberto` fica true", () => {
+  // Medido em roilabs.com.br em 18/09: jan, fev e mar devolveram linha com 0 impressão. Se o mês
+  // caísse em "sem dado" por não ter linha em todo dia, o gráfico esconderia justamente os meses
+  // em que o site não foi visto — que são a informação.
+  const meses = mesesDaSerie(
+    [
+      { date: "2026-03-02", impressions: 0, clicks: 0 },
+      { date: "2026-03-19", impressions: 0, clicks: 0 },
+    ],
+    { inicio: "2026-01-15", fim: "2026-09-15" },
+  );
+  assert.equal(meses.length, 1);
+  assert.equal(meses[0].coberto, true);
+  assert.equal(meses[0].impressoes, 0);
+  assert.equal(meses[0].diasComLinha, 2);
+});
+
+test("bissexto sai do calendário, não de tabela à mão: fevereiro de 2024 fecha em 29", () => {
+  const meses = mesesDaSerie([{ date: "2024-02-10", impressions: 1 }], { inicio: "2024-02-01", fim: "2024-03-31" });
+  assert.equal(meses[0].fim, "2024-02-29");
+  assert.equal(meses[0].coberto, true);
+});
+
+test("série vazia ou nula não quebra e não inventa mês", () => {
+  assert.deepEqual(mesesDaSerie([], { inicio: "2026-01-15", fim: "2026-09-15" }), []);
+  assert.deepEqual(mesesDaSerie(null, { inicio: "2026-01-15", fim: "2026-09-15" }), []);
+});
+
+test("a janela que decide é a RECEBIDA: o mês de estreia da propriedade não é mês inteiro", () => {
+  // Medido em goiania.roilabs.com.br em 18/09: a propriedade só tem dado desde 28/06, e a janela
+  // PEDIDA (15/01 → 15/09) cobre junho inteiro. Contra a pedida, junho saía `coberto` com os 7
+  // impressões dos seus 3 dias e desenhava uma barra ao lado dos 292 de julho — a leitura de
+  // queda que a função existe para impedir, entrando pela porta do denominador.
+  const days = [
+    { date: "2026-06-28", impressions: 7 },
+    { date: "2026-07-15", impressions: 292 },
+    { date: "2026-08-15", impressions: 520 },
+    { date: "2026-09-10", impressions: 388 },
+  ];
+  const pedida = { inicio: "2026-01-15", fim: "2026-09-15" };
+  const recebida = { inicio: "2026-06-28", fim: "2026-09-15" };
+  assert.deepEqual(
+    mesesDaSerie(days, pedida).map((m) => [m.mes, m.coberto]),
+    [["2026-06", true], ["2026-07", true], ["2026-08", true], ["2026-09", false]],
+    "contra a janela pedida, junho passa por inteiro — é o defeito",
+  );
+  assert.deepEqual(
+    mesesDaSerie(days, recebida).map((m) => [m.mes, m.coberto]),
+    [["2026-06", false], ["2026-07", true], ["2026-08", true], ["2026-09", false]],
+    "contra a recebida, sobram os dois meses que a fonte cobriu do primeiro ao último dia",
+  );
+});
+
+test("as pontas saem CORTADAS pela janela — o eixo não promete dado que a série não tem", () => {
+  // O rótulo da ponta direita vem de `fim`. Sem o corte, uma série que fecha em 15/09 rotularia
+  // o eixo com 30/09 e prometeria duas semanas que ninguém mediu.
+  const meses = mesesDaSerie(
+    [{ date: "2026-06-28", impressions: 7 }, { date: "2026-09-10", impressions: 388 }],
+    { inicio: "2026-06-28", fim: "2026-09-15" },
+  );
+  assert.equal(meses[0].inicio, "2026-06-28");
+  assert.equal(meses[meses.length - 1].fim, "2026-09-15");
+  // O mês do meio, inteiro dentro da janela, mantém as bordas do calendário.
+  const cheio = mesesDaSerie([{ date: "2026-07-15", impressions: 1 }], { inicio: "2026-06-28", fim: "2026-09-15" })[0];
+  assert.deepEqual([cheio.inicio, cheio.fim, cheio.coberto], ["2026-07-01", "2026-07-31", true]);
 });

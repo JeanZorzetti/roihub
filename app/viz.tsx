@@ -37,11 +37,18 @@ export function WeekChart({
   points,
   fmt,
   cut,
+  unidade = "semanas",
 }: {
   title: string;
   points: WeekPoint[];
   fmt: (v: number) => string;
   cut?: WeekCut;
+  /** 028 — a unidade do slot, só para o texto alternativo. Opcional de propósito: /seo, /infra e o
+   *  nível 1 de aquisição desenham semanas e não passam nada, então nada muda para eles. O bloco
+   *  de Descoberta agrega por MÊS (8 meses de janela, `mesesDaSerie`), e um `aria-label` dizendo
+   *  "últimas 7 semanas" sobre sete colunas mensais mentiria para quem lê por leitor de tela — a
+   *  única versão da tela em que o rótulo do eixo não está visível ao lado. */
+  unidade?: string;
 }) {
   const values = points.map((p) => p.value);
   const max = Math.max(0, ...values.filter((v): v is number => v !== null));
@@ -56,8 +63,8 @@ export function WeekChart({
         role="img"
         aria-label={
           cut
-            ? `${title}, últimas ${points.length} semanas. A série muda de site na semana ${cut.index + 1}: antes ${cut.antes}, depois ${cut.depois}. Os dois lados não se comparam.`
-            : `${title}, últimas ${points.length} semanas`
+            ? `${title}, ${points.length} ${unidade}. A série muda de site no slot ${cut.index + 1}: antes ${cut.antes}, depois ${cut.depois}. Os dois lados não se comparam.`
+            : `${title}, ${points.length} ${unidade}`
         }
       >
         <line x1="0" y1={BASE} x2={CW} y2={BASE} className="axis" />

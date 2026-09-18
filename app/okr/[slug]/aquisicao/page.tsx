@@ -13,6 +13,7 @@ import {
   type DiaSeparado,
 } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
+import { mesesDaSerie } from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
@@ -47,25 +48,6 @@ import { WeekChart, type WeekPoint, type WeekCut } from "../../../viz";
 // trimestre não precisam ser pagas a cada request.
 export const revalidate = 3600;
 
-/** A janela que a FONTE deu, não a que foi pedida (FR-027). Nunca se rotula de 12 meses um dado de
- *  3 — o truncamento é NOMEADO. */
-function Recebida({ pedida, recebida }: { pedida: { inicio: string; fim: string }; recebida: { inicio: string; fim: string } | null }) {
-  if (!recebida) return <span className="foot"> · janela recebida: não apurada</span>;
-  const truncada = recebida.inicio > pedida.inicio || recebida.fim < pedida.fim;
-  return (
-    <span className="foot">
-      {" "}
-      · janela recebida: <strong>{recebida.inicio} → {recebida.fim}</strong>
-      {truncada && (
-        <>
-          {" "}
-          — <strong>truncada</strong>: a fonte não tem dado para todo o período pedido ({pedida.inicio} → {pedida.fim}).
-        </>
-      )}
-    </span>
-  );
-}
-
 /**
  * 028 — o selo de estado de uma leitura. TRÊS portadores: o símbolo (no `::before` do CSS), a
  * palavra e a cor. O piso da skill proíbe cor como portador único, e esta tela vira PDF de reunião
@@ -99,12 +81,21 @@ function Leitura({
   children,
   selo,
   palavra,
+  fracao,
+  meta,
+  parte,
 }: {
   valor?: string;
   sem?: string;
   children: React.ReactNode;
   selo?: Selo;
   palavra?: string;
+  /** 028 — a fração desta leitura numa escala de 0 a 100%, desenhada como comprimento. */
+  fracao?: number;
+  /** A meta do board na MESMA escala: um número vira tique, um par `[piso, teto]` vira faixa. */
+  meta?: number | [number, number];
+  /** O valor contra o MAIOR da lista, quando a escala não é percentual (contagens). */
+  parte?: number;
 }) {
   return (
     <li className="lt">
@@ -112,8 +103,271 @@ function Leitura({
       <span className="lt-r">
         {children}
         {selo ? <SeloEstado tipo={selo} palavra={palavra} /> : null}
+        {/* A barra NUNCA acompanha uma ausência: `sem` presente significa que não há valor, e uma
+            trilha vazia ao lado de "não apurado" leria como zero medido — o defeito que as sete
+            corridas anteriores desta tela passaram removendo do texto. */}
+        {sem === undefined && fracao !== undefined ? <Trilha fracao={fracao} meta={meta} /> : null}
+        {sem === undefined && parte !== undefined ? <Parte fracao={parte} /> : null}
       </span>
     </li>
+  );
+}
+
+/**
+ * 028 · A TRILHA — uma fração de 0 a 100% como comprimento, com a meta do board como posição.
+ *
+ * Mora na faixa de `padding-bottom` da própria linha (`position: absolute`), então **não custa
+ * altura**: quinze leituras ganham o canal de comprimento sem o bloco crescer um pixel. Foi por
+ * isso que a 6ª corrida recusou o gráfico de barras dos canais do GA4 — "mesma altura que 6
+ * linhas de texto, sem ganhar canal". Aqui o canal entra e a altura não.
+ *
+ * A moldura é o que a distingue da `Parte`: trilha emoldurada = escala fixa 0–100%; barra sem
+ * moldura = relativa ao maior da lista. Sem essa distinção visual, 4.988 sessões de Organic
+ * Search encostadas na borda leriam como "100% das sessões".
+ */
+function Trilha({ fracao, meta }: { fracao: number; meta?: number | [number, number] }) {
+  const pct = Math.max(0, Math.min(1, fracao)) * 100;
+  const lim = (v: number) => Math.max(0, Math.min(100, v * 100));
+  return (
+    <span className="trk" aria-hidden>
+      {/* `max(1px, …)`: fração medida e positiva desenha pelo menos 1px, senão 0,3% arredonda para
+          largura 0 e fica idêntico ao zero — a mesma regra das barras do `WeekChart`. */}
+      <span className="trk-f" style={{ width: pct > 0 ? `max(1px, ${pct}%)` : 0 }} />
+      {Array.isArray(meta) ? (
+        <span className="trk-faixa" style={{ left: `${lim(meta[0])}%`, width: `${lim(meta[1]) - lim(meta[0])}%` }} />
+      ) : meta !== undefined ? (
+        <span className="trk-m" style={{ left: `${lim(meta)}%` }} />
+      ) : null}
+    </span>
+  );
+}
+
+/** A barra relativa ao MAIOR item da lista. Sem moldura, porque a escala não é percentual — e o
+ *  bloco declara por escrito contra quem ela mede (o "sobe em relação a quê?" do piso da skill). */
+function Parte({ fracao }: { fracao: number }) {
+  const pct = Math.max(0, Math.min(1, fracao)) * 100;
+  return (
+    <span className="prt" aria-hidden>
+      <span className="prt-f" style={{ width: pct > 0 ? `max(1px, ${pct}%)` : 0 }} />
+    </span>
+  );
+}
+
+/**
+ * 028 · A COMPOSIÇÃO — para onde foi o total, em segmentos que somam o denominador.
+ *
+ * Serve dois blocos: marca/não-marca (impressões do corte de país) e indexação (destino das URLs
+ * declaradas). O segmento `hachurado` é o que está FORA da conta — resíduo que o Search Console
+ * não atribui, inspeção que falhou, URL que ninguém consultou. A hachura é padrão, não cor: o
+ * piso da skill proíbe cor como portador único, e esta tela vira PDF de reunião trimestral.
+ *
+ * Segmento de valor ZERO não vira faixa de 0px (invisível é indistinguível de ausente): ele sai
+ * da barra e aparece na legenda com o valor, que é o zero qualificado do G4.
+ */
+function Composicao({
+  total,
+  partes,
+  rotulo,
+}: {
+  total: number;
+  partes: { chave: string; valor: number; nome: string; hachurado?: boolean }[];
+  rotulo: string;
+}) {
+  if (total <= 0) return null;
+  const desenhadas = partes.filter((x) => x.valor > 0);
+  return (
+    <figure className="cmp">
+      <figcaption className="cmp-cap">{rotulo}</figcaption>
+      <div
+        className="cmp-barra"
+        role="img"
+        aria-label={`${rotulo}: ${partes.map((x) => `${x.nome} ${x.valor.toLocaleString("pt-BR")}`).join(", ")}`}
+      >
+        {desenhadas.map((x) => (
+          <span
+            key={x.chave}
+            className={x.hachurado ? `cmp-s cmp-${x.chave} cmp-hach` : `cmp-s cmp-${x.chave}`}
+            style={{ width: `max(2px, ${(x.valor / total) * 100}%)` }}
+          />
+        ))}
+      </div>
+      <ul className="cmp-leg">
+        {partes.map((x) => (
+          <li key={x.chave}>
+            <span className={x.hachurado ? `cmp-k cmp-${x.chave} cmp-hach` : `cmp-k cmp-${x.chave}`} aria-hidden />
+            <strong>{x.valor.toLocaleString("pt-BR")}</strong> {x.nome}
+            {x.valor === 0 ? <span className="cmp-zero"> · zero medido</span> : null}
+          </li>
+        ))}
+      </ul>
+    </figure>
+  );
+}
+
+/**
+ * 028 · A RÉGUA DA JANELA — quanto do período PEDIDO a fonte realmente cobre (FR-027).
+ *
+ * Substitui o `<Recebida>`, que imprimia as mesmas quatro datas em prosa: elas continuam na tela,
+ * agora como pontas da régua, e a distância entre "pedi 8 meses" e "recebi 5 dias" passa a ser
+ * comprimento em vez de uma subtração que o leitor faz de cabeça. Medido em 18/09: a propriedade
+ * nova da atma cobre 5 dos 244 dias pedidos — 2%, que em prosa some e na régua é um risco na
+ * borda. Nunca se rotula de 12 meses um dado de 3: o truncamento é NOMEADO, e agora também medido.
+ */
+function ReguaJanela({
+  pedida,
+  recebida,
+  legenda,
+}: {
+  pedida: { inicio: string; fim: string };
+  recebida: { inicio: string; fim: string } | null;
+  legenda: string;
+}) {
+  const t0 = Date.parse(pedida.inicio);
+  const t1 = Date.parse(pedida.fim);
+  const span = Math.max(1, t1 - t0);
+  const em = (d: string) => Math.max(0, Math.min(100, ((Date.parse(d) - t0) / span) * 100));
+  const truncada = !!recebida && (recebida.inicio > pedida.inicio || recebida.fim < pedida.fim);
+  const dias = recebida ? Math.round((Date.parse(recebida.fim) - Date.parse(recebida.inicio)) / 864e5) + 1 : null;
+  const pedidos = Math.round(span / 864e5) + 1;
+  return (
+    <figure className="jan">
+      <div
+        className="jan-trilha"
+        role="img"
+        aria-label={
+          recebida
+            ? `Janela pedida ${pedida.inicio} a ${pedida.fim}, ${pedidos} dias. A fonte cobre ${recebida.inicio} a ${recebida.fim}, ${dias} dia(s)${truncada ? " — janela truncada" : ""}.`
+            : `Janela pedida ${pedida.inicio} a ${pedida.fim}. A janela recebida não foi apurada.`
+        }
+      >
+        {recebida ? (
+          <span
+            className="jan-f"
+            style={{ left: `${em(recebida.inicio)}%`, width: `max(2px, ${em(recebida.fim) - em(recebida.inicio)}%)` }}
+          />
+        ) : null}
+      </div>
+      <figcaption className="jan-cap">
+        <span className="jan-p">{pedida.inicio}</span>
+        <span className="jan-meio">
+          {legenda}
+          {recebida ? (
+            <>
+              {" "}
+              · a fonte cobre <strong>{dias}</strong> de {pedidos} dia(s)
+              {truncada ? (
+                <>
+                  {" "}
+                  — <strong>truncada</strong>: {recebida.inicio} → {recebida.fim}
+                </>
+              ) : (
+                <> — a janela inteira</>
+              )}
+            </>
+          ) : (
+            <> · janela recebida não apurada</>
+          )}
+        </span>
+        <span className="jan-p">{pedida.fim}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+/**
+ * 028 · O FRESCOR — a idade da apuração como POSIÇÃO num eixo comum às seis fontes.
+ *
+ * A tabela de instrumentos já publica seis datas; comparar "15/09, 18/09, 14/09, 07/09" na
+ * vertical é aritmética que o leitor faz de cabeça a cada visita. O tique no eixo responde "quem
+ * está atrasado" de relance, sem tirar a data do lado.
+ *
+ * ⚠️ A faixa de tolerância é POR FONTE, não uma só. O crawl roda na segunda e 4 dias de idade é o
+ * normal dele; a indexação roda diária e 4 dias é atraso. Uma faixa única marcaria o crawl como
+ * atrasado — mentira de forma, do tipo que nenhuma medição contradiz.
+ *
+ * Série encerrada não tem faixa nenhuma: a promessa de D-3 não se aplica ao que parou de crescer
+ * por decisão de escopo ou troca de domínio (o G25 da 3ª corrida, agora em forma visual).
+ */
+const FRESCOR_DIAS = 14; // o eixo: duas semanas até hoje
+function Frescor({
+  cobreAte,
+  hoje,
+  tolerancia,
+  encerrada,
+}: {
+  cobreAte: string;
+  hoje: string;
+  tolerancia: number;
+  encerrada: boolean;
+}) {
+  const idade = Math.round((Date.parse(hoje) - Date.parse(cobreAte)) / 864e5);
+  const anterior = idade > FRESCOR_DIAS;
+  const x = anterior ? 0 : ((FRESCOR_DIAS - idade) / FRESCOR_DIAS) * 100;
+  return (
+    <span
+      className="frs"
+      title={`${cobreAte} · ${idade} dia(s) atrás${encerrada ? " · série encerrada, sem prazo a cumprir" : ` · esta fonte se compromete com ${tolerancia} dia(s)`}`}
+    >
+      {!encerrada && (
+        <span className="frs-ok" style={{ width: `${(Math.min(tolerancia, FRESCOR_DIAS) / FRESCOR_DIAS) * 100}%` }} />
+      )}
+      <span
+        className={anterior ? "frs-t frs-antes" : idade > tolerancia && !encerrada ? "frs-t frs-atrasada" : "frs-t"}
+        style={{ left: `${x}%` }}
+      />
+    </span>
+  );
+}
+
+/**
+ * 028 · AS CÉLULAS — uma por URL consultada, o estado de cada uma nomeado.
+ *
+ * O Pass Rate de campo é uma fração sobre 5 URLs: exibir só "0%" ou "não apurável" esconde o
+ * denominador, e é o G32 (procedência do número mais destacado) que cobra. Cinco células dizem o
+ * total, quantas passaram e por que as outras não — com palavra, forma e cor, nunca só cor.
+ */
+const ESTADO_DA_URL: Record<string, { palavra: string; classe: string }> = {
+  passa: { palavra: "passa nos três", classe: "cel-passa" },
+  reprova: { palavra: "reprova em um dos três", classe: "cel-reprova" },
+  parcial: { palavra: "dado parcial, sem os três", classe: "cel-parcial" },
+  "sem-amostra": { palavra: "sem amostra de campo", classe: "cel-sem" },
+  falhou: { palavra: "falhou agora", classe: "cel-falhou" },
+  "sem-chave": { palavra: "hub sem chave da CrUX", classe: "cel-sem" },
+  "nao-lida": { palavra: "não lida", classe: "cel-sem" },
+};
+function CelulasDeUrl({
+  urls,
+  caminho,
+}: {
+  urls: { url: string; estado: string }[];
+  caminho: (u: string) => string;
+}) {
+  if (!urls.length) return null;
+  const contagem = new Map<string, number>();
+  for (const u of urls) contagem.set(u.estado, (contagem.get(u.estado) ?? 0) + 1);
+  return (
+    <figure className="cel">
+      <ul className="cel-linha">
+        {urls.map((u) => {
+          const e = ESTADO_DA_URL[u.estado] ?? ESTADO_DA_URL["nao-lida"];
+          return (
+            <li key={u.url} className={`cel-i ${e.classe}`} title={`${caminho(u.url)} — ${e.palavra}`}>
+              <span className="cel-c" aria-hidden />
+              <span className="cel-u">{caminho(u.url)}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <figcaption className="cel-cap">
+        {urls.length} URL(s) consultada(s) ·{" "}
+        {[...contagem.entries()].map(([estado, n], i) => (
+          <span key={estado}>
+            {i > 0 ? " · " : ""}
+            <strong>{n}</strong> {ESTADO_DA_URL[estado]?.palavra ?? estado}
+          </span>
+        ))}
+      </figcaption>
+    </figure>
   );
 }
 
@@ -255,6 +509,12 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // 026 — o denominador das frações da janela curta. Toda fração desta tela carrega a base ao
   // lado; a do Top 3 não carregava, e era julgada contra a faixa do board sobre 26 impressões.
   const baseCurta = linhasBusca ? totalImpressoes(linhasBusca) : null;
+  // 028 — UM portão para todas as barras do bloco de consultas. Abaixo do piso a fração existe e a
+  // RÉGUA não: desenhar comprimento ao lado de um selo que diz "sem veredito do board" daria
+  // autoridade visual justamente ao número que a tela passou três corridas tirando do pedestal
+  // (o 43×, a fração do Top 3, a canibalização vazia). A guarda mora aqui, não em cada linha —
+  // seis vezes nesta tela um veredito consertado no chamador voltou pela porta seguinte.
+  const acimaDoPiso = baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO;
   const vitais = await lerPassRate(slug, linhasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   // 025: acima de 10× o `pct` vira armadilha de leitura. Em pt-BR o separador de milhar é o PONTO,
@@ -360,6 +620,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     : null;
   const cliques = dias?.reduce((t, d) => t + d.clicks, 0) ?? null;
   const impressoes = dias?.reduce((t, d) => t + d.impressions, 0) ?? null;
+  // 028 — a FORMA dos oito meses. A janela é a RECEBIDA (`recebidaGsc`), nunca a pedida: a pedida
+  // cobre meses que a propriedade não tinha, e o mês de estreia sairia "inteiro" com os poucos
+  // dias que mediu. Medido: goiania estreia em 28/06 e junho desenhava 7 impressões ao lado dos
+  // 292 de julho; contra a recebida ele sai da conta e restam 2 meses inteiros. Em roilabs o mesmo
+  // cálculo devolve 7 meses — três deles com ZERO impressão MEDIDO, que é o que a série precisa
+  // mostrar e o que uma janela de 28 dias esconde.
+  const mesesGsc = dias && recebidaGsc ? mesesDaSerie(dias, recebidaGsc) : [];
+  const mesesCobertos = mesesGsc.filter((m: { coberto: boolean }) => m.coberto);
+  const pontosMes: WeekPoint[] = mesesGsc.map((m: { inicio: string; fim: string; impressoes: number; coberto: boolean }) => ({
+    start: m.inicio,
+    end: m.fim,
+    value: m.coberto ? m.impressoes : null,
+  }));
   // ── 025: as duas medidas do board que não existiam ───────────────────────────────────────
   //
   // NENHUMA conta aqui: `completude`, `crescimentoNaoMarca` e `razaoDeMarca` moram em
@@ -540,7 +813,21 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   //
   // Esta tabela é o lugar único da história. Cada bloco abaixo perde a sua versão e fica com um
   // selo que aponta para cá. Não é ressalva nova: é a mesma, hasteada.
-  const instrumentos: { nome: string; mede: string; desde: string; selo: Selo; nota: string }[] = [];
+  // 028 — `cobreAte` é o dia mais recente que a fonte cobre, e `tolerancia` é a cadência que ELA
+  // promete. Os dois existem para o `<Frescor>`: sem a tolerância por fonte, o crawl semanal de
+  // 4 dias apareceria atrasado ao lado da indexação diária de 4 dias, que está.
+  const instrumentos: {
+    nome: string;
+    mede: string;
+    desde: string;
+    selo: Selo;
+    nota: string;
+    cobreAte: string | null;
+    tolerancia: number;
+  }[] = [];
+  const TOLERANCIA_D3 = ATRASO_PROMETIDO_DIAS + FOLGA_DIAS; // as fontes que prometem D-3
+  const TOLERANCIA_DIARIA = 2; // a corrida das 05:47, com um dia de folga
+  const TOLERANCIA_SEMANAL = 7 + FOLGA_DIAS; // a corrida de segunda 06:17
   if (diasSeparados?.length) {
     // `hostDoVeredito` sai do SEGMENTO que o veredito usa, e ele só existe quando há separação
     // marca / não-marca — ou seja, em 1 dos 35 projetos. Cair em "host não identificado" nos
@@ -556,6 +843,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
       nota: serieEncerrada
         ? `${leitura ? leitura.segmento.dias.length : diasSeparados.length} dia(s) preservados; não crescem mais. O site passou a ser medido em ${segmentosDepois[segmentosDepois.length - 1]?.host ?? "outro host"}, que ainda não tem semana completa.`
         : `${diasSeparados.length} dia(s) em hub_gsc_dia, gravados pela corrida diária.`,
+      cobreAte: ultimoDiaMedido,
+      tolerancia: TOLERANCIA_D3,
     });
   }
   if (propriedadeGsc) {
@@ -576,6 +865,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               baseCurta === null
               ? "A consulta respondeu, mas o total de impressões da janela não foi apurado."
               : `${br(baseCurta)} impressões na janela de 28 dias.`,
+      cobreAte: recebidaGsc?.fim ?? null,
+      tolerancia: TOLERANCIA_D3,
     });
   }
   if (indexacao) {
@@ -598,6 +889,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             : idx
               ? `${br(idx.inspecionadas)} URL(s) inspecionadas de ${br(idx.declaradas)} declaradas.`
               : "Nenhuma apuração gravada para este projeto.",
+      // A data sai do registro mesmo quando há `motivo` (sem_orcamento, sem_sitemap): a corrida
+      // RODOU e decidiu não inspecionar, que é diferente de nunca ter rodado.
+      cobreAte: "erro" in indexacao ? null : indexacao.dia,
+      tolerancia: TOLERANCIA_DIARIA,
     });
   }
   if (crawl) {
@@ -614,6 +909,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             : paginado
               ? `${br(paginado.visitadas)} página(s) visitadas de ${br(paginado.declaradas)} declaradas no sitemap.`
               : "Nenhuma corrida completa gravada.",
+      cobreAte: paginado?.dia ?? null,
+      tolerancia: TOLERANCIA_SEMANAL,
     });
   }
   if (vitais) {
@@ -628,6 +925,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           : vitais.fracao === null
             ? `Origem nova não tem amostra de campo: a CrUX só publica o que passou do limiar de tráfego dela, e responde 404 até lá. Isto não é site lento — é site ainda não medido.`
             : `${vitais.comDado} de ${vitais.consultadas} URL(s) consultadas têm os três vitais.`,
+      // A CrUX não data a apuração: a janela é dela, móvel, de 28 dias, e não há "dia da
+      // apuração" a desenhar. Sem tique é mais honesto que um tique em hoje.
+      cobreAte: null,
+      tolerancia: TOLERANCIA_D3,
     });
   }
   if (p.ga4?.propertyId) {
@@ -642,6 +943,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           : foraTotal > 0
             ? `A propriedade ${p.ga4.propertyId} conta qualquer coisa que carregue a tag. ${br(foraTotal)} sessão(ões) de ${fora.length} outro(s) host(s) ficam FORA das cifras deste bloco, nomeadas nele.`
             : `Propriedade ${p.ga4.propertyId}; nenhuma sessão medida fora dos hosts declarados.`,
+      cobreAte: recebidaGa4?.fim ?? null,
+      tolerancia: TOLERANCIA_D3,
     });
   }
 
@@ -914,7 +1217,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 <tr>
                   <th scope="col">Fonte</th>
                   <th scope="col">Mede</th>
-                  <th scope="col">Apuração</th>
+                  <th scope="col">Apuração · idade</th>
                   <th scope="col">Estado</th>
                 </tr>
               </thead>
@@ -923,12 +1226,32 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   <tr key={i.nome}>
                     <td className="inst-n">{i.nome}</td>
                     <td className="inst-q"><code>{i.mede}</code></td>
-                    <td className="inst-d">{i.desde}</td>
+                    <td className="inst-d">
+                      {i.desde}
+                      {/* Sem data não há tique: a CrUX não publica dia de apuração, e um tique em
+                          hoje inventaria frescor que ninguém mediu. */}
+                      {i.cobreAte ? (
+                        <Frescor
+                          cobreAte={i.cobreAte}
+                          hoje={hojeIso}
+                          tolerancia={i.tolerancia}
+                          encerrada={i.selo === "fim"}
+                        />
+                      ) : null}
+                    </td>
                     <td className="inst-s"><SeloEstado tipo={i.selo} /></td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {/* A legenda do eixo fica VISÍVEL, não atrás de um clique: barra sem escala declarada é
+                o "sobe em relação a quê?" que o piso da skill proíbe. */}
+            <p className="foot">
+              Eixo: <strong>{FRESCOR_DIAS} dias</strong> até hoje ({hojeIso}). O tique é o dia mais
+              recente que a fonte cobre; a faixa clara é o prazo que <strong>ela</strong> promete —
+              fora dela está atrasada. Série <strong>encerrada</strong> não tem prazo, e por isso não
+              tem faixa.
+            </p>
             <details className="ress">
               <summary>
                 {(() => {
@@ -985,10 +1308,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Descoberta — Search Console, 8 meses</h2>
-          <p className="foot">
-            {janelaGsc.inicio} → {janelaGsc.fim}
-            <Recebida pedida={janelaGsc} recebida={recebidaGsc} />
-          </p>
+          <ReguaJanela pedida={janelaGsc} recebida={recebidaGsc} legenda="8 meses pedidos" />
           {cliques != null && impressoes != null ? (
             <ul className="lts">
               <Leitura valor={br(cliques)}>cliques em {dias!.length} dia(s) com dado</Leitura>
@@ -1009,6 +1329,47 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               </Leitura>
             </ul>
           )}
+          {/* A FORMA dos oito meses. Duas cifras dizem QUANTO; nenhuma diz se o volume está subindo
+              ou caindo dentro da janela, que é a pergunta desta tela. Só mês inteiramente coberto
+              entra: desenhar as pontas pelo que mediram pintaria uma queda de calendário. */}
+          {mesesCobertos.length >= 2 ? (
+            <>
+              <div className="desc-serie">
+                <WeekChart
+                  title={`Impressões por mês · ${mesesCobertos.length} mês(es) inteiro(s) na janela`}
+                  points={pontosMes}
+                  fmt={(v) => `${br(v)} impressões`}
+                  unidade="meses"
+                />
+              </div>
+              {/* A COLUNA VAZIA PRECISA DE NOME. O nível 1 tem a legenda dos três estados; aqui
+                  uma coluna sem barra ficava sem explicação, e "mês de ponta" e "mês sem
+                  impressão" são coisas diferentes que o desenho separa (vazio contra traço abaixo
+                  da linha) e o texto tem que nomear. O zero só é citado quando existe na janela —
+                  explicar um estado que não está na tela é ruído. */}
+              <p className="foot">
+                Coluna <strong>vazia</strong>: mês de ponta, que a janela recebida não cobre
+                inteiro — {mesesGsc.length - mesesCobertos.length} de {mesesGsc.length}.
+                {mesesCobertos.some((m: { impressoes: number }) => m.impressoes === 0) ? (
+                  <>
+                    {" "}
+                    <strong>Traço</strong> abaixo da linha: mês inteiro medido com{" "}
+                    <strong>zero</strong> impressão —{" "}
+                    {mesesCobertos.filter((m: { impressoes: number }) => m.impressoes === 0).length} nesta
+                    janela. Vazio e zero <strong>não</strong> são a mesma coisa.
+                  </>
+                ) : null}
+              </p>
+            </>
+          ) : dias && dias.length ? (
+            /* G4/G5: não é zero e não é gráfico vazio — é janela curta demais para ter forma. A
+               causa é a mesma do selo da tabela de instrumentos, e a régua acima já a mostra. */
+            <p className="foot">
+              <strong>Sem forma mensal:</strong> a janela recebida não fecha dois meses inteiros
+              ({mesesGsc.length} tocado(s), {mesesCobertos.length} inteiro(s)) — meio mês ao lado de
+              um mês cheio leria como queda.
+            </p>
+          ) : null}
           <details className="ress">
             <summary>Por que 8 meses, e por que não se divide pela janela da ficha</summary>
             <dl>
@@ -1062,6 +1423,35 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 {janelaMarca.inicio} → {janelaMarca.fim} · {diasComMarca.length} dia(s) com a
                 separação medida
               </p>
+
+              {/* 028 — A COMPOSIÇÃO. As duas leituras abaixo são uma razão e uma variação; nenhuma
+                  das duas mostra o TAMANHO relativo dos dois baldes, que é o que o título deste
+                  bloco promete ("a demanda que já é sua e a que ainda não é"). Medido na atma:
+                  10.085 de marca contra 169.521 de não-marca — 5,6% contra 94,4%.
+                  O denominador é `comp` (a série inteira), o MESMO de `razao` logo abaixo. Usar as
+                  somas do segmento aqui faria a barra e a razão divergirem na mesma tela.
+                  Na CONTRADIÇÃO a barra não sai: resíduo negativo significa que os baldes somam
+                  MAIS que o total, e uma barra empilhada afirmaria uma partição que não existe —
+                  o alarme abaixo é que manda não ler os números. */}
+              {comp &&
+              comp.estado !== "nao-declarada" &&
+              comp.estado !== "contradicao" &&
+              comp.impressoesPais! > 0 ? (
+                <Composicao
+                  total={comp.impressoesPais!}
+                  rotulo={`Impressões do corte ${decl.pais} · ${janelaMarca.inicio} → ${janelaMarca.fim}`}
+                  partes={[
+                    { chave: "marca", valor: comp.impressoesMarca!, nome: "de marca — quem já procura pelo nome" },
+                    { chave: "nmarca", valor: comp.impressoesNaoMarca!, nome: "não-marca — quem ainda não conhece" },
+                    {
+                      chave: "resto",
+                      valor: Math.max(0, comp.residuo ?? 0),
+                      nome: "que o Search Console não atribui a consulta nenhuma",
+                      hachurado: true,
+                    },
+                  ]}
+                />
+              ) : null}
 
               <ul className="lts">
                 {/* FR-008/FR-009: os dois meses saem NOMEADOS, nenhum é o corrente, e o primeiro
@@ -1265,6 +1655,21 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           ) : (
             <>
               <ul className="lts">
+                {/* 028 — O MEDIDOR DO PISO, e é a primeira linha de propósito: ele é o portão das
+                    quatro leituras abaixo. Quatro selos diziam "abaixo do piso" em palavra e o
+                    leitor não tinha como saber se falta pouco ou falta tudo — 26 de 100 é uma
+                    distância, e distância se lê por comprimento. Ele SAI da tela sozinho quando a
+                    base passar do piso, e aí as trilhas das frações entram no lugar. */}
+                {baseCurta !== null && !acimaDoPiso ? (
+                  <Leitura
+                    valor={br(baseCurta)}
+                    fracao={baseCurta / PISO_IMPRESSOES_VEREDITO}
+                    selo={baseCurta === 0 ? "sem" : "piso"}
+                    palavra={baseCurta === 0 ? "nenhuma impressão na janela" : "a régua do board ainda não vale"}
+                  >
+                    de {br(PISO_IMPRESSOES_VEREDITO)} impressões — o piso da régua do board
+                  </Leitura>
+                ) : null}
                 {/* FR-009: o rótulo de piso é para o LEITOR, não um comentário no código — e
                     continua na tela, agora como selo em vez de parágrafo. */}
                 <Leitura valor={br(kpis.consultasUnicas.valor)} selo="piso" palavra="piso, não total">
@@ -1286,6 +1691,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   <Leitura
                     valor={kpis.impressoesNoTop3 === null ? undefined : pct(kpis.impressoesNoTop3)}
                     sem={kpis.impressoesNoTop3 === null ? "não apurado" : undefined}
+                    fracao={acimaDoPiso && kpis.impressoesNoTop3 !== null ? kpis.impressoesNoTop3 : undefined}
+                    meta={[0.4, 0.5]}
                     selo={
                       baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? "piso" : undefined
                     }
@@ -1316,7 +1723,12 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   </Leitura>
                 ) : (
                   <>
-                    <Leitura valor={pct(ativas)} selo={ativas >= 0.7 ? "dado" : undefined}>
+                    <Leitura
+                      valor={pct(ativas)}
+                      fracao={acimaDoPiso ? ativas : undefined}
+                      meta={0.7}
+                      selo={ativas >= 0.7 ? "dado" : undefined}
+                    >
                       de Active Index Ratio ({br(kpis.urlsComImpressao)} ÷ {br(denomIdx!)} indexadas,{" "}
                       {idx!.dia}) · meta do board: ≥ 70%
                     </Leitura>
@@ -1394,6 +1806,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 ) : (
                   <Leitura
                     valor={pct(kpis.ctrGap.fracao)}
+                    fracao={acimaDoPiso ? kpis.ctrGap.fracao : undefined}
+                    meta={[0.75, 0.8]}
                     selo={kpis.ctrGap.fracao >= 0.75 ? "dado" : undefined}
                   >
                     das URLs atingem o CTR mínimo da posição ({kpis.ctrGap.avaliadas} avaliada(s)) ·
@@ -1749,6 +2163,29 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                propriedade usada e o site declarado; quando os dois divergem, isso É a causa. */
             <>
               <p className="foot">Apurado em {indexacao!.dia} · {indexacao!.propriedade ?? "—"}</p>
+              {/* 028 — A COMPOSIÇÃO no estado CEGO. Os quatro baldes de destino ficam FORA da barra
+                  de propósito: eles valem 0 no registro porque nenhuma inspeção respondeu, e
+                  desenhá-los como "0 indexadas, zero medido" afirmaria sobre o índice do Google o
+                  que ninguém mediu — a inversão que este bloco existe para não repetir. O que a
+                  barra mostra é verdade inteira: das 25 URLs declaradas, nenhuma tem veredito. */}
+              <Composicao
+                total={indexacao!.declaradas}
+                rotulo={`Destino das ${br(indexacao!.declaradas)} URL(s) declaradas no sitemap`}
+                partes={[
+                  {
+                    chave: "falha",
+                    valor: indexacao!.inspecionadas,
+                    nome: "inspeção(ões) que falharam — sem veredito de índice",
+                    hachurado: true,
+                  },
+                  {
+                    chave: "fora",
+                    valor: Math.max(0, indexacao!.declaradas - indexacao!.inspecionadas),
+                    nome: "não inspecionada(s) nesta corrida",
+                    hachurado: true,
+                  },
+                ]}
+              />
               <ul className="lts">
                 <Leitura
                   sem="não apurado"
@@ -1801,9 +2238,40 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 {idx!.propriedade ? <> · {idx!.propriedade}</> : null}
               </p>
 
+              {/* 028 — A COMPOSIÇÃO. A fração de cima responde "quanto do inspecionado está no
+                  índice"; a barra responde "e quanto do que o site DECLARA foi olhado", que é a
+                  pergunta do título. Os dois segmentos hachurados são o que está fora da divisão:
+                  inspeção que falhou (fora dos dois lados) e URL que a corrida não chegou a olhar.
+                  Sem eles, uma amostra de 81 de 99 leria como o site inteiro — a armadilha que a
+                  022 existe para não repetir. */}
+              <Composicao
+                total={idx!.declaradas}
+                rotulo={`Destino das ${br(idx!.declaradas)} URL(s) declaradas no sitemap`}
+                partes={[
+                  { chave: "idx", valor: idx!.indexadas, nome: "no índice" },
+                  { chave: "rni", valor: idx!.rastreadasNaoIndexadas, nome: "o Google leu e recusou" },
+                  { chave: "dni", valor: idx!.descobertasNaoIndexadas, nome: "o Google nem leu" },
+                  { chave: "out", valor: idx!.outras, nome: "redirect, canonical, noindex" },
+                  {
+                    chave: "falha",
+                    valor: idx!.falhas,
+                    nome: "inspeção(ões) que falharam — fora da conta",
+                    hachurado: true,
+                  },
+                  {
+                    chave: "fora",
+                    valor: Math.max(0, idx!.declaradas - idx!.inspecionadas),
+                    nome: "não inspecionada(s) nesta corrida",
+                    hachurado: true,
+                  },
+                ]}
+              />
+
               <ul className="lts">
                 <Leitura
                   valor={pct(taxaIdx)}
+                  fracao={taxaIdx}
+                  meta={0.95}
                   selo={amostrado ? "piso" : taxaIdx >= 0.95 ? "dado" : undefined}
                   palavra={
                     amostrado
@@ -1839,6 +2307,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     {rejeicao !== null && (
                       <Leitura
                         valor={pct(rejeicao)}
+                        fracao={rejeicao}
+                        meta={0.05}
                         selo={rejeicao < 0.05 ? "dado" : undefined}
                         palavra={rejeicao < 0.05 ? "meta do board atingida" : undefined}
                       >
@@ -2290,6 +2760,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               ) : (
                 <Leitura
                   valor={pct(vitais.fracao)}
+                  fracao={vitais.fracao}
+                  meta={0.9}
                   selo={vitais.fracao >= 0.9 ? "dado" : undefined}
                   palavra={vitais.fracao >= 0.9 ? "meta do board atingida" : undefined}
                 >
@@ -2298,6 +2770,15 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </Leitura>
               )}
             </ul>
+            {/* 028 — AS CÉLULAS. Uma fração sobre cinco URLs esconde o denominador: "não apurável"
+                e "0%" ocupam o mesmo espaço na tela e nenhum dos dois diz que são CINCO URLs, nem
+                quais. Cada célula carrega forma, palavra e cor, e o rodapé conta os estados — é o
+                G32 (procedência do número mais destacado) em forma visual. Medido em 18/09: as 5
+                prioritárias da atma responderam 404 na CrUX, então as 5 células saem hachuradas e
+                a tela não tem como ser confundida com "site lento". */}
+            {!("erro" in vitais) && vitais.porUrl?.length ? (
+              <CelulasDeUrl urls={vitais.porUrl} caminho={caminho} />
+            ) : null}
             {!("erro" in vitais) && (
               <details className="ress">
                 <summary>O que entra na conta, e quantas URLs foram consultadas</summary>
@@ -2330,10 +2811,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           <h2 className="ficha-bloco-h">Comportamento — GA4, 12 meses</h2>
           {/* 028 — a procedência (propriedade, hosts contados, janela recebida, exclusões) subiu
               para a tabela de instrumentos e desceu para o `<details>`. Aqui fica só o recorte. */}
-          <p className="foot">
-            {janelaGa4.inicio} → {janelaGa4.fim}
-            <Recebida pedida={janelaGa4} recebida={recebidaGa4} />
-          </p>
+          <ReguaJanela pedida={janelaGa4} recebida={recebidaGa4} legenda="12 meses pedidos" />
           {canais && "linhas" in canais ? (
             <>
               <ul className="lts">
@@ -2349,7 +2827,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </Leitura>
                 {[...canais.linhas]
                   .sort((a, b) => b.sessoes - a.sessoes)
-                  .map((l) => (
+                  .map((l, _i, ordenados) => (
                     /* `Unassigned` é o grupo do GA4 para a sessão cuja origem ele NÃO conseguiu
                        atribuir. A contagem é real; o canal é que não existe. Sem o selo ele lê
                        como um canal ao lado de Organic Search — e ninguém investe em "Unassigned",
@@ -2357,6 +2835,12 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     <Leitura
                       key={l.grupo}
                       valor={br(l.sessoes)}
+                      /* 028 — a BARRA RELATIVA ao maior canal, que é o que a coluna de números não
+                         entrega: 4.988 contra 793 lê como "6 vezes" e mostra-se como domínio.
+                         A 6ª corrida recusou um gráfico de barras aqui porque custava a mesma
+                         altura de 6 linhas de texto sem ganhar canal; esta mora no `padding` da
+                         própria linha e custa zero pixel. A escala sai declarada abaixo. */
+                      parte={ordenados[0].sessoes > 0 ? l.sessoes / ordenados[0].sessoes : undefined}
                       selo={l.grupo === "Unassigned" ? "sem" : undefined}
                       palavra={l.grupo === "Unassigned" ? "origem não atribuída pelo GA4" : undefined}
                     >
@@ -2364,6 +2848,17 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     </Leitura>
                   ))}
               </ul>
+
+              {/* A escala da barra fica VISÍVEL: barra sem referência declarada é o "sobe em
+                  relação a quê?" do piso da skill. */}
+              {canais.linhas.length > 1 ? (
+                <p className="foot">
+                  A barra mede contra o <strong>maior canal</strong> (
+                  {[...canais.linhas].sort((a, b) => b.sessoes - a.sessoes)[0].grupo},{" "}
+                  {br([...canais.linhas].sort((a, b) => b.sessoes - a.sessoes)[0].sessoes)}), não
+                  contra o total.
+                </p>
+              ) : null}
 
               <details className="ress">
                 <summary>

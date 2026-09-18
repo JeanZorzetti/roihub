@@ -234,3 +234,41 @@ test("URL com só TTFB não conta como comDado — o TTFB não define Bom", () =
   assert.equal(r.comDado, 0);
   assert.equal(r.fracao, null);
 });
+
+// ── 028: o veredito por URL sai do MESMO laço da fração ─────────────────────────────────────
+test("porUrl nomeia o estado de cada URL, na ordem consultada, e a soma bate com os agregados", () => {
+  const bom = { lcp: 1800, inp: 120, cls: 0.05 };
+  const r = passRate(
+    new Map([
+      ["https://x/", { estado: "record", record: record(bom) }],
+      ["https://x/b", { estado: "record", record: record({ lcp: 4000, inp: 120, cls: 0.05 }) }],
+      ["https://x/c", { estado: "record", record: record({ lcp: 1800, cls: 0.05 }) }], // sem INP
+      ["https://x/d", { estado: "sem-amostra" }],
+      ["https://x/e", { estado: "falhou", erro: "HTTP 429" }],
+      ["https://x/f", { estado: "sem-chave" }],
+    ]),
+    6,
+  );
+  assert.deepEqual(r.porUrl, [
+    { url: "https://x/", estado: "passa" },
+    { url: "https://x/b", estado: "reprova" },
+    { url: "https://x/c", estado: "parcial" },
+    { url: "https://x/d", estado: "sem-amostra" },
+    { url: "https://x/e", estado: "falhou" },
+    { url: "https://x/f", estado: "sem-chave" },
+  ]);
+  // A célula NUNCA pode divergir do agregado: é o mesmo laço.
+  assert.equal(r.porUrl.filter((u) => u.estado === "passa").length, r.passam);
+  assert.equal(r.porUrl.filter((u) => u.estado === "passa" || u.estado === "reprova").length, r.comDado);
+  assert.equal(r.porUrl.filter((u) => u.estado === "parcial").length, r.parciais);
+  assert.equal(r.porUrl.filter((u) => u.estado === "falhou").length, r.falharam);
+  assert.equal(r.fracao, 1 / 2);
+});
+
+test("porUrl existe também quando a fração não é apurável — a tela desenha as células sem veredito", () => {
+  // Estado medido na atma em 18/09: as 5 URLs prioritárias responderam 404 na CrUX.
+  const r = passRate(leituras(null, null, null, null, null), 5);
+  assert.equal(r.fracao, null);
+  assert.equal(r.porUrl.length, 5);
+  assert.ok(r.porUrl.every((u) => u.estado === "sem-amostra"));
+});

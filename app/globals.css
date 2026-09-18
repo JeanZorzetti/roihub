@@ -1038,3 +1038,199 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   [data-info="aquisicao"] .inst .inst-q { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
   [data-info="aquisicao"] .inst .inst-d { grid-column: 1 / -1; font-size: 12px; white-space: normal; }
 }
+
+/* information-design · 8ª corrida · trilha, composição, régua de janela, frescor e células
+   responde: a Atma é encontrada por quem não a conhece, e esse volume está subindo ou caindo?
+   fonte: hub_gsc_dia, hub_indexacao, hub_pagina_corrida, GSC/GA4/CrUX ao vivo · 2026-09-18
+   ─────────────────────────────────────────────────────────────────────────────────────────────
+   As sete corridas anteriores trabalharam o TEXTO: cada ressalva foi conquistada por medição e
+   hasteada para a tabela de instrumentos e para oito `<details>`. O que sobrou é uma tela em que
+   quatorze leituras são valor + palavra, e nenhuma tem comprimento — o leitor compara 4.988 com
+   793 fazendo divisão de cabeça, e mede "26 de 100" lendo a palavra "piso" quatro vezes.
+   Este bloco dá canal visual a cada camada SEM comprar altura onde ela é caríssima: `.trk` e
+   `.prt` moram na faixa de `padding-bottom` da própria linha.
+   NENHUMA cor nova entrou: as barras usam a ramp sequencial (`--seq*`) que já existia, o vermelho
+   é o mesmo `--crit-ink` do selo `cega` e a ausência é o mesmo `--muted` do selo `sem`. */
+
+/* ── A trilha (fração de 0 a 100%) e a barra relativa ────────────────────────────────────────
+   As duas vivem no `padding` da linha: `position: absolute` dentro de `.lt-r`, que é o item de
+   grade da direita. Custo de altura: ZERO — medido, `.lt` continua com os mesmos 6px+6px.
+   As duas NUNCA aparecem no mesmo bloco (trilha em Consultas/Indexação/Vitais, barra relativa
+   só em Comportamento), então a diferença de escala não precisa ser adivinhada: cada bloco
+   declara a sua por escrito, numa linha visível. */
+[data-info="aquisicao"] .lt-r { position: relative; }
+/* `bottom: -5px`: a barra mora na faixa de `padding-bottom` que o `.lt` já reservava (6px). Dar
+   padding ao `.lt-r` custaria 5px em TODA linha — 25 na tela da atma — inclusive nas que não têm
+   barra nenhuma. Medido nas duas versões: 3.682px contra 3.560px em 1280. */
+[data-info="aquisicao"] .trk,
+[data-info="aquisicao"] .prt {
+  position: absolute; left: 0; right: 0; bottom: -5px; height: 4px; display: block;
+}
+/* O fundo da trilha é a ESCALA (0 a 100%), não dado: grade pode ser mais fraca que o dado, e é o
+   único elemento aqui abaixo de 3:1 de propósito. */
+[data-info="aquisicao"] .trk { background: var(--grid); border-radius: 2px; }
+/* #1c5cab sobre --surface = 6,6:1. */
+[data-info="aquisicao"] .trk-f,
+[data-info="aquisicao"] .prt-f {
+  position: absolute; left: 0; top: 0; bottom: 0; background: var(--seq550); border-radius: 2px;
+}
+/* A meta como POSIÇÃO. Tique quando é um número, faixa quando o board pede um intervalo
+   (40%–50%, 5%–10%, 75%–80%): um tique sozinho sobre uma faixa afirmaria alvo exato. */
+[data-info="aquisicao"] .trk-m {
+  position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink2); border-radius: 1px;
+}
+[data-info="aquisicao"] .trk-faixa {
+  position: absolute; top: -2px; bottom: -2px; border-left: 2px solid var(--ink2);
+  border-right: 2px solid var(--ink2);
+}
+
+/* O gráfico mensal da Descoberta tem teto de largura: `width: 100%` num bloco de 1.180px esticaria
+   o viewBox de 248x76 para 362px de altura — a "linha esticada inventa drama" do piso da skill, e
+   uma coluna por mês com 168px de largura. 520px mantém a proporção 3,3:1 do desenho original. */
+[data-info="aquisicao"] .desc-serie { max-width: 520px; }
+
+/* ── A composição ────────────────────────────────────────────────────────────────────────────
+   Para onde foi o total. A ORDEM dos segmentos é a mesma da legenda, e é ela — não a cor — o
+   portador que sobrevive ao cinza e à impressão. O hachurado é o que está FORA da conta, e a
+   direção da hachura separa os dois tipos de fora: falha de instrumento (vermelho, 45°) e nunca
+   olhado (neutro, 135°). */
+[data-info="aquisicao"] .cmp { margin: 10px 0 0; }
+[data-info="aquisicao"] .cmp-cap {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.02em; margin-bottom: 5px;
+  font-variant-numeric: tabular-nums;
+}
+[data-info="aquisicao"] .cmp-barra {
+  display: flex; gap: 1px; height: 16px; border-radius: 3px; overflow: hidden;
+  background: var(--grid);
+}
+[data-info="aquisicao"] .cmp-s { display: block; height: 100%; }
+[data-info="aquisicao"] .cmp-leg {
+  list-style: none; margin: 7px 0 0; padding: 0; display: grid; gap: 2px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); font-size: 12px; color: var(--ink2);
+}
+/* NÃO é flex — a mesma armadilha de `.nm-legenda`: cada nó de texto e cada `<strong>` viraria
+   um item, e o "· zero medido" saía do fim da frase e ia parar na coluna vizinha, solto. */
+[data-info="aquisicao"] .cmp-leg li { line-height: 1.45; }
+[data-info="aquisicao"] .cmp-leg strong { font-variant-numeric: tabular-nums; color: var(--ink); }
+[data-info="aquisicao"] .cmp-k {
+  display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px;
+  vertical-align: 0;
+}
+/* Zero é QUALIFICADO, nunca uma faixa de 0px (invisível é indistinguível de ausente). */
+[data-info="aquisicao"] .cmp-zero { color: var(--muted); }
+/* G21 — RODADO, e reprovou na primeira volta: `--seq650` x `--seq550` dão ΔE 0,097 em OKLab
+   contra o mínimo de 0,12, e os dois eram segmentos VIZINHOS da barra de indexação ("no índice" e
+   "o Google leu e recusou"). A régua de cor manda ajustar o L e nunca a matiz — como a paleta é a
+   do projeto e esta tela não promove token ao global, a saída foi trocar o par por valores que já
+   existem e passam. Medido nos cinco que dividem barra:
+     contraste sobre #fcfcfb — seq650 9,66:1 · seq400 3,54:1 · ink 19,17:1 · muted 4,82:1 ·
+     crit-ink 6,30:1;  ΔE mínimo entre pares — 0,187 (seq400 x muted).
+   `--seq250` e `--seq450` ficaram de fora: 2,06:1 de contraste e ΔE 0,047 do seq400.
+   `--ink` para "o Google nem leu" é neutro de propósito: é o balde que pede trabalho de link
+   interno, e nenhum verde/vermelho cabe num diagnóstico que não é bom nem ruim. */
+[data-info="aquisicao"] .cmp-idx,
+[data-info="aquisicao"] .cmp-nmarca { background: var(--seq650); }
+[data-info="aquisicao"] .cmp-rni,
+[data-info="aquisicao"] .cmp-marca { background: var(--seq400); }
+[data-info="aquisicao"] .cmp-dni { background: var(--ink); }
+[data-info="aquisicao"] .cmp-out { background: var(--muted); }
+/* FORA DA CONTA: hachura sobre o VAZIO, não sobre o preenchido. Com fundo sólido, "outras"
+   (muted cheio) e "não inspecionada" (muted hachurado) ficavam a um padrão de 2px de distância,
+   com ΔE zero — dois baldes de significado oposto (um está dentro da divisão, o outro fora)
+   separados só pela textura. Vazado contra cheio é diferença de FORMA, que sobrevive ao cinza. */
+[data-info="aquisicao"] .cmp-hach { background-color: transparent; }
+[data-info="aquisicao"] .cmp-falha {
+  color: var(--crit-ink);
+  background-image: repeating-linear-gradient(45deg, currentColor 0 2px, transparent 2px 5px);
+}
+[data-info="aquisicao"] .cmp-fora,
+[data-info="aquisicao"] .cmp-resto {
+  color: var(--muted);
+  background-image: repeating-linear-gradient(135deg, currentColor 0 2px, transparent 2px 5px);
+}
+
+/* ── A régua da janela ───────────────────────────────────────────────────────────────────────
+   Substitui as quatro datas em prosa do antigo `<Recebida>`: as duas pontas continuam escritas,
+   e o que era subtração de cabeça ("pedi 8 meses, recebi de 11/09 a 15/09") passa a ser posição
+   e comprimento. */
+[data-info="aquisicao"] .jan { margin: 8px 0 0; }
+/* 6px e não 10: a régua fica logo abaixo do `h2`, e com cobertura inteira (GA4, 366 de 366) uma
+   barra cheia de 10px lia como faixa de cabeçalho — peso visual sem informação. Em 6px ela
+   continua sendo o elemento que mede, e o sliver de 2% da atma continua visível pelo `max(2px)`. */
+[data-info="aquisicao"] .jan-trilha {
+  position: relative; height: 6px; background: var(--grid); border-radius: 3px;
+}
+[data-info="aquisicao"] .jan-f {
+  position: absolute; top: 0; bottom: 0; background: var(--seq650); border-radius: 3px;
+}
+[data-info="aquisicao"] .jan-cap {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px;
+  margin-top: 4px; font-size: 12px; color: var(--muted);
+}
+[data-info="aquisicao"] .jan-p { font-variant-numeric: tabular-nums; order: 1; }
+[data-info="aquisicao"] .jan-meio { order: 3; flex-basis: 100%; line-height: 1.5; }
+[data-info="aquisicao"] .jan-meio strong { color: var(--ink2); font-variant-numeric: tabular-nums; }
+
+/* ── O frescor ───────────────────────────────────────────────────────────────────────────────
+   Um eixo de 14 dias por linha da tabela de instrumentos, dentro da célula que já tinha a data.
+   Custo de altura: ZERO (é `inline-block` numa linha de 19,5px).
+   A faixa clara é o prazo que a PRÓPRIA fonte promete — 2 dias para a corrida diária, 9 para a de
+   segunda, 5 para quem depende do D-3. Uma faixa só marcaria o crawl semanal como atrasado. */
+[data-info="aquisicao"] .frs {
+  position: relative; display: inline-block; width: 72px; height: 11px; margin-left: 8px;
+  border-bottom: 1px solid var(--grid); vertical-align: -1px;
+}
+/* Sem borda na faixa: a linha tracejada da esquerda lia como um SEGUNDO tique ao lado do tique
+   de verdade, e o leitor não tinha como saber qual dos dois era a medição. O preenchimento
+   sozinho separa faixa (área) de tique (linha). */
+[data-info="aquisicao"] .frs-ok {
+  position: absolute; right: 0; top: 0; bottom: 0; background: rgba(22, 101, 52, 0.14);
+}
+/* #52514e = 7,7:1 */
+[data-info="aquisicao"] .frs-t {
+  position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink2);
+}
+/* #b91c1c = 6,3:1. O mesmo vermelho do selo `cega`: fonte que deveria ter respondido e não. */
+[data-info="aquisicao"] .frs-atrasada { background: var(--crit-ink); }
+/* Mais velha que o eixo: a seta diz que o tique ficou para trás, em vez de mentir encostando-o
+   na borda como se fosse exatamente 14 dias. */
+[data-info="aquisicao"] .frs-antes { background: transparent; }
+[data-info="aquisicao"] .frs-antes::before {
+  content: "◀"; position: absolute; left: -3px; top: -2px; font-size: 9px; color: var(--ink2);
+}
+
+/* ── As células de URL ───────────────────────────────────────────────────────────────────────
+   Uma por URL consultada. Mesmo idioma do selo (símbolo + palavra + cor), porque a pergunta é a
+   mesma: em que estado está esta medição. O símbolo é o terceiro portador. */
+[data-info="aquisicao"] .cel { margin: 10px 0 0; }
+[data-info="aquisicao"] .cel-linha {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px;
+}
+[data-info="aquisicao"] .cel-i {
+  display: flex; align-items: baseline; gap: 5px; font-size: 11px; line-height: 1.5;
+  padding: 2px 8px; border: 1px solid currentColor; border-radius: 4px; max-width: 100%;
+}
+[data-info="aquisicao"] .cel-u { color: var(--ink2); overflow-wrap: anywhere; }
+[data-info="aquisicao"] .cel-c::before { font-weight: 700; }
+[data-info="aquisicao"] .cel-passa { color: var(--good-ink); }
+[data-info="aquisicao"] .cel-passa .cel-c::before { content: "✓"; }
+[data-info="aquisicao"] .cel-reprova { color: var(--crit-ink); }
+[data-info="aquisicao"] .cel-reprova .cel-c::before { content: "✕"; }
+[data-info="aquisicao"] .cel-parcial { color: var(--muted); }
+[data-info="aquisicao"] .cel-parcial .cel-c::before { content: "◐"; }
+[data-info="aquisicao"] .cel-sem { color: var(--muted); }
+[data-info="aquisicao"] .cel-sem .cel-c::before { content: "○"; }
+[data-info="aquisicao"] .cel-falhou { color: var(--crit-ink); }
+[data-info="aquisicao"] .cel-falhou .cel-c::before { content: "✕"; }
+[data-info="aquisicao"] .cel-cap {
+  margin-top: 6px; font-size: 12px; color: var(--muted); line-height: 1.5;
+}
+[data-info="aquisicao"] .cel-cap strong { color: var(--ink2); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  /* 278px de largura útil: o eixo de 72px ao lado de uma data de ~70px estoura a célula, que em
+     360px já é `grid-column: 1 / -1`. Ele desce para uma linha própria, com a largura toda. */
+  [data-info="aquisicao"] .frs { display: block; width: 100%; margin: 3px 0 0; }
+  [data-info="aquisicao"] .cmp-leg { grid-template-columns: 1fr; }
+  [data-info="aquisicao"] .cel-i { width: 100%; }
+}
