@@ -269,6 +269,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   // A apuração de verdade: motivo `null` E alguma inspeção que não falhou.
   const idx = indexacao && !("erro" in indexacao) && !indexacao.motivo ? indexacao : null;
+  // 029 — ESCOPO É PROPRIEDADE DA FONTE, não aviso no topo do bloco. A corrida de indexação passou
+  // a percorrer só `SLUGS_DE_BUSCA` e a guarda entrou como `⚠️ Fora do escopo` no TOPO do bloco;
+  // a cadeia de branches abaixo e a tabela de instrumentos continuaram falando como se o rodízio
+  // ainda servisse os 35. Medido em 18/09 nos 34 projetos de fora: a tabela dizia "sem amostra /
+  // nenhuma apuração gravada" sobre uma apuração de 2026-09-07 com 14 URLs declaradas, e o bloco
+  // prometia "volta na frente da fila na próxima corrida" três linhas abaixo de "não será
+  // atualizado". No banco, só a atma foi apurada desde 08/09 — a promessa é impossível.
+  const foraDoEscopo = !SLUGS_DE_BUSCA.includes(slug);
+  // Apuração que EXISTE e não cresce mais: fim de série, não ausência de amostra.
+  const idxCongelado = foraDoEscopo && indexacao && !("erro" in indexacao) ? indexacao : null;
   // Denominador da taxa = inspecionadas − falhas (022, FR-008). A falha sai dos DOIS lados: erro de
   // quota contado como não-indexação inverteria o sinal, e quanto mais o sistema falhasse pior o
   // site pareceria. Zero ⇒ `null`, "não apurado", nunca 0%.
@@ -573,11 +583,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     instrumentos.push({
       nome: "Indexação",
       mede: (indexacao && !("erro" in indexacao) ? indexacao.propriedade : null) ?? "—",
-      desde: idx ? idx.dia : "—",
-      selo: "erro" in indexacao ? "cega" : cega ? "cega" : idx ? "dado" : "sem",
+      // A data da apuração congelada FICA: "—" diria que este projeto nunca foi medido, e o bloco
+      // abaixo exibe "Apurado em <dia>" na linha seguinte — duas versões do mesmo fato.
+      desde: idxCongelado ? idxCongelado.dia : idx ? idx.dia : "—",
+      selo:
+        "erro" in indexacao ? "cega" : idxCongelado ? "fim" : cega ? "cega" : idx ? "dado" : "sem",
       nota:
         "erro" in indexacao
           ? `A leitura da apuração falhou agora (${indexacao.erro}).`
+          : idxCongelado
+            ? `A corrida percorre só ${SLUGS_DE_BUSCA.join(", ")}. As ${br(idxCongelado.declaradas)} URL(s) declaradas foram apuradas em ${idxCongelado.dia} e o número não cresce mais — é decisão de escopo, não falha nem fila.`
           : cega
             ? `${br(idx!.falhas)} de ${br(idx!.inspecionadas)} inspeções falham${propriedadeForaDoSite ? `: a propriedade não cobre ${hostDeclarado ?? p.url}, e a API de inspeção recusa toda URL fora da propriedade. O conserto é na corrida, não nesta tela.` : "."}`
             : idx
@@ -838,7 +853,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </p>
           </div>
         ) : (
-          <div className="nm-resposta" data-info="aquisicao-nao-marca" id="nao-marca">
+          <div
+            /* 029 — a reserva de altura (G24) existe para a ausência TRANSITÓRIA, que vira dado
+               sozinha. `decl.motivo` é a ausência DECLARADA: não muda até alguém editar o card. */
+            className={decl.motivo ? "nm-resposta nm-declarada" : "nm-resposta"}
+            data-info="aquisicao-nao-marca"
+            id="nao-marca"
+          >
             <h2 className="nm-h">A resposta desta tela ainda não é apurável</h2>
             {/* TRÊS ausências, três consertos diferentes. Colapsar as três em "não apurado" faria
                 "ninguém declarou os termos de marca" (conserto: editar o card, 2 minutos) parecer
@@ -1701,7 +1722,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               <strong>Não inspecionado nesta rodada.</strong> O sitemap foi lido e declara{" "}
               <strong>{br(indexacao.declaradas)}</strong> URL(s), mas a quota da propriedade
               ({indexacao.propriedade ?? "—"}) já tinha sido consumida por outros projetos quando
-              chegou a vez deste. Ele volta na frente da fila na próxima corrida.
+              chegou a vez deste.{" "}
+              {/* 029 — "volta na frente da fila" foi escrita quando o rodízio servia os 35. Com a
+                  corrida restrita a SLUGS_DE_BUSCA ela vira promessa de uma corrida que não vem, e
+                  contradiz o aviso de escopo três linhas acima. */}
+              {foraDoEscopo ? (
+                <>
+                  <strong>A próxima corrida não vem</strong>: o rodízio foi restrito a{" "}
+                  {SLUGS_DE_BUSCA.join(", ")} depois desta apuração, então esta fila não avança
+                  mais.
+                </>
+              ) : (
+                <>Ele volta na frente da fila na próxima corrida.</>
+              )}
               <br />
               Apurado em <strong>{indexacao.dia}</strong>.
             </p>

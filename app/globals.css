@@ -894,8 +894,18 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="aquisicao-nao-marca"] .nm-velho { color: var(--crit-ink); }
 
 /* G24 — o bloco ocupa a MESMA faixa nos dois estados. Sem o piso, a tela inteira sobe quando a
-   série não é apurável, e os onze blocos abaixo trocam de lugar entre uma visita e outra. */
+   série não é apurável, e os onze blocos abaixo trocam de lugar entre uma visita e outra.
+
+   029 — a reserva vale para a ausência TRANSITÓRIA (a corrida ainda não gravou o dia, a série
+   ainda é curta): essa vira dado sozinha, e sem piso a página se reorganiza entre duas visitas.
+   NÃO vale para a ausência DECLARADA (`marca` fora de `data/projects.json`), que não muda até
+   alguém editar o arquivo. Medido em 18/09: em 34 dos 35 projetos a reserva pagava ~300px de
+   branco mudo como elemento mais proeminente da tela — o oposto do que o piso da skill pede de
+   uma ausência, que é ser NOMEADA, não ser grande. O texto que nomeia a causa e o conserto não
+   muda; some só o vazio. Especificidade: `.nm-declarada` (0,2,0) vence a media query (0,1,0)
+   sem depender da ordem. */
 [data-info="aquisicao-nao-marca"] { min-height: 420px; }
+[data-info="aquisicao-nao-marca"].nm-declarada { min-height: 0; }
 @media (max-width: 640px) { [data-info="aquisicao-nao-marca"] { min-height: 520px; } }
 
 /* 360px: três cifras lado a lado viram 90px cada e o número de 28px estoura. Empilha. */
