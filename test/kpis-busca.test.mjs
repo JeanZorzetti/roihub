@@ -18,6 +18,8 @@ import {
   kpisDeBusca,
   activeIndexRatio,
   queryToPageRatio,
+  PISO_IMPRESSOES_VEREDITO,
+  totalImpressoes,
 } from "../lib/kpis-busca.mjs";
 
 const l = (query, page, impressoes, cliques, posicao) => ({ query, page, impressoes, cliques, posicao });
@@ -310,4 +312,28 @@ test("kpisDeBusca repassa o `ehMarca` em vez de filtrar por conta própria", () 
   assert.equal(k.canibalizacao.removidas, 1);
   assert.equal(k.canibalizacao.lista.length, 1);
   assert.equal(kpisDeBusca(marcadas).canibalizacao.removidas, null);
+});
+
+// ── 026: o piso de impressões do veredito do Top 3 ──────────────────────────────────────────
+
+test("PISO_IMPRESSOES_VEREDITO é a base em que 1 impressão vale no máximo 1 ponto", () => {
+  // A faixa do board tem 10 pontos (40% a 50%). No piso, uma impressão move a fração 1pp — são
+  // precisas 10 para atravessar a faixa. É isso que o número significa.
+  assert.ok(100 / PISO_IMPRESSOES_VEREDITO <= 1);
+  // Abaixo do piso a régua não vale: com as 26 impressões reais de 18/09, 1 impressão vale 3,8pp
+  // e TRÊS atravessam a faixa inteira.
+  assert.ok(100 / 26 > 1);
+  assert.ok(Math.ceil(10 / (100 / 26)) === 3);
+});
+
+test("totalImpressoes é o denominador que acompanha a fração", () => {
+  const linhas = [
+    { query: "a", page: "/x", cliques: 1, impressoes: 20, posicao: 2 },
+    { query: "b", page: "/y", cliques: 0, impressoes: 6, posicao: 9 },
+  ];
+  assert.equal(totalImpressoes(linhas), 26);
+  assert.equal(totalImpressoes([]), 0);
+  assert.equal(totalImpressoes(null), 0);
+  // A fração do Top 3 lida contra ESSE total: 20 de 26.
+  assert.equal(impressoesNoTop3(linhas), 20 / 26);
 });

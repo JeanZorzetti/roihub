@@ -1,4 +1,5 @@
 import { GoogleAuth } from "google-auth-library";
+import { separarPorHost } from "./projects.mjs";
 
 // Borda de rede da GA4 Data API (013). Zero regra: mapa de canais, estados e soma moram em
 // lib/ficha.mjs (Princípio III). Cliente GoogleAuth PRÓPRIO — não compartilha escopo nem estado
@@ -7,7 +8,15 @@ import { GoogleAuth } from "google-auth-library";
 export type LeituraGa4 =
   | null
   | { erro: string }
-  | { linhas: { grupo: string; sessoes: number }[]; janela: { inicio: string; fim: string }; propriedade: string };
+  | {
+      linhas: { grupo: string; sessoes: number }[];
+      janela: { inicio: string; fim: string };
+      propriedade: string;
+      /** 026 — só existe quando o chamador passou `hosts`: o que a propriedade mede e NÃO é o
+       *  site declarado. Campo opcional de propósito, para `lib/okr-coleta.ts` (os 35 projetos da
+       *  ficha) continuar recebendo exatamente a forma de antes. */
+      fora?: { host: string; sessoes: number }[];
+    };
 
 type Client = Awaited<ReturnType<GoogleAuth["getClient"]>>;
 
@@ -27,14 +36,29 @@ function normalizarPropriedade(propertyId: string): string {
   return propertyId.startsWith("properties/") ? propertyId : `properties/${propertyId}`;
 }
 
+/**
+ * Sessões por canal na janela.
+ *
+ * 026 — `hosts` é OPT-IN e muda o que a função mede, não só o que ela mostra. Sem ele a soma é da
+ * PROPRIEDADE inteira, que é o que a ficha dos 35 projetos sempre leu. Com ele a dimensão
+ * `hostName` entra na consulta e a soma passa a ser só dos hosts que o card declara — porque a
+ * propriedade GA4 conta qualquer coisa que carregue a tag, e na atma isso inclui o painel admin,
+ * o `localhost` do desenvolvimento e dois previews da Vercel: 1.162 das 7.933 sessões de 12 meses
+ * (14,6%), medido em 18/09.
+ *
+ * O que ficou de fora volta em `fora`, nomeado e com o peso. Silenciar a exclusão faria o total
+ * encolher 14,6% sem uma linha na tela dizendo por quê — e isso lê como queda de tráfego.
+ */
 export async function ga4Canais(
   propertyId: string | undefined,
   janela: { inicio: string; fim: string },
+  hosts?: string[],
 ): Promise<LeituraGa4> {
   if (!propertyId) return null; // não configurado — sem tocar a rede
   const clientP = getClient();
   if (!clientP) return { erro: "GOOGLE_SERVICE_ACCOUNT_JSON ausente" }; // o nome, nunca o valor
   const propriedade = normalizarPropriedade(propertyId);
+  const porHost = !!hosts?.length;
   try {
     const client = await clientP;
     const res = await client.request<{ rows?: { dimensionValues: { value: string }[]; metricValues: { value: string }[] }[] }>({
@@ -42,15 +66,30 @@ export async function ga4Canais(
       method: "POST",
       data: {
         dateRanges: [{ startDate: janela.inicio, endDate: janela.fim }],
-        dimensions: [{ name: "sessionDefaultChannelGroup" }],
+        dimensions: porHost
+          ? [{ name: "sessionDefaultChannelGroup" }, { name: "hostName" }]
+          : [{ name: "sessionDefaultChannelGroup" }],
         metrics: [{ name: "sessions" }],
+        ...(porHost ? { limit: 500 } : {}),
       },
     });
-    const linhas = (res.data.rows ?? []).map((r) => ({
-      grupo: r.dimensionValues[0].value,
-      sessoes: Number(r.metricValues[0].value),
-    }));
-    return { linhas, janela, propriedade };
+    if (!porHost) {
+      const linhas = (res.data.rows ?? []).map((r) => ({
+        grupo: r.dimensionValues[0].value,
+        sessoes: Number(r.metricValues[0].value),
+      }));
+      return { linhas, janela, propriedade };
+    }
+    // A separação é PURA e mora em `lib/projects.mjs` (Princípio III): esta borda só busca.
+    const { linhas, fora } = separarPorHost(
+      (res.data.rows ?? []).map((r) => ({
+        grupo: r.dimensionValues[0].value,
+        host: r.dimensionValues[1].value,
+        sessoes: Number(r.metricValues[0].value),
+      })),
+      hosts!,
+    );
+    return { linhas, janela, propriedade, fora };
   } catch (e) {
     const err = e as { code?: string; message?: string };
     return { erro: err?.code ?? String(err?.message ?? "erro").slice(0, 60) };
@@ -74,6 +113,7 @@ export async function ga4Canais(
 export async function ga4Cobertura(
   propertyId: string | undefined,
   janela: { inicio: string; fim: string },
+  hosts?: string[],
 ): Promise<{ primeiro: string; ultimo: string } | { erro: string } | null> {
   if (!propertyId) return null; // não configurado — sem tocar a rede
   const clientP = getClient();
@@ -86,14 +126,19 @@ export async function ga4Cobertura(
       method: "POST",
       data: {
         dateRanges: [{ startDate: janela.inicio, endDate: janela.fim }],
-        dimensions: [{ name: "date" }],
+        dimensions: hosts?.length ? [{ name: "date" }, { name: "hostName" }] : [{ name: "date" }],
         metrics: [{ name: "sessions" }],
-        limit: 400,
+        limit: hosts?.length ? 3000 : 400,
       },
     });
+    // 026 — a cobertura tem que ser dos MESMOS hosts que a soma de `ga4Canais`, senão ela prova
+    // cobertura com o tráfego do painel admin: o admin da atma recebe sessão TODO dia, então
+    // "último dia com dado" continuaria em D-3 mesmo se o site público parasse de ser medido.
+    const declarados = new Set((hosts ?? []).map((h) => h.replace(/^www\./, "")));
     // Dia com 0 sessões não é dia COM DADO: ele existe na resposta e não prova cobertura.
     const dias = (res.data.rows ?? [])
       .filter((r) => Number(r.metricValues[0].value) > 0)
+      .filter((r) => declarados.size === 0 || declarados.has(r.dimensionValues[1].value.replace(/^www\./, "")))
       .map((r) => r.dimensionValues[0].value)
       .sort();
     if (!dias.length) return { erro: "nenhum dia com sessão na janela pedida" };

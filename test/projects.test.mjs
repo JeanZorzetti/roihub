@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergeProjects, normalizeSite, reposSemSite } from "../lib/projects.mjs";
+import { mergeProjects, normalizeSite, reposSemSite, hostsDeclarados, separarPorHost } from "../lib/projects.mjs";
 
 const repo = (name, extra = {}) => ({
   name,
@@ -100,4 +100,47 @@ test("reposSemSite lista só repo vivo, não curado e sem homepage", () => {
     ]
   );
   assert.deepEqual(out.map((r) => r.name), ["qprime"]);
+});
+
+// ── 026: hosts declarados e a separação do que é medido junto sem ser do site ────────────────
+
+test("hostsDeclarados junta url e dominioAnterior, sem www e sem repetir", () => {
+  assert.deepEqual(
+    hostsDeclarados({ url: "https://usealigner.com/", dominioAnterior: { url: "https://www.atma.roilabs.com.br/" } }),
+    ["usealigner.com", "atma.roilabs.com.br"],
+  );
+  assert.deepEqual(hostsDeclarados({ url: "https://so-um.com/" }), ["so-um.com"]);
+  // Mesmo host nos dois campos não vira dois.
+  assert.deepEqual(hostsDeclarados({ url: "https://a.com/", dominioAnterior: { url: "https://www.a.com/x" } }), ["a.com"]);
+  // Card sem URL utilizável: lista vazia, e quem chama não filtra nada.
+  assert.deepEqual(hostsDeclarados({ url: "nao-e-url" }), []);
+  assert.deepEqual(hostsDeclarados(null), []);
+});
+
+test("separarPorHost soma por grupo e devolve o que ficou de FORA nomeado", () => {
+  // O caso real de 18/09: dois hosts do site, o painel admin e o localhost na mesma propriedade.
+  const linhas = [
+    { grupo: "Organic Search", host: "atma.roilabs.com.br", sessoes: 4940 },
+    { grupo: "Organic Search", host: "usealigner.com", sessoes: 48 },
+    { grupo: "Organic Search", host: "atmaadmin.roilabs.com.br", sessoes: 430 },
+    { grupo: "Direct", host: "localhost", sessoes: 63 },
+    { grupo: "Direct", host: "usealigner.com", sessoes: 140 },
+  ];
+  const out = separarPorHost(linhas, ["usealigner.com", "atma.roilabs.com.br"]);
+  assert.deepEqual(out.linhas, [{ grupo: "Organic Search", sessoes: 4988 }, { grupo: "Direct", sessoes: 140 }]);
+  // `fora` ordenado por peso: é a lista que a tela publica.
+  assert.deepEqual(out.fora, [{ host: "atmaadmin.roilabs.com.br", sessoes: 430 }, { host: "localhost", sessoes: 63 }]);
+});
+
+test("separarPorHost normaliza www dos DOIS lados", () => {
+  const out = separarPorHost([{ grupo: "Direct", host: "www.a.com", sessoes: 10 }], ["a.com"]);
+  assert.deepEqual(out.linhas, [{ grupo: "Direct", sessoes: 10 }]);
+  assert.deepEqual(out.fora, []);
+});
+
+test("separarPorHost com lista vazia não esconde o site inteiro", () => {
+  // Card sem URL: filtrar por lista vazia deixaria a tela em branco fingindo zero sessões.
+  const out = separarPorHost([{ grupo: "Direct", host: "qualquer.com", sessoes: 7 }], []);
+  assert.deepEqual(out.linhas, [{ grupo: "Direct", sessoes: 7 }]);
+  assert.deepEqual(out.fora, []);
 });

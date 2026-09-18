@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listProjects, SLUGS_DE_BUSCA } from "@/lib/projects";
+import { hostsDeclarados } from "@/lib/projects.mjs";
 import {
   lerIndexacao,
   lerCrawlDePagina,
@@ -15,7 +16,7 @@ import { gscSeries, gscConsultas } from "@/lib/gsc";
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
-import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal } from "@/lib/kpis-busca.mjs";
+import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal, totalImpressoes, PISO_IMPRESSOES_VEREDITO } from "@/lib/kpis-busca.mjs";
 import { posicaoDoTermo } from "@/lib/pagina.mjs";
 import {
   canonizar,
@@ -168,8 +169,12 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // de uma nunca alcança a outra.
   const [serie, canais, cobertura, consultas, indexacao, crawl, serieSeparada] = await Promise.all([
     gscSeries(p.url, janelaGsc.inicio, janelaGsc.fim),
-    ga4Canais(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }),
-    ga4Cobertura(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }),
+    // 026: os hosts DECLARADOS entram na consulta. A propriedade GA4 conta qualquer coisa que
+    // carregue a tag — na atma, o painel admin, o `localhost` do desenvolvimento e dois previews
+    // da Vercel: 1.075 das 7.846 sessões de 12 meses (13,7%), e 43% do canal Referral. Uma tela
+    // que pergunta quem ENCONTRA o produto não pode contar o time entrando no admin.
+    ga4Canais(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }, hostsDeclarados(p)),
+    ga4Cobertura(p.ga4?.propertyId, { inicio: janelaGa4.inicio, fim: janelaGa4.fim }, hostsDeclarados(p)),
     // 021: as consultas vêm na janela CURTA (descoberta, 28d), não na longa desta página.
     // Striking Distance com 8 meses misturaria posição de fevereiro com a de hoje e a lista de
     // trabalho apontaria para páginas que já subiram ou já caíram — uma fila de trabalho velha
@@ -196,6 +201,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const decl = marcaDeclarada(p);
   const ehMarca = decl.motivo ? null : (q: string) => new RegExp(decl.padrao, "i").test(q);
   const kpis = linhasBusca ? kpisDeBusca(linhasBusca, ehMarca) : null;
+  // 026 — o denominador das frações da janela curta. Toda fração desta tela carrega a base ao
+  // lado; a do Top 3 não carregava, e era julgada contra a faixa do board sobre 26 impressões.
+  const baseCurta = linhasBusca ? totalImpressoes(linhasBusca) : null;
   const vitais = await lerPassRate(slug, linhasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   // 025: acima de 10× o `pct` vira armadilha de leitura. Em pt-BR o separador de milhar é o PONTO,
@@ -217,6 +225,20 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const taxaIdx = idx && base > 0 ? idx.indexadas / base : null;
   const rejeicao = idx && base > 0 ? (idx.rastreadasNaoIndexadas + idx.descobertasNaoIndexadas) / base : null;
   const amostrado = !!idx && idx.inspecionadas < idx.declaradas;
+  // 026 — a propriedade que a corrida usou cobre o host que o card declara? `sc-domain:x` cobre
+  // `a.b.x`; uma propriedade de prefixo cobre só o próprio host. Divergir é a assinatura de uma
+  // troca de domínio no meio da corrida, e é a causa REAL de 100% de falha na inspeção.
+  const propriedadeForaDoSite = (() => {
+    const prop = indexacao && !("erro" in indexacao) ? indexacao.propriedade : null;
+    if (!prop) return false;
+    let host: string;
+    try { host = new URL(p.url).hostname.replace(/^www\./, ""); } catch { return false; }
+    if (prop.startsWith("sc-domain:")) {
+      const dominio = prop.slice("sc-domain:".length);
+      return host !== dominio && !host.endsWith(`.${dominio}`);
+    }
+    return !prop.startsWith(`https://${host}/`) && !prop.startsWith(`https://www.${host}/`);
+  })();
 
   // 022/US3 — o denominador das duas razões do board.
   //
@@ -270,6 +292,11 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // FR-027, lado GSC: a janela real sai da PRÓPRIA série — `days[0].date` / `days.at(-1).date`.
   // Zero chamada extra: a fonte se autodeclara.
   const recebidaGsc = dias && dias.length ? { inicio: dias[0].date, fim: dias[dias.length - 1].date } : null;
+  // 026 — quantos dos 28 dias pedidos pelo bloco de consultas a fonte de fato tem. CONTADO na
+  // série, não subtraído das pontas: um buraco no meio não pode virar cobertura cheia.
+  const diasRecebidosCurta = dias
+    ? dias.filter((d) => d.date >= curtaGsc.inicio && d.date <= curtaGsc.fim).length
+    : null;
   const cliques = dias?.reduce((t, d) => t + d.clicks, 0) ?? null;
   const impressoes = dias?.reduce((t, d) => t + d.impressions, 0) ?? null;
   // ── 025: as duas medidas do board que não existiam ───────────────────────────────────────
@@ -436,6 +463,11 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   const recebidaGa4 = cobertura && "primeiro" in cobertura ? { inicio: cobertura.primeiro, fim: cobertura.ultimo } : null;
   const sessoes = canais && "linhas" in canais ? canais.linhas.reduce((t, l) => t + l.sessoes, 0) : null;
+  // 026 — os hosts que o CARD declara, e o que a propriedade mediu fora deles. Os dois vão para a
+  // tela: o primeiro como procedência do número, o segundo como a exclusão nomeada.
+  const hostsDoSite = hostsDeclarados(p);
+  const fora = canais && "linhas" in canais ? (canais.fora ?? []) : [];
+  const foraTotal = fora.reduce((t, f) => t + f.sessoes, 0);
 
   return (
     <main className="page">
@@ -906,11 +938,26 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Consultas — Search Console, 28 dias</h2>
           <p className="foot">
-            Janela: <strong>{curtaGsc.inicio} → {curtaGsc.fim}</strong> — a mesma da célula{" "}
+            Janela pedida: <strong>{curtaGsc.inicio} → {curtaGsc.fim}</strong> — a mesma da célula{" "}
             <code>visitante</code> da <a href={`/okr/${slug}`}>ficha</a>, e{" "}
             <strong>não</strong> a de 8 meses do bloco acima. Os números dos dois blocos medem
             períodos diferentes e não se dividem um pelo outro.
           </p>
+          {/* 026 — a janela RECEBIDA também aqui, não só no bloco de 8 meses. `gscConsultas` não
+              traz a dimensão `date`, então a janela real sai da série que já está na página: é a
+              MESMA propriedade, e o primeiro dia dela é o primeiro dia que existe nesta também.
+              Zero requisição a mais. Sem esta linha, o bloco promete 28 dias e entrega 5 — foi o
+              que a migração de domínio produziu: a propriedade nova começou em 11/09. */}
+          {recebidaGsc && recebidaGsc.inicio > curtaGsc.inicio && (
+            <p className="foot">
+              ⚠️ <strong>Janela recebida: {recebidaGsc.inicio} → {curtaGsc.fim}</strong> —{" "}
+              <strong>truncada</strong>. A propriedade de <code>{p.url}</code> no Search Console não
+              tem dado antes de {recebidaGsc.inicio}, então os números abaixo cobrem{" "}
+              <strong>{diasRecebidosCurta}</strong> dos 28 dias pedidos. Eles{" "}
+              <strong>não</strong> são comparáveis com uma janela cheia de 28 dias, e a queda em
+              relação a qualquer leitura anterior é da JANELA, não do site.
+            </p>
+          )}
 
           {!SLUGS_DE_BUSCA.includes(slug) ? (
             /* Escopo, não ausência: sem esta linha o `kpis === null` abaixo diria "sem propriedade
@@ -946,9 +993,38 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   <strong>{kpis.noTop20.toLocaleString("pt-BR")}</strong> consultas no Top 20{" "}
                   <span className="foot">(posições 1,0 a 20,0)</span>
                 </li>
+                {/* 026 — fração SEMPRE com a base ao lado, e o veredito do board só acima do
+                    piso. Com as 26 impressões que a propriedade nova tinha em 18/09, uma única
+                    impressão move a fração 3,8 pontos e três atravessam a faixa inteira de 10:
+                    exibir "dentro da faixa" ali seria aprovar ruído, o mesmo defeito do `43×`. */}
                 <li>
                   <strong>{kpis.impressoesNoTop3 === null ? "não apurado" : pct(kpis.impressoesNoTop3)}</strong>{" "}
-                  das impressões no Top 3 <span className="foot">(meta do board: 40% a 50%)</span>
+                  das impressões no Top 3{" "}
+                  {kpis.impressoesNoTop3 !== null && baseCurta !== null && (
+                    <span className="foot">
+                      ({br(Math.round(kpis.impressoesNoTop3 * baseCurta))} de {br(baseCurta)}{" "}
+                      impressões na janela)
+                    </span>
+                  )}{" "}
+                  {baseCurta === 0 ? (
+                    /* G4 — zero impressões é um ESTADO, não um denominador. Dividir por ele daria
+                       "Infinity pontos" na tela, que é o zero disfarçado de número que este piso
+                       existe para não produzir. */
+                    <span className="foot">
+                      — <strong>sem base</strong>: a janela não teve impressão nenhuma, então não há
+                      fração nem régua. Isto não é 0% no Top 3.
+                    </span>
+                  ) : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
+                    <span className="foot">
+                      — <strong>sem veredito do board</strong>: a faixa de referência é 40% a 50%,
+                      dez pontos de largura, e com {br(baseCurta)} impressões cada uma vale{" "}
+                      {(100 / baseCurta).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}{" "}
+                      pontos. A régua só passa a valer a partir de{" "}
+                      <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões na janela.
+                    </span>
+                  ) : (
+                    <span className="foot">(meta do board: 40% a 50%)</span>
+                  )}
                 </li>
                 {/* 022/FR-011: com denominador apurado isto vira a RAZÃO que o board pede; sem ele
                     volta a ser contagem COM O MOTIVO. Razão de denominador chutado é falha. */}
@@ -1204,11 +1280,36 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </p>
           ) : taxaIdx === null ? (
             /* Todas as inspeções falharam: denominador zero. "Não apurado", nunca 0% — contar
-               erro de quota como não-indexação inverteria o sinal da medição inteira. */
+               erro de quota como não-indexação inverteria o sinal da medição inteira.
+               026 — a redação anterior afirmava a causa ("rede ou quota") e a tela não a conhece.
+               Medido em 18/09: 25 de 25 falharam, e por seis corridas seguidas desde 13/09, porque
+               o sitemap SEGUE O 301 e passou a declarar URLs de usealigner.com enquanto a
+               propriedade gravada continuava `sc-domain:roilabs.com.br` — a URL Inspection API
+               recusa toda URL fora da propriedade. Nem rede, nem quota. O que a tela sabe é a
+               propriedade usada e o site declarado; quando os dois divergem, isso É a causa. */
             <p className="foot">
               não apurado — as <strong>{br(indexacao!.inspecionadas)}</strong> inspeções desta
-              corrida falharam (rede ou quota). Falha de inspeção não é não-indexação, então não há
-              fração a exibir.
+              corrida <strong>falharam</strong>, todas. Falha de inspeção não é não-indexação, então
+              não há fração a exibir.
+              <br />
+              A corrida usou a propriedade <code>{indexacao!.propriedade ?? "—"}</code> e o card
+              declara o site em <code>{p.url}</code>.{" "}
+              {propriedadeForaDoSite ? (
+                <>
+                  <strong>Os dois não batem</strong>: a API de inspeção só responde sobre URLs{" "}
+                  <strong>dentro</strong> da propriedade, então toda inspeção é recusada antes de
+                  olhar o índice. É o rastro de uma troca de domínio — o sitemap acompanha o
+                  redirecionamento e passa a declarar o site novo antes de a propriedade dele
+                  entrar na corrida. O conserto é a propriedade do host atual no Search Console,
+                  não uma nova tentativa.
+                </>
+              ) : (
+                <>
+                  Os dois batem, então a causa <strong>não é</strong> a propriedade — e a tela não
+                  tem como distinguir rede de quota daqui. Quem investiga olha o retorno da corrida
+                  das 05:47.
+                </>
+              )}
               <br />
               Apurado em <strong>{indexacao!.dia}</strong>.
             </p>
@@ -1636,7 +1737,18 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             <>
               <p>
                 <strong>{sessoes!.toLocaleString("pt-BR")}</strong> sessões{" "}
-                <span className="foot">(GA4, propriedade {canais.propriedade})</span>
+                <span className="foot">
+                  (GA4, propriedade {canais.propriedade}
+                  {/* 026 — a procedência do número é a propriedade E os hosts. Sem os hosts
+                      escritos aqui, "sessões" é uma cifra sobre um recorte que ninguém declarou. */}
+                  {hostsDoSite.length > 0 && (
+                    <>
+                      {" "}· contando só{" "}
+                      <strong>{hostsDoSite.map((h) => <code key={h}>{h}</code>).reduce((a, b) => <>{a}, {b}</>)}</strong>
+                    </>
+                  )}
+                  )
+                </span>
               </p>
               <ul className="ficha-krs">
                 {[...canais.linhas]
@@ -1648,6 +1760,32 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     </li>
                   ))}
               </ul>
+              {/* 026 — a exclusão é informação, não faxina. Filtrar em silêncio encolheria o total
+                  em 13,7% sem uma linha dizendo por quê, e isso lê como queda de tráfego. O que a
+                  propriedade mede sem ser o site sai NOMEADO, com o peso. */}
+              {fora.length > 0 && (
+                <p className="foot">
+                  ⚠️ <strong>{br(foraTotal)}</strong> sessões da mesma propriedade{" "}
+                  <strong>não entraram</strong> nos números acima (
+                  {sessoes! + foraTotal > 0 ? pct(foraTotal / (sessoes! + foraTotal)) : "não apurável"} do
+                  que a propriedade mediu na janela):
+                  elas são de hosts que este card <strong>não declara</strong> como sendo o site.
+                  Painel administrativo, <code>localhost</code> de desenvolvimento e preview de
+                  deploy carregam a mesma tag do GA4 — e nenhum deles é alguém{" "}
+                  <strong>encontrando</strong> o produto, que é a pergunta desta tela.
+                  <br />
+                  {fora.map((f, i) => (
+                    <span key={f.host}>
+                      {i > 0 && " · "}
+                      <code>{f.host}</code> {br(f.sessoes)}
+                    </span>
+                  ))}
+                  <br />
+                  Host que passar a ser do site entra aqui declarando-o em{" "}
+                  <code>data/projects.json</code> (<code>url</code> ou{" "}
+                  <code>dominioAnterior.url</code>) — a lista acima nunca é chute do hub.
+                </p>
+              )}
             </>
           ) : (
             <p className="foot">
