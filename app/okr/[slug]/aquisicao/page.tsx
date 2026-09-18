@@ -664,7 +664,12 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // vazia: medir "% do pico" através do corte compararia 8 meses de um site com 5 dias de outro e
   // publicaria uma queda de 98% que é mudança de casa, não perda de tráfego. É o mesmo erro do
   // `43×` que a corrida anterior removeu, com o sinal trocado.
-  const leitura = diasSeparados ? ritmoDoSegmentoAtual(diasSeparados) : null;
+  // 029 — os hosts que o CARD declara como sendo o site. Eles entram na LEITURA e não só na
+  // procedência: desde a 029 a corrida grava a soma deles, e a assinatura do dia muda no dia da
+  // troca sem que o site tenha mudado. Sem passá-los, a leitura cortaria a série em dois
+  // exatamente onde esta feature veio costurá-la.
+  const hostsDoSite = hostsDeclarados(p);
+  const leitura = diasSeparados ? ritmoDoSegmentoAtual(diasSeparados, hostsDoSite) : null;
   const ritmo = leitura?.ritmo ?? null;
   // O bloco fala do site ANTERIOR quando o atual ainda não fechou duas semanas. Não é ressalva de
   // rodapé: muda o SUJEITO da frase, e sem ele o leitor atribui ao domínio novo uma história que
@@ -686,7 +691,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // As semanas PARCIAIS das duas pontas entram no gráfico com `value: null` — "sem dado" e não um
   // valor menor. Desenhá-las pelo que mediram encolheria a última coluna por calendário e pintaria
   // uma queda de 63% que não existe (a ponta da atma tem 2 dias dos 7).
-  const semanas = diasSeparados ? semanasNaoMarca(diasSeparados) : [];
+  const semanas = diasSeparados ? semanasNaoMarca(diasSeparados, hostsDoSite) : [];
   const pontos: WeekPoint[] = semanas.map((w) => ({
     start: w.inicio,
     end: w.fim,
@@ -705,11 +710,28 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     for (let i = 1; i < nomeadas.length; i++) {
       const anterior = nomeadas.slice(0, i).filter(Boolean).at(-1);
       if (anterior && nomeadas[i] && nomeadas[i] !== anterior) {
-        return { index: i, antes: anterior, depois: nomeadas[i]! };
+        // 029 — a assinatura é gravada com `+`; o rótulo do corte mostra a lista legível. Sem
+        // isto o gráfico exibe `a.com+b.com`, que é a forma de armazenamento vazando para a tela.
+        return { index: i, antes: anterior.split("+").join(" + "), depois: nomeadas[i]!.split("+").join(" + ") };
       }
     }
     return undefined;
   })();
+  // 029 — QUEM a série soma e DESDE QUANDO. Sai do DADO (a assinatura gravada na coluna `host`),
+  // nunca de `dominioAnterior.data`: é a assinatura que diz o que a corrida de fato somou, e a data
+  // declarada da troca cai antes do primeiro dia em que o domínio novo teve impressão.
+  //
+  // A CONTRIBUIÇÃO de cada host não está aqui, e não se inventa: a tabela guarda a soma do dia e
+  // não a parcela de cada domínio. O que a tela pode afirmar é quem entrou e quando — dizer "97%
+  // vem do domínio antigo" exigiria uma linha por host, que é outra spec.
+  const somaDaSerie = (() => {
+    const desde = new Map<string, string>();
+    for (const d of diasSeparados ?? []) {
+      for (const h of (d.host ?? "").split("+").filter(Boolean)) if (!desde.has(h)) desde.set(h, d.dia);
+    }
+    return [...desde.entries()].map(([host, dia]) => ({ host, dia }));
+  })();
+
   // G3/G25 — procedência e frescor. `criado` é quando a corrida GRAVOU; `ultimoDiaMedido` é o
   // último dia que o Search Console cobriu. A distância entre o último dia medido e HOJE é a idade
   // real: a fonte promete D-3, e acima disso a corrida parou ou a fonte atrasou. Um número velho
@@ -797,9 +819,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   const recebidaGa4 = cobertura && "primeiro" in cobertura ? { inicio: cobertura.primeiro, fim: cobertura.ultimo } : null;
   const sessoes = canais && "linhas" in canais ? canais.linhas.reduce((t, l) => t + l.sessoes, 0) : null;
-  // 026 — os hosts que o CARD declara, e o que a propriedade mediu fora deles. Os dois vão para a
-  // tela: o primeiro como procedência do número, o segundo como a exclusão nomeada.
-  const hostsDoSite = hostsDeclarados(p);
+  // 026 — o que a propriedade mediu FORA dos hosts declarados (`hostsDoSite`, definido junto da
+  // leitura da série): a exclusão nomeada do bloco de Comportamento.
   const fora = canais && "linhas" in canais ? (canais.fora ?? []) : [];
   const foraTotal = fora.reduce((t, f) => t + f.sessoes, 0);
 
@@ -833,11 +854,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     // marca / não-marca — ou seja, em 1 dos 35 projetos. Cair em "host não identificado" nos
     // outros 34 seria inventar uma ausência: `hub_gsc_dia.host` está preenchido em 5.840 de 5.840
     // linhas desde o backfill de 18/09. O último dia da série sabe de que site ele veio.
+    // 029 — a assinatura do ÚLTIMO dia, não a do segmento: `mede` responde "o que esta fonte mede
+    // hoje", e o segmento carrega a assinatura do dia em que ele COMEÇOU. Numa série que atravessa
+    // a migração, a do começo é o domínio antigo sozinho — a resposta certa para janeiro e errada
+    // para hoje.
     const hostDaSerie =
-      hostDoVeredito ?? [...diasSeparados].reverse().find((d) => d.host)?.host ?? null;
+      [...diasSeparados].reverse().find((d) => d.host)?.host ?? hostDoVeredito ?? null;
     instrumentos.push({
       nome: "Série gravada",
-      mede: hostDaSerie ?? "host não gravado nesta série",
+      // 029 — a assinatura é gravada com `+`; na tela ela vira a lista dos domínios somados.
+      mede: hostDaSerie ? hostDaSerie.split("+").join(" + ") : "host não gravado nesta série",
       desde: ultimoDiaMedido ? `até ${ultimoDiaMedido}` : "—",
       selo: serieEncerrada ? "fim" : "dado",
       nota: serieEncerrada
@@ -1015,7 +1041,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 <div className="foot">
                   {br(somasMarca.impressoesNaoMarca)} de {br(somasMarca.impressoesPais)} impressões
                   {janelaSeg ? <> · {janelaSeg.inicio} → {janelaSeg.fim}</> : null}
-                  {hostDoVeredito ? <> · <code>{hostDoVeredito}</code></> : null}
+                  {somaDaSerie.length ? (
+                    <> · <code>{somaDaSerie.map((h) => h.host).join(" + ")}</code></>
+                  ) : null}
                   {decl.motivo === null ? <> · corte <code>{decl.pais}</code></> : null}
                 </div>
               </div>
@@ -1047,7 +1075,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
             <div className="nm-grafico">
               <WeekChart
-                title={`Impressões não-marca por semana · ${ritmo.semanasCompletas} semanas completas${corte ? " no site atual da série" : ""}`}
+                title={`Impressões não-marca por semana · ${ritmo.semanasCompletas} semanas completas`}
                 points={pontos}
                 fmt={(v) => `${br(v)} impressões`}
                 cut={corte}
@@ -1061,8 +1089,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 <li><span className="nm-k nm-k-vazio" aria-hidden /> coluna vazia: semana <strong>parcial</strong> ou que cruza a troca de site, fora da leitura ({ritmo.parciaisIgnoradas} nas pontas)</li>
                 {corte ? (
                   <li>
-                    <span className="nm-k nm-k-corte" aria-hidden /> linha vertical: a série trocou
-                    de <strong>site</strong>. Os dois lados não se somam nem se comparam
+                    <span className="nm-k nm-k-corte" aria-hidden /> linha vertical: daqui em
+                    diante a semana <strong>soma os domínios declarados</strong> — o negócio é o
+                    mesmo, o instrumento é que mudou de casa
                   </li>
                 ) : null}
               </ul>
@@ -1121,11 +1150,23 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               )}{" "}
               <span className="foot">
                 Só semanas de 7 dias entram nesta leitura. Fonte: <code>hub_gsc_dia</code>, série
-                gravada pela corrida diária{hostDoVeredito ? <> em <code>{hostDoVeredito}</code></> : null} —{" "}
-                {leitura ? leitura.segmento.dias.length : diasSeparados!.length} dias
-                {corte ? <> dos {diasSeparados!.length} da série</> : null}. As cifras de busca do
-                resto da tela vêm do site declarado no card e <strong>não se comparam</strong> com
-                estas quando os dois diferem.
+                gravada pela corrida diária
+                {somaDaSerie.length ? (
+                  <>
+                    {" "}somando{" "}
+                    {somaDaSerie.map((h, i) => (
+                      <span key={h.host}>
+                        {i > 0 ? " + " : ""}
+                        <code>{h.host}</code> (desde {h.dia})
+                      </span>
+                    ))}
+                  </>
+                ) : null}{" "}
+                — {leitura ? leitura.segmento.dias.length : diasSeparados!.length} dias
+                {leitura && leitura.segmento.dias.length !== diasSeparados!.length ? (
+                  <> dos {diasSeparados!.length} da série</>
+                ) : null}. As cifras de busca do resto da tela vêm do site declarado no card e{" "}
+                <strong>não se comparam</strong> com estas quando os dois diferem.
                 <br />
                 {/* G3/G25 — os três que fazem de um número informação: DE QUANDO, DE ONDE, e sobre
                     qual total. O total está nas cifras acima; os outros dois estão aqui. */}
@@ -1279,17 +1320,23 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                       {migracao.historico ? (
                         <> O histórico anterior não se perdeu — {migracao.historico}.</>
                       ) : null}
-                      {/* G3: bloco que mede outro SUJEITO declara. Marca/não-marca lê a série
-                          GRAVADA em `hub_gsc_dia`, apurada no domínio antigo — não a propriedade
-                          nova. Sem esta linha a tela volta a somar dois sites. */}
+                      {/* G3: bloco que mede outro SUJEITO declara. 029 — o sujeito mudou: a série
+                          gravada deixou de ser "o domínio antigo" e passou a ser a SOMA dos hosts
+                          declarados. As fontes ao vivo continuam num só, e é essa a diferença que
+                          esta linha precisa dizer agora. */}
                       {diasSeparados?.length ? (
                         <>
                           {" "}
                           <strong>Exceção — Marca e não-marca:</strong> esse bloco lê a série{" "}
                           <strong>gravada</strong> ({diasSeparados.length} dia(s) em{" "}
-                          <code>hub_gsc_dia</code>), apurada no domínio <strong>antigo</strong>. Os
-                          números dele e os das fontes ao vivo medem <strong>sites diferentes</strong>{" "}
-                          e não se comparam entre si.
+                          <code>hub_gsc_dia</code>), que desde{" "}
+                          {somaDaSerie.length > 1 ? somaDaSerie[somaDaSerie.length - 1].dia : "a troca"}{" "}
+                          <strong>soma os domínios declarados</strong>
+                          {somaDaSerie.length > 1 ? (
+                            <> ({somaDaSerie.map((h) => h.host).join(" + ")})</>
+                          ) : null}. As fontes ao vivo medem{" "}
+                          <strong>só o domínio novo</strong>, então os números dos dois lados não se
+                          dividem um pelo outro.
                         </>
                       ) : null}
                     </dd>

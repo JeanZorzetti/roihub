@@ -934,7 +934,12 @@ export type DiaGsc = { dia: string; impressoes: number; cliques: number; posicao
  * Um único INSERT com todas as linhas em vez de um por dia: o backfill traz ~487 dias, e 487
  * viagens ao banco por projeto transformariam a primeira corrida em minutos de rede.
  */
-export async function gravarDiasGsc(projeto: string, dias: DiaGsc[], host: string | null = null): Promise<number> {
+export async function gravarDiasGsc(
+  projeto: string,
+  dias: DiaGsc[],
+  host: string | null = null,
+  declarados: string[] = []
+): Promise<number> {
   if (!dias.length) return 0;
   await ensure();
   const valores: unknown[] = [];
@@ -943,9 +948,20 @@ export async function gravarDiasGsc(projeto: string, dias: DiaGsc[], host: strin
     valores.push(projeto, d.dia, d.impressoes, d.cliques, d.posicao, host);
     return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`;
   });
+  valores.push(declarados.length ? declarados : null);
+  const p = `$${valores.length}::text[]`;
   // 026 — a guarda de host. Dia já medido em OUTRO site não é sobrescrito: o `rowCount` cai e a
   // corrida reporta a diferença, em vez de trocar 1.146 impressões por 31 em silêncio. Sobre
   // `host IS NULL` escreve, porque é assim que a coluna se preenche na primeira corrida.
+  //
+  // 029 — com `declarados`, a régua deixa de ser "mesmo host" e passa a ser "todos os hosts da
+  // assinatura estão entre os declarados". O caso que criou a guarda continua barrado (trocar a
+  // `url` sem declarar reescrevia 248 dias com números de outro site); o que passa a valer é a
+  // regravação de um dia cuja medição melhorou DENTRO da mesma declaração — que é a transição de
+  // domínio, onde o dia certo é a SOMA dos dois e não o número de um deles.
+  //
+  // Sem `declarados` a guarda antiga continua inteira: afrouxar por omissão é como uma proteção
+  // morre em silêncio, e há chamadores que não sabem desta feature.
   const r = await pool().query(
     `INSERT INTO hub_gsc_dia (projeto, dia, impressoes, cliques, posicao, host)
      VALUES ${tuplas.join(", ")}
@@ -955,7 +971,11 @@ export async function gravarDiasGsc(projeto: string, dias: DiaGsc[], host: strin
        posicao = EXCLUDED.posicao,
        host = EXCLUDED.host,
        criado = now()
-     WHERE hub_gsc_dia.host IS NULL OR hub_gsc_dia.host IS NOT DISTINCT FROM EXCLUDED.host`,
+     WHERE hub_gsc_dia.host IS NULL
+        OR (${p} IS NULL AND hub_gsc_dia.host IS NOT DISTINCT FROM EXCLUDED.host)
+        OR (${p} IS NOT NULL
+            AND (SELECT bool_and(h = ANY(${p}))
+                   FROM unnest(string_to_array(hub_gsc_dia.host, '+')) AS h))`,
     valores
   );
   return r.rowCount ?? 0;
@@ -1021,13 +1041,18 @@ export async function gravarMarcaGsc(
   projeto: string,
   pais: string,
   dias: DiaDeMarca[],
-  host: string | null = null
+  host: string | null = null,
+  declarados: string[] = []
 ): Promise<{ atualizados: number; semLinhaDeTotal: number; deOutroHost: number }> {
   if (!dias.length) return { atualizados: 0, semLinhaDeTotal: 0, deOutroHost: 0 };
   await ensure();
-  const valores: unknown[] = [projeto, pais, host];
+  // 029 — `$4` é a mesma régua da `gravarDiasGsc`: nulo mantém a guarda de igualdade da 026,
+  // preenchido testa pertinência ao conjunto declarado. As sete colunas de marca são a fatia do
+  // mesmo dia, e ler as duas metades do mesmo dia por réguas diferentes é como um total certo
+  // passa a carregar uma fatia errada.
+  const valores: unknown[] = [projeto, pais, host, declarados.length ? declarados : null];
   const tuplas = dias.map((d, i) => {
-    const b = i * 7 + 3;
+    const b = i * 7 + 4;
     valores.push(
       d.dia,
       d.impressoesPais,
@@ -1052,7 +1077,11 @@ export async function gravarMarcaGsc(
        AS v(dia, impressoes_pais, cliques_pais, impressoes_marca, cliques_marca,
             impressoes_nao_marca, cliques_nao_marca)
      WHERE g.projeto = $1 AND g.dia = v.dia
-       AND (g.host IS NULL OR g.host IS NOT DISTINCT FROM $3::text)`,
+       AND (g.host IS NULL
+            OR ($4::text[] IS NULL AND g.host IS NOT DISTINCT FROM $3::text)
+            OR ($4::text[] IS NOT NULL
+                AND (SELECT bool_and(h = ANY($4::text[]))
+                       FROM unnest(string_to_array(g.host, '+')) AS h)))`,
     valores
   );
   const atualizados = r.rowCount ?? 0;
@@ -1064,8 +1093,11 @@ export async function gravarMarcaGsc(
   const existentes = await pool().query<{ n: string }>(
     `SELECT count(*) AS n FROM hub_gsc_dia
       WHERE projeto = $1 AND dia = ANY($2::date[])
-        AND host IS NOT NULL AND host IS DISTINCT FROM $3::text`,
-    [projeto, dias.map((d) => d.dia), host]
+        AND host IS NOT NULL
+        AND CASE WHEN $4::text[] IS NULL THEN host IS DISTINCT FROM $3::text
+                 ELSE NOT (SELECT bool_and(h = ANY($4::text[]))
+                             FROM unnest(string_to_array(host, '+')) AS h) END`,
+    [projeto, dias.map((d) => d.dia), host, declarados.length ? declarados : null]
   );
   const deOutroHost = Number(existentes.rows[0]?.n ?? 0);
   return { atualizados, semLinhaDeTotal: dias.length - atualizados - deOutroHost, deOutroHost };

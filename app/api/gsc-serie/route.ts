@@ -8,8 +8,15 @@
 // IV declara intocável, e uma indisponibilidade do GSC passaria a poder derrubar o card noturno.
 import { gscSeries, gscSerieFiltrada } from "@/lib/gsc";
 import { projetosDeBusca } from "@/lib/projects";
+import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gravarDiasGsc, gravarMarcaGsc, ultimoDiaGsc, dbOn } from "@/lib/db";
-import { janelaDaCorrida, diasParaGravar, DIAS_BACKFILL } from "@/lib/serie-gsc.mjs";
+import {
+  janelaDaCorrida,
+  diasParaGravar,
+  somarSeriesPorHost,
+  assinaturaDeHosts,
+  DIAS_BACKFILL,
+} from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, adensarDias, completude } from "@/lib/marca.mjs";
 
 export const runtime = "nodejs";
@@ -18,7 +25,7 @@ export const runtime = "nodejs";
 // e, ao contrário daquela rota, não encosta no limite do proxy do EasyPanel.
 export const maxDuration = 300;
 
-export async function POST() {
+export async function POST(req: Request) {
   // Princípio V: valida o ambiente na ENTRADA e responde só com os NOMES do que falta.
   const faltando = [
     !dbOn() && "DATABASE_URL",
@@ -31,6 +38,23 @@ export async function POST() {
   // escopo errado, não escopo generoso.
   const projetos = await projetosDeBusca();
 
+  // 029 — `desde` reabre a janela do TOTAL para trás, e é assim que o histórico de uma transição de
+  // domínio é corrigido: a mesma corrida, com outro início. Script próprio repetiria o laço de
+  // projetos, as três pernas e a gravação — quatro lugares para divergir no primeiro conserto que
+  // só um dos dois recebesse. As sete colunas de marca não precisam dele: elas já rodam na janela
+  // de backfill de 480 dias a cada corrida e se recorrigem sozinhas.
+  const desde = await (async () => {
+    try {
+      const corpo = (await req.json()) as { desde?: unknown };
+      return typeof corpo?.desde === "string" ? corpo.desde : null;
+    } catch {
+      return null; // corpo vazio é o caso comum: o cron dispara sem body
+    }
+  })();
+  if (desde !== null && !/^\d{4}-\d{2}-\d{2}$/.test(desde)) {
+    return Response.json({ error: "desde inválido", esperado: "YYYY-MM-DD" }, { status: 400 });
+  }
+
   const gravados: Record<string, number> = {};
   const backfills: string[] = [];
   const semPropriedade: string[] = [];
@@ -42,6 +66,12 @@ export async function POST() {
   const semMarca: { projeto: string; motivo: string }[] = [];
   // 026: dias que a guarda de host recusou — a série daquele projeto foi medida em outro site.
   const recusados: { projeto: string; host: string | null; dias: number }[] = [];
+  // 029: os hosts que ENTRARAM na soma de cada projeto, e os declarados que não têm mais
+  // propriedade no Search Console. `somados` é o que torna a corrida auditável sem abrir o banco:
+  // host que sumir da lista sem ninguém ter mexido na declaração encolheu a soma — e o número do
+  // dia encolheu junto.
+  const somados: Record<string, string[]> = {};
+  const encerrados: { projeto: string; host: string }[] = [];
 
   // Em SÉRIE, não em Promise.all: são requisições ao mesmo endpoint do Google com a mesma
   // credencial, e disparar dezenas de uma vez é o caminho mais curto para um 429 que transformaria
@@ -50,27 +80,49 @@ export async function POST() {
     try {
       const ultimo = await ultimoDiaGsc(p.slug);
       const janela = janelaDaCorrida(ultimo);
-      const s = await gscSeries(p.url, janela.inicio, janela.fim);
-      // `null` é ausência estrutural (host fora de toda propriedade) e `{erro}` é falha
-      // transitória — a distinção que `lib/gsc.ts` mantém e que aqui decide entre um projeto que
-      // nunca terá série e um que precisa ser olhado.
-      if (s === null) {
+      const inicioTotal = desde ?? janela.inicio;
+      // 029 — a corrida mede TODOS os hosts que o card declara, não o host da `url` atual. Medido
+      // na Atma em 18/09/2026, quatro dias depois da troca: `atma.roilabs.com.br` ainda valia 1.146
+      // impressões em 15/09 contra 31 de `usealigner.com`. Ler só o novo gravou 35 em 16/09, ~3% do
+      // que o negócio fez. É a mesma régua que o bloco de Comportamento (GA4) desta tela já usa —
+      // "o site" é o conjunto declarado, e não um host.
+      const declarados: string[] = hostsDeclarados(p);
+      const respostas: { host: string; days: { date: string }[] }[] = [];
+      const vivos: string[] = [];
+      let abortou = "";
+      for (const h of declarados) {
+        const s = await gscSeries(`https://${h}/`, inicioTotal, janela.fim);
+        // `null` é ausência ESTRUTURAL (host fora de toda propriedade) e `{erro}` é falha
+        // transitória — a distinção que `lib/gsc.ts` mantém. 029: a ausência estrutural de um host
+        // declarado é ele ENCERRADO (propriedade removida da conta), e a corrida segue com os que
+        // sobraram; a falha aborta o projeto, porque soma parcial é indistinguível de queda real.
+        if (s === null) {
+          encerrados.push({ projeto: p.slug, host: h });
+          continue;
+        }
+        if ("erro" in s) {
+          abortou = `${h}: ${s.erro}`;
+          break;
+        }
+        respostas.push({ host: h, days: s.days });
+        vivos.push(h);
+      }
+      if (abortou) {
+        falhas.push({ projeto: p.slug, erro: abortou.slice(0, 60) });
+        continue;
+      }
+      if (!vivos.length) {
         semPropriedade.push(p.slug);
         continue;
       }
-      if ("erro" in s) {
-        falhas.push({ projeto: p.slug, erro: s.erro });
-        continue;
-      }
-      const dias = diasParaGravar(s.days);
-      // 026 — o host que ESTA corrida leu. Sai de `p.url` e não da propriedade: `sc-domain:` cobre
-      // o domínio inteiro, e é o host que `queryTimeseries` usa para filtrar — ou seja, é ele que
-      // identifica o site medido. Sem passá-lo adiante, trocar a `url` de um projeto faz a corrida
-      // seguinte reescrever a história com os números de outro site.
-      const host = (() => {
-        try { return new URL(p.url).hostname; } catch { return null; }
-      })();
-      gravados[p.slug] = await gravarDiasGsc(p.slug, dias, host);
+      somados[p.slug] = vivos;
+      const dias = diasParaGravar(somarSeriesPorHost(respostas));
+      // 026/029 — a assinatura do que ESTA corrida somou. Sai dos hosts declarados e não da
+      // propriedade: `sc-domain:` cobre o domínio inteiro, e é o host que `queryTimeseries` usa
+      // para filtrar — ou seja, é ele que identifica o site medido. Sem passá-la adiante, trocar a
+      // `url` de um projeto faz a corrida seguinte reescrever a história com números de outro site.
+      const host = assinaturaDeHosts(vivos);
+      gravados[p.slug] = await gravarDiasGsc(p.slug, dias, host, declarados);
       // Dia recusado pela guarda de host é ACHADO, não silêncio: a série mudou de casa e alguém
       // precisa decidir o que a tela mostra. `pedidos - gravados` é a conta, aqui e na marca.
       if (dias.length > gravados[p.slug]) {
@@ -100,12 +152,19 @@ export async function POST() {
       // As três pernas na MESMA corrida e na MESMA janela (D13): pernas de corridas diferentes
       // mediriam o deslizamento da janela do GSC na meia-noite UTC (33 e depois 42 na mesma tarde),
       // e o corte de país nas três é o que impede a diferença de medir o próprio corte.
+      // 029 — cada perna soma os MESMOS hosts vivos do total. Ler a fatia de marca num host e o
+      // total noutro produziria uma fração cujo numerador e denominador medem sites diferentes —
+      // e é a fatia de não-marca que assina o veredito do topo da tela.
       const pernas = [];
       for (const corte of [undefined, { modo: "inclui" as const, padrao: decl.padrao }, { modo: "exclui" as const, padrao: decl.padrao }]) {
-        const r = await gscSerieFiltrada(p.url, decl.pais, jm, corte);
-        if (r === null) throw new Error("sem propriedade na perna de marca");
-        if ("erro" in r) throw new Error(r.erro);
-        pernas.push(adensarDias(jm.inicio, jm.fim, r.days));
+        const porHost = [];
+        for (const h of vivos) {
+          const r = await gscSerieFiltrada(`https://${h}/`, decl.pais, jm, corte);
+          if (r === null) throw new Error("sem propriedade na perna de marca");
+          if ("erro" in r) throw new Error(r.erro);
+          porHost.push({ host: h, days: r.days });
+        }
+        pernas.push(adensarDias(jm.inicio, jm.fim, somarSeriesPorHost(porHost)));
       }
       const [totalPais, deMarca, naoMarca] = pernas;
 
@@ -118,7 +177,7 @@ export async function POST() {
         impressoesNaoMarca: naoMarca[i].impressoes,
         cliquesNaoMarca: naoMarca[i].cliques,
       }));
-      const escrita = await gravarMarcaGsc(p.slug, decl.pais, linhasDeMarca, host);
+      const escrita = await gravarMarcaGsc(p.slug, decl.pais, linhasDeMarca, host, declarados);
       marca[p.slug] = { dias: linhasDeMarca.length, ...escrita, termos: decl.termos.length, pais: decl.pais };
 
       // FR-006 registrada: a conferência é a resposta a uma pergunta que só a medição responde.
@@ -144,6 +203,8 @@ export async function POST() {
     linhas: Object.values(gravados).reduce((a, b) => a + b, 0),
     gravados,
     backfills,
+    somados,
+    encerrados,
     semPropriedade,
     recusados,
     falhas,
