@@ -15,6 +15,12 @@ export function sinceGsc(inicio: string): string {
 
 export type WeekPoint = { start: string; end: string; value: number | null };
 
+/** 026 — a marca de que a série mudou de SITE no meio do eixo.
+ *
+ *  `index` é o slot onde o site novo COMEÇA. Prop opcional de propósito: /seo e /infra desenham
+ *  séries de um domínio só e não passam nada, então o gráfico delas não muda um pixel. */
+export type WeekCut = { index: number; antes: string; depois: string };
+
 // Colunas com topo arredondado 4px e base reta (spec dataviz: data-end redondo, baseline quadrada).
 function barPath(x: number, y: number, w: number, h: number): string {
   const r = Math.min(4, h, w / 2);
@@ -30,10 +36,12 @@ export function WeekChart({
   title,
   points,
   fmt,
+  cut,
 }: {
   title: string;
   points: WeekPoint[];
   fmt: (v: number) => string;
+  cut?: WeekCut;
 }) {
   const values = points.map((p) => p.value);
   const max = Math.max(0, ...values.filter((v): v is number => v !== null));
@@ -43,8 +51,30 @@ export function WeekChart({
   return (
     <figure className="wk-chart">
       <figcaption>{title}</figcaption>
-      <svg viewBox={`0 0 ${CW} ${CH}`} role="img" aria-label={`${title}, últimas ${points.length} semanas`}>
+      <svg
+        viewBox={`0 0 ${CW} ${CH}`}
+        role="img"
+        aria-label={
+          cut
+            ? `${title}, últimas ${points.length} semanas. A série muda de site na semana ${cut.index + 1}: antes ${cut.antes}, depois ${cut.depois}. Os dois lados não se comparam.`
+            : `${title}, últimas ${points.length} semanas`
+        }
+      >
         <line x1="0" y1={BASE} x2={CW} y2={BASE} className="axis" />
+        {/* 026 — o corte de domínio, desenhado ANTES das barras para ficar atrás delas.
+            Ele não é enfeite: sem a linha, 34 semanas de um site e 2 de outro leem como uma série
+            contínua, e a troca de casa vira uma queda de 98% que não aconteceu. A régua do piso
+            que ele atende é "cor nunca é o único portador" — a marca é POSIÇÃO (uma linha no
+            eixo) mais TEXTO (os dois hosts, abaixo), então ela sobrevive ao cinza e à impressão. */}
+        {cut && cut.index > 0 && cut.index < points.length && (
+          <line
+            className="wk-cut"
+            x1={cut.index * slot}
+            y1={PLOT_TOP - 8}
+            x2={cut.index * slot}
+            y2={BASE + 6}
+          />
+        )}
         {points.map((p, i) => {
           const v = p.value;
           // `Math.max(1, …)`: qualquer valor MEDIDO e positivo desenha pelo menos 1px. Sem o piso,
@@ -69,12 +99,25 @@ export function WeekChart({
             </g>
           );
         })}
-        {max > 0 && last !== null && (
+        {/* 026 — com corte, o rótulo do fim SAI. Ele mostraria o último valor, que é de OUTRO
+            site, sozinho e em destaque ao lado de barras 200x maiores: um número assim convida
+            exatamente à comparação que o bloco diz por escrito que não se faz. Sem corte nada
+            muda, e /seo e /infra seguem com o rótulo. */}
+        {max > 0 && last !== null && !cut && (
           <text className="wk-end" x={CW - 1} y={Math.max(10, BASE - lastH - 4)} textAnchor="end">
             {compact.format(last)}
           </text>
         )}
       </svg>
+      {/* Os dois nomes ficam SOB o eixo, cada um do seu lado do corte, em vez de numa legenda de
+          cor: a pergunta "de qual site é esta barra?" se responde olhando para baixo, sem o olho
+          ir e voltar até um quadradinho colorido. */}
+      {cut && cut.index > 0 && cut.index < points.length ? (
+        <div className="wk-hosts">
+          <span style={{ flexBasis: `${(cut.index / points.length) * 100}%` }}>{cut.antes}</span>
+          <span className="wk-hosts-novo">{cut.depois}</span>
+        </div>
+      ) : null}
       <div className="wk-range" aria-hidden>
         <span>{fmtDay(points[0].start)}</span>
         <span>{fmtDay(points[points.length - 1].end)}</span>

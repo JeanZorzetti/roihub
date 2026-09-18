@@ -41,6 +41,31 @@
       "achado": "O número mais destacado da tela era FALSO como veredito. [page.tsx:523] escrevia '43× de crescimento · meta do board 5% a 10%/mês — ACIMA DA FAIXA', ou seja, aprovação. Os 43× são jul→ago medidos a partir de 27 dias de ZERO em 31 (a desindexação). A série real: pico de 17.020 impressões não-marca na semana de 06/04, colapso em 20/04 (16.225→6.454 numa semana, posição 3,1→6,1), decaimento até zero em julho, retomada em agosto (4.129) e platô em 1.492 — 8,8% do pico. Posição média piorou de 2,8 para 8,3. A faixa do board premiava o site por ter quebrado antes.",
       "cuidado_com_o_veredito_novo": "A primeira redação dizia 'caindo há 4 semanas'. FALSO: a última semana completa SUBIU (1.449→1.492). `quedasConsecutivas` existe para impedir isso, e o veredito exibido é 'Estacionado bem abaixo do pico'. Trocar um veredito falso por outro não teria consertado nada.",
       "obs": "Reuso, não código novo: `WeekChart` já existia e servia /seo e /infra. Duas correções entraram nele e alcançam as três telas — zero MEDIDO vira traço pontilhado abaixo da linha de base (antes era barra de altura 0, idêntica a 'sem dado', com a diferença só no tooltip) e barra positiva ganhou piso de 1px (2 impressões contra 17.020 arredondava para 0 e sumia). Também removido um byte NUL LITERAL em page.tsx:708, dentro de um `key` — inofensivo em runtime, mas fazia o arquivo ler como BINÁRIO para grep, file e diff; virou o escape \u0000. PENDENTE: 34 dos 35 projetos não declaram `marca` em data/projects.json, então o bloco de nível 1 cai em 'não apurado' neles — a mensagem agora nomeia essa causa e o conserto (declarar os termos), em vez de mandar esperar mais dados que nunca chegariam."
+    },
+    {
+      "data": "2026-09-18",
+      "rota": "/okr/[slug]/aquisicao",
+      "corrida": "3a do dia. As duas anteriores consertaram o DADO e fecharam a FORMA (32/32). Esta achou que a forma recem-construida seria APAGADA na corrida seguinte, e o achado nao era de desenho.",
+      "pergunta": "A Atma e encontrada por quem nao a conhece, e esse volume esta subindo ou caindo agora? (inalterada — a forma da 2a corrida responde; o que faltava era ela sobreviver ate amanha)",
+      "forma": "A mesma coluna semanal, agora com CORTE DE DOMINIO: linha vertical tracejada no slot onde o site muda, os dois hosts escritos sob o eixo, e o rotulo do fim suprimido quando ha corte. `WeekChart` ganhou o prop opcional `cut` — /seo e /infra nao mudaram um pixel.",
+      "descartada": "(a) desenhar as duas series como uma so, que foi o comportamento que a guarda acabou de impedir; (b) mostrar SO o segmento atual, que jogaria fora a unica evidencia de que ja existiram 17.020 impressoes numa semana; (c) segundo eixo Y para o site novo — G12, e a escala compartilhada e que diz a verdade (usealigner.com esta em 0,4% do que o antigo fazia).",
+      "fonte": "roihub_db:5445 · hub_gsc_dia (248 dias + coluna `host` nova). Search Console: `sc-domain:roilabs.com.br` filtrada em atma.roilabs.com.br (23.599 impressoes/27d) e `sc-domain:usealigner.com` (5 dias, 63 impressoes) — as duas consultadas ao vivo no Passo 2.",
+      "granularidade": "dia; agregado em semana ISO. So semanas de 7 dias E de um host so entram no veredito.",
+      "latencia": "D-3 do Search Console. O segmento do veredito ENCERROU em 15/09 e nao envelhece mais — `dadoVelho` foi desarmado para serie encerrada.",
+      "estados": [
+        "com dado",
+        "zero real",
+        "nao apurado (4 causas)",
+        "dado velho (desarmado em serie encerrada)",
+        "semana que cruza a migracao (reusa 'coluna vazia')",
+        "veredito e de OUTRO site (aviso proprio)"
+      ],
+      "pior_caso": "36 slots; 32 barras; menor barra 1px; bloco 982x686 em 1280, 686x744 em 768, 278x1207 em 360, zero overflow-x nas tres.",
+      "gates": "32/32. G25 REPROVOU nesta corrida e foi corrigido: `ultimoDiaMedido` passou a ser do SEGMENTO, nao da ponta da serie — a serie inteira segue crescendo no site novo enquanto o bloco fala do antigo, e medir a idade pela ponta diria 'ha 2 dias' sobre numeros congelados para sempre. G20/G21 remedidos: linha do corte 7,53:1 sobre --page, grade 1,26:1. Tema unico (light), entao 'nos dois temas' e n/a. G31 e G32 passam na imagem.",
+      "achado": "A corrida das 05:17 de 19/09 APAGARIA os 248 dias da serie. `data/projects.json` trocou a url da Atma para usealigner.com em 18/09 11:39 (commit 7539300, ja em origin/main); `gravarDiasGsc` faz `ON CONFLICT DO UPDATE SET impressoes = EXCLUDED.impressoes`, e a perna de marca refaz 480 dias TODA corrida com `adensarDias` preenchendo zero. Medido: 15/09 vale 1.146 impressoes no host antigo e 31 no novo; `impressoes_nao_marca` da serie inteira (169.515) iria a 0. Nao e emenda de duas series — e apagamento. Raiz: `hub_gsc_dia` e chaveada por (projeto, dia) e nao guardava DE QUAL SITE o dia veio.",
+      "conserto": "Coluna `host TEXT` + guarda no upsert (`WHERE hub_gsc_dia.host IS NULL OR host IS NOT DISTINCT FROM EXCLUDED.host`) e no UPDATE da perna de marca. `scripts/backfill-host-gsc.mjs` carimbou 5.839 linhas de 34 projetos, derivando o host de `dominioAnterior` quando existe e de `url` quando nao — regra de dado declarado, nao chute. A corrida rodada de verdade logo depois respondeu `recusados: [{atma, usealigner.com, dias:1}]` e `marca.atma.deOutroHost: 248`: os 248 dias protegidos, 16/09 gravado como dia novo do site novo.",
+      "prova": "Tres frames em 1280/768/360 do estado de hoje; um frame do estado de AMANHA (janela estendida por 1 minuto para incluir 16/09, dado real, revertida em seguida) mostrando o aviso 'Esta leitura e do site anterior'; e um frame do corte desenhado numa rota temporaria `app/prova-corte` com dado SINTETICO declarado — o corte real so aparece quando usealigner.com tiver uma semana completa, por volta de 22/09. A rota foi apagada. 912/912 testes, `tsc --noEmit` limpo, console sem erro, zero HTTP>=400.",
+      "obs": "PENDENTE E HUMANO: nada. PENDENTE: quando usealigner.com acumular 2 semanas completas, `ritmoDoSegmentoAtual` move o veredito para ele sozinho e o pico passa a ser o do site novo — o teste 'com 2 semanas completas no dominio novo, o veredito passa para ele' cobre a virada. Segue valendo que 34 dos 35 projetos nao declaram `marca`, entao o bloco de nivel 1 cai em 'nao apurado' neles."
     }
   ]
 }

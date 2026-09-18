@@ -12,6 +12,8 @@ import {
   razaoDeMarca,
   semanasNaoMarca,
   ritmoNaoMarca,
+  segmentosPorHost,
+  ritmoDoSegmentoAtual,
 } from "../lib/marca.mjs";
 
 const casa = (termos, consulta) => new RegExp(regexDeMarca(termos), "i").test(consulta);
@@ -404,4 +406,82 @@ test("mês-base normal NÃO é interrompido — um dia de zero não cala a medid
   const c = crescimentoNaoMarca([...julho, ...agosto], "2026-09-10");
   assert.equal(c.baseInterrompida, false);
   assert.equal(c.diasZeroDe, 1);
+});
+
+// ── 026: a série que trocou de domínio no meio ───────────────────────────────────────────────
+//
+// O caso real: a Atma saiu de `atma.roilabs.com.br` para `usealigner.com`. A propriedade nova do
+// Search Console nasceu vazia (5 dias, 63 impressões contra 244 dias e 371.189 da antiga), e sem
+// o corte a tela leria a mudança de casa como colapso de tráfego.
+
+/** Uma série de `n` dias a partir de `de`, todos com o mesmo host e o mesmo valor. */
+const serieHost = (de, n, host, valor) =>
+  Array.from({ length: n }, (_, i) => ({
+    dia: new Date(Date.parse(de + "T00:00:00Z") + i * 864e5).toISOString().slice(0, 10),
+    host,
+    impressoesNaoMarca: valor,
+    cliquesNaoMarca: 0,
+    posicao: 5,
+  }));
+
+test("segmentosPorHost separa blocos contíguos e não agrupa por nome", () => {
+  const dias = [...serieHost("2026-09-01", 3, "a.com", 10), ...serieHost("2026-09-04", 2, "b.com", 1), ...serieHost("2026-09-06", 2, "a.com", 9)];
+  const segs = segmentosPorHost(dias);
+  assert.deepEqual(segs.map((s) => s.host), ["a.com", "b.com", "a.com"]);
+  assert.deepEqual(segs.map((s) => s.dias.length), [3, 2, 2]);
+});
+
+test("host null não abre segmento novo — ignorância não é evidência de troca", () => {
+  const dias = [...serieHost("2026-09-01", 2, null, 10), ...serieHost("2026-09-03", 2, "a.com", 10)];
+  const segs = segmentosPorHost(dias);
+  assert.equal(segs.length, 1);
+  assert.equal(segs[0].host, "a.com", "o bloco sem nome adota o host que apareceu");
+});
+
+test("semana que cruza o corte sai com host null — ela soma dois sites", () => {
+  // Segunda 07/09 a domingo 13/09: 4 dias no host antigo, 3 no novo.
+  const dias = [...serieHost("2026-09-07", 4, "antigo.com", 100), ...serieHost("2026-09-11", 3, "novo.com", 5)];
+  const [semana] = semanasNaoMarca(dias);
+  assert.equal(semana.dias, 7);
+  assert.equal(semana.completa, true, "tem os 7 dias do calendário");
+  assert.equal(semana.host, null, "mas não pertence a nenhum dos dois sites");
+});
+
+test("semana inteira num host só carrega o nome dele", () => {
+  const [semana] = semanasNaoMarca(serieHost("2026-09-07", 7, "antigo.com", 100));
+  assert.equal(semana.host, "antigo.com");
+});
+
+test("o veredito vem do domínio ANTIGO enquanto o novo não tem 2 semanas completas", () => {
+  // 3 semanas fechadas no antigo (a última caindo) + 5 dias no novo, como a Atma em 18/09.
+  const dias = [
+    ...serieHost("2026-08-17", 7, "antigo.com", 1000),
+    ...serieHost("2026-08-24", 7, "antigo.com", 800),
+    ...serieHost("2026-08-31", 7, "antigo.com", 600),
+    ...serieHost("2026-09-07", 5, "novo.com", 6),
+  ];
+  const r = ritmoDoSegmentoAtual(dias);
+  assert.equal(r.segmento.host, "antigo.com");
+  // Os valores são por DIA na fixture, então a semana soma 7x: 1.000/dia = 7.000 na semana.
+  assert.equal(r.ritmo.pico.impressoesNaoMarca, 7000);
+  assert.equal(r.ritmo.ultima.impressoesNaoMarca, 4200, "4.200, nunca os 30 do domínio novo");
+  assert.equal(r.posteriores.length, 1, "e a tela precisa saber que fala do site anterior");
+  assert.equal(r.posteriores[0].host, "novo.com");
+});
+
+test("com 2 semanas completas no domínio novo, o veredito passa para ele", () => {
+  const dias = [
+    ...serieHost("2026-08-17", 7, "antigo.com", 1000),
+    ...serieHost("2026-08-24", 7, "antigo.com", 800),
+    ...serieHost("2026-08-31", 7, "novo.com", 50),
+    ...serieHost("2026-09-07", 7, "novo.com", 70),
+  ];
+  const r = ritmoDoSegmentoAtual(dias);
+  assert.equal(r.segmento.host, "novo.com");
+  assert.equal(r.ritmo.pico.impressoesNaoMarca, 490, "o pico é do site de hoje, não os 7.000 da casa antiga");
+  assert.equal(r.posteriores.length, 0);
+});
+
+test("série sem nenhuma semana completa não inventa veredito", () => {
+  assert.equal(ritmoDoSegmentoAtual(serieHost("2026-09-11", 5, "novo.com", 6)), null);
 });

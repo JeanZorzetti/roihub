@@ -40,6 +40,8 @@ export async function POST() {
   const marca: Record<string, unknown> = {};
   const conferencia: Record<string, unknown> = {};
   const semMarca: { projeto: string; motivo: string }[] = [];
+  // 026: dias que a guarda de host recusou — a série daquele projeto foi medida em outro site.
+  const recusados: { projeto: string; host: string | null; dias: number }[] = [];
 
   // Em SÉRIE, não em Promise.all: são requisições ao mesmo endpoint do Google com a mesma
   // credencial, e disparar dezenas de uma vez é o caminho mais curto para um 429 que transformaria
@@ -61,7 +63,19 @@ export async function POST() {
         continue;
       }
       const dias = diasParaGravar(s.days);
-      gravados[p.slug] = await gravarDiasGsc(p.slug, dias);
+      // 026 — o host que ESTA corrida leu. Sai de `p.url` e não da propriedade: `sc-domain:` cobre
+      // o domínio inteiro, e é o host que `queryTimeseries` usa para filtrar — ou seja, é ele que
+      // identifica o site medido. Sem passá-lo adiante, trocar a `url` de um projeto faz a corrida
+      // seguinte reescrever a história com os números de outro site.
+      const host = (() => {
+        try { return new URL(p.url).hostname; } catch { return null; }
+      })();
+      gravados[p.slug] = await gravarDiasGsc(p.slug, dias, host);
+      // Dia recusado pela guarda de host é ACHADO, não silêncio: a série mudou de casa e alguém
+      // precisa decidir o que a tela mostra. `pedidos - gravados` é a conta, aqui e na marca.
+      if (dias.length > gravados[p.slug]) {
+        recusados.push({ projeto: p.slug, host, dias: dias.length - gravados[p.slug] });
+      }
       if (janela.backfill) backfills.push(p.slug);
 
       // ── 025: a fatia de marca, DEPOIS de o total já estar gravado ───────────────────────────
@@ -104,7 +118,7 @@ export async function POST() {
         impressoesNaoMarca: naoMarca[i].impressoes,
         cliquesNaoMarca: naoMarca[i].cliques,
       }));
-      const escrita = await gravarMarcaGsc(p.slug, decl.pais, linhasDeMarca);
+      const escrita = await gravarMarcaGsc(p.slug, decl.pais, linhasDeMarca, host);
       marca[p.slug] = { dias: linhasDeMarca.length, ...escrita, termos: decl.termos.length, pais: decl.pais };
 
       // FR-006 registrada: a conferência é a resposta a uma pergunta que só a medição responde.
@@ -131,6 +145,7 @@ export async function POST() {
     gravados,
     backfills,
     semPropriedade,
+    recusados,
     falhas,
     marca,
     conferencia,

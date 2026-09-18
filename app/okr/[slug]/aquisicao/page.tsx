@@ -12,7 +12,7 @@ import {
   type DiaSeparado,
 } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
-import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoNaoMarca } from "@/lib/marca.mjs";
+import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
 import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal } from "@/lib/kpis-busca.mjs";
@@ -34,7 +34,7 @@ import {
 import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
 import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
-import { WeekChart, type WeekPoint } from "../../../viz";
+import { WeekChart, type WeekPoint, type WeekCut } from "../../../viz";
 
 // AQUISIÇÃO (019, FR-022..FR-029): o que tem relógio de TRIMESTRE sai da tela que se lê na
 // segunda-feira e ganha a janela longa que a 018 adiou — 8 meses de Search Console, 12 de GA4.
@@ -298,12 +298,29 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   //
   // O bloco abaixo é o único de nível 1. Ele responde com a FORMA da série (35 semanas) e com duas
   // cifras, e todos os outros blocos passam a ser evidência dele.
-  const ritmo = diasSeparados ? ritmoNaoMarca(diasSeparados) : null;
+  // 026 — o veredito sai do SEGMENTO, nunca da série inteira. A Atma trocou
+  // `atma.roilabs.com.br` por `usealigner.com`, e a propriedade nova do Search Console nasceu
+  // vazia: medir "% do pico" através do corte compararia 8 meses de um site com 5 dias de outro e
+  // publicaria uma queda de 98% que é mudança de casa, não perda de tráfego. É o mesmo erro do
+  // `43×` que a corrida anterior removeu, com o sinal trocado.
+  const leitura = diasSeparados ? ritmoDoSegmentoAtual(diasSeparados) : null;
+  const ritmo = leitura?.ritmo ?? null;
+  // O bloco fala do site ANTERIOR quando o atual ainda não fechou duas semanas. Não é ressalva de
+  // rodapé: muda o SUJEITO da frase, e sem ele o leitor atribui ao domínio novo uma história que
+  // é do antigo.
+  const segmentosDepois = leitura?.posteriores ?? [];
+  const hostDoVeredito = leitura?.segmento.host ?? null;
   // A fatia sai das somas que `completude` já conferiu — a mesma conta que assina o ✅ do bloco de
   // marca. Recalcular aqui abriria a porta para os dois números divergirem na tela.
   // Uma variável ESTREITADA, não um `comp!` na marcação: `nao-declarada` não tem as somas, e um
   // `!` faria o TypeScript parar de cobrar justamente o estado que existe para ser tratado.
-  const somasMarca = comp && comp.estado !== "nao-declarada" && comp.impressoesPais > 0 ? comp : null;
+  // 026 — as somas do NÍVEL 1 são do segmento que respondeu, não da série inteira. Somar as
+  // impressões dos dois domínios num denominador só produz uma fatia que não é de nenhum dos dois
+  // sites. `comp` (série inteira) segue servindo o bloco de CONFERÊNCIA lá embaixo, que é sobre a
+  // aritmética das três pernas e não sobre o desempenho de um site.
+  const compSeg = leitura ? completude(leitura.segmento.dias) : comp;
+  const somasMarca =
+    compSeg && compSeg.estado !== "nao-declarada" && compSeg.impressoesPais > 0 ? compSeg : null;
   const fatiaNaoMarca = somasMarca ? somasMarca.impressoesNaoMarca / somasMarca.impressoesPais : null;
   // As semanas PARCIAIS das duas pontas entram no gráfico com `value: null` — "sem dado" e não um
   // valor menor. Desenhá-las pelo que mediram encolheria a última coluna por calendário e pintaria
@@ -312,14 +329,39 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const pontos: WeekPoint[] = semanas.map((w) => ({
     start: w.inicio,
     end: w.fim,
-    value: w.completa ? w.impressoesNaoMarca : null,
+    // 026: `w.host === null` numa semana COMPLETA é a semana que cruza a migração — 4 dias de um
+    // site e 3 de outro. Ela cai no mesmo estado das parciais (coluna vazia) de propósito: o
+    // estado que ela precisa é "fora da leitura", e ele já existe. Um quarto estado só para ela
+    // custaria uma chave a mais na legenda e diria a mesma coisa.
+    value: w.completa && w.host !== null ? w.impressoesNaoMarca : null,
   }));
+  // O corte: o primeiro slot cujo host difere do slot anterior nomeado. Sai do DADO (a coluna
+  // `host` de `hub_gsc_dia`), nunca de `dominioAnterior.data` — o Search Console segue atribuindo
+  // tráfego ao domínio antigo por semanas depois do 301, e a data declarada da migração cairia
+  // antes do corte real. Some sozinho quando a série tiver um host só.
+  const corte: WeekCut | undefined = (() => {
+    const nomeadas = semanas.map((w) => w.host);
+    for (let i = 1; i < nomeadas.length; i++) {
+      const anterior = nomeadas.slice(0, i).filter(Boolean).at(-1);
+      if (anterior && nomeadas[i] && nomeadas[i] !== anterior) {
+        return { index: i, antes: anterior, depois: nomeadas[i]! };
+      }
+    }
+    return undefined;
+  })();
   // G3/G25 — procedência e frescor. `criado` é quando a corrida GRAVOU; `ultimoDiaMedido` é o
   // último dia que o Search Console cobriu. A distância entre o último dia medido e HOJE é a idade
   // real: a fonte promete D-3, e acima disso a corrida parou ou a fonte atrasou. Um número velho
   // sem esta linha é indistinguível de um número de hoje — e é o defeito que mais ilude, porque o
   // painel continua bonito e continua errado.
-  const ultimoDiaMedido = diasSeparados?.length ? diasSeparados[diasSeparados.length - 1].dia : null;
+  // 026 — a idade é a do SEGMENTO que respondeu, não a da série inteira. Depois da migração, a
+  // série inteira segue crescendo no site NOVO enquanto o bloco fala do ANTIGO: medir a idade pela
+  // ponta da série diria "há 2 dias" sobre números que pararam de se mover e nunca mais vão se
+  // mover. Série encerrada não é dado velho — a promessa de D-3 não se aplica a ela, e o alarme de
+  // `dadoVelho` disparando para sempre treinaria o leitor a ignorá-lo.
+  const diasDoVeredito = leitura?.segmento.dias ?? diasSeparados;
+  const ultimoDiaMedido = diasDoVeredito?.length ? diasDoVeredito[diasDoVeredito.length - 1].dia : null;
+  const serieEncerrada = segmentosDepois.length > 0;
   const gravadoEm = diasSeparados?.length
     ? diasSeparados.map((d) => d.criado).filter((c): c is string => !!c).sort().at(-1) ?? null
     : null;
@@ -329,8 +371,15 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     ultimoDiaMedido !== null
       ? Math.round((Date.parse(hojeIso + "T00:00:00Z") - Date.parse(ultimoDiaMedido + "T00:00:00Z")) / 864e5)
       : null;
-  const dadoVelho = idadeDoDado !== null && idadeDoDado > ATRASO_PROMETIDO_DIAS + FOLGA_DIAS;
+  const dadoVelho = !serieEncerrada && idadeDoDado !== null && idadeDoDado > ATRASO_PROMETIDO_DIAS + FOLGA_DIAS;
 
+  // A janela do NÍVEL 1 é a do segmento; a do bloco de conferência segue sendo a da série inteira.
+  const diasComMarcaSeg = (leitura?.segmento.dias ?? []).filter(
+    (d) => typeof d.impressoesMarca === "number"
+  );
+  const janelaSeg = diasComMarcaSeg.length
+    ? { inicio: diasComMarcaSeg[0].dia, fim: diasComMarcaSeg[diasComMarcaSeg.length - 1].dia }
+    : null;
   const diasComMarca = (diasSeparados ?? []).filter((d) => typeof d.impressoesMarca === "number");
   const janelaMarca = diasComMarca.length
     ? { inicio: diasComMarca[0].dia, fim: diasComMarca[diasComMarca.length - 1].dia }
@@ -489,7 +538,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 <div className="nm-valor">{pct(fatiaNaoMarca)}</div>
                 <div className="foot">
                   {br(somasMarca.impressoesNaoMarca)} de {br(somasMarca.impressoesPais)} impressões
-                  {janelaMarca ? <> · {janelaMarca.inicio} → {janelaMarca.fim}</> : null}
+                  {janelaSeg ? <> · {janelaSeg.inicio} → {janelaSeg.fim}</> : null}
+                  {hostDoVeredito ? <> · <code>{hostDoVeredito}</code></> : null}
                   {decl.motivo === null ? <> · corte <code>{decl.pais}</code></> : null}
                 </div>
               </div>
@@ -521,9 +571,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
             <div className="nm-grafico">
               <WeekChart
-                title={`Impressões não-marca por semana · ${ritmo.semanasCompletas} semanas completas`}
+                title={`Impressões não-marca por semana · ${ritmo.semanasCompletas} semanas completas${corte ? " no site atual da série" : ""}`}
                 points={pontos}
                 fmt={(v) => `${br(v)} impressões`}
+                cut={corte}
               />
               {/* A legenda é obrigatória porque o gráfico tem TRÊS estados e dois deles não são
                   barra. Sem ela, o traço do zero medido lê como sujeira e a coluna ausente lê
@@ -531,13 +582,38 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               <ul className="nm-legenda">
                 <li><span className="nm-k nm-k-barra" aria-hidden /> barra: impressões da semana</li>
                 <li><span className="nm-k nm-k-zero" aria-hidden /> traço abaixo da linha: semana <strong>medida</strong>, zero impressão</li>
-                <li><span className="nm-k nm-k-vazio" aria-hidden /> coluna vazia: semana <strong>parcial</strong>, fora da leitura ({ritmo.parciaisIgnoradas} nas pontas)</li>
+                <li><span className="nm-k nm-k-vazio" aria-hidden /> coluna vazia: semana <strong>parcial</strong> ou que cruza a troca de site, fora da leitura ({ritmo.parciaisIgnoradas} nas pontas)</li>
+                {corte ? (
+                  <li>
+                    <span className="nm-k nm-k-corte" aria-hidden /> linha vertical: a série trocou
+                    de <strong>site</strong>. Os dois lados não se somam nem se comparam
+                  </li>
+                ) : null}
               </ul>
             </div>
 
             {/* O veredito em texto. Ele NÃO pode dizer "caindo" de graça: a última semana da atma
                 subiu (1.449 → 1.492) depois de quatro de recuo, e `quedasConsecutivas` é quem
                 decide a frase. Trocar um veredito falso por outro não teria consertado nada. */}
+            {/* 026 — quando o bloco fala do site ANTERIOR, isso vem ANTES do veredito e não depois.
+                A frase abaixo diz "Estacionado bem abaixo do pico" sobre `atma.roilabs.com.br`; o
+                leitor que chega hoje pensa em `usealigner.com`, que é o site do card. Sem esta
+                linha o bloco atribui ao domínio novo uma história que não é dele — e o domínio
+                novo não tem história nenhuma ainda, que é justamente o que precisa ser dito. */}
+            {segmentosDepois.length > 0 ? (
+              <p className="nm-corte-aviso">
+                <strong>Esta leitura é do site anterior</strong> (<code>{hostDoVeredito}</code>).{" "}
+                {segmentosDepois.map((seg) => (
+                  <span key={seg.host ?? "sem-host"}>
+                    <code>{seg.host ?? "site não identificado"}</code> tem {seg.dias.length} dia(s)
+                    medidos e nenhuma semana completa — não há forma para ler ainda.{" "}
+                  </span>
+                ))}
+                Propriedade nova do Search Console nasce vazia: a diferença entre os dois lados do
+                corte é troca de casa, não queda de tráfego.
+              </p>
+            ) : null}
+
             <p className="nm-veredito">
               {ritmo.quedasConsecutivas >= 2 ? (
                 <>
@@ -559,16 +635,26 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               )}{" "}
               <span className="foot">
                 Só semanas de 7 dias entram nesta leitura. Fonte: <code>hub_gsc_dia</code>, série
-                gravada pela corrida diária — o domínio <strong>antigo</strong>, {diasSeparados!.length}{" "}
-                dias. As cifras de busca do resto da tela vêm do domínio novo e{" "}
-                <strong>não se comparam</strong> com estas.
+                gravada pela corrida diária{hostDoVeredito ? <> em <code>{hostDoVeredito}</code></> : null} —{" "}
+                {leitura ? leitura.segmento.dias.length : diasSeparados!.length} dias
+                {corte ? <> dos {diasSeparados!.length} da série</> : null}. As cifras de busca do
+                resto da tela vêm do site declarado no card e <strong>não se comparam</strong> com
+                estas quando os dois diferem.
                 <br />
                 {/* G3/G25 — os três que fazem de um número informação: DE QUANDO, DE ONDE, e sobre
                     qual total. O total está nas cifras acima; os outros dois estão aqui. */}
                 Último dia medido: <strong>{ultimoDiaMedido}</strong>
-                {idadeDoDado !== null ? <> (há {idadeDoDado} dia(s))</> : null}
-                {gravadoEm ? <> · gravado em <strong>{gravadoEm}</strong></> : null} · o Search
-                Console entrega com <strong>{ATRASO_PROMETIDO_DIAS} dias</strong> de atraso.
+                {serieEncerrada ? (
+                  <> — esta série <strong>encerrou</strong> aqui e não cresce mais; o site passou a
+                    ser medido em <code>{segmentosDepois[segmentosDepois.length - 1].host ?? "outro host"}</code></>
+                ) : idadeDoDado !== null ? (
+                  <> (há {idadeDoDado} dia(s))</>
+                ) : null}
+                {gravadoEm ? <> · gravado em <strong>{gravadoEm}</strong></> : null}
+                {serieEncerrada ? null : (
+                  <> · o Search Console entrega com <strong>{ATRASO_PROMETIDO_DIAS} dias</strong> de
+                    atraso.</>
+                )}
                 {dadoVelho ? (
                   <>
                     {" "}

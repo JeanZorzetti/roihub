@@ -784,8 +784,9 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 .ficha-bloco--novo .ficha-bloco-h { color: var(--accent); }
 .ficha-bloco--novo .pill { border-color: var(--accent); color: var(--accent); }
 
-/* information-design · coluna semanal + cifras · responde: a Atma é encontrada por quem não a
-   conhece, e esse volume está subindo ou caindo agora? · fonte: hub_gsc_dia · 2026-09-18 */
+/* information-design · coluna semanal com corte de domínio + cifras · responde: a Atma é
+   encontrada por quem não a conhece, e esse volume está subindo ou caindo agora? ·
+   fonte: hub_gsc_dia (colunas impressoes_nao_marca, host) · 2026-09-18 */
 
 /* O ÚNICO bloco de nível 1 de /okr/[slug]/aquisicao. Os onze blocos abaixo dele são `.ficha-bloco`,
    com título de 12px em cinza — a diferença de peso é o que faz existir uma resposta e não onze
@@ -850,6 +851,42 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   height: 0; border-top: 2px dotted var(--nm-zero); align-self: center;
 }
 [data-info="aquisicao-nao-marca"] .nm-k-vazio { border: 1px dashed var(--grid); border-radius: 2px; }
+/* 026 — a chave do corte de domínio. Barra VERTICAL, para não ser confundida com o traço
+   horizontal do zero medido: as duas são linhas, e a única coisa que as separa sem depender de
+   cor é a direção. */
+[data-info="aquisicao-nao-marca"] .nm-k-corte {
+  width: 0; height: 12px; border-left: 2px dashed var(--nm-corte); margin-left: 6px; margin-right: 12px;
+}
+
+/* A linha do corte e os nomes dos dois sites. `--nm-corte` é `--ink2`, o mesmo do traço de zero:
+   ambos são ANOTAÇÃO sobre a série, não uma segunda série — e anotação que competisse em peso
+   com a barra inverteria a hierarquia que este bloco existe para ter. Medido: 7,53:1 sobre
+   `--page`, bem acima do 3:1 que elemento gráfico portador de informação exige. */
+[data-info="aquisicao-nao-marca"] { --nm-corte: var(--ink2); }
+[data-info="aquisicao-nao-marca"] .wk-chart .wk-cut {
+  stroke: var(--nm-corte); stroke-width: 1; stroke-dasharray: 3 2;
+}
+[data-info="aquisicao-nao-marca"] .wk-hosts {
+  display: flex; font-size: 11px; color: var(--muted); margin-top: 3px; gap: 6px;
+  /* `tabular-nums` não serve aqui (é texto), mas o `min-width: 0` sim: sem ele o nome longo do
+     host empurra o segundo para fora do bloco em 360px. */
+  min-width: 0;
+}
+[data-info="aquisicao-nao-marca"] .wk-hosts span {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex-shrink: 1;
+}
+/* O lado NOVO herda a marca do corte: borda à esquerda, alinhada com a linha do gráfico, para o
+   olho ligar o nome à divisão sem precisar de legenda. */
+[data-info="aquisicao-nao-marca"] .wk-hosts-novo {
+  border-left: 1px dashed var(--nm-corte); padding-left: 5px; flex: 1 1 auto;
+}
+/* 026 — o aviso de que o bloco fala de OUTRO site. Fica acima do veredito e leva borda + texto,
+   nunca só cor: ele muda o SUJEITO da frase seguinte, e um leitor que não distingue a cor leria
+   a história do domínio antigo como estado do novo. */
+[data-info="aquisicao-nao-marca"] .nm-corte-aviso {
+  font-size: 13px; line-height: 1.6; margin: 0 0 10px; padding: 8px 10px;
+  border-left: 3px solid var(--nm-corte); background: var(--surface); color: var(--ink2);
+}
 [data-info="aquisicao-nao-marca"] .nm-veredito { font-size: 15px; line-height: 1.6; margin: 0; }
 [data-info="aquisicao-nao-marca"] .nm-veredito .foot { display: block; margin-top: 6px; }
 /* O aviso de dado velho não pode ser só a cor vermelha: leva o ⚠ e a palavra, e continua

@@ -284,6 +284,20 @@ function ensure(): Promise<unknown> {
       ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS cliques_marca INT;
       ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS impressoes_nao_marca INT;
       ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS cliques_nao_marca INT;
+      -- 026: DE QUAL SITE o dia foi medido.
+      --
+      -- A PK e (projeto, dia), e um projeto pode trocar de dominio -- a Atma trocou
+      -- atma.roilabs.com.br por usealigner.com em 18/09. Sem esta coluna a corrida seguinte
+      -- reescreve, com os numeros da propriedade NOVA, dias que foram medidos na ANTIGA: medido
+      -- em 18/09, 15/09 valia 1.146 impressoes no host antigo e 31 no novo. A perna de marca
+      -- piora, porque ela refaz 480 dias TODA corrida e adensa com zero -- os 248 dias da serie
+      -- inteira iriam a 0. Isso nao e emenda de duas series, e apagamento.
+      --
+      -- NULL = medido antes desta coluna existir, host desconhecido. A guarda do upsert deixa
+      -- escrever sobre NULL de proposito: e o unico caminho para a coluna se preencher sozinha na
+      -- primeira corrida, sem migracao por projeto. Quem ja migrou precisa de backfill explicito
+      -- (scripts/backfill-host-gsc.mjs), porque para esse o NULL nao e ignorancia inofensiva.
+      ALTER TABLE hub_gsc_dia ADD COLUMN IF NOT EXISTS host TEXT;
       -- Apuracao de indexacao: uma linha por PROJETO POR DIA (022). O agregado, nunca a URL —
       -- 35 projetos x milhares de URLs x diario responde perguntas que a spec nao faz.
       --
@@ -920,23 +934,28 @@ export type DiaGsc = { dia: string; impressoes: number; cliques: number; posicao
  * Um único INSERT com todas as linhas em vez de um por dia: o backfill traz ~487 dias, e 487
  * viagens ao banco por projeto transformariam a primeira corrida em minutos de rede.
  */
-export async function gravarDiasGsc(projeto: string, dias: DiaGsc[]): Promise<number> {
+export async function gravarDiasGsc(projeto: string, dias: DiaGsc[], host: string | null = null): Promise<number> {
   if (!dias.length) return 0;
   await ensure();
   const valores: unknown[] = [];
   const tuplas = dias.map((d, i) => {
-    const base = i * 5;
-    valores.push(projeto, d.dia, d.impressoes, d.cliques, d.posicao);
-    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`;
+    const base = i * 6;
+    valores.push(projeto, d.dia, d.impressoes, d.cliques, d.posicao, host);
+    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`;
   });
+  // 026 — a guarda de host. Dia já medido em OUTRO site não é sobrescrito: o `rowCount` cai e a
+  // corrida reporta a diferença, em vez de trocar 1.146 impressões por 31 em silêncio. Sobre
+  // `host IS NULL` escreve, porque é assim que a coluna se preenche na primeira corrida.
   const r = await pool().query(
-    `INSERT INTO hub_gsc_dia (projeto, dia, impressoes, cliques, posicao)
+    `INSERT INTO hub_gsc_dia (projeto, dia, impressoes, cliques, posicao, host)
      VALUES ${tuplas.join(", ")}
      ON CONFLICT (projeto, dia) DO UPDATE SET
        impressoes = EXCLUDED.impressoes,
        cliques = EXCLUDED.cliques,
        posicao = EXCLUDED.posicao,
-       criado = now()`,
+       host = EXCLUDED.host,
+       criado = now()
+     WHERE hub_gsc_dia.host IS NULL OR hub_gsc_dia.host IS NOT DISTINCT FROM EXCLUDED.host`,
     valores
   );
   return r.rowCount ?? 0;
@@ -960,6 +979,10 @@ export type DiaSeparado = DiaGsc & {
    *  os dois é a IDADE do dado, e sem ela a tela não sabe dizer se a promessa de D-3 do Search
    *  Console ainda está de pé — só que o número existe. */
   criado: string | null;
+  /** 026 — o site de onde ESTE dia foi medido. `null` = gravado antes da coluna existir. Quando
+   *  ele muda no meio da série, a série mudou de casa: os dois lados não se somam nem se comparam,
+   *  e é dele que a tela tira o corte. */
+  host: string | null;
   pais: string | null;
   impressoesPais: number | null;
   cliquesPais: number | null;
@@ -997,13 +1020,14 @@ export type DiaDeMarca = {
 export async function gravarMarcaGsc(
   projeto: string,
   pais: string,
-  dias: DiaDeMarca[]
-): Promise<{ atualizados: number; semLinhaDeTotal: number }> {
-  if (!dias.length) return { atualizados: 0, semLinhaDeTotal: 0 };
+  dias: DiaDeMarca[],
+  host: string | null = null
+): Promise<{ atualizados: number; semLinhaDeTotal: number; deOutroHost: number }> {
+  if (!dias.length) return { atualizados: 0, semLinhaDeTotal: 0, deOutroHost: 0 };
   await ensure();
-  const valores: unknown[] = [projeto, pais];
+  const valores: unknown[] = [projeto, pais, host];
   const tuplas = dias.map((d, i) => {
-    const b = i * 7 + 2;
+    const b = i * 7 + 3;
     valores.push(
       d.dia,
       d.impressoesPais,
@@ -1027,11 +1051,24 @@ export async function gravarMarcaGsc(
      FROM (VALUES ${tuplas.join(", ")})
        AS v(dia, impressoes_pais, cliques_pais, impressoes_marca, cliques_marca,
             impressoes_nao_marca, cliques_nao_marca)
-     WHERE g.projeto = $1 AND g.dia = v.dia`,
+     WHERE g.projeto = $1 AND g.dia = v.dia
+       AND (g.host IS NULL OR g.host IS NOT DISTINCT FROM $3::text)`,
     valores
   );
   const atualizados = r.rowCount ?? 0;
-  return { atualizados, semLinhaDeTotal: dias.length - atualizados };
+  // 026 — DOIS motivos para um dia não ser atualizado, e eles pedem consertos opostos. Sem total
+  // gravado: a série do projeto não alcança aquele dia, e o conserto é esperar a corrida cobrir
+  // (alto na primeira corrida, esperado). Medido em outro host: a linha existe e está CERTA para o
+  // site de então — o conserto é não tocar nela nunca. Colapsar os dois faria a proteção que
+  // acabou de salvar 248 dias parecer com um buraco na medição.
+  const existentes = await pool().query<{ n: string }>(
+    `SELECT count(*) AS n FROM hub_gsc_dia
+      WHERE projeto = $1 AND dia = ANY($2::date[])
+        AND host IS NOT NULL AND host IS DISTINCT FROM $3::text`,
+    [projeto, dias.map((d) => d.dia), host]
+  );
+  const deOutroHost = Number(existentes.rows[0]?.n ?? 0);
+  return { atualizados, semLinhaDeTotal: dias.length - atualizados - deOutroHost, deOutroHost };
 }
 
 /** A série gravada de um projeto, em ordem cronológica. Assinatura inalterada desde a 021; desde a
@@ -1041,7 +1078,7 @@ export async function lerDiasGsc(projeto: string, inicio?: string, fim?: string)
   const r = await pool().query<DiaSeparado>(
     `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, impressoes, cliques, posicao,
             to_char(criado, 'YYYY-MM-DD HH24:MI') AS criado,
-            pais,
+            host, pais,
             impressoes_pais AS "impressoesPais", cliques_pais AS "cliquesPais",
             impressoes_marca AS "impressoesMarca", cliques_marca AS "cliquesMarca",
             impressoes_nao_marca AS "impressoesNaoMarca", cliques_nao_marca AS "cliquesNaoMarca"
