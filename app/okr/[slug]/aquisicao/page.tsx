@@ -13,7 +13,7 @@ import {
   type DiaSeparado,
 } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
-import { mesesDaSerie } from "@/lib/serie-gsc.mjs";
+import { mesesDaSerie, janelaDeFoco } from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
@@ -37,6 +37,7 @@ import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
 import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
 import { WeekChart, type WeekPoint, type WeekCut } from "../../../viz";
+import { SerieComFoco, SerieEmTabela, type Foco } from "./serie";
 
 // AQUISIÇÃO (019, FR-022..FR-029): o que tem relógio de TRIMESTRE sai da tela que se lê na
 // segunda-feira e ganha a janela longa que a 018 adiou — 8 meses de Search Console, 12 de GA4.
@@ -717,6 +718,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     }
     return undefined;
   })();
+  // 030 — a JANELA de foco. A escala compartilhada não sustenta as quatro ordens de magnitude da
+  // série (pico 17.020 contra 1.492 na última completa): as seis últimas semanas desenhavam 14,
+  // 14, 11, 5, 3 e 3 unidades de 56, e 114, 28, 7 e 2 desenhavam a MESMA barra de 1 unidade. A
+  // função devolve `null` quando não há esmagamento a desfazer, e aí a tela desenha UM gráfico —
+  // é ela, e não a marcação, que decide se existe segundo gráfico.
+  const foco: Foco | null = janelaDeFoco(pontos);
+  // O slot do pico, para rotulá-lo na tira de contexto. Sai de `ritmo.pico`, o MESMO objeto que
+  // assina o "% do pico" do título: derivar um segundo pico aqui abriria a porta para o rótulo do
+  // gráfico e a cifra do título apontarem para semanas diferentes.
+  const picoIndex = ritmo
+    ? pontos.findIndex((pt) => pt.start === ritmo.pico.inicio && pt.value !== null)
+    : -1;
+
   // 029 — QUEM a série soma e DESDE QUANDO. Sai do DADO (a assinatura gravada na coluna `host`),
   // nunca de `dominioAnterior.data`: é a assinatura que diz o que a corrida de fato somou, e a data
   // declarada da troca cai antes do primeiro dia em que o domínio novo teve impressão.
@@ -1074,27 +1088,18 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </div>
 
             <div className="nm-grafico">
-              <WeekChart
-                title={`Impressões não-marca por semana · ${ritmo.semanasCompletas} semanas completas`}
-                points={pontos}
+              {/* 030 — FOCO + CONTEXTO no lugar de um eixo linear compartilhado de 37 semanas.
+                  `janelaDeFoco` é quem decide se há dois gráficos; `picoIndex` é quem rotula o
+                  pico, e ele sai do MESMO `ritmo.pico` que assina o "% do pico" do título. */}
+              <SerieComFoco
+                pontos={pontos}
                 fmt={(v) => `${br(v)} impressões`}
                 cut={corte}
+                foco={foco}
+                picoIndex={picoIndex >= 0 ? picoIndex : null}
               />
-              {/* A legenda é obrigatória porque o gráfico tem TRÊS estados e dois deles não são
-                  barra. Sem ela, o traço do zero medido lê como sujeira e a coluna ausente lê
-                  como zero — invertendo justamente o achado de julho. */}
-              <ul className="nm-legenda">
-                <li><span className="nm-k nm-k-barra" aria-hidden /> barra: impressões da semana</li>
-                <li><span className="nm-k nm-k-zero" aria-hidden /> traço abaixo da linha: semana <strong>medida</strong>, zero impressão</li>
-                <li><span className="nm-k nm-k-vazio" aria-hidden /> coluna vazia: semana <strong>parcial</strong> ou que cruza a troca de site, fora da leitura ({ritmo.parciaisIgnoradas} nas pontas)</li>
-                {corte ? (
-                  <li>
-                    <span className="nm-k nm-k-corte" aria-hidden /> linha vertical: daqui em
-                    diante a semana <strong>soma os domínios declarados</strong> — o negócio é o
-                    mesmo, o instrumento é que mudou de casa
-                  </li>
-                ) : null}
-              </ul>
+              {/* Os 37 valores só existiam no `<title>` do SVG — ou seja, no hover. */}
+              <SerieEmTabela pontos={pontos} fmt={(v) => `${br(v)} impressões`} />
             </div>
 
             {/* O veredito em texto. Ele NÃO pode dizer "caindo" de graça: a última semana da atma

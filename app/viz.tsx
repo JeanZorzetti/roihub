@@ -22,7 +22,10 @@ export type WeekPoint = { start: string; end: string; value: number | null };
 export type WeekCut = { index: number; antes: string; depois: string };
 
 // Colunas com topo arredondado 4px e base reta (spec dataviz: data-end redondo, baseline quadrada).
-function barPath(x: number, y: number, w: number, h: number): string {
+/** 030 — exportada para `okr/[slug]/aquisicao/serie.tsx`, que desenha a mesma barra em outra
+ *  geometria. Uma fonte para o topo arredondado: a memória deste projeto registra seis vezes o
+ *  mesmo defeito de regra reimplementada no chamador. */
+export function barPath(x: number, y: number, w: number, h: number): string {
   const r = Math.min(4, h, w / 2);
   return `M${x},${y + h} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h} Z`;
 }

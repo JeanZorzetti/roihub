@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { janelaDaCorrida, diasParaGravar, mesesDaSerie, DIAS_BACKFILL } from "../lib/serie-gsc.mjs";
+import {
+  janelaDaCorrida, diasParaGravar, mesesDaSerie, DIAS_BACKFILL,
+  janelaDeFoco, reguaDeMeses, SEMANAS_DE_FOCO,
+} from "../lib/serie-gsc.mjs";
 
 const AGORA = Date.parse("2026-09-07T12:00:00Z");
 const HOJE = "2026-09-07";
@@ -169,4 +172,92 @@ test("as pontas saem CORTADAS pela janela — o eixo não promete dado que a sé
   // O mês do meio, inteiro dentro da janela, mantém as bordas do calendário.
   const cheio = mesesDaSerie([{ date: "2026-07-15", impressions: 1 }], { inicio: "2026-06-28", fim: "2026-09-15" })[0];
   assert.deepEqual([cheio.inicio, cheio.fim, cheio.coberto], ["2026-07-01", "2026-07-31", true]);
+});
+
+// ── janelaDeFoco / reguaDeMeses (030) ───────────────────────────────────────────────────────
+/** A série semanal REAL da atma, lida de `hub_gsc_dia` em 18/09: impressões não-marca por semana
+ *  ISO, com as duas pontas parciais em `null` como o gráfico as recebe. É a regressão: é esta
+ *  série que o eixo compartilhado esmagava. */
+const ATMA = [
+  null, 3009, 5520, 5107, 5799, 5012, 5293, 4623, 5119, 7419, 9647, 9408, 11579,
+  17020, 16225, 6454, 5616, 6043, 5586, 5670, 4624, 4079, 1754, 509, 28, 7, 0, 0, 2,
+  974, 2081, 4129, 4121, 3447, 1449, 1492, null,
+].map((value, i) => {
+  const dia = new Date(Date.UTC(2026, 0, 5) + i * 7 * 864e5).toISOString().slice(0, 10);
+  return { start: dia, end: dia, value };
+});
+
+test("atma: o foco pega as 13 últimas e a escala cai de 17.020 para 4.129", () => {
+  const f = janelaDeFoco(ATMA);
+  assert.ok(f, "série de 37 slots com pico 11x a última tem foco");
+  assert.equal(f.fim, ATMA.length - 1);
+  assert.equal(f.fim - f.inicio + 1, SEMANAS_DE_FOCO);
+  assert.equal(f.max, 4129);
+  assert.equal(f.maxSerie, 17020);
+  assert.equal(Math.round(f.vezesAbaixo * 10) / 10, 4.1);
+});
+
+test("a última semana completa sai de 5 para 20 unidades de um plot de 56", () => {
+  const f = janelaDeFoco(ATMA);
+  const ultima = 1492;
+  assert.equal(Math.round((ultima / f.maxSerie) * 56), 5, "escala compartilhada: 5 de 56");
+  assert.equal(Math.round((ultima / f.max) * 56), 20, "escala do foco: 20 de 56");
+});
+
+test("série curta não ganha foco — ele SERIA a série", () => {
+  // Pico no PRIMEIRO slot, fora do foco em qualquer comprimento: assim só a guarda de
+  // comprimento pode reprovar, e o teste mede ela e não o teto de 80%.
+  const comPico = (n) =>
+    Array.from({ length: n }, (_, i) => ({ start: `2026-0${1 + Math.floor(i / 4)}-0${1 + (i % 4)}`, value: i === 0 ? 17020 : 1000 + i }));
+  assert.equal(janelaDeFoco(comPico(SEMANAS_DE_FOCO + 2)), null, "13+2 slots: o foco seria a série");
+  assert.ok(janelaDeFoco(comPico(SEMANAS_DE_FOCO + 3)), "um slot a mais e há o que ampliar");
+});
+
+test("pico DENTRO do foco não ganha foco: não há esmagamento a desfazer", () => {
+  // As 16 últimas da atma contêm o pico do recorte (4.129) dentro das 13 finais — a escala
+  // compartilhada dessa série já é a escala do foco, e dois gráficos diriam a mesma coisa.
+  const f = janelaDeFoco(ATMA.slice(-(SEMANAS_DE_FOCO + 3)));
+  assert.equal(f, null);
+});
+
+test("série sem esmagamento não ganha foco: o topo do foco já usa mais de 80% da escala", () => {
+  const plana = ATMA.map((p, i) => ({ ...p, value: i === 0 ? null : 1000 }));
+  assert.equal(janelaDeFoco(plana), null);
+  // 0,8 é o corte: com o pico em 1.200 o foco usa 83% e não há foco; com 1.300 usa 77% e há.
+  const quase = plana.map((p, i) => (i === 5 ? { ...p, value: 1200 } : p));
+  assert.equal(janelaDeFoco(quase), null);
+  const esmagada = plana.map((p, i) => (i === 5 ? { ...p, value: 1300 } : p));
+  assert.ok(janelaDeFoco(esmagada));
+});
+
+test("foco sem dois valores medidos é null, não um foco de uma barra só", () => {
+  const pontas = ATMA.map((p, i) => (i >= ATMA.length - SEMANAS_DE_FOCO + 1 ? { ...p, value: null } : p));
+  assert.equal(janelaDeFoco(pontas), null);
+});
+
+test("série em que só o zero foi medido não tem foco (nem pico para medir contra)", () => {
+  assert.equal(janelaDeFoco(ATMA.map((p) => ({ ...p, value: 0 }))), null);
+  assert.equal(janelaDeFoco([]), null);
+  assert.equal(janelaDeFoco(null), null);
+});
+
+test("a régua põe um tique por mês e o ANO só quando muda", () => {
+  const r = reguaDeMeses(ATMA);
+  assert.deepEqual(r.map((t) => t.rotulo), ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set"]);
+  assert.equal(r[0].index, 0);
+  assert.equal(r[0].ano, "2026");
+  assert.deepEqual(r.slice(1).map((t) => t.ano), [null, null, null, null, null, null, null, null]);
+  // O tique de abril cai no slot 13, que é o do pico (06/04) — é ele que torna a data localizável.
+  assert.equal(r[3].index, 13);
+});
+
+test("série que atravessa o réveillon marca o ano no segundo janeiro", () => {
+  const pontos = ["2026-12-07", "2026-12-14", "2026-12-28", "2027-01-04", "2027-01-11"].map((start) => ({ start, value: 10 }));
+  const r = reguaDeMeses(pontos);
+  assert.deepEqual(r.map((t) => [t.rotulo, t.ano]), [["dez", "2026"], ["jan", "2027"]]);
+});
+
+test("slot sem data ou com mês fora de 1..12 não produz tique", () => {
+  assert.deepEqual(reguaDeMeses([{ value: 1 }, { start: "2026-13-01", value: 1 }, { start: "", value: 1 }]), []);
+  assert.deepEqual(reguaDeMeses(null), []);
 });

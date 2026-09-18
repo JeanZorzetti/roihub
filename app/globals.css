@@ -831,55 +831,165 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
    não estão ali. A razão 248×76 do viewBox já dá a proporção. */
 [data-info="aquisicao-nao-marca"] .nm-grafico .wk-chart svg { width: 100%; height: auto; }
 
-/* A legenda dos TRÊS estados do gráfico. Cada chave é uma FORMA diferente e não uma cor diferente:
-   impressa em cinza, ou para quem não separa azul de cinza, barra cheia / traço pontilhado /
-   contorno vazio continuam se distinguindo. */
-[data-info="aquisicao-nao-marca"] .nm-legenda {
-  list-style: none; margin: 6px 0 0; padding: 0;
-  display: grid; grid-template-columns: auto auto auto; justify-content: start; gap: 6px 22px;
-  font-size: 12px; color: var(--muted);
+/* information-design · foco + contexto com régua de mês · responde: o volume de quem NÃO conhece
+   a marca está subindo ou caindo agora? · fonte: hub_gsc_dia · 2026-09-18
+   ─────────────────────────────────────────────────────────────────────────────────────────────
+   9ª corrida. A 8ª deu forma a 25 leituras de evidência e não tocou o gráfico do nível 1, que
+   desenhava as 37 semanas num eixo LINEAR COMPARTILHADO. Medido: pico de 17.020 (06/04) contra
+   1.492 na última semana completa, num plot de 56 unidades — as seis últimas completas davam
+   14, 14, 11, 5, 3 e 3 unidades, e os valores 114, 28, 7 e 2 davam a MESMA barra de 1 unidade,
+   que é o piso que impede a barra de sumir. A pergunta da tela é sobre AGORA.
+
+   Todo RÓTULO é HTML posicionado em %, nunca `<text>` do SVG: texto num viewBox de 248 unidades
+   encolhe com o container, e a 360px um rótulo de 3 unidades renderiza a 4,3px. Foi por isso que
+   o gráfico anterior só tinha rótulo nas pontas, em HTML.
+
+   O que morreu daqui: `.nm-legenda` (4 linhas de prosa, 3 delas descrevendo ausência), `.nm-k*`
+   e `.wk-hosts*`. A legenda virou uma linha porque o que ela dizia em prosa entrou no plot —
+   textura na faixa pós-corte, contorno na semana parcial. */
+[data-info="aquisicao-nao-marca"] .sf { margin: 0 0 10px; }
+
+/* O cabeçalho de cada um dos dois gráficos: o QUE ele mostra à esquerda, a ESCALA à direita.
+   A escala à direita é o conserto do G32 na imagem — recortado da tela, o gráfico anterior não
+   tinha um número sequer, e cada barra era uma altura solta. */
+[data-info="aquisicao-nao-marca"] .sf-cab {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  font-size: 11px; color: var(--muted); margin-bottom: 3px;
 }
-/* O `li` NÃO é flex: com `display:flex` cada nó de texto e cada `<strong>` vira um item
-   separado, e a 360px a linha quebrava DENTRO da frase — "zero impressão" descia sozinho e lia
-   como um quarto estado que não existe. Inline deixa o texto fluir como texto. */
-[data-info="aquisicao-nao-marca"] .nm-legenda li { line-height: 1.5; }
-[data-info="aquisicao-nao-marca"] .nm-k {
-  display: inline-block; width: 14px; height: 12px; margin-right: 6px; vertical-align: -1px;
-}
-[data-info="aquisicao-nao-marca"] .nm-k-barra { background: var(--nm-barra); border-radius: 2px 2px 0 0; }
-[data-info="aquisicao-nao-marca"] .nm-k-zero {
-  height: 0; border-top: 2px dotted var(--nm-zero); align-self: center;
-}
-[data-info="aquisicao-nao-marca"] .nm-k-vazio { border: 1px dashed var(--grid); border-radius: 2px; }
-/* 026 — a chave do corte de domínio. Barra VERTICAL, para não ser confundida com o traço
-   horizontal do zero medido: as duas são linhas, e a única coisa que as separa sem depender de
-   cor é a direção. */
-[data-info="aquisicao-nao-marca"] .nm-k-corte {
-  width: 0; height: 12px; border-left: 2px dashed var(--nm-corte); margin-left: 6px; margin-right: 12px;
+[data-info="aquisicao-nao-marca"] .sf-cab-t { text-transform: uppercase; letter-spacing: 0.05em; }
+[data-info="aquisicao-nao-marca"] .sf-cab-escala { text-align: right; min-width: 0; }
+[data-info="aquisicao-nao-marca"] .sf-cab-escala strong {
+  color: var(--ink); font-variant-numeric: tabular-nums;
 }
 
-/* A linha do corte e os nomes dos dois sites. `--nm-corte` é `--ink2`, o mesmo do traço de zero:
-   ambos são ANOTAÇÃO sobre a série, não uma segunda série — e anotação que competisse em peso
-   com a barra inverteria a hierarquia que este bloco existe para ter. Medido: 7,53:1 sobre
-   `--page`, bem acima do 3:1 que elemento gráfico portador de informação exige. */
-[data-info="aquisicao-nao-marca"] { --nm-corte: var(--ink2); }
-[data-info="aquisicao-nao-marca"] .wk-chart .wk-cut {
+/* `.sf-plot` envolve SÓ o svg. É o que faz `top`/`height` em % dos overlays baterem exatamente
+   com as unidades do viewBox — a régua e os hosts ficam fora, no fluxo normal. */
+[data-info="aquisicao-nao-marca"] .sf-plot { position: relative; }
+[data-info="aquisicao-nao-marca"] .sf-svg {
+  width: 100%; height: auto; display: block; position: relative; z-index: 1;
+}
+[data-info="aquisicao-nao-marca"] .sf-axis { stroke: var(--grid); stroke-width: 1; }
+[data-info="aquisicao-nao-marca"] .sf-bar { fill: var(--nm-barra); }
+[data-info="aquisicao-nao-marca"] .sf-wk:hover .sf-bar { fill: var(--seq400); }
+/* Zero MEDIDO, abaixo da base. `--ink2` sobre `--surface` = 8,1:1. */
+[data-info="aquisicao-nao-marca"] .sf-zero {
+  stroke: var(--nm-zero); stroke-width: 2; stroke-dasharray: 2 2;
+}
+/* A semana PARCIAL: caixa vazada ABAIXO da linha de base, na mesma faixa do zero medido.
+   A primeira versão desta corrida punha o contorno com ALTURA CHEIA dentro do plot, e só abrir o
+   PNG pegou os dois defeitos: (1) num gráfico de barras, marca alta lê como valor alto — a
+   parcial de janeiro ficava mais alta que as barras de janeiro; (2) no slot que também está
+   depois do corte, a hachura da faixa ENGOLIA o contorno e o slot ficava com uma ausência só.
+   Sob o eixo a regra fica única: nada ali é valor positivo medido, e a FORMA separa os dois
+   estados (linha pontilhada = zero, caixa vazada = parcial). `--muted` sobre `--surface` =
+   4,82:1, acima do 3:1 que elemento gráfico portador de informação exige — o `--grid` da chave
+   antiga dava 1,26:1, uma lacuna de G21 que ninguém havia medido. */
+[data-info="aquisicao-nao-marca"] .sf-parcial {
+  fill: none; stroke: var(--muted); stroke-width: 0.6; stroke-dasharray: 2 2;
+}
+[data-info="aquisicao-nao-marca"] .sf-cut {
   stroke: var(--nm-corte); stroke-width: 1; stroke-dasharray: 3 2;
 }
-[data-info="aquisicao-nao-marca"] .wk-hosts {
-  display: flex; font-size: 11px; color: var(--muted); margin-top: 3px; gap: 6px;
-  /* `tabular-nums` não serve aqui (é texto), mas o `min-width: 0` sim: sem ele o nome longo do
-     host empurra o segundo para fora do bloco em 360px. */
-  min-width: 0;
+/* A faixa depois do corte: hachura de 1px de `--muted` a cada 7px. Fica ATRÁS das barras
+   (`z-index: 0` contra o 1 do svg) e o fundo transparente do svg a deixa aparecer entre elas. */
+[data-info="aquisicao-nao-marca"] .sf-depois {
+  position: absolute; right: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(135deg, transparent 0 9px, var(--muted) 9px 10px);
+  opacity: 0.4;
 }
-[data-info="aquisicao-nao-marca"] .wk-hosts span {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex-shrink: 1;
+/* O topo da escala, tracejado: é a régua contra a qual cada barra é uma fração. */
+[data-info="aquisicao-nao-marca"] .sf-teto {
+  position: absolute; left: 0; right: 0; z-index: 0;
+  border-top: 1px dashed var(--muted);
 }
-/* O lado NOVO herda a marca do corte: borda à esquerda, alinhada com a linha do gráfico, para o
-   olho ligar o nome à divisão sem precisar de legenda. */
-[data-info="aquisicao-nao-marca"] .wk-hosts-novo {
-  border-left: 1px dashed var(--nm-corte); padding-left: 5px; flex: 1 1 auto;
+/* A janela do foco, marcada na tira de contexto. Sem ela os dois gráficos leem como duas SÉRIES
+   em vez de duas escalas do mesmo dado. Contorno e não preenchimento cheio: um fundo forte
+   competiria com as barras que ele existe para emoldurar. */
+[data-info="aquisicao-nao-marca"] .sf-janela {
+  position: absolute; top: 0; bottom: 0; z-index: 0; pointer-events: none;
+  border: 1px solid var(--grid); border-bottom: none;
+  background: color-mix(in oklab, var(--accent) 7%, transparent);
 }
+[data-info="aquisicao-nao-marca"] .sf-janela i {
+  position: absolute; top: 0; right: 3px; font-style: normal; font-size: 10px; color: var(--muted);
+}
+/* O rótulo do pico, com tique-guia: na tira ele é a barra mais alta por definição, e o tique diz
+   QUAL slot é sem precisar de uma segunda cor de barra (que exigiria validar dE de um par de
+   azuis e não ganharia canal nenhum). */
+[data-info="aquisicao-nao-marca"] .sf-pico {
+  position: absolute; top: -1px; z-index: 2; white-space: nowrap;
+  font-size: 11px; color: var(--ink); background: var(--surface); padding: 0 3px;
+  font-variant-numeric: tabular-nums;
+}
+[data-info="aquisicao-nao-marca"] .sf-pico::after {
+  content: ""; position: absolute; left: 50%; bottom: -4px; width: 0; height: 4px;
+  border-left: 1px solid var(--ink2);
+}
+
+/* A régua de mês. `position: relative` com os rótulos em `absolute`: o tique é a borda
+   ESQUERDA do rótulo, então ele cai exatamente no slot que abre o mês. */
+[data-info="aquisicao-nao-marca"] .sf-regua {
+  position: relative; height: 15px; margin-top: 2px; font-size: 11px; color: var(--muted);
+}
+[data-info="aquisicao-nao-marca"] .sf-regua span {
+  position: absolute; top: 0; padding-left: 4px; border-left: 1px solid var(--grid);
+  line-height: 15px; white-space: nowrap;
+}
+[data-info="aquisicao-nao-marca"] .sf-regua i { font-style: normal; }
+
+/* Os dois hosts. Sem largura reservada para o lado NOVO: ele se ancora na linha do corte e
+   cresce para o lado em que há espaço. O flex com `flexBasis` que estava aqui dava 6% ao host
+   novo quando o corte caía no slot 34 de 37, e o rótulo saía `atma.roilabs.com.br + usealigne…`. */
+[data-info="aquisicao-nao-marca"] .sf-hosts {
+  position: relative; height: 16px; font-size: 11px; color: var(--muted); margin-top: 1px;
+}
+[data-info="aquisicao-nao-marca"] .sf-hosts span {
+  position: absolute; top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%;
+}
+[data-info="aquisicao-nao-marca"] .sf-host-antes { left: 0; padding-right: 6px; }
+[data-info="aquisicao-nao-marca"] .sf-host-novo {
+  border-left: 1px dashed var(--nm-corte); padding-left: 5px;
+}
+[data-info="aquisicao-nao-marca"] .sf-host-fim {
+  border-left: none; border-right: 1px dashed var(--nm-corte); padding-left: 0; padding-right: 5px;
+}
+
+[data-info="aquisicao-nao-marca"] .sf-ctx { margin-top: 12px; }
+
+/* A legenda, agora em UMA linha. O `li` não é flex pelo mesmo motivo de antes: com flex cada nó
+   de texto e cada `<strong>` vira item e a 360px a quebra caía DENTRO da frase. */
+[data-info="aquisicao-nao-marca"] .sf-legenda {
+  list-style: none; margin: 8px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 4px 18px;
+  font-size: 12px; color: var(--muted);
+}
+[data-info="aquisicao-nao-marca"] .sf-legenda li { line-height: 1.5; }
+[data-info="aquisicao-nao-marca"] .sf-k {
+  display: inline-block; width: 14px; height: 12px; margin-right: 5px; vertical-align: -1px;
+}
+[data-info="aquisicao-nao-marca"] .sf-k-barra { background: var(--nm-barra); border-radius: 2px 2px 0 0; }
+[data-info="aquisicao-nao-marca"] .sf-k-zero {
+  height: 0; border-top: 2px dotted var(--nm-zero); vertical-align: 4px;
+}
+[data-info="aquisicao-nao-marca"] .sf-k-parcial {
+  border: 1px dashed var(--muted); border-radius: 2px; height: 6px; vertical-align: 1px;
+}
+[data-info="aquisicao-nao-marca"] .sf-k-depois {
+  background: repeating-linear-gradient(135deg, transparent 0 3px, var(--muted) 3px 4px);
+  border-left: 1px dashed var(--nm-corte);
+}
+
+/* A série em tabela: o acesso por TECLADO aos 37 valores, que só existiam no hover do SVG. */
+[data-info="aquisicao-nao-marca"] .sf-tabela { margin-top: 8px; font-size: 12px; }
+[data-info="aquisicao-nao-marca"] .sf-tabela summary { color: var(--accent); cursor: pointer; }
+[data-info="aquisicao-nao-marca"] .sf-tabela table { margin-top: 6px; border-collapse: collapse; width: 100%; }
+[data-info="aquisicao-nao-marca"] .sf-tabela th,
+[data-info="aquisicao-nao-marca"] .sf-tabela td {
+  text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid var(--grid); font-weight: 400;
+}
+[data-info="aquisicao-nao-marca"] .sf-td-num { font-variant-numeric: tabular-nums; }
+
 /* 026 — o aviso de que o bloco fala de OUTRO site. Fica acima do veredito e leva borda + texto,
    nunca só cor: ele muda o SUJEITO da frase seguinte, e um leitor que não distingue a cor leria
    a história do domínio antigo como estado do novo. */
@@ -917,7 +1027,35 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   [data-info="aquisicao-nao-marca"] .nm-valor { font-size: 24px; }
   /* Um item de legenda por linha. Com `flex-wrap` a 360px a quebra caía no MEIO do item — o
      "zero impressão" descia sozinho e lia como um quarto estado que não existe. */
-  [data-info="aquisicao-nao-marca"] .nm-legenda { grid-template-columns: 1fr; gap: 6px; }
+  [data-info="aquisicao-nao-marca"] .sf-legenda { flex-direction: column; gap: 5px; }
+  /* A 360px a tira de contexto tem 278px para 9 rótulos de mês (~30px cada, e o rótulo de 3
+     letras mede ~20px): eles se tocam. Só o gráfico de FOCO mantém a régua cheia — 4 rótulos em
+     278px sobra espaço — e na tira ficam as pontas, que é o que aquele gráfico precisa dizer. */
+  [data-info="aquisicao-nao-marca"] .sf-ctx .sf-regua span:not(:first-child):not(:last-child) { display: none; }
+  [data-info="aquisicao-nao-marca"] .sf-cab { flex-direction: column; gap: 1px; }
+  [data-info="aquisicao-nao-marca"] .sf-cab-escala { text-align: left; }
+  /* A 360px o viewBox de 248×73 dá 72px de plot para 13 barras — squat. Com
+     `preserveAspectRatio="none"` no svg, altura explícita ESTICA no eixo vertical, e barra
+     sobrevive a isso: só o comprimento codifica, a largura do slot não codifica nada. Todo
+     traço leva `non-scaling-stroke`, senão esticar engordaria a linha de base. */
+  [data-info="aquisicao-nao-marca"] .sf-plot .sf-svg { height: 170px; }
+  [data-info="aquisicao-nao-marca"] .sf-plot-ctx .sf-svg { height: 56px; }
+  /* Os dois hosts EMPILHAM a 360px. Ancorados na linha do corte eles colidiam e saía
+     `atma.roilabs.comlabs.com.br + usealigner.com` — defeito que a medição não pegou (nenhum dos
+     dois estava truncado: `scrollWidth === clientWidth` nos dois, eles só ocupavam o mesmo lugar)
+     e que só apareceu no PNG. Num gráfico de 278px a POSIÇÃO horizontal do rótulo não carrega
+     quase nada; quem carrega o corte ali é a linha tracejada mais a hachura. Os `left`/`right`
+     inline saem de cena sozinhos com `position: static`. */
+  [data-info="aquisicao-nao-marca"] .sf-hosts { position: static; height: auto; }
+  [data-info="aquisicao-nao-marca"] .sf-hosts span { position: static; display: block; max-width: 100%; }
+  [data-info="aquisicao-nao-marca"] .sf-host-fim {
+    border-right: none; border-left: 1px dashed var(--nm-corte); padding-left: 5px; padding-right: 0;
+  }
+  /* A régua do foco tem `jun/26` no slot 0 e `jul` no slot 2, ou seja 0 e 42px de 278: a 11px o
+     primeiro mede ~40px e os dois se tocam. A 10px sobra folga e o ano continua na tela — que é
+     o único rótulo que importa quando a série atravessa o réveillon. */
+  [data-info="aquisicao-nao-marca"] .sf-regua { font-size: 10px; }
+  [data-info="aquisicao-nao-marca"] .sf-regua span { padding-left: 3px; }
 }
 
 /* `WeekChart`: zero MEDIDO. Pontilhado e abaixo da linha de base — ver o comentário em viz.tsx.
@@ -1108,7 +1246,7 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   list-style: none; margin: 7px 0 0; padding: 0; display: grid; gap: 2px 16px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); font-size: 12px; color: var(--ink2);
 }
-/* NÃO é flex — a mesma armadilha de `.nm-legenda`: cada nó de texto e cada `<strong>` viraria
+/* NÃO é flex — a mesma armadilha de `.sf-legenda`: cada nó de texto e cada `<strong>` viraria
    um item, e o "· zero medido" saía do fim da frase e ia parar na coluna vizinha, solto. */
 [data-info="aquisicao"] .cmp-leg li { line-height: 1.45; }
 [data-info="aquisicao"] .cmp-leg strong { font-variant-numeric: tabular-nums; color: var(--ink); }
