@@ -505,7 +505,13 @@
       }
     },
     "nome": "Atma Aligner — alinhadores invisíveis",
-    "url": "https://atma.roilabs.com.br/",
+    "url": "https://usealigner.com/",
+    "dominioAnterior": {
+      "url": "https://atma.roilabs.com.br/",
+      "data": "2026-09-11",
+      "porque": "o domínio antigo responde 301 para o novo, e o 301 leva semanas para transferir os sinais",
+      "historico": "244 dias, 4.558 cliques e 371.189 impressões seguem em sc-domain:roilabs.com.br filtrada por atma.roilabs.com.br (conferido em 2026-09-18)"
+    },
     "repo": "Atma",
     "receita": 7,
     "receitaNota": "Infoproduto de R$ 47 com checkout PRÓPRIO (MercadoPago) e o fluxo PROVADO de ponta a ponta em 11/08: POST em /api/infoproduto/checkout devolve 200 com `init_point` real do MP, a linha grava no Postgres e volta pelo JSON.parse. Antes disso ele respondia 500 desde 24/04 — ver blockers. Continua ZERO venda real, e isso é APURADO no gateway, não suposto: `vendas` sai de scripts/vendas-mercadopago.mjs, que em 11/08 seguia em 20 pagamentos, todos de usuário de teste ⚠️ CORREÇÃO 31/08: o 'fluxo PROVADO de ponta a ponta em 11/08' foi provado na conta ERRADA. A preferência daquele teste é a única que existe na conta (`preferences/search` → total 1) e a conta é `test_user` do Mercado Pago. O checkout funciona; ele só não cobra dinheiro real. Trocar a credencial na Vercel é o que separa este projeto de 0 para poder faturar.",

@@ -253,7 +253,14 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const alinhamento = paginado ? taxaAlinhamento(paginado.paginas) : null;
   const cobertura024 = paginado ? taxaCobertura(paginado.paginas) : null;
   const atualizacao = paginado ? cadencia(paginado.paginas, paginado.dia) : null;
-  const periferia = paginado ? ordemDaPeriferia(paginado.paginas, impressoesPorUrl) : [];
+  // Corrida que visitou páginas e não extraiu UM link interno não mediu um site sem links: o
+  // rastreador não leu link nenhum (página renderizada no cliente é a causa comum). Com isso,
+  // `orfas === visitadas` sai por construção e TODA medida derivada de link interno — órfãs,
+  // periferia, profundidade, links contextuais — fica sem veredito nesta corrida.
+  const crawlSemLinks = !!(
+    paginado && paginado.visitadas > 0 && paginado.linksNavegacao === 0 && paginado.orfas === paginado.visitadas
+  );
+  const periferia = paginado && !crawlSemLinks ? ordemDaPeriferia(paginado.paginas, impressoesPorUrl) : [];
   // FR-013: URL do sitemap que responde erro ou redireciona é ACHADO — o sitemap declarando uma
   // URL morta é a informação, não um buraco na medição.
   const achadosDoSitemap = (paginado?.paginas ?? []).filter((pg) => pg.noSitemap && (pg.erro || pg.redirecionada));
@@ -286,6 +293,55 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     ? { inicio: diasComMarca[0].dia, fim: diasComMarca[diasComMarca.length - 1].dia }
     : null;
 
+  // ── Migração de domínio: o site que o crawl visitou contra o que o hub declara ──────────────
+  //
+  // O host sai do DADO das duas pontas, nunca de texto fixo: `p.url` é o que o hub declara, e o
+  // host majoritário das páginas visitadas é onde o crawl de fato chegou (ele segue o 301). Quando
+  // os dois divergem, a tela está juntando dois sites diferentes sob um nome só — e some sozinha
+  // quando `data/projects.json` for corrigido, sem ninguém lembrar de apagar um aviso.
+  const hostDeclarado = (() => {
+    try { return p.url ? new URL(p.url).hostname : null; } catch { return null; }
+  })();
+  const hostCrawleado = (() => {
+    const contagem = new Map<string, number>();
+    for (const pagina of paginado?.paginas ?? []) {
+      try {
+        const host = new URL(pagina.url).hostname;
+        contagem.set(host, (contagem.get(host) ?? 0) + 1);
+      } catch { /* URL inválida na corrida não vota */ }
+    }
+    return [...contagem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  })();
+  const propriedadeGsc = serie && "property" in serie ? serie.property : null;
+  const dominioDaPropriedade = propriedadeGsc?.startsWith("sc-domain:") ? propriedadeGsc.slice(10) : null;
+  // A propriedade cobre o host novo? `sc-domain:` cobre o domínio e os subdomínios dele — e mais
+  // nada. Checagem de string, zero chamada extra à API.
+  const novoHostCoberto = !!(
+    dominioDaPropriedade && hostCrawleado &&
+    (hostCrawleado === dominioDaPropriedade || hostCrawleado.endsWith("." + dominioDaPropriedade))
+  );
+  const migrou =
+    hostDeclarado && hostCrawleado && hostDeclarado !== hostCrawleado
+      ? { de: hostDeclarado, para: hostCrawleado, dia: paginado?.dia ?? null }
+      : null;
+
+  // Migração DECLARADA no card. Distinta do `migrou` acima: lá o hub está desatualizado e o conserto
+  // é editar `projects.json`; aqui o hub já está certo e o que precisa ser dito é POR QUE a série
+  // encurtou. Propriedade nova do Search Console nasce vazia — a queda é troca de casa, não perda de
+  // tráfego, e sem esta linha o leitor lê catástrofe onde não houve nenhuma.
+  //
+  // Some sozinha quando a janela recebida alcançar a pedida, ou seja, quando a propriedade nova
+  // tiver histórico suficiente. Ninguém precisa lembrar de apagar o aviso.
+  const migracao =
+    p.dominioAnterior && recebidaGsc && recebidaGsc.inicio > janelaGsc.inicio
+      ? {
+          ...p.dominioAnterior,
+          hostAnterior: (() => {
+            try { return new URL(p.dominioAnterior.url).hostname; } catch { return p.dominioAnterior.url; }
+          })(),
+        }
+      : null;
+
   const recebidaGa4 = cobertura && "primeiro" in cobertura ? { inicio: cobertura.primeiro, fim: cobertura.ultimo } : null;
   const sessoes = canais && "linhas" in canais ? canais.linhas.reduce((t, l) => t + l.sessoes, 0) : null;
 
@@ -303,6 +359,61 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
           semanal é a <a href={`/okr/${slug}`}>ficha</a>; a derivação da conta é o{" "}
           <a href={`/okr/${slug}/metodo`}>método</a>.
         </p>
+
+        {/* O site mudou de domínio e a medição não foi junto. Enquanto isso for verdade, é o
+            primeiro fato da tela: sem ele o leitor soma um crawl do site NOVO com números de busca
+            do site VELHO achando que os dois falam do mesmo lugar. */}
+        {migrou ? (
+          <p className="foot" style={{ borderLeft: "3px solid var(--borda)", paddingLeft: "0.75rem" }}>
+            <strong>Dois sites nesta tela.</strong> O crawl de <strong>{migrou.dia ?? "—"}</strong>{" "}
+            visitou <code>{migrou.para}</code>, mas o hub ainda declara{" "}
+            <code>{migrou.de}</code> em <code>data/projects.json</code> — o antigo responde{" "}
+            <strong>301</strong> para o novo, e o rastreador seguiu o redirecionamento.{" "}
+            {propriedadeGsc ? (
+              <>
+                Os blocos de <strong>busca</strong> abaixo (Descoberta, Marca, Consultas,
+                Striking distance, Canibalização, Indexação) saem de{" "}
+                <code>{propriedadeGsc}</code> filtrada por <code>{migrou.de}</code>:{" "}
+                <strong>medem o domínio antigo</strong>.{" "}
+                {novoHostCoberto
+                  ? null
+                  : `Não há propriedade no Search Console que cubra ${migrou.para}, então o domínio novo ainda não tem nenhuma medição de busca — o que não é o mesmo que não ter tráfego.`}
+              </>
+            ) : (
+              <>Os blocos de busca abaixo estão sem propriedade no Search Console.</>
+            )}{" "}
+            Só o bloco <strong>Dentro das páginas</strong> mede <code>{migrou.para}</code>. Este
+            aviso some sozinho quando a URL do projeto for corrigida.
+          </p>
+        ) : null}
+
+        {/* A migração já declarada no card: o hub está certo, e o que falta dizer é por que a série
+            encurtou. Sem isto, 371.189 → 40 impressões lê como colapso de tráfego. */}
+        {migracao ? (
+          <p className="foot" style={{ borderLeft: "3px solid var(--borda)", paddingLeft: "0.75rem" }}>
+            <strong>Mudança de domínio em {migracao.data}.</strong> Este projeto media{" "}
+            <code>{migracao.hostAnterior}</code> e passou a medir <code>{hostDeclarado}</code> —{" "}
+            {migracao.porque}.
+            <br />
+            Os blocos que consultam o Search Console <strong>ao vivo</strong> já saem de{" "}
+            <code>{propriedadeGsc ?? "—"}</code>, que tem dado só a partir de{" "}
+            <strong>{recebidaGsc!.inicio}</strong>: a janela vem truncada e o volume é baixo porque o
+            instrumento é novo, <strong>não</strong> porque o tráfego caiu.{" "}
+            {migracao.historico ? <>O histórico anterior não se perdeu — {migracao.historico}.</> : null}
+            <br />
+            {/* G3: bloco que mede outro SUJEITO declara. Marca/não-marca lê a série GRAVADA em
+                `hub_gsc_dia`, apurada no domínio antigo — não a propriedade nova. Sem esta linha a
+                tela volta a somar dois sites, que é exatamente o defeito que a migração criou. */}
+            {diasSeparados?.length ? (
+              <>
+                <strong>Exceção — Marca e não-marca:</strong> esse bloco lê a série{" "}
+                <strong>gravada</strong> ({diasSeparados.length} dia(s) em <code>hub_gsc_dia</code>),
+                apurada no domínio <strong>antigo</strong>. Os números dele e os do resto desta tela
+                medem <strong>sites diferentes</strong> e não se comparam entre si.
+              </>
+            ) : null}
+          </p>
+        ) : null}
 
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Descoberta — Search Console, 8 meses</h2>
@@ -398,8 +509,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                       </>
                     ) : (
                       <>
-                        (<strong>{crescimento.de} → {crescimento.para}</strong>, dois meses{" "}
-                        <strong>fechados</strong> — nenhum deles é o mês corrente) · meta do board:{" "}
+                        (<strong>{crescimento.de} → {crescimento.para}</strong>:{" "}
+                        <strong>
+                          {crescimento.deImpressoes.toLocaleString("pt-BR")} →{" "}
+                          {crescimento.paraImpressoes.toLocaleString("pt-BR")}
+                        </strong>{" "}
+                        impressões não-marca, dois meses <strong>fechados</strong> — nenhum deles é
+                        o mês corrente) · meta do board:{" "}
                         <strong>5% a 10%/mês</strong> —{" "}
                         {crescimento.valor >= 0.05 && crescimento.valor <= 0.1
                           ? "dentro da faixa."
@@ -941,15 +1057,37 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </p>
               )}
 
-              {/* US1 — para onde vai a autoridade interna. */}
-              <p>
-                <strong>{br(crawl.orfas)}</strong> página(s) órfã(s){" "}
-                <span className="foot">
-                  declaradas no sitemap que <strong>nenhum link interno alcança</strong> ·{" "}
-                  {br(crawl.linkadasNaoDeclaradas)} alcançada(s) por link e ausente(s) do sitemap
-                </span>
-              </p>
-              <ul className="ficha-krs">
+              {/* US1 — para onde vai a autoridade interna.
+                  ⚠️ Antes de publicar a contagem, o caso 100%: corrida que visitou páginas e não
+                  extraiu UM link — nem de navegação, nem contextual — não mediu um site sem links
+                  internos, ela não leu link nenhum. Aí `orfas` é igual a `visitadas` por
+                  construção, e publicar "N órfãs" afirma sobre o site um defeito que é do
+                  rastreador. É erro na fonte, e erro na fonte nunca vira número. */}
+              {crawlSemLinks ? (
+                <p>
+                  <strong>não apurado</strong> — a corrida visitou{" "}
+                  <strong>{br(crawl.visitadas)}</strong> página(s) e extraiu{" "}
+                  <strong>zero link interno</strong> (nenhum de navegação, nenhum contextual).{" "}
+                  <span className="foot">
+                    Site sem nenhum link interno não existe; o que houve foi o rastreador não
+                    enxergar os links — página renderizada no cliente é a causa comum. Por isso as{" "}
+                    {br(crawl.orfas)} "órfãs" não são exibidas como achado: elas são{" "}
+                    <strong>iguais às visitadas por construção</strong>, e um número assim afirma
+                    sobre o site um defeito que é da medição. As seis medidas abaixo que dependem de
+                    link interno (periferia, profundidade, links contextuais) ficam igualmente sem
+                    veredito nesta corrida.
+                  </span>
+                </p>
+              ) : (
+                <p>
+                  <strong>{br(crawl.orfas)}</strong> página(s) órfã(s){" "}
+                  <span className="foot">
+                    declaradas no sitemap que <strong>nenhum link interno alcança</strong> ·{" "}
+                    {br(crawl.linkadasNaoDeclaradas)} alcançada(s) por link e ausente(s) do sitemap
+                  </span>
+                </p>
+              )}
+              <ul className="ficha-krs" hidden={periferia.length === 0}>
                 {periferia.slice(0, 15).map((pg) => (
                   <li key={pg.url}>
                     <strong>{caminho(pg.url)}</strong>{" "}

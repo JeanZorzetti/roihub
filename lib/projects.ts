@@ -71,6 +71,15 @@ export type Project = {
    *  do número. Ausente é o normal para os outros 16 projetos: `conversao()` cai para 28d/D-3, a
    *  mesma janela de sempre (FR-006, SC-007) — o campo NÃO se espalha para quem não declarou. */
   epoca?: { data: string; porque: string };
+  /** O domínio ANTERIOR, quando o projeto mudou de casa. Irmã de `epoca` na forma e distinta no
+   *  assunto: `epoca` corta a cadeia de Conversão (os leads), esta corta a de Descoberta (a busca).
+   *  Não colapsar as duas — um projeto pode ter uma sem a outra.
+   *
+   *  Presente → a tela de aquisição declara a migração em vez de deixar a queda de impressões
+   *  parecer perda de tráfego. É o caso em que a série CAI legitimamente sem nada ter piorado: a
+   *  propriedade nova do Search Console nasce vazia e o histórico fica na antiga, que segue viva.
+   *  Sem esta declaração o leitor vê 371.189 → 40 e conclui catástrofe, que é o oposto do fato. */
+  dominioAnterior?: { url: string; data: string; porque: string; historico?: string };
   /** A taxonomia de PERDA é do CLIENTE, não do template (019, FR-015): os slugs de
    *  `patient_leads.motivo` são livres e vivem no repo do projeto, não neste. Ausente = a ficha
    *  exibe `enviados` e OMITE vivos/perdidos, nomeando o que falta declarar (FR-015b) — nunca

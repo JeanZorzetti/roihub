@@ -243,6 +243,17 @@ test("crescimento compara os DOIS últimos meses fechados, nomeando os dois", ()
   assert.equal(c.valor, (31 * 20) / (28 * 10) - 1);
 });
 
+// A razão sozinha é ilegível quando a base é pequena: 342 → 14.689 vira "43×", que lê como
+// crescimento e é recuperação de um mês quebrado. Os dois absolutos saem junto ou o veredito
+// contra a meta do board é ruído formatado.
+test("crescimento devolve os ABSOLUTOS dos dois meses, não só a razão", () => {
+  const dias = [...serieDe("2026-02-01", "2026-02-28", 10), ...serieDe("2026-03-01", "2026-03-31", 20)];
+  const c = crescimentoNaoMarca(dias, "2026-04-05");
+  assert.equal(c.deImpressoes, 28 * 10);
+  assert.equal(c.paraImpressoes, 31 * 20);
+  assert.equal(c.paraImpressoes / c.deImpressoes - 1, c.valor, "os absolutos têm que reproduzir a razão");
+});
+
 test("o mês CORRENTE nunca entra na comparação", () => {
   const dias = [...serieDe("2026-02-01", "2026-02-28"), ...serieDe("2026-03-01", "2026-03-31"), ...serieDe("2026-04-01", "2026-04-10")];
   const c = crescimentoNaoMarca(dias, "2026-04-10");
