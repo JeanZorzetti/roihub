@@ -1,8 +1,9 @@
 # Handoff — 030 · a leitura por página soma os hosts declarados
 
 **Estado em 19/09/2026 (noite)**: US1, US2 e US3 implementadas e verdes (`npm test` 1065/1065, `tsc` limpo).
-**Não feito**: rollout do autopublishing (T030/T031), conferência em produção (T038), e dois critérios de
-sucesso que a spec não consegue cumprir do jeito que estão escritos (abaixo).
+**No ar** desde 19/09 20:35 BRT (e1a22ed; conferido 20:38 e 20:49).
+**Não feito**: rollout do autopublishing (T030/T031) e dois critérios de sucesso que a spec não consegue
+cumprir do jeito que estão escritos (abaixo).
 
 ## O que mudou
 
@@ -26,11 +27,11 @@ sucesso que a spec não consegue cumprir do jeito que estão escritos (abaixo).
 1. **Decidir SC-001/SC-002** (dono). Medido: o bloco lê `query`+`page` e o Search Console omite as consultas raras — **10.395 de 24.664 impressões (42,1%)**, 14 URLs, **6 avaliadas, 0% no piso**. A spec afirmava ≥ 99%, 23 páginas, 13,04%: esses números saem da dimensão `page` (29 páginas, 24 avaliáveis, 3 atingem = 12,5%). Opções: reescrever os SC contra `query`+`page`, ou alimentar o CTR Gap pela dimensão `page`.
 2. **Spec 031: `gscSeries(p.url)` multi-host** (D8 da research). É o que a tela contradiz hoje: "recebido 6 dos 28 dias" ao lado de "hosts somados". Também trava a T024 (`impressoesV` de um host contra média por página de dois).
 3. **Rollout do autopublishing** (constituição): `dry_run=true` e os quatro canários (goiania, tapepro, sirius, context). Nenhum foi executado — precisa do `CRON_SECRET` de produção e gasta quota do claude-cli. O risco que eles protegem (a leitura de busca) foi coberto por paridade byte a byte com dado real nos 10 sites; o que sobra é o restante do fluxo, que não foi tocado.
-4. **T038**: conferir `hub.roilabs.com.br/okr/atma/aquisicao` **duas vezes**, ~15 min após o deploy. Procurar a frase "hosts somados".
-5. Defeito pré-existente, achado no caminho: no bloco de consultas a 360px as linhas `ul.lts > li` do componente `Leitura` passam da borda (direita em 381 > 360). Não é desta spec.
+4. Defeito pré-existente, achado no caminho: no bloco de consultas a 360px as linhas `ul.lts > li` do componente `Leitura` passam da borda (direita em 381 > 360). Não é desta spec.
 
 ## Gotchas do ambiente
 
+- A rota do autopublishing foi exercitada localmente (dry-run com `GITHUB_TOKEN` inválido → `github-auth`): o `import()` dinâmico resolve.
 - Verificação na tela sem o segredo real: `HUB_USER=roi HUB_PASS=<qualquer> npm run dev` — o `.env` não sobrescreve variável já definida no shell.
 - Falha injetada para provar o caminho de erro: `HTTPS_PROXY=http://127.0.0.1:9 npm run dev` (o gaxios respeita; tudo do Google falha).
 - Os números da spec (98/8, 24.566/426, 24.664/434, 5 páginas em comum) foram **reproduzidos** por `node --env-file=.env scripts/conferir-soma-hosts.mjs atma 2026-08-20 2026-09-16 --pagina`. `--consulta` dá os 10.395.

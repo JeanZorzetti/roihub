@@ -160,8 +160,8 @@ exatamente por isso que a FR-006 é o que se cobra aqui.
 - [X] T034 [P] Conferir que cada comentário novo em `lib/gsc-hosts.mjs`, `lib/gsc.ts` e `app/okr/[slug]/aquisicao/page.tsx` traz o **fato medido** que motivou a linha (0,4% das impressões; 22.059@7,3 + 5@21 ⇒ média simples daria ≈14 e reprovaria no balizador ≤10,9) — comentário que narra o que a linha faz é ruído e sai
 - [X] T035 [P] Ler o diff inteiro procurando segredo em log, resposta ou mensagem de erro: o `{erro}` de `lib/gsc.ts` carrega o **host** (dado público do card) e nada mais (Princípio V)
 - [X] T036 Rodar `npm test` — suíte inteira verde, ~1,6 s, não só os arquivos tocados
-- [ ] T037 Commit e push do diff inteiro (`lib/gsc-hosts.mjs`, `lib/gsc.ts`, `lib/projects.ts`, `lib/okr-coleta.ts`, `lib/autopublish.ts`, `app/okr/[slug]/aquisicao/page.tsx`, `scripts/conferir-soma-hosts.mjs`, `test/`, `package.json`) em `main` **fora** de 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
-- [ ] T038 Conferir `https://hub.roilabs.com.br/okr/atma/aquisicao` no ar **duas vezes**, ~15 min após o push — uma checagem cedo "prova" que não subiu
+- [X] T037 Commit e push do diff inteiro (`lib/gsc-hosts.mjs`, `lib/gsc.ts`, `lib/projects.ts`, `lib/okr-coleta.ts`, `lib/autopublish.ts`, `app/okr/[slug]/aquisicao/page.tsx`, `scripts/conferir-soma-hosts.mjs`, `test/`, `package.json`) em `main` **fora** de 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
+- [X] T038 Conferir `https://hub.roilabs.com.br/okr/atma/aquisicao` no ar **duas vezes**, ~15 min após o push — uma checagem cedo "prova" que não subiu
 
 ---
 
@@ -252,5 +252,9 @@ O que a implementação encontrou e não estava escrito. Tudo medido, nada estim
 | 8 | T007 foi absorvida por T011/T021/T027: as assinaturas finais (`hosts: string[]`) entraram direto. | — | A paridade FR-006 foi provada com dado real (abaixo), no lugar do checkpoint de tela. |
 
 **FR-006 com dados reais**: código de HEAD × código novo, `gscQueryPages`, `gscConsultas` e `gscPaginas` nos 10 sites do autopublishing, uma requisição real por leitura — linhas, ordem e posições **idênticas byte a byte** nos 10. Cobre a T030/T031 no que elas protegem (a leitura de busca), mas **não as substitui**: nenhuma corrida `dry_run` nem canário foi executado.
+
+**Produção (T038)**: push em e1a22ed às 20:35 BRT; conferido às 20:38 e às 20:49 — HTTP 200, `hosts somados` e o total 10.395 no HTML servido, estado antigo (`impressões — o piso da régua do board`) ausente. O deploy levou ~2 min desta vez, não os ~15 do costume.
+
+**Rota do autopublishing**: o `import()` dinâmico de `@/lib/projects` só roda numa publicação real, então foi provado à parte — dry-run local com `GITHUB_TOKEN` inválido de propósito devolveu `{"status":"failed","reason":"github-auth"}` (o wrapper resolveu e o `publishProject` rodou), não um 500 de módulo.
 
 **Mutação**: 10 comportamentos quebrados de propósito (teto contra o total, soma parcial, erro sem host, teto de páginas errado, média simples, chave pela URL crua, barra normalizada, `null`→0, lista vazia em strict, autopublishing ignorando o `dominioAnterior`); os 10 são pegos por teste.
