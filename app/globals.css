@@ -1372,3 +1372,36 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   [data-info="aquisicao"] .cmp-leg { grid-template-columns: 1fr; }
   [data-info="aquisicao"] .cel-i { width: 100%; }
 }
+
+/* ── A ORIGEM DA RÉGUA (031) ──────────────────────────────────────────────────
+   De onde vem o número contra o qual a leitura é julgada.
+
+   O levantamento de 19/09/2026 mediu as 26 folhas do board contra fonte primária: 4 têm régua
+   publicada, 21 não têm. Até então as duas naturezas saíam com a MESMA cara — `LCP ≤ 2,5s`
+   (Google, com URL) e `40% a 50% no Top 3` (sem origem conhecida) apareciam como "meta do board",
+   com a mesma faixa desenhada na trilha. Duas coisas de natureza diferente com a mesma tipografia
+   é mentira de FORMA: nenhuma medição a contradiz, porque os dois números estão certos — só um
+   deles é verificável.
+
+   O portador principal é a FORMA, não a cor: losango CHEIO tem fonte, VAZADO não tem. Impresso em
+   cinza ou lido por quem não distingue matiz, a distinção sobrevive — o mesmo argumento de
+   `.cmp-hach`, onde vazado contra cheio separa o que está dentro da conta do que está fora.
+   A palavra é o segundo portador ("régua:" contra "parâmetro editorial, sem fonte:") e vem do
+   catálogo em `lib/gsc-delta.mjs`, nunca escrita aqui.
+
+   Sai em 12px e `--muted`: é procedência, não leitura. Ela qualifica o número acima e não pode
+   competir com ele — mas também não pode ficar atrás de um clique, porque a natureza da régua
+   muda como o número deve ser lido, e isso é nível 2, não nível 3. */
+[data-info="aquisicao"] .org {
+  display: block; margin-top: 2px; font-size: 12px; line-height: 1.5; color: var(--muted);
+}
+[data-info="aquisicao"] .org::before { margin-right: 5px; font-size: 10px; vertical-align: 1px; }
+/* Cheio = verificável. O link é o que torna a afirmação auditável, e por isso a fonte é clicável
+   e o recorte fica ao lado: régua de outro mercado citada sem o recorte é a falsa autoridade que
+   `handoff/okr-regua-de-mercado.md` proíbe na trava 4. */
+[data-info="aquisicao"] .org-com::before { content: "◆"; }
+/* Vazado = sem origem. NÃO usa `--crit-ink`: o número não está errado, está sem fonte, e vermelho
+   diria que alguém errou. Neutro, como as ausências dos selos `sem` e `piso`. */
+[data-info="aquisicao"] .org-sem::before { content: "◇"; }
+[data-info="aquisicao"] .org a { color: var(--accent); }
+

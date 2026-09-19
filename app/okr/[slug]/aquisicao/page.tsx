@@ -34,6 +34,7 @@ import {
   CADENCIA_MESES,
 } from "@/lib/grafo.mjs";
 import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
+import { regua as reguaDoBoard } from "@/lib/gsc-delta.mjs";
 import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
 import { WeekChart, type WeekPoint, type WeekCut } from "../../../viz";
@@ -67,6 +68,55 @@ const PALAVRA_DO_SELO: Record<Selo, string> = {
 };
 function SeloEstado({ tipo, palavra }: { tipo: Selo; palavra?: string }) {
   return <span className={`selo selo-${tipo}`}>{palavra ?? PALAVRA_DO_SELO[tipo]}</span>;
+}
+
+/**
+ * 031 · A ORIGEM DE UMA RÉGUA — de onde vem o número contra o qual a leitura é julgada.
+ *
+ * Até 19/09/2026 esta tela dizia "meta do board" em três pontos, com faixa desenhada na trilha e
+ * selo `dado` quando a leitura batia. O levantamento de `handoff/gsc-balizador-estudo.md` mediu as
+ * 26 folhas do board contra fonte primária: **4 têm régua, 21 não têm**. As três metas que esta
+ * tela exibia estão entre as 21 — `40% a 50%` no Top 3, `≥ 70%` de Active Index e `5% a 10%/mês`
+ * de crescimento não são publicadas por ninguém.
+ *
+ * Não estão erradas: estão **sem origem**, que é diferente. O problema era tipográfico — elas
+ * apareciam com a mesma autoridade de `LCP ≤ 2,5s`, que é do Google e tem URL. Duas coisas de
+ * natureza diferente com a mesma cara é mentira de forma, do tipo que nenhuma medição contradiz.
+ *
+ * A régua sai de `lib/gsc-delta.mjs`, nunca escrita aqui: é lá que `test/gsc-delta.test.mjs` exige
+ * `fonte`, `url`, `acessadoEm` e `recorte` de toda linha, e motivo próprio de toda recusa.
+ */
+function Origem({ chave }: { chave: string }) {
+  const r = reguaDoBoard(chave) as
+    | { tem: true; meta: number | [number, number] | null; fonte: { fonte: string; url: string; acessadoEm: string; recorte: string } }
+    | { tem: false; motivo: string; natureza: string };
+  if (r.tem) {
+    return (
+      <span className="org org-com">
+        régua:{" "}
+        <a href={r.fonte.url} target="_blank" rel="noreferrer">
+          {r.fonte.fonte}
+        </a>{" "}
+        · {r.fonte.recorte} · acessado em {r.fonte.acessadoEm}
+      </span>
+    );
+  }
+  // `natureza` separa quatro ausências com consertos OPOSTOS, e por isso nenhuma delas diz só
+  // "sem régua": procurar fonte, ligar coletor, e aceitar que binário não tem quartil são
+  // trabalhos diferentes. O motivo vem do catálogo — escrevê-lo aqui criaria a segunda cópia.
+  const rotulo =
+    r.natureza === "semColetor"
+      ? "sem coletor"
+      : r.natureza === "norma"
+        ? "norma, não régua"
+        : r.natureza === "procedimento"
+          ? "procedimento"
+          : "parâmetro editorial, sem fonte";
+  return (
+    <span className="org org-sem">
+      {rotulo}: {r.motivo}
+    </span>
+  );
 }
 
 /**
@@ -1517,24 +1567,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 ) : (
                   <Leitura
                     valor={variacao(crescimento.valor)}
-                    selo={
-                      crescimento.baseInterrompida
-                        ? "piso"
-                        : crescimento.valor >= 0.05 && crescimento.valor <= 0.1
-                          ? "dado"
-                          : undefined
-                    }
-                    palavra={
-                      crescimento.baseInterrompida
-                        ? "a faixa do board não se aplica"
-                        : crescimento.valor >= 0.05 && crescimento.valor <= 0.1
-                          ? "dentro da faixa do board"
-                          : undefined
-                    }
+                    selo={crescimento.baseInterrompida ? "piso" : undefined}
+                    palavra={crescimento.baseInterrompida ? "a faixa do board não se aplica" : undefined}
                   >
                     de crescimento de impressões não-marca ({crescimento.de} → {crescimento.para}:{" "}
                     {br(crescimento.deImpressoes)} → {br(crescimento.paraImpressoes)})
-                    {crescimento.baseInterrompida ? null : <> · meta do board: 5% a 10%/mês</>}
+                    {crescimento.baseInterrompida ? null : (
+                      <>
+                        {" "}· parâmetro do board: 5% a 10%/mês — <Origem chave="crescimentoNaoMarca" />
+                      </>
+                    )}
                   </Leitura>
                 )}
 
@@ -1762,7 +1804,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                       </>
                     ) : null}
                     {baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO ? (
-                      <> · meta do board: 40% a 50%</>
+                      <>
+                        {" "}· parâmetro do board: 40% a 50% — <Origem chave="impressoesTop3" />
+                      </>
                     ) : null}
                   </Leitura>
                 )}
@@ -1779,10 +1823,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                       valor={pct(ativas)}
                       fracao={acimaDoPiso ? ativas : undefined}
                       meta={0.7}
-                      selo={ativas >= 0.7 ? "dado" : undefined}
                     >
                       de Active Index Ratio ({br(kpis.urlsComImpressao)} ÷ {br(denomIdx!)} indexadas,{" "}
-                      {idx!.dia}) · meta do board: ≥ 70%
+                      {idx!.dia}) · parâmetro do board: ≥ 70% — <Origem chave="activeIndexRatio" />
                     </Leitura>
                     {porPagina && (
                       <Leitura

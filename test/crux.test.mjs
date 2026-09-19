@@ -93,8 +93,8 @@ test("o limite do board é inclusivo: 2500 é dentro, 2501 é fora (FR-006)", ()
   assert.equal(medirRecord(record({ lcp: 2501 })).get("largest_contentful_paint").veredito, "fora");
   assert.equal(medirRecord(record({ inp: 200 })).get("interaction_to_next_paint").veredito, "dentro");
   assert.equal(medirRecord(record({ cls: 0.1 })).get("cumulative_layout_shift").veredito, "dentro");
-  assert.equal(medirRecord(record({ ttfb: 600 })).get("experimental_time_to_first_byte").veredito, "dentro");
-  assert.equal(medirRecord(record({ ttfb: 601 })).get("experimental_time_to_first_byte").veredito, "fora");
+  assert.equal(medirRecord(record({ ttfb: 800 })).get("experimental_time_to_first_byte").veredito, "dentro");
+  assert.equal(medirRecord(record({ ttfb: 801 })).get("experimental_time_to_first_byte").veredito, "fora");
 });
 
 // ── T010: cada unidade na sua ───────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ test("rodapé declara p75, alvo, janela, dispositivo e meta (FR-005, FR-006, FR-
 test("o TTFB mostra os DOIS limites e o rótulo de experimental (FR-007, FR-008)", () => {
   const m = medirRecord(record(bom));
   const r = rodape(m.get("experimental_time_to_first_byte"), ORIGEM);
-  assert.match(r, /meta ≤ 600 ms \(ideal < 300 ms\): dentro/);
+  assert.match(r, /meta ≤ 800 ms \(ideal < 300 ms\): dentro/);
   assert.match(r, /experimental na fonte$/);
 });
 

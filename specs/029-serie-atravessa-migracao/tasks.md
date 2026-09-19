@@ -125,7 +125,7 @@ histórico, só então mexer na tela.
 - [X] T031 `npm test` verde (suíte inteira, não só os arquivos tocados)
 - [X] T032 Conferir a tela no navegador: veredito único, semana de 14/09 com barra, fronteira
       datada, e nenhuma frase de série encerrada
-- [ ] T033 Commit e push respeitando a janela do Princípio IV (fora de 23:30-01:00 e 08:00-08:45
+- [X] T033 Commit e push respeitando a janela do Princípio IV (fora de 23:30-01:00 e 08:00-08:45
       BRT); o deploy do EasyPanel leva ~15 min e a tela precisa ser conferida DUAS vezes
 - [X] T034 `handoff/` — registrar o que a corrida passou a medir e o que a assinatura significa,
       para quem abrir a tela daqui a três meses
