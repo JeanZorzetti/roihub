@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CATALOGO, regua } from "../lib/gsc-delta.mjs";
-import { BOARD, GRUPOS, NOTA_DO_GRUPO, RAMOS, selo, mapaDoBoard } from "../lib/board-gsc.mjs";
+import { BENCHMARK, benchmark } from "../lib/kpis-busca.mjs";
+import { PROFUNDIDADE_MAX } from "../lib/grafo.mjs";
+import { BOARD, DIVERGENCIAS, GRUPOS, NOTA_DO_GRUPO, RAMOS, selo, mapaDoBoard } from "../lib/board-gsc.mjs";
 
 /** Todo nó do mapa, achatado, para as asserções de contagem e unicidade. */
 function todosOsNos(no, acc = []) {
@@ -89,8 +91,18 @@ test("o selo de cada folha segue a natureza do balizador, nunca o texto do board
 test("toda folha do mapa carrega a tag de procedência visível", () => {
   const folhas = todosOsNos(mapaDoBoard().nodeData).filter((n) => n.metadata?.chave);
   for (const f of folhas) {
-    assert.ok(Array.isArray(f.tags) && f.tags.length === 1, `folha sem tag: ${f.metadata.chave}`);
+    assert.ok(Array.isArray(f.tags) && f.tags.length >= 1, `folha sem tag: ${f.metadata.chave}`);
+    // A PRIMEIRA tag é sempre a procedência — a ordem importa porque a lista da página imprime as
+    // tags na ordem e a procedência é a que qualifica todo o resto. A segunda, quando existe, é a
+    // divergência board × código, e nada mais entra: tag extra sem dono vira decoração com cara de
+    // selo, que é o defeito que a forma ◆/◇ existe para não ter.
     assert.match(f.tags[0], /^[◆◇] /, `tag sem marca de forma: ${f.metadata.chave}`);
+    const extras = f.tags.slice(1);
+    assert.deepEqual(
+      extras,
+      DIVERGENCIAS[f.metadata.chave] ? [DIVERGENCIAS[f.metadata.chave].tag] : [],
+      `tag extra que não é a divergência declarada: ${f.metadata.chave}`,
+    );
   }
 });
 
@@ -133,4 +145,91 @@ test("nenhuma nota repete o próprio rótulo", () => {
 test("o mapa cabe no teto de leitura da forma — 150 nós", () => {
   const total = todosOsNos(mapaDoBoard().nodeData).length;
   assert.ok(total <= 150, `${total} nós: acima de 150 o leitor não lê, admira — agregue antes`);
+});
+
+// ── A TRAVA QUE FALTAVA: valor transcrito × constante que o hub usa para julgar ────────────────
+//
+// A auditoria de 19/09/2026 achou 9 defeitos de DADO que passavam pelos 1029 testes sem uma falha,
+// e a razão era sempre a mesma: os testes comparam LISTA contra LISTA — chave daqui existe lá, selo
+// segue o balizador — e nenhum deles olha para DENTRO da prosa. O board entrou no repo como terceira
+// fonte de números sem herdar a disciplina que as outras duas têm.
+//
+// O caso que doeu: o TTFB. O board diz 600ms, `crux.mjs` e `gsc-delta.mjs` julgam por 800ms desde o
+// mesmo dia, e os dois foram publicados juntos — o 600 no rótulo do nó, o 800 atrás de um clique.
+//
+// Os três testes abaixo são o único ponto onde essa classe de divergência é pega antes da tela,
+// enquanto o board for transcrito à mão e julgado à parte.
+
+/** Toda a prosa de uma folha — rótulo e nota, folha e descendentes. */
+function prosaDaFolha(chave) {
+  const cai = (ds) => ds.flatMap((d) => [d.rotulo, d.nota ?? "", ...(d.filhos ? cai(d.filhos) : [])]);
+  return cai(BOARD[chave].detalhe).join(" \n ");
+}
+
+/**
+ * O número aparece na prosa, nas grafias que ele mesmo gera?
+ *
+ * ⚠️ TETO CONHECIDO: isto casa GRAFIA, não interpreta a frase. `2500` casa "2,5s" porque a função
+ * gera a forma dividida por mil; um board que escrevesse "dois segundos e meio" passaria batido. O
+ * upgrade, se um dia doer, é declarar a meta do board como DADO ao lado da prosa — e aí o teste vira
+ * igualdade. Enquanto as metas forem numéricas, a grafia basta e custa cinco linhas.
+ *
+ * As bordas existem porque `8` casava dentro de `18%` e aprovava a tabela errada em silêncio.
+ */
+function citaONumero(texto, n, exigePorcento = false) {
+  const formas = new Set([String(n), String(n).replace(".", ",")]);
+  if (n >= 1000) formas.add(String(n / 1000)).add(String(n / 1000).replace(".", ","));
+  return [...formas].some((forma) => {
+    const corpo = forma.replace(/[.,]/g, "[.,]");
+    return new RegExp(`(?<![\d,.])${corpo}${exigePorcento ? "\s*%" : "(?![\d])"}`).test(texto);
+  });
+}
+
+/** A constante VIVA de cada divergência — lida do código, nunca copiada. Divergência declarada sem
+ *  entrada aqui reprova: é o que impede alguém de declarar uma divergência contra nada. */
+const CONSTANTE_VIVA = {
+  ttfb: () => regua("ttfb").meta,
+  ctrPorPosicao: () => benchmark(1),
+  profundidadeClique: () => PROFUNDIDADE_MAX,
+};
+
+test("nenhuma meta escalar publicada contradiz a constante que o hub usa para julgar", () => {
+  const mudas = Object.keys(CATALOGO)
+    .filter((k) => regua(k).tem && regua(k).meta !== null && !DIVERGENCIAS[k])
+    .filter((k) => !citaONumero(prosaDaFolha(k), regua(k).meta));
+  assert.deepEqual(
+    mudas,
+    [],
+    `o board publica um número que não é o do hub, e a divergência não está declarada em DIVERGENCIAS: ${mudas.join(", ")}`,
+  );
+});
+
+test("a tabela de CTR do board é a que julga, ou a divergência está declarada", () => {
+  const fora = ["ctrPorPosicao", "ctrGap"]
+    .filter((k) => !DIVERGENCIAS[k])
+    .filter((k) => !BENCHMARK.every((faixa) => citaONumero(prosaDaFolha(k), faixa.ctr * 100, true)));
+  assert.deepEqual(fora, [], `folha de CTR cuja tabela transcrita não reproduz BENCHMARK: ${fora.join(", ")}`);
+});
+
+test("toda divergência declarada aponta para um nó real e para a constante viva", () => {
+  for (const [chave, d] of Object.entries(DIVERGENCIAS)) {
+    assert.ok(CATALOGO[chave], `divergência em folha fora do catálogo: ${chave}`);
+    assert.ok(
+      prosaDaFolha(chave).includes(d.no),
+      `${chave}: o rótulo declarado em \`no\` não existe mais na transcrição — a divergência ficou órfã`,
+    );
+    const viva = CONSTANTE_VIVA[chave];
+    assert.ok(viva, `${chave}: divergência sem constante viva declarada em CONSTANTE_VIVA`);
+    assert.equal(d.hub, viva(), `${chave}: \`hub\` copiado do código saiu de sincronia com a constante`);
+  }
+});
+
+test("a divergência é VISÍVEL no nó, não só no painel do pai", () => {
+  const nos = todosOsNos(mapaDoBoard().nodeData);
+  for (const [chave, d] of Object.entries(DIVERGENCIAS)) {
+    const folha = nos.find((n) => n.id === chave);
+    assert.ok(folha.tags.includes(d.tag), `${chave}: a folha não carrega a etiqueta da divergência`);
+    const no = nos.find((n) => n.topic === d.no);
+    assert.ok(no?.tags?.includes(d.tag), `${chave}: o nó divergente não carrega a etiqueta — o número do board fica sozinho`);
+  }
 });

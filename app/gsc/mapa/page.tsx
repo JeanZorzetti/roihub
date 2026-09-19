@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { CATALOGO } from "@/lib/gsc-delta.mjs";
-import { mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
+import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
+import { DIVERGENCIAS, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
 import { Tabs } from "../../tabs";
 import { Mapa } from "./mapa";
 
@@ -10,7 +10,8 @@ import { Mapa } from "./mapa";
 // POR QUE UMA SEGUNDA TELA E NÃO A SUBSTITUIÇÃO DE `/gsc`: as duas respondem perguntas diferentes.
 // `/gsc` responde "contra o que este KPI é julgado" — 32 linhas, estático, imprimível, zero JS, e é
 // dele que sai o placar de procedência. Esta responde "o que este KPI É, na definição do board" —
-// 113 nós, 5 níveis, e a prosa que só existia dentro do editor. Fundir as duas custaria o render
+// 113 nós em 6 níveis (medidos, nunca estimados: ver `fundo`), e a prosa que só existia dentro do
+// editor. Fundir as duas custaria o render
 // estático da primeira para ganhar profundidade que a maior parte das visitas não pede.
 //
 // ⚠️ ESTA TELA TAMBÉM NÃO LÊ DADO DE PROJETO NENHUM, pelo mesmo motivo da irmã: os números da Atma
@@ -29,11 +30,33 @@ export const metadata: Metadata = {
 export default function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
+  const reguaDe = regua as (k: string) => { tem: boolean; meta: number | [number, number] | null };
+  const medidoPor = MEDIDO_POR as Record<string, string | undefined>;
 
   type No = { id: string; topic: string; note?: string; tags?: string[]; children?: No[] };
 
   const nos = (n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);
   const total = nos(dados.nodeData as No);
+
+  // TODO número desta tela é COMPUTADO, e a regra nasceu de um erro publicado: a primeira versão
+  // escreveu "7", "25" e "5 níveis" como texto corrido. Os 5 níveis eram 6 — 7 nós viviam no nível
+  // que a tela dizia não existir, e a medida nunca tinha sido feita, foi estimada e propagada de
+  // `.info/log.json`. Os 7/25 sobreviveriam intactos a mudar o balizador de uma folha, porque os
+  // testes comparam LISTA contra LISTA e nunca contra a constante. Constante acoplada ao tamanho de
+  // uma lista é armadilha: a lista muda, a constante fica, e a tela mente sem nenhum teste ficar
+  // vermelho.
+  const niveis = (n: No, d = 1): number => Math.max(d, ...(n.children ?? []).map((f) => niveis(f, d + 1)));
+  const fundo = niveis(dados.nodeData as No);
+
+  const chaves = Object.keys(cat);
+  const comRegua = chaves.filter((k) => reguaDe(k).tem);
+  // Régua ESCALAR × régua TABELADA: `ctrPorPosicao` e `ctrGap` são julgadas por uma tabela por faixa
+  // de posição, não por um número, e o selo `◆` as igualava às outras cinco sem dizer isso.
+  const escalar = comRegua.filter((k) => reguaDe(k).meta !== null);
+  // Sem coletor ≠ sem faixa publicada, e os dois pedem trabalho OPOSTO: um é ligar a fonte, o outro
+  // é aceitar que ninguém publica a régua. A frase antiga dizia "o número existe" para as 25 — e era
+  // falsa para as que nenhum coletor mede.
+  const semColetor = chaves.filter((k) => !medidoPor[k]);
 
   // A lista é gerada do MESMO `mapaDoBoard()` que alimenta o mapa. Uma segunda travessia escrita à
   // mão divergiria do desenho na primeira folha nova — e divergiria calada, porque o portador
@@ -41,7 +64,11 @@ export default function MapaDoBoardPage() {
   const lista = (n: No, nivel: number) => (
     <li key={n.id}>
       <span className={`mb-n mb-n${Math.min(nivel, 3)}`}>{n.topic}</span>
-      {n.tags?.length ? <span className="mb-tag">{n.tags[0]}</span> : null}
+      {n.tags?.map((t) => (
+        <span className="mb-tag" key={t}>
+          {t}
+        </span>
+      ))}
       {n.note ? <span className="mb-nota">{n.note}</span> : null}
       {n.children?.length ? <ul>{n.children.map((f) => lista(f, nivel + 1))}</ul> : null}
     </li>
@@ -58,15 +85,28 @@ export default function MapaDoBoardPage() {
           As <strong>{Object.keys(cat).length} folhas</strong> do board com os níveis que a{" "}
           <a href="/gsc">árvore de procedência</a> não desenha: o título numerado, a família dentro do
           ramo e a definição — <em>o que mede</em>, <em>fórmula</em>, <em>meta recomendada</em>.{" "}
-          <strong>{total} nós</strong> ao todo, em 5 níveis. Levantado do board{" "}
+          <strong>{total} nós</strong> ao todo, em {fundo} níveis. Levantado do board{" "}
           <code>okr-Saw2eoSKZDPLJAk6xeDBuS</code> em <strong>19/09/2026</strong>.
         </p>
         <p className="foot">
           <strong>A meta do board não é régua.</strong> Ela está aqui porque é o que o board diz, não
-          porque tem fonte: <span className="arv-k">◆</span> marca as 7 folhas com fonte, URL e
-          recorte declarados, <span className="arv-k">◇</span> as 25 em que o número existe e ninguém
-          publica a faixa dele. O motivo de cada ausência aparece no painel ao clicar no nó, e o
-          placar fechado está na <a href="/gsc">árvore</a>.
+          porque tem fonte: <span className="arv-k">◆</span> marca as {comRegua.length} folhas com
+          limiar declarado — {escalar.length} com um número, {comRegua.length - escalar.length} com a
+          tabela de CTR por faixa de posição —, <span className="arv-k">◇</span> as{" "}
+          {chaves.length - comRegua.length} em que o hub não publica faixa nenhuma. Dessas,{" "}
+          <strong>{semColetor.length} não têm coletor</strong>: ali o número não existe, e o trabalho
+          é ligar a fonte, não procurar estudo. O motivo de cada ausência aparece no painel ao clicar
+          no nó, e o placar fechado está na <a href="/gsc">árvore</a>.
+        </p>
+        <p className="foot">
+          <strong>Onde o board e o código discordam, o nó diz.</strong> A transcrição não é corrigida
+          — o board é o que o board diz —, mas o nó divergente carrega a etiqueta{" "}
+          <span className="mb-tag">⚠</span> com o número que o hub usa para julgar, e o painel explica
+          qual dos dois tem fonte. São {Object.keys(DIVERGENCIAS).length}:{" "}
+          {Object.keys(DIVERGENCIAS)
+            .map((k) => cat[k].nome)
+            .join(" · ")}
+          .
         </p>
 
         <Mapa dados={dados} />

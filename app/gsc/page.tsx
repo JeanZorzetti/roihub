@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { CATALOGO, MEDIDO_POR, EDITORIAIS, regua } from "@/lib/gsc-delta.mjs";
+import {
+  CATALOGO,
+  MEDIDO_POR,
+  EDITORIAIS,
+  RESSALVA_DO_COLETOR,
+  limiarEmTexto,
+  regua,
+} from "@/lib/gsc-delta.mjs";
 import { layoutDeArvore, caminhoDaLigacao, recuosPorNivel } from "@/lib/arvore-layout.mjs";
 import { Tabs } from "../tabs";
 
@@ -167,8 +174,9 @@ export default async function BoardGscPage() {
           </svg>
           <figcaption className="foot">
             <span className="arv-k">◆</span> régua publicada, com fonte e recorte ·{" "}
-            <span className="arv-k">◇</span> sem régua: o número existe e ninguém publica a faixa
-            dele. <strong>Cheio e vazado, não cor</strong> — a distinção sobrevive ao cinza e à
+            <span className="arv-k">◇</span> sem régua: ninguém publica a faixa dele — e em parte
+            delas o número nem existe, porque nenhum coletor mede.{" "}
+            <strong>Cheio e vazado, não cor</strong> — a distinção sobrevive ao cinza e à
             impressão.
           </figcaption>
         </figure>
@@ -183,7 +191,7 @@ export default async function BoardGscPage() {
           <li className="lt">
             <span className="lt-v">{contagem.recusa ?? 0}</span>
             <span className="lt-r">
-              sem fonte: o número existe e <strong>ninguém publica</strong> a faixa dele
+              sem fonte: <strong>ninguém publica</strong> a faixa dele
             </span>
           </li>
           <li className="lt">
@@ -227,6 +235,10 @@ export default async function BoardGscPage() {
                 {doRamo.map((k) => {
                   const r = regua(k) as Regua;
                   const onde = (MEDIDO_POR as Record<string, string>)[k];
+                  // A ressalva viaja COM o coletor: `consultasUnicas` e as irmãs devolvem um piso,
+                  // nunca o total, e a flag `piso: true` morria na borda — a tela creditava o
+                  // coletor e parava aí, publicando o piso como se fosse a contagem.
+                  const ressalva = (RESSALVA_DO_COLETOR as Record<string, string>)[k];
                   return (
                     <tr key={k}>
                       <td className="inst-n">{cat[k].nome}</td>
@@ -234,23 +246,19 @@ export default async function BoardGscPage() {
                         {/* Ausência NOMEADA: um traço faria "ninguém mediu ainda" parecer com "não
                             se aplica", e os dois pedem trabalho oposto. */}
                         {onde ? <code>{onde}</code> : <span className="lt-v-sem">nenhum coletor</span>}
+                        {ressalva ? <span className="foot"> ⚠ {ressalva}</span> : null}
                       </td>
                       <td>
                         {r.tem ? (
                           <span className="org org-com">
                             <a href={r.fonte.url} target="_blank" rel="noreferrer">
                               {r.fonte.fonte}
-                            </a>
-                            {r.meta !== null ? (
-                              <>
-                                {" "}
-                                · limiar{" "}
-                                <strong>
-                                  {Array.isArray(r.meta) ? `${r.meta[0]} a ${r.meta[1]}` : r.meta}
-                                </strong>
-                              </>
-                            ) : null}{" "}
-                            · {r.fonte.recorte} · acessado em {r.fonte.acessadoEm}
+                            </a>{" "}
+                            {/* O limiar sai de `limiarEmTexto()` e não de `r.meta` cru: as duas
+                                folhas de CTR têm `meta: null` porque a régua delas é uma TABELA, e
+                                a formatação antiga simplesmente não imprimia limiar para elas. */}
+                            · <strong>{limiarEmTexto(k)}</strong> · {r.fonte.recorte} · acessado em{" "}
+                            {r.fonte.acessadoEm}
                           </span>
                         ) : (
                           <span className="org org-sem">
