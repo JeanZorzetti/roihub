@@ -133,6 +133,14 @@ export async function listReposSemSite(): Promise<{ name: string; url: string; p
   return reposSemSite(curated as Curated[], await listRepos());
 }
 
+/** O `dominioAnterior` que o card declara para um slug, ou `null` (030, C2). Lê a curadoria direto,
+ *  sem rede, pelo mesmo motivo de `listFichas()`: o campo SÓ existe nela — repo vindo do GitHub
+ *  nunca o tem. Existe para um consumidor: o autopublishing, cuja lista de projetos é própria e não
+ *  o tem (declará-lo lá seria uma segunda lista de hosts, que FR-001 proíbe). */
+export function dominioAnteriorDoSlug(slug: string): { url: string } | null {
+  return (curated as Curated[]).find((p) => p.slug === slug)?.dominioAnterior ?? null;
+}
+
 /** Só os projetos com `ficha` curada, para o menu da aba OKR. Lê a curadoria direto porque `ficha`
  *  SÓ existe nela — repo vindo do GitHub nunca tem o campo, então esta lista e a de
  *  `listProjects()` concordam por construção. Sem `listRepos()`: uma barra de navegação presente

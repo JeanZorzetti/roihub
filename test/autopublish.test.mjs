@@ -1287,7 +1287,7 @@ test("GSC consulta as janelas exatas e reduz URL Inspection", async () => {
     },
   };
 
-  const rows = await gscQueryPages("https://x.test", {
+  const rows = await gscQueryPages(["x.test"], {
     client,
     now: new Date("2026-07-24T12:00:00Z"),
   });
@@ -1355,7 +1355,7 @@ test("GSC estrito tenta tres vezes e falha fechado", async () => {
     },
   };
   await assert.rejects(
-    () => gscQueryPages("https://x.test", {
+    () => gscQueryPages(["x.test"], {
       client,
       strict: true,
       sleep: async (delay) => delays.push(delay),
@@ -1364,6 +1364,81 @@ test("GSC estrito tenta tres vezes e falha fechado", async () => {
   );
   assert.equal(requests, 3);
   assert.deepEqual(delays, [250, 500]);
+});
+
+test("GSC estrito com lista de hosts vazia lança e nunca devolve []", async () => {
+  let requests = 0;
+  const client = {
+    request: async () => {
+      requests += 1;
+      return { data: {} };
+    },
+  };
+  // Card sem URL utilizável não é site sem histórico: `[]` faria toda pauta virar "new" e o robô
+  // publicaria uma segunda página para uma URL que já ranqueia — o defeito que o `strict` impede.
+  await assert.rejects(() => gscQueryPages([], { client, strict: true, sleep: async () => {} }), /gsc-unavailable/);
+  assert.equal(requests, 0, "lista vazia não é retentada nem gasta requisição");
+  assert.deepEqual(await gscQueryPages([], { client }), [], "sem strict, sem onde olhar é sem linhas");
+});
+
+test("a pauta lê o histórico dos DOIS hosts: a consulta que só ranqueia no domínio anterior deixa de ser new", async () => {
+  // `antigo.x.test` cai na mesma propriedade `sc-domain:x.test` do host atual, e o filtro de host
+  // é o que separa as duas respostas.
+  const client = {
+    request: async (request) => {
+      if (!request.data) {
+        return { data: { siteEntry: [{ siteUrl: "sc-domain:x.test", permissionLevel: "siteOwner" }] } };
+      }
+      const host = request.data.dimensionFilterGroups[0].filters[0].expression;
+      const rows = host === "https://antigo.x.test/"
+        ? [{ keys: ["guia de crm", "https://antigo.x.test/blog/guia-de-crm"], clicks: 30, impressions: 900, position: 6 }]
+        : [];
+      return { data: { rows } };
+    },
+  };
+  const inventory = [{
+    slug: "guia-de-crm",
+    title: "Guia de CRM",
+    primaryKeyword: "guia de crm",
+    path: "content/blog/guia-de-crm.mdx",
+    headings: [],
+  }];
+  const now = new Date("2026-07-24T12:00:00Z");
+
+  const doisHosts = await gscQueryPages(["x.test", "antigo.x.test"], { client, now });
+  assert.equal(doisHosts[0].page, "https://x.test/blog/guia-de-crm", "a URL sai assinada pelo host atual");
+  const [candidato] = rankCandidates(doisHosts, inventory);
+  assert.equal(candidato.action, "update");
+  assert.equal(candidato.targetPath, "content/blog/guia-de-crm.mdx");
+
+  // Com um host só a mesma consulta nem chega à lista, e a pauta trataria o assunto como novo.
+  assert.deepEqual(await gscQueryPages(["x.test"], { client, now }), []);
+});
+
+test("publishProject passa à leitura de busca o host de siteUrl e o domínio anterior do card", async () => {
+  const lidos = [];
+  const executar = (extra = {}) => publishProject("context", "2026-07-24", {
+    db: fakeDb(),
+    gscQueryPages: async (...args) => {
+      lidos.push(args);
+      return [];
+    },
+    readRepository: async () => ({ headSha: "head0", files: [] }),
+    researchAndDraft: async () => ({
+      ...validContextDraft(),
+      action: "new",
+      overlap: "uncertain",
+      reason: "The inventory does not establish whether this intent is new.",
+    }),
+    ...extra,
+  });
+
+  await executar();
+  await executar({ dominioAnterior: (slug) => (slug === "context" ? { url: "https://antigo.nimblabs.com/" } : null) });
+  assert.deepEqual(lidos, [
+    [["context.nimblabs.com"], { strict: true }],
+    [["context.nimblabs.com", "antigo.nimblabs.com"], { strict: true }],
+  ]);
 });
 
 test("claude-cli pesquisa e decide update sem copiar a heurística do candidato", async () => {

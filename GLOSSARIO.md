@@ -21,5 +21,6 @@ no mesmo commit que o usa.
 | Contestação no cartão | "⚠️ Contestação no cartão" | chargeback, charged_back | alerta do ROI Labs (027) — pede ação diferente da devolução |
 | Renovação recusada | "⚠️ Renovação recusada" + data do cancelamento automático | ciclo falhou, falha de renovação | alerta do ROI Labs (027) |
 | Assinatura cancelada | "⛔ Assinatura cancelada" + quem cancelou | assinatura encerrada, churn | alerta do ROI Labs (027) |
-| Assinatura de hosts | os hosts somados num dia, ordenados e unidos por `+` | host da série, domínio do projeto | coluna `host` de `hub_gsc_dia` (029) — uma assinatura de um host é o caso comum, não um caso especial |
+| Assinatura de hosts | os hosts somados num dia, ordenados e unidos por `+` | host da série, domínio do projeto | coluna `host` de `hub_gsc_dia` (029) e linha "hosts somados" do bloco de consultas de /okr/<slug>/aquisicao (030) — uma assinatura de um host é o caso comum, não um caso especial: a tela cala |
+| Host sem propriedade | "sem propriedade no Search Console e fora da soma" + o host | host encerrado, domínio morto, host que falhou | bloco de consultas de /okr/<slug>/aquisicao (030) — ausência estrutural, que pede criar a propriedade; não é "Search Console indisponível", falha de agora que pede tentar de novo |
 | Fronteira de migração | o dia em que a assinatura muda DENTRO do conjunto declarado | corte da série, série encerrada | gráfico de semanas em /okr/<slug>/aquisicao (029) — a série segue viva dos dois lados |

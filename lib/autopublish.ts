@@ -10,6 +10,7 @@ import {
 // @ts-expect-error Node's direct TypeScript execution requires the .ts extension.
 } from "./autopublish-clients.ts";
 import { projectBySlug } from "./autopublish-projects.mjs";
+import { hostsDeclarados } from "./projects.mjs";
 import { extractInventory, guiaUpsert, registryUpsert, renderDraft } from "./autopublish-render.mjs";
 import {
   beginPublication,
@@ -34,6 +35,10 @@ type Dependency = (...args: any[]) => any;
 type PublishDependencies = {
   dryRun?: boolean;
   db?: PublicationDb;
+  // 030: o `dominioAnterior` do card. Entra por AQUI e não por import de `lib/projects.ts`: aquele
+  // módulo usa o alias `@/` e não carrega no Node dos testes; a rota injeta `dominioAnteriorDoSlug`.
+  // Ausente é um host só — o que o robô sempre leu.
+  dominioAnterior?: (slug: string) => { url: string } | null;
   gscQueryPages?: Dependency;
   readRepository?: Dependency;
   researchAndDraft?: Dependency;
@@ -176,6 +181,7 @@ export async function publishProject(
   const {
     dryRun = false,
     db = database,
+    dominioAnterior = () => null,
     gscQueryPages = queryGscPages,
     readRepository = readProjectRepository,
     researchAndDraft = createDraft,
@@ -217,8 +223,13 @@ export async function publishProject(
   }
 
   try {
+    // 030: a pauta lê o histórico do site INTEIRO. Uma URL que ranqueia no domínio anterior é
+    // invisível para a leitura de um host só, e o robô a leria como pauta nova e publicaria uma
+    // segunda página para o mesmo termo. `siteUrl` segue sendo o host canônico de `targetUrl`,
+    // `origin` e sitemap no resto do arquivo.
+    const hosts = hostsDeclarados({ url: project.siteUrl, dominioAnterior: dominioAnterior(project.slug) ?? undefined });
     const [gscRows, repository] = await Promise.all([
-      gscQueryPages(project.siteUrl, { strict: true }),
+      gscQueryPages(hosts, { strict: true }),
       readRepository(project),
     ]);
     const registry = typeof project.registryPath === "string"

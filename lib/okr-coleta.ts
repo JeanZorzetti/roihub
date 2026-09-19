@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { gscSeries, gscPaginas, type GscPaginas } from "@/lib/gsc";
+import { hostsDeclarados } from "@/lib/projects.mjs";
 import { totals28 } from "@/lib/series.mjs";
 import { apurado, naoApurado, ehApurado } from "@/lib/funil.mjs";
 import { pipelineDe, celulaDeLeads, celulasDeOrcamento, celulaDeContato, celulaDeResposta, ticketDeOrcamentos, motivosDoFunil } from "@/lib/okr.mjs";
@@ -183,7 +184,9 @@ export async function coletarDoProjeto(
     gscSeries(p.url),
     ga4Canais(p.ga4?.propertyId, { inicio: janelaComportamento.inicio, fim: janelaComportamento.fim }),
     ga4Eventos(p.ga4?.propertyId, { inicio: janelaComportamento.inicio, fim: janelaComportamento.fim }),
-    gscPaginas(p.url, { inicio: janelaDescoberta.inicio, fim: janelaDescoberta.fim }),
+    // 030: os hosts declarados, os mesmos da aba de aquisição — a lista de páginas da ficha lia só
+    // o host de `url` e mostrava a campeã da Atma (22.059 impressões) com as 5 do domínio novo.
+    gscPaginas(hostsDeclarados(p), { inicio: janelaDescoberta.inicio, fim: janelaDescoberta.fim }),
   ]);
   const totals = s && "days" in s ? totals28(s.days, janelaDescoberta.fim) : null;
   // `s` distingue fato real (`null`) de falha transitória (`{erro}`) — achado 1 do design-review

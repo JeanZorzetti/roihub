@@ -1,4 +1,5 @@
 import { GoogleAuth } from "google-auth-library";
+import { mesclarPorCaminho } from "./gsc-hosts.mjs";
 
 export type GscTrend = { current: number; previous: number; property: string } | null;
 
@@ -12,6 +13,18 @@ type GscPageRow = {
   position: number;
 };
 type GscPageMetrics = { clicks: number; impressions: number; position: number };
+type Janela = { inicio: string; fim: string };
+
+/** O que UM host devolveu, antes da soma (030, E3). `host` é o declarado no card, e não a
+ *  propriedade: `sc-domain:` cobre o domínio inteiro, e `propriedade` só serve de diagnóstico. */
+export type RespostaPorHost = { host: string; propriedade: string; rows: GscPageRow[]; truncado: boolean };
+type LinhaSomada = ReturnType<typeof mesclarPorCaminho>[number];
+/** O que `lerPorHosts` devolve (030, E5) — um dos três, nunca uma mistura. `null` é ausência
+ *  estrutural; `{erro}` é falha de agora e COMEÇA pelo host que falhou. */
+export type LeituraSomada =
+  | { linhas: LinhaSomada[]; hosts: string[]; encerrados: string[]; truncado: boolean }
+  | { erro: string }
+  | null;
 
 export function mergeGscWindows(current: GscPageRow[], previous: GscPageRow[]) {
   const keyed = new Map<string, { query: string; page: string; current: GscPageMetrics | null; previous: GscPageMetrics | null }>();
@@ -146,12 +159,17 @@ const TETO_LINHAS = 25000;
 // (contra D-30 da descoberta) e uma segunda requisição para a janela anterior, que nenhum dos
 // KPIs de busca usa: um dia de divergência entre o total de cima da aba e a lista de baixo,
 // pago em rede dobrada.
+//
+// 030: `dimensions` e `rowLimit` viraram parâmetros para a leitura de páginas (`["page"]`, 1.000)
+// usar a MESMA requisição em vez de uma cópia inline — eram três cópias do mesmo filtro de host.
 export async function queryPageWindow(
   client: RequestClient,
   property: string,
   host: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  dimensions: string[] = ["query", "page"],
+  rowLimit: number = TETO_LINHAS
 ): Promise<GscPageRow[]> {
   const res = await client.request<{ rows?: GscPageRow[] }>({
     url: `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(
@@ -161,14 +179,71 @@ export async function queryPageWindow(
     data: {
       startDate,
       endDate,
-      dimensions: ["query", "page"],
-      rowLimit: 25000,
+      dimensions,
+      rowLimit,
       dimensionFilterGroups: [
         { filters: [{ dimension: "page", operator: "contains", expression: `https://${host}/` }] },
       ],
     },
   });
   return res.data.rows ?? [];
+}
+
+/**
+ * 030 — o caminho ÚNICO das leituras por página do Search Console: uma requisição por host
+ * declarado e a soma por caminho. Eram três cópias de `resolveProperty` + filtro de host + teto
+ * (`gscQueryPages`, `gscConsultas`, `gscPaginas`), e consertar a que foi reportada deixava as
+ * outras duas contando o site pela metade — medido na Atma em 19/09/2026, a aba de aquisição
+ * decidia os KPIs de clique sobre 98 das 24.664 impressões do site (0,4%).
+ *
+ * Em SÉRIE, não em paralelo: mesma credencial e mesmo endpoint, e disparar os dois de uma vez é o
+ * caminho curto para um 429. Exportada pelo mesmo motivo de `queryPageWindow`: testável sem o Next.
+ *
+ * Os dois estados de ausência NÃO colapsam, porque pedem conserto diferente:
+ * - host sem propriedade, com outro vivo → a leitura segue com os vivos e o host sai em
+ *   `encerrados`. Nenhum vivo (ou env desligada, ou lista vazia) → `null`: conserto é domínio.
+ * - host que FALHA → `{erro}` e nada é publicado. Soma parcial lê como queda de tráfego (a guarda
+ *   da 029 salvou o histórico e entregou 3% do número); a mensagem COMEÇA pelo host, porque um
+ *   `{erro}` de uma leitura de dois hosts sem ele não diz onde ir.
+ *
+ * `truncado` compara cada resposta contra o `rowLimit` DESTA requisição, e nunca o total somado:
+ * com dois hosts o total passa de 25.000 sem que nenhuma propriedade tenha sido cortada, e contra
+ * o total a flag dispararia sem motivo — ou, contra o teto errado, nunca.
+ */
+export async function lerPorHosts(
+  hosts: string[],
+  { janela, dimensions, rowLimit, client }: { janela: Janela; dimensions: string[]; rowLimit: number; client?: RequestClient },
+): Promise<LeituraSomada> {
+  if (hosts.length === 0) return null;
+  const clientP = client ? Promise.resolve(client) : getClient();
+  if (!clientP) return null;
+  const respostas: RespostaPorHost[] = [];
+  const encerrados: string[] = [];
+  // Falha em `listSites()` é da leitura inteira e não de um host: nomeia todos.
+  let alvo = hosts.join(", ");
+  try {
+    const conectado = await clientP;
+    const sites = await listSites(conectado);
+    for (const host of hosts) {
+      alvo = host;
+      const propriedade = resolveProperty(host, sites);
+      if (!propriedade) {
+        encerrados.push(host);
+        continue;
+      }
+      const rows = await queryPageWindow(conectado, propriedade, host, janela.inicio, janela.fim, dimensions, rowLimit);
+      respostas.push({ host, propriedade, rows, truncado: rows.length >= rowLimit });
+    }
+  } catch (e) {
+    return { erro: `${alvo}: ${(e instanceof Error ? e.message : String(e)).slice(0, 60)}` };
+  }
+  if (respostas.length === 0) return null;
+  return {
+    linhas: mesclarPorCaminho(respostas, hosts),
+    hosts: respostas.map((r) => r.host),
+    encerrados,
+    truncado: respostas.some((r) => r.truncado),
+  };
 }
 
 type GscClientOptions = { client?: RequestClient; now?: Date };
@@ -191,16 +266,35 @@ async function gscConnection(siteUrl: string, clientOverride?: RequestClient) {
 // strict: pro autopublishing, GSC indisponível NÃO pode virar [] — sem linhas toda pauta
 // vira "new" e o robô duplica URL já ranqueada. 3 tentativas e falha fechado.
 // Janelas em série: na falha a segunda chamada não é gasta.
-export async function gscQueryPages(siteUrl: string, options: GscStrictOptions = {}) {
+//
+// 030: recebe os hosts declarados. A ORDEM importa — soma os hosts DENTRO de cada janela e só
+// depois compara as janelas: com as respostas cruas, a mesma página nos dois hosts entraria duas
+// vezes no par `current`/`previous` e a pauta leria a mesma URL como duas.
+export async function gscQueryPages(hosts: string[], options: GscStrictOptions = {}) {
   const { strict = false, sleep = wait } = options;
+  // Lista vazia em `strict` é erro e nunca `[]`: um card sem URL utilizável não é um site sem
+  // histórico, e `[]` faz toda pauta virar "new" — o defeito que o `strict` existe para impedir.
+  if (strict && hosts.length === 0) throw new Error("gsc-unavailable");
+  const janela = async (de: number, ate: number, now: number): Promise<GscPageRow[] | null> => {
+    const lida = await lerPorHosts(hosts, {
+      janela: { inicio: isoDaysAgo(de, now), fim: isoDaysAgo(ate, now) },
+      dimensions: ["query", "page"],
+      rowLimit: TETO_LINHAS,
+      client: options.client,
+    });
+    if (!lida) return null;
+    if ("erro" in lida) throw new Error(lida.erro);
+    // Linha sem impressão não existe na resposta do Google; o filtro só estreita o tipo.
+    return lida.linhas.flatMap((l) =>
+      l.posicao === null ? [] : [{ keys: [l.query!, l.page], clicks: l.cliques, impressions: l.impressoes, position: l.posicao }],
+    );
+  };
   for (let attempt = 0; ; attempt++) {
     try {
-      const connection = await gscConnection(siteUrl, options.client);
-      if (!connection) return [];
       const now = options.now?.getTime() ?? Date.now();
-      const { client, host, property } = connection;
-      const current = await queryPageWindow(client, property, host, isoDaysAgo(31, now), isoDaysAgo(3, now));
-      const previous = await queryPageWindow(client, property, host, isoDaysAgo(59, now), isoDaysAgo(32, now));
+      const current = await janela(31, 3, now);
+      if (!current) return [];
+      const previous = (await janela(59, 32, now)) ?? [];
       return mergeGscWindows(current, previous);
     } catch {
       if (!strict) return [];
@@ -380,7 +474,12 @@ export async function gscTrend(siteUrl: string): Promise<GscTrend> {
 }
 
 export type GscPaginas =
-  | { paginas: { pagina: string; impressoes: number; cliques: number; posicao: number }[] }
+  | {
+      paginas: { pagina: string; impressoes: number; cliques: number; posicao: number; hosts: string[] }[];
+      hosts: string[];
+      encerrados: string[];
+      truncado: boolean;
+    }
   | { erro: string }
   | null;
 
@@ -390,91 +489,73 @@ export type GscPaginas =
  *
  * Função nova em vez de dimensão extra em `gscSeries()` (016, D6): aquela devolve série diária e é
  * consumida por meia dúzia de lugares; trocar a forma do retorno mexeria em todos eles para servir
- * um consumidor só. Mesma autenticação, mesmo filtro de host, mesma janela declarada (R7).
+ * um consumidor só.
  *
- * `null` é "não há onde olhar" (env desligada ou host fora de toda propriedade) e `{erro}` é falha
+ * 030: soma os hosts declarados. Medido na Atma em 19/09/2026, a página que carrega 90% do
+ * movimento (22.059 impressões) vive no domínio antigo, e a lista lida só do host novo a mostrava
+ * com 5 — a média por página, e com ela as "páginas necessárias", saía de uma fatia de 0,4%.
+ * O teto é o desta requisição (1.000), e não o das consultas: comparar contra 25.000 faria o
+ * `truncado` nunca disparar aqui.
+ *
+ * `null` é "não há onde olhar" (env desligada ou nenhum host com propriedade) e `{erro}` é falha
  * transitória — a mesma distinção que `gscSeries()` faz, e pelo mesmo motivo: colapsar as duas faz
  * "sem propriedade" mentir quando era só timeout.
  */
-export async function gscPaginas(siteUrl: string, janela: { inicio: string; fim: string }): Promise<GscPaginas> {
-  const clientP = getClient();
-  if (!clientP) return null;
-  try {
-    const client = await clientP;
-    const host = new URL(siteUrl).hostname;
-    const property = resolveProperty(host, await listSites(client));
-    if (!property) return null;
-    const res = await client.request<{
-      rows?: { keys: string[]; clicks: number; impressions: number; position: number }[];
-    }>({
-      url: `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(property)}/searchAnalytics/query`,
-      method: "POST",
-      data: {
-        startDate: janela.inicio,
-        endDate: janela.fim,
-        dimensions: ["page"],
-        dimensionFilterGroups: [
-          { filters: [{ dimension: "page", operator: "contains", expression: `https://${host}/` }] },
-        ],
-        rowLimit: 1000,
-      },
-    });
-    return {
-      paginas: (res.data.rows ?? []).map((r) => ({
-        pagina: r.keys[0],
-        impressoes: r.impressions,
-        cliques: r.clicks,
-        posicao: r.position,
-      })),
-    };
-  } catch (e) {
-    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
-  }
+export async function gscPaginas(hosts: string[], janela: Janela, options: GscClientOptions = {}): Promise<GscPaginas> {
+  const lida = await lerPorHosts(hosts, { janela, dimensions: ["page"], rowLimit: 1000, client: options.client });
+  if (!lida || "erro" in lida) return lida;
+  const { linhas, ...resto } = lida;
+  return {
+    ...resto,
+    // Linha sem impressão não existe na resposta do Google; o `flatMap` só estreita o tipo.
+    paginas: linhas.flatMap((l) =>
+      l.posicao === null
+        ? []
+        : [{ pagina: l.page, impressoes: l.impressoes, cliques: l.cliques, posicao: l.posicao, hosts: l.hosts }],
+    ),
+  };
 }
 
-/** Uma linha de `query`+`page` da janela, com os nomes do domínio em vez de `keys[0]`/`keys[1]`. */
-export type LinhaBusca = { query: string; page: string; cliques: number; impressoes: number; posicao: number };
-export type GscConsultas = { linhas: LinhaBusca[]; truncado: boolean } | { erro: string } | null;
+/** Uma linha de `query`+`page` da janela, com os nomes do domínio em vez de `keys[0]`/`keys[1]`.
+ *  `hosts` (030) é quem contribuiu com a linha — a página mesclada de dois hosts nomeia os dois. */
+export type LinhaBusca = { query: string; page: string; cliques: number; impressoes: number; posicao: number; hosts: string[] };
+export type GscConsultas =
+  | { linhas: LinhaBusca[]; hosts: string[]; encerrados: string[]; truncado: boolean }
+  | { erro: string }
+  | null;
 
 /**
  * As consultas da janela, para os KPIs de busca da 021.
  *
- * UMA chamada, com a janela que o chamador passa — `descoberta()`, no caso da aba de aquisição.
+ * UMA janela, a que o chamador passa — `descoberta()`, no caso da aba de aquisição.
  * `gscQueryPages` não serve aqui: a janela dela é fixa em D-31→D-3 (um dia mais larga que a
  * descoberta, o que faria a lista não fechar com o total exibido acima dela) e ela gasta uma
  * segunda requisição na janela anterior, que nenhum KPI desta feature lê.
  *
- * `truncado` existe porque `TETO_LINHAS` é um corte silencioso da API: sem o sinal, um projeto
- * grande exibiria o teto como se fosse o fim dos dados (FR-011).
+ * 030: soma os hosts declarados. Desde a troca de domínio da Atma (11/09), a aba decidia os sete
+ * KPIs do ramo CLIQUE sobre 98 das 24.664 impressões do site — o Índice de Conformidade saía sem
+ * denominador, e um painel mudo é indistinguível de um painel que ninguém apurou.
  *
- * `null` = não há onde olhar (env desligada ou host fora de toda propriedade); `{erro}` = falha
+ * `truncado` existe porque `TETO_LINHAS` é um corte silencioso da API: sem o sinal, um projeto
+ * grande exibiria o teto como se fosse o fim dos dados (FR-011). Vale por propriedade.
+ *
+ * `null` = não há onde olhar (env desligada ou nenhum host com propriedade); `{erro}` = falha
  * transitória. Mesma distinção de `gscSeries()` e `gscPaginas()`, e pelo mesmo motivo.
  */
 export async function gscConsultas(
-  siteUrl: string,
-  janela: { inicio: string; fim: string },
+  hosts: string[],
+  janela: Janela,
   options: GscClientOptions = {},
 ): Promise<GscConsultas> {
-  const clientP = options.client ? Promise.resolve(options.client) : getClient();
-  if (!clientP) return null;
-  try {
-    const client = await clientP;
-    const host = new URL(siteUrl).hostname;
-    const property = resolveProperty(host, await listSites(client));
-    if (!property) return null;
-    const rows = await queryPageWindow(client, property, host, janela.inicio, janela.fim);
-    // `query` ou `page` vazio não é linha de busca — mesma guarda de `mergeGscWindows`.
-    const linhas = rows
-      .filter((r) => r.keys[0] && r.keys[1])
-      .map((r) => ({
-        query: r.keys[0],
-        page: r.keys[1],
-        cliques: r.clicks,
-        impressoes: r.impressions,
-        posicao: r.position,
-      }));
-    return { linhas, truncado: rows.length >= TETO_LINHAS };
-  } catch (e) {
-    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
-  }
+  const lida = await lerPorHosts(hosts, { janela, dimensions: ["query", "page"], rowLimit: TETO_LINHAS, client: options.client });
+  if (!lida || "erro" in lida) return lida;
+  return {
+    ...lida,
+    // Linha sem impressão não existe na resposta do Google; o `flatMap` só estreita o tipo.
+    linhas: lida.linhas.flatMap((l) =>
+      l.posicao === null
+        ? []
+        : [{ query: l.query!, page: l.page, cliques: l.cliques, impressoes: l.impressoes, posicao: l.posicao, hosts: l.hosts }],
+    ),
+  };
 }

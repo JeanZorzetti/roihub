@@ -13,7 +13,7 @@ import {
   type DiaSeparado,
 } from "@/lib/db";
 import { gscSeries, gscConsultas } from "@/lib/gsc";
-import { mesesDaSerie, janelaDeFoco } from "@/lib/serie-gsc.mjs";
+import { mesesDaSerie, janelaDeFoco, assinaturaDeHosts } from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
@@ -538,7 +538,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     // Fora de `SLUGS_DE_BUSCA` a chamada nem sai: os KPIs do board são da Atma, e este bloco era
     // o último pedaço da 021 que ainda servia os 35 — porque lê ao vivo no render, sem passar
     // pela corrida que já foi restringida.
-    SLUGS_DE_BUSCA.includes(slug) ? gscConsultas(p.url, curtaGsc) : null,
+    // 030: os hosts DECLARADOS, os mesmos da série e do GA4 — a aba lia só o host de `url` e, desde
+    // a troca de domínio da Atma, decidia os KPIs de clique sobre 98 das 24.664 impressões do site.
+    SLUGS_DE_BUSCA.includes(slug) ? gscConsultas(hostsDeclarados(p), curtaGsc) : null,
     // 022: a indexação vem do BANCO, apurada pela corrida das 05:47. Zero chamada à URL Inspection
     // API aqui — ver `lerApuracao`.
     lerApuracao(slug),
@@ -548,6 +550,14 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     lerSerieSeparada(slug, janelaGsc),
   ]);
   const linhasBusca = consultas && "linhas" in consultas ? consultas.linhas : null;
+  // 030 (FR-008) — QUEM compôs os números do bloco. Um total somado sem a assinatura de quem o
+  // compôs não é conferível. É a MESMA assinatura da série gravada (`hub_gsc_dia.host`, 029 —
+  // ordenada, unida por `+`), para as duas fontes serem comparáveis a olho. Com um host só não há
+  // o que declarar: a tela de sempre (FR-006).
+  const hostsDoCard = hostsDeclarados(p);
+  const consultasLidas = consultas && "linhas" in consultas ? consultas : null;
+  const hostsSomados = consultasLidas ? (assinaturaDeHosts(consultasLidas.hosts) ?? "").split("+").join(" + ") : null;
+  const declaraHosts = !!consultasLidas && (consultasLidas.hosts.length > 1 || consultasLidas.encerrados.length > 0);
 
   // ── 025: a declaração de marca, que serve os DOIS blocos desta página ─────────────────────
   //
@@ -941,7 +951,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     const estreita = baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO;
     instrumentos.push({
       nome: "Consultas ao vivo",
-      mede: propriedadeGsc,
+      // 030 — com dois hosts somados a propriedade da SÉRIE (um host só) não descreve o que esta
+      // linha mede. Um host: a propriedade de sempre.
+      mede: declaraHosts && hostsSomados ? hostsSomados : propriedadeGsc,
       desde: recebidaGsc ? `desde ${recebidaGsc.inicio}` : "—",
       selo: baseCurta === 0 ? "sem" : estreita ? "piso" : "dado",
       nota:
@@ -1725,6 +1737,20 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 {curtaGsc.fim})
               </>
             ) : null}
+            {declaraHosts && consultasLidas ? (
+              <>
+                {" "}
+                · {consultasLidas.hosts.length > 1 ? "hosts somados" : "host consultado"}:{" "}
+                <strong>{hostsSomados}</strong>
+                {consultasLidas.encerrados.length > 0 ? (
+                  <>
+                    {" "}
+                    · sem propriedade no Search Console e fora da soma:{" "}
+                    <strong>{consultasLidas.encerrados.join(", ")}</strong>
+                  </>
+                ) : null}
+              </>
+            ) : null}
           </p>
 
           {!SLUGS_DE_BUSCA.includes(slug) ? (
@@ -1743,8 +1769,17 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               não apurado —{" "}
               {consultas && "erro" in consultas
                 ? `Search Console indisponível (${consultas.erro})`
-                : `sem propriedade no GSC para ${p.url}`}
+                : hostsDoCard.length > 1
+                  ? `sem propriedade no GSC para nenhum dos hosts declarados (${hostsDoCard.join(", ")})`
+                  : `sem propriedade no GSC para ${p.url}`}
               .
+              {/* 030 (FR-004) — o `erro` já COMEÇA pelo host que falhou. Com dois hosts o bloco
+                  inteiro fica sem número, e a frase diz por quê: um total sem o host que falhou
+                  leria como queda de tráfego (a guarda da 029 salvou o histórico e entregou 3% do
+                  número). */}
+              {consultas && "erro" in consultas && hostsDoCard.length > 1
+                ? " Um total parcial leria como queda de tráfego — por isso nenhum número do bloco é publicado. Tente de novo em instantes."
+                : null}
             </p>
           ) : (
             <>
@@ -2052,6 +2087,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                         {" "}
                         <strong>E há truncamento</strong> no teto de linhas da API — os números são
                         piso por essa segunda razão, além da omissão das raras.
+                        {consultas.hosts.length > 1
+                          ? " O teto vale por propriedade: basta uma ter sido cortada."
+                          : null}
                       </>
                     ) : null}
                   </dd>
