@@ -1433,6 +1433,50 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="gsc"] .gsc-ed dt code { overflow-wrap: anywhere; }
 [data-info="gsc"] .gsc-ed dd { margin: 0; font-size: 13px; color: var(--ink2); line-height: 1.6; }
 
+/* ── A ÁRVORE ──────────────────────────────────────────────────────────
+   O board como ele é: raiz à esquerda, ramificação para a direita, uma linha por folha. Layout no
+   servidor (`lib/arvore-layout.mjs`), SVG no HTML, zero JS de cliente e zero dependência — o
+   desenho existe no `view-source` e sobrevive a JS desligado, a impressão e a leitor de tela
+   (`role="img"` com a tabela abaixo como segundo portador).
+
+   Texto em `<text>` do SVG, e não HTML posicionado: aqui o texto acompanha o viewBox de propósito,
+   porque o vinculo entre rótulo e traço é geométrico — diferente do gráfico do nível 1, onde o
+   rótulo é legenda de eixo e encolher até 4px o tornaria ilegível. A proteção de legibilidade aqui
+   é `min-width` com rolagem horizontal PRÓPRIA do bloco, nunca da página. */
+[data-info="gsc"] .arv {
+  margin: 14px 0 0; padding: 0 0 4px;
+  /* A rolagem é DO BLOCO. `overflow-x` no `<main>` é o que a 011 proíbe reintroduzir em 390px. */
+  overflow-x: auto;
+}
+[data-info="gsc"] .arv:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[data-info="gsc"] .arv-svg {
+  display: block; width: 100%; height: auto;
+  /* Abaixo disto os rótulos de KPI ficam ilegíveis e a árvore vira risco. O bloco rola; a página
+     não. */
+  min-width: 620px;
+  /* TETO de largura. Sem ele o viewBox de 580 estica para os 1.180px do card e a árvore sai
+     com ~2.100px de altura — o mesmo "esticar inventa drama" que o gráfico mensal da Descoberta
+     já resolveu com max-width. Em 880px a escala fica em ~1,5×: o texto de 12px renderiza a
+     18px e a árvore inteira cabe em ~1.300px. */
+  max-width: 880px;
+}
+/* O traço é GRADE, não dado: ele mostra a hierarquia, que os rótulos já carregam pela posição.
+   Por isso `--grid` e não um tom de dado — traço mais forte que o texto inverteria a leitura. */
+[data-info="gsc"] .arv-t { stroke: var(--grid); stroke-width: 1.5; }
+[data-info="gsc"] .arv-n text { font-size: 12px; fill: var(--ink2); }
+/* Três níveis, três pesos: a hierarquia sai da TIPOGRAFIA e da posição, sem uma cor por nível. */
+[data-info="gsc"] .arv-n0 text { font-size: 14px; font-weight: 700; fill: var(--ink); }
+[data-info="gsc"] .arv-n1 text {
+  font-size: 11px; font-weight: 700; fill: var(--muted); letter-spacing: 0.06em;
+}
+[data-info="gsc"] .arv-f text { font-size: 12px; fill: var(--ink2); }
+/* O marcador de régua. `--muted` dá 4,82:1 sobre a superfície, acima do 3:1 que elemento gráfico
+   portador de informação exige — e a informação real é a FORMA (cheio contra vazado), não a cor. */
+[data-info="gsc"] .arv-m { font-size: 10px; fill: var(--muted); }
+[data-info="gsc"] .arv-k { color: var(--muted); font-size: 11px; }
+[data-info="gsc"] .arv figcaption { margin-top: 6px; }
+
+
 @media (max-width: 640px) {
   /* 278px úteis não comportam três colunas: cada folha vira um bloco, com o nome em cima e a
      procedência embaixo. Mesma técnica da tabela de instrumentos, e pela mesma razão — `table` e

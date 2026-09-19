@@ -3,17 +3,26 @@
 **Levantado em 19/09/2026.** Fonte do board: `https://whimsical.com/v-rtice3/okr-Saw2eoSKZDPLJAk6xeDBuS`
 Regime escolhido: **A** — as linhas entram sob as regras de `lib/benchmark.mjs` (`media`/`elite`/`fonte`/`url`/`acessadoEm`/`recorte` obrigatórios, ou `Recusa` com motivo próprio).
 
-Nenhum dos 26 itens do board ficou de fora. Cada um está abaixo como `LINHA`, `RECUSA` ou `PROCEDIMENTO`.
+Nenhuma das folhas do board ficou de fora. Cada uma está abaixo como `LINHA`, `RECUSA` ou `PROCEDIMENTO`.
 
 ---
 
 ## 0. Veredito
 
-| | |
-|---|---|
-| `LINHA` (fonte citável, faixa, recorte declarado) | **5** |
-| `RECUSA` (sem fonte publicável) | **20** |
-| `PROCEDIMENTO` (não é KPI) | **1** |
+⚠️ **O placar abaixo foi escrito à mão e estava errado até 19/09/2026.** Dizia "26 folhas, 4 com
+régua". São **32 folhas** — o board decompõe em mais itens do que a leitura visual contou — e
+**7 têm régua**, porque LCP, INP e CLS são três entradas de catálogo e não uma. O erro sobreviveu a
+várias revisões deste documento porque prosa não tem como reclamar.
+
+O número que vale é o de `/gsc`, **contado do catálogo a cada render**. Este aqui é cópia datada:
+
+| natureza | quantas | o que significa |
+|---|---|---|
+| `régua` | **7** | fonte, url, data de acesso e recorte declarados |
+| `recusa` | **18** | o número existe e ninguém publica a faixa dele |
+| `sem coletor` | **3** | falta ligar a fonte, não procurar estudo |
+| `norma` | **3** | binário: não existe quartil de "válido ou inválido" |
+| `procedimento` | **1** | não é KPI |
 
 **Três números do board não sobrevivem ao contato com a fonte primária.** Estão na §1 porque não são "linha sem fonte" — são linha *contra* a fonte.
 
@@ -246,7 +255,7 @@ O GSC não informa volume de mercado — só o que o próprio site recebeu. Medi
 
 ## 4. O que isso significa para a tela do `atma`
 
-Das 26 folhas do board, **4 emitem veredito**. As outras 22 aparecem como `sem régua` — estado que `benchmark.mjs` já trata como dado legítimo e visível.
+Das 32 folhas do board, **7 emitem veredito**. As outras 25 aparecem como `sem régua` — estado que `benchmark.mjs` já trata como dado legítimo e visível.
 
 Isso não é fracasso do levantamento. É o board revelando o que ele sempre foi: **uma taxonomia de diagnóstico com valores editoriais**, não uma régua de mercado. Como mapa do que olhar no GSC, é bom. Como fonte de limiar para um motor de veredito, dois terços dele não têm de onde vir.
 

@@ -19,7 +19,7 @@ import * as grafo from "../lib/grafo.mjs";
 import * as crux from "../lib/crux.mjs";
 import { apurado, naoApurado } from "../lib/funil.mjs";
 
-// As 26 folhas do board `okr-Saw2eoSKZDPLJAk6xeDBuS`, escritas por extenso.
+// As 32 folhas do board `okr-Saw2eoSKZDPLJAk6xeDBuS`, escritas por extenso.
 // Literal e não `Object.keys(CATALOGO).length`: contar o próprio objeto passaria verde se alguém
 // apagasse uma folha e acrescentasse outra. O board é a fonte, e ele não muda sozinho.
 const FOLHAS = [
@@ -39,6 +39,9 @@ const SELOS = ["dado", "fim", "piso", "sem", "cega"];
 test("nenhuma folha do board fica de fora do catálogo", () => {
   for (const f of FOLHAS) assert.ok(CATALOGO[f], `folha ausente do catálogo: ${f}`);
   assert.deepEqual(Object.keys(CATALOGO).sort(), [...FOLHAS].sort());
+  // O total, travado. O levantamento em markdown escreveu "26 folhas" à mão e errou — o board
+  // decompõe em 32. Prosa não tem como reclamar; este assert tem.
+  assert.equal(FOLHAS.length, 32);
 });
 
 test("toda régua declara fonte, url, acessadoEm e recorte (trava 4)", () => {
