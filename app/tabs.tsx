@@ -18,15 +18,21 @@ type Active =
   | "crm"
   | "ia"
   | "automacao"
-  | "okr";
+  | "okr"
+  | "gsc";
 
 /**
- * As 13 seções em 4 grupos, na ordem em que o trabalho acontece: o número chega (Medir), vira
+ * As 14 seções em 4 grupos, na ordem em que o trabalho acontece: o número chega (Medir), vira
  * escolha (Decidir), vira trabalho (Executar), e a máquina que roda por baixo (Máquina).
  *
- * Uma faixa de 13 links planos não tinha ordem legível nenhuma — era só uma lista. O agrupamento
+ * Uma faixa de links planos não tinha ordem legível nenhuma — era só uma lista. O agrupamento
  * é o que a coluna compra e a faixa não comprava; abaixo de 1024px o CSS devolve os itens à faixa
  * horizontal de antes (`display: contents`), sem hambúrguer e sem JS de cliente.
+ *
+ * 19/09/2026 — `Board GSC` entrou em Medir, ao lado de SEO. É a ÚNICA seção que não lê dado de
+ * projeto nenhum: ela publica a TAXONOMIA (o que cada KPI é, onde é medido, contra que régua) que
+ * as telas de projeto consomem. Fica em Medir e não em Máquina porque quem a abre está perguntando
+ * o que um número significa, não como o hub funciona por dentro.
  */
 const GRUPOS: { id: string; titulo: string; itens: [Active, string, string][] }[] = [
   {
@@ -35,6 +41,7 @@ const GRUPOS: { id: string; titulo: string; itens: [Active, string, string][] }[
     itens: [
       ["home", "/", "Ranking"],
       ["seo", "/seo", "SEO"],
+      ["gsc", "/gsc", "Board GSC"],
       ["infra", "/infra", "Infra"],
       ["insights", "/insights", "Insights"],
     ],

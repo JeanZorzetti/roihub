@@ -1392,16 +1392,60 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
    Sai em 12px e `--muted`: é procedência, não leitura. Ela qualifica o número acima e não pode
    competir com ele — mas também não pode ficar atrás de um clique, porque a natureza da régua
    muda como o número deve ser lido, e isso é nível 2, não nível 3. */
-[data-info="aquisicao"] .org {
+[data-info="aquisicao"] .org,
+[data-info="gsc"] .org {
   display: block; margin-top: 2px; font-size: 12px; line-height: 1.5; color: var(--muted);
 }
-[data-info="aquisicao"] .org::before { margin-right: 5px; font-size: 10px; vertical-align: 1px; }
+[data-info="aquisicao"] .org::before,
+[data-info="gsc"] .org::before { margin-right: 5px; font-size: 10px; vertical-align: 1px; }
 /* Cheio = verificável. O link é o que torna a afirmação auditável, e por isso a fonte é clicável
    e o recorte fica ao lado: régua de outro mercado citada sem o recorte é a falsa autoridade que
    `handoff/okr-regua-de-mercado.md` proíbe na trava 4. */
-[data-info="aquisicao"] .org-com::before { content: "◆"; }
+[data-info="aquisicao"] .org-com::before,
+[data-info="gsc"] .org-com::before { content: "◆"; }
 /* Vazado = sem origem. NÃO usa `--crit-ink`: o número não está errado, está sem fonte, e vermelho
    diria que alguém errou. Neutro, como as ausências dos selos `sem` e `piso`. */
-[data-info="aquisicao"] .org-sem::before { content: "◇"; }
-[data-info="aquisicao"] .org a { color: var(--accent); }
+[data-info="aquisicao"] .org-sem::before,
+[data-info="gsc"] .org-sem::before { content: "◇"; }
+[data-info="aquisicao"] .org a,
+[data-info="gsc"] .org a { color: var(--accent); }
+
+/* ── O BOARD PUBLICADO (`/gsc`) ──────────────────────────────────────────────
+   Reusa `.inst`, `.lts` e `.selo` da tela de aquisição — as duas respondem "em que estado está
+   isto", e um segundo vocabulário visual para a mesma pergunta é como os dois começam a divergir.
+   Só a coluna da régua precisa de largura própria: os motivos de recusa são frases inteiras, e numa
+   tabela de três colunas iguais eles espremeriam o nome do KPI em duas letras por linha. */
+[data-info="gsc"] .inst { table-layout: fixed; }
+[data-info="gsc"] .inst th:nth-child(1) { width: 20%; }
+[data-info="gsc"] .inst th:nth-child(2) { width: 22%; }
+[data-info="gsc"] .inst td { vertical-align: top; }
+/* O `<code>` do caminho é uma palavra só e estoura a coluna fixa sem isto — mesma correção que
+   `usealigner.com` pediu na tabela de instrumentos em 360px. */
+[data-info="gsc"] .inst .inst-q code { overflow-wrap: anywhere; }
+[data-info="gsc"] .inst .inst-n { white-space: normal; }
+/* Na tela de aquisição a origem é nota de rodapé de uma leitura; aqui ela É a célula, então não
+   leva o recuo de quem qualifica um número acima. */
+[data-info="gsc"] .org { margin-top: 0; }
+
+[data-info="gsc"] .gsc-ed { margin: 12px 0 0; }
+[data-info="gsc"] .gsc-ed div { margin-bottom: 10px; }
+[data-info="gsc"] .gsc-ed dt { font-size: 12px; margin-bottom: 2px; }
+[data-info="gsc"] .gsc-ed dt code { overflow-wrap: anywhere; }
+[data-info="gsc"] .gsc-ed dd { margin: 0; font-size: 13px; color: var(--ink2); line-height: 1.6; }
+
+@media (max-width: 640px) {
+  /* 278px úteis não comportam três colunas: cada folha vira um bloco, com o nome em cima e a
+     procedência embaixo. Mesma técnica da tabela de instrumentos, e pela mesma razão — `table` e
+     `tbody` têm de sair do modelo de tabela junto, senão o navegador gera caixa anônima em volta
+     de cada linha e renderiza só a primeira. */
+  [data-info="gsc"] .inst,
+  [data-info="gsc"] .inst tbody { display: block; }
+  [data-info="gsc"] .inst thead { display: none; }
+  [data-info="gsc"] .inst tr {
+    display: block; padding: 8px 0; border-bottom: 1px solid var(--grid);
+  }
+  [data-info="gsc"] .inst td { display: block; border-bottom: none; padding: 0; min-width: 0; }
+  [data-info="gsc"] .inst .inst-n { margin-bottom: 3px; }
+}
+
 
