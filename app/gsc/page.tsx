@@ -109,6 +109,16 @@ export default async function BoardGscPage() {
           Esta tela <strong>não tem número de projeto</strong> — ela diz o que os números significam.
           Os da Atma estão em <a href="/okr/atma/aquisicao">aquisição</a>.
         </p>
+        {/* A definição de cada KPI não cabe aqui: esta árvore para na folha porque é da PROCEDÊNCIA
+            que ela trata, e uma linha por folha é o que dá a leitura de "quantas têm régua". O que o
+            board diz que cada KPI É — fórmula, meta, o que mede — vive no mapa, em 113 nós. */}
+        <p className="foot">
+          <a href="/gsc/mapa">
+            <strong>Ver o board inteiro como mapa mental</strong>
+          </a>{" "}
+          — os mesmos {chaves.length} KPIs com os níveis que esta árvore não desenha: o título
+          numerado do board, a família dentro do ramo e a definição de cada um.
+        </p>
 
         {/* ── A ÁRVORE ────────────────────────────────────────────────────────────────────────
             `role="img"` com `aria-label` no SVG e a MESMA informação em tabela logo abaixo: um

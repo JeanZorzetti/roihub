@@ -1493,3 +1493,128 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 }
 
 
+
+/* information-design · mapa mental (árvore, nó-aresta) · responde: o que cada KPI do board de GSC
+   é, na definição do board · fonte: lib/board-gsc.mjs (transcrição de okr-Saw2eoSKZDPLJAk6xeDBuS,
+   19/09/2026) · 2026-09-19 */
+
+[data-info="gsc"] .me-wrap { margin: 18px 0 0; }
+
+/* Altura FIXA e não `auto`: o Mind Elixir mede o container no `init` e desenha as arestas em SVG
+   com essas coordenadas. Container de altura automática mede 0 no primeiro frame e o mapa nasce
+   com as linhas todas convergindo no canto. 70vh com piso em 420px — abaixo disso não cabem os 4
+   ramos abertos e o mapa vira rolagem vertical dentro de rolagem vertical. */
+[data-info="gsc"] .me-box {
+  height: clamp(440px, 78vh, 900px);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  background: var(--page);
+  overflow: hidden;
+}
+[data-info="gsc"] .me-box:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* A lib desenha o nó com a fonte dela; aqui ele volta para a do hub. `--topic-padding` e o tamanho
+   vêm depois do reset da lib por especificidade de descendente. */
+[data-info="gsc"] .me-box me-tpc {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  /* 240px e não 340: com 340 o mapa media 1.636px de largura numa caixa de 1.160 e os rótulos das
+     duas pontas morriam na borda. Estreitar quebra o título em mais linhas e ALTURA a caixa
+     absorve por rolagem; largura cortada ela não absorve, só engole. */
+  max-width: 240px;
+}
+
+/* A lib desenha DUAS barras flutuantes. A `.lt`, no topo à esquerda, troca a DIREÇÃO e o layout do
+   mapa — ela desfaria o `SIDE` que foi escolhido por medição (com tudo à direita o mapa tem 2.693px
+   de altura) e devolveria o desenho ilegível com um clique. Fora, e não só por isso: sem fundo
+   próprio ela caía POR CIMA do texto de "1. KPI de Eficiência: CTR Relativo por Posição" no quadro
+   de 19/09/2026. A `.rb` fica — zoom e recentrar são o que um mapa maior que a caixa precisa. */
+[data-info="gsc"] .me-box .mind-elixir-toolbar.lt { display: none; }
+[data-info="gsc"] .me-box .mind-elixir-toolbar.rb {
+  background: var(--surface);
+  border: 1px solid var(--grid);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(11, 11, 11, 0.08);
+}
+[data-info="gsc"] .me-box me-root me-tpc { font-size: 15px; font-weight: 700; }
+
+/* A tag de procedência: `◆`/`◇` + palavra. FORMA, não cor — cinza sobre cinza, ela sobrevive à
+   impressão e ao daltonismo, que é a mesma regra do `.org` da tela irmã.
+   A lib põe `.tags` DENTRO do `me-tpc`, colada no rótulo: medido em 19/09/2026 saía
+   "…CTR Relativo por Posição◆ régua publicada" numa linha só. `margin-top` a separa. */
+[data-info="gsc"] .me-box me-tpc .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+[data-info="gsc"] .me-box me-tpc .tags span {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--grid);
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+/* ── o painel: é ele que torna `note` legível, porque a lib nunca renderiza o campo ── */
+[data-info="gsc"] .me-painel {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--grid);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--surface);
+  /* Altura mínima para o conteúdo abaixo não saltar a cada seleção: o painel varia de uma linha
+     ("nenhum nó selecionado") a cinco (o motivo de uma recusa tem até 311 caracteres). */
+  min-height: 132px;
+}
+[data-info="gsc"] .me-painel-t { margin: 2px 0 8px; font-size: 15px; line-height: 1.35; }
+[data-info="gsc"] .me-painel .org { margin: 0 0 6px; font-size: 13px; line-height: 1.6; }
+[data-info="gsc"] .me-painel .foot { margin: 0; }
+[data-info="gsc"] .me-nota { margin: 0; font-size: 13px; color: var(--ink2); line-height: 1.6; }
+/* Ausência NOMEADA, nunca um branco mudo: "nada selecionado" e "o board não escreve neste nó"
+   pedem ações opostas e um painel vazio diz os dois. */
+[data-info="gsc"] .me-vazio { margin: 0; font-size: 13px; color: var(--muted); font-style: italic; }
+
+/* ── o segundo portador: a mesma árvore em lista, sem JS ── */
+[data-info="gsc"] .mapa-board,
+[data-info="gsc"] .mapa-board ul { list-style: none; margin: 0; padding: 0; }
+[data-info="gsc"] .mapa-board { margin-top: 12px; }
+[data-info="gsc"] .mapa-board ul {
+  margin-left: 10px;
+  padding-left: 12px;
+  border-left: 1px solid var(--grid);
+}
+[data-info="gsc"] .mapa-board li { margin: 6px 0; }
+[data-info="gsc"] .mb-n { font-size: 13px; color: var(--ink2); }
+[data-info="gsc"] .mb-n0 {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink);
+}
+[data-info="gsc"] .mb-n1 { font-size: 14px; font-weight: 600; color: var(--ink); }
+[data-info="gsc"] .mb-n2 { font-size: 13px; font-weight: 600; color: var(--ink); }
+[data-info="gsc"] .mb-tag {
+  margin-left: 6px; font-size: 10px; color: var(--muted);
+  border: 1px solid var(--grid); border-radius: 3px; padding: 0 4px; white-space: nowrap;
+}
+[data-info="gsc"] .mb-nota {
+  display: block; margin: 2px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6;
+  max-width: 78ch;
+}
+
+@media (max-width: 640px) {
+  /* 278px úteis não comportam pan+zoom de um mapa de 113 nós com utilidade nenhuma — a lista abaixo
+     é que responde no celular. O mapa encolhe para não ocupar a tela inteira sendo ilegível. */
+  [data-info="gsc"] .me-box { height: 320px; }
+  [data-info="gsc"] .me-box me-tpc { max-width: 200px; }
+  [data-info="gsc"] .mapa-board ul { margin-left: 4px; padding-left: 8px; }
+  [data-info="gsc"] .mb-tag { display: inline-block; margin: 3px 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-info="gsc"] .me-box * { transition: none !important; animation: none !important; }
+}
