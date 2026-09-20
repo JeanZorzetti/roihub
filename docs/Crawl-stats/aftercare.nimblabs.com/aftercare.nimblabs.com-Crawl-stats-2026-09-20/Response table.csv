@@ -1,0 +1,5 @@
+Response,Total requests ratio
+OK (200),0.9403
+Not found (404),0.0567
+robots.txt not available,0.0015
+Page could not be reached,0.0015
