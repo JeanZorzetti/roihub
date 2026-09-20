@@ -1135,6 +1135,31 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="aquisicao"] .lt-b { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 [data-info="aquisicao"] .lt-b::before { content: " · "; }
 
+/* ── 033 · NÍVEL 1 — a página nomeada (FR-012, SC-009, SC-010) ───────────────────────────────
+   A leitura recusada de 18/09/2026 é explícita: o gate de área pede RESPOSTA MAIOR, não evidência
+   menor — oito corridas leram ao contrário e encolheram a evidência em vez de crescer a resposta.
+   Fonte maior + padding generoso é o que garante nível 1 >= 2x um `.lt` de nível 2 nas três
+   larguras, sem depender de quantas linhas o texto quebra. */
+[data-info="aquisicao"] .nomeada-bloco { margin: 14px 0 6px; }
+[data-info="aquisicao"] .nomeada-frase {
+  font-size: 17px; line-height: 1.65; color: var(--ink); font-weight: 500; margin: 0;
+  padding: 16px 18px; background: var(--grid); border-left: 4px solid var(--seq550); border-radius: 4px;
+}
+[data-info="aquisicao"] .nomeada-frase strong { font-variant-numeric: tabular-nums; }
+/* FR-013 — zero página decidida NÃO é o mesmo estado visual da resposta: cinza, sem a borda azul
+   que marca "aqui está o achado". */
+[data-info="aquisicao"] .nomeada-vazia { color: var(--ink2); font-weight: 400; border-left-color: var(--muted); }
+
+/* ── 033 · os cinco estados do veredito por intervalo ────────────────────────────────────────
+   Geometria (o segmento da trilha) é o portador primário; o glifo é reforço, nunca sozinho — por
+   isso sempre `aria-hidden` + a palavra ao lado, nunca só `title`. */
+[data-info="aquisicao"] .vrd { font-variant-numeric: tabular-nums; }
+[data-info="aquisicao"] .vrd span[aria-hidden] { margin-right: 3px; }
+
+/* O segmento do IC de Wilson: mesma cor da trilha comum — o que muda é a posição (`left`), nunca
+   a cor, para o veredito sobreviver a tons de cinza (SC-006). */
+[data-info="aquisicao"] .trk-seg { border-radius: 2px; }
+
 /* ── A ressalva, uma vez por bloco ───────────────────────────────────────────
    Nível 3 do SKILL: o contexto que só quem já leu os dois primeiros níveis quer. `<details>`
    nativo — zero JS, e o resumo diz QUANTAS leituras estão lá dentro, para ninguém precisar abrir

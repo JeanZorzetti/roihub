@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
 import { DIVERGENCIAS, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
+import { listProjects } from "@/lib/projects";
+import { hostsDeclarados } from "@/lib/projects.mjs";
+import { gscPaginas } from "@/lib/gsc";
+import { descoberta } from "@/lib/janelas.mjs";
+import { porFaixaDePosicao } from "@/lib/kpis-busca.mjs";
 import { Tabs } from "../../tabs";
 import { Mapa } from "./mapa";
 
@@ -14,26 +19,129 @@ import { Mapa } from "./mapa";
 // editor. Fundir as duas custaria o render
 // estático da primeira para ganhar profundidade que a maior parte das visitas não pede.
 //
-// ⚠️ ESTA TELA TAMBÉM NÃO LÊ DADO DE PROJETO NENHUM, pelo mesmo motivo da irmã: os números da Atma
-// vivem em `/okr/atma/aquisicao`, e repeti-los aqui daria duas telas discordando sobre o mesmo KPI.
+// 033 — REVERSÃO DECLARADA (`plan.md` § Complexity Tracking): até 19/09/2026 esta tela recusava
+// ler dado de projeto pelo motivo abaixo, escrito então:
+//   "os números da Atma vivem em /okr/atma/aquisicao, e repeti-los aqui daria duas telas
+//   discordando sobre o mesmo KPI."
+// O risco era real, mas a causa era DUAS IMPLEMENTAÇÕES, não dois lugares de exibição. A FR-005 é
+// explícita: é O MAPA que precisa mostrar, em cada faixa de posição, a base e o veredito — nenhuma
+// outra tela do hub tem a faixa como unidade (a de aquisição lê por URL e por termo). A trava que
+// neutraliza o risco original: as seis faixas do nó "Posição no Google" vêm de
+// `lib/kpis-busca.mjs#porFaixaDePosicao()`, a MESMA função que `/okr/atma/aquisicao` consome —
+// discordar exigiria escrever a conta duas vezes, que é exatamente o que a função única impede.
+// O board `okr-Saw2eoSKZDPLJAk6xeDBuS` é o board DA ATMA, não do portfólio, então a tela lendo a
+// Atma é coerente com o escopo dela — e é isso que o cabeçalho da seção declara por escrito.
 //
+// A janela é MÓVEL (28 dias fechando em D-3): `force-static` congelaria o número no build e ele
+// envelheceria em silêncio — o mesmo defeito de `dado velho` que esta feature conserta um nível
+// acima. `revalidate = 3600` é o valor que `/okr/[slug]/aquisicao` já usa, mesma fonte e mesma
+// quota diária compartilhada; adotar outro criaria duas políticas de frescor para o mesmo dado.
+export const revalidate = 3600;
+
 // ⚠️ A META DO BOARD NÃO VIRA RÉGUA AO SER DESENHADA. Cada folha carrega o losango da procedência
 // (`◆` tem fonte, `◇` não tem) e o painel imprime o motivo. Publicar "< 15% de reescrita" com a
 // mesma tipografia de "LCP ≤ 2,5s" é o defeito que `/gsc` existe para acusar — e um mapa bonito é
 // justamente onde ele passaria despercebido.
-export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "Board GSC — o mapa mental completo, com a definição de cada KPI",
 };
 
-export default function MapaDoBoardPage() {
+type No = { id: string; topic: string; note?: string; tags?: string[]; children?: No[]; metadata?: unknown };
+
+/** Busca em profundidade por `id` — a árvore de `mapaDoBoard()` não tem índice, e os ids das
+ *  folhas são literais (`chave` do catálogo, ver `lib/board-gsc.mjs#mapaDoBoard`). */
+function acharNo(n: No, id: string): No | null {
+  if (n.id === id) return n;
+  for (const f of n.children ?? []) {
+    const achado = acharNo(f, id);
+    if (achado) return achado;
+  }
+  return null;
+}
+
+const pct1 = (v: number) => `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+
+/** 033 — o `topic` de uma faixa: curto, os cinco estados (`data-model.md` § Os cinco estados) por
+ *  glifo E texto, nunca só cor. A prosa longa (IC completo, régua, fonte, janela) vai no `note`,
+ *  que o painel de seleção mostra — a `mind-elixir` não renderiza `note` (ver `mapa.tsx`). */
+function topicDaFaixa(f: ReturnType<typeof porFaixaDePosicao>[number]): string {
+  const base = `${f.rotulo}`;
+  if (f.amostra.impressoes === 0) return `${base} · ∅ o site não aparece aqui`;
+  const contagem = `${f.amostra.impressoes.toLocaleString("pt-BR")} impr · ${f.paginas} ${f.paginas === 1 ? "pág" : "págs"}`;
+  if (f.regua === null) return `${base} · ${contagem} · ○ sem régua nesta faixa`;
+  if (f.veredito === "indecisa") return `${base} · ${contagem} · ◐ não decide`;
+  const ic = f.intervalo!;
+  const parenteses =
+    f.veredito === "abaixo"
+      ? `IC até ${pct1(ic.superior)} < régua ${pct1(f.regua)}`
+      : `IC desde ${pct1(ic.inferior)} > régua ${pct1(f.regua)}`;
+  const glifo = f.veredito === "abaixo" ? "▼ abaixo" : "▲ atinge";
+  return `${base} · ${contagem} · ${glifo} (${parenteses})`;
+}
+
+function noteDaFaixa(f: ReturnType<typeof porFaixaDePosicao>[number]): string {
+  const janela = `janela ${f.janela.inicio} → ${f.janela.fim}`;
+  if (f.amostra.impressoes === 0) return `Nenhuma impressão nesta faixa na janela — ${janela}. Não é 0%: é ausência de amostra.`;
+  const ctr = f.amostra.ctr === null ? "sem CTR" : `CTR real ${pct1(f.amostra.ctr)}`;
+  if (f.regua === null) return `${ctr}, sobre ${f.amostra.impressoes.toLocaleString("pt-BR")} impressões — sem régua publicada para esta faixa (o board pede "~1,5%" e o número não tem fonte) · ${janela}.`;
+  const ic = f.intervalo!;
+  const veredito =
+    f.veredito === "indecisa"
+      ? "o intervalo de confiança de 95% (Wilson) atravessa a régua — a amostra não decide"
+      : f.veredito === "abaixo"
+        ? "o intervalo de confiança de 95% exclui a régua por baixo"
+        : "o intervalo de confiança de 95% exclui a régua por cima";
+  return `${ctr} (IC 95%: ${pct1(ic.inferior)} a ${pct1(ic.superior)}) contra a régua de ${pct1(f.regua)} — ${veredito} · ${janela}.`;
+}
+
+export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
   const reguaDe = regua as (k: string) => { tem: boolean; meta: number | [number, number] | null };
   const medidoPor = MEDIDO_POR as Record<string, string | undefined>;
 
-  type No = { id: string; topic: string; note?: string; tags?: string[]; children?: No[] };
+  // 033/US2 — as seis faixas de posição, sobre os hosts da ATMA (o board é o dela). Contrato de
+  // ausência (`contracts/telas.md` §C): `null` = sem propriedade, `{erro}` = falha transitória,
+  // `{paginas:[]}` = respondeu, zero impressão. Nenhum dos três renderiza `0%`.
+  const projects = await listProjects();
+  const atma = projects.find((p) => p.slug === "atma");
+  const janela = descoberta();
+  const paginasGsc = atma ? await gscPaginas(hostsDeclarados(atma), janela) : null;
+  const semPropriedade = "sem propriedade no Search Console para este projeto";
+  const notaAusencia =
+    paginasGsc === null
+      ? semPropriedade
+      : "erro" in paginasGsc
+        ? `erro na fonte: ${paginasGsc.erro}`
+        : null;
+  const faixas = paginasGsc && !("erro" in paginasGsc) ? porFaixaDePosicao(paginasGsc.paginas, janela) : null;
+
+  // O nó "Posição no Google" é filho único do detalhe de `ctrPorPosicao` (`BOARD.ctrPorPosicao`),
+  // e seus 6 filhos estão na MESMA ordem de `FAIXAS`/`porFaixaDePosicao()` — a ordem em que
+  // `noDeDetalhe()` percorre `d.filhos`, que é a ordem em que o board declara as seis faixas.
+  const ctrNode = acharNo(dados.nodeData as No, "ctrPorPosicao");
+  const posicaoNode = ctrNode?.children?.[0] ?? null;
+  if (posicaoNode) {
+    // FR-004 — a janela também no nó PAI: um nó lido isolado (clique direto, sem passar pelo pai)
+    // ainda declara de que período o número é.
+    const janelaTxt = `Janela: ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3).`;
+    if (notaAusencia) {
+      posicaoNode.note = posicaoNode.note ? `${posicaoNode.note} — ${notaAusencia}. ${janelaTxt}` : `${notaAusencia}. ${janelaTxt}`;
+    } else if (faixas) {
+      const decisivas = faixas.filter((f) => f.veredito === "atinge" || f.veredito === "abaixo").length;
+      posicaoNode.note = posicaoNode.note
+        ? `${posicaoNode.note} — ${decisivas} de 6 faixas decisivas nesta janela. ${janelaTxt}`
+        : `${decisivas} de 6 faixas decisivas nesta janela. ${janelaTxt}`;
+      // As seis faixas, por índice — `FAIXAS`/`porFaixaDePosicao()` devolvem sempre 6, na mesma
+      // ordem que `BOARD.ctrPorPosicao.detalhe[0].filhos` declara.
+      posicaoNode.children = (posicaoNode.children ?? []).map((filho, i) => {
+        const f = faixas[i];
+        if (!f) return filho;
+        return { ...filho, topic: topicDaFaixa(f), note: noteDaFaixa(f) };
+      });
+    }
+  }
 
   const nos = (n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);
   const total = nos(dados.nodeData as No);
@@ -97,6 +205,17 @@ export default function MapaDoBoardPage() {
           <strong>{semColetor.length} não têm coletor</strong>: ali o número não existe, e o trabalho
           é ligar a fonte, não procurar estudo. O motivo de cada ausência aparece no painel ao clicar
           no nó, e o placar fechado está na <a href="/gsc">árvore</a>.
+        </p>
+        <p className="foot">
+          {/* 033/T042 — qual projeto está medindo, por escrito: o board é o da Atma, não do
+              portfólio, e as seis faixas de "Posição no Google" (abaixo) medem os hosts dela. */}
+          <strong>As seis faixas de &ldquo;Posição no Google&rdquo; medem a Atma</strong> —{" "}
+          {atma ? hostsDeclarados(atma).join(" + ") : "projeto não encontrado"}, janela{" "}
+          {janela.inicio} → {janela.fim} (28 dias, fecha em D-3). O board{" "}
+          <code>okr-Saw2eoSKZDPLJAk6xeDBuS</code> é o board dela, não do portfólio.{" "}
+          {notaAusencia ? (
+            <strong>{notaAusencia === semPropriedade ? "Sem propriedade no Search Console para este projeto." : notaAusencia}</strong>
+          ) : null}
         </p>
         <p className="foot">
           <strong>Onde o board e o código discordam, o nó diz.</strong> A transcrição não é corrigida

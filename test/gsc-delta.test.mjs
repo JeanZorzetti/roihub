@@ -6,16 +6,14 @@ import {
   MEDIDO_POR,
   RESSALVA_DO_COLETOR,
   EDITORIAIS,
-  cliquesNaoCapturados,
   seloDaMedida,
   regua,
-  exigePiso,
+  limiarEmTexto,
+  idadeEmMeses,
   linha,
   ordenar,
   resumo,
-  PISO_IMPRESSOES_VEREDITO,
 } from "../lib/gsc-delta.mjs";
-import { PISO_IMPRESSOES_VEREDITO as PISO_NA_FONTE } from "../lib/kpis-busca.mjs";
 import * as grafo from "../lib/grafo.mjs";
 import * as crux from "../lib/crux.mjs";
 import { apurado, naoApurado } from "../lib/funil.mjs";
@@ -68,12 +66,9 @@ test("quem não é régua carrega motivo próprio, e nenhum motivo se repete", (
   assert.equal(new Set(motivos).size, motivos.length, "há motivos repetidos entre folhas sem régua");
 });
 
-test("cliques não capturados: aritmética de um degrau, e null quando já cobre", () => {
-  assert.equal(cliquesNaoCapturados({ impressoes: 1240, ctr: 0.05, benchmark: 0.13 }), 1240 * 0.08);
-  assert.equal(cliquesNaoCapturados({ impressoes: 1000, ctr: 0.2, benchmark: 0.13 }), null);
-  assert.equal(cliquesNaoCapturados({ impressoes: 0, ctr: 0.05, benchmark: 0.13 }), null);
-  assert.equal(cliquesNaoCapturados(null), null);
-});
+// 033 — `cliquesNaoCapturados()` MIGROU para lib/kpis-busca.mjs (T016): não tinha consumidor em
+// produção, e `paginaNomeada()` é o primeiro. As 4 asserções migraram para test/kpis-busca.test.mjs.
+// Este arquivo continua a re-exportar o mesmo binding (como já fazia com `ctrEsperado`).
 
 // ---------- o selo é da 028, e só dela ----------
 
@@ -108,34 +103,30 @@ test("coletor inexistente não vira `cega`", () => {
   assert.equal(l.regua.natureza, "semColetor");
 });
 
-// ---------- piso de amostra (026) ----------
+// ---------- 033/FR-008 — a validade da régua de CTR ----------
 
-// O 100 não é redeclarado aqui nem lá: `gsc-delta` reexporta o binding de `kpis-busca`. Este teste
-// existe para que uma cópia futura do número fique vermelha no mesmo commit em que nascer.
-test("o piso é o mesmo objeto da fonte, nunca uma cópia", () => {
-  assert.equal(PISO_IMPRESSOES_VEREDITO, PISO_NA_FONTE);
+test("FR-008 — CTR_PISO declara medidaEm, cadencia, serp e serpDaFonte como campos estruturados", () => {
+  const r = regua("ctrGap");
+  assert.equal(r.fonte.medidaEm, "2025-05-28");
+  assert.equal(r.fonte.cadencia, "mensal");
+  assert.match(r.fonte.serp, /resposta gerada por IA/);
+  assert.match(r.fonte.serpDaFonte, /SERP limpa/);
+  // a régua de ctrPorPosicao é a MESMA CTR_PISO — os dois campos de SERP não podem divergir
+  assert.deepEqual(regua("ctrPorPosicao").fonte.serp, r.fonte.serp);
 });
 
-test("abaixo do piso vira selo `piso` e mantém a base à vista", () => {
-  // as 26 impressões de `usealigner.com` em 18/09 — o caso que a 026 documentou
-  const l = linha("ctrGap", apurado(0.04), { delta: 99, moeda: "cliques", base: 26 });
-  assert.equal(l.selo, "piso");
-  assert.match(l.palavra, /26/, "a base explica por que o número está sem veredito");
-  assert.equal(l.delta, null, "amostra rasa não emite distância");
-  assert.ok(l.real, "o número continua na tela: o que sai é a régua");
+test("limiarEmTexto() anexa a SERP que a régua JULGA, não mais o piso de impressões", () => {
+  const t = limiarEmTexto("ctrGap");
+  assert.doesNotMatch(t, /impressões na janela/, "FR-009: o sufixo de piso saiu");
+  assert.match(t, /resposta gerada por IA/, "FR-008: a SERP que a régua julga entra no lugar");
+  assert.match(t, /2025-05-28/, "a data de reconstrução acompanha a SERP");
 });
 
-test("exatamente no piso já emite veredito", () => {
-  const l = linha("ctrGap", apurado(0.04), { delta: 99, moeda: "cliques", base: PISO_IMPRESSOES_VEREDITO });
-  assert.equal(l.selo, "dado");
-  assert.equal(l.delta, 99);
-});
-
-test("régua com piso exige a base — esquecer não passa batido", () => {
-  assert.throws(() => linha("ctrGap", apurado(0.04), { delta: 9, moeda: "cliques" }), /exige `base`/);
-  assert.equal(exigePiso("ctrGap"), true);
-  assert.equal(exigePiso("lcp"), false, "CrUX tem amostra própria: o piso do GSC não se aplica");
-  assert.equal(exigePiso("larguraTitulo"), false, "medição direta do HTML não tem amostra");
+test("idadeEmMeses deriva da medidaEm — nunca um número gravado", () => {
+  const agora = Date.parse("2026-09-20T12:00:00Z");
+  assert.equal(idadeEmMeses("2025-05-28", agora), 15);
+  assert.equal(idadeEmMeses("2026-09-20", agora), 0);
+  assert.equal(idadeEmMeses("2026-09-21", agora), 0, "data futura não devolve idade negativa");
 });
 
 // ---------- o eixo da régua ----------

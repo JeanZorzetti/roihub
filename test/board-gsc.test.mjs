@@ -233,3 +233,11 @@ test("a divergência é VISÍVEL no nó, não só no painel do pai", () => {
     assert.ok(no?.tags?.includes(d.tag), `${chave}: o nó divergente não carrega a etiqueta — o número do board fica sozinho`);
   }
 });
+
+// 033/T035/FR-005 — a divergência do CTR por posição precisa dizer QUAL régua julga cada faixa,
+// agora que há veredito por faixa ao lado da transcrição (`porFaixaDePosicao`).
+test("a divergência de ctrPorPosicao diz qual régua julga cada faixa, não só que a tabela do board diverge", () => {
+  const d = DIVERGENCIAS.ctrPorPosicao;
+  assert.match(d.nota, /BENCHMARK/);
+  assert.match(d.tag, /veredito/i, "a etiqueta passa a dizer que há veredito ao lado da transcrição");
+});

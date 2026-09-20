@@ -17,7 +17,8 @@ import { mesesDaSerie, janelaDeFoco, assinaturaDeHosts } from "@/lib/serie-gsc.m
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
-import { kpisPorTermo, kpisPorPagina, queryToPageRatio, termoPrincipal, totalImpressoes, PISO_IMPRESSOES_VEREDITO } from "@/lib/kpis-busca.mjs";
+import { kpisPorTermo, kpisPorPagina, queryToPageRatio, termoPrincipal, totalImpressoes, LIMIAR_PAGINAS_DECIDIDAS } from "@/lib/kpis-busca.mjs";
+import { vereditoContraFaixa } from "@/lib/intervalo.mjs";
 import { posicaoDoTermo } from "@/lib/pagina.mjs";
 import {
   canonizar,
@@ -34,7 +35,7 @@ import {
   CADENCIA_MESES,
 } from "@/lib/grafo.mjs";
 import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
-import { regua as reguaDoBoard } from "@/lib/gsc-delta.mjs";
+import { regua as reguaDoBoard, idadeEmMeses } from "@/lib/gsc-delta.mjs";
 import { lerCampo } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
 import { WeekChart, type WeekPoint, type WeekCut } from "../../../viz";
@@ -86,9 +87,16 @@ function SeloEstado({ tipo, palavra }: { tipo: Selo; palavra?: string }) {
  * A régua sai de `lib/gsc-delta.mjs`, nunca escrita aqui: é lá que `test/gsc-delta.test.mjs` exige
  * `fonte`, `url`, `acessadoEm` e `recorte` de toda linha, e motivo próprio de toda recusa.
  */
-function Origem({ chave }: { chave: string }) {
+function Origem({ chave, detalhado }: { chave: string; detalhado?: boolean }) {
   const r = reguaDoBoard(chave) as
-    | { tem: true; meta: number | [number, number] | null; fonte: { fonte: string; url: string; acessadoEm: string; recorte: string } }
+    | {
+        tem: true;
+        meta: number | [number, number] | null;
+        fonte: {
+          fonte: string; url: string; acessadoEm: string; recorte: string;
+          medidaEm?: string; cadencia?: string; serp?: string; serpDaFonte?: string;
+        };
+      }
     | { tem: false; motivo: string; natureza: string };
   if (r.tem) {
     return (
@@ -98,6 +106,18 @@ function Origem({ chave }: { chave: string }) {
           {r.fonte.fonte}
         </a>{" "}
         · {r.fonte.recorte} · acessado em {r.fonte.acessadoEm}
+        {/* 033/FR-008 — nível 3: as DUAS condições de SERP, nomeadas e separadas — a da referência
+            e a que a régua julga —, mais a idade DERIVADA de `medidaEm`/`cadencia` (nunca
+            gravada). Colapsar as duas SERPs numa frase só afirmaria sobre a régua o que só vale
+            sobre a fonte. */}
+        {detalhado && r.fonte.medidaEm ? (
+          <>
+            {" "}
+            · régua reconstruída em {r.fonte.medidaEm} ({idadeEmMeses(r.fonte.medidaEm)} meses
+            atrás, cadência {r.fonte.cadencia}) · julga a SERP: {r.fonte.serp} · a referência mediu:{" "}
+            {r.fonte.serpDaFonte}
+          </>
+        ) : null}
       </span>
     );
   }
@@ -120,6 +140,28 @@ function Origem({ chave }: { chave: string }) {
 }
 
 /**
+ * 033 — os CINCO estados do veredito por intervalo (`data-model.md` § Os cinco estados). Nunca cor
+ * como único portador (SC-006): glifo `aria-hidden` + texto sempre juntos, e o texto é o que chega
+ * ao leitor de tela. Os glifos NUNCA reusam `◆`/`◇`, que neste hub já significam procedência da
+ * régua (`Origem`).
+ */
+const VEREDITO_TEXTO = {
+  atinge: { glifo: "▲", texto: "atinge" },
+  abaixo: { glifo: "▼", texto: "abaixo" },
+  indecisa: { glifo: "◐", texto: "a amostra não decide" },
+  semRegua: { glifo: "○", texto: "sem régua nesta faixa" },
+  semImpressao: { glifo: "∅", texto: "o site não aparece aqui" },
+} as const;
+function Veredito({ estado }: { estado: keyof typeof VEREDITO_TEXTO }) {
+  const { glifo, texto } = VEREDITO_TEXTO[estado];
+  return (
+    <span className="vrd">
+      <span aria-hidden>{glifo}</span> {texto}
+    </span>
+  );
+}
+
+/**
  * Uma leitura: valor à esquerda em coluna fixa, rótulo e selo à direita.
  *
  * Substitui o parágrafo-por-leitura que crescia a cada corrida. O valor ocupa a MESMA coluna
@@ -136,6 +178,7 @@ function Leitura({
   meta,
   parte,
   base,
+  segmento,
 }: {
   valor?: string;
   sem?: string;
@@ -153,6 +196,10 @@ function Leitura({
   meta?: number | [number, number];
   /** O valor contra o MAIOR da lista, quando a escala não é percentual (contagens). */
   parte?: number;
+  /** 033 — o intervalo de confiança `[inferior, superior]` de Wilson, desenhado como SEGMENTO em
+   *  vez de comprimento a partir do zero. Tem prioridade sobre `fracao` quando os dois vêm juntos:
+   *  o segmento é o que a SC-002/SC-006 pedem — a posição relativa à régua, não o ponto isolado. */
+  segmento?: [number, number];
 }) {
   return (
     <li className="lt">
@@ -164,7 +211,8 @@ function Leitura({
         {/* A barra NUNCA acompanha uma ausência: `sem` presente significa que não há valor, e uma
             trilha vazia ao lado de "não apurado" leria como zero medido — o defeito que as sete
             corridas anteriores desta tela passaram removendo do texto. */}
-        {sem === undefined && fracao !== undefined ? <Trilha fracao={fracao} meta={meta} /> : null}
+        {sem === undefined && segmento !== undefined ? <Trilha segmento={segmento} meta={meta} /> : null}
+        {sem === undefined && segmento === undefined && fracao !== undefined ? <Trilha fracao={fracao} meta={meta} /> : null}
         {sem === undefined && parte !== undefined ? <Parte fracao={parte} /> : null}
       </span>
     </li>
@@ -183,14 +231,35 @@ function Leitura({
  * moldura = relativa ao maior da lista. Sem essa distinção visual, 4.988 sessões de Organic
  * Search encostadas na borda leriam como "100% das sessões".
  */
-function Trilha({ fracao, meta }: { fracao: number; meta?: number | [number, number] }) {
-  const pct = Math.max(0, Math.min(1, fracao)) * 100;
+/**
+ * 033 — `segmento` estende a Trilha para desenhar `[inferior, superior]` do intervalo de Wilson
+ * como uma faixa POSICIONADA, em vez de um comprimento a partir do zero. É o que faz o veredito
+ * (`atinge`/`abaixo`/`indecisa`) ser GEOMETRIA — segmento à esquerda do tique, à direita, ou
+ * cruzando — e sobreviver a tons de cinza (SC-006): o que separa os três estados é posição, não
+ * cor. Custa zero pixel de altura: mora na mesma faixa de `padding-bottom` que `fracao` já usava.
+ */
+function Trilha({
+  fracao,
+  meta,
+  segmento,
+}: {
+  fracao?: number;
+  meta?: number | [number, number];
+  segmento?: [number, number];
+}) {
   const lim = (v: number) => Math.max(0, Math.min(100, v * 100));
   return (
     <span className="trk" aria-hidden>
-      {/* `max(1px, …)`: fração medida e positiva desenha pelo menos 1px, senão 0,3% arredonda para
-          largura 0 e fica idêntico ao zero — a mesma regra das barras do `WeekChart`. */}
-      <span className="trk-f" style={{ width: pct > 0 ? `max(1px, ${pct}%)` : 0 }} />
+      {segmento ? (
+        <span
+          className="trk-f trk-seg"
+          style={{ left: `${lim(segmento[0])}%`, width: `max(1px, ${lim(segmento[1]) - lim(segmento[0])}%)` }}
+        />
+      ) : (
+        // `max(1px, …)`: fração medida e positiva desenha pelo menos 1px, senão 0,3% arredonda
+        // para largura 0 e fica idêntico ao zero — a mesma regra das barras do `WeekChart`.
+        <span className="trk-f" style={{ width: fracao !== undefined && fracao > 0 ? `max(1px, ${lim(fracao)}%)` : 0 }} />
+      )}
       {Array.isArray(meta) ? (
         <span className="trk-faixa" style={{ left: `${lim(meta[0])}%`, width: `${lim(meta[1]) - lim(meta[0])}%` }} />
       ) : meta !== undefined ? (
@@ -565,7 +634,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   const janelaGsc = descobertaLonga() as { nome: string; inicio: string; fim: string; porque: string };
   const janelaGa4 = comportamentoLongo() as { nome: string; inicio: string; fim: string; porque: string };
-  const curtaGsc = descoberta() as { inicio: string; fim: string };
+  // 033 — tipo INTEIRO (não só inicio/fim): `kpisPorPagina`/`conformidadeDeCtr`/`porFaixaDePosicao`
+  // exigem a `Janela` completa (FR-004) para carimbar nome e motivo em cada número que a consomem.
+  const curtaGsc = descoberta() as { nome: string; inicio: string; fim: string; porque: string };
   const curtaGa4 = comportamento() as { inicio: string; fim: string };
 
   // Duas fontes independentes, sem somar latência — mesmo padrão de `coletarDoProjeto()`. A falha
@@ -644,18 +715,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // 032 (FR-003/E5) — a base da OUTRA leitura. `null` quando ela não respondeu, e NUNCA 0 por
   // ausência: zero impressões é um estado medido, e a tela já o distingue de "não perguntei".
   const basePagina = paginasBusca ? totalImpressoes(paginasBusca) : null;
-  // 028 — UM portão para todas as barras do bloco de consultas. Abaixo do piso a fração existe e a
-  // RÉGUA não: desenhar comprimento ao lado de um selo que diz "sem veredito do board" daria
-  // autoridade visual justamente ao número que a tela passou três corridas tirando do pedestal
-  // (o 43×, a fração do Top 3, a canibalização vazia). A guarda mora aqui, não em cada linha —
-  // seis vezes nesta tela um veredito consertado no chamador voltou pela porta seguinte.
-  // 032/D7 — UM PORTÃO POR LEITURA. O piso mede se a base sustenta a régua do board, e as duas
-  // bases são diferentes: julgar uma fração calculada sobre 24.664 impressões pelo portão de uma
-  // base de 10.395 seria aplicar a régua a partir do denominador errado. Os dois continuam morando
-  // no cálculo da base, e não em cada linha — seis vezes nesta tela um veredito consertado no
-  // chamador voltou pela porta seguinte.
-  const acimaDoPisoTermo = baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO;
-  const acimaDoPisoPagina = basePagina !== null && basePagina >= PISO_IMPRESSOES_VEREDITO;
+  // 033/FR-009 — o piso fixo de impressões SAIU: quem decide se uma amostra sustenta um veredito
+  // deixou de ser a contagem de impressões e passou a ser o intervalo de confiança da própria
+  // amostra (`lib/intervalo.mjs`), aplicado LINHA A LINHA por `conformidadeDeCtr()`/
+  // `vereditoContraFaixa()`. As trilhas passam a ser desenhadas sempre que houver medida.
   const vitais = await lerPassRate(slug, paginasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   // 025: acima de 10× o `pct` vira armadilha de leitura. Em pt-BR o separador de milhar é o PONTO,
@@ -727,8 +790,11 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // 032 — a família por URL nasce AQUI, e não ao lado de `kpis`, porque `denomIdx` só existe
   // depois da apuração de indexação acima. Ele continua vindo do BANCO: nenhuma das duas leituras
   // do Search Console conhece o total de URLs indexadas.
-  const kpisUrl = paginasBusca ? kpisPorPagina(paginasBusca, denomIdx) : null;
+  // 033 — `curtaGsc` obrigatória (FR-004): é a janela desta leitura, e a mesma que `conformidade`
+  // e `faixas` carimbam em cada número que produzem.
+  const kpisUrl = paginasBusca ? kpisPorPagina(paginasBusca, denomIdx, curtaGsc) : null;
   const ativas = kpisUrl?.activeIndexRatio ?? null;
+  const conformidade = kpisUrl?.conformidade ?? null;
   // `queryToPageRatio` NÃO migra: o numerador é `consultasUnicas`, que é por termo. Ele continua
   // nesta leitura e continua carregando o selo de piso por isso (FR-004).
   const porPagina = linhasBusca && denomIdx ? queryToPageRatio(linhasBusca, denomIdx) : null;
@@ -1054,25 +1120,25 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     });
   }
   if (propriedadeGsc) {
-    const estreita = baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO;
     instrumentos.push({
       nome: "Consultas ao vivo",
       // 030 — com dois hosts somados a propriedade da SÉRIE (um host só) não descreve o que esta
       // linha mede. Um host: a propriedade de sempre.
       mede: declaraHosts && hostsSomados ? hostsSomados : propriedadeGsc,
       desde: recebidaGsc ? `desde ${recebidaGsc.inicio}` : "—",
-      selo: baseCurta === 0 ? "sem" : estreita ? "piso" : "dado",
+      // 033/FR-009 — o selo `piso` por base agregada SAIU: quem decide se uma amostra sustenta um
+      // veredito é o intervalo de confiança de CADA linha (`conformidadeDeCtr`), não uma contagem
+      // total da leitura. Este instrumento só distingue "sem impressão" de "com dado".
+      selo: baseCurta === 0 ? "sem" : "dado",
       nota:
         baseCurta === 0
           ? "A janela não teve impressão nenhuma: não há base para fração nem para régua."
-          : estreita
-            ? `${br(baseCurta!)} impressões em ${diasRecebidosCurta ?? "?"} dos 28 dias pedidos. A faixa do board tem 10 pontos de largura e cada impressão vale ${(100 / baseCurta!).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} deles — a régua só passa a valer a partir de ${br(PISO_IMPRESSOES_VEREDITO)}.`
-            : /* G5: `?? 0` aqui publicaria "0 impressões na janela" quando a consulta não
-                 respondeu — ausência virando zero real, na mesma tabela que existe para dizer em
-                 que estado cada fonte está. */
-              baseCurta === null
-              ? "A consulta respondeu, mas o total de impressões da janela não foi apurado."
-              : `${br(baseCurta)} impressões na janela de 28 dias.`,
+          : /* G5: `?? 0` aqui publicaria "0 impressões na janela" quando a consulta não
+               respondeu — ausência virando zero real, na mesma tabela que existe para dizer em
+               que estado cada fonte está. */
+            baseCurta === null
+            ? "A consulta respondeu, mas o total de impressões da janela não foi apurado."
+            : `${br(baseCurta)} impressões na janela de 28 dias.`,
       cobreAte: recebidaGsc?.fim ?? null,
       tolerancia: TOLERANCIA_D3,
     });
@@ -1891,39 +1957,59 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             </p>
           ) : (
             <>
+              {/* ── NÍVEL 1 — A RESPOSTA (FR-012, SC-009, SC-010) ────────────────────────────────
+                  033 — o Índice de Conformidade deixou de ser publicável sozinho: com poucas
+                  páginas decididas (< LIMIAR_PAGINAS_DECIDIDAS), um índice sobre 4 páginas é ruído
+                  travestido de percentual. A RESPOSTA vira a página nomeada — a de maior impressão
+                  entre as decididas — até a amostra crescer o bastante para o índice virar a
+                  resposta principal. A leitura recusada de 18/09/2026 é explícita: este bloco pede
+                  ÁREA MAIOR que a lista abaixo, não evidência menor. */}
+              {conformidade && (
+                <div className="nomeada-bloco">
+                  {conformidade.porPagina.decididas === 0 ? (
+                    // FR-013 — zero página decidida: nível 1 é TEXTO. Índice nenhum é publicado.
+                    <p className="nomeada-frase nomeada-vazia">
+                      Nenhuma página decidida nesta janela: <strong>{br(conformidade.indecisas)}</strong>{" "}
+                      página(s) <Veredito estado="indecisa" />, <strong>{br(conformidade.semRegua)}</strong>{" "}
+                      página(s) <Veredito estado="semRegua" />. A amostra ainda não julga nenhuma URL —
+                      não há página nomeada.
+                    </p>
+                  ) : conformidade.porPagina.decididas < LIMIAR_PAGINAS_DECIDIDAS && conformidade.nomeada ? (
+                    <p className="nomeada-frase">
+                      <Veredito estado={conformidade.nomeada.veredito} />
+                      {" — "}
+                      <strong>{caminho(conformidade.nomeada.url)}</strong> — {pct(conformidade.nomeada.participacao)}{" "}
+                      do tráfego decidível ({br(conformidade.nomeada.impressoes)} de{" "}
+                      {br(conformidade.porTrafego.impressoesDecididas)} impressões), CTR{" "}
+                      {pct(conformidade.nomeada.ctr)} contra a régua de {pct(conformidade.nomeada.regua)} na posição{" "}
+                      {conformidade.nomeada.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+                      {conformidade.nomeada.veredito === "abaixo" && conformidade.nomeada.cliquesFaltantes !== null ? (
+                        <>
+                          {" "}
+                          — faltam <strong>{Math.round(conformidade.nomeada.cliquesFaltantes)}</strong> cliques na
+                          janela.
+                        </>
+                      ) : conformidade.nomeada.veredito === "atinge" ? (
+                        <> — já atinge a régua da própria posição.</>
+                      ) : (
+                        <>.</>
+                      )}
+                    </p>
+                  ) : (
+                    // decididas >= LIMIAR: a tela TROCA DE FORMA e o índice por página sobe a nível
+                    // 1 — a troca é declarada por escrito, nunca silenciosa (edge case da spec).
+                    <p className="nomeada-frase">
+                      <strong>{pct(conformidade.porPagina.fracao ?? 0)}</strong> das páginas decidíveis atingem a
+                      régua da própria posição ({br(conformidade.porPagina.atingem)} de{" "}
+                      {br(conformidade.porPagina.decididas)}). Com {br(conformidade.porPagina.decididas)} páginas já
+                      decididas — acima do limiar de {br(LIMIAR_PAGINAS_DECIDIDAS)} —, o índice passa a ser a
+                      resposta principal no lugar de uma única página nomeada.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <ul className="lts">
-                {/* 028 — O MEDIDOR DO PISO, e é a primeira linha de propósito: ele é o portão das
-                    leituras abaixo. Quatro selos diziam "abaixo do piso" em palavra e o leitor não
-                    tinha como saber se falta pouco ou falta tudo — 26 de 100 é uma distância, e
-                    distância se lê por comprimento. Ele SAI da tela sozinho quando a base passar do
-                    piso, e aí as trilhas das frações entram no lugar.
-
-                    032/D7 — UM PORTÃO POR LEITURA, e cada um nomeia a sua. As duas bases são
-                    diferentes (24.664 contra 10.395 na Atma), e o portão de uma não tem autoridade
-                    sobre uma fração calculada na outra. */}
-                {kpis !== null && baseCurta !== null && !acimaDoPisoTermo ? (
-                  <Leitura
-                    valor={br(baseCurta)}
-                    fracao={baseCurta / PISO_IMPRESSOES_VEREDITO}
-                    selo={baseCurta === 0 ? "sem" : "piso"}
-                    palavra={baseCurta === 0 ? "nenhuma impressão na janela" : "a régua do board ainda não vale"}
-                  >
-                    de {br(PISO_IMPRESSOES_VEREDITO)} impressões na leitura por termo — o piso da régua
-                    do board
-                  </Leitura>
-                ) : null}
-                {kpisUrl !== null && basePagina !== null && !acimaDoPisoPagina ? (
-                  <Leitura
-                    valor={br(basePagina)}
-                    fracao={basePagina / PISO_IMPRESSOES_VEREDITO}
-                    selo={basePagina === 0 ? "sem" : "piso"}
-                    palavra={basePagina === 0 ? "nenhuma impressão na janela" : "a régua do board ainda não vale"}
-                  >
-                    de {br(PISO_IMPRESSOES_VEREDITO)} impressões na leitura por página — o piso da régua
-                    do board
-                  </Leitura>
-                ) : null}
-
                 {/* ── AS MEDIDAS POR TERMO ──────────────────────────────────────────────────────
                     Afirmam algo sobre uma CONSULTA, e consulta só existe nesta leitura. */}
                 {kpis === null ? (
@@ -1963,34 +2049,40 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                       <Leitura sem="sem base" selo="sem" palavra="não é 0% no Top 3" base={baseDoTermo}>
                         impressões no Top 3 — a janela não teve impressão nenhuma
                       </Leitura>
-                    ) : (
-                      <Leitura
-                        valor={kpis.impressoesNoTop3 === null ? undefined : pct(kpis.impressoesNoTop3)}
-                        sem={kpis.impressoesNoTop3 === null ? "não apurado" : undefined}
-                        fracao={acimaDoPisoTermo && kpis.impressoesNoTop3 !== null ? kpis.impressoesNoTop3 : undefined}
-                        meta={[0.4, 0.5]}
-                        base={baseDoTermo}
-                        selo={baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? "piso" : undefined}
-                        palavra={
-                          baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "sem veredito do board"
-                            : undefined
-                        }
-                      >
-                        das impressões no Top 3
-                        {kpis.impressoesNoTop3 !== null && baseCurta !== null ? (
-                          <>
-                            {" "}
-                            ({br(Math.round(kpis.impressoesNoTop3 * baseCurta))} de {br(baseCurta)})
-                          </>
-                        ) : null}
-                        {baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO ? (
-                          <>
-                            {" "}· parâmetro do board: 40% a 50% — <Origem chave="impressoesTop3" />
-                          </>
-                        ) : null}
-                      </Leitura>
-                    )}
+                    ) : (() => {
+                      // 033/US3 — o piso fixo de impressões SAIU (FR-009): quem decide se a amostra
+                      // exclui a faixa de 40% a 50% do board é o intervalo de Wilson de
+                      // `impressoesNoTop3`, não uma contagem de base. `vereditoContraFaixa` só
+                      // decide quando o intervalo inteiro fica de um lado da faixa (AS-1 da US3).
+                      const top3 = kpis.impressoesNoTop3;
+                      const veredito = top3 ? vereditoContraFaixa(top3.noTop3, top3.total, [0.4, 0.5]) : null;
+                      const decidido = veredito === "atinge" || veredito === "abaixo";
+                      return (
+                        <Leitura
+                          valor={top3 === null ? undefined : pct(top3.fracao)}
+                          sem={top3 === null ? "não apurado" : undefined}
+                          fracao={decidido ? top3!.fracao : undefined}
+                          meta={[0.4, 0.5]}
+                          base={baseDoTermo}
+                          selo={top3 !== null && veredito === "indecisa" ? "piso" : undefined}
+                          palavra={top3 !== null && veredito === "indecisa" ? "a amostra não decide" : undefined}
+                        >
+                          {top3 !== null && veredito ? <><Veredito estado={veredito} />{" — "}</> : null}
+                          das impressões no Top 3
+                          {top3 !== null ? (
+                            <>
+                              {" "}
+                              ({br(top3.noTop3)} de {br(top3.total)})
+                            </>
+                          ) : null}
+                          {top3 !== null ? (
+                            <>
+                              {" "}· parâmetro do board: 40% a 50% — <Origem chave="impressoesTop3" />
+                            </>
+                          ) : null}
+                        </Leitura>
+                      );
+                    })()}
                   </>
                 )}
 
@@ -2016,7 +2108,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 ) : (
                   <Leitura
                     valor={pct(ativas)}
-                    fracao={acimaDoPisoPagina ? ativas : undefined}
+                    fracao={ativas}
                     meta={0.7}
                     base={baseDaPagina}
                   >
@@ -2060,9 +2152,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                         : ""}
                     </Leitura>
                   ) : (
-                    /* QUATRO ausências com consertos diferentes. A frase única que existia antes
-                       ("o site tem consultas, nenhuma delas está nessa posição") afirmava a quarta
-                       nas quatro — inclusive quando a causa era a própria janela. */
+                    /* TRÊS ausências com consertos diferentes (033/FR-009: o piso fixo de amostra
+                       que gerava um quarto estado — "não apurável" — SAIU; a lista é uma contagem
+                       exaustiva, não um veredito de régua, e continua honesta com a base ao lado
+                       em qualquer tamanho de amostra). */
                     <Leitura
                       base={baseDoTermo}
                       sem={
@@ -2070,48 +2163,43 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                           ? "nada a empurrar"
                           : baseCurta === 0
                             ? "sem base"
-                            : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                              ? "não apurável"
-                              : "zero real"
+                            : "zero real"
                       }
-                      selo={
-                        kpis.strikingDistance.removidas
-                          ? "sem"
-                          : baseCurta === 0
-                            ? "sem"
-                            : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                              ? "piso"
-                              : "dado"
-                      }
+                      selo={kpis.strikingDistance.removidas || baseCurta === 0 ? "sem" : "dado"}
                       palavra={
                         kpis.strikingDistance.removidas
                           ? `${br(kpis.strikingDistance.removidas)} era(m) de marca`
                           : baseCurta === 0
                             ? "nenhuma impressão na janela"
-                            : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                              ? "não é &ldquo;nenhuma na faixa&rdquo;"
-                              : "nenhuma nesta faixa"
+                            : "nenhuma nesta faixa"
                       }
                     >
                       consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
                     </Leitura>
                   ))}
 
-                {kpisUrl === null ? null : kpisUrl.ctrGap === null ? (
-                  <Leitura sem="sem base" selo="sem" palavra="não é 0%" base={baseDaPagina}>
-                    das URLs atingem o CTR mínimo da própria posição
-                  </Leitura>
-                ) : (
-                  <Leitura
-                    valor={pct(kpisUrl.ctrGap.fracao)}
-                    fracao={acimaDoPisoPagina ? kpisUrl.ctrGap.fracao : undefined}
-                    meta={[0.75, 0.8]}
-                    base={baseDaPagina}
-                    selo={kpisUrl.ctrGap.fracao >= 0.75 ? "dado" : undefined}
-                  >
-                    das URLs atingem o CTR mínimo da posição ({kpisUrl.ctrGap.avaliadas} avaliada(s)) ·
-                    meta do board: 75% a 80%
-                  </Leitura>
+                {/* ── NÍVEL 2 — A EVIDÊNCIA (FR-010/FR-011) ─────────────────────────────────────
+                    As DUAS leituras, sem o mesmo peso: só a por página carrega a meta do board —
+                    a AUSÊNCIA de meta na leitura por tráfego é o portador da distinção (SC-008). */}
+                {conformidade === null ? null : (
+                  <>
+                    <Leitura
+                      valor={conformidade.porPagina.fracao === null ? undefined : pct(conformidade.porPagina.fracao)}
+                      sem={conformidade.porPagina.fracao === null ? "sem base" : undefined}
+                      fracao={conformidade.porPagina.fracao ?? undefined}
+                      meta={conformidade.porPagina.meta}
+                      base={`${br(conformidade.porPagina.atingem)} de ${br(conformidade.porPagina.decididas)} decididas · ${br(conformidade.indecisas)} indecisa(s) · ${br(conformidade.semRegua)} sem régua`}
+                    >
+                      das páginas decidíveis atingem a régua da própria posição · meta do board: 75% a 80%
+                    </Leitura>
+                    <Leitura
+                      valor={conformidade.porTrafego.fracao === null ? undefined : pct(conformidade.porTrafego.fracao)}
+                      sem={conformidade.porTrafego.fracao === null ? "sem base" : undefined}
+                      base={`${br(conformidade.porTrafego.impressoesQueAtingem)} de ${br(conformidade.porTrafego.impressoesDecididas)} impressões`}
+                    >
+                      das impressões decidíveis estão em páginas que atingem — sem meta do board: é qualificação, não o KPI
+                    </Leitura>
+                  </>
                 )}
 
                 {kpis !== null &&
@@ -2123,32 +2211,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                         : ""}
                     </Leitura>
                   ) : (
-                    /* 027 — AUSÊNCIA NÃO É APROVAÇÃO. Declarar a meta do board atingida sobre uma
-                       lista que a própria tela chama de piso transforma "não deu para ver" em "está
-                       certo". Abaixo do piso o selo diz `não apurável`, nunca `meta atingida`. */
+                    /* 027 — AUSÊNCIA NÃO É APROVAÇÃO, mesmo sem o piso fixo (033/FR-009): zero é
+                       zero real, e a base ao lado é o que permite o leitor julgar por si. */
                     <Leitura
                       base={baseDoTermo}
-                      sem={
-                        baseCurta === 0
-                          ? "sem base"
-                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "não apurável"
-                            : "zero real"
-                      }
-                      selo={
-                        baseCurta === 0
-                          ? "sem"
-                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "piso"
-                            : "dado"
-                      }
-                      palavra={
-                        baseCurta === 0
-                          ? "nenhuma impressão na janela"
-                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "não é a meta do board atingida"
-                            : "meta do board atingida"
-                      }
+                      sem={baseCurta === 0 ? "sem base" : "zero real"}
+                      selo={baseCurta === 0 ? "sem" : "dado"}
+                      palavra={baseCurta === 0 ? "nenhuma impressão na janela" : "meta do board atingida"}
                     >
                       consulta(s) com duas URLs suas disputando
                     </Leitura>
@@ -2165,8 +2234,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     kpis && kpis.strikingDistance.lista.length > 0
                       ? `${br(kpis.strikingDistance.lista.length)} a um empurrão do Top 3`
                       : null,
-                    kpisUrl?.ctrGap && kpisUrl.ctrGap.abaixo.length > 0
-                      ? `${br(kpisUrl.ctrGap.abaixo.length)} abaixo do benchmark de CTR`
+                    conformidade && conformidade.abaixo.length > 0
+                      ? `${br(conformidade.abaixo.length)} decidida(s) abaixo da régua de CTR`
                       : null,
                     kpis && kpis.canibalizacao.lista.length > 0
                       ? `${br(kpis.canibalizacao.lista.length)} em canibalização`
@@ -2190,18 +2259,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </ul>
               )}
 
-              {kpisUrl?.ctrGap != null && kpisUrl.ctrGap.abaixo.length > 0 && (
+              {conformidade != null && conformidade.abaixo.length > 0 && (
                 <>
                   <p className="foot">
-                    Abaixo do benchmark — aqui o problema é o <strong>título</strong>, não a posição:
+                    Decididas e abaixo da régua — a amostra JÁ EXCLUI a régua da própria posição, o
+                    problema é o <strong>título</strong>, não a posição nem o tamanho da amostra:
                   </p>
                   <ul className="ficha-krs">
-                    {kpisUrl.ctrGap.abaixo.slice(0, 10).map((u) => (
+                    {conformidade.abaixo.slice(0, 10).map((u) => (
                       <li key={u.url}>
-                        <strong>{u.url}</strong>{" "}
+                        <Veredito estado="abaixo" /> <strong>{u.url}</strong>{" "}
                         <span className="foot">
-                          posição {u.posicao!.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ·
-                          CTR {pct(u.ctr!)} contra {pct(u.benchmark!)} esperado · {br(u.impressoes)}{" "}
+                          posição {u.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} ·
+                          CTR {pct(u.ctr!)} contra {pct(u.regua)} esperado · {br(u.impressoes)}{" "}
                           impressões
                         </span>
                       </li>
@@ -2305,20 +2375,32 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     ) : null}
                   </dd>
 
-                  {baseCurta !== null && baseCurta > 0 && baseCurta < PISO_IMPRESSOES_VEREDITO ? (
+                  {conformidade && conformidade.indecisas > 0 ? (
                     <>
-                      <dt>abaixo do piso</dt>
+                      <dt>a amostra não decide</dt>
                       <dd>
-                        A janela tem <strong>{br(baseCurta)} impressões</strong>. A faixa de
-                        referência do board tem 10 pontos de largura, e cada impressão vale{" "}
-                        {(100 / baseCurta).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}{" "}
-                        deles — três atravessam a faixa inteira. A régua só passa a valer a partir de{" "}
-                        <strong>{br(PISO_IMPRESSOES_VEREDITO)}</strong> impressões, e abaixo disso a
-                        ausência de achado não é achado nenhum: não é &ldquo;nenhuma na faixa&rdquo;
-                        nem &ldquo;meta do board atingida&rdquo;, é <strong>não medido</strong>.
+                        <strong>{br(conformidade.indecisas)} página(s)</strong> têm intervalo de
+                        confiança que ATRAVESSA a régua da própria posição: nem excluem o piso, nem
+                        o superam com folga — não é &ldquo;abaixo&rdquo; nem &ldquo;atinge&rdquo;, é{" "}
+                        <strong>não decidido</strong>. Elas saem do denominador dos dois índices
+                        acima, e é por isso que o índice por página pode variar de uma janela para a
+                        outra <strong>sem nenhuma página ter mudado de desempenho</strong> — só de
+                        quantas a amostra passou a decidir. 20 indecisas virando 4 muda o índice de
+                        12,5% para 25,0% mesmo com o site parado.
                       </dd>
                     </>
                   ) : null}
+
+                  {conformidade && (
+                    <>
+                      <dt>régua de CTR — procedência</dt>
+                      <dd>
+                        <Origem chave="ctrGap" detalhado /> · janela {curtaGsc.inicio} →{" "}
+                        {curtaGsc.fim} · confiança de 95% (Wilson) sobre cada amostra — nunca uma
+                        contagem fixa de impressões.
+                      </dd>
+                    </>
+                  )}
 
                   <dt>Striking distance</dt>
                   <dd>

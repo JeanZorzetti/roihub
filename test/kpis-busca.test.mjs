@@ -4,6 +4,10 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   benchmark,
+  BENCHMARK,
+  FAIXAS,
+  faixaDaPosicao,
+  porFaixaDePosicao,
   ctr,
   consultasUnicas,
   noTop20,
@@ -11,16 +15,22 @@ import {
   urlsComImpressao,
   strikingDistance,
   ctrPorConsulta,
-  ctrGap,
+  conformidadeDeCtr,
+  paginaNomeada,
+  cliquesNaoCapturados,
+  LIMIAR_PAGINAS_DECIDIDAS,
   termoPrincipal,
   canibalizacao,
   kpisPorTermo,
   kpisPorPagina,
   activeIndexRatio,
   queryToPageRatio,
-  PISO_IMPRESSOES_VEREDITO,
   totalImpressoes,
 } from "../lib/kpis-busca.mjs";
+import { descoberta } from "../lib/janelas.mjs";
+import { vereditoContraFaixa } from "../lib/intervalo.mjs";
+
+const JANELA = descoberta(Date.parse("2026-09-20T12:00:00Z"));
 
 const l = (query, page, impressoes, cliques, posicao) => ({ query, page, impressoes, cliques, posicao });
 // 032 — a linha da OUTRA leitura. Campo `pagina`, sem `query`: é o que torna as duas famílias
@@ -28,12 +38,17 @@ const l = (query, page, impressoes, cliques, posicao) => ({ query, page, impress
 const pg = (pagina, impressoes, cliques, posicao) => ({ pagina, impressoes, cliques, posicao });
 
 // ── pureza (Princípio III) ──────────────────────────────────────────────────────────────────
-test("módulo é puro: sem process.env, sem Date.now(), sem import", () => {
+// 033 — o módulo deixou de ser "zero imports": importa lib/intervalo.mjs, que é FOLHA (zero
+// imports por sua vez), então continua sem process.env/pg/fetch/google-auth-library na árvore.
+// A trava passa a permitir EXATAMENTE este import, e reprova qualquer outro.
+test("módulo é puro: sem process.env, sem Date.now(), e o único import é a folha lib/intervalo.mjs", () => {
   const bruto = readFileSync(fileURLToPath(new URL("../lib/kpis-busca.mjs", import.meta.url)), "utf8");
   const src = bruto.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
   assert.doesNotMatch(src, /process\.env/, "módulo puro não pode ler ambiente");
   assert.doesNotMatch(src, /Date\.now\(\)/, "módulo puro não pode ler relógio");
-  assert.doesNotMatch(src, /^import /m, "módulo puro não importa nada");
+  const imports = [...src.matchAll(/^import .*$/gm)];
+  assert.equal(imports.length, 1, "exatamente um import — a folha de intervalo.mjs");
+  assert.match(imports[0][0], /from ["']\.\/intervalo\.mjs["']/, "o único import permitido é a folha lib/intervalo.mjs");
 });
 
 // ── benchmark: CADA borda de faixa, uma a uma ───────────────────────────────────────────────
@@ -133,7 +148,7 @@ test("faixa que era SÓ marca esvazia a lista com removidas > 0, não com removi
   assert.equal(r.removidas, 1, "0 aqui diria 'nenhuma na faixa', que é outra causa");
 });
 
-// ── ctrPorConsulta / ctrGap ─────────────────────────────────────────────────────────────────
+// ── ctrPorConsulta ──────────────────────────────────────────────────────────────────────────
 test("posição 2 com CTR 5% fica marcada como abaixo do benchmark", () => {
   const [r] = ctrPorConsulta([l("a", "/a", 100, 5, 2.0)]);
   assert.equal(r.benchmark, 0.13);
@@ -152,37 +167,170 @@ test("linha sem benchmark tem atinge null — 'não medido' não é 'reprovado'"
   assert.notEqual(r.atinge, false);
 });
 
-test("CTR Gap exclui do denominador as URLs sem benchmark", () => {
-  // Duas páginas: uma no Top 3 que atinge, outra na posição 40 que nem tem régua.
-  const g = ctrGap([pg("/a", 100, 30, 2.0), pg("/b", 100, 0, 40)]);
-  assert.equal(g.avaliadas, 1, "a URL sem benchmark não entra no denominador");
-  assert.equal(g.fracao, 1);
+// ── 033 — conformidadeDeCtr(): o veredito por intervalo substitui o piso fixo de impressões ───
+test("conformidadeDeCtr exclui do denominador as URLs sem régua, e as indecisas não entram nem no numerador nem no denominador", () => {
+  // /a: 30/100 na posição 2 (régua 13%) — amostra decide e ATINGE.
+  // /b: posição 40 — sem régua, fora dos dois eixos.
+  const c = conformidadeDeCtr([pg("/a", 100, 30, 2.0), pg("/b", 100, 0, 40)], JANELA);
+  assert.equal(c.semRegua, 1, "a URL sem benchmark não entra no denominador");
+  assert.equal(c.porPagina.decididas, 1);
+  assert.equal(c.porPagina.fracao, 1);
 });
 
-test("CTR Gap sem nenhuma URL avaliável devolve null, não 0%", () => {
-  assert.equal(ctrGap([]), null);
-  assert.equal(ctrGap([pg("/a", 100, 0, 40)]), null, "só URL sem benchmark = sem denominador");
+test("conformidadeDeCtr com lista vazia: todos os contadores em zero, frações null", () => {
+  const c = conformidadeDeCtr([], JANELA);
+  assert.equal(c.porPagina.fracao, null);
+  assert.equal(c.porTrafego.fracao, null);
+  assert.equal(c.indecisas, 0);
+  assert.equal(c.semRegua, 0);
+  assert.equal(c.semImpressao, 0);
+  assert.equal(c.nomeada, null, "FR-013 — zero página decidida não publica nomeada");
+});
+
+// SC-001/SC-002 — o caso que abriu a spec: 0/21 na Posição 1 DECIDE contra 25% (abaixo), e 3/105
+// nas Posições 4 a 6 NÃO decide contra 4,5% (indecisa) — o piso fixo tratava os dois igual.
+test("SC-001/SC-002 — 0/21 na posição 1 decide (abaixo); 3/105 nas posições 4 a 6 não decide", () => {
+  const c = conformidadeDeCtr([pg("/pos1", 21, 0, 1.0), pg("/pos456", 105, 3, 5.0)], JANELA);
+  assert.equal(c.porPagina.decididas, 1, "só a posição 1 decide — a outra é indecisa");
+  assert.equal(c.indecisas, 1);
 });
 
 // 032 — O CASO QUE ABRIU A SPEC. A home da Atma sai na posição 11,82 pela leitura por TERMO (fora
 // da faixa do balizador, que acaba em 10,9) e na 6,93 pela leitura por PÁGINA, com 22,49% de CTR.
-// A leitura incompleta expulsava do denominador justamente a única página que atinge o piso, e o
-// veredito publicado virava 0% — pior que a ausência, porque um zero convida a agir no lugar errado.
-test("CTR Gap: a página em 6,93 com 22,49% entra no denominador e atinge o piso", () => {
-  const g = ctrGap([pg("/", 578, 130, 6.93), pg("/precos", 448, 13, 11.82)]);
-  assert.equal(g.avaliadas, 1, "a de 11,82 está fora da faixa do balizador e não entra");
-  assert.equal(g.fracao, 1, "a de 6,93 atinge o piso de 4,5% da faixa dela");
-  assert.deepEqual(g.abaixo, [], "fora da faixa NÃO é reprovada: 'não medido' e 'abaixo' pedem trabalho oposto");
+test("conformidadeDeCtr: a página em 6,93 com 22,49% entra no denominador e atinge a régua", () => {
+  const c = conformidadeDeCtr([pg("/", 578, 130, 6.93), pg("/precos", 448, 13, 11.82)], JANELA);
+  assert.equal(c.semRegua, 1, "a de 11,82 está fora da faixa do balizador e não entra");
+  assert.equal(c.porPagina.decididas, 1);
+  assert.equal(c.porPagina.fracao, 1, "a de 6,93 atinge a régua de 4,5% da faixa dela");
+  assert.deepEqual(c.abaixo, [], "fora da faixa NÃO é reprovada: 'não medido' e 'abaixo' pedem trabalho oposto");
 });
 
 // 032/D3 — NENHUMA agregação aqui. Cada linha JÁ é uma URL; recalcular `posição × impressões ÷
 // impressões` reintroduziria a deriva de ponto flutuante que a 031 removeu. E a faixa acaba em
 // 10,9: um `11,000000000000002` cai fora dela e a página some do denominador sem nada ter mudado.
-test("CTR Gap não re-agrega: a posição sai como entrou, sem deriva de ponto flutuante", () => {
-  const g = ctrGap([pg("/p", 1146, 0, 3.9)]);
-  assert.equal(g.abaixo[0].posicao, 3.9, "3.8999999999999995 é a deriva que a 031 removeu");
-  assert.equal(g.abaixo[0].url, "/p", "o campo de saída continua url — é o nome que a lista 'abaixo' já renderiza");
-  assert.equal(ctrGap([pg("/borda", 100, 0, 10.9)]).avaliadas, 1, "10,9 é o último ponto da faixa e tem de entrar");
+test("conformidadeDeCtr não re-agrega: a posição sai como entrou, sem deriva de ponto flutuante", () => {
+  // impressões altas o bastante para o intervalo decidir contra a régua de 3,9 (4,5%)
+  const c = conformidadeDeCtr([pg("/p", 1146, 0, 3.9)], JANELA);
+  assert.equal(c.abaixo[0].posicao, 3.9, "3.8999999999999995 é a deriva que a 031 removeu");
+  assert.equal(c.abaixo[0].url, "/p", "o campo de saída continua url — é o nome que a lista 'abaixo' já renderiza");
+  assert.equal(conformidadeDeCtr([pg("/borda", 5000, 0, 10.9)], JANELA).semRegua, 0, "10,9 é o último ponto da faixa e tem de entrar");
+});
+
+// ── paginaNomeada — FR-012 ──────────────────────────────────────────────────────────────────
+test("paginaNomeada escolhe a MAIOR impressão entre as decididas, não a pior", () => {
+  const decididas = [
+    { url: "/pequena", cliques: 0, impressoes: 100, posicao: 2.0, ctr: 0, regua: 0.13, veredito: "abaixo" },
+    { url: "/grande", cliques: 200, impressoes: 1000, posicao: 2.0, ctr: 0.2, regua: 0.13, veredito: "atinge" },
+  ];
+  const n = paginaNomeada(decididas, 1100);
+  assert.equal(n.url, "/grande");
+  assert.equal(n.veredito, "atinge", "se a maior atinge, a frase diz isso — não vira 'a pior'");
+  assert.equal(n.participacao, 1000 / 1100);
+});
+
+test("paginaNomeada: empate de impressões resolve pela URL alfabeticamente menor", () => {
+  const decididas = [
+    { url: "zebra", cliques: 0, impressoes: 100, posicao: 2.0, ctr: 0, regua: 0.13, veredito: "abaixo" },
+    { url: "abelha", cliques: 0, impressoes: 100, posicao: 2.0, ctr: 0, regua: 0.13, veredito: "abaixo" },
+  ];
+  assert.equal(paginaNomeada(decididas, 200).url, "abelha");
+});
+
+test("paginaNomeada: decididas vazio devolve null (FR-013)", () => {
+  assert.equal(paginaNomeada([], 0), null);
+});
+
+// SC-009 — a página nomeada real da Atma em 20/09/2026.
+test("paginaNomeada — SC-009: /blog/quanto-custa-alinhador-invisivel, 94% do tráfego decidível, 155 cliques faltantes", () => {
+  const decididas = [{ url: "/blog/quanto-custa-alinhador-invisivel", cliques: 275, impressoes: 21500, posicao: 7.343047498187092, ctr: 275 / 21500, regua: 0.02, veredito: "abaixo" }];
+  const n = paginaNomeada(decididas, 22899);
+  assert.ok(Math.abs(n.participacao - 0.939) < 0.001);
+  assert.equal(n.cliquesFaltantes, 155);
+});
+
+// ── cliquesNaoCapturados — migrada de lib/gsc-delta.mjs (T016) ─────────────────────────────
+test("cliques não capturados: aritmética de um degrau, e null quando já cobre", () => {
+  assert.equal(cliquesNaoCapturados({ impressoes: 1240, ctr: 0.05, benchmark: 0.13 }), 1240 * 0.08);
+  assert.equal(cliquesNaoCapturados({ impressoes: 1000, ctr: 0.2, benchmark: 0.13 }), null);
+  assert.equal(cliquesNaoCapturados({ impressoes: 0, ctr: 0.05, benchmark: 0.13 }), null);
+  assert.equal(cliquesNaoCapturados(null), null);
+  // SC-009: 21.500 × 2,00% = 430 esperados − 275 medidos = 155 faltantes.
+  assert.equal(cliquesNaoCapturados({ impressoes: 21500, ctr: 275 / 21500, benchmark: 0.02 }), 155);
+});
+
+// ── LIMIAR_PAGINAS_DECIDIDAS — derivado, não escolhido (FR-012) ────────────────────────────
+test("LIMIAR_PAGINAS_DECIDIDAS: 1/n não atravessa os 5 pontos da faixa, e 1/(n-1) atravessaria", () => {
+  // No limiar exato uma página só alcança a BORDA da faixa (75% a 80%), nunca a atravessa —
+  // por isso <=, não <; um n menor (n-1) já atravessaria (>=).
+  assert.ok(1 / LIMIAR_PAGINAS_DECIDIDAS <= 0.05);
+  assert.ok(1 / (LIMIAR_PAGINAS_DECIDIDAS - 1) >= 0.05);
+});
+
+// ── FAIXAS/faixaDaPosicao — derivadas de BENCHMARK, nunca uma segunda lista (US2) ──────────
+test("FAIXAS: cada degrau de BENCHMARK tem uma faixa correspondente (de/ate/regua), nos dois sentidos", () => {
+  for (let i = 0; i < BENCHMARK.length; i++) {
+    const de = i === 0 ? 1 : BENCHMARK[i - 1].ate;
+    const f = FAIXAS[i];
+    assert.equal(f.de, de, `FAIXAS[${i}].de diverge do degrau anterior de BENCHMARK`);
+    assert.equal(f.ate, BENCHMARK[i].ate, `FAIXAS[${i}].ate diverge de BENCHMARK[${i}].ate`);
+    assert.equal(f.regua, BENCHMARK[i].ctr, `FAIXAS[${i}].regua diverge de BENCHMARK[${i}].ctr`);
+  }
+  // sentido inverso: toda FAIXA com regua não-null tem que existir em BENCHMARK
+  for (const f of FAIXAS) {
+    if (f.regua === null) continue;
+    assert.ok(BENCHMARK.some((b) => b.ctr === f.regua), `FAIXAS regua=${f.regua} não existe em BENCHMARK`);
+  }
+});
+
+test("FAIXAS: a sexta é declarada (Página 2), sem fonte em BENCHMARK, e o rótulo nomeia a própria faixa", () => {
+  assert.equal(FAIXAS.length, 6);
+  const pagina2 = FAIXAS[5];
+  assert.equal(pagina2.regua, null);
+  assert.match(pagina2.rotulo, /11/);
+  assert.match(pagina2.rotulo, /20/);
+  // rótulo é autoral: cada rótulo nomeia de/ate-1, e não é derivável de BENCHMARK
+  for (const f of FAIXAS.slice(0, 5)) {
+    if (f.ate - 1 > f.de) assert.match(f.rotulo, new RegExp(String(f.ate - 1)), `${f.rotulo} não nomeia o fim da própria faixa`);
+  }
+});
+
+test("faixaDaPosicao: fronteira exclusiva, nunca re-agregação — 11,000000000000002 cai na página 2", () => {
+  assert.equal(faixaDaPosicao(11.000000000000002).rotulo, "Página 2 (11 a 20)");
+  assert.equal(faixaDaPosicao(1.0).rotulo, "Posição 1");
+  assert.equal(faixaDaPosicao(6.999999999).rotulo, "Posições 4 a 6");
+  assert.equal(faixaDaPosicao(7.0).rotulo, "Posições 7 a 10");
+});
+
+test("faixaDaPosicao: acima de 20,0 é null — as seis faixas do board não vão além da página 2", () => {
+  assert.equal(faixaDaPosicao(20.5), null);
+  assert.equal(faixaDaPosicao(45), null);
+  assert.equal(faixaDaPosicao(0), null);
+  assert.equal(faixaDaPosicao(NaN), null);
+});
+
+test("porFaixaDePosicao devolve SEMPRE as seis, mesmo sem impressão, com janela em cada uma", () => {
+  const r = porFaixaDePosicao([pg("/a", 100, 30, 2.0)], JANELA);
+  assert.equal(r.length, 6);
+  assert.ok(r.every((f) => f.janela === JANELA));
+  const posicao1 = r.find((f) => f.rotulo === "Posição 1");
+  assert.equal(posicao1.paginas, 0);
+  assert.equal(posicao1.intervalo, null, "sem impressão não há intervalo");
+  assert.equal(posicao1.veredito, null);
+  const posicao2 = r.find((f) => f.rotulo === "Posição 2");
+  assert.equal(posicao2.paginas, 1);
+  assert.equal(posicao2.veredito, "atinge");
+});
+
+test("porFaixaDePosicao: nenhuma página em duas faixas, e a soma bate com o total de URLs com impressão", () => {
+  const paginas = [pg("/a", 100, 30, 2.0), pg("/b", 50, 0, 15.0), pg("/c", 30, 0, 25.0)];
+  const r = porFaixaDePosicao(paginas, JANELA);
+  const somaDentro = r.reduce((a, f) => a + f.paginas, 0);
+  // /c está em 25,0 — acima de 20,0, fora das seis faixas.
+  assert.equal(somaDentro, 2);
+  const pagina2 = r.find((f) => f.rotulo === "Página 2 (11 a 20)");
+  assert.equal(pagina2.regua, null);
+  assert.equal(pagina2.veredito, null, "sem régua não há veredito, nunca 'indecisa'");
+  assert.ok(pagina2.amostra.impressoes > 0, "o CTR real continua visível mesmo sem régua");
 });
 
 // 032/SC-001 — as 29 páginas da Atma na janela medida (2026-08-20 → 2026-09-16), como `gscPaginas`
@@ -220,17 +368,49 @@ const PAGINAS_ATMA_JANELA = [
   pg("/blog/quanto-custam-alinhadores-invisiveis-2026", 1, 0, 1),
 ];
 
-test("CTR Gap sobre as páginas da janela medida: 12,5% com 24 avaliadas, a home entre elas", () => {
-  const g = ctrGap(PAGINAS_ATMA_JANELA);
-  assert.equal(g.avaliadas, 24, "5 das 29 páginas estão acima de 10,9 e ficam fora do denominador");
-  assert.equal(g.fracao, 0.125, "3 das 24 atingem o piso da própria posição — a tela publicava 0% com 6");
+test("conformidadeDeCtr sobre as páginas da janela medida: o site inteiro entra, não os 10.395 da leitura por termo", () => {
   assert.equal(totalImpressoes(PAGINAS_ATMA_JANELA), 24664, "a base é o site inteiro, não os 10.395 da leitura por termo");
+  const c = conformidadeDeCtr(PAGINAS_ATMA_JANELA, JANELA);
   const home = PAGINAS_ATMA_JANELA.find((p) => p.pagina === "/");
   assert.ok(
     ctr(home.cliques, home.impressoes) >= benchmark(home.posicao),
     "a home é avaliada e ATINGE — pela leitura por termo ela saía em 11,82 e nem entrava no denominador",
   );
-  assert.equal(g.abaixo.some((u) => u.url === "/"), false);
+  assert.equal(c.abaixo.some((u) => u.url === "/"), false);
+});
+
+// 033/SC-003/SC-007/SC-009/SC-010 — o caso de referência da Atma em 20/09/2026, reconstruído com
+// os mesmos números que `research.md`/`data-model.md` publicam: 4 decididas (1 atinge, 3 abaixo,
+// entre elas a página nomeada), 20 indecisas, 5 sem régua, 0 sem impressão — 29 URLs no total.
+const ATMA_20_09 = [
+  pg("/blog/quanto-custa-alinhador-invisivel", 21500, 275, 7.343047498187092), // nomeada, abaixo
+  pg("/pacientes/precos", 583, 20, 8.0), // atinge
+  pg("/a-abaixo-1", 400, 0, 1.5), // abaixo, decisivo
+  pg("/a-abaixo-2", 416, 0, 1.8), // abaixo, decisivo
+  ...Array.from({ length: 20 }, (_, i) => pg(`/indecisa-${i}`, 1, 0, 5.0)), // n=1: nunca decide
+  ...Array.from({ length: 5 }, (_, i) => pg(`/cauda-longa-${i}`, 50, 0, 15.0)), // posição > 10,9: sem régua
+];
+
+test("conformidadeDeCtr — caso de referência da Atma (20/09/2026): porPagina 25% (1 de 4), porTrafego 2,5% (583 de 22.899), 20 indecisas, 5 sem régua", () => {
+  const c = conformidadeDeCtr(ATMA_20_09, JANELA);
+  assert.equal(ATMA_20_09.length, 29);
+  assert.equal(c.porPagina.decididas, 4);
+  assert.equal(c.porPagina.atingem, 1);
+  assert.equal(c.porPagina.fracao, 0.25);
+  assert.deepEqual(c.porPagina.meta, [0.75, 0.8]);
+  assert.equal(c.porTrafego.impressoesQueAtingem, 583);
+  assert.equal(c.porTrafego.impressoesDecididas, 22899);
+  assert.ok(Math.abs(c.porTrafego.fracao - 0.025) < 0.001);
+  assert.equal(c.porTrafego.meta, null, "FR-010 — o board nunca definiu meta para a leitura por tráfego");
+  assert.equal(c.indecisas, 20);
+  assert.equal(c.semRegua, 5);
+  assert.equal(c.semImpressao, 0);
+  // Invariante da FR-011/data-model §4: as quatro contagens somam o total de páginas.
+  assert.equal(c.porPagina.decididas + c.indecisas + c.semRegua + c.semImpressao, ATMA_20_09.length);
+  assert.ok(c.porPagina.atingem <= c.porPagina.decididas);
+  assert.equal(c.nomeada.url, "/blog/quanto-custa-alinhador-invisivel");
+  assert.equal(c.nomeada.cliquesFaltantes, 155);
+  assert.ok(Math.abs(c.nomeada.participacao - 0.939) < 0.001);
 });
 
 // ── contagens ───────────────────────────────────────────────────────────────────────────────
@@ -245,13 +425,31 @@ test("Top 20 conta consultas distintas dentro de 1,0-20,0", () => {
   assert.equal(noTop20([l("a", "/a", 10, 0, 20.0), l("b", "/b", 10, 0, 20.1)]), 1);
 });
 
-test("% de impressões no Top 3 usa 1,0-3,9", () => {
-  assert.equal(impressoesNoTop3([l("a", "/a", 75, 0, 3.9), l("b", "/b", 25, 0, 4.0)]), 0.75);
+test("% de impressões no Top 3 usa 1,0-3,9, e devolve fracao/noTop3/total", () => {
+  const r = impressoesNoTop3([l("a", "/a", 75, 0, 3.9), l("b", "/b", 25, 0, 4.0)]);
+  assert.equal(r.fracao, 0.75);
+  assert.equal(r.noTop3, 75);
+  assert.equal(r.total, 100);
 });
 
 test("% de impressões no Top 3 sem impressão devolve null, não NaN", () => {
   assert.equal(impressoesNoTop3([]), null);
   assert.equal(impressoesNoTop3([l("a", "/a", 0, 0, 2)]), null);
+});
+
+// 033/US3/AS-1 — o piso fixo de impressões sai também daqui: quem decide se a amostra exclui os
+// 40% a 50% do board é `vereditoContraFaixa()`, aplicado sobre {noTop3, total}.
+test("Top 3 — a amostra da Atma (3% em 22.899 impressões) DECIDE e exclui 40% com folga", () => {
+  const linhas = [l("a", "/a", 686, 0, 2.0), l("b", "/b", 22213, 0, 15.0)];
+  const top3 = impressoesNoTop3(linhas);
+  assert.ok(Math.abs(top3.fracao - 0.03) < 0.001);
+  assert.equal(vereditoContraFaixa(top3.noTop3, top3.total, [0.4, 0.5]), "abaixo");
+});
+
+test("Top 3 — amostra pequena NÃO decide: o número sai com a base e sem veredito (AS-1)", () => {
+  const linhas = [l("a", "/a", 2, 0, 2.0), l("b", "/b", 3, 0, 15.0)];
+  const top3 = impressoesNoTop3(linhas);
+  assert.equal(vereditoContraFaixa(top3.noTop3, top3.total, [0.4, 0.5]), "indecisa");
 });
 
 test("URLs com impressão é CONTAGEM — o denominador de indexadas não existe", () => {
@@ -285,9 +483,11 @@ test("lista vazia não estoura em nenhum KPI", () => {
   assert.deepEqual(k.strikingDistance.lista, []);
   assert.equal(k.strikingDistance.removidas, null);
   assert.deepEqual(k.canibalizacao.lista, []);
-  const kp = kpisPorPagina([], null);
+  const kp = kpisPorPagina([], null, JANELA);
   assert.equal(kp.urlsComImpressao, 0);
-  assert.equal(kp.ctrGap, null);
+  assert.equal(kp.conformidade.porPagina.fracao, null);
+  assert.equal(kp.conformidade.nomeada, null);
+  assert.equal(kp.faixas.length, 6);
   assert.equal(kp.activeIndexRatio, null);
 });
 
@@ -306,23 +506,24 @@ test("kpisPorTermo devolve os MESMOS valores de antes da 032", () => {
   assert.equal(k.consultasUnicas.valor, 4);
   assert.equal(k.consultasUnicas.piso, true);
   assert.equal(k.noTop20, 3, "a de posição 30 fica fora");
-  assert.equal(k.impressoesNoTop3, 110 / 205);
+  assert.equal(k.impressoesNoTop3.fracao, 110 / 205);
   assert.equal(k.strikingDistance.lista.length, 2, "as de 6,0 e 5,0");
   assert.equal(k.strikingDistance.lista[0].page, "/b", "ordenadas por impressões");
   assert.equal(k.canibalizacao.lista.length, 1, "alinhador preco em /a e /b");
   assert.equal(k.canibalizacao.lista[0].impressoes, 150);
   // A fronteira em forma de teste: estas duas foram para a família por URL e não podem voltar.
-  assert.equal("ctrGap" in k, false, "o CTR Gap é por URL — contá-lo na leitura por termo É o defeito da 032");
+  assert.equal("conformidade" in k, false, "a conformidade é por URL — contá-la na leitura por termo É o defeito da 032");
   assert.equal("urlsComImpressao" in k, false, "idem: a leitura por termo omite as raras e some com metade das URLs");
 });
 
 test("kpisPorPagina: sem denominador apurado, activeIndexRatio é null e a contagem fica", () => {
   const paginas = [pg("/a", 10, 1, 5), pg("/b", 0, 0, 8), pg("/c", 3, 0, 9)];
-  const k = kpisPorPagina(paginas, null);
+  const k = kpisPorPagina(paginas, null, JANELA);
   assert.equal(k.activeIndexRatio, null, "sem denominador apurado a tela volta à contagem, não inventa razão");
   assert.equal(k.urlsComImpressao, 2, "/b tem 0 impressões e não conta");
-  assert.equal(k.ctrGap.avaliadas, 2, "as duas com impressão estão dentro da faixa do balizador");
-  assert.equal(kpisPorPagina(paginas, 4).activeIndexRatio, 2 / 4);
+  assert.equal(k.conformidade.semImpressao, 1, "/b tem 0 impressões — nem indecisa, nem sem régua");
+  assert.equal(k.conformidade.indecisas, 2, "amostras de 10 e 3 não excluem a régua da própria posição");
+  assert.equal(kpisPorPagina(paginas, 4, JANELA).activeIndexRatio, 2 / 4);
 });
 
 // ── 022: as duas razões que estavam capadas por falta de denominador ─────────────────────────
@@ -355,7 +556,7 @@ test("activeIndexRatio devolve null quando há mais URLs com impressão do que i
   const paginas = [pg("/1", 10, 1, 5), pg("/2", 3, 0, 9), pg("/3", 2, 0, 7)];
   assert.equal(activeIndexRatio(paginas, 2), null, "3 ÷ 2 = 150% leria como meta folgada");
   assert.equal(activeIndexRatio(paginas, 3), 1, "cobrir exatamente o numerador é razão válida");
-  assert.equal(kpisPorPagina(paginas, 2).urlsComImpressao, 3, "a contagem fica — é ela que volta à tela");
+  assert.equal(kpisPorPagina(paginas, 2, JANELA).urlsComImpressao, 3, "a contagem fica — é ela que volta à tela");
 });
 
 test("lista de linhas vazia com denominador válido é zero, não null — nada foi visto, mas foi medido", () => {
@@ -468,17 +669,10 @@ test("kpisPorTermo repassa `ehMarca` para as DUAS listas, não só para canibali
   );
 });
 
-// ── 026: o piso de impressões do veredito do Top 3 ──────────────────────────────────────────
-
-test("PISO_IMPRESSOES_VEREDITO é a base em que 1 impressão vale no máximo 1 ponto", () => {
-  // A faixa do board tem 10 pontos (40% a 50%). No piso, uma impressão move a fração 1pp — são
-  // precisas 10 para atravessar a faixa. É isso que o número significa.
-  assert.ok(100 / PISO_IMPRESSOES_VEREDITO <= 1);
-  // Abaixo do piso a régua não vale: com as 26 impressões reais de 18/09, 1 impressão vale 3,8pp
-  // e TRÊS atravessam a faixa inteira.
-  assert.ok(100 / 26 > 1);
-  assert.ok(Math.ceil(10 / (100 / 26)) === 3);
-});
+// 033/FR-009 — o piso fixo de impressões do veredito do Top 3 (026) SAIU do repositório inteiro:
+// a suficiência de amostra passou a ser decidida pelo intervalo de Wilson, testado em
+// `test/intervalo.test.mjs` (`vereditoContraFaixa`) e usado pela tela via `impressoesNoTop3()`
+// acima — não há mais constante nem teste próprios aqui.
 
 test("totalImpressoes é o denominador que acompanha a fração", () => {
   const linhas = [
@@ -489,5 +683,5 @@ test("totalImpressoes é o denominador que acompanha a fração", () => {
   assert.equal(totalImpressoes([]), 0);
   assert.equal(totalImpressoes(null), 0);
   // A fração do Top 3 lida contra ESSE total: 20 de 26.
-  assert.equal(impressoesNoTop3(linhas), 20 / 26);
+  assert.equal(impressoesNoTop3(linhas).fracao, 20 / 26);
 });

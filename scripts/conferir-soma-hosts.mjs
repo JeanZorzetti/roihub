@@ -23,7 +23,7 @@ import { GoogleAuth } from "google-auth-library";
 import { melhorPropriedade, diasAtras } from "../lib/gsc-consulta.mjs";
 import { somarSeriesPorHost, assinaturaDeHosts } from "../lib/serie-gsc.mjs";
 import { hostsDeclarados } from "../lib/projects.mjs";
-// 032 — a RÉGUA, e só ela. `ctrGap` e `mesclarPorCaminho` ficam de fora de propósito: a
+// 032 — a RÉGUA, e só ela. `conformidadeDeCtr` (antes `ctrGap`) e `mesclarPorCaminho` ficam de fora de propósito: a
 // testemunha não pode ser o código que ela confere. A mescla por caminho e a conta do índice estão
 // reescritas aqui embaixo; o piso por faixa de posição é o mesmo do board e divergir dele faria os
 // dois números serem diferentes por um motivo que não é o medido.
