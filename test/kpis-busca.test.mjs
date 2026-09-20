@@ -12,6 +12,7 @@ import {
   consultasUnicas,
   noTop20,
   impressoesNoTop3,
+  penetracaoNoTop3,
   urlsComImpressao,
   strikingDistance,
   ctrPorConsulta,
@@ -684,4 +685,71 @@ test("totalImpressoes é o denominador que acompanha a fração", () => {
   assert.equal(totalImpressoes(null), 0);
   // A fração do Top 3 lida contra ESSE total: 20 de 26.
   assert.equal(impressoesNoTop3(linhas).fracao, 20 / 26);
+});
+
+// 034 — a penetração no Top 3 conta TERMO contra um inventário declarado, não impressão.
+// Os números saem da medição de 20/09/2026 na Atma: 725 termos monitorados, 453 com impressão na
+// janela de Descoberta e 73 em posição ≤ 3.
+const linhaTermo = (termo, posicao, impressoes = 100) => ({ termo, posicao, impressoes, cliques: 0 });
+const inv = (...termos) => ({ termos, total: termos.length, procedencia: { piso: 20 } });
+
+test("penetração é termos no Top 3 sobre o inventário INTEIRO", () => {
+  const r = penetracaoNoTop3(
+    [linhaTermo("a", 1.1), linhaTermo("b", 2.9), linhaTermo("c", 7.4)],
+    inv("a", "b", "c", "d"),
+  );
+  assert.equal(r.noTop3, 2);
+  assert.equal(r.total, 4, "o denominador é o inventário, não o que a janela devolveu");
+  assert.equal(r.fracao, 0.5);
+});
+
+// A armadilha do denominador: medir só sobre os apurados dá 66,7% aqui contra 50%, e o número
+// MELHORA conforme o site some do radar. Na Atma seria 16,1% em vez de 10,1%.
+test("termo do inventário ausente da janela conta no total e não no Top 3", () => {
+  const r = penetracaoNoTop3([linhaTermo("a", 1.1)], inv("a", "b", "c"));
+  assert.equal(r.total, 3);
+  assert.equal(r.cobertura, 1);
+  assert.equal(r.noTop3, 1);
+  assert.ok(Math.abs(r.fracao - 1 / 3) < 1e-9);
+});
+
+test("termo fora do inventário é ignorado mesmo em posição 1", () => {
+  const r = penetracaoNoTop3([linhaTermo("a", 1.1), linhaTermo("intruso", 1)], inv("a", "b"));
+  assert.equal(r.noTop3, 1);
+  assert.equal(r.total, 2);
+  assert.equal(r.cobertura, 1);
+});
+
+test("cobertura abaixo do total liga o selo de piso", () => {
+  assert.equal(penetracaoNoTop3([linhaTermo("a", 1)], inv("a", "b")).piso, true);
+  assert.equal(penetracaoNoTop3([linhaTermo("a", 1), linhaTermo("b", 9)], inv("a", "b")).piso, false);
+});
+
+// O contrato de ausência: 34 dos 35 projetos não têm inventário, e `0%` neles seria uma reprovação
+// fabricada — o mesmo defeito que a 4ª corrida da ficha da Atma removeu.
+test("sem inventário devolve null e NUNCA zero", () => {
+  assert.equal(penetracaoNoTop3([linhaTermo("a", 1)], null), null);
+  assert.equal(penetracaoNoTop3([linhaTermo("a", 1)], undefined), null);
+});
+
+test("inventário presente e janela sem nenhuma linha devolve 0 de N com cobertura 0", () => {
+  const r = penetracaoNoTop3([], inv("a", "b"));
+  assert.equal(r.cobertura, 0);
+  assert.equal(r.noTop3, 0);
+  assert.equal(r.fracao, 0);
+  assert.equal(r.piso, true);
+});
+
+// Posição exatamente 3,0 está DENTRO: a fórmula do board diz "posição ≤ 3", e `impressoesNoTop3`
+// usa `< 4` porque lá a unidade é a faixa de posição. Duas medidas, duas fronteiras — e é por isso
+// que elas não compartilham função.
+test("posição 3,0 entra e 3,01 não", () => {
+  assert.equal(penetracaoNoTop3([linhaTermo("a", 3)], inv("a")).noTop3, 1);
+  assert.equal(penetracaoNoTop3([linhaTermo("a", 3.01)], inv("a")).noTop3, 0);
+});
+
+test("termo com posicao null não entra no Top 3 mas conta na cobertura", () => {
+  const r = penetracaoNoTop3([{ termo: "a", posicao: null, impressoes: 0, cliques: 0 }], inv("a", "b"));
+  assert.equal(r.noTop3, 0);
+  assert.equal(r.cobertura, 1);
 });

@@ -3,10 +3,13 @@ import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
 import { DIVERGENCIAS, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
 import { listProjects } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
-import { gscLigado, gscPaginas } from "@/lib/gsc";
+import { gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
+import { lerInventario } from "@/lib/inventario.mjs";
+import INVENTARIOS from "@/data/inventario-de-termos.json";
+import { penetracaoNoTop3, porFaixaDePosicao } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { descoberta } from "@/lib/janelas.mjs";
-import { porFaixaDePosicao } from "@/lib/kpis-busca.mjs";
+
 import { Tabs } from "../../tabs";
 import { Mapa } from "./mapa";
 
@@ -107,6 +110,31 @@ function noteDaFaixa(f: ReturnType<typeof porFaixaDePosicao>[number]): string {
   return `${ctr} (IC 95%: ${pct1(ic.inferior)} a ${pct1(ic.superior)}) contra a régua de ${pct1(f.regua)} — ${veredito} · ${janela}.`;
 }
 
+/** 034 — o `topic` da penetração: o número, a base e o estado. NENHUM glifo de veredito (`▼`/`▲`/
+ *  `◐`) aparece aqui, e a ausência é exigência da FR-009 — a folha tem coletor e NÃO tem régua.
+ *  Os "20% a 30%" são meta do board, e comparar contra eles seria publicar um veredito que o
+ *  `balizador: recusa` desta folha nega duas linhas acima, no mesmo painel. */
+function topicDaPenetracao(p: { fracao: number; noTop3: number; total: number; cobertura: number; piso: boolean }): string {
+  const base = `Medido: ${pct1(p.fracao)} · ${p.noTop3} de ${p.total} termos monitorados`;
+  return p.piso ? `${base} · piso (${p.cobertura} apurados na janela)` : base;
+}
+
+function noteDaPenetracao(
+  p: { fracao: number; noTop3: number; total: number; cobertura: number; piso: boolean },
+  janela: { inicio: string; fim: string },
+  procedencia: { congeladoEm: string; piso: number; janela: { inicio: string; fim: string } },
+): string {
+  const medida = `${p.noTop3} dos ${p.total} termos do inventário estão em posição ≤ 3 na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3).`;
+  const inventario = `O inventário foi congelado em ${procedencia.congeladoEm}: termos com ao menos ${procedencia.piso} impressões entre ${procedencia.janela.inicio} e ${procedencia.janela.fim}, somados os hosts declarados, sem a marca própria.`;
+  // A cobertura não é rodapé: 271 dos 725 termos não tiveram UMA impressão na janela, e um termo
+  // sem impressão não prova estar fora do Top 3 — prova que ninguém buscou por ele, ou que o
+  // Search Console omitiu a consulta rara. Sem esta frase o piso leria como total.
+  const cobertura = p.piso
+    ? ` Só ${p.cobertura} deles tiveram impressão nesta janela, então o número é PISO: os ${p.total - p.cobertura} ausentes contam no denominador e não podem contar no numerador.`
+    : " Todos tiveram impressão nesta janela.";
+  return `${medida}${cobertura} ${inventario} Meta do board: 20% a 30% — meta, não régua: o denominador é escolhido por quem mede, então não há faixa de mercado para julgar contra.`;
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -155,6 +183,50 @@ export default async function MapaDoBoardPage() {
         return { ...filho, topic: topicDaFaixa(f), note: noteDaFaixa(f) };
       });
     }
+  }
+
+  // 034/US2 — a penetração no Top 3, na folha que define o KPI. Leitura SEPARADA da de cima e na
+  // dimensão `query` sozinha: a de cima lê por PÁGINA e esta conta TERMO, e a agregação do Google
+  // por termo não é a soma das linhas de `query`+`page` (é a mesma razão que fez a 032 deletar
+  // `porUrl`). Duas requisições, duas perguntas.
+  const termosGsc = atma ? await gscTermos(hosts, janela) : null;
+  // O JSON entra tipado pelo próprio arquivo; `lerInventario` é `.mjs` e valida em tempo de
+  // execução (lista vazia, termo duplicado, marca dentro do inventário) — é ela que reprova o
+  // arquivo editado à mão, não o `tsc`.
+  const inventario = lerInventario("atma", INVENTARIOS);
+  const penNode = acharNo(dados.nodeData as No, "penetracaoTop3");
+  if (penNode) {
+    const pen =
+      termosGsc && !("erro" in termosGsc) ? penetracaoNoTop3(termosGsc.linhas, inventario) : null;
+    // 034/US3 — QUATRO estados e nunca `0%` em três deles. "Sem inventário" (34 dos 35 projetos)
+    // e "a leitura falhou" pedem trabalho oposto — curar uma lista × investigar uma credencial —
+    // e um `null` mudo faria os dois parecerem o mesmo. A ordem é a da causa mais específica.
+    const filho: No = !inventario
+      ? {
+          id: "penetracaoTop3-medido",
+          topic: "∅ não apurado · inventário de termos não declarado para este projeto",
+          note: "A fórmula pede um total de termos MONITORADOS, e monitorar é decisão de quem mede: sem a lista declarada não existe denominador, e qualquer percentual seria inventado. Um inventário se declara em `data/inventario-de-termos.json` — `scripts/derivar-inventario.mjs` deriva o primeiro a partir do que o site já ranqueia.",
+        }
+      : !termosGsc
+        ? {
+            id: "penetracaoTop3-medido",
+            topic: "∅ não apurado · sem leitura do Search Console",
+            note: `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. O inventário existe (${inventario.total} termos); o que falta é a leitura.`,
+          }
+        : "erro" in termosGsc
+          ? {
+              id: "penetracaoTop3-medido",
+              topic: "∅ não apurado · a leitura do Search Console falhou",
+              note: `Falha transitória, não ausência de dado: ${termosGsc.erro}. O inventário existe (${inventario.total} termos) e a medida volta na próxima leitura.`,
+            }
+          : {
+              id: "penetracaoTop3-medido",
+              topic: topicDaPenetracao(pen!),
+              note: noteDaPenetracao(pen!, janela, inventario.procedencia),
+            };
+    // À FRENTE da fórmula e da meta: quem expande a folha está procurando o número, e a definição
+    // do board é o que ele confere DEPOIS de achá-lo.
+    penNode.children = [filho, ...(penNode.children ?? [])];
   }
 
   const nos = (n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);

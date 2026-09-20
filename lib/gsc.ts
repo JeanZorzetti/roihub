@@ -1,5 +1,5 @@
 import { GoogleAuth } from "google-auth-library";
-import { mesclarPorCaminho } from "./gsc-hosts.mjs";
+import { mesclarPorCaminho, mesclarPorTermo } from "./gsc-hosts.mjs";
 import { somarSeriesPorHost } from "./serie-gsc.mjs";
 
 export type GscTrend = { current: number; previous: number; property: string } | null;
@@ -626,6 +626,52 @@ export async function gscPaginas(hosts: string[], janela: Janela, options: GscCl
         ? []
         : [{ pagina: l.page, impressoes: l.impressoes, cliques: l.cliques, posicao: l.posicao, hosts: l.hosts }],
     ),
+  };
+}
+
+/** Uma linha da leitura na dimensão `query` sozinha — a agregação por TERMO do próprio Google.
+ *  `posicao` é `null` quando nenhuma linha do termo teve impressão (034). */
+export type LinhaTermo = { termo: string; cliques: number; impressoes: number; posicao: number | null; hosts: string[] };
+export type GscTermos =
+  | { linhas: LinhaTermo[]; hosts: string[]; encerrados: string[]; truncado: boolean }
+  | { erro: string }
+  | null;
+
+/**
+ * 034 — a leitura por TERMO, que é a dimensão que a penetração no Top 3 mede.
+ *
+ * Não é `gscConsultas()` com uma dimensão a menos: aquela lê `["query", "page"]` e devolve o mesmo
+ * termo uma vez por página em que ele ranqueia. Contar termos ali exigiria somar as linhas de
+ * volta, que é a `porUrl()` deletada na 032 — a agregação do Google por `query` não é a soma das
+ * linhas de `query`+`page`, e é a dele que a fórmula do board pede.
+ *
+ * Não passa por `lerPorHosts()` de propósito: a mescla de lá chama `new URL(keys.at(-1))` para
+ * reduzir a página ao caminho, e aqui a última chave é o termo. Toda linha cairia no `catch` e a
+ * leitura voltaria VAZIA sem erro. Daí `lerHosts()` (a genérica) + `mesclarPorTermo()`.
+ *
+ * `truncado` compara cada resposta contra o teto DESTA requisição e nunca o total somado — mesma
+ * regra de `lerPorHosts`, pelo mesmo motivo: com dois hosts o total passa do teto sem que nenhuma
+ * propriedade tenha sido cortada.
+ *
+ * Contrato de ausência igual ao das vizinhas: `null` = não há onde olhar, `{erro}` = falha
+ * transitória.
+ */
+export async function gscTermos(hosts: string[], janela: Janela, options: GscClientOptions = {}): Promise<GscTermos> {
+  const lida = await lerHosts(
+    hosts,
+    async (conectado, propriedade, host) => {
+      const rows = await queryPageWindow(conectado, propriedade, host, janela.inicio, janela.fim, ["query"], TETO_LINHAS);
+      return { rows, truncado: rows.length >= TETO_LINHAS };
+    },
+    options.client,
+  );
+  if (!lida || "erro" in lida) return lida;
+  const respostas = lida.respostas.map(({ host, dados }) => ({ host, rows: dados.rows }));
+  return {
+    linhas: mesclarPorTermo(respostas),
+    hosts: lida.respostas.map((r) => r.host),
+    encerrados: lida.encerrados,
+    truncado: lida.respostas.some((r) => r.dados.truncado),
   };
 }
 

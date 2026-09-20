@@ -5,7 +5,7 @@
 // no domínio antigo e 5 na posição 21 no novo, e é a MESMA página.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mesclarPorCaminho, motivoDeAusencia } from "../lib/gsc-hosts.mjs";
+import { mesclarPorCaminho, mesclarPorTermo, motivoDeAusencia } from "../lib/gsc-hosts.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts } from "../lib/gsc.ts";
 
 const ATUAL = "usealigner.com";
@@ -650,4 +650,53 @@ test("gscLigado acompanha a env — e é o predicado que `lerHosts` usa para dev
     if (guardada === undefined) delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     else process.env.GOOGLE_SERVICE_ACCOUNT_JSON = guardada;
   }
+});
+
+// 034 — a mescla da leitura por TERMO. Os números saem da medição de 20/09/2026: `invisalign` tem
+// 10.408 impressões na posição 1,1 somando os dois hosts, e `atma aligner` tem 13 impressões na
+// posição 4,2 SÓ no domínio novo.
+const termo = (q, impressions, clicks = 0, position = 5) => ({ keys: [q], clicks, impressions, position });
+
+test("o mesmo termo nos dois hosts vira UMA linha, posição ponderada por impressão", () => {
+  const linhas = mesclarPorTermo([
+    resposta(ATUAL, termo("invisalign", 8, 0, 42)),
+    resposta(ANTIGO, termo("invisalign", 10400, 5, 1.1)),
+  ]);
+  assert.equal(linhas.length, 1);
+  assert.equal(linhas[0].impressoes, 10408);
+  assert.equal(linhas[0].cliques, 5);
+  // Média simples daria 21,55 e jogaria o termo para fora do Top 3 por causa de 8 impressões.
+  assert.ok(Math.abs(linhas[0].posicao - (42 * 8 + 1.1 * 10400) / 10408) < 1e-9);
+  assert.ok(linhas[0].posicao < 1.2);
+});
+
+test("linha sem impressão não vota na posição", () => {
+  const [l] = mesclarPorTermo([
+    resposta(ATUAL, termo("alinhador invisivel", 0, 0, 90)),
+    resposta(ANTIGO, termo("alinhador invisivel", 100, 2, 3.9)),
+  ]);
+  assert.equal(l.posicao, 3.9, "a posição 90 de uma linha sem exibição não descreve nada");
+  assert.equal(l.impressoes, 100);
+});
+
+test("voto único devolve a posição como o Google mandou, sem ponto flutuante", () => {
+  const [l] = mesclarPorTermo([resposta(ANTIGO, termo("aparelho transparente", 1146, 0, 3.9))]);
+  assert.equal(l.posicao, 3.9);
+});
+
+test("termo sem nenhuma impressão devolve posicao null e nunca 0", () => {
+  const [l] = mesclarPorTermo([resposta(ATUAL, termo("bruxismo", 0, 0, 51))]);
+  assert.equal(l.posicao, null, "posição 0 não existe no Google e leria como a melhor possível");
+});
+
+test("termo vazio não vira linha", () => {
+  assert.equal(mesclarPorTermo([resposta(ATUAL, termo("", 10, 0, 2))]).length, 0);
+});
+
+test("os hosts que contribuíram ficam na linha", () => {
+  const [l] = mesclarPorTermo([
+    resposta(ATUAL, termo("atma aligner", 13, 0, 4.2)),
+    resposta(ANTIGO, termo("invisalign", 10400, 5, 1.1)),
+  ]);
+  assert.deepEqual(l.hosts, [ATUAL]);
 });
