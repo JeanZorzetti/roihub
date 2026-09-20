@@ -79,9 +79,9 @@ II). O teste vem antes da lib e precisa **falhar** antes dela existir.
 ## Fase 4 — fechamento
 
 - [x] **T016** `npm test` na suíte inteira + `npx tsc --noEmit` limpo.
-- [ ] **T017** Commit e push respeitando a janela do Princípio IV (nada em 23:30–01:00 nem
+- [x] **T017** Commit e push respeitando a janela do Princípio IV (nada em 23:30–01:00 nem
       08:00–08:45 BRT).
-- [ ] **T018** Conferir a tela **no ar**, duas vezes (o deploy leva ~15 min), e comparar o número
+- [x] **T018** Conferir a tela **no ar**, duas vezes (o deploy leva ~15 min), e comparar o número
       publicado com uma consulta ao vivo do mesmo dia.
 - [x] **T019** `quickstart.md`: como refazer o inventário e como conferir o número contra a fonte.
 
@@ -97,3 +97,17 @@ II). O teste vem antes da lib e precisa **falhar** antes dela existir.
   `Medido em lib/kpis-busca.mjs#penetracaoNoTop3 (termos do inventário em posição ≤ 3, dimensão query)`.
 - Playwright em 1280 e 360: sem estouro lateral, console com **0 erro e 0 aviso**.
 - O número bate com a consulta ao vivo do mesmo dia (mesma janela, mesmos hosts): 74 de 725.
+
+### Produção (20/09/2026)
+
+Commit `6d7aa6a`, push às 07:2x BRT — fora das duas janelas de cron do Princípio IV.
+
+Duas leituras de `https://hub.roilabs.com.br/gsc/mapa`, ~5 min de intervalo, **idênticas**:
+
+```
+Medido: 10,2% · 74 de 725 termos monitorados · piso (454 apurados na janela)
+penetracaoNoTop3 (termos do inventário em posição ≤ 3, dimensão query)
+```
+
+Consulta ao vivo ao Search Console no mesmo dia, mesma janela e mesmos hosts:
+`{ fracao: 0.1020…, noTop3: 74, total: 725, cobertura: 454, piso: true }` — bate com o publicado.
