@@ -1,7 +1,7 @@
 # Handoff — 036 · Crescimento Não-Marca medido no board
 
 **Data:** 20/09/2026 · **Spec:** `specs/036-crescimento-nao-marca-medido/` · **Estado:** implementada e
-verificada em build de produção local; **a tela no ar ainda não foi conferida** (T013, ver "Pendente").
+verificada em build de produção local **e conferida no ar duas vezes** (15:50 e 15:55 BRT, mesma leitura).
 
 ## O que mudou
 
@@ -63,8 +63,8 @@ depois de 04/10, aí sim há defeito.
 
 ## Pendente
 
-1. **T013** — conferir a tela em `https://hub.roilabs.com.br/gsc/mapa` **duas vezes, com intervalo**
-   (deploy leva ~15 min e o container serve a versão antiga até trocar), procurando a string
-   `base interrompida (27 de 31 dias em zero)`, que só existe na versão nova.
-2. Reindexar o corpus da busca só se este handoff virar fonte de pergunta — memória e handoff moram fora
-   do que o cron alcança (`node --env-file=.env scripts/indexar.mjs`).
+Nada da 036 em aberto. Só o que depende do calendário: **a virada de 04/10** (acima) — conferir que a
+linha passa a abrir pela razão quando setembro fechar.
+
+Reindexar o corpus da busca só se este handoff virar fonte de pergunta — memória e handoff moram fora
+do que o cron alcança (`node --env-file=.env scripts/indexar.mjs`).

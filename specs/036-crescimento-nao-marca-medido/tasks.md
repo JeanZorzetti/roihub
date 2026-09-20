@@ -73,11 +73,11 @@ a escrever a frase de ausência duas vezes — que é o defeito que esta feature
   nó nas duas telas, o teste de leitura da linha sozinha, a passagem sem JavaScript, e as três
   linhas que precisam bater entre `/gsc/mapa` e `/okr/atma/aquisicao` (SC-005).
 
-- [ ] **T013** Commit + push em `main` **fora** das janelas do Princípio IV (23:30–01:00 e
+- [x] **T013** Commit + push em `main` **fora** das janelas do Princípio IV (23:30–01:00 e
   08:00–08:45 BRT). Conferir a tela no ar duas vezes, com intervalo — o container serve a versão
   antiga até terminar de trocar.
 
-- [ ] **T014** `handoff-036-crescimento-nao-marca-medido.md`: o que mudou, o que ficou fora, e o
+- [x] **T014** `handoff-036-crescimento-nao-marca-medido.md`: o que mudou, o que ficou fora, e o
   **número** — incluindo a virada esperada de 04/10, quando setembro fechar e a comparação passar a
   ser ago→set com base íntegra.
 
@@ -141,3 +141,14 @@ O que a implementação fez **diferente do escrito acima**, e por quê:
   aplica"; `/okr/sirius/aquisicao` publica "Marca não declarada" e **não** "ainda não há dois meses
   fechados". Com `DATABASE_URL` vazia o nó diz "banco indisponível", e não "marca não declarada".
 - ⚠️ Não verificado: leitor de tela real, dispositivo real, e a tela **no ar** (T013, depois do push).
+
+### No ar (T013) — duas leituras, 20/09/2026
+
+Push às 15:49 BRT (`f6d57ef`), fora das duas janelas do Princípio IV. A tela em
+`hub.roilabs.com.br/gsc/mapa` foi lida às **15:50** e às **15:55–15:56** (esta com três consultas
+seguidas), procurando `base interrompida (27 de 31 dias em zero)` — string que só existe na versão
+nova. As duas leituras deram o mesmo resultado: a linha de topo pelos absolutos, a nota com a janela
+em meses fechados e "8,8% do pico", zero `4.195%`. `/okr/atma/aquisicao` publica `43×` com
+`342 → 14.689` e `/okr/sirius/aquisicao` publica "Marca não declarada", sem "faltam dois meses".
+O deploy levou **~1 minuto**, bem abaixo dos ~15 min que o `CLAUDE.md` cita: a segunda leitura existe
+para pegar o container alternando entre a imagem velha e a nova, e não alternou.
