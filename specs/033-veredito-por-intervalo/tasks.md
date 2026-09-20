@@ -330,9 +330,11 @@ estados.
 - [X] **T046** [US2] `app/gsc/mapa/page.tsx` — a **janela** aparece no nó pai de "Posição no Google"
       **e de novo em cada nó de faixa** (FR-004). O nó é lido isolado.
 
-**Checkpoint**: 🚨 **NÃO FECHADO — reprovado em produção em 20/09/2026, 05:36 BRT.** As seis faixas
-saem sem dado nenhum e a tela publica uma frase FALSA. Ver a Phase 4b. SC-004 e SC-005 seguem
-abertos.
+**Checkpoint**: ✅ **FECHADO em 20/09/2026, 06:31 BRT** (`b5a2767`; T070–T072). Reprovou em produção
+às 05:36 — seis faixas sem dado e uma frase FALSA, assada no build (Phase 4b). Agora, em duas
+leituras separadas por 6 min: **SC-004** ✓ (as seis declaram base e janela; as três indecisas
+não emitem veredito) e **SC-005** ✓ **no mapa** (as seis notas e o nó pai declaram a mesma janela,
+`2026-08-21 → 2026-09-17`; nenhum número compõe duas janelas).
 
 ---
 
@@ -409,11 +411,21 @@ assada — e foi a que não tem `[slug]`.
       `/ausente/` → D4), então trocar a frase muda a família do buraco e o Placar. É decisão de
       taxonomia, não de texto: fica para uma tarefa própria.
 
-- [ ] **T072** [US2] Depois da T070, refazer a T068 **no mapa também**: duas leituras, a segunda
+- [X] **T072** [US2] Depois da T070, refazer a T068 **no mapa também**: duas leituras, a segunda
       confirmando que as seis faixas trazem base, janela e veredito só onde a amostra decide. A
       conferência anterior olhou só a aba de aquisição e por isso aprovou uma feature pela metade —
       o próprio `tasks.md` já avisava disso na T044 ("um teste de verificação que só olhe o mapa
       aprova uma tela que não responde"), e desta vez o erro foi o simétrico.
+      **FEITO em 20/09/2026, `b5a2767`.** Duas leituras de `hub.roilabs.com.br/gsc/mapa`, 06:25 e
+      06:31 BRT (6 min de intervalo), **idênticas**: `Cache-Control: no-store` e nenhum
+      `X-Nextjs-Cache` (o build antigo respondia `s-maxage=3600` + `STALE`, medido antes do
+      deploy), zero ocorrência de "sem propriedade", `2 de 6 faixas decisivas`, janela em 6 de 6
+      notas. As seis: Posição 1 ▼ abaixo (21 impr · IC até 15,5% < 25%) · Posições 2, 3 e 4–6 ◐ não
+      decide (3, 11 e 105 impr) · Posições 7–10 ▼ abaixo (23.450 impr · IC até 1,9% < 2%) · Página 2
+      ○ sem régua (437 impr). Veredito só onde o intervalo exclui a régua.
+      **Não verificado:** screenshot (a página exige basic auth e passar a senha a uma ferramenta de
+      browser a ecoaria — a T060–T064 já cobriu o visual), teclado e 360px. A conferência é sobre o
+      HTML servido.
 
 ### O que NÃO é o conserto
 
@@ -598,14 +610,19 @@ sem screenshot depois não está pronto.
       o `date` do Git Bash ignora `TZ`.
       **FEITO** — `9899229` está em `origin/main`, commitado às 05:12 BRT, fora das duas janelas.
       A marcação ficou desatualizada: o push aconteceu e a linha seguiu dizendo "não feito".
-- [ ] **T068** Deploy leva **~15 min**. Conferir a tela **duas vezes** — a primeira conferência
+- [X] **T068** Deploy leva **~15 min**. Conferir a tela **duas vezes** — a primeira conferência
       frequentemente pega o container antigo.
-      **PARCIAL, e reprovou.** Feito em 20/09 05:36 BRT, 24 min após o deploy:
-      `/okr/atma/aquisicao` ✅ passa — página nomeada (`/blog/quanto-custa-alinhador-invisivel`,
-      93,9% do tráfego decidível, 155 cliques faltando), índice "1 de 4 decididas · 20 indecisa(s) ·
-      5 sem régua", e a frase da FR-011 sobre a melhora falsa.
-      `/gsc/mapa` ❌ **reprova** — seis faixas sem dado e uma frase falsa na tela. Ver a Phase 4b.
-      Fechar só depois da T072.
+      **1ª tentativa (05:36 BRT): PARCIAL, e reprovou.** `/okr/atma/aquisicao` ✅ passa — página
+      nomeada (`/blog/quanto-custa-alinhador-invisivel`, 93,9% do tráfego decidível, 155 cliques
+      faltando), índice "1 de 4 decididas · 20 indecisa(s) · 5 sem régua", e a frase da FR-011.
+      `/gsc/mapa` ❌ reprovou — ver a Phase 4b.
+      **2ª tentativa (20/09, 06:25 e 06:31 BRT, após `b5a2767`): PASSA nas duas telas, nas duas
+      leituras.** Aquisição com os mesmos números da 1ª tentativa (página nomeada, 93,9%, 155
+      cliques, "1 de 4 decididas", 20 indecisas, 5 sem régua, FR-011 no DOM — 1 ocorrência fora de
+      `<script>`, medida com parser, não com `sed` guloso) e **zero** "sem propriedade" nem
+      "credencial". Mapa: ver a T072. **Este deploy NÃO levou ~15 min**: o build novo respondeu
+      ~1 min depois do push — só o código mudou e as camadas de `npm ci` vieram do cache. Os 15 min
+      são teto, não regra; o marcador que separou build novo de velho foi o header, não o tempo.
 
 ---
 
