@@ -1,5 +1,6 @@
 import { GoogleAuth } from "google-auth-library";
 import { mesclarPorCaminho } from "./gsc-hosts.mjs";
+import { somarSeriesPorHost } from "./serie-gsc.mjs";
 
 export type GscTrend = { current: number; previous: number; property: string } | null;
 
@@ -80,7 +81,7 @@ export function isoDaysAgo(n: number, now = Date.now()): string {
 }
 
 async function queryClicks(
-  client: Client,
+  client: RequestClient,
   property: string,
   host: string,
   startDate: string,
@@ -113,7 +114,7 @@ export type GscSeries = { property: string; days: GscDay[] } | { erro: string } 
 
 // Mesmo endpoint do queryClicks, só acrescenta dimensions:["date"] → série diária.
 async function queryTimeseries(
-  client: Client,
+  client: RequestClient,
   property: string,
   host: string,
   startDate: string,
@@ -189,12 +190,18 @@ export async function queryPageWindow(
   return res.data.rows ?? [];
 }
 
+/** O que `lerHosts` devolve (031, C2) — um dos três, nunca uma mistura. `dados` é o que `buscar`
+ *  devolveu para AQUELE host: o laço não sabe se é página, consulta ou série. */
+export type LeituraPorHosts<T> =
+  | { respostas: { host: string; propriedade: string; dados: T }[]; encerrados: string[] }
+  | { erro: string }
+  | null;
+
 /**
- * 030 — o caminho ÚNICO das leituras por página do Search Console: uma requisição por host
- * declarado e a soma por caminho. Eram três cópias de `resolveProperty` + filtro de host + teto
- * (`gscQueryPages`, `gscConsultas`, `gscPaginas`), e consertar a que foi reportada deixava as
- * outras duas contando o site pela metade — medido na Atma em 19/09/2026, a aba de aquisição
- * decidia os KPIs de clique sobre 98 das 24.664 impressões do site (0,4%).
+ * 031 — o laço ÚNICO de hosts do Search Console, extraído de `lerPorHosts` (030). Eram três
+ * leituras (página, série, tendência) e cada uma ia escrever à mão o mesmo contrato de falha que a
+ * 030 acabou de consolidar: a "sétima ocorrência" de `guarda_no_chamador_volta_pela_porta_seguinte`.
+ * Aqui mora a regra; quem chama só diz o que buscar em cada host e como somar.
  *
  * Em SÉRIE, não em paralelo: mesma credencial e mesmo endpoint, e disparar os dois de uma vez é o
  * caminho curto para um 429. Exportada pelo mesmo motivo de `queryPageWindow`: testável sem o Next.
@@ -206,18 +213,19 @@ export async function queryPageWindow(
  *   da 029 salvou o histórico e entregou 3% do número); a mensagem COMEÇA pelo host, porque um
  *   `{erro}` de uma leitura de dois hosts sem ele não diz onde ir.
  *
- * `truncado` compara cada resposta contra o `rowLimit` DESTA requisição, e nunca o total somado:
- * com dois hosts o total passa de 25.000 sem que nenhuma propriedade tenha sido cortada, e contra
- * o total a flag dispararia sem motivo — ou, contra o teto errado, nunca.
+ * `getClient()` fica FORA do `try` de propósito: o `JSON.parse` da env cita um trecho da service
+ * account na mensagem de erro, e dentro do `try` ela iria parar no `{erro}` — que a tela publica.
+ * Env malformada sobe como exceção, como sempre subiu (Princípio V).
  */
-export async function lerPorHosts(
+export async function lerHosts<T>(
   hosts: string[],
-  { janela, dimensions, rowLimit, client }: { janela: Janela; dimensions: string[]; rowLimit: number; client?: RequestClient },
-): Promise<LeituraSomada> {
+  buscar: (client: RequestClient, propriedade: string, host: string) => Promise<T>,
+  client?: RequestClient,
+): Promise<LeituraPorHosts<T>> {
   if (hosts.length === 0) return null;
   const clientP = client ? Promise.resolve(client) : getClient();
   if (!clientP) return null;
-  const respostas: RespostaPorHost[] = [];
+  const respostas: { host: string; propriedade: string; dados: T }[] = [];
   const encerrados: string[] = [];
   // Falha em `listSites()` é da leitura inteira e não de um host: nomeia todos.
   let alvo = hosts.join(", ");
@@ -231,17 +239,45 @@ export async function lerPorHosts(
         encerrados.push(host);
         continue;
       }
-      const rows = await queryPageWindow(conectado, propriedade, host, janela.inicio, janela.fim, dimensions, rowLimit);
-      respostas.push({ host, propriedade, rows, truncado: rows.length >= rowLimit });
+      respostas.push({ host, propriedade, dados: await buscar(conectado, propriedade, host) });
     }
   } catch (e) {
     return { erro: `${alvo}: ${(e instanceof Error ? e.message : String(e)).slice(0, 60)}` };
   }
   if (respostas.length === 0) return null;
+  return { respostas, encerrados };
+}
+
+/**
+ * 030 — o caminho ÚNICO das leituras por página do Search Console: uma requisição por host
+ * declarado e a soma por caminho. Eram três cópias de `resolveProperty` + filtro de host + teto
+ * (`gscQueryPages`, `gscConsultas`, `gscPaginas`), e consertar a que foi reportada deixava as
+ * outras duas contando o site pela metade — medido na Atma em 19/09/2026, a aba de aquisição
+ * decidia os KPIs de clique sobre 98 das 24.664 impressões do site (0,4%).
+ *
+ * O contrato de falha e de ausência é o de `lerHosts`. O que é DESTA leitura é o `truncado`, que
+ * compara cada resposta contra o `rowLimit` DESTA requisição, e nunca o total somado: com dois
+ * hosts o total passa de 25.000 sem que nenhuma propriedade tenha sido cortada, e contra o total a
+ * flag dispararia sem motivo — ou, contra o teto errado, nunca.
+ */
+export async function lerPorHosts(
+  hosts: string[],
+  { janela, dimensions, rowLimit, client }: { janela: Janela; dimensions: string[]; rowLimit: number; client?: RequestClient },
+): Promise<LeituraSomada> {
+  const lida = await lerHosts(
+    hosts,
+    async (conectado, propriedade, host) => {
+      const rows = await queryPageWindow(conectado, propriedade, host, janela.inicio, janela.fim, dimensions, rowLimit);
+      return { rows, truncado: rows.length >= rowLimit };
+    },
+    client,
+  );
+  if (!lida || "erro" in lida) return lida;
+  const respostas: RespostaPorHost[] = lida.respostas.map(({ host, propriedade, dados }) => ({ host, propriedade, ...dados }));
   return {
     linhas: mesclarPorCaminho(respostas, hosts),
     hosts: respostas.map((r) => r.host),
-    encerrados,
+    encerrados: lida.encerrados,
     truncado: respostas.some((r) => r.truncado),
   };
 }
@@ -336,14 +372,67 @@ export async function inspectUrl(
   }
 }
 
-// Série diária dos últimos 84 dias (12 semanas fechando em D-3, GSC atrasa).
-//
-// 019/FR-025: `inicio`/`fim` entraram como parâmetros OPCIONAIS, com o default byte a byte o de
-// sempre — é ele que alimenta o portfólio inteiro, e trocá-lo moveria a célula `visitante` dos 17
-// projetos (SC-007). Um segundo `gscSerieLonga()` duplicaria autenticação, `resolveProperty` e
-// tratamento de erro só para trocar duas datas; `/okr/[slug]/aquisicao` passa a janela de 8 meses
-// aqui. `totals28()` continua fatiando 28 dias e não é tocada.
+/** O que `gscSeries` devolve (031, E4) — a soma dos hosts declarados. `hosts` são os que
+ *  responderam e `encerrados` os declarados sem propriedade; a régua da janela recebida deriva de
+ *  `days`. `{erro}` COMEÇA pelo host que falhou e nunca carrega dia nenhum. */
+export type GscSerieSomada =
+  | { property: string; days: GscDay[]; hosts: string[]; encerrados: string[] }
+  | { erro: string }
+  | null;
+
+/**
+ * Série diária dos últimos 84 dias (12 semanas fechando em D-3, GSC atrasa), SOMADA nos hosts
+ * declarados.
+ *
+ * 031: recebia UM host, o de `url`. Medido na Atma em 19/09/2026, a aba de aquisição publicava 127
+ * das 370.559 impressões da janela (0,03%; 7 de 244 dias) sob uma frase que dizia "hosts somados"
+ * com 10.098 — a soma por dia da 029 e a lista de hosts existiam e nenhuma leitura ao vivo as
+ * chamava. O tipo do primeiro parâmetro mudou de propósito (`string` → `string[]`): o próximo
+ * `gscSeries(p.url)` deixa de compilar, em vez de a porta errada ficar fechada por convenção.
+ *
+ * A soma é `somarSeriesPorHost`, e não há segunda implementação: ela já divergiu uma vez neste repo.
+ * O contrato de falha e de ausência é o de `lerHosts`. `property` é a do primeiro host vivo.
+ *
+ * 019/FR-025: `janela` é OPCIONAL, com o default byte a byte o de sempre — é ele que alimenta o
+ * portfólio inteiro, e trocá-lo moveria a célula `visitante` dos 17 projetos (SC-007).
+ * `/okr/[slug]/aquisicao` passa a janela de 8 meses aqui. As datas do default nascem UMA vez, fora
+ * do laço: dentro dele, dois hosts somariam janelas de um dia de diferença ao cruzar a meia-noite UTC.
+ * `totals28()` continua fatiando 28 dias e não é tocada.
+ */
 export async function gscSeries(
+  hosts: string[],
+  janela: Janela = { inicio: isoDaysAgo(86), fim: isoDaysAgo(3) },
+  options: { client?: RequestClient } = {},
+): Promise<GscSerieSomada> {
+  const lida = await lerHosts(
+    hosts,
+    (client, propriedade, host) => queryTimeseries(client, propriedade, host, janela.inicio, janela.fim),
+    options.client,
+  );
+  if (!lida || "erro" in lida) return lida;
+  return {
+    property: lida.respostas[0].propriedade,
+    // `lerHosts` devolve `dados` e a soma lê `days`: passar `respostas` cru COMPILA (o tipo do JSDoc
+    // tem tudo opcional) e devolve [] — série vazia, sem erro.
+    //
+    // Dia sem impressão FICA, com o `position: 0` que o Google mandou. O Google DEVOLVE essas linhas
+    // (medido em 19/09/2026: 2 de 244 dias em atma.roilabs.com.br, 3 de 7 em usealigner.com), e
+    // descartá-las — o `flatMap` que a 030 usa nas leituras por página — encurtaria "dias com dado" e
+    // deslocaria a borda da janela recebida de um projeto de UM host (FR-006). O 0 não vira posição:
+    // as médias são ponderadas por impressão, e aqui o peso é zero.
+    days: somarSeriesPorHost(lida.respostas.map((r) => ({ host: r.host, days: r.dados }))).map((d) => ({
+      ...d,
+      position: d.position ?? 0,
+    })),
+    hosts: lida.respostas.map((r) => r.host),
+    encerrados: lida.encerrados,
+  };
+}
+
+// A primitiva de UM host — era o `gscSeries`. Só a corrida que grava (`app/api/gsc-serie/route.ts`)
+// a usa, porque ela mesma faz o laço de hosts e soma. Leitura ao vivo chamando isto é a porta
+// errada reaberta: ler um host só é exatamente o defeito que a 031 fechou.
+export async function gscSerieDeUmHost(
   siteUrl: string,
   inicio: string = isoDaysAgo(86),
   fim: string = isoDaysAgo(3),
@@ -454,20 +543,39 @@ export async function gscStatus(): Promise<GscStatus> {
 }
 
 // Cliques dos últimos 28d (fechando 3 dias atrás, GSC atrasa) vs os 28d anteriores.
-// Qualquer falha (env ausente, sem propriedade, quota) → null e o hub usa o seoSeed.
-export async function gscTrend(siteUrl: string): Promise<GscTrend> {
+// Qualquer falha (env ausente ou malformada, nenhum host com propriedade, quota, host que lança) →
+// null e o hub usa o seoSeed.
+//
+// 031: soma os cliques dos hosts declarados, por janela. Lia só o host de `url` e, na Atma, dava a
+// home 9 cliques onde o site tinha 449 (medido em 19/09/2026, D-31→D-3: 9 no host novo, 449 no
+// total) — a tendência lia como colapso um projeto que só trocou de domínio. Host sem propriedade não é falha: soma os vivos.
+// Host que FALHA é `null`, e não a soma do que respondeu: `GscTrend` não tem campo de erro (e
+// ampliá-lo reescreveria home e agenda por uma frase que ninguém exibe), então nomear o host é
+// impossível aqui — mas a metade que importa da FR-004, não publicar total parcial, se cumpre.
+//
+// As duas janelas de UM host ficam no `Promise.all` de sempre; o que roda em série são os HOSTS
+// (`lerHosts`). O teto em voo continua 2 requisições, nunca 2×N. As quatro datas nascem UMA vez, fora
+// do laço: dentro dele, dois hosts somariam janelas de um dia de diferença ao cruzar a meia-noite UTC.
+export async function gscTrend(hosts: string[], options: { client?: RequestClient } = {}): Promise<GscTrend> {
   try {
-    const clientP = getClient();
-    if (!clientP) return null;
-    const client = await clientP;
-    const host = new URL(siteUrl).hostname;
-    const property = resolveProperty(host, await listSites(client));
-    if (!property) return null;
-    const [current, previous] = await Promise.all([
-      queryClicks(client, property, host, isoDaysAgo(31), isoDaysAgo(3)),
-      queryClicks(client, property, host, isoDaysAgo(59), isoDaysAgo(32)),
-    ]);
-    return { current, previous, property };
+    const [inicioAtual, fimAtual, inicioAnterior, fimAnterior] = [isoDaysAgo(31), isoDaysAgo(3), isoDaysAgo(59), isoDaysAgo(32)];
+    const lida = await lerHosts(
+      hosts,
+      async (client, propriedade, host) => {
+        const [current, previous] = await Promise.all([
+          queryClicks(client, propriedade, host, inicioAtual, fimAtual),
+          queryClicks(client, propriedade, host, inicioAnterior, fimAnterior),
+        ]);
+        return { current, previous };
+      },
+      options.client,
+    );
+    if (!lida || "erro" in lida) return null;
+    return {
+      current: lida.respostas.reduce((t, r) => t + r.dados.current, 0),
+      previous: lida.respostas.reduce((t, r) => t + r.dados.previous, 0),
+      property: lida.respostas[0].propriedade,
+    };
   } catch {
     return null;
   }

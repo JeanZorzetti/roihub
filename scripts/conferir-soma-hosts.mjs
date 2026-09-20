@@ -118,5 +118,11 @@ for (const d of soma) {
 }
 
 const total = soma.reduce((a, d) => a + d.impressions, 0);
-console.log(`\n${soma.length} dia(s) · ${total} impressões somadas · ${inicio} → ${fim}`);
+// 031/SC-005: a célula `visitante` da ficha é de CLIQUES — sem esta soma o critério não é conferível
+// à mão, e a testemunha só falaria de impressão.
+const cliques = soma.reduce((a, d) => a + d.clicks, 0);
+console.log(`\n${soma.length} dia(s) · ${total} impressões · ${cliques} cliques somados · ${inicio} → ${fim}`);
+for (const s of series) {
+  console.log(`  ${s.host.padEnd(24)} ${String(s.days.length).padStart(4)} dia(s) · ${s.days.reduce((a, d) => a + d.impressions, 0)} impressões · ${s.days.reduce((a, d) => a + d.clicks, 0)} cliques`);
+}
 console.log("Os ~3 últimos dias saem baixos porque o GSC não os fechou — não são queda.");

@@ -325,6 +325,40 @@ function ReguaJanela({
   );
 }
 
+/** Mesma assinatura da série gravada (`hub_gsc_dia.host`, 029): ordenada e unida por `+`. Legível
+ *  com espaços, para as fontes serem comparáveis a olho. */
+const assinaturaLegivel = (hosts: string[]) => (assinaturaDeHosts(hosts) ?? "").split("+").join(" + ");
+
+/** Um host lido e nenhum encerrado é o caso comum (FR-006): a tela cala, e o chamador não abre o
+ *  parágrafo. */
+const declaraOsHosts = (l: { hosts: string[]; encerrados: string[] } | null) =>
+  !!l && (l.hosts.length > 1 || l.encerrados.length > 0);
+
+/** Publicada quando um host declarado FALHA: com dois hosts o bloco inteiro fica sem número. */
+const TOTAL_PARCIAL =
+  "Um total parcial leria como queda de tráfego — por isso nenhum número do bloco é publicado. Tente de novo em instantes.";
+
+/**
+ * 031 (FR-005) — QUEM compôs os números de um bloco do Search Console, dito pela MESMA frase no bloco
+ * de série e no de consultas. Era JSX solto no de consultas (030); no de série seria uma segunda
+ * cópia, e duas cópias divergem na primeira edição — a SC-003 é os dois blocos declararem a mesma
+ * lista. A frase é a que a 030 já publica: "hosts somados" e "sem propriedade … e fora da soma"
+ * (GLOSSARIO.md), sem string nova.
+ */
+function HostsDaLeitura({ hosts, encerrados }: { hosts: string[]; encerrados: string[] }) {
+  return (
+    <>
+      {hosts.length > 1 ? "hosts somados" : "host consultado"}: <strong>{assinaturaLegivel(hosts)}</strong>
+      {encerrados.length > 0 ? (
+        <>
+          {" "}
+          · sem propriedade no Search Console e fora da soma: <strong>{encerrados.join(", ")}</strong>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 /**
  * 028 · O FRESCOR — a idade da apuração como POSIÇÃO num eixo comum às seis fontes.
  *
@@ -524,7 +558,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // Duas fontes independentes, sem somar latência — mesmo padrão de `coletarDoProjeto()`. A falha
   // de uma nunca alcança a outra.
   const [serie, canais, cobertura, consultas, indexacao, crawl, serieSeparada] = await Promise.all([
-    gscSeries(p.url, janelaGsc.inicio, janelaGsc.fim),
+    // 031: os hosts DECLARADOS, os mesmos do bloco de consultas mais abaixo. Lia só o de `url` e
+    // publicava 127 das 370.559 impressões da Atma (0,03%) sob a frase "hosts somados".
+    gscSeries(hostsDeclarados(p), { inicio: janelaGsc.inicio, fim: janelaGsc.fim }),
     // 026: os hosts DECLARADOS entram na consulta. A propriedade GA4 conta qualquer coisa que
     // carregue a tag — na atma, o painel admin, o `localhost` do desenvolvimento e dois previews
     // da Vercel: 1.075 das 7.846 sessões de 12 meses (13,7%), e 43% do canal Referral. Uma tela
@@ -556,8 +592,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // o que declarar: a tela de sempre (FR-006).
   const hostsDoCard = hostsDeclarados(p);
   const consultasLidas = consultas && "linhas" in consultas ? consultas : null;
-  const hostsSomados = consultasLidas ? (assinaturaDeHosts(consultasLidas.hosts) ?? "").split("+").join(" + ") : null;
-  const declaraHosts = !!consultasLidas && (consultasLidas.hosts.length > 1 || consultasLidas.encerrados.length > 0);
+  const hostsSomados = consultasLidas ? assinaturaLegivel(consultasLidas.hosts) : null;
+  const declaraHosts = declaraOsHosts(consultasLidas);
+  // 031: a série também declara — os dois blocos leem os mesmos hosts, e a tela diz a mesma coisa.
+  const serieLida = serie && "days" in serie ? serie : null;
+  const declaraHostsSerie = declaraOsHosts(serieLida);
+  // Ausência estrutural, dita igual nos dois blocos: com dois hosts, "para {url}" nomearia um só.
+  const semPropriedadeGsc =
+    hostsDoCard.length > 1
+      ? `sem propriedade no GSC para nenhum dos hosts declarados (${hostsDoCard.join(", ")})`
+      : `sem propriedade no GSC para ${p.url}`;
 
   // ── 025: a declaração de marca, que serve os DOIS blocos desta página ─────────────────────
   //
@@ -1379,31 +1423,39 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     <dd>
                       O projeto media <code>{migracao.hostAnterior}</code> e passou a medir{" "}
                       <code>{hostDeclarado}</code> — {migracao.porque}. As fontes que consultam o
-                      Search Console <strong>ao vivo</strong> já saem de{" "}
-                      <code>{propriedadeGsc ?? "—"}</code>, que tem dado só a partir de{" "}
-                      <strong>{recebidaGsc?.inicio ?? "—"}</strong>: a janela vem truncada e o
-                      volume é baixo porque o <strong>instrumento</strong> é novo,{" "}
-                      <strong>não</strong> porque o tráfego caiu.
+                      Search Console <strong>ao vivo</strong> somam os hosts declarados e têm dado
+                      só a partir de <strong>{recebidaGsc?.inicio ?? "—"}</strong>: a janela vem
+                      truncada.
+                      {/* 031 (D8): "o instrumento é novo" só é verdade quando um host declarado FICOU
+                          DE FORA da soma. Com os dois somados, o bloco só aparece se a união ainda
+                          não alcança a janela pedida — e a frase fixa dizia que a fonte lia só o
+                          host novo, o que a leitura deixou de fazer. */}
+                      {serieLida && serieLida.encerrados.length > 0 ? (
+                        <>
+                          {" "}
+                          Sem propriedade no Search Console e fora da soma:{" "}
+                          <code>{serieLida.encerrados.join(", ")}</code> — o histórico não entra, então
+                          o volume baixo é da leitura e <strong>não</strong> do tráfego.
+                        </>
+                      ) : null}
                       {migracao.historico ? (
                         <> O histórico anterior não se perdeu — {migracao.historico}.</>
                       ) : null}
-                      {/* G3: bloco que mede outro SUJEITO declara. 029 — o sujeito mudou: a série
-                          gravada deixou de ser "o domínio antigo" e passou a ser a SOMA dos hosts
-                          declarados. As fontes ao vivo continuam num só, e é essa a diferença que
-                          esta linha precisa dizer agora. */}
+                      {/* G3: bloco que mede outro SUJEITO declara. 029 — a série gravada soma os
+                          hosts declarados. 031 — as fontes ao vivo também, então a frase "as fontes
+                          ao vivo medem só o domínio novo" saiu: deixou de ser verdade. */}
                       {diasSeparados?.length ? (
                         <>
                           {" "}
-                          <strong>Exceção — Marca e não-marca:</strong> esse bloco lê a série{" "}
+                          <strong>Marca e não-marca:</strong> esse bloco lê a série{" "}
                           <strong>gravada</strong> ({diasSeparados.length} dia(s) em{" "}
                           <code>hub_gsc_dia</code>), que desde{" "}
                           {somaDaSerie.length > 1 ? somaDaSerie[somaDaSerie.length - 1].dia : "a troca"}{" "}
                           <strong>soma os domínios declarados</strong>
                           {somaDaSerie.length > 1 ? (
                             <> ({somaDaSerie.map((h) => h.host).join(" + ")})</>
-                          ) : null}. As fontes ao vivo medem{" "}
-                          <strong>só o domínio novo</strong>, então os números dos dois lados não se
-                          dividem um pelo outro.
+                          ) : null}
+                          .
                         </>
                       ) : null}
                     </dd>
@@ -1423,25 +1475,32 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
         <div className="ficha-bloco">
           <h2 className="ficha-bloco-h">Descoberta — Search Console, 8 meses</h2>
           <ReguaJanela pedida={janelaGsc} recebida={recebidaGsc} legenda="8 meses pedidos" />
+          {declaraHostsSerie && serieLida ? (
+            <p className="foot">
+              <HostsDaLeitura hosts={serieLida.hosts} encerrados={serieLida.encerrados} />
+            </p>
+          ) : null}
           {cliques != null && impressoes != null ? (
             <ul className="lts">
               <Leitura valor={br(cliques)}>cliques em {dias!.length} dia(s) com dado</Leitura>
               <Leitura valor={br(impressoes)}>impressões</Leitura>
             </ul>
           ) : (
-            <ul className="lts">
-              <Leitura
-                sem="não apurado"
-                selo={serie && "erro" in serie ? "cega" : "sem"}
-                palavra={
-                  serie && "erro" in serie
-                    ? `Search Console indisponível (${serie.erro})`
-                    : `sem propriedade no GSC para ${p.url}`
-                }
-              >
-                cliques e impressões em 8 meses
-              </Leitura>
-            </ul>
+            <>
+              <ul className="lts">
+                <Leitura
+                  sem="não apurado"
+                  selo={serie && "erro" in serie ? "cega" : "sem"}
+                  palavra={
+                    // O `erro` já COMEÇA pelo host que falhou (031/FR-004).
+                    serie && "erro" in serie ? `Search Console indisponível (${serie.erro})` : semPropriedadeGsc
+                  }
+                >
+                  cliques e impressões em 8 meses
+                </Leitura>
+              </ul>
+              {serie && "erro" in serie && hostsDoCard.length > 1 ? <p className="foot">{TOTAL_PARCIAL}</p> : null}
+            </>
           )}
           {/* A FORMA dos oito meses. Duas cifras dizem QUANTO; nenhuma diz se o volume está subindo
               ou caindo dentro da janela, que é a pergunta desta tela. Só mês inteiramente coberto
@@ -1740,15 +1799,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             {declaraHosts && consultasLidas ? (
               <>
                 {" "}
-                · {consultasLidas.hosts.length > 1 ? "hosts somados" : "host consultado"}:{" "}
-                <strong>{hostsSomados}</strong>
-                {consultasLidas.encerrados.length > 0 ? (
-                  <>
-                    {" "}
-                    · sem propriedade no Search Console e fora da soma:{" "}
-                    <strong>{consultasLidas.encerrados.join(", ")}</strong>
-                  </>
-                ) : null}
+                · <HostsDaLeitura hosts={consultasLidas.hosts} encerrados={consultasLidas.encerrados} />
               </>
             ) : null}
           </p>
@@ -1767,19 +1818,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                ausência estrutural (o conserto é domínio próprio); `{erro}` é falha de agora. */
             <p className="foot">
               não apurado —{" "}
-              {consultas && "erro" in consultas
-                ? `Search Console indisponível (${consultas.erro})`
-                : hostsDoCard.length > 1
-                  ? `sem propriedade no GSC para nenhum dos hosts declarados (${hostsDoCard.join(", ")})`
-                  : `sem propriedade no GSC para ${p.url}`}
+              {consultas && "erro" in consultas ? `Search Console indisponível (${consultas.erro})` : semPropriedadeGsc}
               .
               {/* 030 (FR-004) — o `erro` já COMEÇA pelo host que falhou. Com dois hosts o bloco
                   inteiro fica sem número, e a frase diz por quê: um total sem o host que falhou
                   leria como queda de tráfego (a guarda da 029 salvou o histórico e entregou 3% do
                   número). */}
-              {consultas && "erro" in consultas && hostsDoCard.length > 1
-                ? " Um total parcial leria como queda de tráfego — por isso nenhum número do bloco é publicado. Tente de novo em instantes."
-                : null}
+              {consultas && "erro" in consultas && hostsDoCard.length > 1 ? ` ${TOTAL_PARCIAL}` : null}
             </p>
           ) : (
             <>
@@ -2071,9 +2116,15 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                       <>
                         {" "}
                         Recebida: {recebidaGsc.inicio} → {curtaGsc.fim}, ou seja{" "}
-                        <strong>{diasRecebidosCurta} dos 28 dias</strong> — a propriedade de{" "}
-                        <code>{p.url}</code> não tem dado antes de {recebidaGsc.inicio}. A queda em
-                        relação a qualquer leitura anterior é da JANELA, não do site.
+                        <strong>{diasRecebidosCurta} dos 28 dias</strong> —{" "}
+                        {hostsDoCard.length > 1 ? (
+                          <>os hosts somados não têm dado antes de {recebidaGsc.inicio}</>
+                        ) : (
+                          <>
+                            a propriedade de <code>{p.url}</code> não tem dado antes de {recebidaGsc.inicio}
+                          </>
+                        )}
+                        . A queda em relação a qualquer leitura anterior é da JANELA, não do site.
                       </>
                     ) : null}
                   </dd>

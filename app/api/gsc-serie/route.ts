@@ -6,7 +6,7 @@
 //
 // Rota própria em vez de mais um coletor em `/api/estado`: aquela roda na janela que o Princípio
 // IV declara intocável, e uma indisponibilidade do GSC passaria a poder derrubar o card noturno.
-import { gscSeries, gscSerieFiltrada } from "@/lib/gsc";
+import { gscSerieDeUmHost, gscSerieFiltrada } from "@/lib/gsc";
 import { projetosDeBusca } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gravarDiasGsc, gravarMarcaGsc, ultimoDiaGsc, dbOn } from "@/lib/db";
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       const vivos: string[] = [];
       let abortou = "";
       for (const h of declarados) {
-        const s = await gscSeries(`https://${h}/`, inicioTotal, janela.fim);
+        const s = await gscSerieDeUmHost(`https://${h}/`, inicioTotal, janela.fim);
         // `null` é ausência ESTRUTURAL (host fora de toda propriedade) e `{erro}` é falha
         // transitória — a distinção que `lib/gsc.ts` mantém. 029: a ausência estrutural de um host
         // declarado é ele ENCERRADO (propriedade removida da conta), e a corrida segue com os que

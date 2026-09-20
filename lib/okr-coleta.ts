@@ -181,7 +181,10 @@ export async function coletarDoProjeto(
   // janela do GSC: é a segunda query da mesma propriedade, para a camada de entrega, e falha dela
   // não pode alcançar as outras três.
   const [s, ga4, ga4ev, paginas] = await Promise.all([
-    gscSeries(p.url),
+    // 031: os hosts declarados. A célula `visitante` da ficha lia só o host de `url` e, na Atma,
+    // contava a fatia que já migrou — medido em 19/09/2026 (8 meses): 9 cliques no host novo contra
+    // 4.550 no site. É o número que vira decisão.
+    gscSeries(hostsDeclarados(p)),
     ga4Canais(p.ga4?.propertyId, { inicio: janelaComportamento.inicio, fim: janelaComportamento.fim }),
     ga4Eventos(p.ga4?.propertyId, { inicio: janelaComportamento.inicio, fim: janelaComportamento.fim }),
     // 030: os hosts declarados, os mesmos da aba de aquisição — a lista de páginas da ficha lia só

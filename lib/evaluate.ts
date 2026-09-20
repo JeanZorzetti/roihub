@@ -2,6 +2,7 @@ import insights from "@/data/insights.json";
 import { checkHealth, type Health } from "@/lib/health";
 import { gscTrend, type GscTrend } from "@/lib/gsc";
 import { listProjects, type Project } from "@/lib/projects";
+import { hostsDeclarados } from "@/lib/projects.mjs";
 import { computeScore, seoScoreFromClicks, decayFromHealth, ordemDoRanking } from "@/lib/score.mjs";
 
 // Avaliação ao vivo de um projeto (saúde + GSC + insights) — a MESMA para home e agenda,
@@ -20,7 +21,8 @@ export type Evaluated = Project & {
 };
 
 export async function evaluate(p: Project): Promise<Evaluated> {
-  const [health, trend] = await Promise.all([checkHealth(p.url), gscTrend(p.url)]);
+  // 031: `checkHealth` olha o site que responde HOJE (`url`); a tendência soma os hosts declarados.
+  const [health, trend] = await Promise.all([checkHealth(p.url), gscTrend(hostsDeclarados(p))]);
   const seoAuto = trend ? seoScoreFromClicks(trend.current, trend.previous) : null;
   const seo = seoAuto ?? p.seoSeed;
   const insight = (insights.projects as unknown as Record<string, Insight>)[p.slug];

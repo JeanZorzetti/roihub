@@ -6,7 +6,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mesclarPorCaminho } from "../lib/gsc-hosts.mjs";
-import { gscConsultas, gscPaginas, gscQueryPages, lerPorHosts } from "../lib/gsc.ts";
+import { gscConsultas, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts } from "../lib/gsc.ts";
 
 const ATUAL = "usealigner.com";
 const ANTIGO = "atma.roilabs.com.br";
@@ -379,4 +379,226 @@ test("as três leituras consultam os MESMOS hosts declarados (FR-007)", async ()
   assert.deepEqual(await consultados((client) => gscConsultas(HOSTS, JANELA, { client })), HOSTS);
   assert.deepEqual(await consultados((client) => gscPaginas(HOSTS, JANELA, { client })), HOSTS);
   assert.deepEqual(await consultados((client) => gscQueryPages(HOSTS, { client, now: AGORA })), HOSTS);
+});
+
+// ── 031: a série diária soma os hosts declarados ─────────────────────────────────────────────
+//
+// Números da medição de 19/09/2026 (specs/031-serie-ao-vivo-soma-hosts/spec.md): na janela
+// 2026-01-17 → 2026-09-17 o domínio novo tem 7 dias e 127 impressões, o antigo 244 dias e 370.432 —
+// e a aba publicava as 127, dois blocos acima de uma frase que dizia "hosts somados". `gscSeries` e
+// `gscTrend` não tinham UM teste antes desta feature: o `tsc` era o único portão.
+//
+// Uma linha como a dimensão `date` a devolve: `keys` é [data].
+const dia = (date, impressions, clicks = 0, position = 5) => ({ keys: [date], clicks, impressions, position });
+const somaDe = (days, campo) => days.reduce((t, d) => t + d[campo], 0);
+
+test("gscSeries soma os dois hosts: o total fecha com a soma das duas respostas (SC-004)", async () => {
+  const client = clienteFalso({
+    [ATUAL]: [dia("2026-09-13", 4, 0, 6), dia("2026-09-15", 31, 2, 8.3)],
+    [ANTIGO]: [dia("2026-09-12", 900, 11, 3.4), dia("2026-09-13", 557, 8, 3.1), dia("2026-09-15", 1146, 14, 2.8)],
+  });
+  const lida = await gscSeries(HOSTS, undefined, { client });
+  // Passar as respostas cruas à soma COMPILA e devolve [] — série vazia, sem erro. É este total que pega.
+  assert.equal(somaDe(lida.days, "impressions"), 4 + 31 + 900 + 557 + 1146);
+  assert.equal(somaDe(lida.days, "clicks"), 2 + 11 + 8 + 14);
+  assert.deepEqual(lida.days.map((d) => d.date), ["2026-09-12", "2026-09-13", "2026-09-15"], "a união dos dias, em ordem");
+  assert.equal(lida.property, `sc-domain:${ATUAL}`, "a propriedade do primeiro host vivo");
+  assert.deepEqual(lida.hosts, HOSTS);
+  assert.deepEqual(lida.encerrados, []);
+});
+
+test("gscSeries: a mesma data nos dois hosts vira UMA linha, com a posição ponderada por impressão", async () => {
+  const client = clienteFalso({ [ATUAL]: [dia("2026-09-15", 31, 2, 8.3)], [ANTIGO]: [dia("2026-09-15", 1146, 14, 2.8)] });
+  const { days } = await gscSeries(HOSTS, undefined, { client });
+  assert.equal(days.length, 1);
+  assert.equal(days[0].impressions, 1177);
+  assert.equal(days[0].clicks, 16);
+  assert.ok(Math.abs(days[0].position - (8.3 * 31 + 2.8 * 1146) / 1177) < 1e-9, "média simples daria 5,55");
+});
+
+test("gscSeries com UM host faz uma requisição só e devolve os dias da resposta crua (FR-006)", async () => {
+  const client = clienteFalso({
+    [ATUAL]: [dia("2026-09-01", 786, 16, 4.2), dia("2026-09-02", 1146, 14, 3.9), dia("2026-09-03", 0, 0, 0)],
+  });
+  const lida = await gscSeries([ATUAL], undefined, { client });
+  assert.equal(client.posts.length, 1);
+  assert.deepEqual(lida, {
+    property: `sc-domain:${ATUAL}`,
+    days: [
+      { date: "2026-09-01", clicks: 16, impressions: 786, position: 4.2 },
+      // (3,9 × 1146) ÷ 1146 dá 3,8999999999999995: o voto único não pode passar pela ponderação.
+      { date: "2026-09-02", clicks: 14, impressions: 1146, position: 3.9 },
+      // O Google DEVOLVE a linha sem impressão, com position 0 (medido em 19/09/2026). Descartá-la
+      // encurtaria "dias com dado" — o `242` que a tela mostrou antes desta asserção.
+      { date: "2026-09-03", clicks: 0, impressions: 0, position: 0 },
+    ],
+    hosts: [ATUAL],
+    encerrados: [],
+  });
+});
+
+test("gscSeries: o dia sem impressão em TODOS os hosts continua na série, com o 0 do Google", async () => {
+  const client = clienteFalso({
+    [ATUAL]: [dia("2026-07-05", 0, 0, 0), dia("2026-07-06", 31, 2, 8.3)],
+    [ANTIGO]: [dia("2026-07-05", 0, 0, 0), dia("2026-07-06", 1146, 14, 2.8)],
+  });
+  const { days } = await gscSeries(HOSTS, undefined, { client });
+  assert.deepEqual(days[0], { date: "2026-07-05", clicks: 0, impressions: 0, position: 0 });
+  assert.equal(days.length, 2);
+});
+
+test("gscSeries: UM host falhando — {erro} começa pelo host e NENHUM dia sai (SC-006)", async () => {
+  const client = clienteFalso(
+    { [ATUAL]: [dia("2026-09-15", 31)], [ANTIGO]: [dia("2026-09-15", 1146)] },
+    { falhaEm: ANTIGO },
+  );
+  const lida = await gscSeries(HOSTS, undefined, { client });
+  // O primeiro host respondeu, e mesmo assim nada dele é publicado: a soma encolhida lê como queda.
+  assert.deepEqual(Object.keys(lida), ["erro"]);
+  assert.ok(lida.erro.startsWith(`${ANTIGO}: `), lida.erro);
+});
+
+test("gscSeries: host sem propriedade não é falha — soma os vivos e nomeia o encerrado", async () => {
+  const client = clienteFalso({ [ATUAL]: [dia("2026-09-15", 31, 2, 8.3)] });
+  const lida = await gscSeries([ATUAL, SEM_PROPRIEDADE], undefined, { client });
+  assert.deepEqual(lida.hosts, [ATUAL]);
+  assert.deepEqual(lida.encerrados, [SEM_PROPRIEDADE]);
+  assert.equal(somaDe(lida.days, "impressions"), 31);
+  assert.equal(client.posts.length, 1);
+});
+
+test("gscSeries: lista vazia e hosts todos sem propriedade devolvem null, sem gastar requisição", async () => {
+  const client = clienteFalso();
+  assert.equal(await gscSeries([], undefined, { client }), null);
+  assert.equal(await gscSeries([SEM_PROPRIEDADE, `outro.${SEM_PROPRIEDADE}`], undefined, { client }), null);
+  assert.equal(client.posts.length, 0);
+});
+
+test("gscSeries: a janela default é D-86 → D-3, a mesma de antes (019/FR-025)", async () => {
+  const antes = [isoDaysAgo(86), isoDaysAgo(3)];
+  const client = clienteFalso();
+  await gscSeries([ATUAL], undefined, { client });
+  const depois = [isoDaysAgo(86), isoDaysAgo(3)];
+  const { startDate, endDate, dimensions, rowLimit } = client.posts[0].data;
+  // Dois relógios (antes e depois) só para o teste não quebrar se cruzar a meia-noite UTC.
+  assert.ok([antes, depois].some(([i, f]) => i === startDate && f === endDate), `${startDate} → ${endDate}`);
+  assert.deepEqual(dimensions, ["date"]);
+  assert.equal(rowLimit, 2000, "os 16 meses do backfill cabem com folga; 500 truncaria sem erro");
+});
+
+test("gscSeries repassa a janela pedida a TODOS os hosts", async () => {
+  const client = clienteFalso();
+  await gscSeries(HOSTS, JANELA, { client });
+  assert.deepEqual(client.posts.map(hostDoPedido), HOSTS);
+  for (const { data } of client.posts) assert.deepEqual([data.startDate, data.endDate], [JANELA.inicio, JANELA.fim]);
+});
+
+test("gscSeries: as datas nascem UMA vez — a meia-noite UTC no meio da leitura não separa os hosts (D5)", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-09-19T23:59:59Z") });
+  const client = clienteFalso();
+  const request = client.request;
+  // Cada requisição ao Google "demora" 2 s: o segundo host é perguntado depois da meia-noite.
+  client.request = async (req) => {
+    const res = await request(req);
+    if (req.method === "POST") t.mock.timers.tick(2000);
+    return res;
+  };
+  await gscSeries(HOSTS, undefined, { client });
+  assert.equal(client.posts.length, 2);
+  // D-3 de 19/09 é 16/09. Calculada DENTRO do laço, o segundo host (já em 20/09) leria 17/09.
+  assert.equal(client.posts[0].data.endDate, "2026-09-16", "o relógio falso está em vigor");
+  assert.deepEqual(client.posts[1].data.startDate, client.posts[0].data.startDate);
+  assert.deepEqual(client.posts[1].data.endDate, client.posts[0].data.endDate, "dois hosts somariam períodos de um dia de diferença");
+});
+
+// ── 031: a tendência da home soma os cliques dos hosts, por janela ───────────────────────────
+//
+// `queryClicks` devolve `rows[0].clicks` (sem dimensão: uma linha, o total da janela). Relógio falso
+// em 19/09/2026 12:00Z: current = D-31→D-3 = 2026-08-19→2026-09-16, previous = D-59→D-32 = 07-22→08-18.
+const HOJE_DA_TENDENCIA = new Date("2026-09-19T12:00:00Z");
+const CURRENT = "2026-08-19";
+const cliquesPorJanela = (atual, anterior) => (data) => [{ clicks: data.startDate === CURRENT ? atual : anterior }];
+
+// Conta as requisições em voo ao mesmo tempo: as duas janelas de UM host devem estar juntas (o
+// `Promise.all` de sempre), e os HOSTS não — o teto é 2, nunca 2×N.
+function comPicoEmVoo(client) {
+  const request = client.request;
+  const medida = { emVoo: 0, pico: 0 };
+  client.request = async (req) => {
+    if (req.method !== "POST") return request(req);
+    medida.pico = Math.max(medida.pico, ++medida.emVoo);
+    await new Promise((resolve) => setImmediate(resolve));
+    medida.emVoo--;
+    return request(req);
+  };
+  return medida;
+}
+
+test("gscTrend soma os dois hosts POR JANELA: current com current, previous com previous", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: HOJE_DA_TENDENCIA });
+  const client = clienteFalso({ [ATUAL]: cliquesPorJanela(9, 0), [ANTIGO]: cliquesPorJanela(415, 380) });
+  assert.deepEqual(await gscTrend(HOSTS, { client }), { current: 424, previous: 380, property: `sc-domain:${ATUAL}` });
+  assert.equal(client.posts.length, 4);
+});
+
+test("gscTrend com UM host faz duas requisições em voo juntas e devolve o número de hoje (FR-006)", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: HOJE_DA_TENDENCIA });
+  const client = clienteFalso({ [ATUAL]: cliquesPorJanela(415, 380) });
+  const medida = comPicoEmVoo(client);
+  assert.deepEqual(await gscTrend([ATUAL], { client }), { current: 415, previous: 380, property: `sc-domain:${ATUAL}` });
+  assert.equal(client.posts.length, 2);
+  assert.equal(medida.pico, 2, "as duas janelas juntas, como o `Promise.all` de hoje — em série seria 1");
+});
+
+test("gscTrend com dois hosts: o teto em voo é 2 — os hosts vão em série, e nunca 2×N", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: HOJE_DA_TENDENCIA });
+  const client = clienteFalso({ [ATUAL]: cliquesPorJanela(9, 0), [ANTIGO]: cliquesPorJanela(415, 380) });
+  const medida = comPicoEmVoo(client);
+  await gscTrend(HOSTS, { client });
+  assert.equal(medida.pico, 2, "paralelizar os hosts dobraria a rajada contra a mesma credencial — caminho curto para um 429");
+});
+
+test("gscTrend: UM host falhando devolve null, e não a soma do que respondeu", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: HOJE_DA_TENDENCIA });
+  const client = clienteFalso({ [ATUAL]: cliquesPorJanela(9, 0), [ANTIGO]: cliquesPorJanela(415, 380) }, { falhaEm: ANTIGO });
+  // 9 cliques no lugar de 424 lê como colapso: `null` faz a home cair no `seoSeed`.
+  assert.equal(await gscTrend(HOSTS, { client }), null);
+});
+
+test("gscTrend: host sem propriedade soma os vivos; nenhum vivo e lista vazia dão null sem requisição", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: HOJE_DA_TENDENCIA });
+  const vivo = clienteFalso({ [ATUAL]: cliquesPorJanela(9, 0) });
+  assert.deepEqual(await gscTrend([ATUAL, SEM_PROPRIEDADE], { client: vivo }), { current: 9, previous: 0, property: `sc-domain:${ATUAL}` });
+  const nenhum = clienteFalso();
+  assert.equal(await gscTrend([SEM_PROPRIEDADE], { client: nenhum }), null);
+  assert.equal(await gscTrend([], { client: nenhum }), null);
+  assert.equal(nenhum.posts.length, 0);
+});
+
+test("gscTrend: as quatro datas nascem UMA vez — a meia-noite UTC no meio da leitura não separa os hosts", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-09-19T23:59:59Z") });
+  const client = clienteFalso();
+  const request = client.request;
+  client.request = async (req) => {
+    const res = await request(req);
+    if (req.method === "POST") t.mock.timers.tick(2000);
+    return res;
+  };
+  await gscTrend(HOSTS, { client });
+  const janelas = client.posts.map(({ data }) => `${data.startDate}→${data.endDate}`);
+  assert.equal(janelas.length, 4);
+  assert.deepEqual(janelas.slice(2), janelas.slice(0, 2), "o segundo host pergunta as mesmas janelas do primeiro");
+});
+
+test("gscTrend: env malformada não derruba a home — e o trecho da service account não sai em lugar nenhum", async () => {
+  const guardada = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  process.env.GOOGLE_SERVICE_ACCOUNT_JSON = '{"private_key": "SEGREDO-QUE-NAO-PODE-VAZAR", malformado';
+  try {
+    // O `JSON.parse` cita um trecho do texto na mensagem: fora do `try` do laço ele sobe, e o `catch`
+    // da tendência o transforma em `null` — a home cai no `seoSeed` sem exibir a mensagem.
+    assert.equal(await gscTrend(HOSTS), null);
+  } finally {
+    if (guardada === undefined) delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    else process.env.GOOGLE_SERVICE_ACCOUNT_JSON = guardada;
+  }
 });

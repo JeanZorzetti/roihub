@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import { listProjects, type Project } from "@/lib/projects";
 import { gscSeries, gscStatus, isoDaysAgo } from "@/lib/gsc";
+import { hostsDeclarados } from "@/lib/projects.mjs";
 import { bucketWeeks, totals28 } from "@/lib/series.mjs";
 import { rankBySeoScore } from "@/lib/seo-score.mjs";
 import { Tabs, GscFoot } from "../tabs";
@@ -37,7 +38,7 @@ export default async function SeoPage() {
     gscStatus(),
     Promise.all(
       projects.map(async (p): Promise<Row> => {
-        const s = await gscSeries(p.url);
+        const s = await gscSeries(hostsDeclarados(p));
         // `{erro}` (falha transitória) vira o mesmo estado vazio que `null` (fato real) aqui —
         // esta tela não distingue os dois motivos, só `okr-coleta.ts` precisa (design-review 03/09).
         if (!s || "erro" in s) return { ...p, weeks: [], t: null };
