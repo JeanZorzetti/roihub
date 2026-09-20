@@ -3,10 +3,10 @@ import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
 import { DIVERGENCIAS, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
 import { listProjects } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
-import { gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
+import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo } from "@/lib/kpis-busca.mjs";
+import { impressoesNoTop3, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
@@ -222,6 +222,48 @@ function noteDoCrescimento(
   return `${janela}${base}${forma} Meta do board: 5% a 10% ao mês — meta, não régua: não há faixa de mercado publicada, então o hub não julga contra ela.`;
 }
 
+type MedidaImpressoes = NonNullable<ReturnType<typeof impressoesNoTop3>>;
+
+/** 037 — o `topic` da concentração no Top 3: a fração, o numerador e a base LIDA, nada além.
+ *  NENHUM glifo de veredito (`▼`/`▲`/`◐`), pela mesma razão das três folhas vizinhas
+ *  (FR-009 da 034, FR-008 da 036): os 40% a 50% são meta do board, `balizador.tipo` desta folha é
+ *  `recusa`, e um `▼` aqui publicaria o julgamento que o `◇ sem fonte` do rótulo nega duas
+ *  linhas acima, no mesmo painel. Quem julga contra a faixa é a aba de aquisição, e a nota diz isso. */
+function topicDasImpressoes(m: MedidaImpressoes): string {
+  return `Medido: ${pct1(m.fracao)} · ${br(m.noTop3)} de ${br(m.total)} impressões lidas por consulta×página`;
+}
+
+/** A nota da concentração. Ordem: a medida com a janela, a BASE (que é parcial, e a alternativa de
+ *  base completa com o número que ela daria), a marca, a concentração numa URL, e a divergência de
+ *  veredito com a outra tela. Nada de novo entra aqui sem sair outra coisa: quatro corridas
+ *  acrescentaram ressalva a esta família de blocos e o log de 18/09 registrou que a ressalva já é
+ *  mais comprida que a resposta. */
+function noteDasImpressoes(
+  m: MedidaImpressoes,
+  janela: { inicio: string; fim: string },
+  porPagina: { base: number; fracao: number } | null,
+  marca: { noTop3: number; semMarca: number } | null,
+  campea: { caminho: string; fracao: number } | null,
+): string {
+  const medida = `${br(m.noTop3)} das ${br(m.total)} impressões lidas estão entre as posições 1,0 e 3,9 na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3).`;
+  // A base é PARCIAL, e dizer isso não é rodapé: a dimensão `query` do Search Console omite as
+  // consultas raras. Sem esta frase a fração leria como fatia do site inteiro. A alternativa de
+  // base completa está aqui com o número que ela daria, porque é ele que prova por que ela não foi
+  // escolhida — não uma opinião sobre dimensões.
+  const base = porPagina
+    ? ` A leitura cobre ${br(m.total)} das ${br(porPagina.base)} impressões que o site teve na mesma janela: a dimensão \`query\` omite as consultas raras, então isto é fração da parte apurada. A dimensão \`page\`, que tem a base completa, daria ${pct1(porPagina.fracao)} — lá a posição é a MÉDIA da URL, e a média de uma página não descreve nenhuma das impressões dela.`
+    : "";
+  const daMarca = marca
+    ? ` ${br(marca.noTop3)} do numerador ${marca.noTop3 === 1 ? "é impressão" : "são impressões"} da marca própria; sem ${marca.noTop3 === 1 ? "ela" : "elas"} a concentração seria ${pct1(marca.semMarca)}.`
+    : " A marca própria NÃO foi separada: este projeto não declara `marca` no card, e o número pode estar sustentado pelo próprio nome da empresa.";
+  const concentrada = campea ? ` ${pct1(campea.fracao)} do numerador vêm de uma URL só (${campea.caminho}).` : "";
+  // FR-007 da 035, aplicada a uma divergência de VEREDITO e não de número: as duas telas publicam o
+  // mesmo valor (mesma função, mesma leitura, mesma janela) e só uma o julga. Sem esta frase, quem
+  // vier das duas telas encontra um `▼` de um lado e nenhum do outro sobre o MESMO número.
+  const divergencia = " A aba de aquisição do projeto publica este mesmo número — mesma função, mesma leitura, mesma janela — com veredito contra a faixa; aqui não há glifo.";
+  return `${medida}${base}${daMarca}${concentrada}${divergencia} Meta do board: 40% a 50% — meta, não régua: a concentração depende do mix de termos de marca, e nenhum estudo publica faixa de mercado para ela.`;
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -415,6 +457,78 @@ export default async function MapaDoBoardPage() {
     cnmNode.children = [filho, ...(cnmNode.children ?? [])];
   }
 
+  // 037/US1 — a concentração no Top 3 na folha que a define. MESMA função e MESMA leitura de
+  // `/okr/[slug]/aquisicao` (`impressoesNoTop3` sobre consulta×página), então as duas telas
+  // publicam o mesmo número por construção — a trava que o cabeçalho deste arquivo declara contra
+  // "duas telas discordando" (033). Custa UMA requisição por host, e as duas leituras já carregadas
+  // não serviriam — medido na Atma em 20/09/2026, mesma janela: a dimensão `query` sozinha dá
+  // 22,5% (uma posição média por termo, misturando as páginas em que ele ranqueia) e a dimensão
+  // `page` dá 0,1% (a campeã tem 21.500 impressões numa média de 7,3, e nenhuma delas acontece em
+  // 7,3). A leitura por consulta×página é a de grão mais fino que o Search Console entrega, e é
+  // a que 032/D9 já tinha escolhido para esta medida na outra tela.
+  const impNode = acharNo(dados.nodeData as No, "impressoesTop3");
+  if (impNode) {
+    const consultasGsc = atma ? await gscConsultas(hosts, janela) : null;
+    const lidas = consultasGsc && !("erro" in consultasGsc) ? consultasGsc.linhas : null;
+    const medida = lidas ? impressoesNoTop3(lidas) : null;
+    const noTop3 = (lidas ?? []).filter((l) => l.posicao >= 1 && l.posicao < 4);
+    const soma = (ls: { impressoes: number }[]) => ls.reduce((a, l) => a + l.impressoes, 0);
+    // ⚠️ `l.query` e nunca `l.termo`: esta leitura é a de consulta×página, e o campo da outra
+    // compilaria removendo ZERO — o defeito que a 035 achou na guarda de marca do striking.
+    const impMarca = medida && !decl.motivo ? soma(noTop3.filter((l) => new RegExp(decl.padrao, "i").test(l.query))) : null;
+    // A URL que mais sustenta o numerador. `page` é a URL já assinada pelo host de `url` na mescla,
+    // e o caminho é o que cabe num nó — o host inteiro repetiria o que o cabeçalho já declara.
+    const porUrl = new Map<string, number>();
+    for (const l of noTop3) porUrl.set(l.page, (porUrl.get(l.page) ?? 0) + l.impressoes);
+    const campea = [...porUrl].sort((a, b) => b[1] - a[1])[0] ?? null;
+    // A MESMA leitura por página que as seis faixas consomem — zero requisição nova para provar
+    // por que a dimensão de base completa não é a escolhida.
+    const paginas = paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null;
+    const porPaginaTop3 = paginas ? impressoesNoTop3(paginas) : null;
+    // Os QUATRO estados, da causa mais específica para a mais genérica, e nenhum dos três de
+    // ausência publica `0%`: sobre ausência, "0% no Top 3" é a reprovação mais grave que esta folha
+    // sabe emitir, e seria fabricada. Zero MEDIDO cai no quarto e mostra `0%` — é o que os separa.
+    const filho: No = !consultasGsc
+      ? {
+          id: "impressoesTop3-medido",
+          topic: "∅ não apurado · sem leitura do Search Console",
+          note: `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. Sem a leitura não há denominador, e uma fração precisa dos dois lados.`,
+        }
+      : "erro" in consultasGsc
+        ? {
+            id: "impressoesTop3-medido",
+            topic: "∅ não apurado · a leitura do Search Console falhou",
+            note: `Falha transitória, não ausência de dado: ${consultasGsc.erro}. A medida volta na próxima leitura.`,
+          }
+        : medida === null
+          ? {
+              id: "impressoesTop3-medido",
+              topic: "∅ não apurado · nenhuma impressão na janela",
+              note: `A janela ${janela.inicio} → ${janela.fim} não teve uma impressão sequer: o denominador é zero. Não é "nada no Top 3" — é nada em lugar nenhum, e os dois pedem trabalho oposto.`,
+            }
+          : {
+              id: "impressoesTop3-medido",
+              topic: topicDasImpressoes(medida),
+              note: noteDasImpressoes(
+                medida,
+                janela,
+                porPaginaTop3 ? { base: totalImpressoes(paginas!), fracao: porPaginaTop3.fracao } : null,
+                impMarca === null ? null : { noTop3: impMarca, semMarca: (medida.noTop3 - impMarca) / medida.total },
+                campea ? { caminho: new URL(campea[0]).pathname, fracao: campea[1] / medida.noTop3 } : null,
+              ),
+            };
+    // À FRENTE da definição e da meta, pelo mesmo motivo das três folhas vizinhas: quem expande está
+    // procurando o número, e confere a definição do board DEPOIS de achá-lo.
+    impNode.children = [filho, ...(impNode.children ?? [])];
+  }
+
+  // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase
+  // do cabeçalho dizia "as seis faixas" quando elas eram a única coisa medida aqui, e ficou estreita
+  // quando a 034, a 035, a 036 e esta penduraram uma leitura em quatro folhas. Escrever "quatro"
+  // ali seria a constante acoplada ao tamanho de uma lista que o comentário abaixo proíbe.
+  const medidos = (n: No): number => (n.id.endsWith("-medido") ? 1 : 0) + (n.children ?? []).reduce((s, f) => s + medidos(f), 0);
+  const folhasMedidas = medidos(dados.nodeData as No);
+
   const nos =(n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);
   const total = nos(dados.nodeData as No);
 
@@ -481,9 +595,10 @@ export default async function MapaDoBoardPage() {
         <p className="foot">
           {/* 033/T042 — qual projeto está medindo, por escrito: o board é o da Atma, não do
               portfólio, e as seis faixas de "Posição no Google" (abaixo) medem os hosts dela. */}
-          <strong>As seis faixas de &ldquo;Posição no Google&rdquo; medem a Atma</strong> —{" "}
-          {atma ? hostsDeclarados(atma).join(" + ") : "projeto não encontrado"}, janela{" "}
-          {janela.inicio} → {janela.fim} (28 dias, fecha em D-3). O board{" "}
+          <strong>O que esta tela mede é a Atma</strong> — {atma ? hostsDeclarados(atma).join(" + ") : "projeto não encontrado"},
+          janela {janela.inicio} → {janela.fim} (28 dias, fecha em D-3): as seis faixas de{" "}
+          &ldquo;Posição no Google&rdquo; e as <strong>{folhasMedidas} folhas com leitura própria</strong>,
+          que abrem com o número antes da definição do board. O board{" "}
           <code>okr-Saw2eoSKZDPLJAk6xeDBuS</code> é o board dela, não do portfólio.{" "}
           {notaAusencia ? <strong>{notaAusencia.charAt(0).toUpperCase() + notaAusencia.slice(1)}.</strong> : null}
         </p>
