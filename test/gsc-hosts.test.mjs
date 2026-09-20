@@ -5,8 +5,8 @@
 // no domínio antigo e 5 na posição 21 no novo, e é a MESMA página.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mesclarPorCaminho } from "../lib/gsc-hosts.mjs";
-import { gscConsultas, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts } from "../lib/gsc.ts";
+import { mesclarPorCaminho, motivoDeAusencia } from "../lib/gsc-hosts.mjs";
+import { gscConsultas, gscLigado, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts } from "../lib/gsc.ts";
 
 const ATUAL = "usealigner.com";
 const ANTIGO = "atma.roilabs.com.br";
@@ -597,6 +597,55 @@ test("gscTrend: env malformada não derruba a home — e o trecho da service acc
     // O `JSON.parse` cita um trecho do texto na mensagem: fora do `try` do laço ele sobe, e o `catch`
     // da tendência o transforma em `null` — a home cai no `seoSeed` sem exibir a mensagem.
     assert.equal(await gscTrend(HOSTS), null);
+  } finally {
+    if (guardada === undefined) delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    else process.env.GOOGLE_SERVICE_ACCOUNT_JSON = guardada;
+  }
+});
+
+// ── 033/T071 — `null` tem TRÊS causas, e a tela não pode escolher uma e afirmar ─────────────────
+//
+// `lerHosts` devolve `null` para lista vazia, env desligada E host fora de toda propriedade. A
+// tela do mapa lia os três como o último e publicava "sem propriedade no Search Console" no dia em
+// que o defeito era a credencial ausente do build — a permissão estava certa e era ela que a frase
+// mandava auditar. As três frases têm de existir e ser diferentes.
+test("motivoDeAusencia: credencial ausente e host fora de toda propriedade dizem coisas DIFERENTES", () => {
+  const semCredencial = motivoDeAusencia({ ligado: false, hosts: HOSTS });
+  const semPropriedade = motivoDeAusencia({ ligado: true, hosts: HOSTS });
+  assert.notEqual(semCredencial, semPropriedade);
+  assert.match(semCredencial, /credencial/i);
+  assert.doesNotMatch(semCredencial, /propriedade/i, "credencial ausente não acusa permissão");
+  assert.match(semPropriedade, /propriedade/i);
+  assert.doesNotMatch(semPropriedade, /credencial/i, "propriedade ausente não acusa credencial");
+});
+
+test("motivoDeAusencia: com a credencial presente nomeia os hosts que ficaram de fora", () => {
+  const frase = motivoDeAusencia({ ligado: true, hosts: HOSTS });
+  for (const h of HOSTS) assert.ok(frase.includes(h), `${h} some da frase`);
+});
+
+test("motivoDeAusencia: lista de hosts vazia é a terceira causa e vem ANTES da credencial", () => {
+  // Mesma ordem de `lerHosts`, que confere a lista antes de olhar a env.
+  const frase = motivoDeAusencia({ ligado: false, hosts: [] });
+  assert.match(frase, /host/i);
+  assert.doesNotMatch(frase, /credencial|propriedade/i);
+  assert.notEqual(frase, motivoDeAusencia({ ligado: false, hosts: HOSTS }));
+});
+
+test("motivoDeAusencia: nenhuma das frases cita variável de ambiente (Princípio V)", () => {
+  for (const ligado of [true, false])
+    for (const hosts of [HOSTS, []])
+      assert.doesNotMatch(motivoDeAusencia({ ligado, hosts }), /GOOGLE|SERVICE_ACCOUNT|_JSON|process\.env/);
+});
+
+test("gscLigado acompanha a env — e é o predicado que `lerHosts` usa para devolver null", async () => {
+  const guardada = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  try {
+    delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+    assert.equal(gscLigado(), false);
+    assert.equal(await lerPorHosts(HOSTS, PEDIDO), null, "sem a credencial a leitura não tenta rede");
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON = "{}";
+    assert.equal(gscLigado(), true);
   } finally {
     if (guardada === undefined) delete process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
     else process.env.GOOGLE_SERVICE_ACCOUNT_JSON = guardada;

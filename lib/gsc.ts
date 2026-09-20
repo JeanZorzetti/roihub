@@ -44,9 +44,14 @@ export function mergeGscWindows(current: GscPageRow[], previous: GscPageRow[]) {
 let clientPromise: Promise<Client> | null = null;
 let sitesCache: { at: number; sites: Site[] } | null = null;
 
+/** 033/T071 — a credencial do Search Console existe neste ambiente? É o PREDICADO de `getClient()`,
+ *  exportado para a tela não inventar o próprio: `null` das leituras é "env desligada OU host fora
+ *  de toda propriedade", e só este booleano separa as duas. Devolve booleano e nunca o valor. */
+export const gscLigado = () => Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+
 function getClient(): Promise<Client> | null {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) return null;
+  if (!gscLigado()) return null;
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!;
   clientPromise ??= new GoogleAuth({
     credentials: JSON.parse(raw),
     scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],

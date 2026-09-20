@@ -3,7 +3,8 @@ import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
 import { DIVERGENCIAS, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
 import { listProjects } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
-import { gscPaginas } from "@/lib/gsc";
+import { gscLigado, gscPaginas } from "@/lib/gsc";
+import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { descoberta } from "@/lib/janelas.mjs";
 import { porFaixaDePosicao } from "@/lib/kpis-busca.mjs";
 import { Tabs } from "../../tabs";
@@ -32,11 +33,22 @@ import { Mapa } from "./mapa";
 // O board `okr-Saw2eoSKZDPLJAk6xeDBuS` é o board DA ATMA, não do portfólio, então a tela lendo a
 // Atma é coerente com o escopo dela — e é isso que o cabeçalho da seção declara por escrito.
 //
-// A janela é MÓVEL (28 dias fechando em D-3): `force-static` congelaria o número no build e ele
-// envelheceria em silêncio — o mesmo defeito de `dado velho` que esta feature conserta um nível
-// acima. `revalidate = 3600` é o valor que `/okr/[slug]/aquisicao` já usa, mesma fonte e mesma
-// quota diária compartilhada; adotar outro criaria duas políticas de frescor para o mesmo dado.
-export const revalidate = 3600;
+// 033/T070 — DINÂMICA, e não por gosto. A janela é MÓVEL (28 dias fechando em D-3) e a leitura do
+// Search Console precisa da credencial, que NÃO existe no `npm run build` do Docker (o `Dockerfile`
+// não tem `ARG`/`ENV` para ela, e não deve ter: segredo em camada de build fica no histórico da
+// imagem — Princípio V). Com `revalidate = 3600` a rota era ESTÁTICA: o build pré-renderizava, a
+// leitura devolvia `null` sem a credencial, e esse `null` foi assado no artefato e servido como
+// `X-Nextjs-Cache: HIT` — seis faixas sem dado e uma frase falsa, a primeira hora de cada deploy.
+// `/okr/[slug]/aquisicao` declara o MESMO `revalidate` e escapou por acidente de roteamento (o
+// segmento `[slug]` sem `generateStaticParams` não pré-renderiza), não por acerto.
+//
+// POR QUE NÃO `<Suspense>` em volta da leitura, que manteria o board estático: misturar estático e
+// dinâmico DENTRO de uma rota é o Partial Prerendering, que é feature do `cacheComponents` — e o
+// `next.config.mjs` não o liga (ligar muda o padrão de todas as rotas do hub, e proíbe `revalidate`
+// e `dynamic` de segmento). Sem ele o `<Suspense>` não muda o que é pré-renderizado, e a leitura
+// continua rodando no build. Conferido em 20/09/2026 pela doc do Next 16 instalada, e pelo build.
+// O que se perde é o render estático do board (`mapaDoBoard()` é função pura, custo desprezível).
+export const dynamic = "force-dynamic";
 
 // ⚠️ A META DO BOARD NÃO VIRA RÉGUA AO SER DESENHADA. Cada folha carrega o losango da procedência
 // (`◆` tem fonte, `◇` não tem) e o painel imprime o motivo. Publicar "< 15% de reescrita" com a
@@ -107,11 +119,13 @@ export default async function MapaDoBoardPage() {
   const projects = await listProjects();
   const atma = projects.find((p) => p.slug === "atma");
   const janela = descoberta();
-  const paginasGsc = atma ? await gscPaginas(hostsDeclarados(atma), janela) : null;
-  const semPropriedade = "sem propriedade no Search Console para este projeto";
+  const hosts = atma ? hostsDeclarados(atma) : [];
+  const paginasGsc = atma ? await gscPaginas(hosts, janela) : null;
+  // 033/T071 — `null` tem TRÊS causas com consertos opostos (lista vazia, credencial ausente, host
+  // fora de toda propriedade), e a tela afirmava a terceira sempre. Quem nomeia é `motivoDeAusencia`.
   const notaAusencia =
     paginasGsc === null
-      ? semPropriedade
+      ? motivoDeAusencia({ ligado: gscLigado(), hosts })
       : "erro" in paginasGsc
         ? `erro na fonte: ${paginasGsc.erro}`
         : null;
@@ -213,9 +227,7 @@ export default async function MapaDoBoardPage() {
           {atma ? hostsDeclarados(atma).join(" + ") : "projeto não encontrado"}, janela{" "}
           {janela.inicio} → {janela.fim} (28 dias, fecha em D-3). O board{" "}
           <code>okr-Saw2eoSKZDPLJAk6xeDBuS</code> é o board dela, não do portfólio.{" "}
-          {notaAusencia ? (
-            <strong>{notaAusencia === semPropriedade ? "Sem propriedade no Search Console para este projeto." : notaAusencia}</strong>
-          ) : null}
+          {notaAusencia ? <strong>{notaAusencia.charAt(0).toUpperCase() + notaAusencia.slice(1)}.</strong> : null}
         </p>
         <p className="foot">
           <strong>Onde o board e o código discordam, o nó diz.</strong> A transcrição não é corrigida

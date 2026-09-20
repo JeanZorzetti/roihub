@@ -330,8 +330,97 @@ estados.
 - [X] **T046** [US2] `app/gsc/mapa/page.tsx` — a **janela** aparece no nó pai de "Posição no Google"
       **e de novo em cada nó de faixa** (FR-004). O nó é lido isolado.
 
-**Checkpoint**: as seis faixas no mapa e na lista, com base, janela e veredito só onde a amostra
-decide. SC-004, SC-005.
+**Checkpoint**: 🚨 **NÃO FECHADO — reprovado em produção em 20/09/2026, 05:36 BRT.** As seis faixas
+saem sem dado nenhum e a tela publica uma frase FALSA. Ver a Phase 4b. SC-004 e SC-005 seguem
+abertos.
+
+---
+
+## Phase 4b: A US2 reprovou em produção — o build assa uma busca que falhou
+
+**Achado em 20/09/2026, 05:36 BRT**, fazendo a T068 que tinha ficado para trás. `/gsc/mapa` responde
+200 com `X-Nextjs-Cache: HIT`, as seis faixas sem base e sem veredito, e no lugar do dado:
+
+> **"Sem propriedade no Search Console para este projeto."**
+
+**A frase é falsa.** As duas propriedades (`sc-domain:usealigner.com` e `sc-domain:roilabs.com.br`)
+existem e respondem — conferidas à mão na mesma madrugada, e é delas que a aba de aquisição tira os
+números que ELA publica corretamente.
+
+### A causa, provada pelos dois lados
+
+`/gsc/mapa` é **caminho estático**. Com `export const revalidate = 3600` e sem diretiva dinâmica, o
+Next pré-renderiza a página no `npm run build` — que roda dentro do Docker, onde
+`GOOGLE_SERVICE_ACCOUNT_JSON` **não existe**: o `Dockerfile` não tem `ARG` nem `ENV` para ele
+(linha 12, `RUN npm run build`). O `null` do build foi assado no artefato e é servido como `HIT`.
+
+`/okr/[slug]/aquisicao` escapa **por acidente de roteamento**, não por acerto: é segmento dinâmico
+sem `generateStaticParams`, então o Next não consegue pré-renderizar e ela renderiza sob demanda, em
+runtime, onde a credencial existe. **As duas declaram o mesmo `revalidate = 3600`.** Só uma pode ser
+assada — e foi a que não tem `[slug]`.
+
+É `ssg_db_query_build_time_gotcha` casado com `isr_hit_with_old_html_is_an_old_build`.
+
+### Dois defeitos, com consertos diferentes
+
+- [X] **T070** [US2] **O build não pode assar uma busca que falhou.** Mover a leitura do Search
+      Console em `app/gsc/mapa/page.tsx` para um filho envolvido em `<Suspense>` que renderiza sob
+      demanda, mantendo o board (que não depende de rede) estático. `force-dynamic` na página
+      inteira também resolve e é pior: joga fora o render estático de 137 KB de board que nunca
+      muda entre deploys. **Não passar a credencial como `ARG` no Dockerfile** — segredo em camada
+      de build fica no histórico da imagem (Princípio V).
+      **Critério**: `curl` logo após um deploy devolve as seis faixas com dado, sem esperar a hora
+      do `revalidate`.
+      **FEITO com `force-dynamic`, e a premissa acima estava errada.** Misturar estático e
+      dinâmico dentro de uma rota é o Partial Prerendering, que é feature do `cacheComponents` —
+      e o `next.config.mjs` não o liga (a doc do Next 16 instalada em `node_modules` diz isso, e
+      ligar mexe no padrão de TODAS as rotas do hub e proíbe `revalidate`/`dynamic` de segmento).
+      Sem ele, `<Suspense>` não muda o que é pré-renderizado e a leitura continua rodando no
+      build. O "pior" da frase original é desprezível: `mapaDoBoard()` é função pura. `revalidate
+      = 3600` saiu (não significa nada em rota dinâmica) e o comentário do arquivo diz por quê.
+      **Provado como o Docker**: `GOOGLE_SERVICE_ACCOUNT_JSON= next build` → `/gsc/mapa` sai `ƒ`
+      (antes `○`); servidor local com a credencial, **primeira** requisição, `2 de 6 faixas
+      decisivas`, `Cache-Control: no-store`, sem `X-Nextjs-Cache`.
+
+- [X] **T071** [US2] **A tela acusa a causa errada.** O contrato da 030 define `null` como "env
+      desligada **ou** host fora de toda propriedade" — **duas** causas. `app/gsc/mapa/page.tsx:111`
+      escolhe uma e afirma: *"sem propriedade no Search Console para este projeto"*. Quem ler vai
+      auditar permissão que está correta enquanto o defeito é variável de ambiente. Separar os dois
+      estados na borda (`lerPorHosts`/`gscPaginas`) e deixar cada tela nomear o que de fato houve.
+      **Critério**: com a credencial ausente a tela diz que a credencial está ausente; com a
+      credencial presente e o host fora de toda propriedade, diz isso. As duas frases existem e são
+      diferentes.
+      ⚠️ Esta é a mesma família de defeito que a 033 inteira existe para consertar — ausência com o
+      nome errado —, entrando pela porta da infraestrutura em vez da estatística.
+      **FEITO sem mudar o tipo de retorno.** Trocar `null` por união discriminada tocaria as sete
+      leituras e uns 30 asserts. Em vez disso a borda exporta o predicado que ELA JÁ USAVA —
+      `gscLigado()` em `lib/gsc.ts`, o mesmo de `getClient()`, uma fonte só — e
+      `motivoDeAusencia({ligado, hosts})` em `lib/gsc-hosts.mjs` (pura, na ordem de `lerHosts`:
+      lista vazia → credencial → propriedade) devolve as **três** frases, que nunca citam o nome da
+      variável (Princípio V). `app/gsc/mapa/page.tsx` e `app/okr/[slug]/aquisicao/page.tsx`
+      (`semPropriedadeGsc`, mesmo `null`, mesma frase errada) passam a usá-la. 5 testes novos em
+      `test/gsc-hosts.test.mjs`, vistos falhar antes. Render real com a credencial em branco: "A
+      credencial do Search Console não está configurada neste ambiente." e nenhuma ocorrência de
+      "sem propriedade". A terceira frase (credencial presente, host fora de toda propriedade) só
+      está provada em teste unitário — o catálogo não tem host assim para renderizar.
+      **NÃO tocado, de propósito: `lib/okr-coleta.ts:198`** (`sem propriedade no GSC para ${p.url}`,
+      célula `visitante` da ficha). O mesmo `null`, a mesma frase — mas `familiaDe()` em
+      `lib/okr.mjs:476` classifica o buraco por regex nesse texto (`/propriedade|GSC|indexa/` → D1,
+      `/ausente/` → D4), então trocar a frase muda a família do buraco e o Placar. É decisão de
+      taxonomia, não de texto: fica para uma tarefa própria.
+
+- [ ] **T072** [US2] Depois da T070, refazer a T068 **no mapa também**: duas leituras, a segunda
+      confirmando que as seis faixas trazem base, janela e veredito só onde a amostra decide. A
+      conferência anterior olhou só a aba de aquisição e por isso aprovou uma feature pela metade —
+      o próprio `tasks.md` já avisava disso na T044 ("um teste de verificação que só olhe o mapa
+      aprova uma tela que não responde"), e desta vez o erro foi o simétrico.
+
+### O que NÃO é o conserto
+
+**Esperar.** O `stale-while-revalidate` provavelmente regenera a página em runtime cerca de uma hora
+depois do deploy, com a credencial presente, e o mapa se cura sozinho. Isso não fecha nada: **a cada
+deploy a primeira hora do mapa volta a publicar a frase falsa**, e é a hora em que alguém abre a
+tela para conferir o que acabou de subir.
 
 ---
 
@@ -504,14 +593,19 @@ sem screenshot depois não está pronto.
       principal, com a seção "a origem" (o caso desta spec) e o padrão transferível (piso fixo de
       tamanho decide pelo TAMANHO da amostra, não pela DISTÂNCIA até a régua — as duas variáveis que
       decidem se dá para concluir algo).
-- [ ] **T067** Push em `main` **fora das janelas**: 23:30–01:00 BRT (estado noturno às 23:37,
+- [X] **T067** Push em `main` **fora das janelas**: 23:30–01:00 BRT (estado noturno às 23:37,
       autopublishing às 00:13) e 08:00–08:45 BRT (cron diário). A hora BRT sai pelo **PowerShell** —
       o `date` do Git Bash ignora `TZ`.
-      **Não feito** — aguardando confirmação explícita do dono antes de commitar/dar push (push é
-      deploy neste repo).
+      **FEITO** — `9899229` está em `origin/main`, commitado às 05:12 BRT, fora das duas janelas.
+      A marcação ficou desatualizada: o push aconteceu e a linha seguiu dizendo "não feito".
 - [ ] **T068** Deploy leva **~15 min**. Conferir a tela **duas vezes** — a primeira conferência
       frequentemente pega o container antigo.
-      **Não feito** — depende de T067.
+      **PARCIAL, e reprovou.** Feito em 20/09 05:36 BRT, 24 min após o deploy:
+      `/okr/atma/aquisicao` ✅ passa — página nomeada (`/blog/quanto-custa-alinhador-invisivel`,
+      93,9% do tráfego decidível, 155 cliques faltando), índice "1 de 4 decididas · 20 indecisa(s) ·
+      5 sem régua", e a frase da FR-011 sobre a melhora falsa.
+      `/gsc/mapa` ❌ **reprova** — seis faixas sem dado e uma frase falsa na tela. Ver a Phase 4b.
+      Fechar só depois da T072.
 
 ---
 

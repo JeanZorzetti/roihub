@@ -12,7 +12,8 @@ import {
   type PaginaCrawl,
   type DiaSeparado,
 } from "@/lib/db";
-import { gscSeries, gscConsultas, gscPaginas } from "@/lib/gsc";
+import { gscSeries, gscConsultas, gscPaginas, gscLigado } from "@/lib/gsc";
+import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { mesesDaSerie, janelaDeFoco, assinaturaDeHosts } from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
@@ -695,11 +696,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // 031: a série também declara — os dois blocos leem os mesmos hosts, e a tela diz a mesma coisa.
   const serieLida = serie && "days" in serie ? serie : null;
   const declaraHostsSerie = declaraOsHosts(serieLida);
-  // Ausência estrutural, dita igual nos dois blocos: com dois hosts, "para {url}" nomearia um só.
-  const semPropriedadeGsc =
-    hostsDoCard.length > 1
-      ? `sem propriedade no GSC para nenhum dos hosts declarados (${hostsDoCard.join(", ")})`
-      : `sem propriedade no GSC para ${p.url}`;
+  // Ausência dita igual nos blocos, e pelo nome CERTO (033/T071): `null` é lista vazia, credencial
+  // ausente OU host fora de toda propriedade — três consertos opostos, e a frase antiga afirmava a
+  // terceira sempre. Com dois hosts, "para {url}" nomearia um só; `motivoDeAusencia` lista todos.
+  const semPropriedadeGsc = motivoDeAusencia({ ligado: gscLigado(), hosts: hostsDoCard });
 
   // ── 025: a declaração de marca, que serve os DOIS blocos desta página ─────────────────────
   //
