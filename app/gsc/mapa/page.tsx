@@ -8,8 +8,9 @@ import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
 import { penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
-import { marcaDeclarada } from "@/lib/marca.mjs";
-import { descoberta } from "@/lib/janelas.mjs";
+import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
+import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
+import { dbOn, lerDiasGsc, type DiaSeparado } from "@/lib/db";
 
 import { Tabs } from "../../tabs";
 import { Mapa } from "./mapa";
@@ -177,6 +178,50 @@ function noteDoStriking(
   return `${medida}${marca}${cauda}${noInventario}${divergencia} Meta do board: converter 15% a 25% ao trimestre — meta, não régua: a taxa de promoção depende da dificuldade do termo e do esforço aplicado, e nenhum estudo público controla as duas.`;
 }
 
+type MedidaCrescimento = ReturnType<typeof crescimentoNaoMarca>;
+type LeituraDaSerie = ReturnType<typeof ritmoDoSegmentoAtual>;
+
+/** 036 — a nota do crescimento não-marca. O topic já é `linhaDeCrescimento()` (em `lib/`, testada);
+ *  aqui mora só a prosa, na ordem do `data-model.md` § 5: a janela nos termos DESTA folha, por que
+ *  a faixa do board não se aplica, a FORMA da série, e a razão quando ela não abriu a linha.
+ *
+ *  O nó é lido ISOLADO (clique direto, sem o pai), então a nota carrega o que a linha de topo não
+ *  cabe: de que meses o número é e por que os 28 dias do cabeçalho da página não valem aqui. */
+function noteDoCrescimento(
+  m: MedidaCrescimento,
+  leitura: LeituraDaSerie,
+  decl: ReturnType<typeof marcaDeclarada>,
+): string {
+  if (m.estado === "nao-declarada") {
+    return decl.motivo
+      ? `O card da Atma não declara \`marca\` (${decl.motivo}). Sem a lista de termos o hub não sabe quais consultas são busca pelo NOME, e a separação marca/não-marca não existe — o que não é o mesmo que zero. Declara-se em \`data/projects.json\`, campo \`marca\` (\`termos\` + \`pais\`).`
+      : "O card declara `marca`, mas nenhum dia da série gravada traz a separação medida. Não é falta de declaração: a corrida das 05:17 ainda não preencheu a série, e a medida aparece na próxima passagem.";
+  }
+  if (m.estado === "poucos-meses") {
+    return "A razão compara dois meses fechados CONSECUTIVOS, e a série ainda não os tem. É calendário: o conserto é esperar o próximo mês fechar. O mês corrente nunca entra — o Search Console ainda sobe a ponta dos últimos dias.";
+  }
+  if (m.estado === "nao-consecutivos") {
+    return `Os dois últimos meses fechados são ${m.de} e ${m.para}, e há um mês no meio que não fechou: falta dia com a separação medida. É buraco a investigar em \`hub_gsc_dia\`, não calendário a esperar — comparar os dois chamaria de crescimento mensal a soma de dois meses.`;
+  }
+  if (m.estado === "base-zero") {
+    return `O mês-base ${m.de} tem ZERO impressões não-marca, então a razão dividiria por zero. O mês seguinte (${m.para}) tem ${br(m.paraImpressoes)}: há número, não há razão. Não é problema a consertar — sem base, a comparação não existe.`;
+  }
+  const janela = `A razão compara MESES FECHADOS (${m.de} e ${m.para}) da série que o hub grava da Atma — não os 28 dias que o cabeçalho da página declara para as seis faixas de posição. O mês corrente nunca entra: o Search Console ainda sobe a ponta (30/07 saiu com 30 impressões e fechou em 827).`;
+  // FR-003/FR-009 — a razão SÓ chega aqui quando a linha de topo não a abriu. É a mesma palavra da
+  // aba de aquisição ("a faixa do board não se aplica"), para as duas telas não divergirem.
+  const base = m.baseInterrompida
+    ? ` ⚠️ O mês-base ${m.de} teve ${m.diasZeroDe} de ${m.diasDe} dias em zero: um terço do mês sem nenhuma impressão não-marca é o instrumento ou o índice fora do ar, não sazonalidade. A razão entre os dois é ${variacao(m.valor)}, e ela mede a VOLTA de um mês quebrado, não ritmo de aquisição — a faixa do board não se aplica.`
+    : "";
+  // FR-013 — o `ritmo` é o MESMO objeto que assina o "% do pico" de /okr/atma/aquisicao. Derivar um
+  // pico aqui abriria a porta para as duas telas citarem picos diferentes.
+  const semana = (s: { inicio: string; fim: string; impressoesNaoMarca: number; posicao: number | null }) =>
+    `${s.inicio} → ${s.fim}, ${br(s.impressoesNaoMarca)} impressões não-marca${s.posicao === null ? "" : `, posição média ${s.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}`}`;
+  const forma = leitura
+    ? ` Forma da série, sobre semanas completas: a última (${semana(leitura.ritmo.ultima)}) contra a melhor (${semana(leitura.ritmo.pico)})${leitura.ritmo.fracaoDoPico === null ? "" : ` — ${pct1(leitura.ritmo.fracaoDoPico)} do pico`}.${leitura.posteriores.length ? " ⚠️ Esta forma é do site ANTERIOR: o domínio novo ainda não fechou duas semanas completas." : ""}`
+    : " A série ainda não tem duas semanas completas para ler a forma.";
+  return `${janela}${base}${forma} Meta do board: 5% a 10% ao mês — meta, não régua: não há faixa de mercado publicada, então o hub não julga contra ela.`;
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -280,14 +325,17 @@ export default async function MapaDoBoardPage() {
   // compilaria e removeria NADA. Medido na Atma em 20/09/2026: 347 consultas e 113 cliques com a
   // guarda desligada contra 344 e 41 com ela, e `atma aligner` (posição 4,4, 423 impressões)
   // encabeçando a fila com 70 dos 113 cliques.
+  //
+  // A MESMA construção de marca de `/okr/[slug]/aquisicao` (025/D3): uma fonte só. Duas
+  // divergiriam na primeira variante nova, e a tela filtraria por um padrão que não é o exibido.
+  // `?? {}` e não `atma!`: sem o card não há marca a declarar, e `motivo: "ausente"` é o estado
+  // certo. (Sem o card também não há leitura, então a folha cai no primeiro estado de qualquer
+  // forma — mas a medida não pode depender dessa coincidência para não quebrar.)
+  // 036 — SOBE para o escopo da função: a folha do crescimento não-marca lê a mesma declaração, e
+  // duas construções seriam a divergência que o parágrafo acima descreve.
+  const decl = marcaDeclarada(atma ?? {});
   const sdNode = acharNo(dados.nodeData as No, "strikingDistance");
   if (sdNode) {
-    // A MESMA construção de marca de `/okr/[slug]/aquisicao` (025/D3): uma fonte só. Duas
-    // divergiriam na primeira variante nova, e a tela filtraria por um padrão que não é o exibido.
-    // `?? {}` e não `atma!`: sem o card não há marca a declarar, e `motivo: "ausente"` é o estado
-    // certo. (Sem o card também não há leitura, então a folha cai no primeiro estado de qualquer
-    // forma — mas a medida não pode depender dessa coincidência para não quebrar.)
-    const decl = marcaDeclarada(atma ?? {});
     const ehMarca = decl.motivo ? null : (t: string) => new RegExp(decl.padrao, "i").test(t);
     const medida =
       termosGsc && !("erro" in termosGsc) ? strikingDistancePorTermo(termosGsc.linhas, ehMarca) : null;
@@ -321,7 +369,53 @@ export default async function MapaDoBoardPage() {
     sdNode.children = [filho, ...(sdNode.children ?? [])];
   }
 
-  const nos = (n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);
+  // 036/US1 — o crescimento não-marca na folha que define o KPI. A fonte é o BANCO (`hub_gsc_dia`,
+  // gravada pela corrida das 05:17): zero requisição nova ao Search Console (FR-005). Buscar as três
+  // pernas no render triplicaria a rede por visita para exibir um número sem data.
+  //
+  // A MESMA janela da aba de aquisição (`descobertaLonga`) e os MESMOS hosts declarados, senão as
+  // duas telas leem recortes diferentes da série e citam meses, absolutos e picos que divergem
+  // (SC-005). Falha do banco vira `{erro}` truncado, e nunca a string de conexão (Princípio V).
+  const cnmNode = acharNo(dados.nodeData as No, "crescimentoNaoMarca");
+  if (cnmNode) {
+    const longa = descobertaLonga() as { inicio: string; fim: string };
+    let serie: DiaSeparado[] | { erro: string } | null = null;
+    if (atma && dbOn()) {
+      try {
+        serie = await lerDiasGsc("atma", longa.inicio, longa.fim);
+      } catch (e) {
+        serie = { erro: (e instanceof Error ? e.message : String(e)).slice(0, 60) };
+      }
+    }
+    // SEIS estados de tela, e nenhum publica `0`: os cinco da função pura + a leitura que falhou. A
+    // falha é transitória e a ausência é estrutural — uma pede investigar credencial, a outra pede
+    // declarar marca, e um `null` mudo faria as duas parecerem a mesma coisa (mesma razão da 030).
+    let filho: No;
+    if (!Array.isArray(serie)) {
+      filho = {
+        id: "crescimentoNaoMarca-medido",
+        topic: `∅ não apurado · banco indisponível (${serie ? serie.erro : atma ? "sem banco configurado para o hub" : "projeto atma não encontrado no hub"})`,
+        note: "Falha transitória ou ambiente sem banco — não ausência de dado. A série está gravada em `hub_gsc_dia`; o que falhou foi a leitura, e a medida volta na próxima. Sem a leitura não há mês fechado para comparar, e um 0% aqui leria como estagnação medida.",
+      };
+    } else {
+      const medida = crescimentoNaoMarca(serie, new Date().toISOString().slice(0, 10));
+      // `nao-declarada` sem `decl.motivo`: o card DECLARA e a série ainda não traz a separação.
+      // Dizer "marca não declarada" ali mandaria editar o card — o conserto é esperar a corrida.
+      const naoPreenchida = medida.estado === "nao-declarada" && !decl.motivo;
+      filho = {
+        id: "crescimentoNaoMarca-medido",
+        topic: naoPreenchida
+          ? "∅ não apurado · a série gravada ainda não traz a separação de marca"
+          : linhaDeCrescimento(medida),
+        note: noteDoCrescimento(medida, ritmoDoSegmentoAtual(serie, hosts), decl),
+      };
+    }
+    // À FRENTE da fórmula e da meta, pelo mesmo motivo das folhas vizinhas. Sem glifo de veredito
+    // (FR-008): os 5% a 10% são meta do board, `balizador.tipo` é `recusa` e a folha segue `◇ sem fonte`.
+    cnmNode.children = [filho, ...(cnmNode.children ?? [])];
+  }
+
+  const nos =(n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);
   const total = nos(dados.nodeData as No);
 
   // TODO número desta tela é COMPUTADO, e a regra nasceu de um erro publicado: a primeira versão

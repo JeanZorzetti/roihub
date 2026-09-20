@@ -15,7 +15,7 @@ import {
 import { gscSeries, gscConsultas, gscPaginas, gscLigado } from "@/lib/gsc";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { mesesDaSerie, janelaDeFoco, assinaturaDeHosts } from "@/lib/serie-gsc.mjs";
-import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
+import { marcaDeclarada, completude, crescimentoNaoMarca, causaDaAusencia, variacao, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
 import { kpisPorTermo, kpisPorPagina, queryToPageRatio, termoPrincipal, totalImpressoes, LIMIAR_PAGINAS_DECIDIDAS } from "@/lib/kpis-busca.mjs";
@@ -721,13 +721,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // `vereditoContraFaixa()`. As trilhas passam a ser desenhadas sempre que houver medida.
   const vitais = await lerPassRate(slug, paginasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
-  // 025: acima de 10× o `pct` vira armadilha de leitura. Em pt-BR o separador de milhar é o PONTO,
-  // então um crescimento de 4195% sai "4.195%" — que, ao lado de uma meta de "5% a 10%", lê como
-  // 4,195% e inverte o veredito para quem bate o olho. Medido em 08/09: julho da atma colapsou para
-  // 342 impressões não-marca e agosto voltou a 14.689, uma recuperação real de 42×.
-  const variacao = (f: number) =>
-    Math.abs(f) >= 10 ? `${(f + 1).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}×` : pct(f);
-  const br = (n: number) => n.toLocaleString("pt-BR");
+  // 036 — `variacao()` (o 43× no lugar de "4.195%", 025) subiu para `lib/marca.mjs`: o mapa é o
+  // segundo consumidor, e a regra dos 10× não pode existir em dois lugares.
+  const br =(n: number) => n.toLocaleString("pt-BR");
   // Só encurta a URL para caber na linha: a chave continua sendo a canônica da D3.
   const caminho = (u: string) => u.replace(p.url.replace(/\/+$/, ""), "") || "/";
   // 032/FR-003 — o sufixo que cada medida do bloco de busca carrega. Repetido linha a linha de
@@ -1757,11 +1753,15 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               <ul className="lts">
                 {/* FR-008/FR-009: os dois meses saem NOMEADOS, nenhum é o corrente, e o primeiro
                     mês fechado é "ainda não apurável" — nunca 0%, que leria como estagnação medida
-                    e mandaria consertar um problema que não existe. */}
-                {crescimento === null ? (
+                    e mandaria consertar um problema que não existe.
+                    036/FR-007: a CAUSA vem de `crescimentoNaoMarca()`, a mesma que `/gsc/mapa`
+                    publica. A frase única de antes ("ainda não há dois meses fechados") era falsa em
+                    duas das três ausências: buraco na série e mês-base em zero pedem consertos que
+                    não são esperar o calendário. */}
+                {crescimento?.estado !== "medido" ? (
                   <Leitura sem="não apurável" selo="sem" palavra="não é 0%">
-                    de crescimento de impressões não-marca — ainda não há dois meses fechados nesta
-                    janela
+                    de crescimento de impressões não-marca —{" "}
+                    {crescimento ? causaDaAusencia(crescimento) : "sem série gravada para ler"}
                   </Leitura>
                 ) : (
                   <Leitura
@@ -1867,15 +1867,24 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     o corte.
                   </dd>
 
-                  {crescimento === null ? (
+                  {crescimento?.estado !== "medido" ? (
                     <>
                       <dt>Por que ainda não há crescimento apurável</dt>
                       <dd>
                         <strong>Não é 0%</strong>: um zero aqui seria estagnação medida, e o que
-                        existe é ausência de medição. Um mês só entra quando tem o calendário
-                        completo <strong>e</strong> três dias de folga depois do fim — o Search
-                        Console ainda sobe a ponta (30/07 da atma saiu com 30 impressões e fechou em
-                        827).
+                        existe é ausência de medição.{" "}
+                        {/* A regra do calendário só explica `poucos-meses`. As outras causas já
+                            saíram por extenso na linha de cima, e repeti-las aqui com prosa própria
+                            seria a segunda frase que diverge da do mapa (036/FR-007). */}
+                        {crescimento === null || crescimento.estado === "poucos-meses" ? (
+                          <>
+                            Um mês só entra quando tem o calendário completo <strong>e</strong> três
+                            dias de folga depois do fim — o Search Console ainda sobe a ponta
+                            (30/07 da atma saiu com 30 impressões e fechou em 827).
+                          </>
+                        ) : (
+                          <>Aqui: {causaDaAusencia(crescimento)}.</>
+                        )}
                       </dd>
                     </>
                   ) : crescimento.baseInterrompida ? (

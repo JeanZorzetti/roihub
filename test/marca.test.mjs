@@ -9,6 +9,9 @@ import {
   completude,
   mesesFechados,
   crescimentoNaoMarca,
+  variacao,
+  causaDaAusencia,
+  linhaDeCrescimento,
   razaoDeMarca,
   semanasNaoMarca,
   ritmoNaoMarca,
@@ -232,11 +235,11 @@ test("mês fechado carrega o somatório de não-marca e a contagem de dias", () 
 
 // (3) Primeiro mês fechado: "ainda não apurável", NUNCA 0% — um zero aqui viraria uma queda de
 // 100% na tela e mandaria consertar um problema que não existe (FR-009).
-test("crescimento com UM só mês fechado é null, e explicitamente não é 0", () => {
+test("crescimento com UM só mês fechado é `poucos-meses`, e explicitamente não é 0", () => {
   const um = serieDe("2026-02-01", "2026-02-28");
   const c = crescimentoNaoMarca(um, "2026-04-05");
-  assert.equal(c, null);
-  assert.notEqual(c, 0, "0 leria como estagnação medida, e não como ausência de medição");
+  assert.deepEqual(c, { estado: "poucos-meses", fechados: 1 });
+  assert.equal(c.valor, undefined, "ler `.valor` sem checar o estado quebra à vista — 0 leria como estagnação medida");
 });
 
 test("crescimento compara os DOIS últimos meses fechados, nomeando os dois", () => {
@@ -275,7 +278,7 @@ test("meses não consecutivos não se comparam", () => {
     ["2026-02", "2026-04"],
     "março tem 20 dos 31 e sai",
   );
-  assert.equal(crescimentoNaoMarca(dias, "2026-05-05"), null);
+  assert.deepEqual(crescimentoNaoMarca(dias, "2026-05-05"), { estado: "nao-consecutivos", de: "2026-02", para: "2026-04" });
 });
 
 test("dia sem medição de não-marca não conta como dia do mês", () => {
@@ -406,6 +409,132 @@ test("mês-base normal NÃO é interrompido — um dia de zero não cala a medid
   const c = crescimentoNaoMarca([...julho, ...agosto], "2026-09-10");
   assert.equal(c.baseInterrompida, false);
   assert.equal(c.diasZeroDe, 1);
+});
+
+// ── 036: o `null` que não dizia a causa, e a linha de topo do nó do mapa ─────────────────────────
+// Quatro ausências com consertos opostos: esperar o calendário, investigar um buraco, aceitar que não
+// há base, declarar a marca. Cada uma com a entrada MÍNIMA que a produz.
+
+const jul = () => diasDe("2026-07-01", [...Array(27).fill(0), ...Array(4).fill(85)]);
+const ago = () => diasDe("2026-08-01", Array(31).fill(474));
+
+test("`nao-declarada`: série SEM impressoesNaoMarca — as de 33 dos 34 projetos", () => {
+  // Só o total, sem a separação: é o que `hub_gsc_dia` guarda para quem não declara marca.
+  const soTotal = serieDe("2026-01-11", "2026-08-31").map(({ dia }) => ({ dia, impressoes: 40, cliques: 1 }));
+  assert.deepEqual(crescimentoNaoMarca(soTotal, "2026-09-20"), { estado: "nao-declarada" });
+  assert.deepEqual(crescimentoNaoMarca([], "2026-09-20"), { estado: "nao-declarada" });
+  assert.deepEqual(crescimentoNaoMarca(null, "2026-09-20"), { estado: "nao-declarada" });
+});
+
+test("`nao-declarada` ≠ `poucos-meses`: 238 dias sem a coluna NÃO acusam falta de calendário", () => {
+  // O defeito que a 036 conserta: `mesesFechados` devolve [] para essa série, e o `null` antigo lia
+  // "menos de dois meses fechados" onde a causa é a marca.
+  const dias = serieDe("2026-01-11", "2026-09-05").map(({ dia }) => ({ dia, impressoes: 40, cliques: 1 }));
+  assert.equal(dias.length, 238);
+  assert.notEqual(crescimentoNaoMarca(dias, "2026-09-20").estado, "poucos-meses");
+});
+
+test("`poucos-meses` traz quantos fechados há, e zero é diferente de um", () => {
+  assert.deepEqual(crescimentoNaoMarca(serieDe("2026-02-01", "2026-02-10"), "2026-04-05"), {
+    estado: "poucos-meses",
+    fechados: 0,
+  });
+  assert.match(causaDaAusencia({ estado: "poucos-meses", fechados: 0 }), /^nenhum mês fechado/);
+  assert.match(causaDaAusencia({ estado: "poucos-meses", fechados: 1 }), /^1 mês fechado/);
+});
+
+test("`nao-consecutivos` nomeia os DOIS meses — sem eles ninguém sabe onde procurar o buraco", () => {
+  const dias = [...serieDe("2026-02-01", "2026-02-28"), ...serieDe("2026-04-01", "2026-04-30")];
+  const c = crescimentoNaoMarca(dias, "2026-05-05");
+  assert.equal(c.estado, "nao-consecutivos");
+  assert.equal(linhaDeCrescimento(c), "∅ não apurado · buraco na série entre 2026-02 e 2026-04");
+});
+
+test("`base-zero` traz o mês seguinte: há um número a publicar mesmo sem razão", () => {
+  const dias = [...diasDe("2026-07-01", Array(31).fill(0)), ...ago()];
+  const c = crescimentoNaoMarca(dias, "2026-09-10");
+  assert.deepEqual(c, { estado: "base-zero", de: "2026-07", para: "2026-08", paraImpressoes: 31 * 474 });
+  assert.equal(c.valor, undefined, "÷0 renderizaria Infinity");
+  assert.equal(linhaDeCrescimento(c), "∅ não apurado · mês-base em zero (2026-07) — sem base não há razão");
+});
+
+test("`medido` mantém os campos de sempre e ganha só o discriminador", () => {
+  const c = crescimentoNaoMarca([...jul(), ...ago()], "2026-09-20");
+  assert.deepEqual(Object.keys(c).sort(), [
+    "baseInterrompida", "de", "deImpressoes", "diasDe", "diasZeroDe", "estado", "para", "paraImpressoes", "valor",
+  ]);
+  assert.equal(c.estado, "medido");
+  assert.equal(c.deImpressoes, 4 * 85);
+});
+
+// FR-014/SC-006 — o defeito desta feature: a razão sobre um mês quebrado, lida ao lado de "5% a 10%".
+test("`medido` com `baseInterrompida` NÃO abre a linha pela razão", () => {
+  const c = crescimentoNaoMarca([...jul(), ...ago()], "2026-09-20");
+  assert.equal(c.baseInterrompida, true);
+  const linha = linhaDeCrescimento(c);
+  assert.equal(
+    linha,
+    "Medido: 14.694 impressões não-marca em 2026-08, contra 340 em 2026-07 — base interrompida (27 de 31 dias em zero)",
+  );
+  // Lida SOZINHA, a linha não pode conter a razão nem o veredito que ela sugere.
+  assert.doesNotMatch(linha, /×|%|\+\d/, "a razão desce para a nota; a linha de topo fala em absolutos");
+  assert.match(linha, /^Medido: [\d.]+ impressões/, "os absolutos vêm ANTES de tudo");
+});
+
+test("`medido` SEM base interrompida abre pela razão, com sinal e os dois absolutos", () => {
+  const julho = diasDe("2026-07-01", Array(31).fill(100));
+  const agosto = diasDe("2026-08-01", Array(31).fill(107));
+  const c = crescimentoNaoMarca([...julho, ...agosto], "2026-09-20");
+  assert.equal(c.baseInterrompida, false);
+  assert.equal(
+    linhaDeCrescimento(c),
+    "Medido: +7% de 2026-07 para 2026-08 (3.100 → 3.317 impressões não-marca)",
+  );
+});
+
+test("queda é medida, sai com sinal e sem o `+`", () => {
+  const julho = diasDe("2026-07-01", Array(31).fill(100));
+  const agosto = diasDe("2026-08-01", Array(31).fill(46));
+  const linha = linhaDeCrescimento(crescimentoNaoMarca([...julho, ...agosto], "2026-09-20"));
+  assert.match(linha, /^Medido: -54% de 2026-07 para 2026-08/);
+});
+
+// SC-002 — o fato da 025: em pt-BR `4195%` imprime "4.195%" e, ao lado de "5% a 10%", inverte o veredito.
+test("variacao acima de 10× escreve múltiplo, nunca porcentagem com ponto de milhar", () => {
+  assert.equal(variacao(41.95), "43×");
+  assert.equal(variacao(0.072), "7,2%");
+  assert.equal(variacao(-0.54), "-54%");
+  assert.equal(variacao(9.99), "999%", "abaixo de 10× continua porcentagem");
+  assert.equal(variacao(10), "11×", "o limiar é 10×, inclusive");
+});
+
+test("nenhum estado publica `0%`, `4.195%` ou a razão de um mês quebrado", () => {
+  const estados = [
+    crescimentoNaoMarca([], "2026-09-20"),
+    crescimentoNaoMarca(serieDe("2026-02-01", "2026-02-28"), "2026-04-05"),
+    crescimentoNaoMarca([...serieDe("2026-02-01", "2026-02-28"), ...serieDe("2026-04-01", "2026-04-30")], "2026-05-05"),
+    crescimentoNaoMarca([...diasDe("2026-07-01", Array(31).fill(0)), ...ago()], "2026-09-10"),
+    crescimentoNaoMarca([...jul(), ...ago()], "2026-09-20"),
+  ];
+  assert.deepEqual(estados.map((e) => e.estado), ["nao-declarada", "poucos-meses", "nao-consecutivos", "base-zero", "medido"]);
+  for (const e of estados) {
+    const linha = linhaDeCrescimento(e);
+    // `0%` SOZINHO: "10%" e "-54%" são medidas legítimas e contêm a substring.
+    assert.doesNotMatch(linha, /(^|[^\d,.])0%/, linha);
+    assert.doesNotMatch(linha, /\d\.\d{3}%/, linha);
+    assert.doesNotMatch(linha, /Infinity|NaN|undefined/, linha);
+  }
+});
+
+test("as quatro ausências abrem com o glifo `∅ não apurado`, e a medida não", () => {
+  const ausentes = [
+    { estado: "nao-declarada" },
+    { estado: "poucos-meses", fechados: 1 },
+    { estado: "nao-consecutivos", de: "2026-02", para: "2026-04" },
+    { estado: "base-zero", de: "2026-07", para: "2026-08", paraImpressoes: 10 },
+  ];
+  for (const a of ausentes) assert.match(linhaDeCrescimento(a), /^∅ não apurado · /);
+  assert.equal(new Set(ausentes.map(causaDaAusencia)).size, 4, "quatro causas, quatro frases");
 });
 
 // ── 026: a série que trocou de domínio no meio ───────────────────────────────────────────────
