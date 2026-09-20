@@ -171,8 +171,15 @@ produção separado do resto.
 - [X] T035 [P] Conferir que cada comentário novo em `lib/gsc.ts`, `lib/serie-gsc.mjs` e `app/okr/[slug]/aquisicao/page.tsx` traz o **fato medido** que o motivou (127 de 370.559 = 0,03%; 7 de 244 dias; `3,9 × 1146 ÷ 1146` = `3,8999999999999995` em 1.574 de 20.000 casos). Comentário que narra o que a linha faz é ruído e sai
 - [X] T036 [P] Ler o diff inteiro procurando segredo em log, resposta ou mensagem de erro (Princípio V): o `{erro}` carrega o **host** (dado público do card) e nada mais, e `getClient()` continua **fora** do `try` — dentro dele, uma env malformada publicaria na tela um trecho do JSON da service account, porque é isso que a mensagem do `JSON.parse` cita
 - [X] T037 Rodar `npm test` (suíte inteira, não só os arquivos tocados) e `npx tsc --noEmit`. Verde e exit 0, com a contagem de testes ≥ 1065 + os casos novos
-- [ ] T038 Commit e push do diff (`lib/gsc.ts`, `lib/serie-gsc.mjs`, `lib/okr-coleta.ts`, `lib/evaluate.ts`, `app/okr/[slug]/aquisicao/page.tsx`, `app/seo/page.tsx`, `app/api/gsc-serie/route.ts`, `scripts/conferir-soma-hosts.mjs`, `test/`) em `main` **fora** de 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
-- [ ] T039 Conferir `https://hub.roilabs.com.br/okr/atma/aquisicao` no ar **duas** vezes, ~15 min após o push — uma checagem cedo "prova" que não subiu
+- [X] T038 Commit e push do diff (`lib/gsc.ts`, `lib/serie-gsc.mjs`, `lib/okr-coleta.ts`, `lib/evaluate.ts`, `app/okr/[slug]/aquisicao/page.tsx`, `app/seo/page.tsx`, `app/api/gsc-serie/route.ts`, `scripts/conferir-soma-hosts.mjs`, `test/`) em `main` **fora** de 23:30–01:00 e 08:00–08:45 BRT (Princípio IV)
+- [X] T039 Conferir `https://hub.roilabs.com.br/okr/atma/aquisicao` no ar **duas** vezes, ~15 min após o push — uma checagem cedo "prova" que não subiu
+
+> **Conferido em 19/09/2026** (push `5e7d55d` às ~23:18 BRT, antes da janela vedada): produção respondeu
+> `http=200` com "a fonte cobre 244 de 244 dia(s)", 370.559 impressões e "hosts somados" nos dois
+> blocos — na 2ª tentativa do monitor (~23:21) e de novo 5 min depois. O código antigo mostrava "7 de
+> 244", então esse texto só sai do deploy novo. Conferida em produção **só a aba de aquisição**: a ficha
+> (424), o `/seo` (424) e a tendência da home (449 vs 341) foram provados no dev local contra a
+> testemunha, não no ar. **T022 segue aberta** — ver a nota na própria tarefa.
 
 ---
 
