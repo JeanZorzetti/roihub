@@ -6,8 +6,9 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { penetracaoNoTop3, porFaixaDePosicao } from "@/lib/kpis-busca.mjs";
+import { penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
+import { marcaDeclarada } from "@/lib/marca.mjs";
 import { descoberta } from "@/lib/janelas.mjs";
 
 import { Tabs } from "../../tabs";
@@ -135,6 +136,47 @@ function noteDaPenetracao(
   return `${medida}${cobertura} ${inventario} Meta do board: 20% a 30% — meta, não régua: o denominador é escolhido por quem mede, então não há faixa de mercado para julgar contra.`;
 }
 
+type MedidaStriking = NonNullable<ReturnType<typeof strikingDistancePorTermo>>;
+
+const br = (n: number) => n.toLocaleString("pt-BR");
+
+/** 035 — o `topic` do striking distance: o número e a base, nada além. NENHUM glifo de veredito,
+ *  pela mesma razão da penetração (FR-009): os 15% a 25% são meta do board, `balizador.tipo` desta
+ *  folha é `recusa`, e um `▼` aqui publicaria julgamento que o painel nega duas linhas acima.
+ *  `total: 0` cai neste mesmo formato de propósito — zero MEDIDO é uma medida, e é o que o separa
+ *  dos três estados de ausência. */
+function topicDoStriking(m: MedidaStriking): string {
+  return `Medido: ${br(m.total)} ${m.total === 1 ? "consulta" : "consultas"} entre as posições 4,0 e 10,9 · base ${br(m.base)} termos lidos`;
+}
+
+function noteDoStriking(
+  m: MedidaStriking,
+  janela: { inicio: string; fim: string },
+  inventario: { termos: string[]; total: number } | null,
+): string {
+  const medida = `${br(m.total)} de ${br(m.base)} termos lidos estão entre as posições 4,0 e 10,9 na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somando ${br(m.impressoes)} impressões e ${br(m.cliques)} cliques.`;
+  // FR-005 — `removidas: null` NÃO é `0`. Um é "a marca pode estar aí e ninguém procurou", o outro
+  // é "procurei e não achei". Consertos opostos: editar o card × nada a fazer.
+  const marca =
+    m.removidas === null
+      ? " ⚠️ A marca própria NÃO foi filtrada: este projeto não declara `marca` no card, e a fila pode estar encabeçada pelo próprio nome da empresa — que reforço de conteúdo e link interno não movem."
+      : m.removidas > 0
+        ? ` ${br(m.removidas)} consulta(s) de marca saíram da contagem.`
+        : " Nenhuma consulta de marca caiu nesta faixa (a marca é declarada no card).";
+  // FR-014 — sem piso de impressões, a cauda precisa aparecer. Um total nu lê como se as 344 fossem
+  // trabalho do mesmo tamanho, e 93 delas tiveram UMA impressão em 28 dias.
+  const cauda = m.cauda > 0 ? ` ${br(m.cauda)} delas tiveram uma única impressão na janela.` : "";
+  // FR-013 — leitura SECUNDÁRIA, nunca o numerador: o inventário está congelado, e filtrar por ele
+  // cegaria a folha para a consulta nova, que é a oportunidade que este KPI existe para achar.
+  const noInventario = inventario
+    ? ` ${br(m.lista.filter((l) => (inventario.termos as string[]).includes((l as { termo: string }).termo)).length)} das ${br(m.total)} estão no inventário declarado de ${br(inventario.total)} termos monitorados.`
+    : "";
+  // FR-007 — as duas telas medem grandezas diferentes sob o mesmo nome de KPI, e a que não declarar
+  // isso vira "duas telas discordando". Sem citar o número de lá: ele muda a cada janela.
+  const divergencia = ` A aba de aquisição do projeto publica um número MAIOR para o mesmo KPI: lá a leitura é por consulta×página, porque a lista de lá é fila de trabalho e precisa nomear a página a reforçar — o mesmo termo entra uma vez por página em que ranqueia. Aqui a contagem é de CONSULTAS, na dimensão que o Google agrega por consulta, como o board pede.`;
+  return `${medida}${marca}${cauda}${noInventario}${divergencia} Meta do board: converter 15% a 25% ao trimestre — meta, não régua: a taxa de promoção depende da dificuldade do termo e do esforço aplicado, e nenhum estudo público controla as duas.`;
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -227,6 +269,56 @@ export default async function MapaDoBoardPage() {
     // À FRENTE da fórmula e da meta: quem expande a folha está procurando o número, e a definição
     // do board é o que ele confere DEPOIS de achá-lo.
     penNode.children = [filho, ...(penNode.children ?? [])];
+  }
+
+  // 035/US1 — o striking distance na folha que define o KPI, sobre a MESMA leitura por termo que a
+  // penetração acabou de consumir. Zero requisição nova (FR-003): as duas medidas contam CONSULTA,
+  // e consulta só existe na dimensão `query`.
+  //
+  // A guarda de marca é a razão de a medida ter função própria. `strikingDistance()` — a que
+  // `/okr/atma/aquisicao` usa — filtra por `c.query`, e as linhas daqui trazem `termo`: a chamada
+  // compilaria e removeria NADA. Medido na Atma em 20/09/2026: 347 consultas e 113 cliques com a
+  // guarda desligada contra 344 e 41 com ela, e `atma aligner` (posição 4,4, 423 impressões)
+  // encabeçando a fila com 70 dos 113 cliques.
+  const sdNode = acharNo(dados.nodeData as No, "strikingDistance");
+  if (sdNode) {
+    // A MESMA construção de marca de `/okr/[slug]/aquisicao` (025/D3): uma fonte só. Duas
+    // divergiriam na primeira variante nova, e a tela filtraria por um padrão que não é o exibido.
+    // `?? {}` e não `atma!`: sem o card não há marca a declarar, e `motivo: "ausente"` é o estado
+    // certo. (Sem o card também não há leitura, então a folha cai no primeiro estado de qualquer
+    // forma — mas a medida não pode depender dessa coincidência para não quebrar.)
+    const decl = marcaDeclarada(atma ?? {});
+    const ehMarca = decl.motivo ? null : (t: string) => new RegExp(decl.padrao, "i").test(t);
+    const medida =
+      termosGsc && !("erro" in termosGsc) ? strikingDistancePorTermo(termosGsc.linhas, ehMarca) : null;
+    // Os QUATRO estados da folha, da causa mais específica para a mais genérica — e nenhum dos três
+    // de ausência publica `0`. Zero medido é o quarto, e ele SIM mostra `0`: é o que os separa.
+    const filho: No = !termosGsc
+      ? {
+          id: "strikingDistance-medido",
+          topic: "∅ não apurado · sem leitura do Search Console",
+          note: `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. Sem a leitura não há faixa de posição para contar — e um "0 consultas" aqui leria como "nada a converter", a afirmação mais otimista possível sobre um KPI de oportunidade.`,
+        }
+      : "erro" in termosGsc
+        ? {
+            id: "strikingDistance-medido",
+            topic: "∅ não apurado · a leitura do Search Console falhou",
+            note: `Falha transitória, não ausência de dado: ${termosGsc.erro}. A medida volta na próxima leitura.`,
+          }
+        : medida === null
+          ? {
+              id: "strikingDistance-medido",
+              topic: "∅ não apurado · forma de linha inesperada na leitura",
+              note: "A medida foi alimentada com linhas que não carregam `termo` — provavelmente a leitura por consulta×página em vez da leitura por consulta. É bug de código, não ausência de dado: a função recusa medir em vez de devolver um número com a guarda de marca desligada.",
+            }
+          : {
+              id: "strikingDistance-medido",
+              topic: topicDoStriking(medida),
+              note: noteDoStriking(medida, janela, inventario),
+            };
+    // À FRENTE da métrica e da meta, pelo mesmo motivo da folha vizinha: quem expande está
+    // procurando o número, e confere a definição do board DEPOIS de achá-lo.
+    sdNode.children = [filho, ...(sdNode.children ?? [])];
   }
 
   const nos = (n: No): number => 1 + (n.children ?? []).reduce((s, f) => s + nos(f), 0);

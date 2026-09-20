@@ -15,6 +15,7 @@ import {
   penetracaoNoTop3,
   urlsComImpressao,
   strikingDistance,
+  strikingDistancePorTermo,
   ctrPorConsulta,
   conformidadeDeCtr,
   paginaNomeada,
@@ -752,4 +753,69 @@ test("termo com posicao null não entra no Top 3 mas conta na cobertura", () => 
   const r = penetracaoNoTop3([{ termo: "a", posicao: null, impressoes: 0, cliques: 0 }], inv("a", "b"));
   assert.equal(r.noTop3, 0);
   assert.equal(r.cobertura, 1);
+});
+
+// ── 035: strikingDistancePorTermo ───────────────────────────────────────────────────────────
+//
+// A MEDIDA DO BOARD CONTA CONSULTA, e consulta se conta na dimensão `query`. A função irmã existe
+// porque a leitura por termo devolve `termo` e não `query`: passar essas linhas para
+// `strikingDistance()` compila e desliga a guarda de marca em silêncio. Medido na Atma em
+// 20/09/2026: 347 consultas e 113 cliques sem a guarda contra 344 e 41 com ela — `atma aligner`
+// sozinha carrega 70 dos 113.
+const lt = (termo, posicao, impressoes = 100, cliques = 0) => ({ termo, posicao, impressoes, cliques });
+
+test("striking por termo pega 4,0 a 10,9 e exclui as bordas de fora", () => {
+  const r = strikingDistancePorTermo([lt("a", 3.9), lt("b", 4.0), lt("c", 10.9), lt("d", 11.0)]);
+  assert.equal(r.total, 2, "só b e c");
+  assert.equal(r.base, 4, "a base são as linhas LIDAS, não as da faixa");
+});
+
+// `null >= 4` é `false` por coerção, e a medida não pode depender desse acidente: o filtro testa o
+// tipo. Linha sem impressão não vota na posição em `mesclarPorTermo`, e vem com `posicao: null`.
+test("striking por termo ignora posicao null e impressões zero", () => {
+  const r = strikingDistancePorTermo([lt("sem voto", null), lt("sem impressão", 6, 0), lt("boa", 6, 10)]);
+  assert.equal(r.total, 1);
+  assert.equal(r.impressoes, 10);
+});
+
+test("striking por termo tira a MARCA e conta quantas saíram", () => {
+  const linhas = [lt("atma aligner", 4.4, 423, 70), lt("alinhador invisível preço", 5.6, 344, 6)];
+  const r = strikingDistancePorTermo(linhas, ehMarca);
+  assert.equal(r.total, 1);
+  assert.equal(r.removidas, 1);
+  assert.equal(r.cliques, 6, "os 70 cliques da marca não entram — era 62% da fila na Atma");
+});
+
+// `removidas: 0` (marca declarada, nada casou) e `null` (marca não declarada) pedem conserto
+// OPOSTO: editar o card × não fazer nada. Colapsá-los publicaria "nenhuma marca na fila" sobre um
+// projeto onde a marca nunca foi procurada.
+test("striking por termo sem ehMarca devolve removidas null, nunca 0", () => {
+  const r = strikingDistancePorTermo([lt("atma aligner", 4.4, 423, 70)]);
+  assert.equal(r.removidas, null);
+  assert.equal(r.total, 1, "sem guarda declarada a marca CONTA — e a tela diz isso");
+});
+
+test("striking por termo com marca declarada e nenhuma casando devolve removidas 0", () => {
+  assert.equal(strikingDistancePorTermo([lt("alinhador invisível", 5.0)], ehMarca).removidas, 0);
+});
+
+test("striking por termo expõe a cauda de uma impressão", () => {
+  const r = strikingDistancePorTermo([lt("rara", 6, 1), lt("outra rara", 8, 1), lt("gorda", 5, 300)]);
+  assert.equal(r.total, 3);
+  assert.equal(r.cauda, 2, "sem piso, a cauda fica VISÍVEL em vez de cortada em silêncio");
+});
+
+test("striking por termo com lista vazia devolve 0 medido, não null", () => {
+  const r = strikingDistancePorTermo([]);
+  assert.equal(r.total, 0);
+  assert.notEqual(r, null, "zero medido e forma errada pedem consertos opostos");
+});
+
+// A TRAVA DA 035. Alimentar a medida com a leitura `query`+`page` não pode produzir um número:
+// nenhuma linha de lá tem `termo`, a guarda de marca não casaria com nada, e o resultado sairia com
+// cara de medida. `null` obriga a tela a nomear o estado.
+test("striking por termo recusa a forma de linha errada em vez de medir errado", () => {
+  const formaErrada = [{ query: "atma aligner", page: "/x", posicao: 4.4, impressoes: 423, cliques: 70 }];
+  assert.equal(strikingDistancePorTermo(formaErrada, ehMarca), null);
+  assert.equal(strikingDistancePorTermo(formaErrada), null, "sem guarda declarada também recusa");
 });
