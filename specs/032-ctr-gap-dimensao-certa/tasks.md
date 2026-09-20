@@ -151,8 +151,8 @@ impressões sobre a qual foi calculada.
 - [X] T043 `grep -rn "kpis-busca.mjs#" lib` à mão — o teste do mapa confere que a chave é folha do board, **não** que o símbolo exista no arquivo, então T017 passaria verde apontando para o vazio. Este grep é o conserto manual que o risco registrou
 - [X] T044 Portão final: `npm test && npx tsc --noEmit` — os 1085 mais os casos novos, zero falha, `tsc` limpo (quickstart §8)
 - [X] T045 `grep -rn "kpisDeBusca\|porUrl" lib app test scripts` — só pode sobrar o `porUrl` local e homônimo de `lib/crux.mjs`, que não tem parentesco nenhum com o deletado (C2, C6)
-- [ ] T046 Push em `main` **fora** das janelas do Princípio IV (23:30–01:00 e 08:00–08:45 BRT) — hora BRT conferida pelo PowerShell, não pelo `date` do Git Bash
-- [ ] T047 Após ~15 min do deploy no EasyPanel, conferir a tela **duas** vezes: o Índice de Conformidade em 12,5%, as bases declaradas e o Top 3 parado em 27,3%
+- [X] T046 Push em `main` **fora** das janelas do Princípio IV (23:30–01:00 e 08:00–08:45 BRT) — hora BRT conferida pelo PowerShell, não pelo `date` do Git Bash
+- [X] T047 Após ~15 min do deploy no EasyPanel, conferir a tela **duas** vezes: o Índice de Conformidade em 12,5%, as bases declaradas e o Top 3 parado em 27,3%
 
 ---
 
