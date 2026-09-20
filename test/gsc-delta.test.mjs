@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   CATALOGO,
   MEDIDO_POR,
+  RESSALVA_DO_COLETOR,
   EDITORIAIS,
   cliquesNaoCapturados,
   seloDaMedida,
@@ -183,6 +184,28 @@ test("as três folhas sem coletor são exatamente as que ninguém mede", () => {
     .map(([k]) => k)
     .sort();
   assert.deepEqual(semColetor, ["referringDomains", "rejeicaoRastreio", "tamBusca"]);
+});
+
+// 032 — `activeIndexRatio` conta URLs e passou a contar sobre a leitura por PÁGINA, que é
+// completa: a omissão das consultas raras não o alcança mais. Um mapa que continuasse citando a
+// dimensão `query` aqui mandaria o próximo consertar um piso que não existe — e a tela publica
+// esta frase ao lado do "Medido em", então ela é afirmação, não comentário.
+test("a ressalva de activeIndexRatio é só a janela — não cita mais a dimensão query", () => {
+  assert.doesNotMatch(RESSALVA_DO_COLETOR.activeIndexRatio, /query/);
+  assert.match(RESSALVA_DO_COLETOR.activeIndexRatio, /janela de 28 dias/);
+  // A 032 não REMOVE a ressalva: ela para de aplicá-la onde não precisa existir. Onde precisa, fica.
+  for (const k of ["consultasUnicas", "queryToPage", "top20"]) {
+    assert.match(RESSALVA_DO_COLETOR[k], /query/, k + " perdeu a ressalva da dimensão query");
+  }
+});
+
+// 032/D4 — o teste abaixo confere que a CHAVE é folha do board; ele passaria verde com o valor
+// apontando para um símbolo deletado. `porUrl` foi deletada nesta feature, e mapa que descreve o
+// coletor errado manda ligar coletor que já está ligado.
+test("MEDIDO_POR não aponta para porUrl, deletada na 032", () => {
+  for (const [chave, alvo] of Object.entries(MEDIDO_POR)) {
+    assert.doesNotMatch(alvo, /porUrl/, chave + " aponta para porUrl, que não existe mais em kpis-busca.mjs");
+  }
 });
 
 test("todo destino de MEDIDO_POR aponta para folha existente", () => {

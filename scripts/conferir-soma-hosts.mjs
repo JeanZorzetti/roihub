@@ -23,6 +23,11 @@ import { GoogleAuth } from "google-auth-library";
 import { melhorPropriedade, diasAtras } from "../lib/gsc-consulta.mjs";
 import { somarSeriesPorHost, assinaturaDeHosts } from "../lib/serie-gsc.mjs";
 import { hostsDeclarados } from "../lib/projects.mjs";
+// 032 — a RÉGUA, e só ela. `ctrGap` e `mesclarPorCaminho` ficam de fora de propósito: a
+// testemunha não pode ser o código que ela confere. A mescla por caminho e a conta do índice estão
+// reescritas aqui embaixo; o piso por faixa de posição é o mesmo do board e divergir dele faria os
+// dois números serem diferentes por um motivo que não é o medido.
+import { benchmark } from "../lib/kpis-busca.mjs";
 
 const args = process.argv.slice(2);
 const dimensions = args.includes("--consulta") ? ["query", "page"] : args.includes("--pagina") ? ["page"] : ["date"];
@@ -102,6 +107,58 @@ if (dimensions[0] !== "date") {
   const emComum = [...uniao].filter((k) => conjuntos.filter((c) => c.has(k)).length > 1).length;
   console.log(`\nchaves distintas (a linha que a tela deve mostrar): ${num(uniao.size)} · presentes em mais de um host: ${num(emComum)}`);
   console.log("Sem a mescla, cada chave em comum apareceria uma vez por host — é a diferença entre `linhas` e as chaves distintas.");
+  // 032/C8 — em `--pagina`, a testemunha imprime também o que a aba publica como Índice de
+  // Conformidade: a tabela por URL e a fração. Sem isso a SC-001 só era conferível pelo próprio
+  // código que a calcula. A mescla abaixo repete a regra da borda de propósito, escrita de novo.
+  if (dimensions.length === 1) {
+    const porChave = new Map();
+    for (const { rows } of porHostPagina) {
+      for (const r of rows) {
+        const k = chave(r.keys);
+        if (!k) continue;
+        const e = porChave.get(k) ?? { caminho: k.slice(1), cliques: 0, impressoes: 0, votos: [] };
+        e.cliques += r.clicks ?? 0;
+        e.impressoes += r.impressions ?? 0;
+        // Linha sem impressão não vota: a posição dela não descreve exibição nenhuma.
+        if (Number.isFinite(r.position) && (r.impressions ?? 0) > 0) e.votos.push([r.position, r.impressions]);
+        porChave.set(k, e);
+      }
+    }
+    const urls = [...porChave.values()]
+      .map((e) => {
+        const peso = e.votos.reduce((t, [, i]) => t + i, 0);
+        // Voto único devolve a posição como o Google mandou: (3,9 × 1.146) ÷ 1.146 dá
+        // 3,8999999999999995, e a faixa do balizador acaba em 10,9 — a deriva tira página do
+        // denominador sem nada ter mudado.
+        const posicao =
+          e.votos.length === 1 ? e.votos[0][0] : peso > 0 ? e.votos.reduce((t, [p, i]) => t + p * i, 0) / peso : null;
+        const ctr = e.impressoes > 0 ? e.cliques / e.impressoes : null;
+        return { ...e, posicao, ctr, piso: posicao === null ? null : benchmark(posicao) };
+      })
+      .sort((a, b) => b.impressoes - a.impressoes);
+    const pc = (v) => (v === null ? "—" : `${(v * 100).toFixed(2)}%`);
+    console.log("\ncaminho".padEnd(52), "impr".padStart(8), "cliq".padStart(6), "posição".padStart(8), "CTR".padStart(8), "piso".padStart(7), " atinge");
+    for (const u of urls) {
+      const dentro = u.piso !== null && u.ctr !== null;
+      console.log(
+        u.caminho.slice(0, 50).padEnd(51),
+        num(u.impressoes).padStart(8),
+        num(u.cliques).padStart(6),
+        (u.posicao === null ? "—" : u.posicao.toFixed(2)).padStart(8),
+        pc(u.ctr).padStart(8),
+        pc(u.piso).padStart(7),
+        dentro ? (u.ctr >= u.piso ? " sim" : " não") : " fora da faixa",
+      );
+    }
+    const avaliadas = urls.filter((u) => u.piso !== null && u.ctr !== null);
+    const atingem = avaliadas.filter((u) => u.ctr >= u.piso);
+    console.log(
+      avaliadas.length
+        ? `\nÍndice de Conformidade: ${((atingem.length / avaliadas.length) * 100).toFixed(2)}% · ${num(avaliadas.length)} avaliadas · ${num(atingem.length)} atingem · meta do board: 75% a 80%`
+        : "\nÍndice de Conformidade: sem denominador — nenhuma URL na faixa do balizador. Não é 0%.",
+    );
+    console.log("Fora da faixa = posição acima de 10,9, onde o board não define piso: não entra no denominador e NÃO é reprovada.");
+  }
   const truncou = porHostPagina.filter((h) => h.rows.length >= 25000).map((h) => h.host);
   if (truncou.length) console.log(`⚠️  bateu o teto de 25.000 linhas: ${truncou.join(", ")} — o total é piso`);
   process.exit(0);

@@ -1129,6 +1129,11 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="aquisicao"] .lt-v.lt-v-sem { font-size: 11px; font-weight: 700; color: var(--muted); }
 [data-info="aquisicao"] .lt-r { font-size: 13px; color: var(--ink2); line-height: 1.5; }
 [data-info="aquisicao"] .lt-r .selo { margin-left: 8px; vertical-align: 1px; }
+/* 032 — a BASE da medida: quantas impressões entraram nela e qual das duas leituras a produziu.
+   Mora na coluna do rótulo (1fr) e nunca na do valor (96px), então não empurra a coluna que se
+   compara na vertical, e quebra sozinha no celular. `--muted` = 4,82:1, acima do piso de 4,5:1. */
+[data-info="aquisicao"] .lt-b { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+[data-info="aquisicao"] .lt-b::before { content: " · "; }
 
 /* ── A ressalva, uma vez por bloco ───────────────────────────────────────────
    Nível 3 do SKILL: o contexto que só quem já leu os dois primeiros níveis quer. `<details>`

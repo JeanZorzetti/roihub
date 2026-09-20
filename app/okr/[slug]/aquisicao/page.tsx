@@ -12,12 +12,12 @@ import {
   type PaginaCrawl,
   type DiaSeparado,
 } from "@/lib/db";
-import { gscSeries, gscConsultas } from "@/lib/gsc";
+import { gscSeries, gscConsultas, gscPaginas } from "@/lib/gsc";
 import { mesesDaSerie, janelaDeFoco, assinaturaDeHosts } from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, completude, crescimentoNaoMarca, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
 import { descobertaLonga, comportamentoLongo, descoberta, comportamento } from "@/lib/janelas.mjs";
-import { kpisDeBusca, activeIndexRatio, queryToPageRatio, porUrl, termoPrincipal, totalImpressoes, PISO_IMPRESSOES_VEREDITO } from "@/lib/kpis-busca.mjs";
+import { kpisPorTermo, kpisPorPagina, queryToPageRatio, termoPrincipal, totalImpressoes, PISO_IMPRESSOES_VEREDITO } from "@/lib/kpis-busca.mjs";
 import { posicaoDoTermo } from "@/lib/pagina.mjs";
 import {
   canonizar,
@@ -135,12 +135,18 @@ function Leitura({
   fracao,
   meta,
   parte,
+  base,
 }: {
   valor?: string;
   sem?: string;
   children: React.ReactNode;
   selo?: Selo;
   palavra?: string;
+  /** 032 (FR-003/E5) — a base de impressões desta medida e a leitura que a produziu. Depois da 032
+   *  o bloco de busca tem duas bases lado a lado (24.664 e 10.395 na Atma); sem a base ao lado, a
+   *  diferença entre duas linhas vizinhas lê como bug. Mora na coluna do RÓTULO (1fr) e nunca na do
+   *  valor (96px fixos), então não empurra a coluna que se compara na vertical. */
+  base?: string;
   /** 028 — a fração desta leitura numa escala de 0 a 100%, desenhada como comprimento. */
   fracao?: number;
   /** A meta do board na MESMA escala: um número vira tique, um par `[piso, teto]` vira faixa. */
@@ -154,6 +160,7 @@ function Leitura({
       <span className="lt-r">
         {children}
         {selo ? <SeloEstado tipo={selo} palavra={palavra} /> : null}
+        {base ? <span className="lt-b">{base}</span> : null}
         {/* A barra NUNCA acompanha uma ausência: `sem` presente significa que não há valor, e uma
             trilha vazia ao lado de "não apurado" leria como zero medido — o defeito que as sete
             corridas anteriores desta tela passaram removendo do texto. */}
@@ -517,18 +524,24 @@ async function lerSerieSeparada(
  * impressão na janela curta, cortadas em `CAP_URLS_PASS_RATE`. Sem a ordenação o corte sortearia o
  * denominador; as que ficam de fora entram no texto como NÃO CONSULTADAS, nunca como reprovadas.
  *
+ * 032 — a amostra é por URL e passa a sair da leitura por PÁGINA. Na Atma isso a tira de 14 URLs
+ * para 29, e "não consultadas" de 4 para 19: a fração PODE mudar de valor, e isso é a medida
+ * passando a ver o site inteiro, não regressão. O custo de rede não muda — `CAP_URLS_PASS_RATE`
+ * continua 10 consultas ao CrUX.
+ *
  * Em SÉRIE, pelo mesmo motivo de `app/api/gsc-serie/route.ts:36-38`: um punhado de POSTs
  * simultâneos ao mesmo endpoint do Google com a mesma chave é o caminho mais curto para o 429 que
  * transformaria a leitura inteira em falha por pressa. Só para `SLUGS_DE_CAMPO` (FR-014), e a
  * falha segue o idioma de `lerApuracao()`: não derruba a aba.
  */
-async function lerPassRate(slug: string, linhas: Parameters<typeof porUrl>[0] | null) {
-  if (!SLUGS_DE_CAMPO.includes(slug) || !linhas) return null;
-  const urls = porUrl(linhas).sort((a, b) => b.impressoes - a.impressoes);
+async function lerPassRate(slug: string, paginas: { pagina: string; impressoes: number }[] | null) {
+  if (!SLUGS_DE_CAMPO.includes(slug) || !paginas) return null;
+  // Cópia antes de ordenar: a MESMA lista alimenta as outras medidas por URL, e `sort` é no lugar.
+  const urls = [...paginas].sort((a, b) => b.impressoes - a.impressoes);
   const prioritarias = urls.slice(0, CAP_URLS_PASS_RATE);
   try {
     const leituras = new Map();
-    for (const u of prioritarias) leituras.set(u.url, await lerCampo({ tipo: "url", valor: u.url }));
+    for (const u of prioritarias) leituras.set(u.pagina, await lerCampo({ tipo: "url", valor: u.pagina }));
     return { ...passRate(leituras, prioritarias.length), naoConsultadas: urls.length - prioritarias.length };
   } catch (e) {
     return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
@@ -557,7 +570,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
   // Duas fontes independentes, sem somar latência — mesmo padrão de `coletarDoProjeto()`. A falha
   // de uma nunca alcança a outra.
-  const [serie, canais, cobertura, consultas, indexacao, crawl, serieSeparada] = await Promise.all([
+  const [serie, canais, cobertura, consultas, paginasGsc, indexacao, crawl, serieSeparada] = await Promise.all([
     // 031: os hosts DECLARADOS, os mesmos do bloco de consultas mais abaixo. Lia só o de `url` e
     // publicava 127 das 370.559 impressões da Atma (0,03%) sob a frase "hosts somados".
     gscSeries(hostsDeclarados(p), { inicio: janelaGsc.inicio, fim: janelaGsc.fim }),
@@ -577,6 +590,14 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     // 030: os hosts DECLARADOS, os mesmos da série e do GA4 — a aba lia só o host de `url` e, desde
     // a troca de domínio da Atma, decidia os KPIs de clique sobre 98 das 24.664 impressões do site.
     SLUGS_DE_BUSCA.includes(slug) ? gscConsultas(hostsDeclarados(p), curtaGsc) : null,
+    // 032: a leitura por PÁGINA, para as medidas que afirmam algo sobre uma URL. Cita LITERALMENTE
+    // `hostsDeclarados(p)` e `curtaGsc`, as mesmas expressões da linha de cima e não duas
+    // equivalentes (FR-006) — duas janelas aqui fariam as duas bases não fecharem com a mesma soma
+    // de dias. Medido na Atma em 19/09/2026: a dimensão `query` devolve 10.395 das 24.664
+    // impressões do site (42,1%) e 14 das 29 URLs, e era sobre essa fatia que o Índice de
+    // Conformidade publicava 0%. Custo: +1 requisição por host, em paralelo com as outras duas —
+    // a latência é a da mais lenta, não a soma. Os hosts continuam EM SÉRIE dentro de `lerHosts`.
+    SLUGS_DE_BUSCA.includes(slug) ? gscPaginas(hostsDeclarados(p), curtaGsc) : null,
     // 022: a indexação vem do BANCO, apurada pela corrida das 05:47. Zero chamada à URL Inspection
     // API aqui — ver `lerApuracao`.
     lerApuracao(slug),
@@ -586,14 +607,20 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     lerSerieSeparada(slug, janelaGsc),
   ]);
   const linhasBusca = consultas && "linhas" in consultas ? consultas.linhas : null;
+  const paginasBusca = paginasGsc && "paginas" in paginasGsc ? paginasGsc.paginas : null;
   // 030 (FR-008) — QUEM compôs os números do bloco. Um total somado sem a assinatura de quem o
   // compôs não é conferível. É a MESMA assinatura da série gravada (`hub_gsc_dia.host`, 029 —
   // ordenada, unida por `+`), para as duas fontes serem comparáveis a olho. Com um host só não há
   // o que declarar: a tela de sempre (FR-006).
   const hostsDoCard = hostsDeclarados(p);
   const consultasLidas = consultas && "linhas" in consultas ? consultas : null;
-  const hostsSomados = consultasLidas ? assinaturaLegivel(consultasLidas.hosts) : null;
-  const declaraHosts = declaraOsHosts(consultasLidas);
+  const paginasLidas = paginasGsc && "paginas" in paginasGsc ? paginasGsc : null;
+  // 032/D14 — UMA declaração de hosts no cabeçalho, alimentada pela leitura que respondeu. As duas
+  // leem a MESMA lista (FR-006), então duas linhas "hosts somados" seriam duas versões do mesmo
+  // fato — e duas versões do mesmo fato divergem na primeira edição.
+  const hostsDoBloco = consultasLidas ?? paginasLidas;
+  const hostsSomados = hostsDoBloco ? assinaturaLegivel(hostsDoBloco.hosts) : null;
+  const declaraHosts = declaraOsHosts(hostsDoBloco);
   // 031: a série também declara — os dois blocos leem os mesmos hosts, e a tela diz a mesma coisa.
   const serieLida = serie && "days" in serie ? serie : null;
   const declaraHostsSerie = declaraOsHosts(serieLida);
@@ -610,17 +637,26 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // exibiria uma lista de termos (FR-012) que não é a que classificou os números.
   const decl = marcaDeclarada(p);
   const ehMarca = decl.motivo ? null : (q: string) => new RegExp(decl.padrao, "i").test(q);
-  const kpis = linhasBusca ? kpisDeBusca(linhasBusca, ehMarca) : null;
+  const kpis = linhasBusca ? kpisPorTermo(linhasBusca, ehMarca) : null;
   // 026 — o denominador das frações da janela curta. Toda fração desta tela carrega a base ao
   // lado; a do Top 3 não carregava, e era julgada contra a faixa do board sobre 26 impressões.
   const baseCurta = linhasBusca ? totalImpressoes(linhasBusca) : null;
+  // 032 (FR-003/E5) — a base da OUTRA leitura. `null` quando ela não respondeu, e NUNCA 0 por
+  // ausência: zero impressões é um estado medido, e a tela já o distingue de "não perguntei".
+  const basePagina = paginasBusca ? totalImpressoes(paginasBusca) : null;
   // 028 — UM portão para todas as barras do bloco de consultas. Abaixo do piso a fração existe e a
   // RÉGUA não: desenhar comprimento ao lado de um selo que diz "sem veredito do board" daria
   // autoridade visual justamente ao número que a tela passou três corridas tirando do pedestal
   // (o 43×, a fração do Top 3, a canibalização vazia). A guarda mora aqui, não em cada linha —
   // seis vezes nesta tela um veredito consertado no chamador voltou pela porta seguinte.
-  const acimaDoPiso = baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO;
-  const vitais = await lerPassRate(slug, linhasBusca);
+  // 032/D7 — UM PORTÃO POR LEITURA. O piso mede se a base sustenta a régua do board, e as duas
+  // bases são diferentes: julgar uma fração calculada sobre 24.664 impressões pelo portão de uma
+  // base de 10.395 seria aplicar a régua a partir do denominador errado. Os dois continuam morando
+  // no cálculo da base, e não em cada linha — seis vezes nesta tela um veredito consertado no
+  // chamador voltou pela porta seguinte.
+  const acimaDoPisoTermo = baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO;
+  const acimaDoPisoPagina = basePagina !== null && basePagina >= PISO_IMPRESSOES_VEREDITO;
+  const vitais = await lerPassRate(slug, paginasBusca);
   const pct = (f: number) => `${(f * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
   // 025: acima de 10× o `pct` vira armadilha de leitura. Em pt-BR o separador de milhar é o PONTO,
   // então um crescimento de 4195% sai "4.195%" — que, ao lado de uma meta de "5% a 10%", lê como
@@ -631,6 +667,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   const br = (n: number) => n.toLocaleString("pt-BR");
   // Só encurta a URL para caber na linha: a chave continua sendo a canônica da D3.
   const caminho = (u: string) => u.replace(p.url.replace(/\/+$/, ""), "") || "/";
+  // 032/FR-003 — o sufixo que cada medida do bloco de busca carrega. Repetido linha a linha de
+  // propósito: é a repetição que deixa duas bases diferentes visíveis lado a lado. Uma nota única
+  // no rodapé do bloco obrigaria o leitor a lembrar qual medida é de qual família — que é
+  // exatamente o que ninguém faz ao bater o olho numa lista de dez linhas.
+  const baseDoTermo = baseCurta === null ? undefined : `${br(baseCurta)} impressões · leitura por termo`;
+  const baseDaPagina = basePagina === null ? undefined : `${br(basePagina)} impressões · leitura por página`;
+  // 032/FR-005 — o motivo de UMA leitura, na língua que a 030 fixou: `{erro}` é falha de agora (a
+  // mensagem já começa pelo host que falhou) e `null` é ausência estrutural, que pede criar a
+  // propriedade. Os dois consertos são opostos, e por isso não colapsam.
+  const motivoDaLeitura = (r: unknown) =>
+    r && typeof r === "object" && "erro" in r
+      ? `Search Console indisponível (${String(r.erro)})`
+      : semPropriedadeGsc;
 
   // A apuração de verdade: motivo `null` E alguma inspeção que não falhou.
   const idx = indexacao && !("erro" in indexacao) && !indexacao.motivo ? indexacao : null;
@@ -675,7 +724,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // Com amostra, o denominador é tão chutado quanto o que a 021 se recusou a inventar, então a
   // tela volta à contagem com o motivo (FR-011). Cobrir o site inteiro é aumentar o orçamento.
   const denomIdx = idx && !amostrado ? idx.indexadas : null;
-  const ativas = linhasBusca && denomIdx ? activeIndexRatio(linhasBusca, denomIdx) : null;
+  // 032 — a família por URL nasce AQUI, e não ao lado de `kpis`, porque `denomIdx` só existe
+  // depois da apuração de indexação acima. Ele continua vindo do BANCO: nenhuma das duas leituras
+  // do Search Console conhece o total de URLs indexadas.
+  const kpisUrl = paginasBusca ? kpisPorPagina(paginasBusca, denomIdx) : null;
+  const ativas = kpisUrl?.activeIndexRatio ?? null;
+  // `queryToPageRatio` NÃO migra: o numerador é `consultasUnicas`, que é por termo. Ele continua
+  // nesta leitura e continua carregando o selo de piso por isso (FR-004).
   const porPagina = linhasBusca && denomIdx ? queryToPageRatio(linhasBusca, denomIdx) : null;
 
   // ── 024: as seis medidas do crawl ────────────────────────────────────────
@@ -689,9 +744,16 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // apareceria como "sem termo apurado".
   const linhasCanon =
     linhasBusca?.map((l) => ({ ...l, page: canonizar(l.page, p.url) ?? l.page })) ?? null;
-  const impressoesPorUrl = new Map<string, number>(
-    linhasCanon ? porUrl(linhasCanon).map((u: { url: string; impressoes: number }) => [u.url, u.impressoes]) : []
-  );
+  // 032/D10 — este mapa é por URL e passa a sair da leitura por PÁGINA, canonizado pela mesma
+  // regra da 024. SOMA por chave canônica em vez de `new Map(...)` direto porque duas páginas
+  // distintas do Google viram a mesma chave aqui (a Atma tem o mesmo post com e sem barra final,
+  // 442 e 1 impressões): o `Map` ficaria com a última e a periferia leria 1 onde há 443.
+  // `termoPorUrl` logo abaixo CONTINUA na leitura por termo — termo não existe na outra, e é essa
+  // a fronteira da FR-001.
+  const impressoesPorUrl = (paginasBusca ?? []).reduce((m, pag) => {
+    const chave = canonizar(pag.pagina, p.url) ?? pag.pagina;
+    return m.set(chave, (m.get(chave) ?? 0) + pag.impressoes);
+  }, new Map<string, number>());
   const termoPorUrl = new Map<string, string | null>(
     (paginado?.paginas ?? []).map((pg) => [pg.url, linhasCanon ? termoPrincipal(linhasCanon, pg.url) : null])
   );
@@ -1796,10 +1858,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 {curtaGsc.fim})
               </>
             ) : null}
-            {declaraHosts && consultasLidas ? (
+            {declaraHosts && hostsDoBloco ? (
               <>
                 {" "}
-                · <HostsDaLeitura hosts={consultasLidas.hosts} encerrados={consultasLidas.encerrados} />
+                · <HostsDaLeitura hosts={hostsDoBloco.hosts} encerrados={hostsDoBloco.encerrados} />
               </>
             ) : null}
           </p>
@@ -1813,12 +1875,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               {SLUGS_DE_BUSCA.join(", ")} — o board de busca é de lá. Nada foi perguntado ao Search
               Console sobre este projeto: isto é decisão, não ausência de dado.
             </p>
-          ) : kpis === null ? (
+          ) : kpis === null && kpisUrl === null ? (
             /* FR-010: três telas diferentes, nunca uma lista vazia sem explicação. `null` é
-               ausência estrutural (o conserto é domínio próprio); `{erro}` é falha de agora. */
+               ausência estrutural (o conserto é domínio próprio); `{erro}` é falha de agora.
+               032/FR-005: este parágrafo é só para as DUAS leituras caídas. Com uma de pé o bloco
+               continua, com as medidas dela e a ausência da outra nomeada dentro da lista. */
             <p className="foot">
-              não apurado —{" "}
-              {consultas && "erro" in consultas ? `Search Console indisponível (${consultas.erro})` : semPropriedadeGsc}
+              não apurado — as duas leituras do Search Console: {motivoDaLeitura(consultas)}
               .
               {/* 030 (FR-004) — o `erro` já COMEÇA pelo host que falhou. Com dois hosts o bloco
                   inteiro fica sem número, e a frase diz por quê: um total sem o host que falhou
@@ -1830,93 +1893,151 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
             <>
               <ul className="lts">
                 {/* 028 — O MEDIDOR DO PISO, e é a primeira linha de propósito: ele é o portão das
-                    quatro leituras abaixo. Quatro selos diziam "abaixo do piso" em palavra e o
-                    leitor não tinha como saber se falta pouco ou falta tudo — 26 de 100 é uma
-                    distância, e distância se lê por comprimento. Ele SAI da tela sozinho quando a
-                    base passar do piso, e aí as trilhas das frações entram no lugar. */}
-                {baseCurta !== null && !acimaDoPiso ? (
+                    leituras abaixo. Quatro selos diziam "abaixo do piso" em palavra e o leitor não
+                    tinha como saber se falta pouco ou falta tudo — 26 de 100 é uma distância, e
+                    distância se lê por comprimento. Ele SAI da tela sozinho quando a base passar do
+                    piso, e aí as trilhas das frações entram no lugar.
+
+                    032/D7 — UM PORTÃO POR LEITURA, e cada um nomeia a sua. As duas bases são
+                    diferentes (24.664 contra 10.395 na Atma), e o portão de uma não tem autoridade
+                    sobre uma fração calculada na outra. */}
+                {kpis !== null && baseCurta !== null && !acimaDoPisoTermo ? (
                   <Leitura
                     valor={br(baseCurta)}
                     fracao={baseCurta / PISO_IMPRESSOES_VEREDITO}
                     selo={baseCurta === 0 ? "sem" : "piso"}
                     palavra={baseCurta === 0 ? "nenhuma impressão na janela" : "a régua do board ainda não vale"}
                   >
-                    de {br(PISO_IMPRESSOES_VEREDITO)} impressões — o piso da régua do board
+                    de {br(PISO_IMPRESSOES_VEREDITO)} impressões na leitura por termo — o piso da régua
+                    do board
                   </Leitura>
                 ) : null}
-                {/* FR-009: o rótulo de piso é para o LEITOR, não um comentário no código — e
-                    continua na tela, agora como selo em vez de parágrafo. */}
-                <Leitura valor={br(kpis.consultasUnicas.valor)} selo="piso" palavra="piso, não total">
-                  consultas únicas
-                </Leitura>
-                <Leitura valor={br(kpis.noTop20)}>consultas no Top 20 (posições 1,0 a 20,0)</Leitura>
-                {/* 026 — fração SEMPRE com a base ao lado, e o veredito do board só acima do
-                    piso. Com as 26 impressões que a propriedade nova tinha em 18/09, uma única
-                    impressão move a fração 3,8 pontos e três atravessam a faixa inteira de 10:
-                    exibir "dentro da faixa" ali seria aprovar ruído, o mesmo defeito do `43×`. */}
-                {/* G4 — zero impressões é um ESTADO, não um denominador. E abaixo do piso a fração
-                    existe mas a RÉGUA não: o selo diz qual dos dois é o caso, sem fabricar
-                    reprovação nem aprovação. */}
-                {baseCurta === 0 ? (
-                  <Leitura sem="sem base" selo="sem" palavra="não é 0% no Top 3">
-                    impressões no Top 3 — a janela não teve impressão nenhuma
-                  </Leitura>
-                ) : (
+                {kpisUrl !== null && basePagina !== null && !acimaDoPisoPagina ? (
                   <Leitura
-                    valor={kpis.impressoesNoTop3 === null ? undefined : pct(kpis.impressoesNoTop3)}
-                    sem={kpis.impressoesNoTop3 === null ? "não apurado" : undefined}
-                    fracao={acimaDoPiso && kpis.impressoesNoTop3 !== null ? kpis.impressoesNoTop3 : undefined}
-                    meta={[0.4, 0.5]}
-                    selo={
-                      baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? "piso" : undefined
-                    }
-                    palavra={
-                      baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                        ? "sem veredito do board"
-                        : undefined
-                    }
+                    valor={br(basePagina)}
+                    fracao={basePagina / PISO_IMPRESSOES_VEREDITO}
+                    selo={basePagina === 0 ? "sem" : "piso"}
+                    palavra={basePagina === 0 ? "nenhuma impressão na janela" : "a régua do board ainda não vale"}
                   >
-                    das impressões no Top 3
-                    {kpis.impressoesNoTop3 !== null && baseCurta !== null ? (
-                      <>
-                        {" "}
-                        ({br(Math.round(kpis.impressoesNoTop3 * baseCurta))} de {br(baseCurta)})
-                      </>
-                    ) : null}
-                    {baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO ? (
-                      <>
-                        {" "}· parâmetro do board: 40% a 50% — <Origem chave="impressoesTop3" />
-                      </>
-                    ) : null}
+                    de {br(PISO_IMPRESSOES_VEREDITO)} impressões na leitura por página — o piso da régua
+                    do board
                   </Leitura>
-                )}
-                {/* 022/FR-011: com denominador apurado isto vira a RAZÃO que o board pede; sem ele
-                    volta a ser contagem, e o selo é que diz qual dos dois está na tela. Razão de
-                    denominador chutado é falha. */}
-                {ativas === null ? (
-                  <Leitura valor={br(kpis.urlsComImpressao)} selo="sem" palavra="contagem, não razão">
-                    URLs com impressão
+                ) : null}
+
+                {/* ── AS MEDIDAS POR TERMO ──────────────────────────────────────────────────────
+                    Afirmam algo sobre uma CONSULTA, e consulta só existe nesta leitura. */}
+                {kpis === null ? (
+                  /* 032/FR-005 — a falha de UMA leitura suprime só as medidas dela, e a frase diz
+                     QUAL caiu. Colapsar as duas esconderia metade do bloco sem motivo. */
+                  <Leitura sem="não apurado" selo="sem" palavra="as medidas por URL seguem">
+                    as medidas por termo — {motivoDaLeitura(consultas)}
                   </Leitura>
                 ) : (
                   <>
+                    {/* FR-009: o rótulo de piso é para o LEITOR, não um comentário no código — e
+                        continua na tela, agora como selo em vez de parágrafo. */}
                     <Leitura
-                      valor={pct(ativas)}
-                      fracao={acimaDoPiso ? ativas : undefined}
-                      meta={0.7}
+                      valor={br(kpis.consultasUnicas.valor)}
+                      selo="piso"
+                      palavra="piso, não total"
+                      base={baseDoTermo}
                     >
-                      de Active Index Ratio ({br(kpis.urlsComImpressao)} ÷ {br(denomIdx!)} indexadas,{" "}
-                      {idx!.dia}) · parâmetro do board: ≥ 70% — <Origem chave="activeIndexRatio" />
+                      consultas únicas
                     </Leitura>
-                    {porPagina && (
+                    <Leitura valor={br(kpis.noTop20)} base={baseDoTermo}>
+                      consultas no Top 20 (posições 1,0 a 20,0)
+                    </Leitura>
+                    {/* 026 — fração SEMPRE com a base ao lado, e o veredito do board só acima do
+                        piso. Com as 26 impressões que a propriedade nova tinha em 18/09, uma única
+                        impressão move a fração 3,8 pontos e três atravessam a faixa inteira de 10:
+                        exibir "dentro da faixa" ali seria aprovar ruído, o mesmo defeito do `43×`. */}
+                    {/* G4 — zero impressões é um ESTADO, não um denominador. E abaixo do piso a
+                        fração existe mas a RÉGUA não: o selo diz qual dos dois é o caso, sem
+                        fabricar reprovação nem aprovação. */}
+                    {/* 032/D9 — esta medida FICA na leitura por termo, por decisão do dono: ela
+                        afirma onde as CONSULTAS aparecem, e migrá-la para a leitura por página
+                        trocaria a grandeza (a posição passaria a ser a da PÁGINA) ao preço de uma
+                        base completa. A base parcial fica declarada ao lado, que é para isso que a
+                        declaração existe. */}
+                    {baseCurta === 0 ? (
+                      <Leitura sem="sem base" selo="sem" palavra="não é 0% no Top 3" base={baseDoTermo}>
+                        impressões no Top 3 — a janela não teve impressão nenhuma
+                      </Leitura>
+                    ) : (
                       <Leitura
-                        valor={porPagina.valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
-                        selo="piso"
-                        palavra="piso, não total"
+                        valor={kpis.impressoesNoTop3 === null ? undefined : pct(kpis.impressoesNoTop3)}
+                        sem={kpis.impressoesNoTop3 === null ? "não apurado" : undefined}
+                        fracao={acimaDoPisoTermo && kpis.impressoesNoTop3 !== null ? kpis.impressoesNoTop3 : undefined}
+                        meta={[0.4, 0.5]}
+                        base={baseDoTermo}
+                        selo={baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO ? "piso" : undefined}
+                        palavra={
+                          baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "sem veredito do board"
+                            : undefined
+                        }
                       >
-                        consultas por URL indexada
+                        das impressões no Top 3
+                        {kpis.impressoesNoTop3 !== null && baseCurta !== null ? (
+                          <>
+                            {" "}
+                            ({br(Math.round(kpis.impressoesNoTop3 * baseCurta))} de {br(baseCurta)})
+                          </>
+                        ) : null}
+                        {baseCurta !== null && baseCurta >= PISO_IMPRESSOES_VEREDITO ? (
+                          <>
+                            {" "}· parâmetro do board: 40% a 50% — <Origem chave="impressoesTop3" />
+                          </>
+                        ) : null}
                       </Leitura>
                     )}
                   </>
+                )}
+
+                {/* ── AS MEDIDAS POR URL ────────────────────────────────────────────────────────
+                    032/FR-001 — leem a leitura por PÁGINA, que é completa. Pela leitura por termo
+                    elas saíam de 42,1% das impressões e 14 das 29 URLs do site. */}
+                {kpisUrl === null ? (
+                  <Leitura sem="não apurado" selo="sem" palavra="as medidas por termo seguem">
+                    as medidas por URL — {motivoDaLeitura(paginasGsc)}
+                  </Leitura>
+                ) : ativas === null ? (
+                  /* 022/FR-011: com denominador apurado isto vira a RAZÃO que o board pede; sem ele
+                     volta a ser contagem, e o selo é que diz qual dos dois está na tela. Razão de
+                     denominador chutado é falha. */
+                  <Leitura
+                    valor={br(kpisUrl.urlsComImpressao)}
+                    selo="sem"
+                    palavra="contagem, não razão"
+                    base={baseDaPagina}
+                  >
+                    URLs com impressão
+                  </Leitura>
+                ) : (
+                  <Leitura
+                    valor={pct(ativas)}
+                    fracao={acimaDoPisoPagina ? ativas : undefined}
+                    meta={0.7}
+                    base={baseDaPagina}
+                  >
+                    de Active Index Ratio ({br(kpisUrl.urlsComImpressao)} ÷ {br(denomIdx!)} indexadas,{" "}
+                    {idx!.dia}) · parâmetro do board: ≥ 70% — <Origem chave="activeIndexRatio" />
+                  </Leitura>
+                )}
+
+                {/* 032/D6 — o numerador é `consultasUnicas`, então esta razão é POR TERMO e continua
+                    carregando o selo de piso por isso (FR-004). Ela saiu de dentro do ramo da razão
+                    de índice ativo: aninhada ali, a queda da leitura por página levaria junto uma
+                    medida que não depende dela. */}
+                {kpis !== null && porPagina && (
+                  <Leitura
+                    valor={porPagina.valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+                    selo="piso"
+                    palavra="piso, não total"
+                    base={baseDoTermo}
+                  >
+                    consultas por URL indexada
+                  </Leitura>
                 )}
 
                 {/* O truncamento da API saiu daqui: ele é uma SEGUNDA razão para o mesmo selo
@@ -1930,103 +2051,108 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     custava um respiro sem separar nada); a definição e a ressalva vivem no
                     `<details>` do fim do bloco. Nenhuma frase foi apagada: saíram de 9 lugares e
                     foram para 1. */}
-                {kpis.strikingDistance.lista.length > 0 ? (
-                  <Leitura valor={br(kpis.strikingDistance.lista.length)}>
-                    consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
-                    {kpis.strikingDistance.removidas
-                      ? ` · ${br(kpis.strikingDistance.removidas)} de marca removida(s)`
-                      : ""}
-                  </Leitura>
-                ) : (
-                  /* QUATRO ausências com consertos diferentes. A frase única que existia antes
-                     ("o site tem consultas, nenhuma delas está nessa posição") afirmava a quarta
-                     nas quatro — inclusive quando a causa era a própria janela. */
-                  <Leitura
-                    sem={
-                      kpis.strikingDistance.removidas
-                        ? "nada a empurrar"
-                        : baseCurta === 0
-                          ? "sem base"
-                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "não apurável"
-                            : "zero real"
-                    }
-                    selo={
-                      kpis.strikingDistance.removidas
-                        ? "sem"
-                        : baseCurta === 0
+                {kpis !== null &&
+                  (kpis.strikingDistance.lista.length > 0 ? (
+                    <Leitura valor={br(kpis.strikingDistance.lista.length)} base={baseDoTermo}>
+                      consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
+                      {kpis.strikingDistance.removidas
+                        ? ` · ${br(kpis.strikingDistance.removidas)} de marca removida(s)`
+                        : ""}
+                    </Leitura>
+                  ) : (
+                    /* QUATRO ausências com consertos diferentes. A frase única que existia antes
+                       ("o site tem consultas, nenhuma delas está nessa posição") afirmava a quarta
+                       nas quatro — inclusive quando a causa era a própria janela. */
+                    <Leitura
+                      base={baseDoTermo}
+                      sem={
+                        kpis.strikingDistance.removidas
+                          ? "nada a empurrar"
+                          : baseCurta === 0
+                            ? "sem base"
+                            : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                              ? "não apurável"
+                              : "zero real"
+                      }
+                      selo={
+                        kpis.strikingDistance.removidas
                           ? "sem"
-                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "piso"
-                            : "dado"
-                    }
-                    palavra={
-                      kpis.strikingDistance.removidas
-                        ? `${br(kpis.strikingDistance.removidas)} era(m) de marca`
-                        : baseCurta === 0
-                          ? "nenhuma impressão na janela"
-                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                            ? "não é &ldquo;nenhuma na faixa&rdquo;"
-                            : "nenhuma nesta faixa"
-                    }
-                  >
-                    consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
-                  </Leitura>
-                )}
+                          : baseCurta === 0
+                            ? "sem"
+                            : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                              ? "piso"
+                              : "dado"
+                      }
+                      palavra={
+                        kpis.strikingDistance.removidas
+                          ? `${br(kpis.strikingDistance.removidas)} era(m) de marca`
+                          : baseCurta === 0
+                            ? "nenhuma impressão na janela"
+                            : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                              ? "não é &ldquo;nenhuma na faixa&rdquo;"
+                              : "nenhuma nesta faixa"
+                      }
+                    >
+                      consulta(s) a um empurrão do Top 3 (posições 4,0–10,9)
+                    </Leitura>
+                  ))}
 
-                {kpis.ctrGap === null ? (
-                  <Leitura sem="sem base" selo="sem" palavra="não é 0%">
+                {kpisUrl === null ? null : kpisUrl.ctrGap === null ? (
+                  <Leitura sem="sem base" selo="sem" palavra="não é 0%" base={baseDaPagina}>
                     das URLs atingem o CTR mínimo da própria posição
                   </Leitura>
                 ) : (
                   <Leitura
-                    valor={pct(kpis.ctrGap.fracao)}
-                    fracao={acimaDoPiso ? kpis.ctrGap.fracao : undefined}
+                    valor={pct(kpisUrl.ctrGap.fracao)}
+                    fracao={acimaDoPisoPagina ? kpisUrl.ctrGap.fracao : undefined}
                     meta={[0.75, 0.8]}
-                    selo={kpis.ctrGap.fracao >= 0.75 ? "dado" : undefined}
+                    base={baseDaPagina}
+                    selo={kpisUrl.ctrGap.fracao >= 0.75 ? "dado" : undefined}
                   >
-                    das URLs atingem o CTR mínimo da posição ({kpis.ctrGap.avaliadas} avaliada(s)) ·
+                    das URLs atingem o CTR mínimo da posição ({kpisUrl.ctrGap.avaliadas} avaliada(s)) ·
                     meta do board: 75% a 80%
                   </Leitura>
                 )}
 
-                {kpis.canibalizacao.lista.length > 0 ? (
-                  <Leitura valor={br(kpis.canibalizacao.lista.length)}>
-                    consulta(s) com duas URLs suas disputando · meta do board: zero
-                    {kpis.canibalizacao.removidas
-                      ? ` · ${br(kpis.canibalizacao.removidas)} de marca removida(s)`
-                      : ""}
-                  </Leitura>
-                ) : (
-                  /* 027 — AUSÊNCIA NÃO É APROVAÇÃO. Declarar a meta do board atingida sobre uma
-                     lista que a própria tela chama de piso transforma "não deu para ver" em "está
-                     certo". Abaixo do piso o selo diz `não apurável`, nunca `meta atingida`. */
-                  <Leitura
-                    sem={
-                      baseCurta === 0
-                        ? "sem base"
-                        : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                          ? "não apurável"
-                          : "zero real"
-                    }
-                    selo={
-                      baseCurta === 0
-                        ? "sem"
-                        : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                          ? "piso"
-                          : "dado"
-                    }
-                    palavra={
-                      baseCurta === 0
-                        ? "nenhuma impressão na janela"
-                        : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
-                          ? "não é a meta do board atingida"
-                          : "meta do board atingida"
-                    }
-                  >
-                    consulta(s) com duas URLs suas disputando
-                  </Leitura>
-                )}
+                {kpis !== null &&
+                  (kpis.canibalizacao.lista.length > 0 ? (
+                    <Leitura valor={br(kpis.canibalizacao.lista.length)} base={baseDoTermo}>
+                      consulta(s) com duas URLs suas disputando · meta do board: zero
+                      {kpis.canibalizacao.removidas
+                        ? ` · ${br(kpis.canibalizacao.removidas)} de marca removida(s)`
+                        : ""}
+                    </Leitura>
+                  ) : (
+                    /* 027 — AUSÊNCIA NÃO É APROVAÇÃO. Declarar a meta do board atingida sobre uma
+                       lista que a própria tela chama de piso transforma "não deu para ver" em "está
+                       certo". Abaixo do piso o selo diz `não apurável`, nunca `meta atingida`. */
+                    <Leitura
+                      base={baseDoTermo}
+                      sem={
+                        baseCurta === 0
+                          ? "sem base"
+                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "não apurável"
+                            : "zero real"
+                      }
+                      selo={
+                        baseCurta === 0
+                          ? "sem"
+                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "piso"
+                            : "dado"
+                      }
+                      palavra={
+                        baseCurta === 0
+                          ? "nenhuma impressão na janela"
+                          : baseCurta !== null && baseCurta < PISO_IMPRESSOES_VEREDITO
+                            ? "não é a meta do board atingida"
+                            : "meta do board atingida"
+                      }
+                    >
+                      consulta(s) com duas URLs suas disputando
+                    </Leitura>
+                  ))}
               </ul>
 
               {/* NÍVEL 3 — mesma regra do bloco do crawl: a LEITURA (número + selo) é nível 2, a
@@ -2036,13 +2162,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
               <details className="ress">
                 <summary>
                   {[
-                    kpis.strikingDistance.lista.length > 0
+                    kpis && kpis.strikingDistance.lista.length > 0
                       ? `${br(kpis.strikingDistance.lista.length)} a um empurrão do Top 3`
                       : null,
-                    kpis.ctrGap && kpis.ctrGap.abaixo.length > 0
-                      ? `${br(kpis.ctrGap.abaixo.length)} abaixo do benchmark de CTR`
+                    kpisUrl?.ctrGap && kpisUrl.ctrGap.abaixo.length > 0
+                      ? `${br(kpisUrl.ctrGap.abaixo.length)} abaixo do benchmark de CTR`
                       : null,
-                    kpis.canibalizacao.lista.length > 0
+                    kpis && kpis.canibalizacao.lista.length > 0
                       ? `${br(kpis.canibalizacao.lista.length)} em canibalização`
                       : null,
                   ]
@@ -2050,7 +2176,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     .join(" · ") || "Nenhuma lista de trabalho nesta janela"}
                   {` — e o que cada selo quer dizer (${curtaGsc.inicio} → ${curtaGsc.fim})`}
                 </summary>
-              {kpis.strikingDistance.lista.length > 0 && (
+              {kpis !== null && kpis.strikingDistance.lista.length > 0 && (
                 <ul className="ficha-krs">
                   {kpis.strikingDistance.lista.slice(0, 15).map((c) => (
                     <li key={`${c.query}|${c.page}`}>
@@ -2064,13 +2190,13 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </ul>
               )}
 
-              {kpis.ctrGap !== null && kpis.ctrGap.abaixo.length > 0 && (
+              {kpisUrl?.ctrGap != null && kpisUrl.ctrGap.abaixo.length > 0 && (
                 <>
                   <p className="foot">
                     Abaixo do benchmark — aqui o problema é o <strong>título</strong>, não a posição:
                   </p>
                   <ul className="ficha-krs">
-                    {kpis.ctrGap.abaixo.slice(0, 10).map((u) => (
+                    {kpisUrl.ctrGap.abaixo.slice(0, 10).map((u) => (
                       <li key={u.url}>
                         <strong>{u.url}</strong>{" "}
                         <span className="foot">
@@ -2084,7 +2210,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 </>
               )}
 
-              {kpis.canibalizacao.lista.length > 0 && (
+              {kpis !== null && kpis.canibalizacao.lista.length > 0 && (
                 <ul className="ficha-krs">
                   {kpis.canibalizacao.lista.slice(0, 10).map((c) => (
                     <li key={c.consulta}>
@@ -2129,16 +2255,50 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     ) : null}
                   </dd>
 
+                  {baseCurta !== null && basePagina !== null && baseCurta !== basePagina ? (
+                    <>
+                      <dt>as duas bases</dt>
+                      <dd>
+                        Cada medida deste bloco declara sobre quantas impressões foi calculada, e as
+                        duas bases não batem. <strong>Não é bug.</strong> A leitura por{" "}
+                        <strong>página</strong> devolve {br(basePagina)} impressões na janela — o
+                        site inteiro — e a leitura por <strong>termo</strong> devolve{" "}
+                        {br(baseCurta)}, porque o Search Console omite as consultas raras da
+                        dimensão <code>query</code>. Cada medida é lida pela dimensão que a mede: o
+                        que afirma algo sobre uma <strong>URL</strong> sai da primeira, o que afirma
+                        algo sobre uma <strong>consulta</strong> sai da segunda, e nenhum número
+                        mistura as duas. Até 19/09/2026 as duas famílias saíam da leitura por termo,
+                        e o Índice de Conformidade publicava 0% sobre 6 URLs avaliadas quando a
+                        leitura completa dá 12,5% sobre 24 — a home ficava fora do denominador por
+                        aparecer na posição 11,8 por termo em vez dos 6,9 reais.
+                      </dd>
+                    </>
+                  ) : null}
+
                   <dt>piso, não total</dt>
                   <dd>
                     O Search Console omite as consultas raras da dimensão <code>query</code>: o
-                    número real é maior e não é observável.
+                    número real é maior e não é observável.{" "}
+                    <strong>A ressalva vale para as medidas por termo</strong> — as por URL leem a
+                    leitura por página, que é completa, e desde a 032 não carregam mais este selo.
                     {consultas && "truncado" in consultas && consultas.truncado ? (
                       <>
                         {" "}
-                        <strong>E há truncamento</strong> no teto de linhas da API — os números são
-                        piso por essa segunda razão, além da omissão das raras.
+                        <strong>E há truncamento</strong> no teto de linhas da API na leitura por
+                        termo — os números dela são piso por essa segunda razão, além da omissão das
+                        raras.
                         {consultas.hosts.length > 1
+                          ? " O teto vale por propriedade: basta uma ter sido cortada."
+                          : null}
+                      </>
+                    ) : null}
+                    {paginasGsc && "truncado" in paginasGsc && paginasGsc.truncado ? (
+                      <>
+                        {" "}
+                        <strong>A leitura por página também truncou</strong> no teto de linhas da
+                        requisição dela — as medidas por URL são piso nesta janela, e só por essa
+                        razão.
+                        {paginasGsc.hosts.length > 1
                           ? " O teto vale por propriedade: basta uma ter sido cortada."
                           : null}
                       </>
@@ -2164,7 +2324,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   <dd>
                     Consultas entre as posições 4,0 e 10,9: já rankeiam, e reforço de conteúdo ou
                     link interno as move. Ordenadas por impressões — a primeira linha rende mais.
-                    {kpis.strikingDistance.removidas ? (
+                    {kpis?.strikingDistance.removidas ? (
                       <>
                         {" "}
                         <strong>
@@ -2189,7 +2349,7 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
 
                   <dt>Canibalização</dt>
                   <dd>
-                    {kpis.canibalizacao.removidas === null ? (
+                    {kpis === null || kpis.canibalizacao.removidas === null ? (
                       <>
                         Consultas de <strong>marca</strong> aparecem aqui e quase nunca são
                         problema: buscar o nome da empresa traz o site inteiro, e é assim que deve
@@ -2214,7 +2374,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                     <>
                       <dt>contagem, não razão</dt>
                       <dd>
-                        {denomIdx === null && amostrado ? (
+                        {denomIdx !== null && kpisUrl !== null && kpisUrl.urlsComImpressao > denomIdx ? (
+                          /* 032 — apareceu quando o numerador passou a ser do site inteiro. Antes,
+                             a leitura por termo subcontava as URLs e a razão cabia em 100% por
+                             acidente de medição. */
+                          <>
+                            A apuração declarou <strong>{br(denomIdx)} URLs indexadas</strong> e o
+                            Search Console viu impressão em{" "}
+                            <strong>{br(kpisUrl.urlsComImpressao)}</strong> na janela: o numerador é
+                            do site inteiro e o denominador não o cobre. A razão passaria de 100% e
+                            leria como meta folgada — o conserto é o sitemap declarar as URLs que
+                            faltam, não a tela arredondar.
+                          </>
+                        ) : denomIdx === null && amostrado ? (
                           <>
                             A indexação foi apurada por <strong>amostra</strong> (
                             {br(idx!.inspecionadas)} de {br(idx!.declaradas)} URLs): o numerador é do

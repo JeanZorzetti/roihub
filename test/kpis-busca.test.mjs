@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import {
   benchmark,
   ctr,
-  porUrl,
   consultasUnicas,
   noTop20,
   impressoesNoTop3,
@@ -15,7 +14,8 @@ import {
   ctrGap,
   termoPrincipal,
   canibalizacao,
-  kpisDeBusca,
+  kpisPorTermo,
+  kpisPorPagina,
   activeIndexRatio,
   queryToPageRatio,
   PISO_IMPRESSOES_VEREDITO,
@@ -23,6 +23,9 @@ import {
 } from "../lib/kpis-busca.mjs";
 
 const l = (query, page, impressoes, cliques, posicao) => ({ query, page, impressoes, cliques, posicao });
+// 032 — a linha da OUTRA leitura. Campo `pagina`, sem `query`: é o que torna as duas famílias
+// disjuntas para o compilador no chamador tipado.
+const pg = (pagina, impressoes, cliques, posicao) => ({ pagina, impressoes, cliques, posicao });
 
 // ── pureza (Princípio III) ──────────────────────────────────────────────────────────────────
 test("módulo é puro: sem process.env, sem Date.now(), sem import", () => {
@@ -150,29 +153,84 @@ test("linha sem benchmark tem atinge null — 'não medido' não é 'reprovado'"
 });
 
 test("CTR Gap exclui do denominador as URLs sem benchmark", () => {
-  // Duas URLs: uma no Top 3 que atinge, outra na posição 40 que nem tem régua.
-  const g = ctrGap([l("a", "/a", 100, 30, 2.0), l("b", "/b", 100, 0, 40)]);
+  // Duas páginas: uma no Top 3 que atinge, outra na posição 40 que nem tem régua.
+  const g = ctrGap([pg("/a", 100, 30, 2.0), pg("/b", 100, 0, 40)]);
   assert.equal(g.avaliadas, 1, "a URL sem benchmark não entra no denominador");
   assert.equal(g.fracao, 1);
 });
 
 test("CTR Gap sem nenhuma URL avaliável devolve null, não 0%", () => {
   assert.equal(ctrGap([]), null);
-  assert.equal(ctrGap([l("a", "/a", 100, 0, 40)]), null, "só URL sem benchmark = sem denominador");
+  assert.equal(ctrGap([pg("/a", 100, 0, 40)]), null, "só URL sem benchmark = sem denominador");
 });
 
-test("CTR Gap agrega por URL, somando as consultas dela", () => {
-  // Uma URL com duas consultas: 50+50 impressões e 10+10 cliques = 20% de CTR na posição ~2.
-  const g = ctrGap([l("a", "/p", 50, 10, 2.0), l("b", "/p", 50, 10, 2.0)]);
-  assert.equal(g.avaliadas, 1, "duas consultas da mesma URL são UMA URL");
-  assert.equal(g.fracao, 1);
+// 032 — O CASO QUE ABRIU A SPEC. A home da Atma sai na posição 11,82 pela leitura por TERMO (fora
+// da faixa do balizador, que acaba em 10,9) e na 6,93 pela leitura por PÁGINA, com 22,49% de CTR.
+// A leitura incompleta expulsava do denominador justamente a única página que atinge o piso, e o
+// veredito publicado virava 0% — pior que a ausência, porque um zero convida a agir no lugar errado.
+test("CTR Gap: a página em 6,93 com 22,49% entra no denominador e atinge o piso", () => {
+  const g = ctrGap([pg("/", 578, 130, 6.93), pg("/precos", 448, 13, 11.82)]);
+  assert.equal(g.avaliadas, 1, "a de 11,82 está fora da faixa do balizador e não entra");
+  assert.equal(g.fracao, 1, "a de 6,93 atinge o piso de 4,5% da faixa dela");
+  assert.deepEqual(g.abaixo, [], "fora da faixa NÃO é reprovada: 'não medido' e 'abaixo' pedem trabalho oposto");
 });
 
-test("a posição da URL é ponderada por impressões, não média simples", () => {
-  // Uma consulta rara na posição 90 não pode arrastar uma página que vive no Top 3.
-  const [u] = porUrl([l("forte", "/p", 1000, 250, 1.5), l("rara", "/p", 1, 0, 90)]);
-  assert.ok(u.posicao < 2, `posição ponderada deveria ficar perto de 1,5, veio ${u.posicao}`);
-  assert.equal(u.benchmark, 0.25);
+// 032/D3 — NENHUMA agregação aqui. Cada linha JÁ é uma URL; recalcular `posição × impressões ÷
+// impressões` reintroduziria a deriva de ponto flutuante que a 031 removeu. E a faixa acaba em
+// 10,9: um `11,000000000000002` cai fora dela e a página some do denominador sem nada ter mudado.
+test("CTR Gap não re-agrega: a posição sai como entrou, sem deriva de ponto flutuante", () => {
+  const g = ctrGap([pg("/p", 1146, 0, 3.9)]);
+  assert.equal(g.abaixo[0].posicao, 3.9, "3.8999999999999995 é a deriva que a 031 removeu");
+  assert.equal(g.abaixo[0].url, "/p", "o campo de saída continua url — é o nome que a lista 'abaixo' já renderiza");
+  assert.equal(ctrGap([pg("/borda", 100, 0, 10.9)]).avaliadas, 1, "10,9 é o último ponto da faixa e tem de entrar");
+});
+
+// 032/SC-001 — as 29 páginas da Atma na janela medida (2026-08-20 → 2026-09-16), como `gscPaginas`
+// as devolve depois da soma dos hosts declarados: 24.664 impressões e 434 cliques, o site inteiro.
+// A tela publicava 0% com 6 avaliadas, porque a leitura por termo via 42,1% disso.
+const PAGINAS_ATMA_JANELA = [
+  pg("/blog/quanto-custa-alinhador-invisivel", 22064, 282, 7.343047498187092),
+  pg("/blog/alinhadores-vs-aparelho-fixo", 820, 0, 9.636585365853659),
+  pg("/", 578, 130, 6.92560553633218),
+  pg("/pacientes/precos", 448, 13, 17.129464285714285),
+  pg("/blog/invisalign-vs-alinhadores-nacionais", 442, 5, 7.552036199095022),
+  pg("/pacientes/agendar", 148, 0, 7.668918918918919),
+  pg("/pacientes/enviar-exames", 65, 1, 6.676923076923077),
+  pg("/pacientes/antes-depois", 13, 1, 20.923076923076923),
+  pg("/ortodontistas/qualidade-alemao", 13, 0, 4.076923076923077),
+  pg("/pacientes", 11, 1, 3.909090909090909),
+  pg("/blog/quanto-custa-o-alinhador-invisivel", 11, 0, 1.1818181818181819),
+  pg("/pacientes/tratamento", 9, 0, 31.88888888888889),
+  pg("/tecnologia", 9, 1, 4.111111111111111),
+  pg("/sobre", 5, 0, 6.2),
+  pg("/blog/bruxismo-causas-sintomas-tratamento", 4, 0, 57.75),
+  pg("/blog/ortodontia-invisivel-adultos", 4, 0, 39.25),
+  pg("/ortodontistas/vantagens", 4, 0, 6.5),
+  pg("/ortodontistas/modelos-parceria", 3, 0, 4.333333333333334),
+  pg("/blog/alinhador-invisivel-funciona", 2, 0, 2),
+  pg("/ortodontistas/tecnologia", 2, 0, 1),
+  pg("/blog/3", 1, 0, 2),
+  pg("/blog/dor-cabeca-ma-oclusao", 1, 0, 4),
+  pg("/pacientes/faq", 1, 0, 5),
+  pg("/blog/atma-invisalign-clearcorrect-preco", 1, 0, 1),
+  pg("/blog/invisalign-vs-alinhadores-nacionais/", 1, 0, 1),
+  pg("/blog/produto/quanto-custa-alinhador-invisivel", 1, 0, 1),
+  pg("/blog/quanto-custa-a-alinha-invisivel", 1, 0, 1),
+  pg("/blog/quanto-custa-a-alinhador-invisivel", 1, 0, 1),
+  pg("/blog/quanto-custam-alinhadores-invisiveis-2026", 1, 0, 1),
+];
+
+test("CTR Gap sobre as páginas da janela medida: 12,5% com 24 avaliadas, a home entre elas", () => {
+  const g = ctrGap(PAGINAS_ATMA_JANELA);
+  assert.equal(g.avaliadas, 24, "5 das 29 páginas estão acima de 10,9 e ficam fora do denominador");
+  assert.equal(g.fracao, 0.125, "3 das 24 atingem o piso da própria posição — a tela publicava 0% com 6");
+  assert.equal(totalImpressoes(PAGINAS_ATMA_JANELA), 24664, "a base é o site inteiro, não os 10.395 da leitura por termo");
+  const home = PAGINAS_ATMA_JANELA.find((p) => p.pagina === "/");
+  assert.ok(
+    ctr(home.cliques, home.impressoes) >= benchmark(home.posicao),
+    "a home é avaliada e ATINGE — pela leitura por termo ela saía em 11,82 e nem entrava no denominador",
+  );
+  assert.equal(g.abaixo.some((u) => u.url === "/"), false);
 });
 
 // ── contagens ───────────────────────────────────────────────────────────────────────────────
@@ -197,8 +255,7 @@ test("% de impressões no Top 3 sem impressão devolve null, não NaN", () => {
 });
 
 test("URLs com impressão é CONTAGEM — o denominador de indexadas não existe", () => {
-  const linhas = [l("a", "/x", 10, 0, 5), l("b", "/x", 10, 0, 6), l("c", "/y", 0, 0, 8)];
-  assert.equal(urlsComImpressao(linhas), 1, "/y tem 0 impressões e não conta");
+  assert.equal(urlsComImpressao([pg("/x", 10, 0, 5), pg("/y", 0, 0, 8)]), 1, "/y tem 0 impressões e não conta");
 });
 
 // ── canibalização ───────────────────────────────────────────────────────────────────────────
@@ -219,32 +276,68 @@ test("a mesma URL repetida na mesma consulta não é canibalização", () => {
   assert.deepEqual(canibalizacao([l("preco", "/a", 100, 1, 6.0), l("preco", "/a", 20, 0, 7.0)]).lista, []);
 });
 
-// ── agregador ───────────────────────────────────────────────────────────────────────────────
+// ── os dois agregadores ─────────────────────────────────────────────────────────────────────
 test("lista vazia não estoura em nenhum KPI", () => {
-  const k = kpisDeBusca([]);
+  const k = kpisPorTermo([]);
   assert.equal(k.consultasUnicas.valor, 0);
   assert.equal(k.noTop20, 0);
   assert.equal(k.impressoesNoTop3, null);
-  assert.equal(k.urlsComImpressao, 0);
   assert.deepEqual(k.strikingDistance.lista, []);
   assert.equal(k.strikingDistance.removidas, null);
-  assert.equal(k.ctrGap, null);
   assert.deepEqual(k.canibalizacao.lista, []);
+  const kp = kpisPorPagina([], null);
+  assert.equal(kp.urlsComImpressao, 0);
+  assert.equal(kp.ctrGap, null);
+  assert.equal(kp.activeIndexRatio, null);
+});
+
+// 032/SC-004 — A TRAVA. Nenhuma medida por termo pode mudar de valor com esta feature. Os números
+// abaixo são os de antes da migração, escritos à mão: comparar contra a própria função provaria só
+// que o agregador a chama, e é justamente a função que a migração poderia ter trocado de leitura.
+test("kpisPorTermo devolve os MESMOS valores de antes da 032", () => {
+  const linhas = [
+    l("alinhador preco", "/a", 100, 10, 2.0),
+    l("alinhador preco", "/b", 50, 1, 6.0),
+    l("alinhador invisivel", "/a", 40, 0, 5.0),
+    l("atma aligner", "/a", 10, 5, 1.5),
+    l("cauda longa", "/c", 5, 0, 30.0),
+  ];
+  const k = kpisPorTermo(linhas);
+  assert.equal(k.consultasUnicas.valor, 4);
+  assert.equal(k.consultasUnicas.piso, true);
+  assert.equal(k.noTop20, 3, "a de posição 30 fica fora");
+  assert.equal(k.impressoesNoTop3, 110 / 205);
+  assert.equal(k.strikingDistance.lista.length, 2, "as de 6,0 e 5,0");
+  assert.equal(k.strikingDistance.lista[0].page, "/b", "ordenadas por impressões");
+  assert.equal(k.canibalizacao.lista.length, 1, "alinhador preco em /a e /b");
+  assert.equal(k.canibalizacao.lista[0].impressoes, 150);
+  // A fronteira em forma de teste: estas duas foram para a família por URL e não podem voltar.
+  assert.equal("ctrGap" in k, false, "o CTR Gap é por URL — contá-lo na leitura por termo É o defeito da 032");
+  assert.equal("urlsComImpressao" in k, false, "idem: a leitura por termo omite as raras e some com metade das URLs");
+});
+
+test("kpisPorPagina: sem denominador apurado, activeIndexRatio é null e a contagem fica", () => {
+  const paginas = [pg("/a", 10, 1, 5), pg("/b", 0, 0, 8), pg("/c", 3, 0, 9)];
+  const k = kpisPorPagina(paginas, null);
+  assert.equal(k.activeIndexRatio, null, "sem denominador apurado a tela volta à contagem, não inventa razão");
+  assert.equal(k.urlsComImpressao, 2, "/b tem 0 impressões e não conta");
+  assert.equal(k.ctrGap.avaliadas, 2, "as duas com impressão estão dentro da faixa do balizador");
+  assert.equal(kpisPorPagina(paginas, 4).activeIndexRatio, 2 / 4);
 });
 
 // ── 022: as duas razões que estavam capadas por falta de denominador ─────────────────────────
 test("activeIndexRatio é URLs com impressão ÷ indexadas", () => {
-  const linhas = [l("a", "/1", 10, 1, 5), l("b", "/1", 5, 0, 8), l("c", "/2", 3, 0, 9)];
-  assert.equal(activeIndexRatio(linhas, 4), 2 / 4);
+  assert.equal(activeIndexRatio([pg("/1", 15, 1, 5), pg("/2", 3, 0, 9)], 4), 2 / 4);
 });
 
 // FR-011: sem denominador a tela volta à CONTAGEM com o motivo. Uma razão com denominador chutado
 // é falha, não detalhe — foi por isso que a 021 deixou este KPI como contagem.
 test("sem denominador, as duas razões são null e nunca um número inventado", () => {
-  const linhas = [l("a", "/1", 10, 1, 5)];
+  // Cada uma com a leitura da SUA família (032/FR-001): a razão de índice ativo é por URL, e a de
+  // consultas por URL indexada tem `consultasUnicas` no numerador, então continua por termo.
   for (const d of [0, null, undefined, -3, NaN]) {
-    assert.equal(activeIndexRatio(linhas, d), null, `activeIndexRatio inventou razão com indexadas=${d}`);
-    assert.equal(queryToPageRatio(linhas, d), null, `queryToPageRatio inventou razão com indexadas=${d}`);
+    assert.equal(activeIndexRatio([pg("/1", 10, 1, 5)], d), null, `activeIndexRatio inventou razão com indexadas=${d}`);
+    assert.equal(queryToPageRatio([l("a", "/1", 10, 1, 5)], d), null, `queryToPageRatio inventou razão com indexadas=${d}`);
   }
 });
 
@@ -255,9 +348,25 @@ test("queryToPageRatio carrega o piso — o GSC omite as consultas raras", () =>
   assert.equal(r.piso, true, "sem a flag a tela publica o piso como se fosse a razão real");
 });
 
+// 032 — a razão que passa de 1 é um denominador que não cobre o numerador, não um site excelente.
+// Medido na Atma em 20/09/2026, depois de a família por URL migrar para a leitura por página:
+// 29 URLs com impressão ÷ 18 indexadas = 161,1%, publicado ao lado de "meta do board: ≥ 70%".
+test("activeIndexRatio devolve null quando há mais URLs com impressão do que indexadas", () => {
+  const paginas = [pg("/1", 10, 1, 5), pg("/2", 3, 0, 9), pg("/3", 2, 0, 7)];
+  assert.equal(activeIndexRatio(paginas, 2), null, "3 ÷ 2 = 150% leria como meta folgada");
+  assert.equal(activeIndexRatio(paginas, 3), 1, "cobrir exatamente o numerador é razão válida");
+  assert.equal(kpisPorPagina(paginas, 2).urlsComImpressao, 3, "a contagem fica — é ela que volta à tela");
+});
+
 test("lista de linhas vazia com denominador válido é zero, não null — nada foi visto, mas foi medido", () => {
   assert.equal(activeIndexRatio([], 10), 0);
   assert.equal(queryToPageRatio([], 10).valor, 0);
+});
+
+// 032/FR-004 — o selo de piso NÃO sai das medidas por termo. Esta spec para de aplicar a ressalva
+// onde ela não precisava existir; onde precisa, ela fica.
+test("queryToPageRatio continua por termo e continua carregando o piso", () => {
+  assert.equal(queryToPageRatio([l("a", "/1", 10, 1, 5), l("b", "/1", 5, 0, 8)], 4).piso, true);
 });
 
 // ── 024/D10: o termo principal da URL ───────────────────────────────────────
@@ -340,17 +449,17 @@ test("a ordenação por impressões não muda com o filtro ligado", () => {
   );
 });
 
-test("kpisDeBusca repassa o `ehMarca` em vez de filtrar por conta própria", () => {
-  const k = kpisDeBusca(marcadas, ehMarca);
+test("kpisPorTermo repassa o `ehMarca` em vez de filtrar por conta própria", () => {
+  const k = kpisPorTermo(marcadas, ehMarca);
   assert.equal(k.canibalizacao.removidas, 1);
   assert.equal(k.canibalizacao.lista.length, 1);
-  assert.equal(kpisDeBusca(marcadas).canibalizacao.removidas, null);
+  assert.equal(kpisPorTermo(marcadas).canibalizacao.removidas, null);
 });
 
 // 027 — o repasse tem que alcançar as DUAS listas de trabalho. Dar o filtro a uma só foi como a
 // marca voltou a encabeçar o Striking distance depois de já ter sido tirada da vizinha.
-test("kpisDeBusca repassa `ehMarca` para as DUAS listas, não só para canibalizacao", () => {
-  const k = kpisDeBusca(marcadas, ehMarca);
+test("kpisPorTermo repassa `ehMarca` para as DUAS listas, não só para canibalizacao", () => {
+  const k = kpisPorTermo(marcadas, ehMarca);
   assert.equal(k.strikingDistance.removidas, 1, "a fila também é lista de trabalho");
   assert.equal(k.canibalizacao.removidas, 1);
   assert.ok(
