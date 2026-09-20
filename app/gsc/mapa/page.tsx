@@ -6,7 +6,7 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { impressoesNoTop3, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, totalImpressoes } from "@/lib/kpis-busca.mjs";
+import { conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
@@ -262,6 +262,66 @@ function noteDasImpressoes(
   // vier das duas telas encontra um `▼` de um lado e nenhum do outro sobre o MESMO número.
   const divergencia = " A aba de aquisição do projeto publica este mesmo número — mesma função, mesma leitura, mesma janela — com veredito contra a faixa; aqui não há glifo.";
   return `${medida}${base}${daMarca}${concentrada}${divergencia} Meta do board: 40% a 50% — meta, não régua: a concentração depende do mix de termos de marca, e nenhum estudo publica faixa de mercado para ela.`;
+}
+
+type MedidaConformidade = ReturnType<typeof conformidadeDeCtr>;
+
+/** 038 — o `topic` do Índice de Conformidade, e ele TROCA DE FORMA no mesmo limiar da aba de
+ *  aquisição (`LIMIAR_PAGINAS_DECIDIDAS`, 033/FR-012). Abaixo de 20 páginas decididas a resposta é
+ *  a URL NOMEADA e não o índice: "um índice sobre 4 páginas é ruído travestido de percentual" está
+ *  escrito na outra tela, e publicar o percentual AQUI faria este mapa afirmar sobre a mesma
+ *  leitura o que a outra recusa afirmar — a divergência que o cabeçalho deste arquivo existe para
+ *  impedir. O percentual não some: desce para o `note`, como evidência de nível 2.
+ *
+ *  O glifo `▼`/`▲` julga a URL contra a RÉGUA DELA — `ctrGap` declara `balizador: regua` e o piso
+ *  por posição tem fonte. Nenhum glifo julga a FRAÇÃO contra os 75% a 80%: a folha vizinha
+ *  `conformidadeUrls` declara `balizador: recusa` ("QUANTAS URLs devem superá-lo exigiria o GSC de
+ *  terceiros, que ninguém publica"), e um `▼` ali seria veredito sem régua. */
+function topicDaConformidade(c: MedidaConformidade): string {
+  const resto = `${br(c.indecisas)} ${c.indecisas === 1 ? "indecisa" : "indecisas"} · ${br(c.semRegua)} sem régua`;
+  if (c.porPagina.decididas === 0) return `◐ a amostra não decide nenhuma URL · ${resto}`;
+  if (c.porPagina.decididas < LIMIAR_PAGINAS_DECIDIDAS && c.nomeada) {
+    const n = c.nomeada;
+    // O DENOMINADOR abre a caixa, antes da página nomeada: quem chega neste nó procura uma fração,
+    // e sem "4 de 24" a página solta lê como se o nó medisse outra coisa. Medido na imagem: sem
+    // esta abertura o teste de cinco segundos falha — a caixa responde "qual página", não "quantas".
+    // A posição fica só no `note`: a régua já diz em que degrau a URL está, e a caixa tem 240px.
+    return `${br(c.porPagina.decididas)} de ${br(c.porPagina.decididas + c.indecisas)} URLs decididas · ${n.veredito === "abaixo" ? "▼ abaixo" : "▲ atinge"} · ${new URL(n.url).pathname} · ${pct1(n.participacao)} do tráfego · CTR ${pct1(n.ctr)} vs régua ${pct1(n.regua)}`;
+  }
+  return `Medido: ${pct1(c.porPagina.fracao!)} · ${br(c.porPagina.atingem)} de ${br(c.porPagina.decididas)} URLs decididas · ${resto}`;
+}
+
+/** A nota da conformidade. Ordem: o índice com a janela, o DENOMINADOR (que é a pergunta que o
+ *  índice provoca), por que o topic não é o índice, a leitura por tráfego (que aponta para o outro
+ *  lado), a dimensão, e a meta que não julga. */
+function noteDaConformidade(c: MedidaConformidade, janela: { inicio: string; fim: string }, lidas: number): string {
+  const j = `janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3)`;
+  // O índice aparece SEMPRE, inclusive quando não é o topic: quem expande a folha está procurando o
+  // número, e escondê-lo faria a folha medida parecer não medida.
+  const indice =
+    c.porPagina.fracao === null
+      ? `Nenhuma URL decidida na ${j}. Não é 0% de conformidade: "a amostra não julga" e "as páginas falham" pedem trabalho oposto, e um zero aqui mandaria reescrever títulos que ninguém provou estarem ruins.`
+      : `${pct1(c.porPagina.fracao)} das URLs decididas atingem o CTR mínimo da própria posição na ${j} — ${br(c.porPagina.atingem)} de ${br(c.porPagina.decididas)}.`;
+  // 29 lidas → 24 com régua → 4 decididas. Sem esta frase o índice lê como se o site tivesse 4
+  // páginas, e a leitura seguinte seria "o denominador está errado" em vez de "a amostra é rala".
+  const denominador = ` O denominador é ${br(c.porPagina.decididas)} e não ${br(lidas)}: ${br(c.semRegua)} URLs estão acima da posição 10,9, onde o board não publica piso (o "~1,5%" da página 2 não tem fonte e aplicá-lo à cauda mediria o palpite), e ${br(c.indecisas)} têm o intervalo de confiança de 95% (Wilson) atravessando a régua — desde a 033, amostra que não decide não reprova.`;
+  const limiar =
+    c.porPagina.decididas > 0 && c.porPagina.decididas < LIMIAR_PAGINAS_DECIDIDAS
+      ? ` Por isso o nó não abre pelo índice: com menos de ${br(LIMIAR_PAGINAS_DECIDIDAS)} decididas ele é ruído com casa decimal, e a resposta é a URL de maior impressão entre as decididas — a MESMA regra e a MESMA função de /okr/atma/aquisicao, que publica esta frase inteira.`
+      : ` As ${br(c.porPagina.decididas)} decididas passam do limiar de ${br(LIMIAR_PAGINAS_DECIDIDAS)}, e o índice é a resposta — a mesma troca de forma que /okr/atma/aquisicao faz sobre esta leitura.`;
+  // A leitura que aponta para o outro lado. Publicar só a fração por página deixaria "1 de 4
+  // atinge" soar como um quarto do site salvo, quando a URL que atinge carrega 2,5% do movimento.
+  const trafego =
+    c.porTrafego.fracao === null
+      ? ""
+      : ` Pelo TRÁFEGO decidível a mesma leitura dá ${pct1(c.porTrafego.fracao)} (${br(c.porTrafego.impressoesQueAtingem)} de ${br(c.porTrafego.impressoesDecididas)} impressões): contar PÁGINA e contar IMPRESSÃO respondem perguntas diferentes, e a distância entre as duas é o tamanho da concentração — a régua julga cada URL por igual, o usuário não.`;
+  // 032: esta folha é por URL e lê a dimensão `page`. A outra leitura omite as consultas raras e
+  // publicava 0% sobre 6 URLs porque expulsava a home do denominador.
+  const dimensao = " Leitura por PÁGINA (dimensão `page` do Search Console), somados os hosts declarados: é a dimensão que mede URL, e a fronteira que a 032 cobrou do compilador. A leitura por consulta×página omite as consultas raras — 42,1% das impressões da Atma — e com ela este índice publicava 0% sobre 6 URLs.";
+  // A testemunha imprime OUTRA regra e isso não é contradição: sem esta frase, quem rodar o script
+  // para conferir o board acha que o board está errado, e "conserta" um número correto.
+  const testemunha = " A testemunha `scripts/conferir-soma-hosts.mjs atma <ini> <fim> --pagina` aplica o piso FIXO (CTR ≥ régua, sem exigir que a amostra decida) e imprimia 12,50% sobre 24 avaliadas em 20/09/2026, na mesma janela e sobre as mesmas linhas: é a regra anterior à 033, não uma divergência de leitura — as duas contam a mesma coisa e só uma exige significância.";
+  return `${indice}${denominador}${limiar}${trafego}${dimensao}${testemunha} Meta do board: 75% a 80% das URLs — meta, não régua: o piso por posição tem fonte, QUANTAS URLs devem superá-lo exigiria o Search Console de terceiros, que ninguém publica.`;
 }
 
 export default async function MapaDoBoardPage() {
@@ -520,6 +580,50 @@ export default async function MapaDoBoardPage() {
     // À FRENTE da definição e da meta, pelo mesmo motivo das três folhas vizinhas: quem expande está
     // procurando o número, e confere a definição do board DEPOIS de achá-lo.
     impNode.children = [filho, ...(impNode.children ?? [])];
+  }
+
+  // 038/CTR — o Índice de Conformidade na folha que o define. ZERO requisição nova: consome
+  // `paginasGsc`, a MESMA leitura por página que as seis faixas já carregaram acima, e a MESMA
+  // função (`conformidadeDeCtr`) que /okr/[slug]/aquisicao consome — as duas telas concordam por
+  // construção, inclusive na TROCA DE FORMA do limiar, que é onde elas discordariam primeiro.
+  //
+  // A dimensão é decisão da 032 e não preferência: esta medida afirma algo sobre uma URL, e
+  // `conformidadeDeCtr` só aceita `LinhaPagina` — passar as linhas de consulta×página não compila.
+  const gapNode = acharNo(dados.nodeData as No, "ctrGap");
+  if (gapNode) {
+    const paginasDoGap = paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null;
+    // Os QUATRO estados, do mais específico ao mais genérico. Nenhum dos três de ausência publica
+    // `0%`: sobre ausência, "0% das URLs atingem o CTR mínimo" é a reprovação mais grave que esta
+    // folha sabe emitir, e é exatamente o falso negativo que a 032 tirou do ar. O quinto estado —
+    // lido, com régua, e a amostra não decide nenhuma — tem `◐` e vive dentro de `topicDaConformidade`.
+    const filho: No = !paginasGsc
+      ? {
+          id: "ctrGap-medido",
+          topic: "∅ não apurado · sem leitura do Search Console",
+          note: `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. Sem a leitura não há URL para julgar contra a régua da posição.`,
+        }
+      : "erro" in paginasGsc
+        ? {
+            id: "ctrGap-medido",
+            topic: "∅ não apurado · a leitura do Search Console falhou",
+            note: `Falha transitória, não ausência de dado: ${paginasGsc.erro}. A medida volta na próxima leitura.`,
+          }
+        : paginasDoGap!.length === 0
+          ? {
+              id: "ctrGap-medido",
+              topic: "∅ não apurado · nenhuma impressão na janela",
+              note: `A janela ${janela.inicio} → ${janela.fim} não teve uma impressão sequer: não há URL para avaliar. Não é "nenhuma URL atinge a régua" — é nenhuma URL, e os dois pedem trabalho oposto.`,
+            }
+          : (() => {
+              const c = conformidadeDeCtr(paginasDoGap!, janela);
+              return {
+                id: "ctrGap-medido",
+                topic: topicDaConformidade(c),
+                note: noteDaConformidade(c, janela, paginasDoGap!.length),
+              };
+            })();
+    // À FRENTE da definição e da meta, pelo mesmo motivo das quatro folhas vizinhas.
+    gapNode.children = [filho, ...(gapNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase
