@@ -6,13 +6,13 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
+import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
 import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado, type PaginaCrawl } from "@/lib/db";
-import { canonizar, correspondenciaDeIntencao, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
+import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondenciaDeIntencao, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
@@ -1333,6 +1333,107 @@ export default async function MapaDoBoardPage() {
             };
           })();
     profNode.children = [filho, ...(profNode.children ?? [])];
+  }
+
+  // ── 044: "3. KPIs de Relevância On-Page e Cobertura de Entidades" ─────────────────────────
+  //
+  // ZERO REQUISIÇÃO NOVA, como a 043: a canibalização lê as linhas consulta×página que a 040
+  // hasteou, JÁ CANONIZADAS (`linhasDoTermo`), porque sem isso `/x` e `/x/` disputariam entre si. A
+  // cadência lê a mesma corrida de página da profundidade.
+  const anterior044 = atma?.dominioAnterior ?? null;
+  const cruzaATroca = anterior044 && diaUtc(janela.inicio) < diaUtc(anterior044.data) && diaUtc(janela.fim) >= diaUtc(anterior044.data);
+  const canNode = acharNo(dados.nodeData as No, "canibalizacao");
+  if (canNode) {
+    const ehMarca = decl.motivo ? null : (q: string) => new RegExp(decl.padrao, "i").test(q);
+    const porPagina = linhasDoTermo ? canibalizacaoPorPagina(linhasDoTermo, ehMarca) : null;
+    const filho: No =
+      !linhasDoTermo || !porPagina?.avaliadas
+        ? {
+            id: "canibalizacao-medido",
+            topic: `∅ não apurado · ${semConsultas ?? "nenhuma URL com palavra-chave primária fora da marca na janela"}`,
+            note: "A disputa sai da leitura consulta×página do Search Console: sem ela não há consulta para ver quantas URLs a servem. “0 páginas” aqui leria como a meta do board batida num site que ninguém mediu.",
+          }
+        : (() => {
+            const linhas = linhasDoTermo;
+            const canib = canibalizacao(linhas, ehMarca);
+            const d = porPagina.disputadas;
+            const foraDaMarca = linhas.filter((l) => !ehMarca?.(l.query));
+            const impFora = foraDaMarca.reduce((a, l) => a + l.impressoes, 0);
+            const impDisputa = canib.lista.reduce((a, c) => a + c.impressoes, 0);
+            const pos = (p: number) => p.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+            // O conserto é por PAR de páginas, não por consulta: 73 consultas podem ser um par só.
+            const pares = new Map<string, { a: string; b: string; n: number }>();
+            for (const c of canib.lista) {
+              const [a, b] = c.urls;
+              const k = `${a.url}\0${b.url}`;
+              pares.set(k, { a: a.url, b: b.url, n: (pares.get(k)?.n ?? 0) + 1 });
+            }
+            const par = [...pares.values()].sort((x, y) => y.n - x.n)[0];
+            const topo = canib.lista[0];
+            // Medido em 20/09/2026: a página de preço disputa as consultas de preço SÓ pelo domínio
+            // anterior. Sem a frase, o par lê como duas páginas vivas no mesmo site.
+            const hostAnterior = anterior044 ? new URL(anterior044.url).host : null;
+            const hostsDoRival = par ? new Set(linhas.filter((l) => l.page === par.b).flatMap((l) => l.hosts)) : null;
+            const soPeloAnterior = hostAnterior && hostsDoRival?.size === 1 && hostsDoRival.has(hostAnterior);
+            const quais = d
+              .slice(0, 3)
+              .map((x) => `${caminhoDe(x.url)} em «${x.termo}» (também ${x.rivais.slice(0, 2).map(caminhoDe).join(", ")}${x.rivais.length > 2 ? "…" : ""})`)
+              .join("; ");
+            return {
+              id: "canibalizacao-medido",
+              topic: `Medido: ${br(d.length)} de ${br(porPagina.avaliadas)} páginas com a palavra-chave primária disputada · ${br(canib.lista.length)} consultas servidas por 2+ URLs`,
+              note: `Leitura consulta×página do Search Console, ${janela.inicio} → ${janela.fim}, hosts somados por caminho e URL canonizada. A meta do board conta PÁGINAS: das ${br(porPagina.avaliadas)} URLs cuja consulta de maior impressão (a primária, \`termoPrincipal\`, a mesma do título) não é a marca, ${br(d.length)} dividem essa consulta com outra URL do site${d.length ? `: ${quais}${d.length > 3 ? ` e mais ${br(d.length - 3)}` : ""}` : ""}. Contando CONSULTAS, como a aba de aquisição conta: ${br(canib.lista.length)} das ${br(new Set(foraDaMarca.map((l) => l.query)).size)} consultas fora da marca aparecem em 2+ URLs, com ${impFora ? pct1(impDisputa / impFora) : "—"} das impressões fora da marca${canib.removidas ? ` (${br(canib.removidas)} de marca ficam fora: buscar o nome da empresa traz o site inteiro por construção)` : canib.removidas === null ? " — sem marca declarada, nenhuma consulta de marca foi tirada" : ""}.${par ? ` O par que mais se repete é ${caminhoDe(par.a)} à frente de ${caminhoDe(par.b)}, em ${br(par.n)} das ${br(canib.lista.length)} consultas; a disputa que mais custa é «${topo.consulta}» (${br(topo.impressoes)} impressões), com ${topo.urls.slice(0, 2).map((u) => `${caminhoDe(u.url)} na posição ${pos(u.posicao)}`).join(" e ")}.` : ""}${soPeloAnterior ? ` ${caminhoDe(par.b)} só recebeu impressão pelo domínio anterior (${hostAnterior}); pelo ${hosts[0]}, nenhuma na janela.` : ""}${cruzaATroca ? ` A janela atravessa a troca de domínio de ${anterior044!.data}, e as duas pontas entram somadas.` : ""} O “6ª e 14ª” do board é exemplo de posição flutuante, não corte: a contagem é a literal (duas URLs com impressão na mesma consulta), sem limiar de distância, porque nenhum tem fonte. A meta 0 é norma, não régua: ausência de defeito não tem quartil.`,
+            };
+          })();
+    canNode.children = [filho, ...(canNode.children ?? [])];
+  }
+
+  const frescorNode = acharNo(dados.nodeData as No, "frescor");
+  if (frescorNode) {
+    const cad = corrida ? cadencia(corrida.paginas, corrida.dia) : null;
+    const filho: No =
+      !cad || cad.fracao === null
+        ? {
+            id: "frescor-medido",
+            topic: `∅ não apurado · ${semCorrida ?? `nenhuma das ${br(cad!.semData.length)} páginas da corrida declara data de atualização`}`,
+            note: "A data é a que a página declara no HTML gravado pela corrida (`dateModified` do JSON-LD, depois `article:modified_time`, depois `<time datetime>`). Página sem data fica fora do numerador e do denominador: sem data declarada não é desatualizada, é ausência de declaração, e “0%” aqui acusaria de abandonado um site que só não carimba data.",
+          }
+        : (() => {
+            // A política vem da constante, agrupada por prazo: escrever "6 para comercial" aqui seria
+            // a cópia que diverge no dia em que a política mudar.
+            const porMeses = new Map<number, string[]>();
+            for (const [k, m] of Object.entries(CADENCIA_POR_INTENCAO)) porMeses.set(m, [...(porMeses.get(m) ?? []), k]);
+            const politica = [...porMeses]
+              .sort(([a], [b]) => a - b)
+              .map(([m, ks]) => `${m} meses para ${ks.join(" e ")}`)
+              .join(", ");
+            const v = cad.vencidas;
+            const quais = v
+              .slice(0, 3)
+              .map((p: PaginaCrawl) => `${caminhoDe(p.url)} (${p.dataDeclarada}, prazo de ${cadenciaDe(p.intencao)} meses)`)
+              .join(", ");
+            return {
+              id: "frescor-medido",
+              topic: `Medido: ${pct1(cad.fracao)} · ${br(cad.avaliadas - v.length)} de ${br(cad.avaliadas)} páginas com data dentro do prazo · ${br(v.length)} vencidas · ${br(cad.semData.length)} sem data`,
+              note: `Corrida de página de ${corrida!.dia}. A data é a que a própria página declara (\`dateModified\` do JSON-LD, depois \`article:modified_time\`, depois \`<time datetime>\`) — atualização, não publicação. O prazo é por intenção da página, ${politica}: política editorial do hub desde 19/09/2026, não régua (o board diz “6 a 12 meses” sem fonte, e o selo ◇ diz por quê).${v.length ? ` Vencidas: ${quais}${v.length > 3 ? ` e mais ${br(v.length - 3)}` : ""}.` : ""} As ${br(cad.semData.length)} páginas sem data ficam fora do numerador e do denominador: sem data declarada não é desatualizada. O denominador é toda página que declara data, não só os pilares do board: o hub não classifica tipo de página.`,
+            };
+          })();
+    frescorNode.children = [filho, ...(frescorNode.children ?? [])];
+  }
+
+  // A folha SEM COLETOR, pelo mesmo motivo da reescrita do título: muda, "ninguém mediu" pareceria
+  // "ninguém olhou". O id NÃO termina em `-medido`: o contador abaixo diz "folhas com leitura
+  // própria", e esta não tem leitura nenhuma.
+  const coberturaNode = acharNo(dados.nodeData as No, "coberturaSemantica");
+  if (coberturaNode) {
+    coberturaNode.children = [
+      {
+        id: "coberturaSemantica-sem-coletor",
+        topic: "∅ sem coletor · o hub não lê o conteúdo do Top 3 de nenhuma SERP",
+        note: "A meta compara a página com as sub-intenções que os 3 primeiros colocados cobrem na mesma SERP. O hub não tem essa fonte: a Search Analytics API devolve consulta, página e posição, nunca quem são os concorrentes nem o que escrevem; a corrida de página lê só o próprio site e grava título, datas e contagem de palavras, não o texto. Medir exigiria capturar a SERP de cada consulta primária, baixar as 3 páginas do topo e extrair as entidades de cada uma: coletor novo, não dado parado no Search Console. Sem coletor E sem régua: o selo ◇ já diz que “sub-intenção mandatória” não tem definição operacional, e ligar uma fonte não daria essa definição.",
+      },
+      ...(coberturaNode.children ?? []),
+    ];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

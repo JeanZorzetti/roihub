@@ -377,6 +377,23 @@
    "achado": "A URL Inspection ALTERNA entre 'Discovered - currently not indexed' e 'URL is unknown to Google' na MESMA URL em chamadas seguidas (medido 3× em 21/09 em /blog/1, /blog/2, /blog/sorriso-perfeito-15-dicas, /contato). classificar() põe 'unknown' em outras: a fração de rejeição oscila entre 16% e 28% sem o site mudar; o total fora do índice (7) e as indexadas (18) são estáveis. A nota do nó declara.",
    "segundo_achado": "rejeicaoRastreio constava `semColetor` ('o hub não lê o relatório de cobertura') com a razão calculada em agregar() desde a 022 e testada por nome — o erro de 19/09 (profundidade e links marcados sem coletor) repetido na folha vizinha. Virou `recusa` (falta régua, não fonte) e entrou em MEDIDO_POR.",
    "verificacao": "1196/1196 testes (+1), tsc limpo; conferido no dev server em /gsc/mapa: lista servidor com os três nós e as notas, contador 18 folhas com leitura própria (eram 15), mapa com o grupo expandido e as três folhas abertas, console limpo."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo POSIÇÃO MÉDIA › \"3. KPIs de Relevância On-Page e Cobertura de Entidades\": Cobertura Semântica, Cadência de Atualização, Canibalização Interna)",
+   "corrida": "1a (044) — duas folhas medidas com a leitura consulta×página e a corrida de página que já existiam; a terceira ganha nó \"∅ sem coletor\"",
+   "pergunta": "Quantas páginas da Atma disputam a própria palavra-chave primária com outra URL do site, e quanto do conteúdo passou do prazo de revisão?",
+   "forma": "Um nó à frente de cada folha, como 034–043. Canibalização abre na unidade do BOARD (páginas), com a contagem de consultas da aba irmã ao lado.",
+   "descartada": "publicar só as 73 consultas de canibalizacao() — mediria \"0 PÁGINAS competindo\" com o instrumento de consultas; e um corte de \"posição flutuante\" (6ª × 14ª é exemplo do board, não limiar com fonte).",
+   "fonte": "GSC consulta×página, sc-domain:usealigner.com + atma.roilabs.com.br somados por caminho, janela 2026-08-22 → 2026-09-18; hub_pagina (corrida de 2026-09-21)",
+   "estados": [
+    "com dado",
+    "não apurado (sem leitura / sem corrida / nenhuma página declara data)",
+    "sem coletor (cobertura semântica)"
+   ],
+   "pior_caso": "981 linhas consulta×página, 887 consultas, 73 disputadas; 30 páginas na corrida, 10 com data",
+   "achado": "5 de 10 páginas com a primária disputada; 73 de 882 consultas não-marca em 2+ URLs (33,1% das impressões não-marca). O par que se repete (28 de 73) é /blog/quanto-custa-alinhador-invisivel à frente de /pacientes/precos: nas consultas de preço o post fica em 4–9 e a página de preço em 48–65, e ela só tem impressão pelo domínio anterior. Cadência: 40% (4 de 10 com data no prazo), 6 vencidas, 20 sem data — inclusive o post de preço (prazo 6 meses, 2025-10-20).",
+   "obs": "A aba /okr/[slug]/aquisicao dizia \"6 passaram de 12 meses\": falso desde 19/09, quando o prazo virou 6 ou 12 por intenção — 2 das 6 venceram pelo de 6. Corrigido. O nó sem coletor da reescrita do título (040) usa id -medido e conta em \"folhas com leitura própria\"; o da cobertura semântica não conta, e a divergência ficou declarada no handoff."
   }
  ]
 }

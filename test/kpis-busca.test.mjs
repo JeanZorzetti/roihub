@@ -23,6 +23,7 @@ import {
   LIMIAR_PAGINAS_DECIDIDAS,
   termoPrincipal,
   canibalizacao,
+  canibalizacaoPorPagina,
   kpisPorTermo,
   kpisPorPagina,
   activeIndexRatio,
@@ -474,6 +475,25 @@ test("consulta com URL única NÃO aparece na canibalização", () => {
 
 test("a mesma URL repetida na mesma consulta não é canibalização", () => {
   assert.deepEqual(canibalizacao([l("preco", "/a", 100, 1, 6.0), l("preco", "/a", 20, 0, 7.0)]).lista, []);
+});
+
+// 044 — a unidade do board é PÁGINA, e a disputa conta só quando cai na primária dela.
+test("canibalização por página: conta a página cuja PRIMÁRIA é disputada, marca fora dos dois lados", () => {
+  const ehMarca = (q) => /atma/.test(q);
+  const r = canibalizacaoPorPagina(
+    [
+      l("preco", "/blog", 300, 5, 5.0), // primária do /blog, disputada com /precos
+      l("preco", "/precos", 6, 0, 56.0),
+      l("tabela", "/precos", 40, 1, 9.0), // primária do /precos: só ele serve — não disputa
+      l("dicas", "/dicas", 50, 0, 12.0),
+      l("preco", "/dicas", 2, 0, 70.0), // /dicas aparece em "preco", mas a primária dele é "dicas"
+      l("atma", "/", 400, 90, 1.0), // primária de marca: fora do denominador
+      l("atma", "/blog", 3, 0, 8.0),
+    ],
+    ehMarca,
+  );
+  assert.equal(r.avaliadas, 3, "/, cuja primária é a marca, não entra");
+  assert.deepEqual(r.disputadas, [{ url: "/blog", termo: "preco", rivais: ["/precos", "/dicas"] }], "rivais por impressão, como em canibalizacao()");
 });
 
 // ── os dois agregadores ─────────────────────────────────────────────────────────────────────

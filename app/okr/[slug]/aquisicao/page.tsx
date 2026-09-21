@@ -2942,7 +2942,10 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                   ) : (
                     <Leitura valor={pct(atualizacao.fracao)}>
                       dentro da cadência ({br(atualizacao.avaliadas)} que declaram data ·{" "}
-                      {br(atualizacao.vencidas.length)} passaram de {CADENCIA_MESES} meses)
+                      {/* 044 — o prazo é por intenção desde 19/09 (6 OU 12 meses): "passaram de 12
+                          meses" era falso para as vencidas pelo prazo de 6. */}
+                      {br(atualizacao.vencidas.length)} passaram do prazo de{" "}
+                      {Object.keys(atualizacao.prazos).join(" ou ")} meses, conforme a intenção)
                     </Leitura>
                   ))}
 
