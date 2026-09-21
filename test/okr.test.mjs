@@ -18,6 +18,7 @@ import {
   buracosDeVerdade,
   valorEmRisco,
   ultimoPorPessoa,
+  cadeiaLigada,
 } from "../lib/okr.mjs";
 import { conversao } from "../lib/janelas.mjs";
 
@@ -223,6 +224,20 @@ test("celulasDeOrcamento: paciente_lead_id NULL conta uma vez POR LINHA, nunca c
   ];
   const { enviados } = celulasDeOrcamento(rows, { inicio: "2026-08-01", fim: "2026-08-31" });
   assert.deepEqual(enviados, apurado(2), "dois pacientes anônimos do WhatsApp não são o mesmo paciente");
+});
+
+// ── 052/T002 — cadeiaLigada(perfil): a ligação sai do perfil, não é declarada (research D3) ─────
+
+test("052 — cadeiaLigada('D'): os 4 marcos têm coletor, ligada e sem faltante", () => {
+  assert.deepEqual(cadeiaLigada("D"), { ligada: true, semColetor: [] });
+});
+
+test("052 — cadeiaLigada('A'): signup, ativado e trial pago sem coletor — pelos NOMES, não pelas chaves", () => {
+  assert.deepEqual(cadeiaLigada("A"), { ligada: false, semColetor: ["signup", "ativado", "trial pago"] });
+});
+
+test("052 — cadeiaLigada(perfil desconhecido) devolve não ligada e nada faltando", () => {
+  assert.deepEqual(cadeiaLigada("Z"), { ligada: false, semColetor: [] });
 });
 
 test("020/auditoria — órfão cujo NOME já entrou com id é a mesma pessoa, não uma a mais", () => {

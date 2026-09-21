@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mergeProjects, normalizeSite, reposSemSite, hostsDeclarados, separarPorHost } from "../lib/projects.mjs";
+import { mergeProjects, normalizeSite, reposSemSite, hostsDeclarados, separarPorHost, deBusca } from "../lib/projects.mjs";
 
 const repo = (name, extra = {}) => ({
   name,
@@ -136,6 +136,29 @@ test("separarPorHost normaliza www dos DOIS lados", () => {
   const out = separarPorHost([{ grupo: "Direct", host: "www.a.com", sessoes: 10 }], ["a.com"]);
   assert.deepEqual(out.linhas, [{ grupo: "Direct", sessoes: 10 }]);
   assert.deepEqual(out.fora, []);
+});
+
+// ── 052/T005 — deBusca(projetos, slugs): a mesma lista decide quem tem corrida e quem tem mapa ──
+
+test("deBusca devolve na ORDEM de slugs, não na da lista", () => {
+  const sirius = cur("sirius", "https://siriuscrm.com.br/", { curated: true });
+  const atma = cur("atma", "https://usealigner.com/", { curated: true });
+  assert.deepEqual(deBusca([sirius, atma], ["atma", "sirius"]).map((p) => p.slug), ["atma", "sirius"]);
+});
+
+test("deBusca: repo sem card (curated:false) fica fora — FR-003", () => {
+  const semCard = { slug: "sirius", nome: "SIRIUS", url: "https://sirius-ebon.vercel.app/", curated: false };
+  assert.deepEqual(deBusca([semCard], ["sirius"]), []);
+});
+
+test("deBusca: card curado sem `url` fica fora", () => {
+  const semUrl = cur("sirius", "https://siriuscrm.com.br/", { curated: true, url: undefined });
+  assert.deepEqual(deBusca([semUrl], ["sirius"]), []);
+});
+
+test("deBusca: slug fora da lista fica fora", () => {
+  const atma = cur("atma", "https://usealigner.com/", { curated: true });
+  assert.deepEqual(deBusca([atma], ["sirius"]), []);
 });
 
 test("separarPorHost com lista vazia não esconde o site inteiro", () => {

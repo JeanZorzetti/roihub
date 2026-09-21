@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { CATALOGO, CLASSES, MEDIDO_POR, filaDoMapa, regua } from "@/lib/gsc-delta.mjs";
 import { dadosDaFicha } from "@/lib/ficha-dados";
 import { DIVERGENCIAS, GRUPO_DO_TITULO, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
-import { listProjects } from "@/lib/projects";
+import { projetosDeBusca } from "@/lib/projects";
+import { cadeiaLigada } from "@/lib/okr.mjs";
 import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
@@ -19,9 +21,9 @@ import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-c
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
 
-import { Tabs } from "../../tabs";
-import { CadeiaDiagrama } from "../../okr/[slug]/celulas";
-import { Mapa } from "./mapa";
+import { Tabs } from "../../../tabs";
+import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
+import { Mapa } from "../mapa";
 
 // O BOARD DE GSC COMO MAPA MENTAL (032). O Whimsical `okr-Saw2eoSKZDPLJAk6xeDBuS` completo — os
 // níveis que `/gsc` não desenha porque o SVG dele para na folha.
@@ -68,9 +70,13 @@ export const dynamic = "force-dynamic";
 // mesma tipografia de "LCP ≤ 2,5s" é o defeito que `/gsc` existe para acusar — e um mapa bonito é
 // justamente onde ele passaria despercebido.
 
-export const metadata: Metadata = {
-  title: "Board GSC — o mapa mental completo, com a definição de cada KPI",
-};
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const projetosComMapa = await projetosDeBusca();
+  const p = projetosComMapa.find((x) => x.slug === slug);
+  const nomeCurto = p?.nome.split(" — ")[0] ?? slug;
+  return { title: `Board GSC — ${nomeCurto}` };
+}
 
 type No = { id: string; topic: string; note?: string; tags?: string[]; children?: No[]; metadata?: unknown };
 
@@ -253,7 +259,7 @@ function noteDoCrescimento(
 ): string {
   if (m.estado === "nao-declarada") {
     return decl.motivo
-      ? `O card da Atma não declara \`marca\` (${decl.motivo}). Sem a lista de termos o hub não sabe quais consultas são busca pelo NOME, e a separação marca/não-marca não existe — o que não é o mesmo que zero. Declara-se em \`data/projects.json\`, campo \`marca\` (\`termos\` + \`pais\`).`
+      ? `O card deste projeto não declara \`marca\` (${decl.motivo}). Sem a lista de termos o hub não sabe quais consultas são busca pelo NOME, e a separação marca/não-marca não existe — o que não é o mesmo que zero. Declara-se em \`data/projects.json\`, campo \`marca\` (\`termos\` + \`pais\`).`
       : "O card declara `marca`, mas nenhum dia da série gravada traz a separação medida. Não é falta de declaração: a corrida das 05:17 ainda não preencheu a série, e a medida aparece na próxima passagem.";
   }
   if (m.estado === "poucos-meses") {
@@ -265,7 +271,7 @@ function noteDoCrescimento(
   if (m.estado === "base-zero") {
     return `O mês-base ${m.de} tem ZERO impressões não-marca, então a razão dividiria por zero. O mês seguinte (${m.para}) tem ${br(m.paraImpressoes)}: há número, não há razão. Não é problema a consertar — sem base, a comparação não existe.`;
   }
-  const janela = `A razão compara MESES FECHADOS (${m.de} e ${m.para}) da série que o hub grava da Atma — não os 28 dias que o cabeçalho da página declara para as seis faixas de posição. O mês corrente nunca entra: o Search Console ainda sobe a ponta (30/07 saiu com 30 impressões e fechou em 827).`;
+  const janela = `A razão compara MESES FECHADOS (${m.de} e ${m.para}) da série que o hub grava deste projeto — não os 28 dias que o cabeçalho da página declara para as seis faixas de posição. O mês corrente nunca entra: o Search Console ainda sobe a ponta (30/07 saiu com 30 impressões e fechou em 827).`;
   // FR-003/FR-009 — a razão SÓ chega aqui quando a linha de topo não a abriu. É a mesma palavra da
   // aba de aquisição ("a faixa do board não se aplica"), para as duas telas não divergirem.
   const base = m.baseInterrompida
@@ -353,7 +359,7 @@ function topicDaConformidade(c: MedidaConformidade): string {
 /** A nota da conformidade. Ordem: o índice com a janela, o DENOMINADOR (que é a pergunta que o
  *  índice provoca), por que o topic não é o índice, a leitura por tráfego (que aponta para o outro
  *  lado), a dimensão, e a meta que não julga. */
-function noteDaConformidade(c: MedidaConformidade, janela: { inicio: string; fim: string }, lidas: number): string {
+function noteDaConformidade(c: MedidaConformidade, janela: { inicio: string; fim: string }, lidas: number, slug: string): string {
   const j = `janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3)`;
   // O índice aparece SEMPRE, inclusive quando não é o topic: quem expande a folha está procurando o
   // número, e escondê-lo faria a folha medida parecer não medida.
@@ -366,8 +372,8 @@ function noteDaConformidade(c: MedidaConformidade, janela: { inicio: string; fim
   const denominador = ` O denominador é ${br(c.porPagina.decididas)} e não ${br(lidas)}: ${br(c.semRegua)} URLs estão acima da posição 10,9, onde o board não publica piso (o "~1,5%" da página 2 não tem fonte e aplicá-lo à cauda mediria o palpite), e ${br(c.indecisas)} têm o intervalo de confiança de 95% (Wilson) atravessando a régua — desde a 033, amostra que não decide não reprova.`;
   const limiar =
     c.porPagina.decididas > 0 && c.porPagina.decididas < LIMIAR_PAGINAS_DECIDIDAS
-      ? ` Por isso o nó não abre pelo índice: com menos de ${br(LIMIAR_PAGINAS_DECIDIDAS)} decididas ele é ruído com casa decimal, e a resposta é a URL de maior impressão entre as decididas — a MESMA regra e a MESMA função de /okr/atma/aquisicao, que publica esta frase inteira.`
-      : ` As ${br(c.porPagina.decididas)} decididas passam do limiar de ${br(LIMIAR_PAGINAS_DECIDIDAS)}, e o índice é a resposta — a mesma troca de forma que /okr/atma/aquisicao faz sobre esta leitura.`;
+      ? ` Por isso o nó não abre pelo índice: com menos de ${br(LIMIAR_PAGINAS_DECIDIDAS)} decididas ele é ruído com casa decimal, e a resposta é a URL de maior impressão entre as decididas — a MESMA regra e a MESMA função de /okr/${slug}/aquisicao, que publica esta frase inteira.`
+      : ` As ${br(c.porPagina.decididas)} decididas passam do limiar de ${br(LIMIAR_PAGINAS_DECIDIDAS)}, e o índice é a resposta — a mesma troca de forma que /okr/${slug}/aquisicao faz sobre esta leitura.`;
   // A leitura que aponta para o outro lado. Publicar só a fração por página deixaria "1 de 4
   // atinge" soar como um quarto do site salvo, quando a URL que atinge carrega 2,5% do movimento.
   const trafego =
@@ -487,10 +493,11 @@ function noteDoAlinhamento(
   a: NonNullable<ReturnType<typeof taxaAlinhamento>>,
   ano: NonNullable<ReturnType<typeof contrafactualDoAno>>,
   dia: string,
+  slug: string,
 ): string {
   const c = a.compartilhado;
   const passam = a.avaliadas - a.ausentes.length;
-  const fracao = `${pct1(a.fracao)} dos títulos trazem um modificador de intenção explícito — ${br(passam)} de ${br(a.avaliadas)} páginas com título, corrida de ${dia}. É o número que \`lib/grafo.mjs#taxaAlinhamento\` devolve e o que /okr/atma/aquisicao publica na mesma janela.`;
+  const fracao = `${pct1(a.fracao)} dos títulos trazem um modificador de intenção explícito — ${br(passam)} de ${br(a.avaliadas)} páginas com título, corrida de ${dia}. É o número que \`lib/grafo.mjs#taxaAlinhamento\` devolve e o que /okr/${slug}/aquisicao publica na mesma janela.`;
   // O achado, e ele precisa vir ANTES de qualquer conselho sobre título: a maioria dos aprovados
   // não tem título próprio para ter modificador próprio.
   const topo = c.titulos[0];
@@ -584,13 +591,14 @@ function noteDaIntegridade(
   l: ReturnType<typeof taxaLarguraDoTitulo>,
   janela: { inicio: string; fim: string },
   dia: string,
+  slug: string,
 ): string {
   const fracao = `${pct1(i.fracao)} das URLs passam nas DUAS metas medíveis ao mesmo tempo — ${br(Math.round(i.fracao * i.avaliadas))} de ${br(i.avaliadas)}, corrida de ${dia} contra a janela ${janela.inicio} → ${janela.fim}.`;
   // A frase que impede a conjunção de ser lida como a largura.
   const partes = l
     ? ` Separadas, as duas metas dão números muito diferentes: a largura passa em ${pct1(l.fracao)} sobre as ${br(l.avaliadas)} páginas com título, e o termo em ${pct1(i.termo.passam / i.termo.base)} sobre as ${br(i.termo.base)} com termo apurado. A conjunção fica no MENOR denominador dos dois, porque um título só pode passar nas duas onde as duas foram medidas.`
     : "";
-  const doHub = ` A conjunção é do HUB, não do board: o board nomeia o KPI e lista três metas, sem dizer como combiná-las. \`lib/grafo.mjs#taxaIntegridadeDoTitulo\` combina as duas que algum coletor alcança, e é a mesma função que /okr/atma/aquisicao consome — as duas telas concordam por construção.`;
+  const doHub = ` A conjunção é do HUB, não do board: o board nomeia o KPI e lista três metas, sem dizer como combiná-las. \`lib/grafo.mjs#taxaIntegridadeDoTitulo\` combina as duas que algum coletor alcança, e é a mesma função que /okr/${slug}/aquisicao consome — as duas telas concordam por construção.`;
   const terceira = ` A terceira meta, a taxa de reescrita pelo Google, NÃO entra: nada no hub mede o título que o Google de fato exibiu (ver a folha ao lado).`;
   return `${fracao}${partes}${doHub}${terceira}`;
 }
@@ -666,7 +674,7 @@ function noDoVital(id: string, origens: Origens, anterior: { url: string; data: 
  * `balizador: recusa` ("agregação inventada"), então nenhum glifo de veredito aparece: o 90% do
  * board fica no nó da meta, abaixo, como o board escreveu — é a regra que a 034 fixou.
  */
-function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { inicio: string; fim: string }): No {
+function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { inicio: string; fim: string }, slug: string): No {
   const id = "urlsBoas-medido";
   if (!pass)
     return {
@@ -687,7 +695,7 @@ function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { i
     .map((v) => `${v.id.toUpperCase()} ≤ ${formatarValor(v, v.limite)}`)
     .join(", ");
   const amostra = `As ${br(pass.consultadas)} URLs de maior impressão na janela ${janela.inicio} → ${janela.fim} (${porHost})${pass.naoConsultadas > 0 ? `; ${br(pass.naoConsultadas)} não consultadas (teto de ${CAP_URLS_PASS_RATE}) — não reprovadas` : ""}. Por URL: ${porEstado}.`;
-  const regra = ` "Bom" é ${bom} no p75 de campo; o TTFB fica fora. O board cita o relatório de Core Web Vitals do Search Console, que não tem API: a leitura aqui é a CrUX URL a URL, a fonte daquele relatório, e é o mesmo cálculo do bloco de Pass Rate de /okr/atma/aquisicao. A meta do board, no nó abaixo, é meta e não régua: "percentual de URLs aprovadas" não tem limiar publicado.`;
+  const regra = ` "Bom" é ${bom} no p75 de campo; o TTFB fica fora. O board cita o relatório de Core Web Vitals do Search Console, que não tem API: a leitura aqui é a CrUX URL a URL, a fonte daquele relatório, e é o mesmo cálculo do bloco de Pass Rate de /okr/${slug}/aquisicao. A meta do board, no nó abaixo, é meta e não régua: "percentual de URLs aprovadas" não tem limiar publicado.`;
   if (pass.fracao === null)
     return {
       id,
@@ -701,35 +709,44 @@ function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { i
   };
 }
 
-export default async function MapaDoBoardPage() {
+export default async function MapaDoBoardPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const projetosComMapa = await projetosDeBusca();
+  const p = projetosComMapa.find((x) => x.slug === slug);
+  if (!p) notFound();
+  const nomeCurto = p.nome.split(" — ")[0];
+  // 052/research D3 — o painel "Depois do clique" só chama `dadosDaFicha()` quando o PERFIL
+  // declara todo degrau com coletor (FR-010): a Atma (perfil D) segue chamando, como sempre.
+  const cadeiaDoPerfil = cadeiaLigada(p.perfil);
+
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
   const reguaDe = regua as (k: string) => { tem: boolean; meta: number | [number, number] | null };
   const medidoPor = MEDIDO_POR as Record<string, string | undefined>;
 
-  // 033/US2 — as seis faixas de posição, sobre os hosts da ATMA (o board é o dela). Contrato de
+  // 033/US2 — as seis faixas de posição, sobre os hosts do projeto medido. Contrato de
   // ausência (`contracts/telas.md` §C): `null` = sem propriedade, `{erro}` = falha transitória,
   // `{paginas:[]}` = respondeu, zero impressão. Nenhum dos três renderiza `0%`.
-  const projects = await listProjects();
-  const atma = projects.find((p) => p.slug === "atma");
-  // 051/US1 — a cadeia depois do clique vem da MESMA composição de /okr/atma (`dadosDaFicha`), nunca
-  // de uma segunda conta: foi para três telas não divergirem que ela nasceu, e o mapa é a quarta.
-  // Disparada aqui e esperada só no fim — ~3,3 s a frio, em paralelo com as leituras do mapa.
-  const fichaAtma = dadosDaFicha("atma").catch((e: unknown) => ({ erro: e instanceof Error ? e.message.slice(0, 80) : "a composição da ficha falhou" }));
+  // 051/US1 — a cadeia depois do clique vem da MESMA composição de /okr/{slug} (`dadosDaFicha`),
+  // nunca de uma segunda conta: foi para três telas não divergirem que ela nasceu, e o mapa é a
+  // quarta. Disparada aqui e esperada só no fim — ~3,3 s a frio, em paralelo com as leituras do
+  // mapa. 052/FR-010: só quando a cadeia do perfil está ligada — sem coletor não há o que compor.
+  const fichaAtma = cadeiaDoPerfil.ligada
+    ? dadosDaFicha(slug).catch((e: unknown) => ({ erro: e instanceof Error ? e.message.slice(0, 80) : "a composição da ficha falhou" }))
+    : null;
   const janela = descoberta();
-  const hosts = atma ? hostsDeclarados(atma) : [];
-  const paginasGsc = atma ? await gscPaginas(hosts, janela) : null;
+  const hosts = hostsDeclarados(p);
+  const paginasGsc = await gscPaginas(hosts, janela);
   // 042 — o campo (CrUX) COMEÇA aqui e só é esperado no bloco dos vitais, lá embaixo: são até 12
   // POSTs em série (as origens declaradas e as URLs prioritárias), e sem sobrepor às leituras do
   // Search Console que vêm a seguir eles somariam à latência da rota inteira. Nenhuma das duas
   // funções lança.
-  const campo =
-    atma && SLUGS_DE_CAMPO.includes(atma.slug)
-      ? (async () => ({
-          origens: await lerOrigens(hosts),
-          pass: await lerPassRate(atma.slug, paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null),
-        }))()
-      : null;
+  const campo = SLUGS_DE_CAMPO.includes(p.slug)
+    ? (async () => ({
+        origens: await lerOrigens(hosts),
+        pass: await lerPassRate(p.slug, paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null),
+      }))()
+    : null;
   // 033/T071 — `null` tem TRÊS causas com consertos opostos (lista vazia, credencial ausente, host
   // fora de toda propriedade), e a tela afirmava a terceira sempre. Quem nomeia é `motivoDeAusencia`.
   const notaAusencia =
@@ -775,11 +792,11 @@ export default async function MapaDoBoardPage() {
   // dimensão `query` sozinha: a de cima lê por PÁGINA e esta conta TERMO, e a agregação do Google
   // por termo não é a soma das linhas de `query`+`page` (é a mesma razão que fez a 032 deletar
   // `porUrl`). Duas requisições, duas perguntas.
-  const termosGsc = atma ? await gscTermos(hosts, janela) : null;
+  const termosGsc = await gscTermos(hosts, janela);
   // O JSON entra tipado pelo próprio arquivo; `lerInventario` é `.mjs` e valida em tempo de
   // execução (lista vazia, termo duplicado, marca dentro do inventário) — é ela que reprova o
   // arquivo editado à mão, não o `tsc`.
-  const inventario = lerInventario("atma", INVENTARIOS);
+  const inventario = lerInventario(slug, INVENTARIOS);
   const penNode = acharNo(dados.nodeData as No, "penetracaoTop3");
   if (penNode) {
     const pen =
@@ -832,7 +849,7 @@ export default async function MapaDoBoardPage() {
   // forma — mas a medida não pode depender dessa coincidência para não quebrar.)
   // 036 — SOBE para o escopo da função: a folha do crescimento não-marca lê a mesma declaração, e
   // duas construções seriam a divergência que o parágrafo acima descreve.
-  const decl = marcaDeclarada(atma ?? {});
+  const decl = marcaDeclarada(p);
   const sdNode = acharNo(dados.nodeData as No, "strikingDistance");
   if (sdNode) {
     const ehMarca = decl.motivo ? null : (t: string) => new RegExp(decl.padrao, "i").test(t);
@@ -879,9 +896,9 @@ export default async function MapaDoBoardPage() {
   // da aba de aquisição, e uma segunda leitura seria o recorte divergente que o parágrafo acima proíbe.
   const longa = descobertaLonga() as { inicio: string; fim: string };
   let serie: DiaSeparado[] | { erro: string } | null = null;
-  if (atma && dbOn()) {
+  if (dbOn()) {
     try {
-      serie = await lerDiasGsc("atma", longa.inicio, longa.fim);
+      serie = await lerDiasGsc(slug, longa.inicio, longa.fim);
     } catch (e) {
       serie = { erro: (e instanceof Error ? e.message : String(e)).slice(0, 60) };
     }
@@ -895,7 +912,7 @@ export default async function MapaDoBoardPage() {
     if (!Array.isArray(serie)) {
       filho = {
         id: "crescimentoNaoMarca-medido",
-        topic: `∅ não apurado · banco indisponível (${serie ? serie.erro : atma ? "sem banco configurado para o hub" : "projeto atma não encontrado no hub"})`,
+        topic: `∅ não apurado · banco indisponível (${serie ? serie.erro : "sem banco configurado para o hub"})`,
         note: "Falha transitória ou ambiente sem banco — não ausência de dado. A série está gravada em `hub_gsc_dia`; o que falhou foi a leitura, e a medida volta na próxima. Sem a leitura não há mês fechado para comparar, e um 0% aqui leria como estagnação medida.",
       };
     } else {
@@ -932,8 +949,8 @@ export default async function MapaDoBoardPage() {
   // antes, que mantém o dia da semana dos dois lados. Disparada ANTES do `await` de baixo para as
   // duas correrem juntas; `gscConsultas` não lança, a falha volta como `{erro}`.
   const janelaBase = descoberta(Date.now() - 91 * 864e5);
-  const consultasBase = atma ? gscConsultas(hosts, janelaBase) : null;
-  const consultasGsc = atma ? await gscConsultas(hosts, janela) : null;
+  const consultasBase = gscConsultas(hosts, janelaBase);
+  const consultasGsc = await gscConsultas(hosts, janela);
   const impNode = acharNo(dados.nodeData as No, "impressoesTop3");
   if (impNode) {
     const lidas = consultasGsc && !("erro" in consultasGsc) ? consultasGsc.linhas : null;
@@ -1026,7 +1043,7 @@ export default async function MapaDoBoardPage() {
               return {
                 id: "ctrGap-medido",
                 topic: topicDaConformidade(c),
-                note: noteDaConformidade(c, janela, paginasDoGap!.length),
+                note: noteDaConformidade(c, janela, paginasDoGap!.length, slug),
               };
             })();
     // À FRENTE da definição e da meta, pelo mesmo motivo das quatro folhas vizinhas.
@@ -1050,10 +1067,10 @@ export default async function MapaDoBoardPage() {
   // 040 — HASTEADA pelo mesmo motivo de `consultasGsc`: a folha do título mede largura e termo
   // sobre as MESMAS páginas desta corrida, e duas leituras da mesma tabela poderiam cair em dias
   // diferentes se uma corrida gravasse entre as duas.
-  const crawl = dbOn() ? await lerCrawlDePagina("atma") : null;
+  const crawl = dbOn() ? await lerCrawlDePagina(slug) : null;
   // 043 — hasteada pelo mesmo motivo do `crawl`: a Indexação Limpa e a Rejeição de Rastreio leem a
   // MESMA apuração que o schema, e duas leituras podiam cair em corridas diferentes.
-  const apuracao = dbOn() ? await lerIndexacao("atma") : null;
+  const apuracao = dbOn() ? await lerIndexacao(slug) : null;
   const schemaNode = acharNo(dados.nodeData as No, "schema");
   if (schemaNode) {
     const sintaxe = crawl ? taxaCobertura(crawl.paginas) : null;
@@ -1109,8 +1126,8 @@ export default async function MapaDoBoardPage() {
   // são páginas diferentes e TODA URL sai como "sem termo apurado"), acha o termo principal pela
   // leitura e procura esse termo no título gravado pela corrida.
   const linhasDoTermo =
-    consultasGsc && !("erro" in consultasGsc) && atma
-      ? consultasGsc.linhas.map((l) => ({ ...l, page: canonizar(l.page, atma.url) ?? l.page }))
+    consultasGsc && !("erro" in consultasGsc)
+      ? consultasGsc.linhas.map((l) => ({ ...l, page: canonizar(l.page, p.url) ?? l.page }))
       : null;
   const posicaoPorUrl = new Map<string, number | null>(
     (corrida?.paginas ?? []).map((pg) => [
@@ -1214,7 +1231,7 @@ export default async function MapaDoBoardPage() {
               alinhamento.compartilhado.fracaoPropria !== null && alinhamento.compartilhado.urls > 0
                 ? `Medido: ${pct1(alinhamento.fracao)} · ${br(alinhamento.avaliadas - alinhamento.ausentes.length)} de ${br(alinhamento.avaliadas)} títulos com modificador · mas ${br(alinhamento.compartilhado.passam)} são o MESMO título de fallback · ${pct1(alinhamento.compartilhado.fracaoPropria)} (${br(alinhamento.compartilhado.passamProprias)} de ${br(alinhamento.compartilhado.proprias)}) entre títulos próprios`
                 : `Medido: ${pct1(alinhamento.fracao)} · ${br(alinhamento.avaliadas - alinhamento.ausentes.length)} de ${br(alinhamento.avaliadas)} títulos com modificador explícito`,
-            note: noteDoAlinhamento(alinhamento, ano!, corrida!.dia),
+            note: noteDoAlinhamento(alinhamento, ano!, corrida!.dia, slug),
           };
     // O segundo lado precisa da leitura de busca ALÉM da corrida, e por isso tem motivo próprio —
     // a mesma separação que a 040 fez entre a largura (só crawl) e o termo (crawl + Search Console).
@@ -1263,7 +1280,7 @@ export default async function MapaDoBoardPage() {
       : {
           id: "tituloIntegridade-lido",
           topic: `Medido: ${pct1(integridade!.fracao)} nas duas metas medíveis · ${br(integridade!.avaliadas)} URLs julgadas · largura ${pct1(largura!.fracao)} · termo ${pct1(integridade!.termo.passam / integridade!.termo.base)}`,
-          note: noteDaIntegridade(integridade!, largura, janela, corrida!.dia),
+          note: noteDaIntegridade(integridade!, largura, janela, corrida!.dia, slug),
         };
     tituloNode.children = [filho, ...(tituloNode.children ?? [])];
   }
@@ -1281,12 +1298,12 @@ export default async function MapaDoBoardPage() {
     const no = acharNo(dados.nodeData as No, id);
     if (!no) continue;
     const filho: No = lidoCampo
-      ? noDoVital(id, lidoCampo.origens, atma?.dominioAnterior ?? null)
+      ? noDoVital(id, lidoCampo.origens, p.dominioAnterior ?? null)
       : { id: `${id}-medido`, topic: "∅ não apurado · projeto fora do escopo de campo", note: "A leitura de campo só roda para `SLUGS_DE_CAMPO` (`lib/crux.mjs`)." };
     no.children = [filho, ...(no.children ?? [])];
   }
   const passNode = acharNo(dados.nodeData as No, "urlsBoas");
-  if (passNode) passNode.children = [noDoPassRate(lidoCampo?.pass ?? null, janela), ...(passNode.children ?? [])];
+  if (passNode) passNode.children = [noDoPassRate(lidoCampo?.pass ?? null, janela, slug), ...(passNode.children ?? [])];
 
   // ── 043: "2. KPIs de Rastreabilidade e Saúde do Índice" ────────────────────────────────────
   //
@@ -1311,7 +1328,7 @@ export default async function MapaDoBoardPage() {
       corrida && corrida.linkadasNaoDeclaradas > 0
         ? ` A corrida de página de ${corrida.dia} achou ${br(corrida.linkadasNaoDeclaradas)} páginas linkadas que o sitemap não declara: não foram submetidas, então não entram neste denominador — e a corrida de indexação não as inspeciona.`
         : "";
-    const anterior = atma?.dominioAnterior;
+    const anterior = p.dominioAnterior;
     const aposTroca =
       anterior && diaUtc(a.dia) >= diaUtc(anterior.data)
         ? ` A apuração é de ${diaUtc(a.dia) - diaUtc(anterior.data)} dias depois da troca de domínio de ${anterior.data}: URL do domínio novo que o Googlebot ainda não visitou aparece como descoberta, não como recusada.`
@@ -1398,7 +1415,7 @@ export default async function MapaDoBoardPage() {
   // ZERO REQUISIÇÃO NOVA, como a 043: a canibalização lê as linhas consulta×página que a 040
   // hasteou, JÁ CANONIZADAS (`linhasDoTermo`), porque sem isso `/x` e `/x/` disputariam entre si. A
   // cadência lê a mesma corrida de página da profundidade.
-  const anterior044 = atma?.dominioAnterior ?? null;
+  const anterior044 = p.dominioAnterior ?? null;
   const cruzaATroca = anterior044 && diaUtc(janela.inicio) < diaUtc(anterior044.data) && diaUtc(janela.fim) >= diaUtc(anterior044.data);
   const canNode = acharNo(dados.nodeData as No, "canibalizacao");
   if (canNode) {
@@ -1555,7 +1572,7 @@ export default async function MapaDoBoardPage() {
         id: "buscasDeMarca-medido",
         topic: `∅ não apurado · ${
           !Array.isArray(serie)
-            ? `banco indisponível (${serie ? serie.erro : atma ? "sem banco configurado para o hub" : "projeto atma não encontrado no hub"})`
+            ? `banco indisponível (${serie ? serie.erro : "sem banco configurado para o hub"})`
             : decl.motivo
               ? "marca não declarada para este projeto"
               : "a série gravada ainda não traz a separação de marca"
@@ -1751,7 +1768,7 @@ export default async function MapaDoBoardPage() {
   // PELO HOST NOVO, e uma URL só é exibida pelo Google se está no índice. MESMA função, entrada
   // restrita. Medido em 21/09/2026: 14 ÷ 18 = 77,8%, e a inspeção URL a URL fecha as 4 que faltam.
   const airNode = acharNo(dados.nodeData as No, "activeIndexRatio");
-  if (airNode && atma) {
+  if (airNode) {
     const hostNovo = hosts[0];
     const lidas = paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null;
     const falta =
@@ -1776,17 +1793,17 @@ export default async function MapaDoBoardPage() {
       };
     } else {
       const a = apuracao!;
-      const sitemap = new Set(corrida!.paginas.filter((p) => p.noSitemap).map((p) => canonizar(p.url, atma.url) ?? p.url));
+      const sitemap = new Set(corrida!.paginas.filter((pg) => pg.noSitemap).map((pg) => canonizar(pg.url, p.url) ?? pg.url));
       const doHostNovo = lidas!
-        .filter((p) => p.impressoes > 0 && p.hosts?.includes(hostNovo))
-        .map((p) => ({ ...p, pagina: canonizar(p.pagina, atma.url) ?? p.pagina }));
-      const ativas = doHostNovo.filter((p) => sitemap.has(p.pagina));
+        .filter((pg) => pg.impressoes > 0 && pg.hosts?.includes(hostNovo))
+        .map((pg) => ({ ...pg, pagina: canonizar(pg.pagina, p.url) ?? pg.pagina }));
+      const ativas = doHostNovo.filter((pg) => sitemap.has(pg.pagina));
       const r = activeIndexRatio(ativas, a.indexadas);
-      const comImpressao = new Set(ativas.map((p) => p.pagina));
+      const comImpressao = new Set(ativas.map((pg) => pg.pagina));
       const semImpressao = [...sitemap].filter((u) => !comImpressao.has(u)).map(caminhoDe).sort();
-      const foraDoSitemap = [...new Set(doHostNovo.filter((p) => !sitemap.has(p.pagina)).map((p) => caminhoDe(p.pagina)))].sort();
+      const foraDoSitemap = [...new Set(doHostNovo.filter((pg) => !sitemap.has(pg.pagina)).map((pg) => caminhoDe(pg.pagina)))].sort();
       const literal = urlsComImpressao(lidas!);
-      const anterior = atma.dominioAnterior;
+      const anterior = p.dominioAnterior;
       const troca =
         anterior && diaUtc(anterior.data) > diaUtc(janela.inicio) && diaUtc(anterior.data) <= diaUtc(janela.fim)
           ? ` O domínio novo entrou em ${anterior.data}, então ele tem só ${diaUtc(janela.fim) - diaUtc(anterior.data) + 1} dos 28 dias da janela: URL que entrou no índice depois disso teve poucos dias para aparecer.`
@@ -1824,11 +1841,11 @@ export default async function MapaDoBoardPage() {
   // da meta do board, porque a posição do GSC só conta as buscas em que o site apareceu.
   const tamNode = acharNo(dados.nodeData as No, "tamBusca");
   if (tamNode) {
-    const est = (DEMANDAS as Record<string, { procedencia: { congeladoEm: string; inventarioCongeladoEm: string; janelas: { inicio: string; fim: string; impressoes: number }[] }; termos: Record<string, number> } | undefined>).atma;
+    const est = (DEMANDAS as Record<string, { procedencia: { congeladoEm: string; inventarioCongeladoEm: string; janelas: { inicio: string; fim: string; impressoes: number }[] }; termos: Record<string, number> } | undefined>)[slug];
     const falta = !inventario
       ? "inventário de termos não declarado para este projeto"
       : !est
-        ? "sem estimativa de demanda gravada"
+        ? "sem demanda estimada declarada para este projeto"
         : est.procedencia.inventarioCongeladoEm !== inventario.procedencia.congeladoEm
           ? `a estimativa de demanda é do inventário de ${est.procedencia.inventarioCongeladoEm}, e o inventário em uso é de ${inventario.procedencia.congeladoEm}`
           : !termosGsc
@@ -1883,25 +1900,40 @@ export default async function MapaDoBoardPage() {
   // Só CONTAGENS (FR-012): valor em reais não entra no mapa. E nenhuma taxa até o clique (FR-003) —
   // o clique lê 28 dias fechando em D-3, a cadeia lê a época da Atma.
   const fichaLida = await fichaAtma;
-  const erroDaFicha = fichaLida && "erro" in fichaLida ? fichaLida.erro : fichaLida ? null : "projeto atma não encontrado";
+  const erroDaFicha = fichaLida && "erro" in fichaLida ? fichaLida.erro : null;
   const cadeia = fichaLida && !("erro" in fichaLida) && fichaLida.marcosCadeia.length ? fichaLida : null;
+  // 052/FR-010 — sem cadeia LIGADA (`cadeiaDoPerfil.ligada`, research D3), o painel nomeia os
+  // degraus sem coletor e não calcula taxa nenhuma. `semColetor` vazio só ocorre com perfil sem
+  // degraus ou desconhecido (`cadeiaLigada` devolve `[]`), e aí a frase é genérica.
+  const listaSemColetor = new Intl.ListFormat("pt-BR", { type: "conjunction" }).format(cadeiaDoPerfil.semColetor);
+  const semCadeiaLigada = "O perfil deste projeto não declara degraus de conversão, então não há cadeia para ligar ao clique.";
   const valorDoMarco = (m: { celula: { valor: number } | { naoApurado: string } }) => ("valor" in m.celula ? String(m.celula.valor) : "?");
   const cliqueRamo = acharNo(dados.nodeData as No, "clique");
   if (cliqueRamo) {
-    const noDaCadeia: No = cadeia
+    const noDaCadeia: No = !cadeiaDoPerfil.ligada
       ? {
           id: "depois-do-clique",
-          topic: `→ Depois do clique: ${cadeia.marcosCadeia.map(valorDoMarco).join(" → ")}`,
-          tags: ["soma · cada degrau sai do anterior", ...(cadeia.veredito.celula ? [`trava em ${cadeia.veredito.celula}`] : [])],
-          note: `A mesma cadeia de /okr/atma, com a mesma conta: ${cadeia.marcosCadeia.map((m) => `${valorDoMarco(m)} ${m.nome}`).join(" → ")}. Janela ${cadeia.janelas.conversao.inicio} → ${cadeia.janelas.conversao.fim} — ${cadeia.janelas.conversao.porque}. É soma porque cada degrau é um pedaço do anterior. Não há taxa até o clique: o clique lê 28 dias fechando em D-3 e a cadeia lê a época, e dividir um pelo outro seria dividir períodos diferentes.`,
+          topic: cadeiaDoPerfil.semColetor.length
+            ? `→ Depois do clique · ∅ sem cadeia de R$ ligada ao hub: ${listaSemColetor} não têm coletor`
+            : "→ Depois do clique · ∅ sem cadeia de R$ ligada ao hub",
+          note: cadeiaDoPerfil.semColetor.length
+            ? `∅ sem cadeia de R$ ligada ao hub: ${listaSemColetor} não têm coletor. Nenhuma taxa é calculada sem coletor nos dois lados de uma etapa (FR-010).`
+            : semCadeiaLigada,
         }
-      : {
-          id: "depois-do-clique",
-          topic: `→ Depois do clique · ∅ ${erroDaFicha ? "erro na fonte" : "sem cadeia"}`,
-          note: erroDaFicha
-            ? `A composição de /okr/atma falhou agora (${erroDaFicha}). Não é cadeia zerada: a leitura volta na próxima abertura.`
-            : "O perfil da Atma não declara degraus de conversão, então não há cadeia para ligar ao clique.",
-        };
+      : cadeia
+        ? {
+            id: "depois-do-clique",
+            topic: `→ Depois do clique: ${cadeia.marcosCadeia.map(valorDoMarco).join(" → ")}`,
+            tags: ["soma · cada degrau sai do anterior", ...(cadeia.veredito.celula ? [`trava em ${cadeia.veredito.celula}`] : [])],
+            note: `A mesma cadeia de /okr/${slug}, com a mesma conta: ${cadeia.marcosCadeia.map((m) => `${valorDoMarco(m)} ${m.nome}`).join(" → ")}. Janela ${cadeia.janelas.conversao.inicio} → ${cadeia.janelas.conversao.fim} — ${cadeia.janelas.conversao.porque}. É soma porque cada degrau é um pedaço do anterior. Não há taxa até o clique: o clique lê 28 dias fechando em D-3 e a cadeia lê a época, e dividir um pelo outro seria dividir períodos diferentes.`,
+          }
+        : {
+            id: "depois-do-clique",
+            topic: `→ Depois do clique · ∅ ${erroDaFicha ? "erro na fonte" : "sem cadeia"}`,
+            note: erroDaFicha
+              ? `A composição de /okr/${slug} falhou agora (${erroDaFicha}). Não é cadeia zerada: a leitura volta na próxima abertura.`
+              : semCadeiaLigada,
+          };
     cliqueRamo.children = [...(cliqueRamo.children ?? []), noDaCadeia];
   }
   // G3/G25 — a hora da apuração (a tela lê ao abrir) e o crawl que estourou a promessa diária:
@@ -1967,6 +1999,32 @@ export default async function MapaDoBoardPage() {
         <p className="eyebrow">Referência · board de GSC · mapa completo</p>
         <h1 className="ficha-nome">O board do Whimsical inteiro, e o que cada KPI quer dizer</h1>
 
+        {/* 052/US3/FR-011 — o seletor entre os projetos com mapa: mesmas classes de `Tabs`
+            (`.tabs`/`.nav-grupo`/`.tab`), reaproveitadas aqui como em `quadro.tsx` — zero CSS novo.
+            O item atual não é link (`aria-current="page"` num `<span>`), só com o teclado um Tab
+            alcança o outro projeto e Enter abre (SC-006). */}
+        {projetosComMapa.length > 1 && (
+          <nav className="tabs" aria-label="Projetos com mapa">
+            <div className="nav-grupo">
+              <ul>
+                {projetosComMapa.map((x) => (
+                  <li key={x.slug}>
+                    {x.slug === slug ? (
+                      <span className="tab active" aria-current="page">
+                        {x.nome.split(" — ")[0]}
+                      </span>
+                    ) : (
+                      <a className="tab" href={`/gsc/mapa/${x.slug}`}>
+                        {x.nome.split(" — ")[0]}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </nav>
+        )}
+
         {/* ── 051 · A RESPOSTA ANTES DA PROSA ─────────────────────────────────────────────────────
             O painel responde UMA pergunta: onde o trabalho de busca da Atma rende mais, e ele chega
             ao dinheiro? Nível 1 é a cadeia — a lição da BSC, medida que não chega ao resultado é
@@ -1991,7 +2049,7 @@ export default async function MapaDoBoardPage() {
                 />
                 <p className="foot">
                   Janela da cadeia: <strong>{cadeia.janelas.conversao.inicio} → {cadeia.janelas.conversao.fim}</strong> —{" "}
-                  {cadeia.janelas.conversao.porque}. A mesma conta de <a href="/okr/atma">/okr/atma</a>.
+                  {cadeia.janelas.conversao.porque}. A mesma conta de <a href={`/okr/${slug}`}>{`/okr/${slug}`}</a>.
                   {cliques28 !== null ? (
                     <>
                       {" "}Antes dela, o Search Console contou <strong>{br(cliques28)} cliques</strong> em {janela.inicio} →{" "}
@@ -2001,12 +2059,17 @@ export default async function MapaDoBoardPage() {
                   Não há taxa entre os dois números: as janelas são diferentes. Apurado ao abrir a página, em {apuradoEm}.
                 </p>
               </>
+            ) : !cadeiaDoPerfil.ligada ? (
+              <p className="foot">
+                ∅ sem cadeia de R$ ligada ao hub:{" "}
+                {cadeiaDoPerfil.semColetor.length ? `${listaSemColetor} não têm coletor.` : semCadeiaLigada}
+              </p>
             ) : (
               <p className="foot">
                 ∅{" "}
                 {erroDaFicha
-                  ? `erro na fonte — a composição de /okr/atma falhou agora (${erroDaFicha}). Não é cadeia zerada.`
-                  : "sem cadeia — o perfil da Atma não declara degraus de conversão."}
+                  ? `erro na fonte — a composição de /okr/${slug} falhou agora (${erroDaFicha}). Não é cadeia zerada.`
+                  : semCadeiaLigada}
               </p>
             )}
           </section>
@@ -2103,13 +2166,13 @@ export default async function MapaDoBoardPage() {
           no nó, e o placar fechado está na <a href="/gsc">árvore</a>.
         </p>
         <p className="foot">
-          {/* 033/T042 — qual projeto está medindo, por escrito: o board é o da Atma, não do
-              portfólio, e as seis faixas de "Posição no Google" (abaixo) medem os hosts dela. */}
-          <strong>O que esta tela mede é a Atma</strong> — {atma ? hostsDeclarados(atma).join(" + ") : "projeto não encontrado"},
+          {/* 052 — qual projeto está medindo, por escrito: a rota resolve o projeto (`p`), e as
+              seis faixas de "Posição no Google" (abaixo) medem os hosts dele. */}
+          <strong>O que esta tela mede é o projeto {nomeCurto}</strong> — {hostsDeclarados(p).join(" + ")},
           janela {janela.inicio} → {janela.fim} (28 dias, fecha em D-3): as seis faixas de{" "}
           &ldquo;Posição no Google&rdquo; e as <strong>{folhasMedidas} folhas com leitura própria</strong>,
           que abrem com o número antes da definição do board. O board{" "}
-          <code>okr-Saw2eoSKZDPLJAk6xeDBuS</code> é o board dela, não do portfólio.{" "}
+          <code>okr-Saw2eoSKZDPLJAk6xeDBuS</code> é de SEO: a mesma definição vale para cada projeto com mapa.{" "}
           {notaAusencia ? <strong>{notaAusencia.charAt(0).toUpperCase() + notaAusencia.slice(1)}.</strong> : null}
         </p>
         <p className="foot">

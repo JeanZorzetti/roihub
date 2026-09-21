@@ -15,13 +15,13 @@
 ## Cabeçalho
 
 1. **Seletor (FR-011)**: um `<nav aria-label="Projetos com mapa">` com uma lista, na ordem de
-   `SLUGS_DE_BUSCA`. O item atual vai sem link e com `aria-current="page"`. Os outros são `<a>` para
-   `/gsc/mapa/{slug}`, e o texto do link é o `nomeCurto`. Só com o teclado, um Tab chega ao outro
-   projeto e Enter abre (SC-006).
+   `SLUGS_DE_BUSCA`, que é a ordem em que `projetosDeBusca()` já devolve (research D2). O item atual vai
+   sem link e com `aria-current="page"`. Os outros são `<a>` para `/gsc/mapa/{slug}`, e o texto do link é o
+   `nomeCurto`. Só com o teclado, um Tab chega ao outro projeto e Enter abre (SC-006).
 2. **Projeto medido (FR-004)**: "**O que esta tela mede é o projeto {nomeCurto}** — {hosts unidos por " + "},
    janela {início} → {fim} (28 dias, fecha em D-3) …". A frase "é o board dela, não do portfólio" sai, e
-   no lugar entra "O board `okr-Saw2eoSKZDPLJAk6xeDBuS` é de SEO: a mesma definição vale para os {n} projetos
-   com mapa", com `n` computado de `projetosDeBusca().length`.
+   no lugar entra "O board `okr-Saw2eoSKZDPLJAk6xeDBuS` é de SEO: a mesma definição vale para cada projeto
+   com mapa". Sem contagem: um número novo na tela da Atma desalinharia a comparação da SC-002 (research D12).
 
 ## Frases: medida × evidência
 

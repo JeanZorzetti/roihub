@@ -46,7 +46,7 @@ test("todo vital tem onde aparecer na ficha: VITAIS ⊂ MEDIDORES.D2", () => {
   // Um `id` fora do catálogo da ficha não teria onde ser exibido, e a divergência não apareceria
   // em build nenhum.
   for (const v of VITAIS) assert.ok(MEDIDORES.D2.includes(v.id), `${v.id} não está em MEDIDORES.D2`);
-  assert.deepEqual(SLUGS_DE_CAMPO, ["atma"]);
+  assert.deepEqual(SLUGS_DE_CAMPO, ["atma", "sirius"]);
   assert.equal(typeof CAP_URLS_PASS_RATE, "number");
 });
 

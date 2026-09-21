@@ -9,8 +9,10 @@
 O mapa já é quase todo agnóstico. O que o prende à Atma são as leituras com o slug fixo e ~20 frases. O plano:
 
 1. **Rota por projeto (US1, US2).** `app/gsc/mapa/page.tsx` muda para `app/gsc/mapa/[slug]/page.tsx` com
-   `git mv`, sem cópia. O `atma` fixo vira o projeto do slug, que sai de `projetosDeBusca()` (a mesma lista das
-   corridas) com card curado. Um slug fora dela, ou sem card, dá `notFound()`. `/gsc/mapa` redireciona para `/gsc/mapa/atma` com 307.
+   `git mv`, sem cópia. O `atma` fixo vira o projeto do slug, que sai de `projetosDeBusca()`, a mesma lista das
+   corridas. Ela passa a devolver só card curado com `url`, na ordem de `SLUGS_DE_BUSCA` (`deBusca()` em
+   `lib/projects.mjs`, research D2). Um slug fora dela, ou sem card, dá `notFound()`. `/gsc/mapa` redireciona
+   para `/gsc/mapa/atma` com 307.
 2. **Frases (FR-004).** Cada frase que afirma algo sobre o projeto medido passa a usar `nomeCurto`, "este
    projeto" ou `/okr/{slug}`. As duas frases que citam a Atma como evidência de uma regra ficam, e são
    listadas em `EVIDENCIAS` (research D5).
@@ -19,8 +21,8 @@ O mapa já é quase todo agnóstico. O que o prende à Atma são as leituras com
    coletor e não chama `dadosDaFicha`.
 4. **Escopo (US4, FR-005, FR-006).** `SLUGS_DE_BUSCA` e `SLUGS_DE_CAMPO` ganham `sirius`. As três corridas
    cabem no tempo de hoje (research D8). O hiato da série se fecha sozinho, e a separação de marca chega
-   aos 141 dias antigos na primeira corrida com a marca declarada (research D6 e D7, que corrigem uma
-   premissa da spec).
+   aos 141 dias antigos na primeira corrida com a marca declarada (research D6 e D7; a spec foi corrigida
+   em 21/09).
 5. **Seletor (US3, FR-011).** Um `<nav>` no cabeçalho com os projetos de `projetosDeBusca()`.
 6. **Dado declarado (FR-007, FR-008).** A marca e o inventário do Sirius entram só depois do aceite do dono,
    pelo script que já existe. O código não espera por eles.
@@ -35,9 +37,9 @@ O mapa já é quase todo agnóstico. O que o prende à Atma são as leituras com
 passam a receber linhas do `sirius`. Dado declarado: `data/projects.json` (a `marca` do card) e
 `data/inventario-de-termos.json` (a chave `sirius`), os dois depois do aceite.
 
-**Testing**: `node --test`. Crescem `test/okr.test.mjs` (`cadeiaLigada`) e `test/crux.test.mjs`
-(`SLUGS_DE_CAMPO`). Entra **um** arquivo novo, `test/mapa-projeto.test.mjs`, registrado em `package.json` no
-mesmo commit.
+**Testing**: `node --test`. Crescem `test/okr.test.mjs` (`cadeiaLigada`), `test/projects.test.mjs` (`deBusca`) e
+`test/crux.test.mjs` (`SLUGS_DE_CAMPO`). Entra **um** arquivo novo, `test/mapa-projeto.test.mjs`, registrado em
+`package.json` no mesmo commit.
 
 **Target Platform**: container Linux no EasyPanel; dev no Windows.
 
@@ -51,7 +53,7 @@ isso nenhum ajuste no proxy do EasyPanel; nenhum `0`/`0%` sobre ausência; nenhu
 Sirius. Push fora de 23:30–01:00 e 08:00–08:45 BRT (Princípio IV). Push também fora de 05:15–06:40 BRT: as
 três corridas rodam às 05:17, 05:47 e 06:17 e morreriam com o reinício do container.
 
-**Scale/Scope**: 2 projetos, 113 folhas, ~20 frases, 3 corridas; Atma com 25 URLs no sitemap e Sirius com 114.
+**Scale/Scope**: 2 projetos, 113 nós do board (65 folhas), ~20 frases, 3 corridas; Atma com 25 URLs no sitemap e Sirius com 114.
 
 ## Constitution Check
 
@@ -60,8 +62,8 @@ três corridas rodam às 05:17, 05:47 e 06:17 e morreriam com o reinício do con
 | Princípio | Como esta feature cumpre |
 |---|---|
 | I. Contrato único de dados | O projeto do mapa e o seletor saem de `projetosDeBusca()`, que usa `listProjects()`. A marca entra no card, lido pelo mesmo contrato. Nenhum import de `data/projects.json`. |
-| II. `node --test`, registrado à mão | `test/mapa-projeto.test.mjs` entra na lista do `package.json` no commit que o cria, e `test/validade.test.mjs` cobra isso. Os outros dois arquivos já estão registrados. |
-| III. `.mjs` para lógica pura | `cadeiaLigada` (`lib/okr.mjs`), `EVIDENCIAS`, `frasesAlheias` e `numerosDoMapa` (`lib/mapa-projeto.mjs`) nascem em `.mjs`. As `.tsx` só resolvem a rota e escrevem. |
+| II. `node --test`, registrado à mão | `test/mapa-projeto.test.mjs` entra na lista do `package.json` no commit que o cria, e `test/validade.test.mjs` cobra isso. Os outros três arquivos já estão registrados. |
+| III. `.mjs` para lógica pura | `cadeiaLigada` (`lib/okr.mjs`), `deBusca` (`lib/projects.mjs`), `EVIDENCIAS`, `textoDoMain`, `frasesAlheias` e `numerosDoMapa` (`lib/mapa-projeto.mjs`) nascem em `.mjs`. As `.tsx` só resolvem a rota e escrevem. |
 | IV. Push é deploy | Fora das janelas do princípio e das corridas da manhã. Nenhuma `maxDuration` muda. |
 | V. Ambiente explícito, segredo nunca em log | Nenhuma variável nova. As rotas das corridas já validam o ambiente na entrada. A testemunha lê o HTML, não o `.env`. |
 
@@ -91,14 +93,16 @@ app/gsc/mapa/[slug]/page.tsx    # o page.tsx de hoje, com git mv: slug → proje
                                 #   frases da D5, seletor, cadeiaLigada, DEMANDAS[slug], lerInventario(slug)
 app/gsc/mapa/page.tsx           # novo conteúdo: redirect("/gsc/mapa/atma")
 app/gsc/mapa/mapa.tsx           # sem mudança (importado como ../mapa)
-lib/projects.ts                 # SLUGS_DE_BUSCA = ["atma", "sirius"] + a decisão de 21/09 no comentário
+lib/projects.ts                 # SLUGS_DE_BUSCA = ["atma", "sirius"] + a decisão de 21/09; projetosDeBusca() chama deBusca()
+lib/projects.mjs                # deBusca(projetos, slugs): card curado, com url, na ordem de slugs
 lib/crux.mjs                    # SLUGS_DE_CAMPO = ["atma", "sirius"]
 lib/okr.mjs                     # cadeiaLigada(perfil)
-lib/mapa-projeto.mjs            # NOVO: EVIDENCIAS, frasesAlheias(), numerosDoMapa()
-scripts/conferir-mapa.mjs       # NOVO: testemunha das SC-002 (numeros) e SC-005 (alheio) sobre o HTML
+lib/mapa-projeto.mjs            # NOVO: EVIDENCIAS, textoDoMain(), frasesAlheias(), numerosDoMapa()
+scripts/conferir-mapa.mjs       # NOVO: testemunha das SC-002 (numeros) e SC-005 (alheio) sobre o texto de <main>
 test/okr.test.mjs               # cadeiaLigada: D ligada, A com os três nomes, perfil desconhecido
+test/projects.test.mjs          # deBusca: ordem de slugs, repo sem card, sem url
 test/crux.test.mjs              # SLUGS_DE_CAMPO
-test/mapa-projeto.test.mjs      # NOVO: frase de evidência passa, frase sobre o projeto reprova, carimbo fora dos números
+test/mapa-projeto.test.mjs      # NOVO: frase de evidência passa, frase sobre o projeto reprova, carimbo fora dos números, script fora do texto
 package.json                    # registra test/mapa-projeto.test.mjs
 data/projects.json              # card sirius: marca — SÓ depois do aceite (FR-007)
 data/inventario-de-termos.json  # chave sirius via derivar-inventario.mjs --gravar — SÓ depois do aceite (FR-008)

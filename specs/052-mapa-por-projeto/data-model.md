@@ -13,13 +13,15 @@ arquivos de dado declarado.
 | `marca?` | `marcaDeclarada()`: guarda de marca, não-marca, pernas da corrida | declarada em 08/09 | **proposta** (abaixo) |
 | `perfil` | `cadeiaLigada(perfil)`: decide o painel "Depois do clique" | D, ligada | A, não ligada |
 
-Regra: o mapa existe se e só se o slug está em `projetosDeBusca()` **e** o projeto é `curated`. Fora disso
-a resposta é 404 (FR-003). O `curated` separa o card do repo do GitHub que só tem `homepage` (research D2).
+Regra: o mapa existe se e só se o slug está em `projetosDeBusca()`. Fora disso a resposta é 404 (FR-003). A
+lista já sai de `deBusca(projetos, SLUGS_DE_BUSCA)` (`lib/projects.mjs`): card curado, com `url`, na ordem de
+`SLUGS_DE_BUSCA`. O `curated` separa o card do repo do GitHub que só tem `homepage` (research D2).
 
 ## Marca declarada (campo `marca` do card)
 
 `{ termos: string[], pais: string, declaradaEm: "YYYY-MM-DD" }`. O formato já é validado por
-`marcaDeclarada()` em `lib/marca.mjs`.
+`marcaDeclarada()` em `lib/marca.mjs`. `pais` é obrigatório (sem ele o motivo é `sem-pais`) e filtra as três
+pernas de marca da série: as folhas de marca leem só esse país (FR-007).
 
 **Proposta para o Sirius (FR-007, aguardando o aceite)**: `termos: ["sirius", "siriuscrm"]`, `pais: "bra"`,
 `declaradaEm`: a data do aceite.
@@ -64,7 +66,7 @@ mostra o motivo da FR-009.
 
 | Constante | Arquivo | Hoje | Depois | Quem lê |
 |---|---|---|---|---|
-| `SLUGS_DE_BUSCA` | `lib/projects.ts` | `["atma"]` | `["atma", "sirius"]` | as três corridas, `/okr/[slug]/aquisicao` e o mapa (rota e seletor) |
+| `SLUGS_DE_BUSCA` | `lib/projects.ts` | `["atma"]` | `["atma", "sirius"]` | as três corridas e o mapa (rota e seletor), por `projetosDeBusca()` → `deBusca()`; `/okr/[slug]/aquisicao`, direto |
 | `SLUGS_DE_CAMPO` | `lib/crux.mjs` | `["atma"]` | `["atma", "sirius"]` | o mapa (vitais e Pass Rate) e a ficha `/okr/[slug]` |
 
 ## Cadeia ligada (função nova em `lib/okr.mjs`)
@@ -83,5 +85,6 @@ mostra o motivo da FR-009.
 | Export | Forma | Regra |
 |---|---|---|
 | `EVIDENCIAS` | `RegExp[]` | as frases que PODEM nomear a Atma no mapa de outro projeto (research D5): hoje, duas |
-| `frasesAlheias(texto, alheio, permitidas)` | → `string[]` | divide o texto em frases e devolve as que contêm `alheio` (sem diferenciar maiúsculas) e não casam com nenhuma de `permitidas` |
+| `textoDoMain(html)` | → `string` | o texto visível de `<main>`: tira os blocos `<script>` e `<style>` inteiros, depois as tags (research D12) |
+| `frasesAlheias(texto, alheio, permitidas)` | → `string[]` | divide o texto em frases (corte em `.`, `!` ou `?` seguidos de espaço, para não partir `1.234` nem `.mjs`) e devolve as que contêm `alheio` (sem diferenciar maiúsculas) e não casam com nenhuma de `permitidas` |
 | `numerosDoMapa(texto)` | → `string[]` | os números em ordem de aparição, no formato pt-BR (`1.234`, `12,5%`, `4,4`), sem o carimbo "Apurado ao abrir a página, em …" |

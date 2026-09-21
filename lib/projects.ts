@@ -1,6 +1,6 @@
 import curated from "@/data/projects.json";
 import { listRepos } from "@/lib/github";
-import { mergeProjects, reposSemSite } from "@/lib/projects.mjs";
+import { mergeProjects, reposSemSite, deBusca } from "@/lib/projects.mjs";
 
 // Ponto único de entrada da lista de projetos do hub. Todo consumidor (ranking, SEO, infra,
 // insights, agenda) passa por aqui — nenhum importa data/projects.json direto, senão a aba
@@ -110,7 +110,8 @@ export async function listProjects(): Promise<Project[]> {
   return mergeProjects(curated as Curated[], await listRepos()) as Project[];
 }
 
-/** Escopo das corridas de busca (021 série do GSC · 022 indexação do sitemap): **só a Atma**.
+/** Escopo das corridas de busca (021 série do GSC · 022 indexação do sitemap) e, pela mesma
+ *  lista (052/FR-003), de quem tem mapa em `/gsc/mapa/{slug}`.
  *
  *  Decisão do Jean (07/09/2026), corrigindo o escopo com que as duas specs nasceram: o board de
  *  OKR de busca é da Atma, e as corridas estavam varrendo os 35 projetos. Não é otimização — é o
@@ -118,14 +119,18 @@ export async function listProjects(): Promise<Project[]> {
  *  inspeções/dia dividida por 21 subdomínios de `roilabs.com.br`): com um projeto só, o rodízio e
  *  a amostra continuam no código mas nunca disparam.
  *
- *  Lista e não constante porque "primeiras servidas" é sequência, não exclusão permanente: abrir
- *  para o segundo projeto é acrescentar um slug aqui, sem tocar em rota nenhuma. */
-export const SLUGS_DE_BUSCA = ["atma"];
+ *  052 (21/09/2026): o Sirius volta ao escopo para ter mapa — a mesma lista decide quem tem
+ *  corrida e quem tem mapa (FR-003). Lista e não constante porque "primeiras servidas" é
+ *  sequência, não exclusão permanente: abrir para o terceiro projeto é acrescentar um slug aqui,
+ *  sem tocar em rota nenhuma. */
+export const SLUGS_DE_BUSCA = ["atma", "sirius"];
 
-/** Os projetos que as corridas de busca percorrem. Filtra por `url` como antes — quem não tem site
- *  não tem o que inspecionar. */
+/** Os projetos que as corridas de busca percorrem e que têm mapa, na ordem de `SLUGS_DE_BUSCA`.
+ *  `deBusca()` (lib/projects.mjs) exige card curado e `url` — quem não tem site não tem o que
+ *  inspecionar, e quem não tem card não é o projeto certo mesmo tendo `homepage` no GitHub
+ *  (research D2). */
 export async function projetosDeBusca(): Promise<Project[]> {
-  return (await listProjects()).filter((p) => p.url && SLUGS_DE_BUSCA.includes(p.slug));
+  return deBusca(await listProjects(), SLUGS_DE_BUSCA) as Project[];
 }
 
 /** Repos vivos sem homepage — pendências de "todo projeto terá site". */

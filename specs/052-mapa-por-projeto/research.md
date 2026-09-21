@@ -18,15 +18,21 @@ sitemap do Sirius. Nenhum `NEEDS CLARIFICATION` ficou aberto.
 
 ## D2 — Quem tem mapa: a mesma lista das corridas
 
-- **Decisão**: o projeto do mapa é `(await projetosDeBusca()).find((p) => p.slug === slug && p.curated)`. Se
-  não houver, a resposta é `notFound()`. O seletor do cabeçalho (FR-011) lista a mesma
-  `projetosDeBusca()`, com o mesmo filtro.
+- **Decisão**: `projetosDeBusca()` passa a devolver só projeto com card curado e `url`, na ordem de
+  `SLUGS_DE_BUSCA`. A regra mora numa função pura, `deBusca(projetos, slugs)` em `lib/projects.mjs`, testada em
+  `test/projects.test.mjs`. O projeto do mapa é `(await projetosDeBusca()).find((p) => p.slug === slug)`, e sem
+  ele a resposta é `notFound()`. O seletor do cabeçalho (FR-011) lista a mesma `projetosDeBusca()`, sem filtro
+  próprio.
 - **Por quê**: FR-003 e a entidade "Escopo" dizem que a lista das corridas e a lista dos mapas são a mesma.
-  `projetosDeBusca()` já filtra por `url` e passa por `listProjects()` (Princípio I). Mesmo assim, só ela
-  não cobre o card que sumiu. `listProjects()` mescla os repos do GitHub, e o repo `sirius` tem `homepage`
-  (`sirius-ebon.vercel.app`, conforme `test/projects.test.mjs:37`). Sem o card, o slug continuaria com `url`,
-  e o mapa mediria o host da Vercel. O `curated` fecha esse caso: repo sem card nunca é `curated`. As
-  corridas não ganham esse filtro nesta feature, porque o edge case da spec é sobre a tela.
+  Filtrar por `url` não cobre o card que sumiu. `listProjects()` mescla os repos do GitHub (Princípio I), e o
+  repo `sirius` tem `homepage` (`sirius-ebon.vercel.app`, conforme `test/projects.test.mjs:37`). Sem o card, o
+  slug continuaria com `url`, e o mapa mediria o host da Vercel. O `curated` fecha esse caso: repo sem card
+  nunca é `curated`. A guarda fica na função que todos chamam, não na página: posta só na página, a corrida
+  seguiria medindo a Vercel com o mapa em 404, e as duas listas divergiriam.
+- **A ordem**: `mergeProjects` preserva a ordem do `projects.json`, e lá o Sirius é o card 2 e a Atma o card
+  20. Sem ordenar por `SLUGS_DE_BUSCA`, o seletor sairia "Sirius CRM, Atma Aligner".
+- **Efeito nas corridas**: nenhum hoje. Os dois slugs do escopo têm card curado e `url`, e a ordem de
+  percurso passa a ser a de `SLUGS_DE_BUSCA`.
 - **Efeito que isso tem**: depois do `notFound()` o projeto nunca é `undefined`. Os ramos
   `atma ? … : "projeto atma não encontrado no hub"` (linhas 898, 1558 e 1886 de hoje) viram código morto e
   saem do arquivo.
@@ -54,8 +60,7 @@ sitemap do Sirius. Nenhum `NEEDS CLARIFICATION` ficou aberto.
   resultado é "Atma Aligner" e "Sirius CRM". O cabeçalho diz "O que esta tela mede é o projeto {nomeCurto}
   — {hosts}". As notas dizem "este projeto".
 - **Por quê**: o português pede artigo por gênero ("a Atma", "o Sirius"), e o card não declara gênero.
-  "o projeto X" é correto para os dois. A spec escreve "é o Sirius CRM", e a frase entregue é "é o projeto
-  Sirius CRM". A diferença é só essa palavra.
+  "o projeto X" é correto para os dois. O cenário 1 da US1 foi alinhado a esta frase em 21/09.
 - **Alternativa rejeitada**: um campo `artigo` no card, que seria um dado novo só para uma frase.
 
 ## D5 — As frases que nomeiam a Atma: medida ou evidência
@@ -72,7 +77,7 @@ Levantamento de toda string renderizada em `app/gsc/mapa/page.tsx` que contém "
 | 1896, 1902, 1994, 2008 | "/okr/atma" | link do projeto | `/okr/{slug}` |
 | 1903, 2009 | "O perfil da Atma não declara degraus" | projeto medido | "O perfil deste projeto não declara degraus" |
 | 2108 | "O que esta tela mede é a Atma" | cabeçalho | D4 |
-| 2112 | "é o board dela, não do portfólio" | projeto medido | "é um board de SEO: a mesma definição vale para os {n} projetos com mapa" |
+| 2112 | "é o board dela, não do portfólio" | projeto medido | "é de SEO: a mesma definição vale para cada projeto com mapa", sem contagem (D12) |
 | 898, 1558, 1886 | "projeto atma não encontrado" | código morto (D2) | sai |
 | 379 | "42,1% das impressões da Atma" | **evidência** | fica |
 | 382 | "`conferir-soma-hosts.mjs atma …` imprimia 12,50% … em 20/09/2026" | **evidência** | fica |
@@ -94,22 +99,24 @@ em minúscula.
 
 ## D7 — Correção de premissa: a separação de marca chega à série antiga
 
-- **O que a spec supôs**: "Os 141 dias do Sirius sem separação de marca não são reescritos. A separação vale
-  da primeira corrida com a marca declarada em diante". A SC-004 abre exceção para as folhas que precisam de
-  dois meses fechados.
+- **O que a spec supunha** (corrigido nela em 21/09): "Os 141 dias do Sirius sem separação de marca não são
+  reescritos. A separação vale da primeira corrida com a marca declarada em diante". A SC-004 abria exceção
+  para as folhas que precisam de dois meses fechados.
 - **O que o código faz**: as três pernas de marca rodam **toda corrida** na janela de `DIAS_BACKFILL = 480`
   dias (`app/api/gsc-serie/route.ts:147`), e `gravarMarcaGsc` faz `UPDATE` das sete colunas nas linhas que
   já existem. A guarda de host deixa passar, porque as 141 linhas do Sirius têm `host = 'siriuscrm.com.br'`,
   que é o host declarado. **Na primeira corrida com a marca declarada, os 141 dias ganham a separação.**
 - **Consequência**: julho e agosto de 2026 fecham com a separação no primeiro dia, e o crescimento
-  não-marca do Sirius sai medido já no primeiro dia depois da corrida. A exceção da SC-004 não dispara. O
+  não-marca do Sirius sai medido já no primeiro dia depois da corrida. A SC-004 não precisa de exceção. O
   estado "a série gravada ainda não traz a separação de marca" continua no código, para o intervalo entre
   declarar a marca e a corrida seguinte. O total (`impressoes`/`cliques`) não é reescrito, o que continua
   de acordo com a spec.
 - **Corte por país**: as pernas de marca já filtram pelo `pais` da declaração, que na Atma é `bra` desde
-  08/09. Com `pais: "bra"` o não-marca do Sirius lê só o Brasil, e o resto do mapa lê todos os países. A
-  regra é a mesma para os dois projetos, e a premissa "sem corte por país" da spec vale para as folhas
-  que leem o Search Console ao vivo.
+  08/09, e `marcaDeclarada()` recusa marca sem país. Com `pais: "bra"` o não-marca do Sirius lê só o
+  Brasil, e o resto do mapa lê todos os países. O inventário também lê todos: `derivar-inventario.mjs` pede
+  `consultarGsc(host, ["query"])`, sem filtro de país. No Sirius, com 64% das impressões vindas dos EUA,
+  penetração e crescimento não-marca passam a ter denominadores bem diferentes. A regra é a mesma para os
+  dois projetos, e a spec diz isso na FR-007 e nas Assumptions.
 
 ## D8 — O tempo das três corridas cabe, e nenhuma `maxDuration` muda
 
@@ -157,10 +164,20 @@ em minúscula.
 
 ## D12 — As testemunhas das SC-002 e SC-005
 
-- **Decisão**: `lib/mapa-projeto.mjs` (puro) com `EVIDENCIAS`, `frasesAlheias(texto, alheio, permitidas)` e
-  `numerosDoMapa(texto)`. A última devolve os números em ordem e ignora o carimbo "Apurado ao abrir a
-  página, em …". `scripts/conferir-mapa.mjs` baixa o HTML renderizado e chama essas funções. O teste
-  `test/mapa-projeto.test.mjs` fica registrado em `package.json` (Princípio II).
+- **Decisão**: `lib/mapa-projeto.mjs` (puro) com `EVIDENCIAS`, `textoDoMain(html)`, `frasesAlheias(texto,
+  alheio, permitidas)` e `numerosDoMapa(texto)`. `scripts/conferir-mapa.mjs` lê o HTML que o `curl` do
+  quickstart baixou e passa por essas funções. O teste `test/mapa-projeto.test.mjs` fica registrado em
+  `package.json` (Princípio II).
+- **Só o texto visível de `<main>`**: `textoDoMain` tira os blocos `<script>` e `<style>` inteiros antes das
+  tags. O HTML do App Router leva o payload RSC dentro de `<script>`: ele repete o texto da página e traz ids
+  e caminhos de chunk que mudam de um build para outro. Comparado junto, reprovaria a SC-002 numa
+  implementação correta. As notas das folhas não se perdem, porque `#board-lista` as renderiza no servidor.
+  O `<title>` também fica fora, e com ele a troca de título da rota nova.
+- **Frases e números**: `frasesAlheias` corta em `.`, `!` ou `?` seguidos de espaço, para não partir `1.234`
+  nem `.mjs`. `numerosDoMapa` devolve os números em ordem e ignora o carimbo "Apurado ao abrir a página,
+  em …".
+- **Nenhum número novo na tela da Atma**: a comparação é por posição, e um número a mais desalinha todos os
+  seguintes. Por isso a frase do board no cabeçalho não conta os projetos com mapa (D5).
 - **SC-002 sem janela móvel**: a janela do mapa fecha em D-3 e muda à meia-noite. Por isso a comparação
   roda **localmente e ao mesmo tempo**: o commit anterior num worktree na porta 3001 e o novo na 3002, com o
   mesmo `.env`. A comparação é de antes contra depois no mesmo minuto, não de produção ontem contra

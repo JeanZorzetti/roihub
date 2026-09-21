@@ -15,7 +15,7 @@ Medido em 21/09/2026 (Search Console, janela 21/08 → 18/09, e o banco do hub):
 
 1. **A tela é da Atma por escrita, não por construção.** `/gsc/mapa` pede os dados com o nome `atma`
    fixo em seis leituras (ficha, série diária, crawl de página, indexação, inventário e busca do card).
-   O resto — as 113 folhas do board, as funções de medida, os estados de ausência — não sabe de projeto
+   O resto — os 113 nós do board (65 folhas), as funções de medida, os estados de ausência — não sabe de projeto
    nenhum. Trocar o nome fixo por um parâmetro é o grosso do trabalho.
 2. **Os dados do Sirius pararam de ser coletados em 07/09, e a causa é uma decisão, não uma falha.** Em
    07/09 o dono restringiu as corridas de busca à Atma (`SLUGS_DE_BUSCA = ["atma"]`). O comentário
@@ -57,7 +57,7 @@ Medido em 21/09/2026 (Search Console, janela 21/08 → 18/09, e o banco do hub):
 
 ### User Story 1 — Abrir o mapa do Sirius e ler o número de cada folha (Priority: P1)
 
-O dono abre o mapa do Sirius e vê o mesmo board da Atma, com as 113 folhas. Cada folha mostra o
+O dono abre o mapa do Sirius e vê o mesmo board da Atma, com os 113 nós (65 folhas). Cada folha mostra o
 número do Sirius com janela e fonte, ou o estado de ausência com o motivo nomeado. O cabeçalho
 diz por escrito qual projeto e quais hosts estão sendo medidos.
 
@@ -71,11 +71,11 @@ diferentes nos dois.
 **Acceptance Scenarios**:
 
 1. **Given** o Sirius no escopo das corridas de busca, **When** o dono abre o mapa do Sirius,
-   **Then** o cabeçalho diz "O que esta tela mede é o Sirius CRM — siriuscrm.com.br" e as seis faixas
-   de posição mostram as impressões do Sirius na janela de 28 dias.
+   **Then** o cabeçalho diz "O que esta tela mede é o projeto Sirius CRM — siriuscrm.com.br" e as seis
+   faixas de posição mostram as impressões do Sirius na janela de 28 dias.
 2. **Given** uma folha sem dado para o Sirius (ex.: demanda estimada), **When** o mapa abre, **Then**
-   a folha mostra `∅` com o motivo nomeado ("sem demanda estimada declarada para este projeto"),
-   nunca `0` ou `0%`.
+   a folha mostra `∅` com o motivo nomeado (na demanda estimada, o da FR-009 para o estado do
+   inventário), nunca `0` ou `0%`.
 3. **Given** uma frase de nota que cita a Atma como a medição que justificou a regra (ex.: "medido
    na Atma em 20/09/2026: 347 consultas com a guarda desligada"), **When** ela aparece no mapa do
    Sirius, **Then** ela segue dizendo "na Atma". Uma frase que afirma algo sobre o projeto medido
@@ -152,10 +152,11 @@ do dia em cada uma das três tabelas das corridas, e conferir que a da Atma tamb
   cadeia depois do clique: `∅` com motivo, e a fila 80/20 do painel não recebe item dessas folhas.
 - **Folha do campo (CrUX) com tráfego abaixo do limiar da fonte.** A CrUX não publica origem com pouco
   tráfego. Sirius sem dado de campo: `∅ sem dado na CrUX`, não "reprovado".
-- **Série com separação de marca só daqui para frente.** Os 141 dias gravados antes da marca
-  declarada não têm a separação. O crescimento não-marca compara meses fechados. Enquanto não houver
-  dois meses fechados com a separação, a folha diz "a série gravada ainda não traz a separação de
-  marca", nunca "0%". Isso já é um estado existente da folha.
+- **Série sem separação de marca até a primeira corrida com a marca.** Os 141 dias gravados não têm
+  a separação hoje. A primeira corrida depois da marca declarada grava a separação neles também: as
+  pernas de marca rodam em toda corrida sobre os últimos 480 dias e atualizam as linhas que já
+  existem (research D7). Entre a declaração e essa corrida, a folha diz "a série gravada ainda não
+  traz a separação de marca", nunca "0%". Isso já é um estado existente da folha.
 - **Homônimos na marca.** `sirius financeira`, `sirius corretora` e `sirius interativa` são busca pelo
   nome de outra empresa. Declarar `sirius` como marca os tira do não-marca. É o lado conservador:
   eles não são demanda que o Sirius possa conquistar, e contá-los como não-marca inflaria o
@@ -185,15 +186,22 @@ do dia em cada uma das três tabelas das corridas, e conferir que a da Atma tamb
   escopo. É desejado: as duas telas publicam o mesmo número pela mesma função.
 - **FR-006**: O Sirius DEVE entrar no escopo do campo (CrUX).
 - **FR-007**: O card do Sirius DEVE declarar a marca. **Proposta, aguardando o aceite do dono:**
-  termos `sirius` e `siriuscrm`, país `bra`, declarada em 21/09/2026. `sirius` com fronteira de
+  termos `sirius` e `siriuscrm`, país `bra`, declarada na data do aceite. `sirius` com fronteira de
   palavra já cobre `sirius crm`, `crm sirius`, `sirius ia` e `plataforma sirius`. `siriuscrm` entra à
-  parte porque não tem fronteira no meio.
+  parte porque não tem fronteira no meio. **O país é obrigatório e decide o que as folhas de marca
+  leem.** `marcaDeclarada()` recusa marca sem `pais`, e as três pernas de marca da série filtram por
+  ele. Com `bra`, o crescimento não-marca e as buscas de marca do Sirius leem só o Brasil: 13% das
+  impressões dos 28 dias e os 13 cliques. As folhas que leem o Search Console ao vivo e o inventário
+  de termos (FR-008) seguem com todos os países. Na Atma a diferença é pequena porque o público é
+  brasileiro. No Sirius, 64% das impressões vêm dos EUA. O aceite escolhe o país sabendo disso.
 - **FR-008**: O inventário de termos do Sirius DEVE ser derivado pela mesma regra da Atma (≥ 20
   impressões em 8 meses, dimensão consulta, sem a marca) e congelado só depois do aceite do dono.
   **Prévia de 21/09/2026:** 18 termos, que retêm 90,3% das impressões não-marca. Nenhum está no Top
   3. Os 5 primeiros: `evolution api baileys…` (2.777), `agaas` (606), `crm roi` (198), `agaas meaning`
   (171), `crm solar` (147).
-- **FR-009**: A folha de demanda estimada (TAM) do Sirius DEVE mostrar `∅` com o motivo "sem demanda
+- **FR-009**: A folha de demanda estimada (TAM) do Sirius DEVE mostrar `∅` com o motivo nomeado,
+  nunca `0%`. Enquanto o inventário (FR-008) não estiver congelado, o motivo é o que já existe,
+  "inventário de termos não declarado para este projeto". Depois do congelamento, é "sem demanda
   estimada declarada para este projeto".
 - **FR-010**: O painel "Depois do clique" do Sirius DEVE dizer por escrito que o projeto não tem cadeia
   de R$ ligada ao hub, e nenhuma taxa entre clique e receita DEVE ser calculada.
@@ -212,47 +220,53 @@ do dia em cada uma das três tabelas das corridas, e conferir que a da Atma tamb
   genérica.
 - **Inventário de termos**: a lista congelada de termos monitorados de um projeto, com procedência
   (janela, piso, hosts, marca excluída). É o denominador da penetração no Top 3.
-- **Escopo das corridas de busca**: a lista de projetos que as três corridas diárias percorrem. É a
-  mesma lista que decide quem tem mapa.
+- **Escopo das corridas de busca**: a lista de projetos que as três corridas diárias percorrem, só com
+  card curado e site. É a mesma lista que decide quem tem mapa.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: O mapa do Sirius abre com as 113 folhas do board. Cada folha medida mostra número com
-  janela ou `∅` com motivo. Zero folha mostra `0`/`0%` sobre ausência.
+- **SC-001**: O mapa do Sirius abre com o board inteiro: os 113 nós de `mapaDoBoard()` (65 folhas), a
+  mesma função do mapa da Atma. A lista `#board-lista` traz os 112 nós abaixo da raiz, mais os filhos
+  que a página antepõe com o número medido. Cada folha medida mostra número com janela ou `∅` com
+  motivo. Zero folha mostra `0`/`0%` sobre ausência.
 - **SC-002**: Na mesma hora e na mesma janela, 100% dos números do mapa da Atma são iguais antes e
   depois da mudança.
 - **SC-003**: No primeiro dia após o deploy, as três corridas diárias gravam uma linha do Sirius com a
   data do dia, e a da Atma segue gravada.
 - **SC-004**: Sete dias após o deploy, as folhas que leem o banco saem do estado "nenhuma corrida
-  gravada" no mapa do Sirius. Exceção: as que dependem de dois meses fechados com separação de marca,
-  que dizem isso.
+  gravada" no mapa do Sirius. As de marca dependem só da marca aceita (FR-007): com ela, a primeira
+  corrida já separa marca de não-marca nos 141 dias antigos (research D7), e sem ela a folha diz que
+  a marca não foi declarada.
 - **SC-005**: No mapa do Sirius, nenhuma frase que descreve o projeto medido contém "Atma". Isso é
   conferido por busca no HTML renderizado, contra a lista das frases de evidência permitidas.
 - **SC-006**: O dono chega do mapa da Atma ao do Sirius (e volta) em um clique, só com o teclado.
 
 ## Assumptions
 
-- **Sem corte por país no mapa.** O mapa do Sirius lê como o da Atma lê: todos os países somados,
-  pelas mesmas funções. Os 64% dos EUA com 0 clique aparecem no número e na fila, e não são
-  filtrados. Um corte por país mudaria também os números da Atma, que o SC-002 proíbe. Se for
-  desejado, é uma spec própria para os dois projetos.
+- **Nenhum corte por país novo.** As folhas que leem o Search Console ao vivo e o inventário leem como
+  na Atma: todos os países somados, pelas mesmas funções. Os 64% dos EUA com 0 clique aparecem no
+  número e na fila, e não são filtrados. O único corte é o que já existe: as folhas de marca herdam o
+  `pais` obrigatório da marca declarada (FR-007), nos dois projetos. Um corte novo mudaria também os
+  números da Atma, que o SC-002 proíbe. Se for desejado, é uma spec própria para os dois projetos.
 - **O board vale para o Sirius como está.** As definições e metas do Whimsical são de SEO, não de
   alinhador. A meta do board continua sendo meta, não régua (o `◇` de cada folha não muda).
 - **A quota de inspeção do Search Console não aperta.** O Sirius é propriedade própria
   (`siriuscrm.com.br`) e não divide a quota diária com as da Atma.
 - **O tempo das corridas cabe.** O Sirius declara ~131 páginas com impressão em 8 meses. O plano
   confere o tempo máximo de cada rota com os dois projetos antes de ligar.
-- **A série antiga fica.** Os 141 dias do Sirius sem separação de marca não são reescritos. A
-  separação vale da primeira corrida com a marca declarada em diante.
-- **O endereço do Sirius é `/gsc/mapa/sirius`** e o da Atma passa a ser também `/gsc/mapa/atma`.
+- **O total da série antiga fica, e a separação de marca chega a ela.** As impressões e os cliques
+  dos 141 dias do Sirius não são reescritos. As colunas de marca são: a primeira corrida com a marca
+  declarada as grava em todos os dias dos últimos 480 que já existem (research D7).
+- **O endereço do Sirius é `/gsc/mapa/sirius`** e o da Atma passa a ser `/gsc/mapa/atma`. O endereço
+  antigo redireciona para o da Atma (FR-002).
 
 ## Fora do escopo
 
 - A aresta clique → trial → assinatura do Sirius (Stripe ou banco do produto).
 - A demanda estimada (TAM) do Sirius.
-- Corte por país em qualquer folha.
+- Corte por país novo em qualquer folha. O da marca declarada já existe e não muda (FR-007).
 - Abrir o mapa para um terceiro projeto. A estrutura permite, mas esta spec só acrescenta o Sirius.
 - Consertar o que o mapa do Sirius mostrar (a página em inglês, o título, a canibalização). Isso vai
   para a fila, não para esta spec.

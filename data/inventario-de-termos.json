@@ -746,5 +746,44 @@
       "raspagem subgengival preço",
       "valor do tratamento invisalign"
     ]
+  },
+  "sirius": {
+    "procedencia": {
+      "congeladoEm": "2026-09-21",
+      "janela": {
+        "inicio": "2026-01-18",
+        "fim": "2026-09-18"
+      },
+      "piso": 20,
+      "dimensao": "query",
+      "hosts": [
+        "siriuscrm.com.br"
+      ],
+      "excluiMarca": [
+        "sirius",
+        "siriuscrm"
+      ],
+      "porque": "termos com ao menos 20 impressões em 8 meses, somados os hosts declarados, sem a marca própria"
+    },
+    "termos": [
+      "evolution api baileys whatsapp ban risk official meta stance",
+      "agaas",
+      "crm roi",
+      "agaas meaning",
+      "crm solar",
+      "crm simples",
+      "crm para industria energetica",
+      "crm energia",
+      "automação de follow up",
+      "crm energia solar",
+      "crm para representante comercial",
+      "pipeline de vendas",
+      "ecossistema vendas whatsapp",
+      "crm representante comercial",
+      "crm empresa luz",
+      "crm solar vitória da conquista",
+      "solar marketing roi",
+      "crm empresas energia solar"
+    ]
   }
 }
