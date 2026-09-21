@@ -6,7 +6,7 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
+import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, queryToPageRatio, strikingDistancePorTermo, termoPrincipal, totalImpressoes, urlsComImpressao } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
@@ -1633,6 +1633,63 @@ export default async function MapaDoBoardPage() {
     }
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     t20Node.children = [filho, ...(t20Node.children ?? [])];
+  }
+
+  // 048 — Query-to-Page na folha que o define, zero requisição nova: o numerador é a leitura
+  // consulta×página da 046 e o denominador é a apuração de indexação da 043. MESMA função
+  // (`queryToPageRatio`) e MESMA guarda da aba de aquisição — sem denominador quando a corrida
+  // amostrou o sitemap —, então as duas telas publicam o mesmo número. Medido na Atma em 21/09/2026:
+  // 887 ÷ 18 = 49,3. O topo abre também pela CONCENTRAÇÃO porque a média mente aqui: 814 das 887
+  // consultas aparecem num único post, e sem ele a média cai para dentro da faixa de nenhuma das
+  // duas metas do board.
+  const qpNode = acharNo(dados.nodeData as No, "queryToPage");
+  if (qpNode) {
+    const denominador =
+      apuracao && !apuracao.motivo && apuracao.inspecionadas >= apuracao.declaradas && apuracao.indexadas > 0 ? apuracao.indexadas : null;
+    const semDenominador = semApuracao
+      ?? (apuracao!.inspecionadas < apuracao!.declaradas
+        ? `a corrida de ${apuracao!.dia} amostrou ${br(apuracao!.inspecionadas)} de ${br(apuracao!.declaradas)} URLs do sitemap, e a contagem da amostra não divide consulta do site inteiro`
+        : `a corrida de ${apuracao!.dia} não achou URL indexada${apuracao!.falhas ? ` (${br(apuracao!.falhas)} inspeções falharam)` : ""}`);
+    let filho: No;
+    if (!consultasGsc || "erro" in consultasGsc) {
+      filho = {
+        id: "queryToPage-medido",
+        topic: `∅ não apurado · ${consultasGsc ? "a leitura do Search Console falhou" : "sem leitura do Search Console"}`,
+        note: consultasGsc
+          ? `Falha transitória, não ausência de dado: ${consultasGsc.erro}. A medida volta na próxima leitura.`
+          : `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. Sem a leitura não há consulta para dividir.`,
+      };
+    } else {
+      const linhas = consultasGsc.linhas;
+      const lidas = consultasUnicas(linhas).valor;
+      const r = denominador === null ? null : queryToPageRatio(linhas, denominador);
+      const porUrl = new Map<string, Set<string>>();
+      for (const l of linhas) porUrl.set(l.page, (porUrl.get(l.page) ?? new Set<string>()).add(l.query));
+      const [topo, doTopo] = [...porUrl].sort((a, b) => b[1].size - a[1].size)[0] ?? ["", new Set<string>()];
+      const resto = new Set(linhas.filter((l) => l.page !== topo).map((l) => l.query)).size;
+      const ns = [...porUrl.values()].map((s) => s.size).sort((a, b) => a - b);
+      const mediana = ns.length ? (ns[(ns.length - 1) >> 1] + ns[ns.length >> 1]) / 2 : 0;
+      const topoPorHost = hosts.map((h) => `${br(new Set(linhas.filter((l) => l.page === topo && l.hosts.includes(h)).map((l) => l.query)).size)} em ${h}`).join(", ");
+      const ativas = paginasGsc && !("erro" in paginasGsc) ? urlsComImpressao(paginasGsc.paginas) : null;
+      const concentracao = topo
+        ? ` ${br(doTopo.size)} das ${br(lidas)} consultas aparecem numa única URL, ${caminhoDe(topo)} (${topoPorHost}); sem ela sobram ${br(resto)} consultas para as outras ${br(porUrl.size - 1)} URLs com consulta nomeada. A mediana entre as ${br(porUrl.size)} é ${mediana.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}: a média descreve um post, não o site.`
+        : "";
+      const pontas = ` O numerador conta consulta de QUALQUER URL que o Google exibiu na janela, pelos hosts declarados; o denominador é o que a corrida de indexação acha no índice do sitemap de hoje. Os dois não são o mesmo conjunto de URLs, e a razão sobe quando um domínio antigo ainda rende impressão de página que o novo não indexou.${ativas ? ` Contra as ${br(ativas)} URLs com impressão na leitura por página, seriam ${(lidas / ativas).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}.` : ""}`;
+      const metas = " Metas do board: 30 a 80 consultas por URL para artigo/blog e 10 a 25 para produto/landing — metas, não régua: as duas pontas da divisão variam com o nicho. A apuração de indexação grava o agregado, sem o estado por URL, então o denominador não se separa por tipo de página e a média do site não se compara com nenhuma das duas faixas.";
+      filho = r
+        ? {
+            id: "queryToPage-medido",
+            topic: `Medido: ${r.valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} consultas por URL indexada (piso) · ${br(lidas)} ÷ ${br(denominador!)}${topo ? ` · ${br(doTopo.size)} delas numa única URL` : ""}`,
+            note: `${br(lidas)} consultas distintas com impressão na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), leitura consulta×página, divididas pelas ${br(denominador!)} URLs do sitemap que a corrida de ${apuracao!.dia} achou no índice (${br(apuracao!.inspecionadas)} inspecionadas, propriedade ${apuracao!.propriedade ?? "—"}). PISO: o Search Console omite as consultas raras do numerador.${consultasGsc.truncado ? " ⚠️ A leitura bateu no teto de linhas da API em pelo menos um host." : ""}${concentracao}${pontas} Mesma função e mesmo denominador da aba de aquisição, então o número é o mesmo nas duas telas.${metas}`,
+          }
+        : {
+            id: "queryToPage-medido",
+            topic: `∅ razão não apurada · ${br(lidas)} consultas, sem denominador`,
+            note: `O numerador existe: ${br(lidas)} consultas distintas com impressão na janela ${janela.inicio} → ${janela.fim}.${concentracao} O denominador não: ${semDenominador}. Dividir por um número chutado publicaria uma razão falsa, e a contagem de URLs com impressão não é a de URLs indexadas.`,
+          };
+    }
+    // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
+    qpNode.children = [filho, ...(qpNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

@@ -443,6 +443,23 @@
    "pior_caso": "755 de 887 consultas no Top 20, 312 com uma única impressão; 363 de 725 termos do inventário, só 453 com impressão (piso)",
    "achado": "755 consultas no Top 20 (85% das lidas), mas o catálogo está em 50,1% — abaixo dos 60% do board. Série do inventário no Top 20 (28d): 60,3% (fev) → 74,8% → 87,7% → 85,7% (pico abr) → 78,1% → 56,4% → 0,6% (jul) → 53,0% → 50,1%. 752 das 755 aparecem pelo domínio antigo; usealigner.com responde por 8.",
    "gates": "Canvas a 1440px conferido no next dev (nó como 1º filho da folha, contador 23 → 24, texto da nota lido do DOM, console limpo). 360px não conferido: a lista servidor responde no celular (decisão da 032)."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo IMPRESSÕES › \"3. KPI de Densidade: Média de Consultas por Página (Query-to-Page Ratio)\")",
+   "corrida": "1a (048) — terceira folha do ramo IMPRESSÕES com leitura própria; zero requisição nova (consulta×página da 046 + apuração de indexação da 043)",
+   "pergunta": "Quantas consultas distintas cada URL indexada da Atma atrai em 28 dias, e a média descreve o site?",
+   "forma": "Um nó à frente da folha, como 034–047. Abre pela razão do board (queryToPageRatio, mesma função e mesmo denominador da aba de aquisição) e pela concentração: quantas das consultas caem numa única URL. A mediana e o resto sem a campeã vão para a nota.",
+   "descartada": "abrir só pela média (49,3 cai dentro da faixa de blog 30–80 e leria como aprovação, mas 814 das 887 consultas são de um post); e dividir por URLs com impressão (29 → 30,6) — muda o denominador que a aba de aquisição publica, vai para a nota.",
+   "fonte": "GSC consulta×página, janela 2026-08-22 → 2026-09-18; hub_indexacao, corrida 2026-09-21 (25 de 25 inspecionadas, 18 indexadas, sc-domain:usealigner.com)",
+   "estados": [
+    "com dado",
+    "razão não apurada (numerador existe, denominador não: sem banco / sem corrida / corrida sem inspeção / sitemap amostrado / zero indexada)",
+    "não apurado (sem leitura / leitura falhou)"
+   ],
+   "pior_caso": "887 consultas, 981 pares consulta×URL em 14 URLs; 814 numa URL só; 352 consultas com uma única impressão",
+   "achado": "49,3 consultas por URL indexada (887 ÷ 18, piso) — mas 814 das 887 aparecem em /blog/quanto-custa-alinhador-invisivel, 814 delas pelo domínio antigo e 8 pelo novo. Sem ela: 147 consultas para 13 URLs; 147 ÷ 17 indexadas = 8,6 (URL Inspection confirma a campeã Submitted and indexed). Mediana 4 entre as 14 URLs com consulta nomeada; 15 das 29 URLs com impressão não têm consulta nomeada nenhuma. /pacientes/precos soma 33 consultas pelo domínio antigo e segue Discovered - currently not indexed no novo.",
+   "gates": "Canvas a 1440px conferido no next dev (nó como 1º filho da folha, contador 24 → 25, nota lida do DOM, console limpo). 360px não conferido: a lista servidor responde no celular (decisão da 032)."
   }
  ]
 }
