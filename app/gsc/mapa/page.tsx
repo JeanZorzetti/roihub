@@ -6,7 +6,7 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
+import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
@@ -877,6 +877,11 @@ export default async function MapaDoBoardPage() {
   // 040 — HASTEADA para fora do bloco: a folha do título consome a MESMA leitura mais abaixo para
   // achar o termo principal de cada URL. Declarar dentro do `if` faria a segunda folha pagar uma
   // segunda requisição por host pela mesma pergunta.
+  // 046 — a janela-base do footprint (a meta do board é "ao trimestre"): a MESMA leitura, 13 semanas
+  // antes, que mantém o dia da semana dos dois lados. Disparada ANTES do `await` de baixo para as
+  // duas correrem juntas; `gscConsultas` não lança, a falha volta como `{erro}`.
+  const janelaBase = descoberta(Date.now() - 91 * 864e5);
+  const consultasBase = atma ? gscConsultas(hosts, janelaBase) : null;
   const consultasGsc = atma ? await gscConsultas(hosts, janela) : null;
   const impNode = acharNo(dados.nodeData as No, "impressoesTop3");
   if (impNode) {
@@ -1533,6 +1538,57 @@ export default async function MapaDoBoardPage() {
       };
     }
     marcaNode.children = [filho, ...(marcaNode.children ?? [])];
+  }
+
+  // 046 — o footprint na folha que o define. MESMA função e MESMA leitura da aba de aquisição
+  // (`consultasUnicas` sobre consulta×página), então as duas telas publicam o mesmo número por
+  // construção. Medido na Atma em 21/09/2026: 887 aqui e 887 na dimensão `query` sozinha. ⚠️ Não
+  // trocar por `termosGsc`: as linhas de lá trazem `termo`, e `consultasUnicas` sobre elas conta 1.
+  //
+  // O topo abre pelos ABSOLUTOS das duas janelas, nunca pela razão: a base de 13 semanas atrás passa
+  // pela desindexação de junho (a janela fechando em 24/07 tem 6 consultas contra 915 na seguinte), e
+  // ali a razão mede a VOLTA. A regra de base interrompida da 036 (1/3 dos dias em zero) não pega
+  // esse caso — a janela morta teve 2 dias em zero, o resto a 10–20 impressões/dia. A razão desce
+  // para a nota ao lado das impressões do site em cada janela, que é o que denuncia a base derrubada.
+  const cuNode = acharNo(dados.nodeData as No, "consultasUnicas");
+  if (cuNode) {
+    const base = consultasBase ? await consultasBase : null;
+    let filho: No;
+    if (!consultasGsc || "erro" in consultasGsc) {
+      filho = {
+        id: "consultasUnicas-medido",
+        topic: `∅ não apurado · ${consultasGsc ? "a leitura do Search Console falhou" : "sem leitura do Search Console"}`,
+        note: consultasGsc
+          ? `Falha transitória, não ausência de dado: ${consultasGsc.erro}. A medida volta na próxima leitura.`
+          : `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. Sem a leitura não há consulta para contar, e "0 consultas" leria como site que ninguém encontra.`,
+      };
+    } else {
+      const linhas = consultasGsc.linhas;
+      const atual = consultasUnicas(linhas).valor;
+      const anterior = base && !("erro" in base) ? consultasUnicas(base.linhas).valor : null;
+      const porHost = hosts
+        .map((h) => `${br(new Set(linhas.filter((l) => l.hosts.includes(h)).map((l) => l.query)).size)} em ${h}`)
+        .join(", ");
+      const porConsulta = new Map<string, number>();
+      for (const l of linhas) porConsulta.set(l.query, (porConsulta.get(l.query) ?? 0) + l.impressoes);
+      const cauda = [...porConsulta.values()].filter((v) => v === 1).length;
+      const nomeadas = totalImpressoes(linhas);
+      const site = paginasGsc && !("erro" in paginasGsc) ? totalImpressoes(paginasGsc.paginas) : null;
+      const noSite = (j: { inicio: string; fim: string }) =>
+        Array.isArray(serie) ? serie.filter((d) => d.dia >= j.inicio && d.dia <= j.fim).reduce((a, d) => a + d.impressoes, 0) : null;
+      const [impBase, impAtual] = [noSite(janelaBase), noSite(janela)];
+      const trimestre =
+        anterior === null
+          ? ` A janela de 13 semanas antes (${janelaBase.inicio} → ${janelaBase.fim}) não foi lida${base && "erro" in base ? `: ${base.erro}` : ""}, então não há variação trimestral.`
+          : ` Na mesma janela 13 semanas antes (${janelaBase.inicio} → ${janelaBase.fim}), mesma leitura: ${br(anterior)}${anterior > 0 ? `, ${atual > anterior && atual < 11 * anterior ? "+" : ""}${variacao(atual / anterior - 1)} no trimestre` : ", e sem base não há variação"}.${impBase !== null && impAtual !== null ? ` O site teve ${br(impBase)} impressões naquela janela e ${br(impAtual)} nesta (série \`hub_gsc_dia\`): se a base caiu junto, a variação mede a volta do site ao índice, não amplitude nova.` : ""}`;
+      filho = {
+        id: "consultasUnicas-medido",
+        topic: `Medido: ${br(atual)} consultas com ≥ 1 impressão (piso)${anterior === null ? "" : ` · ${br(anterior)} na mesma janela 13 semanas antes`}`,
+        note: `${br(atual)} consultas distintas tiveram ao menos uma impressão na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados: ${porHost}.${consultasGsc.truncado ? " ⚠️ A leitura bateu no teto de linhas da API em pelo menos um host." : ""} PISO, não total: ${site ? `as consultas nomeadas somam ${br(nomeadas)} das ${br(site)} impressões que a leitura por página conta (${pct1(nomeadas / site)}); o resto` : "parte das impressões"} vem de consultas que o Search Console omite por privacidade, e quantas são não se sabe. ${br(cauda)} delas tiveram uma única impressão e entram e saem da contagem por acaso.${trimestre} Mesma função e mesma leitura da aba de aquisição, então o número é o mesmo nas duas telas. Meta do board: 10% a 20% ao trimestre — meta, não régua: o crescimento esperado depende da idade do site (novo cresce 200%, maduro 3%, e os dois podem ir bem).`,
+      };
+    }
+    // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
+    cuNode.children = [filho, ...(cuNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

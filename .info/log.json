@@ -411,6 +411,22 @@
    "pior_caso": "30 páginas na corrida; 243 dias de série; 7 meses fechados",
    "achado": "Links: 5 de 30 páginas na faixa 5–10, 21 abaixo (/sobre com 0), 4 acima (/pacientes/enviar-exames 26). Régua do hub: 10 dentro, 14 abaixo, 6 acima. Marca: 5,5% (9.819 de 177.359); meses 1.649 → 1.910 → 2.240 (pico abr) → 1.803 → 722 → 171 → 448 (ago, 20% do pico). O site virou Use Aligner e nenhuma consulta da janela contém usealigner; «atma aligner» segue na posição 4,4.",
    "gates": "G31 e G32 conferidos nos PNGs de 1470px (nó + painel). Canvas a 390px não conferido: a lista servidor é quem responde no celular, decisão da 032."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo IMPRESSÕES › \"1. KPI de Amplitude: Footprint de Consultas Únicas (Total Queries)\")",
+   "corrida": "1a (046) — primeira folha do ramo IMPRESSÕES com leitura própria; +1 leitura por host (a janela 13 semanas antes), em paralelo à atual",
+   "pergunta": "Quantas consultas distintas deram impressão à Atma em 28 dias, e o número cresceu no trimestre?",
+   "forma": "Um nó à frente da folha, como 034–045. Abre pelos ABSOLUTOS das duas janelas (atual e 13 semanas antes); a variação desce para a nota, ao lado das impressões do site em cada janela (hub_gsc_dia), que é o que denuncia base derrubada. Mesma função (consultasUnicas) e mesma leitura (consulta×página) da aba de aquisição: 887 nas duas.",
+   "descartada": "abrir pela razão trimestral — a base de 13 semanas atrás atravessa a desindexação de junho e em ~3 semanas cairia na janela de 6 consultas (+14.000%); a regra de base interrompida da 036 (1/3 dos dias em zero) não pega: a janela morta teve 2 dias em zero. E contar sobre termosGsc: as linhas trazem termo, e consultasUnicas sobre elas devolve 1.",
+   "fonte": "GSC consulta×página, janelas 2026-08-22 → 2026-09-18 e 2026-05-23 → 2026-06-19; GSC por página (total do site); hub_gsc_dia",
+   "estados": [
+    "com dado (com ou sem janela-base lida)",
+    "não apurado (sem leitura / leitura falhou)"
+   ],
+   "pior_caso": "887 consultas, 9.788 de 23.372 impressões nomeadas (41,9%), 352 com uma única impressão",
+   "achado": "887 consultas (piso) contra 922 treze semanas antes (−3,8%) e 1.882 no pico (janela até 01/05) — 47% do pico. Série de 28d: 809 (fev) → 1.118 → 1.741 → 1.882 → 1.348 → 732 → 6 (jul) → 915 → 887. 872 das 887 ainda aparecem pelo domínio antigo atma.roilabs.com.br; usealigner.com responde por 41.",
+   "gates": "Canvas a 1440px conferido (nó como 1º filho, contador 22 → 23, console limpo). Canvas a 360px não conferido: a lista servidor responde no celular (decisão da 032)."
   }
  ]
 }
