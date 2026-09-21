@@ -460,6 +460,23 @@
    "pior_caso": "887 consultas, 981 pares consulta×URL em 14 URLs; 814 numa URL só; 352 consultas com uma única impressão",
    "achado": "49,3 consultas por URL indexada (887 ÷ 18, piso) — mas 814 das 887 aparecem em /blog/quanto-custa-alinhador-invisivel, 814 delas pelo domínio antigo e 8 pelo novo. Sem ela: 147 consultas para 13 URLs; 147 ÷ 17 indexadas = 8,6 (URL Inspection confirma a campeã Submitted and indexed). Mediana 4 entre as 14 URLs com consulta nomeada; 15 das 29 URLs com impressão não têm consulta nomeada nenhuma. /pacientes/precos soma 33 consultas pelo domínio antigo e segue Discovered - currently not indexed no novo.",
    "gates": "Canvas a 1440px conferido no next dev (nó como 1º filho da folha, contador 24 → 25, nota lida do DOM, console limpo). 360px não conferido: a lista servidor responde no celular (decisão da 032)."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo IMPRESSÕES › \"4. KPI de Eficiência do Índice: Taxa de Páginas Geradoras de Impressão (Active Index Ratio)\")",
+   "corrida": "1a (049) — quarta folha do ramo IMPRESSÕES com leitura própria; zero requisição nova (leitura por página da 033 + apuração de indexação da 043 + sitemap URL a URL da corrida de página da 024)",
+   "pergunta": "Das URLs que a Atma tem no índice, quantas geraram ao menos uma impressão em 28 dias?",
+   "forma": "Um nó à frente da folha, como 034–048. Abre pela razão (activeIndexRatio, a mesma função da aba de aquisição) com a entrada restrita ao conjunto do denominador: URL do sitemap com impressão pelo host novo. A lista das URLs do sitemap sem impressão, a fórmula literal e as URLs fora do sitemap vão para a nota.",
+   "descartada": "a fórmula literal (29 ÷ 18 = 161%: o numerador soma os dois domínios e URL que o sitemap não declara, e activeIndexRatio devolve null por isso na aba de aquisição); e incluir as 3 URLs do domínio novo fora do sitemap nas duas pontas (17 ÷ 21 = 81,0%): o denominador delas não é apurado, vai para a nota.",
+   "fonte": "GSC dimensão page, janela 2026-08-22 → 2026-09-18, hosts usealigner.com + atma.roilabs.com.br; hub_indexacao, corrida 2026-09-21 (25 de 25 inspecionadas, 18 indexadas, sc-domain:usealigner.com); hub_pagina, corrida 2026-09-21 (25 URLs no sitemap)",
+   "estados": [
+    "com dado",
+    "não apurado (sem leitura / leitura falhou / sem banco / sem corrida de indexação / corrida sem inspeção / sitemap amostrado / zero indexada / sem corrida de página)",
+    "razão não apurada (numerador passou do denominador: índice encolheu entre a janela e a corrida)"
+   ],
+   "pior_caso": "29 caminhos com impressão pelos dois hosts, 14 fora do sitemap; o domínio novo tem 8 dos 28 dias da janela",
+   "achado": "77,8% (14 de 18 URLs indexadas do sitemap com impressão pelo domínio novo), acima da meta de 70% do board. As 4 indexadas sem impressão, pela URL Inspection URL a URL de 21/09: /blog/10-mitos-aparelho-invisivel, /blog/alinhador-invisivel-formatura-casamento-2026, /ortodontistas/seja-parceiro (Submitted and indexed, rastreadas em 14/09) e /blog/futuro-ortodontia-ia (indexada na corrida, Crawled - currently not indexed numa inspeção seguinte). Nenhuma das 4 teve impressão nem pelo domínio antigo na janela. As 7 fora do índice: /pacientes/precos, /contato, /ortodontistas, /blog, /blog/1, /blog/2, /blog/sorriso-perfeito-15-dicas. /pacientes/precos tem 418 impressões pelo domínio antigo e 0 pelo novo. Fora do sitemap, o domínio novo exibe /pacientes/antes-depois (18), /ortodontistas/modelos-parceria (3) e /ortodontistas/tecnologia (2).",
+   "gates": "Canvas a 1440px conferido no next dev (folha expandida, nó como 1º filho antes da Fórmula, contador 25 → 26, nota lida do DOM, console limpo); tsc limpo; npm test 1199/1199. 360px não conferido: a lista servidor responde no celular (decisão da 032)."
   }
  ]
 }

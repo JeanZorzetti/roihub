@@ -6,7 +6,7 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, queryToPageRatio, strikingDistancePorTermo, termoPrincipal, totalImpressoes, urlsComImpressao } from "@/lib/kpis-busca.mjs";
+import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, queryToPageRatio, activeIndexRatio, strikingDistancePorTermo, termoPrincipal, totalImpressoes, urlsComImpressao } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
@@ -1690,6 +1690,79 @@ export default async function MapaDoBoardPage() {
     }
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     qpNode.children = [filho, ...(qpNode.children ?? [])];
+  }
+
+  // 049 — Active Index Ratio na folha que o define, zero requisição nova: leitura por página (033),
+  // apuração de indexação (043) e sitemap URL a URL da corrida de página (024). A fórmula literal
+  // publica 29 ÷ 18 = 161% na Atma (e por isso `activeIndexRatio` devolve null na aba de aquisição):
+  // o numerador soma os dois domínios e URL que o sitemap não declara, e o denominador é o índice do
+  // sitemap novo. Aqui o numerador fica no MESMO conjunto do denominador: URL do sitemap com impressão
+  // PELO HOST NOVO, e uma URL só é exibida pelo Google se está no índice. MESMA função, entrada
+  // restrita. Medido em 21/09/2026: 14 ÷ 18 = 77,8%, e a inspeção URL a URL fecha as 4 que faltam.
+  const airNode = acharNo(dados.nodeData as No, "activeIndexRatio");
+  if (airNode && atma) {
+    const hostNovo = hosts[0];
+    const lidas = paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null;
+    const falta =
+      paginasGsc === null
+        ? motivoDeAusencia({ ligado: gscLigado(), hosts })
+        : "erro" in paginasGsc
+          ? `a leitura por página do Search Console falhou (${paginasGsc.erro})`
+          : semApuracao ??
+          (apuracao!.inspecionadas < apuracao!.declaradas
+            ? `a corrida de ${apuracao!.dia} amostrou ${br(apuracao!.inspecionadas)} de ${br(apuracao!.declaradas)} URLs do sitemap, e a contagem da amostra não é o total indexado`
+            : apuracao!.indexadas === 0
+              ? `a corrida de ${apuracao!.dia} não achou URL indexada`
+              : !corrida
+                ? "sem corrida de página gravada: é ela que lista as URLs do sitemap, e sem a lista o numerador não se restringe ao denominador"
+                : null);
+    let filho: No;
+    if (falta) {
+      filho = {
+        id: "activeIndexRatio-medido",
+        topic: `∅ não apurado · ${falta}`,
+        note: "A razão pede duas leituras do mesmo conjunto de URLs: as do sitemap que a corrida de indexação achou no índice (denominador) e, entre elas, as que tiveram impressão em 28 dias (numerador). Faltando qualquer uma, o número não existe, e “não apurado” nunca é 0%.",
+      };
+    } else {
+      const a = apuracao!;
+      const sitemap = new Set(corrida!.paginas.filter((p) => p.noSitemap).map((p) => canonizar(p.url, atma.url) ?? p.url));
+      const doHostNovo = lidas!
+        .filter((p) => p.impressoes > 0 && p.hosts?.includes(hostNovo))
+        .map((p) => ({ ...p, pagina: canonizar(p.pagina, atma.url) ?? p.pagina }));
+      const ativas = doHostNovo.filter((p) => sitemap.has(p.pagina));
+      const r = activeIndexRatio(ativas, a.indexadas);
+      const comImpressao = new Set(ativas.map((p) => p.pagina));
+      const semImpressao = [...sitemap].filter((u) => !comImpressao.has(u)).map(caminhoDe).sort();
+      const foraDoSitemap = [...new Set(doHostNovo.filter((p) => !sitemap.has(p.pagina)).map((p) => caminhoDe(p.pagina)))].sort();
+      const literal = urlsComImpressao(lidas!);
+      const anterior = atma.dominioAnterior;
+      const troca =
+        anterior && diaUtc(anterior.data) > diaUtc(janela.inicio) && diaUtc(anterior.data) <= diaUtc(janela.fim)
+          ? ` O domínio novo entrou em ${anterior.data}, então ele tem só ${diaUtc(janela.fim) - diaUtc(anterior.data) + 1} dos 28 dias da janela: URL que entrou no índice depois disso teve poucos dias para aparecer.`
+          : "";
+      const n = comImpressao.size;
+      const semNoIndice = a.indexadas - n;
+      const fora = a.rastreadasNaoIndexadas + a.descobertasNaoIndexadas + a.outras;
+      // Só fecha se as duas corridas leram o MESMO sitemap: a de página grava a lista, a de
+      // indexação só o agregado. Lista de tamanho diferente não autoriza a partilha.
+      const partilha =
+        sitemap.size === a.declaradas && !a.falhas && semImpressao.length === fora + semNoIndice
+          ? ` ${br(fora)} delas estão fora do índice pela corrida, e as outras ${br(semNoIndice)} são as indexadas sem impressão. A apuração grava o agregado, sem o estado por URL, então esta tela não diz quais são.`
+          : ` ${br(semNoIndice)} das indexadas não tiveram impressão.`;
+      filho = r !== null
+        ? {
+            id: "activeIndexRatio-medido",
+            topic: `Medido: ${pct1(r)} · ${br(n)} de ${br(a.indexadas)} URLs indexadas do sitemap com impressão · ${br(semNoIndice)} sem`,
+            note: `${br(n)} URLs do sitemap tiveram ao menos uma impressão por ${hostNovo} na janela ${janela.inicio} → ${janela.fim} (leitura por página, que não omite URL rara), divididas pelas ${br(a.indexadas)} que a corrida de ${a.dia} achou no índice (${br(a.inspecionadas)} de ${br(a.declaradas)} inspecionadas, propriedade ${a.propriedade ?? "—"}). Uma URL só recebe impressão se está no índice, então o numerador cabe no denominador.${troca} As ${br(semImpressao.length)} URLs do sitemap sem impressão no domínio novo: ${semImpressao.join(", ")}.${partilha} A fórmula literal dá ${br(literal)} ÷ ${br(a.indexadas)}: ${br(literal)} são todos os caminhos com impressão pelos ${br(hosts.length)} hosts declarados, com URL que o sitemap não declara e página que só o domínio antigo ainda exibe. Passa de 100% e não mede o índice.${foraDoSitemap.length ? ` ${br(foraDoSitemap.length)} URLs do domínio novo tiveram impressão sem estar no sitemap (${foraDoSitemap.join(", ")}): estão no índice e ficam fora das duas pontas. Com elas nos dois lados seriam ${pct1((n + foraDoSitemap.length) / (a.indexadas + foraDoSitemap.length))}.` : ""} Meta do board: ≥ 70%. É meta, não régua: a razão cai com a idade do site, e quem publica rápido carrega URL nova ainda sem impressão.`,
+          }
+        : {
+            id: "activeIndexRatio-medido",
+            topic: `∅ razão não apurada · ${br(n)} URLs do sitemap com impressão, ${br(a.indexadas)} indexadas`,
+            note: `O numerador passou do denominador, o que só acontece se o índice encolheu entre a janela (${janela.inicio} → ${janela.fim}) e a corrida de ${a.dia}. Uma razão acima de 100% leria como meta folgada.`,
+          };
+    }
+    // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
+    airNode.children = [filho, ...(airNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase
