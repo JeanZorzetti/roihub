@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
-import { DIVERGENCIAS, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
+import { DIVERGENCIAS, GRUPO_DO_TITULO, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
 import { listProjects } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, totalImpressoes } from "@/lib/kpis-busca.mjs";
+import { conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
+import { posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
 import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado } from "@/lib/db";
-import { taxaCobertura } from "@/lib/grafo.mjs";
+import { canonizar, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 
 import { Tabs } from "../../tabs";
@@ -74,6 +75,18 @@ function acharNo(n: No, id: string): No | null {
   if (n.id === id) return n;
   for (const f of n.children ?? []) {
     const achado = acharNo(f, id);
+    if (achado) return achado;
+  }
+  return null;
+}
+
+/** 040 — o mesmo, por `topic`. Os GRUPOS do board não têm id literal: `mapaDoBoard()` gera o deles
+ *  por hash do caminho (`board-gsc.mjs#id`), e hash não é chave de busca — o nome do grupo é o
+ *  MESMO literal que `GRUPOS` e `NOTA_DO_GRUPO` já declaram, e muda com eles ou não muda. */
+function acharPorTopico(n: No, topic: string): No | null {
+  if (n.topic === topic) return n;
+  for (const f of n.children ?? []) {
+    const achado = acharPorTopico(f, topic);
     if (achado) return achado;
   }
   return null;
@@ -376,6 +389,70 @@ function noteDoSchema(
   return `${fracao}${denominador}${semNada}${oQue}${falta}${porSintaxe} Meta do board: 100% de cobertura e 0 erro crítico — norma, não régua: válido ou inválido é binário, e binário não tem média de mercado para comparar.`;
 }
 
+/** O caminho de uma URL, que é o que cabe num nó — o host inteiro repete o que o cabeçalho diz. */
+const caminhoDe = (u: string) => new URL(u).pathname;
+
+/** 040 — a largura, cuja meta é a única das três do grupo que tem faixa publicada. O `topic` abre
+ *  pela fração e fecha pelos DOIS jeitos de sair da faixa, porque é neles que está o trabalho. */
+function noteDaLargura(l: NonNullable<ReturnType<typeof taxaLarguraDoTitulo>>, dia: string): string {
+  const fracao = `${pct1(l.fracao)} dos títulos caem entre ${TITULO_PX_MIN}px e ${TITULO_PX_MAX}px — ${br(l.avaliadas - l.estreitos.length - l.largos.length)} de ${br(l.avaliadas)} páginas com título, corrida de ${dia}.`;
+  const maisLargo = [...l.largos].sort((a, b) => (b.tituloPx ?? 0) - (a.tituloPx ?? 0))[0] ?? null;
+  const quebra = ` ${br(l.largos.length)} ${l.largos.length === 1 ? "passa" : "passam"} de ${TITULO_PX_MAX}px e ${l.largos.length === 1 ? "corre" : "correm"} risco de corte na SERP; ${br(l.estreitos.length)} ${l.estreitos.length === 1 ? "fica" : "ficam"} abaixo de ${TITULO_PX_MIN}px e ${l.estreitos.length === 1 ? "desperdiça" : "desperdiçam"} pixel que o Google daria de graça. Os dois reprovam a mesma meta e pedem trabalho oposto — encurtar × completar.`;
+  const campeao = maisLargo ? ` O mais largo é ${caminhoDe(maisLargo.url)}, com ${br(maisLargo.tituloPx!)}px.` : "";
+  // FR-005/SC-004 da 024: o método viaja com o número. Um pixel solto é indistinguível de uma
+  // medição, e vai ser lido como uma.
+  const metodo = ` O pixel é ESTIMADO, nunca medido: tabela de larguras da Arial 20px (\`lib/pagina.mjs\`, método \`${l.estreitos[0]?.tituloMetodo ?? l.largos[0]?.tituloMetodo ?? "arial-20px-tabela"}\`) — a SERP real usa a fonte do Google e varia por dispositivo.`;
+  const semLargura = l.semLargura ? ` ${br(l.semLargura)} página com título e sem largura gravada ficou fora do denominador: largura nula é medida ausente, nunca título fora da faixa.` : "";
+  return `${fracao}${quebra}${campeao}${metodo}${semLargura} Meta do board: 100%. A faixa tem régua, e é a única das três metas deste grupo que tem — mas ${TITULO_PX_MAX}px é a zona segura abaixo do corte, não o número do estudo linkado, que diz 600px.`;
+}
+
+/** 040 — o termo no título. O `topic` nomeia os AUSENTES e não só a fração: "0% no começo do
+ *  título" manda mover uma palavra que, em todas as reprovadas, não está lá. */
+function noteDoTermo(
+  t: { passam: number; base: number; ausentes: number },
+  semTermo: number,
+  visitadas: number,
+  janela: { inicio: string; fim: string },
+  dia: string,
+  hosts: string[],
+): string {
+  const fracao = `${pct1(t.passam / t.base)} das URLs trazem o termo principal nos primeiros ${TERMO_ATE} caracteres do título — ${br(t.passam)} de ${br(t.base)}, títulos da corrida de ${dia} contra a janela ${janela.inicio} → ${janela.fim}.`;
+  const ausentes = t.ausentes
+    ? ` Em ${br(t.ausentes)} ${t.ausentes === 1 ? "delas o termo não aparece" : "delas o termo não aparece"} no título de jeito nenhum — isso não é "longe do começo", e o conserto não é mover a palavra para a frente.`
+    : "";
+  // O que o denominador exclui, e por quê. Sem esta frase a fração lê como se o site tivesse
+  // `base` páginas.
+  const fora = ` O denominador é ${br(t.base)} e não ${br(visitadas)}: ${br(semTermo)} URLs da corrida não têm consulta com impressão na janela, e "o Search Console ainda não vê essa página" nunca pode virar "o título está errado".`;
+  const termo = ` Termo principal = a consulta de MAIOR impressão daquela URL na janela (\`lib/kpis-busca.mjs#termoPrincipal\`), lida da dimensão consulta×página; ele vem da LEITURA e muda toda semana, por isso não é gravado na corrida.`;
+  const operador = ` A busca é por FRASE INTEIRA, ignorando acento e caixa (\`lib/pagina.mjs#posicaoDoTermo\`): um título com todas as palavras do termo em outra ordem conta como ausente.`;
+  // A ressalva que só existe em projeto que trocou de domínio, e na Atma ela decide o número: a
+  // leitura soma os hosts por CAMINHO (030) e a corrida visita SÓ o host atual, então o termo pode
+  // ser o que a página do domínio ANTERIOR ranqueava, cobrado do título que o domínio atual serve
+  // hoje. Um termo de marca antiga não tem como estar num título que já mudou de marca.
+  const migracao =
+    hosts.length > 1
+      ? ` A leitura soma ${hosts.join(" + ")} por caminho, e a corrida visita só ${hosts[0]}: onde a impressão ainda acontece no domínio anterior, o termo principal é o que a página DELE ranqueava, comparado com o título que ${hosts[0]} serve hoje.`
+      : "";
+  return `${fracao}${ausentes}${fora}${termo}${operador}${migracao} Meta do board: termo nos ${TERMO_ATE} primeiros caracteres — meta, não régua: nenhum estudo publica posição em caracteres, o de títulos mede correspondência com o H1.`;
+}
+
+/** 040 — a conjunção, que é o que o NOME do KPI pede e nenhuma das três metas sozinha responde. */
+function noteDaIntegridade(
+  i: NonNullable<ReturnType<typeof taxaIntegridadeDoTitulo>>,
+  l: ReturnType<typeof taxaLarguraDoTitulo>,
+  janela: { inicio: string; fim: string },
+  dia: string,
+): string {
+  const fracao = `${pct1(i.fracao)} das URLs passam nas DUAS metas medíveis ao mesmo tempo — ${br(Math.round(i.fracao * i.avaliadas))} de ${br(i.avaliadas)}, corrida de ${dia} contra a janela ${janela.inicio} → ${janela.fim}.`;
+  // A frase que impede a conjunção de ser lida como a largura.
+  const partes = l
+    ? ` Separadas, as duas metas dão números muito diferentes: a largura passa em ${pct1(l.fracao)} sobre as ${br(l.avaliadas)} páginas com título, e o termo em ${pct1(i.termo.passam / i.termo.base)} sobre as ${br(i.termo.base)} com termo apurado. A conjunção fica no MENOR denominador dos dois, porque um título só pode passar nas duas onde as duas foram medidas.`
+    : "";
+  const doHub = ` A conjunção é do HUB, não do board: o board nomeia o KPI e lista três metas, sem dizer como combiná-las. \`lib/grafo.mjs#taxaIntegridadeDoTitulo\` combina as duas que algum coletor alcança, e é a mesma função que /okr/atma/aquisicao consome — as duas telas concordam por construção.`;
+  const terceira = ` A terceira meta, a taxa de reescrita pelo Google, NÃO entra: nada no hub mede o título que o Google de fato exibiu (ver a folha ao lado).`;
+  return `${fracao}${partes}${doHub}${terceira}`;
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -578,9 +655,12 @@ export default async function MapaDoBoardPage() {
   // `page` dá 0,1% (a campeã tem 21.500 impressões numa média de 7,3, e nenhuma delas acontece em
   // 7,3). A leitura por consulta×página é a de grão mais fino que o Search Console entrega, e é
   // a que 032/D9 já tinha escolhido para esta medida na outra tela.
+  // 040 — HASTEADA para fora do bloco: a folha do título consome a MESMA leitura mais abaixo para
+  // achar o termo principal de cada URL. Declarar dentro do `if` faria a segunda folha pagar uma
+  // segunda requisição por host pela mesma pergunta.
+  const consultasGsc = atma ? await gscConsultas(hosts, janela) : null;
   const impNode = acharNo(dados.nodeData as No, "impressoesTop3");
   if (impNode) {
-    const consultasGsc = atma ? await gscConsultas(hosts, janela) : null;
     const lidas = consultasGsc && !("erro" in consultasGsc) ? consultasGsc.linhas : null;
     const medida = lidas ? impressoesNoTop3(lidas) : null;
     const noTop3 = (lidas ?? []).filter((l) => l.posicao >= 1 && l.posicao < 4);
@@ -692,10 +772,13 @@ export default async function MapaDoBoardPage() {
   // ZERO REQUISIÇÃO NOVA, como a 038: `richResultsResult` chega na MESMA resposta da URL Inspection
   // que a corrida diária de `/api/indexacao` já paga por URL, e vinha sendo descartada em
   // `lib/indexacao.mjs` desde a 022.
+  // 040 — HASTEADA pelo mesmo motivo de `consultasGsc`: a folha do título mede largura e termo
+  // sobre as MESMAS páginas desta corrida, e duas leituras da mesma tabela poderiam cair em dias
+  // diferentes se uma corrida gravasse entre as duas.
+  const crawl = dbOn() ? await lerCrawlDePagina("atma") : null;
   const schemaNode = acharNo(dados.nodeData as No, "schema");
   if (schemaNode) {
     const apuracao = dbOn() ? await lerIndexacao("atma") : null;
-    const crawl = dbOn() ? await lerCrawlDePagina("atma") : null;
     const sintaxe = crawl ? taxaCobertura(crawl.paginas) : null;
     const cob = apuracao ? coberturaRich(apuracao) : { julgadas: null, fracao: null };
     // Os CINCO estados de ausência, do mais específico ao mais genérico, e nenhum publica `0%`:
@@ -727,6 +810,122 @@ export default async function MapaDoBoardPage() {
                   note: noteDoSchema(apuracao, cob, sintaxe, crawl?.dia ?? null),
                 };
     schemaNode.children = [filho, ...(schemaNode.children ?? [])];
+  }
+
+  // ── 040: a Integridade do Título, nas três metas que o board pendura no grupo ──────────────
+  //
+  // Este é o primeiro nó do board com TRÊS metas irmãs, e elas não compartilham nem denominador nem
+  // instrumento. A largura sai do crawl e vale para todo título; o termo exige o Search Console e só
+  // vale onde a URL tem consulta com impressão; a reescrita não tem coletor nenhum. Uma fração só
+  // para o grupo mediria a mais fraca das três e chamaria o resultado de "integridade do título".
+  //
+  // Por isso são QUATRO nós: um por meta, no denominador que cada uma pede, e a conjunção no nó do
+  // KPI — que é do hub, não do board, e o `note` declara isso. Publicar só a conjunção (0 de 10 na
+  // Atma) diria "a largura está em 0%" num site em que quase metade dos títulos cabe na faixa: é o
+  // mesmo defeito que a 032 tirou do ar na folha vizinha, medir o critério com outro instrumento.
+  //
+  // ZERO REQUISIÇÃO NOVA, como a 038 e a 039: a leitura consulta×página e a corrida de página já
+  // estão carregadas acima, e foi para isso que as duas subiram para fora dos blocos delas.
+  const corrida = crawl && !crawl.motivo ? crawl : null;
+  const largura = corrida ? taxaLarguraDoTitulo(corrida.paginas) : null;
+  // A MESMA cadeia de /okr/[slug]/aquisicao: canoniza os dois lados (senão `/precos` e `/precos/`
+  // são páginas diferentes e TODA URL sai como "sem termo apurado"), acha o termo principal pela
+  // leitura e procura esse termo no título gravado pela corrida.
+  const linhasDoTermo =
+    consultasGsc && !("erro" in consultasGsc) && atma
+      ? consultasGsc.linhas.map((l) => ({ ...l, page: canonizar(l.page, atma.url) ?? l.page }))
+      : null;
+  const posicaoPorUrl = new Map<string, number | null>(
+    (corrida?.paginas ?? []).map((pg) => [
+      pg.url,
+      linhasDoTermo ? posicaoDoTermo(pg.titulo, termoPrincipal(linhasDoTermo, pg.url)) : null,
+    ]),
+  );
+  const integridade = corrida && linhasDoTermo ? taxaIntegridadeDoTitulo(corrida.paginas, posicaoPorUrl) : null;
+  // Os motivos de ausência, nomeados UMA vez e usados pelos nós — cada um com o seu, porque a
+  // largura continua medível sem Search Console e o termo não.
+  const semCorrida = !dbOn()
+    ? "sem banco · os títulos moram em `hub_pagina`"
+    : !crawl
+      ? "nenhuma corrida de página gravada"
+      : crawl.motivo
+        ? `a corrida de ${crawl.dia} não visitou página nenhuma (\`${crawl.motivo}\`)`
+        : null;
+  const semConsultas = !consultasGsc
+    ? motivoDeAusencia({ ligado: gscLigado(), hosts })
+    : "erro" in consultasGsc
+      ? `a leitura do Search Console falhou: ${consultasGsc.erro}`
+      : null;
+  // O título é do CRAWL e a consulta é do Search Console: sem crawl não há o que medir em meta
+  // nenhuma, e é por isso que ele vem primeiro nos dois nós que dependem dos dois.
+  const porqueSemTermo =
+    semCorrida ?? semConsultas ?? (integridade === null ? "nenhuma URL da corrida teve consulta com impressão na janela" : null);
+
+  const larguraNode = acharNo(dados.nodeData as No, "larguraTitulo");
+  if (larguraNode) {
+    const filho: No =
+      semCorrida || !largura
+        ? {
+            id: "larguraTitulo-medido",
+            topic: `∅ não apurado · ${semCorrida ?? "nenhuma página com título na corrida"}`,
+            note: `A largura é estimada sobre o \`<title>\` que a corrida de página grava, não sobre o Search Console — esta meta é a única das três do grupo que não depende da leitura de busca. ${semCorrida ? "Sem corrida, não há título." : "A corrida rodou e não gravou título nenhum, o que é achado da corrida e não do título."}`,
+          }
+        : {
+            id: "larguraTitulo-medido",
+            topic: `Medido: ${pct1(largura.fracao)} · ${br(largura.avaliadas - largura.estreitos.length - largura.largos.length)} de ${br(largura.avaliadas)} títulos na faixa · ${br(largura.largos.length)} acima de ${TITULO_PX_MAX}px · ${br(largura.estreitos.length)} abaixo de ${TITULO_PX_MIN}px`,
+            note: noteDaLargura(largura, corrida!.dia),
+          };
+    larguraNode.children = [filho, ...(larguraNode.children ?? [])];
+  }
+
+  const termoNode = acharNo(dados.nodeData as No, "termoNoTitulo");
+  if (termoNode) {
+    const filho: No = porqueSemTermo
+      ? {
+          id: "termoNoTitulo-medido",
+          topic: `∅ não apurado · ${porqueSemTermo}`,
+          note: "Esta meta precisa das DUAS fontes: o título vem da corrida de página e o termo principal vem da leitura consulta×página do Search Console, que é onde se sabe para o que a URL ranqueia. Faltando uma, não há par para comparar — e “sem termo apurado” nunca é “o termo não está no título”, que é o veredito oposto.",
+        }
+      : {
+          id: "termoNoTitulo-medido",
+          topic: `Medido: ${pct1(integridade!.termo.passam / integridade!.termo.base)} · ${br(integridade!.termo.passam)} de ${br(integridade!.termo.base)} URLs com termo apurado · em ${br(integridade!.termo.ausentes)} o termo não está no título`,
+          note: noteDoTermo(integridade!.termo, integridade!.semTermo, corrida!.visitadas, janela, corrida!.dia, hosts),
+        };
+    termoNode.children = [filho, ...(termoNode.children ?? [])];
+  }
+
+  // A folha SEM COLETOR, e é ela que explica por que a conjunção acima tem duas metas e não três.
+  // O nó existe por afirmação, não por lacuna: deixar a folha muda faria "ninguém mediu" parecer
+  // "ninguém olhou", e as duas mandam fazer coisas diferentes.
+  const reescritaNode = acharNo(dados.nodeData as No, "reescritaTitulo");
+  if (reescritaNode) {
+    reescritaNode.children = [
+      {
+        id: "reescritaTitulo-medido",
+        topic: "∅ sem coletor · nenhuma fonte do hub diz qual título o Google exibiu",
+        note: "A Search Analytics API devolve consulta, página, cliques, impressões e posição — nunca o snippet. A URL Inspection devolve o estado no índice, não o que a SERP mostra. Medir reescrita exigiria capturar a SERP de cada consulta×página e comparar com o `<title>` da corrida, e o hub não tem essa fonte: é a única das três metas deste grupo sem coletor, e não é dado esperando no Search Console para ser lido. Sem coletor E sem régua: o selo `◇` desta folha já diz por que a meta de < 15% não sustenta veredito, e as duas ausências são independentes — ligar uma fonte não daria régua, e uma régua não daria fonte.",
+      },
+      ...(reescritaNode.children ?? []),
+    ];
+  }
+
+  // A conjunção, no nó do KPI. É GRUPO e não folha — por isso a busca é por `topic`, e por isso o
+  // id NÃO termina em `-medido`: o contador logo abaixo diz "folhas com leitura própria", e este nó
+  // não é uma folha do catálogo.
+  const tituloNode = acharPorTopico(dados.nodeData as No, GRUPO_DO_TITULO);
+  if (tituloNode) {
+    const filho: No = porqueSemTermo
+      ? {
+          id: "tituloIntegridade-lido",
+          topic: `∅ não apurado · ${porqueSemTermo}`,
+          note: `A conjunção só existe onde as duas metas medíveis foram medidas na mesma URL.${largura ? ` A largura sozinha está apurada e vale ${pct1(largura.fracao)} sobre ${br(largura.avaliadas)} títulos — ver a folha "Comprimento em pixels".` : ""}`,
+        }
+      : {
+          id: "tituloIntegridade-lido",
+          topic: `Medido: ${pct1(integridade!.fracao)} nas duas metas medíveis · ${br(integridade!.avaliadas)} URLs julgadas · largura ${pct1(largura!.fracao)} · termo ${pct1(integridade!.termo.passam / integridade!.termo.base)}`,
+          note: noteDaIntegridade(integridade!, largura, janela, corrida!.dia),
+        };
+    tituloNode.children = [filho, ...(tituloNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

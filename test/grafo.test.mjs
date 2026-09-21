@@ -11,6 +11,7 @@ import {
   fronteira,
   agregar,
   taxaIntegridadeDoTitulo,
+  taxaLarguraDoTitulo,
   taxaAlinhamento,
   taxaCobertura,
   cadencia,
@@ -242,6 +243,29 @@ test("US2 — termo fora do título (-1) reprova; termo depois de 35 caracteres 
   const r = taxaIntegridadeDoTitulo(paginas, new Map([["https://x.com/1", -1], ["https://x.com/2", 40]]));
   assert.equal(r.fracao, 0);
   assert.equal(r.avaliadas, 2);
+});
+
+test("040 — a largura tem denominador PRÓPRIO: título sem termo apurado continua medido", () => {
+  const paginas = [pag({ n: 1 }), pag({ n: 2, tituloPx: 900 }), pag({ n: 3, titulo: null, tituloPx: null })];
+  const r = taxaLarguraDoTitulo(paginas);
+  assert.equal(r.avaliadas, 2, "a sem título sai; a sem termo FICA — a meta de largura não pede termo");
+  assert.equal(r.fracao, 0.5);
+  assert.equal(r.largos.length, 1);
+  assert.equal(r.estreitos.length, 0, "curto demais e longo demais pedem consertos opostos");
+  // A mesma lista pela conjunção devolve um denominador menor, e é esse par que impede a tela de
+  // publicar a conjunção como se fosse a largura.
+  const conj = taxaIntegridadeDoTitulo(paginas, new Map([["https://x.com/1", 0]]));
+  assert.equal(conj.avaliadas, 1);
+});
+
+test("040 — termo DEPOIS do caractere 35 e termo AUSENTE reprovam igual e contam diferente", () => {
+  const r = taxaIntegridadeDoTitulo(
+    [pag({ n: 1 }), pag({ n: 2 }), pag({ n: 3 })],
+    new Map([["https://x.com/1", 0], ["https://x.com/2", 40], ["https://x.com/3", -1]]),
+  );
+  assert.equal(r.termo.passam, 1);
+  assert.equal(r.termo.base, 3);
+  assert.equal(r.termo.ausentes, 1, "o -1 não é 'longe do começo': a palavra não está no título");
 });
 
 test("US2 — alinhamento de intenção conta só quem tem título", () => {
