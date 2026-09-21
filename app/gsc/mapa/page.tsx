@@ -10,7 +10,9 @@ import { conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetrac
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
-import { dbOn, lerDiasGsc, type DiaSeparado } from "@/lib/db";
+import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado } from "@/lib/db";
+import { taxaCobertura } from "@/lib/grafo.mjs";
+import { coberturaRich, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 
 import { Tabs } from "../../tabs";
 import { Mapa } from "./mapa";
@@ -324,6 +326,56 @@ function noteDaConformidade(c: MedidaConformidade, janela: { inicio: string; fim
   return `${indice}${denominador}${limiar}${trafego}${dimensao}${testemunha} Meta do board: 75% a 80% das URLs — meta, não régua: o piso por posição tem fonte, QUANTAS URLs devem superá-lo exigiria o Search Console de terceiros, que ninguém publica.`;
 }
 
+/** A cobertura de dados estruturados, na forma que o board pergunta.
+ *
+ *  O nome do TIPO entra no topic e não só no note, e isso é o que separa esta folha de um "94,4%
+ *  quase na meta": a meta do board é 100% com Product, Article, FAQPage ou SoftwareApplication, e
+ *  na Atma o que o Google reconhece é trilha de navegação. A fração sozinha responde "quantas
+ *  páginas têm ALGUM resultado enriquecido" — que não é a pergunta da folha. Mesma lição da 038,
+ *  onde o número certo respondia "qual página" a quem perguntava "quantas". */
+function topicDoSchema(a: Apuracao, cob: { julgadas: number | null; fracao: number | null }): string {
+  const tipos = Object.entries(a.richTipos ?? {}).sort((x, y) => y[1] - x[1]);
+  const doBoard = tiposDoBoard(a.richTipos);
+  const quais = !tipos.length
+    ? "tipo nenhum"
+    : doBoard.length
+      ? tipos.map(([t, n]) => `${t} ${br(n)}`).join(" · ")
+      : `nenhum tipo do board · só ${tipos.map(([t]) => t).join(" e ")}`;
+  const erros = a.richErro ? `${br(a.richErro)} com erro crítico` : "0 erro crítico";
+  return `Medido: ${pct1(cob.fracao!)} · ${br(a.richCom!)} de ${br(cob.julgadas!)} URLs no índice · ${erros} · ${quais}`;
+}
+
+/** A nota do Schema. Ordem: a fração com a data, o DENOMINADOR (que é a pergunta que a fração
+ *  provoca), o que o Google de fato reconhece, a leitura por sintaxe que diz o contrário, e a meta
+ *  do board com o tipo que falta. */
+function noteDoSchema(
+  a: Apuracao,
+  cob: { julgadas: number | null; fracao: number | null },
+  sintaxe: ReturnType<typeof taxaCobertura>,
+  diaDoCrawl: string | null,
+): string {
+  const fracao = `${pct1(cob.fracao!)} das URLs que o Google tem no índice servem pelo menos um resultado enriquecido — ${br(a.richCom!)} de ${br(cob.julgadas!)}, apuração de ${a.dia}, propriedade ${a.propriedade ?? "—"}.`;
+  // Sem esta frase a fração lê como se o site tivesse `julgadas` páginas, e a leitura seguinte
+  // seria "o denominador está errado" em vez de "metade do sitemap está fora do índice".
+  const denominador = ` O denominador é ${br(cob.julgadas!)} e não ${br(a.inspecionadas)}: ${br(a.richSemRelatorio ?? 0)} das URLs declaradas no sitemap estão fora do índice, e para elas o Google não publica relatório nenhum. Elas não entram como falha de schema — "o Google não leu a página" e "o schema não é elegível" pedem trabalho oposto, e somá-los mandaria reescrever markup que ninguém provou estar errado.`;
+  const semNada = a.richNenhum ? ` ${br(a.richNenhum)} ${a.richNenhum === 1 ? "URL está no índice e não serve resultado enriquecido nenhum" : "URLs estão no índice e não servem resultado enriquecido nenhum"} — esse é zero MEDIDO, e entra no denominador.` : "";
+  const tipos = Object.entries(a.richTipos ?? {}).sort((x, y) => y[1] - x[1]);
+  const doBoard = tiposDoBoard(a.richTipos);
+  const oQue = tipos.length
+    ? ` O que o Search Console reconhece, por URL: ${tipos.map(([t, n]) => `${t} em ${br(n)}`).join(", ")}.`
+    : " O Search Console não reconheceu tipo nenhum nas URLs indexadas.";
+  // A frase que impede a fração de ser lida como "quase na meta".
+  const falta = doBoard.length
+    ? ` Desses, ${doBoard.join(" e ")} ${doBoard.length === 1 ? "é o tipo" : "são os tipos"} que a meta do board nomeia.`
+    : " NENHUM deles é um dos quatro que a meta do board nomeia (Product, Article, FAQPage ou SoftwareApplication): a fração acima mede cobertura de resultado enriquecido, não cobertura DO tipo pedido, e contra a meta do board a leitura é 0.";
+  // A outra metade da definição, medida por outro instrumento — e é ela que estava no lugar deste
+  // número antes da 039.
+  const porSintaxe = sintaxe
+    ? ` Pela SINTAXE a mesma folha dá ${pct1(sintaxe.fracao)} (${br(sintaxe.validas)} de ${br(sintaxe.avaliadas)} páginas com JSON-LD que o parser aceita, crawl de ${diaDoCrawl ?? "—"}, \`lib/grafo.mjs#taxaCobertura\`): "válido e sem erro de sintaxe" é a primeira metade da definição do board, "elegível a rich snippet" é a segunda, e as duas divergem inteiras. O 100% também não distingue página a página — é o MESMO bloco JSON-LD global servido em toda rota, ressalva medida na 024.`
+    : "";
+  return `${fracao}${denominador}${semNada}${oQue}${falta}${porSintaxe} Meta do board: 100% de cobertura e 0 erro crítico — norma, não régua: válido ou inválido é binário, e binário não tem média de mercado para comparar.`;
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -624,6 +676,57 @@ export default async function MapaDoBoardPage() {
             })();
     // À FRENTE da definição e da meta, pelo mesmo motivo das quatro folhas vizinhas.
     gapNode.children = [filho, ...(gapNode.children ?? [])];
+  }
+
+  // ── 039: a cobertura de dados estruturados, medida onde o board mandou olhar ───────────────
+  //
+  // A folha se chama "Rich Snippets ELEGÍVEIS" e a meta dela termina em "0 erros críticos no
+  // relatório de Resultados Enriquecidos do Search Console". O hub já tinha um coletor para esta
+  // chave — `lib/grafo.mjs#taxaCobertura`, que conta JSON-LD que o `JSON.parse` aceita — e ele
+  // responde a PRIMEIRA metade da definição ("sem erro de sintaxe"), não a segunda. Na Atma as duas
+  // divergem inteiras: 35 de 35 pelo parser, e nenhuma URL elegível aos tipos que o board nomeia.
+  // Publicar os 100% sozinhos seria medir o critério com outro instrumento — o defeito que a 032
+  // tirou do ar na folha vizinha. Por isso o `topic` é o que o Google reporta e a sintaxe desce
+  // para o `note`, como evidência.
+  //
+  // ZERO REQUISIÇÃO NOVA, como a 038: `richResultsResult` chega na MESMA resposta da URL Inspection
+  // que a corrida diária de `/api/indexacao` já paga por URL, e vinha sendo descartada em
+  // `lib/indexacao.mjs` desde a 022.
+  const schemaNode = acharNo(dados.nodeData as No, "schema");
+  if (schemaNode) {
+    const apuracao = dbOn() ? await lerIndexacao("atma") : null;
+    const crawl = dbOn() ? await lerCrawlDePagina("atma") : null;
+    const sintaxe = crawl ? taxaCobertura(crawl.paginas) : null;
+    const cob = apuracao ? coberturaRich(apuracao) : { julgadas: null, fracao: null };
+    // Os CINCO estados de ausência, do mais específico ao mais genérico, e nenhum publica `0%`:
+    // "nenhuma página elegível" é a reprovação mais grave que esta folha sabe emitir, e é a que
+    // manda reescrever schema — enquanto o conserto real, em quatro dos cinco, é outro.
+    const filho: No = !dbOn()
+      ? { id: "schema-medido", topic: "∅ não apurado · sem banco", note: "A leitura mora em `hub_indexacao`, e sem `DATABASE_URL` não há corrida gravada para ler." }
+      : !apuracao
+        ? { id: "schema-medido", topic: "∅ não apurado · nenhuma corrida de indexação gravada", note: "A cobertura sai do relatório de resultado enriquecido que a corrida diária de `/api/indexacao` baixa junto com o estado de indexação. Sem corrida, não há relatório." }
+        : apuracao.motivo
+          ? { id: "schema-medido", topic: `∅ não apurado · ${apuracao.motivo.replace(/_/g, " ")}`, note: `A corrida de ${apuracao.dia} não inspecionou URL nenhuma (motivo \`${apuracao.motivo}\`), então não há relatório de resultado enriquecido. Não é "nenhuma página elegível" — é nenhuma página olhada.` }
+          : cob.julgadas === null
+            ? {
+                id: "schema-medido",
+                topic: `∅ não apurado · a corrida de ${apuracao.dia} é anterior à leitura do relatório`,
+                // A distinção que o `null` das colunas guarda. Sem esta folha explicando, a
+                // primeira corrida nova pareceria uma queda vinda do nada.
+                note: `A corrida gravou indexação mas não o relatório de resultado enriquecido — as colunas \`rich_*\` de ${apuracao.dia} estão NULAS, e nulo é "não medido", nunca zero. A leitura entrou em 20/09/2026 e vale da próxima corrida em diante; as anteriores não são recuperáveis, porque o relatório é o estado do índice no dia em que se pergunta.`,
+              }
+            : cob.julgadas === 0
+              ? {
+                  id: "schema-medido",
+                  topic: `∅ não apurado · nenhuma das ${br(apuracao.inspecionadas)} URLs está no índice`,
+                  note: `O Google só publica relatório de resultado enriquecido para URL que ele rastreou e indexou. Com ${br(apuracao.richSemRelatorio ?? 0)} URLs fora do índice, não há o que julgar — e chamar isso de 0% de cobertura mandaria reescrever schema quando o conserto é indexação.`,
+                }
+              : {
+                  id: "schema-medido",
+                  topic: topicDoSchema(apuracao, cob),
+                  note: noteDoSchema(apuracao, cob, sintaxe, crawl?.dia ?? null),
+                };
+    schemaNode.children = [filho, ...(schemaNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

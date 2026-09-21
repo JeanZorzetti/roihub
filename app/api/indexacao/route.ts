@@ -165,6 +165,13 @@ export async function POST() {
         descobertasNaoIndexadas: a.descobertasNaoIndexadas,
         outras: a.outras,
         falhas: a.falhas,
+        // 039 — sai na resposta pelo mesmo motivo das outras cinco: a corrida é disparada à mão
+        // quando se quer conferir, e número gravado que a resposta não mostra só se confere no banco.
+        richCom: a.richCom,
+        richErro: a.richErro,
+        richNenhum: a.richNenhum,
+        richSemRelatorio: a.richSemRelatorio,
+        richTipos: a.richTipos,
       });
     } catch (e) {
       // FR-013: um projeto que estoura não leva os outros junto. Mensagem truncada e sem nenhum

@@ -332,6 +332,25 @@ function ensure(): Promise<unknown> {
         criado TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (projeto, dia)
       );
+      -- Resultado enriquecido (039): a segunda metade do relatorio que a mesma inspecao ja baixa.
+      --
+      -- Sao NULAVEIS e ficam nulas para toda linha anterior a 20/09/2026, de proposito: a corrida
+      -- daqueles dias nao leu o relatorio, e 0 ali diria "nenhuma pagina elegivel" sobre dias em
+      -- que ninguem perguntou. NULL e "nao medido"; 0 e medido e vale zero.
+      --
+      -- rich_sem_relatorio nao soma com rich_nenhum pelo mesmo motivo que rastreada nao soma com
+      -- descoberta acima: "o Google leu e nao achou schema elegivel" e "o Google nao leu a pagina"
+      -- tem consertos opostos, e somados viram uma acusacao contra o schema de uma pagina que so
+      -- precisa entrar no indice.
+      --
+      -- Sem coluna de cobertura, como a taxa: ela e rich_com/(rich_com+rich_erro+rich_nenhum).
+      ALTER TABLE hub_indexacao ADD COLUMN IF NOT EXISTS rich_com INT;
+      ALTER TABLE hub_indexacao ADD COLUMN IF NOT EXISTS rich_erro INT;
+      ALTER TABLE hub_indexacao ADD COLUMN IF NOT EXISTS rich_nenhum INT;
+      ALTER TABLE hub_indexacao ADD COLUMN IF NOT EXISTS rich_sem_relatorio INT;
+      -- JSON {tipo: quantas URLs}. Coluna de TEXTO e nao jsonb: o unico leitor desenha a lista, e
+      -- jsonb quebra quem faz JSON.parse do que leu ([[jsonb_breaks_code_that_json_parses]]).
+      ALTER TABLE hub_indexacao ADD COLUMN IF NOT EXISTS rich_tipos TEXT;
       -- Crawl de pagina (024): uma linha por CORRIDA de um projeto num dia.
       --
       -- motivo NULL = apurou. Os tres motivos sao estados DIFERENTES e nunca somam num "0 paginas":
@@ -1137,6 +1156,13 @@ export type Apuracao = {
   outras: number;
   falhas: number;
   motivo: string | null; // null = apurou | sem_sitemap | sitemap_vazio | sem_propriedade | sem_orcamento
+  // 039 — `null` em TODOS os cinco significa "esta corrida não leu o relatório de resultado
+  // enriquecido", que é o caso de toda apuração anterior a 20/09/2026. Zero é medido.
+  richCom?: number | null;
+  richErro?: number | null;
+  richNenhum?: number | null;
+  richSemRelatorio?: number | null;
+  richTipos?: Record<string, number> | null;
 };
 
 /**
@@ -1150,8 +1176,9 @@ export async function gravarIndexacao(projeto: string, a: Apuracao): Promise<voi
   await ensure();
   await pool().query(
     `INSERT INTO hub_indexacao (projeto, dia, propriedade, declaradas, inspecionadas, indexadas,
-       rastreadas_nao_indexadas, descobertas_nao_indexadas, outras, falhas, motivo)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       rastreadas_nao_indexadas, descobertas_nao_indexadas, outras, falhas, motivo,
+       rich_com, rich_erro, rich_nenhum, rich_sem_relatorio, rich_tipos)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      ON CONFLICT (projeto, dia) DO UPDATE SET
        propriedade = EXCLUDED.propriedade,
        declaradas = EXCLUDED.declaradas,
@@ -1162,6 +1189,11 @@ export async function gravarIndexacao(projeto: string, a: Apuracao): Promise<voi
        outras = EXCLUDED.outras,
        falhas = EXCLUDED.falhas,
        motivo = EXCLUDED.motivo,
+       rich_com = EXCLUDED.rich_com,
+       rich_erro = EXCLUDED.rich_erro,
+       rich_nenhum = EXCLUDED.rich_nenhum,
+       rich_sem_relatorio = EXCLUDED.rich_sem_relatorio,
+       rich_tipos = EXCLUDED.rich_tipos,
        criado = now()`,
     [
       projeto,
@@ -1175,6 +1207,11 @@ export async function gravarIndexacao(projeto: string, a: Apuracao): Promise<voi
       a.outras,
       a.falhas,
       a.motivo,
+      a.richCom ?? null,
+      a.richErro ?? null,
+      a.richNenhum ?? null,
+      a.richSemRelatorio ?? null,
+      a.richTipos ? JSON.stringify(a.richTipos) : null,
     ]
   );
 }
@@ -1186,7 +1223,8 @@ export async function lerIndexacao(projeto: string): Promise<Apuracao | null> {
   await ensure();
   const r = await pool().query(
     `SELECT to_char(dia, 'YYYY-MM-DD') AS dia, propriedade, declaradas, inspecionadas, indexadas,
-            rastreadas_nao_indexadas, descobertas_nao_indexadas, outras, falhas, motivo
+            rastreadas_nao_indexadas, descobertas_nao_indexadas, outras, falhas, motivo,
+            rich_com, rich_erro, rich_nenhum, rich_sem_relatorio, rich_tipos
        FROM hub_indexacao
       WHERE projeto = $1
       ORDER BY dia DESC
@@ -1206,6 +1244,13 @@ export async function lerIndexacao(projeto: string): Promise<Apuracao | null> {
     outras: l.outras,
     falhas: l.falhas,
     motivo: l.motivo,
+    richCom: l.rich_com,
+    richErro: l.rich_erro,
+    richNenhum: l.rich_nenhum,
+    richSemRelatorio: l.rich_sem_relatorio,
+    // `null` atravessa como `null`: uma corrida que não leu o relatório não pode chegar à tela
+    // como `{}`, que se desenha igual a "leu e não achou tipo nenhum".
+    richTipos: l.rich_tipos ? (JSON.parse(l.rich_tipos) as Record<string, number>) : null,
   };
 }
 

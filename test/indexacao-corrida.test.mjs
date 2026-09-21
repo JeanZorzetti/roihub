@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { filaDoDia, repartir, amostra, classificar, agregar } from "../lib/indexacao-corrida.mjs";
+import { filaDoDia, repartir, amostra, classificar, classificarRich, agregar } from "../lib/indexacao-corrida.mjs";
 
 const linha = (extra) => ({ url: "https://a/1", propriedade: "sc-domain:a", verdict: "", coverage: "", ultimoCrawl: "", erro: "", ...extra });
 const indexada = (n = 1) => Array.from({ length: n }, () => linha({ verdict: "PASS", coverage: "Submitted and indexed" }));
@@ -176,6 +176,79 @@ test("inspecionadas = indexadas + rastreadas + descobertas + outras + falhas", (
       r.inspecionadas,
       r.indexadas + r.rastreadasNaoIndexadas + r.descobertasNaoIndexadas + r.outras + r.falhas,
       `soma dos baldes não fecha para ${JSON.stringify(linhas)}`,
+    );
+  }
+});
+
+// ── 039: a segunda metade do relatório, que a mesma inspeção já baixa ────────
+
+const rich = (...tipos) => ({ detectedItems: tipos.map((t) => ({ richResultType: t, items: [{ name: "x" }] })) });
+const indexadaCom = (r) => linha({ verdict: "PASS", coverage: "Submitted and indexed", rich: r });
+
+test("indexada SEM relatório é zero medido; fora do índice sem relatório é não há onde olhar", () => {
+  // Os dois chegam da API do jeito IDÊNTICO — `richResultsResult` omitido. O que os separa é o
+  // estado de indexação, e colapsá-los transformaria um problema de indexação numa acusação
+  // contra o schema. Medido na Atma em 20/09/2026: a home é o primeiro caso, /pacientes/precos
+  // (o único Product do site, "Discovered - currently not indexed") é o segundo.
+  assert.equal(classificarRich(indexadaCom(null)), "nenhum");
+  assert.equal(classificarRich(linha({ verdict: "NEUTRAL", coverage: "Discovered - currently not indexed" })), "sem_relatorio");
+  assert.equal(classificarRich(linha({ verdict: "NEUTRAL", coverage: "URL is unknown to Google" })), "sem_relatorio");
+});
+
+test("erro crítico vence item detectado na mesma página", () => {
+  const comAmbos = indexadaCom({
+    detectedItems: [
+      { richResultType: "Breadcrumbs", items: [{ name: "ok" }] },
+      { richResultType: "Product", items: [{ name: "x", issues: [{ issueMessage: "missing field price", severity: "ERROR" }] }] },
+    ],
+  });
+  assert.equal(classificarRich(comAmbos), "com_erro", "um erro presente não é apagado por um acerto ao lado — o board mede 0 erros críticos");
+  const soAviso = indexadaCom({ detectedItems: [{ richResultType: "Article", items: [{ name: "x", issues: [{ issueMessage: "no image", severity: "WARNING" }] }] }] });
+  assert.equal(classificarRich(soAviso), "com_rich", "WARNING não é erro crítico");
+});
+
+test("a cobertura divide por quem tem relatório, não por quem foi inspecionado", () => {
+  const r = agregar([
+    ...Array.from({ length: 3 }, () => indexadaCom(rich("Breadcrumbs"))),
+    indexadaCom(null),
+    linha({ verdict: "NEUTRAL", coverage: "Discovered - currently not indexed" }),
+    linha({ verdict: "NEUTRAL", coverage: "Discovered - currently not indexed" }),
+  ]);
+  assert.equal(r.inspecionadas, 6);
+  assert.equal(r.richJulgadas, 4);
+  assert.equal(r.cobertura, 3 / 4, "dividir por 6 mediria o schema com a régua da indexação");
+  assert.equal(r.richSemRelatorio, 2);
+});
+
+test("falha de inspeção sai das DUAS medidas, e é contada uma vez só", () => {
+  const r = agregar([...indexada(2), ...falha(3)]);
+  assert.equal(r.falhas, 3, "a falha não pode ser contada de novo no balde de resultado enriquecido");
+  assert.equal(r.richJulgadas, 2);
+  assert.equal(r.cobertura, 0, "duas indexadas sem relatório são zero MEDIDO, não null");
+  assert.equal(agregar(falha(4)).cobertura, null, "sem ninguém julgado é não apurado, nunca 0%");
+});
+
+test("os tipos contam URLs, não itens — e nomeiam a cobertura de QUÊ", () => {
+  const c = agregar([
+    indexadaCom({ detectedItems: [{ richResultType: "Breadcrumbs", items: [{ name: "a" }, { name: "b" }] }] }),
+    indexadaCom(rich("Breadcrumbs", "Review snippets")),
+    indexadaCom(null),
+  ]).richTipos;
+  assert.deepEqual(c, { Breadcrumbs: 2, "Review snippets": 1 }, "duas trilhas na mesma página não são duas páginas com trilha");
+});
+
+test("inspecionadas = com + erro + nenhum + sem relatório + falhas", () => {
+  const amostras = [
+    [],
+    [...indexada(2), ...falha(1)],
+    [indexadaCom(rich("Breadcrumbs")), indexadaCom(null), linha({ coverage: "Crawled - currently not indexed" }), ...falha(2)],
+  ];
+  for (const linhas of amostras) {
+    const r = agregar(linhas);
+    assert.equal(
+      r.inspecionadas,
+      r.richCom + r.richErro + r.richNenhum + r.richSemRelatorio + r.falhas,
+      `soma dos baldes de resultado enriquecido não fecha para ${JSON.stringify(linhas)}`,
     );
   }
 });
