@@ -1,8 +1,10 @@
 import { ehApurado } from "@/lib/funil.mjs";
 import { reais, num } from "../projecao";
 
-// O pipeline somado (019, FR-013..FR-017). Os números vêm prontos de `valorEmRisco()`
-// (lib/okr.mjs, puro) — aqui só se escolhe o que aparece e como se escreve.
+// O pipeline (019, FR-013..FR-017). Os números vêm prontos de `valorEmRisco()` (lib/okr.mjs, puro) —
+// aqui só se escolhe o que aparece e como se escreve. Desde a 051/FR-012a, "enviado" soma DOCUMENTOS
+// e vivos/perdidos valem cada pessoa pelo ÚLTIMO orçamento: os dois números não fecham de propósito,
+// e a tela diz por quê.
 //
 // ⛔ PROIBIDO neste arquivo e no módulo (FR-014): qualquer razão `enviados ÷ meta`, barra de
 // progresso, ou frase do tipo "75% da meta". R$ 37.465 é 75% de R$ 50.000, e escrever isso como
@@ -39,7 +41,7 @@ export function ValorEmRisco({
       <p>
         <strong>{reais(risco.enviados.valor)}</strong> enviados{" "}
         <span className="foot">
-          ({risco.enviados.n} orçamento{risco.enviados.n === 1 ? "" : "s"})
+          ({risco.enviados.n} orçamento{risco.enviados.n === 1 ? "" : "s"}, revisões incluídas)
         </span>
         {" · "}
         {/* FR-013a: "fechado" vem do DEGRAU `tratamento`, nunca de `orcamentos.status` — 9 de 9
@@ -59,7 +61,7 @@ export function ValorEmRisco({
           <>
             {" · "}
             <strong>{risco.vivos.pessoas}</strong> ainda vivo{risco.vivos.pessoas === 1 ? "" : "s"} (
-            <strong>{reais(risco.vivos.valor)}</strong>)
+            <strong>{reais(risco.vivos.valor)}</strong> pelo último orçamento de cada)
           </>
         )}
       </p>
@@ -84,7 +86,8 @@ export function ValorEmRisco({
           Perdido = <code>{(motivosDePerda ?? []).join(", ")}</code> (declarado no card). Vivo é o
           complemento, lead sem motivo registrado incluído. {risco.enviados.n} documento
           {risco.enviados.n === 1 ? "" : "s"} contra pessoas: o mesmo paciente com dois orçamentos é
-          um degrau vencido duas vezes, não duas pessoas.
+          um degrau vencido duas vezes, não duas pessoas — e vale o último que recebeu, porque fecha
+          um tratamento, não os dois. Por isso vivos e perdidos somam menos que o total enviado.
         </p>
       ) : (
         // FR-015b: taxonomia não declarada NÃO vira default. Assumir a lista da Atma para outro

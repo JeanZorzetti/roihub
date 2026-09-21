@@ -1636,6 +1636,24 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   max-width: 78ch;
 }
 
+/* information-design · cadeia + fila · responde: onde o trabalho de busca da Atma rende mais, e ele
+   chega ao dinheiro? · fonte: dadosDaFicha("atma") + conformidadeDeCtr + crawl + CrUX · 2026-09-21
+   051 — a resposta antes da prosa. Nível 1 (a cadeia) em corpo maior; nível 2 (a fila) com a barra
+   de canal da ficha, de um tom só; nível 3 (a legenda) em corpo de rodapé. Nenhuma cor nova. */
+[data-info="gsc"] .mapa-resposta { margin: 14px 0 4px; }
+[data-info="gsc"] .mapa-n1-resposta { font-size: 21px; line-height: 1.45; max-width: 64ch; }
+@media (max-width: 640px) { [data-info="gsc"] .mapa-n1-resposta { font-size: 18px; } }
+[data-info="gsc"] .mapa-n1--ausente { min-height: 18rem; }
+[data-info="gsc"] .mapa-fila { margin-top: 12px; }
+[data-info="gsc"] .mapa-fila-h { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 6px; }
+[data-info="gsc"] .mapa-fila-lista { list-style: none; margin: 0; padding: 0; }
+[data-info="gsc"] .mapa-fila-lista li { margin: 0 0 10px; max-width: 520px; }
+[data-info="gsc"] .mapa-fila-v { font-weight: 700; font-variant-numeric: tabular-nums; }
+[data-info="gsc"] .mapa-fila-alvo { overflow-wrap: anywhere; }
+[data-info="gsc"] .mapa-fila-det { display: block; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+[data-info="gsc"] .mapa-legenda { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--muted); max-width: 90ch; }
+[data-info="gsc"] .mapa-legenda .mb-tag { margin: 0 4px 0 0; }
+
 @media (max-width: 640px) {
   /* 278px úteis não comportam pan+zoom de um mapa de 113 nós com utilidade nenhuma — a lista abaixo
      é que responde no celular. O mapa encolhe para não ocupar a tela inteira sendo ilegível. */

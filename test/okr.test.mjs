@@ -17,6 +17,7 @@ import {
   motivosDoFunil,
   buracosDeVerdade,
   valorEmRisco,
+  ultimoPorPessoa,
 } from "../lib/okr.mjs";
 import { conversao } from "../lib/janelas.mjs";
 
@@ -469,7 +470,9 @@ test("auditoria 05/09 — o ticket carrega os DOIS denominadores: documento (mé
   const c = ticketDeOrcamentos(rows, janela);
   assert.equal(c.docs, 7);
   assert.equal(c.pessoas, 4);
-  assert.equal(c.valor.toFixed(2), "4932.34");
+  // 051/FR-012b — média do ÚLTIMO orçamento de cada uma das 4 pessoas (5720,34 · 4830,51 · 5681 ·
+  // 4041), não dos 7 documentos (4932,34): quem pediu dois não pesa mais o dobro.
+  assert.equal(c.valor.toFixed(2), "5068.21");
   // O degrau conta a MESMA coisa que `pessoas` — se um dia divergirem, o rótulo passa a mentir.
   assert.equal(celulasDeOrcamento(rows, janela).enviados.valor, c.pessoas);
 
@@ -515,6 +518,21 @@ test("T031 — linha com `preco` ausente ou não numérico fica FORA da média, 
   );
   // Média só de 100 e 300 — as duas linhas sem `preco` numérico saem da conta, não puxam para 0.
   assert.equal(comBuraco.valor, 200);
+});
+
+test("051/FR-012b — o ticket é a média do último orçamento de cada pessoa, não dos documentos", () => {
+  const janela = { inicio: "2026-08-01", fim: "2026-08-31" };
+  const c = ticketDeOrcamentos(
+    [
+      { criado: "2026-08-05", preco: 1000, desconto_vista: 0, paciente_lead_id: 1 },
+      { criado: "2026-08-09", preco: 3000, desconto_vista: 0, paciente_lead_id: 1 },
+      { criado: "2026-08-06", preco: 2000, desconto_vista: 0, paciente_lead_id: 2 },
+    ],
+    janela,
+  );
+  assert.equal(c.docs, 3);
+  assert.equal(c.pessoas, 2);
+  assert.equal(c.valor, 2500, "(3000 + 2000) / 2 — a média por documento daria 2000");
 });
 
 test("T031 — `rows` null (sem fonte de orçamento) devolve não apurado", () => {
@@ -612,11 +630,65 @@ test("020/auditoria — o órfão resolvido pelo NOME entra no balde da pessoa d
   ];
   const r = valorEmRisco(rows, leads([[53, "enviou_documentacao"], [21, "sem_resposta"]]), JANELA_RISCO, PERDA, apurado(0));
   assert.equal(r.semLead, null, "o órfão foi reconhecido — não sobra balde de 'sem lead'");
-  assert.deepEqual(r.vivos, { pessoas: 1, valor: 4000 }, "os dois orçamentos da Maiara somam no balde dela");
+  // 051/FR-012a — a Maiara vale o ÚLTIMO orçamento dela (1000, de 06/08), não a soma dos dois.
+  assert.deepEqual(r.vivos, { pessoas: 1, valor: 1000 }, "o orçamento órfão resolvido pelo nome é o mais recente da Maiara");
   assert.deepEqual(r.perdidos, { pessoas: 1, valor: 500 });
-  // A conta fecha contra o degrau e contra o total enviado — as três leituras da mesma pessoa.
+  // A conta fecha contra o degrau (pessoas) e contra os últimos orçamentos (valor). `enviados` segue
+  // somando documentos: 4500 enviados para duas pessoas que valem 1500.
   assert.equal(r.vivos.pessoas + r.perdidos.pessoas, celulasDeOrcamento(rows, JANELA_RISCO).enviados.valor);
-  assert.equal(r.vivos.valor + r.perdidos.valor, r.enviados.valor);
+  assert.equal(r.enviados.valor, 4500);
+  assert.equal(r.vivos.valor + r.perdidos.valor, 1500);
+});
+
+test("051/FR-012a — revisões no mesmo dia: vale a ÚLTIMA linha da fonte, que já vem por `criado_em`", () => {
+  // O caso real da Maiara em 05/09: moderado às 17:57 e simples às 18:10, os dois gravados como
+  // `2026-09-05`. A fonte ordena por `criado_em`, então a linha de baixo é a mais recente.
+  const r = valorEmRisco(
+    [orc("2026-08-05", 53, 4490, 0.1), orc("2026-08-05", 53, 2990, 0.05)],
+    leads([[53, "enviou_documentacao"]]),
+    JANELA_RISCO,
+    PERDA,
+    apurado(0),
+  );
+  assert.equal(r.vivos.pessoas, 1);
+  assert.equal(r.vivos.valor, 2990 * 0.95);
+  assert.equal(r.enviados.n, 2, "enviados segue contando os dois documentos");
+});
+
+test("051/FR-012a — a data manda sobre a posição: o orçamento mais novo vence mesmo vindo antes", () => {
+  const r = valorEmRisco(
+    [orc("2026-08-17", 22, 2000, 0), orc("2026-08-05", 22, 1000, 0)],
+    leads([[22, "contato_futuro"]]),
+    JANELA_RISCO,
+    PERDA,
+    apurado(0),
+  );
+  assert.equal(r.vivos.valor, 2000);
+});
+
+test("051/FR-012a — vivos + perdidos + sem lead = a soma do último orçamento de cada pessoa", () => {
+  const rows = [
+    orc("2026-08-05", 51, 4490, 0.1),
+    orc("2026-08-05", 51, 4490, 0.1),
+    orc("2026-08-06", 21, 6000, 0),
+    orc("2026-08-07", null, 900, 0),
+    orc("2026-08-08", 21, 5000, 0),
+  ];
+  const r = valorEmRisco(rows, leads([[51, "contato_futuro"], [21, "sem_resposta"]]), JANELA_RISCO, PERDA, apurado(0));
+  assert.deepEqual(r.vivos, { pessoas: 1, valor: 4041 });
+  assert.deepEqual(r.perdidos, { pessoas: 1, valor: 5000 });
+  assert.deepEqual(r.semLead, { n: 1, valor: 900 });
+  assert.equal(r.vivos.valor + r.perdidos.valor + r.semLead.valor, 4041 + 5000 + 900);
+});
+
+test("051/FR-012a — `ultimoPorPessoa()` devolve UM valor por pessoa, o mais recente", () => {
+  const linhas = [
+    { criado: "2026-08-17", liquido: 30, paciente_lead_id: 1 },
+    { criado: "2026-08-05", liquido: 10, paciente_lead_id: 1 },
+    { criado: "2026-08-05", liquido: 20, paciente_lead_id: 2 },
+  ];
+  const m = ultimoPorPessoa(linhas, (r) => String(r.paciente_lead_id));
+  assert.deepEqual([...m.entries()].sort(), [["1", 30], ["2", 20]]);
 });
 
 test("020/auditoria — órfão irreconhecível continua no 'sem lead', fora de vivos e perdidos", () => {
@@ -640,7 +712,8 @@ test("019/T027 caso 1 — 2 orçamentos do MESMO lead: enviados conta DOCUMENTO,
   assert.equal(r.enviados.n, 2);
   assert.equal(r.enviados.valor, 2000);
   assert.equal(r.vivos.pessoas, 1);
-  assert.equal(r.vivos.valor, 2000);
+  // 051/FR-012a — a pessoa vale o último orçamento, não a soma dos dois documentos.
+  assert.equal(r.vivos.valor, 1000);
 });
 
 test("019/T027 caso 2 — lead com motivo NA lista de perda é perdido, não vivo", () => {

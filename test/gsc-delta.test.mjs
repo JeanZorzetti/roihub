@@ -13,6 +13,8 @@ import {
   linha,
   ordenar,
   resumo,
+  CLASSES,
+  filaDoMapa,
 } from "../lib/gsc-delta.mjs";
 import * as grafo from "../lib/grafo.mjs";
 import * as crux from "../lib/crux.mjs";
@@ -401,4 +403,102 @@ test("resumo conta os dois eixos separados", () => {
   assert.equal(r.porRegua.comRegua, 1);
   assert.equal(r.porRegua.recusa, 1);
   assert.equal(r.porRegua.semColetor, 1);
+});
+
+// ---------- 051 · resultado × alavanca × higiene ----------
+
+// A classificação que o dono aprovou em 21/09/2026, por extenso — mesma razão de `FOLHAS`: contar o
+// próprio catálogo passaria verde com uma folha trocada de classe por engano.
+const CLASSE_DECIDIDA = {
+  resultado: [
+    "ctrPorPosicao", "ctrGap", "conformidadeUrls", "impressoesTop3", "penetracaoTop3", "strikingDistance",
+    "crescimentoNaoMarca", "consultasUnicas", "top20", "queryToPage", "activeIndexRatio", "buscasDeMarca",
+    "tamBusca", "reescritaTitulo", "referringDomains",
+  ],
+  alavanca: ["larguraTitulo", "termoNoTitulo", "intencao", "schema", "linksInternos", "canibalizacao", "frescor", "coberturaSemantica"],
+  higiene: ["lcp", "inp", "cls", "ttfb", "urlsBoas", "indexacaoLimpa", "rejeicaoRastreio", "profundidadeClique"],
+};
+
+test("051/FR-005 — toda folha de métrica tem a classe decidida; o procedimento não tem classe", () => {
+  for (const [classe, chaves] of Object.entries(CLASSE_DECIDIDA)) {
+    for (const k of chaves) assert.equal(CATALOGO[k].classe, classe, `${k}: esperava ${classe}`);
+  }
+  for (const [k, item] of Object.entries(CATALOGO)) {
+    if (item.balizador.tipo === "procedimento") assert.equal(item.classe, undefined, `${k}: procedimento não tem classe`);
+    else assert.ok(Object.hasOwn(CLASSES, item.classe), `${k}: classe ausente ou desconhecida (${item.classe})`);
+  }
+});
+
+test("051/FR-006 — a ação semanal existe nas alavancas, e só nelas", () => {
+  for (const [k, item] of Object.entries(CATALOGO)) {
+    if (item.classe === "alavanca") assert.ok(typeof item.acaoSemanal === "string" && item.acaoSemanal.trim(), `${k}: alavanca sem ação semanal`);
+    else assert.equal(item.acaoSemanal, undefined, `${k}: ação semanal fora de alavanca`);
+  }
+});
+
+test("051/FR-006/FR-007 — cada classe diz o que a nota publica: alavanca é hipótese, higiene é limiar", () => {
+  assert.deepEqual(Object.keys(CLASSES).sort(), ["alavanca", "higiene", "resultado"]);
+  for (const c of Object.values(CLASSES)) {
+    assert.ok(c.rotulo?.trim());
+    assert.ok(c.nota?.trim());
+  }
+  assert.match(CLASSES.alavanca.nota, /hipótese/);
+  assert.match(CLASSES.higiene.nota, /limiar/);
+});
+
+// ---------- 051 · a fila 80/20 ----------
+
+const POST = { url: "https://usealigner.com/blog/quanto-custa-alinhador-invisivel", cliques: 272, impressoes: 20887, posicao: 7.3, regua: 0.02, veredito: "abaixo" };
+POST.ctr = POST.cliques / POST.impressoes;
+const MIUDA = { url: "https://usealigner.com/contato", cliques: 5, impressoes: 500, posicao: 5, ctr: 0.01, regua: 0.045, veredito: "abaixo" };
+const LARGURA = { fracao: 0.4, avaliadas: 30, estreitos: [{}, {}], largos: Array.from({ length: 16 }, () => ({})), semLargura: 0 };
+
+test("051/US3 — em cliques, a URL com mais cliques faltando vem primeiro", () => {
+  const f = filaDoMapa({ abaixo: [MIUDA, POST], largura: null, vitais: [] });
+  const cliques = f.porMoeda.get("cliques");
+  assert.equal(cliques[0].alvo, POST.url);
+  assert.equal(Math.round(cliques[0].delta), Math.round(POST.impressoes * (POST.regua - POST.ctr)));
+  assert.equal(cliques[1].alvo, MIUDA.url);
+});
+
+test("051/US3 — cliques e pp em blocos separados, e nenhum total no retorno", () => {
+  const f = filaDoMapa({ abaixo: [POST], largura: LARGURA, vitais: [] });
+  assert.deepEqual([...f.porMoeda.keys()].sort(), ["cliques", "pp"]);
+  for (const [, bloco] of f.porMoeda) assert.ok(bloco.every((l) => l.moeda === bloco[0].moeda));
+  const pp = f.porMoeda.get("pp")[0];
+  assert.equal(pp.chave, "larguraTitulo");
+  assert.equal(pp.delta.toFixed(1), (16 / 30 * 100).toFixed(1), "pp acima do limite de 580px");
+  assert.ok(!Object.keys(f).some((k) => /total|soma/i.test(k)), "a fila não carrega total");
+});
+
+test("051/US3 — o que fica fora é contado por motivo, e as faixas de posição saem por sobreposição", () => {
+  const f = filaDoMapa({ abaixo: [POST], largura: LARGURA, vitais: [] });
+  const porNatureza = (t) => Object.values(CATALOGO).filter((i) => i.balizador.tipo === t).length;
+  for (const t of ["recusa", "norma", "semColetor", "procedimento"]) assert.equal(f.fora[t], porNatureza(t), t);
+  assert.match(f.sobreposicao, /mesmos cliques/);
+});
+
+test("051/US3 — vitais: dentro da régua e sem amostra saem da fila com o nome; acima entra em ms", () => {
+  const f = filaDoMapa({
+    abaixo: null,
+    largura: null,
+    vitais: [
+      { chave: "lcp", valor: 1800, limite: 2500 },
+      { chave: "inp", valor: null, limite: 200 },
+      { chave: "ttfb", valor: 950, limite: 800 },
+      { chave: "cls", valor: null, limite: 0.1, falhou: true },
+    ],
+  });
+  assert.deepEqual(f.fora.dentroDaRegua, ["lcp"]);
+  assert.deepEqual(f.fora.semAmostra, ["inp"]);
+  // Leitura que falhou não é site sem amostra: os dois pedem trabalho oposto (esperar × consertar).
+  assert.ok(f.fora.semLeitura.includes("cls"));
+  assert.equal(f.porMoeda.get("ms")[0].chave, "ttfb");
+  assert.equal(f.porMoeda.get("ms")[0].delta, 150);
+});
+
+test("051/US3 — sem leitura nenhuma, a fila fica vazia e diz o que faltou, sem inventar zero", () => {
+  const f = filaDoMapa({ abaixo: null, largura: null, vitais: [] });
+  assert.equal(f.porMoeda.size, 0);
+  assert.deepEqual(f.fora.semLeitura.sort(), ["ctrGap", "larguraTitulo"]);
 });

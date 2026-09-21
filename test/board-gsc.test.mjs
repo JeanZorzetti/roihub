@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CATALOGO, regua } from "../lib/gsc-delta.mjs";
+import { CATALOGO, CLASSES, regua } from "../lib/gsc-delta.mjs";
 import { BENCHMARK, benchmark } from "../lib/kpis-busca.mjs";
 import { PROFUNDIDADE_MAX } from "../lib/grafo.mjs";
 import { BOARD, DIVERGENCIAS, GRUPOS, NOTA_DO_GRUPO, RAMOS, selo, mapaDoBoard } from "../lib/board-gsc.mjs";
@@ -93,16 +93,32 @@ test("toda folha do mapa carrega a tag de procedência visível", () => {
   for (const f of folhas) {
     assert.ok(Array.isArray(f.tags) && f.tags.length >= 1, `folha sem tag: ${f.metadata.chave}`);
     // A PRIMEIRA tag é sempre a procedência — a ordem importa porque a lista da página imprime as
-    // tags na ordem e a procedência é a que qualifica todo o resto. A segunda, quando existe, é a
-    // divergência board × código, e nada mais entra: tag extra sem dono vira decoração com cara de
-    // selo, que é o defeito que a forma ◆/◇ existe para não ter.
+    // tags na ordem e a procedência é a que qualifica todo o resto. A segunda é a CLASSE (051/FR-005,
+    // ausente só no procedimento) e a terceira, quando existe, é a divergência board × código. Nada
+    // mais entra: tag extra sem dono vira decoração com cara de selo, que é o defeito que a forma
+    // ◆/◇ existe para não ter.
     assert.match(f.tags[0], /^[◆◇] /, `tag sem marca de forma: ${f.metadata.chave}`);
+    const { classe } = CATALOGO[f.metadata.chave];
     const extras = f.tags.slice(1);
-    assert.deepEqual(
-      extras,
-      DIVERGENCIAS[f.metadata.chave] ? [DIVERGENCIAS[f.metadata.chave].tag] : [],
-      `tag extra que não é a divergência declarada: ${f.metadata.chave}`,
-    );
+    const divergencia = DIVERGENCIAS[f.metadata.chave] ? [DIVERGENCIAS[f.metadata.chave].tag] : [];
+    assert.equal(extras.length, (classe ? 1 : 0) + divergencia.length, `tag extra sem dono: ${f.metadata.chave}`);
+    if (classe) assert.ok(extras[0].startsWith(CLASSES[classe].rotulo), `${f.metadata.chave}: a segunda tag não é a classe`);
+    assert.deepEqual(extras.slice(classe ? 1 : 0), divergencia, `tag extra que não é a divergência declarada: ${f.metadata.chave}`);
+  }
+});
+
+test("051/FR-005..FR-007 — a classe aparece na etiqueta, na nota e no metadata", () => {
+  const folhas = new Map(todosOsNos(mapaDoBoard().nodeData).filter((n) => n.metadata?.chave).map((n) => [n.metadata.chave, n]));
+  // A alavanca NOMEIA a ação semanal na etiqueta — visível sem clique, que é onde a Q2 do dono pôs.
+  assert.equal(folhas.get("larguraTitulo").tags[1], "alavanca · títulos encurtados por semana");
+  assert.equal(folhas.get("lcp").tags[1], "higiene · limiar");
+  assert.equal(folhas.get("ctrGap").tags[1], "resultado");
+  assert.equal(folhas.get("checklistGsc").metadata.classe, null, "procedimento não tem classe");
+  for (const [chave, n] of folhas) {
+    const { classe } = CATALOGO[chave];
+    if (!classe) continue;
+    assert.equal(n.metadata.classe, classe, `${chave}: metadata sem a classe`);
+    assert.ok(n.note.includes(CLASSES[classe].nota), `${chave}: a nota não explica a classe`);
   }
 });
 

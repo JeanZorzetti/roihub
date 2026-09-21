@@ -793,7 +793,8 @@ test("T033/US3-AC1 — resolverTicket(): apurado existe, vence o declarado, rót
 test("auditoria 05/09 — o rótulo do ticket nomeia os dois denominadores, não só 'média de orçamentos'", () => {
   const c = resolverTicket({ valor: 4932.34, docs: 7, pessoas: 4 }, { ticket: 4000 });
   assert.equal(c.estado, "apurado");
-  assert.match(c.fonte, /média de 7 orçamentos de 4 pessoas/);
+  // 051/FR-012b — a média é por pessoa, pelo último orçamento; os documentos seguem no rótulo.
+  assert.match(c.fonte, /média do último orçamento de 4 pessoas, entre 7 orçamentos enviados/);
 });
 
 test("auditoria 06/09 — com órfão, o rótulo decompõe para a conta fechar contra vivos+perdidos", () => {
@@ -801,14 +802,14 @@ test("auditoria 06/09 — com órfão, o rótulo decompõe para a conta fechar c
   // diz 2 vivos + 3 perdidos (= 5 pessoas) e nomeia o órfão à parte; sem a decomposição aqui, quem
   // soma 2+3 e compara com 6 procura um erro que não existe.
   const c = resolverTicket({ valor: 4600.87, docs: 9, pessoas: 6, orfaos: 1 }, null);
-  assert.match(c.fonte, /média de 9 orçamentos de 6 pessoas \(5 com lead \+ 1 sem\)/);
+  assert.match(c.fonte, /média do último orçamento de 6 pessoas \(5 com lead \+ 1 sem\), entre 9 orçamentos enviados/);
   // Sem órfão o rótulo NÃO ganha parêntese — decomposição de "5 com lead + 0 sem" é ruído.
-  assert.match(resolverTicket({ valor: 100, docs: 5, pessoas: 5, orfaos: 0 }, null).fonte, /de 5 pessoas d/);
+  assert.match(resolverTicket({ valor: 100, docs: 5, pessoas: 5, orfaos: 0 }, null).fonte, /de 5 pessoas, entre/);
   assert.doesNotMatch(resolverTicket({ valor: 100, docs: 5, pessoas: 5, orfaos: 0 }, null).fonte, /com lead/);
 });
 
 test("auditoria 05/09 — singular no rótulo, e sem os contadores o texto volta ao genérico em vez de mentir", () => {
-  assert.match(resolverTicket({ valor: 500, docs: 1, pessoas: 1 }, null).fonte, /média de 1 orçamento de 1 pessoa /);
+  assert.match(resolverTicket({ valor: 500, docs: 1, pessoas: 1 }, null).fonte, /média do último orçamento de 1 pessoa, entre 1 orçamento enviado /);
   assert.match(resolverTicket(apurado(4932.34), null).fonte, /^média de orçamentos da janela/);
 });
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { CATALOGO, MEDIDO_POR, regua } from "@/lib/gsc-delta.mjs";
+import { CATALOGO, CLASSES, MEDIDO_POR, filaDoMapa, regua } from "@/lib/gsc-delta.mjs";
+import { dadosDaFicha } from "@/lib/ficha-dados";
 import { DIVERGENCIAS, GRUPO_DO_TITULO, mapaDoBoard, RAMOS } from "@/lib/board-gsc.mjs";
 import { listProjects } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
@@ -19,6 +20,7 @@ import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vita
 import { lerOrigens, lerPassRate } from "@/lib/crux";
 
 import { Tabs } from "../../tabs";
+import { CadeiaDiagrama } from "../../okr/[slug]/celulas";
 import { Mapa } from "./mapa";
 
 // O BOARD DE GSC COMO MAPA MENTAL (032). O Whimsical `okr-Saw2eoSKZDPLJAk6xeDBuS` completo — os
@@ -158,6 +160,45 @@ function noteDaPenetracao(
 type MedidaStriking = NonNullable<ReturnType<typeof strikingDistancePorTermo>>;
 
 const br = (n: number) => n.toLocaleString("pt-BR");
+
+// ── 051/US3 — a apresentação da fila. A regra (quem entra, em que moeda, em que ordem) mora em
+// `lib/gsc-delta.mjs#filaDoMapa`; aqui só se escreve.
+type ItemDaFila = {
+  chave: string;
+  alvo: string | null;
+  delta: number;
+  base: number | null;
+  detalhe: { ctr?: number; regua?: number; posicao?: number; acima?: number; avaliadas?: number; limite?: number };
+};
+
+const ROTULO_DA_MOEDA: Record<string, string> = {
+  cliques: "Cliques que faltam, por página",
+  pp: "Pontos percentuais fora da régua",
+  ms: "Milissegundos acima do limite",
+  cls: "CLS acima do limite",
+};
+
+const dec = (v: number, casas: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+
+/** O número do item, na unidade da moeda. `Math.round` nos cliques, como /okr/atma/aquisicao, para
+ *  as duas telas publicarem o MESMO "faltam N cliques" sobre a mesma conta. */
+function valorDaFila(moeda: string, it: ItemDaFila): string {
+  if (moeda === "cliques") return `faltam ${br(Math.round(it.delta))} cliques`;
+  if (moeda === "pp") return `${dec(it.delta, 1)} pp`;
+  if (moeda === "ms") return `+${br(Math.round(it.delta))} ms`;
+  return `+${dec(it.delta, 2)}`;
+}
+
+function detalheDaFila(moeda: string, it: ItemDaFila): string {
+  const d = it.detalhe;
+  // G8 — o CTR leva o denominador: "0%" sobre 12 impressões e sobre 20 mil são achados diferentes.
+  if (moeda === "cliques" && d.ctr !== undefined && d.regua !== undefined && d.posicao !== undefined)
+    return `CTR ${pct1(d.ctr)} sobre ${it.base !== null ? br(it.base) : "?"} impressões, contra a régua de ${pct1(d.regua)} na posição ${dec(d.posicao, 1)}`;
+  if (moeda === "pp" && d.acima !== undefined && d.avaliadas !== undefined) return `${br(d.acima)} de ${br(d.avaliadas)} títulos acima de 580px`;
+  return d.limite !== undefined ? `limite ${br(d.limite)}` : "";
+}
+
+const nomesDas = (chaves: string[]) => chaves.map((k) => (CATALOGO as Record<string, { nome: string }>)[k].nome).join(", ");
 
 /** 035 — o `topic` do striking distance: o número e a base, nada além. NENHUM glifo de veredito,
  *  pela mesma razão da penetração (FR-009): os 15% a 25% são meta do board, `balizador.tipo` desta
@@ -671,6 +712,10 @@ export default async function MapaDoBoardPage() {
   // `{paginas:[]}` = respondeu, zero impressão. Nenhum dos três renderiza `0%`.
   const projects = await listProjects();
   const atma = projects.find((p) => p.slug === "atma");
+  // 051/US1 — a cadeia depois do clique vem da MESMA composição de /okr/atma (`dadosDaFicha`), nunca
+  // de uma segunda conta: foi para três telas não divergirem que ela nasceu, e o mapa é a quarta.
+  // Disparada aqui e esperada só no fim — ~3,3 s a frio, em paralelo com as leituras do mapa.
+  const fichaAtma = dadosDaFicha("atma").catch((e: unknown) => ({ erro: e instanceof Error ? e.message.slice(0, 80) : "a composição da ficha falhou" }));
   const janela = descoberta();
   const hosts = atma ? hostsDeclarados(atma) : [];
   const paginasGsc = atma ? await gscPaginas(hosts, janela) : null;
@@ -694,6 +739,9 @@ export default async function MapaDoBoardPage() {
         ? `erro na fonte: ${paginasGsc.erro}`
         : null;
   const faixas = paginasGsc && !("erro" in paginasGsc) ? porFaixaDePosicao(paginasGsc.paginas, janela) : null;
+  // 051 — HASTEADA: o nó do CTR Gap e a fila leem a MESMA conformidade, calculada uma vez.
+  const conformidade = paginasGsc && !("erro" in paginasGsc) && paginasGsc.paginas.length ? conformidadeDeCtr(paginasGsc.paginas, janela) : null;
+  const cliques28 = paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas.reduce((s, p) => s + p.cliques, 0) : null;
 
   // O nó "Posição no Google" é filho único do detalhe de `ctrPorPosicao` (`BOARD.ctrPorPosicao`),
   // e seus 6 filhos estão na MESMA ordem de `FAIXAS`/`porFaixaDePosicao()` — a ordem em que
@@ -719,6 +767,8 @@ export default async function MapaDoBoardPage() {
         return { ...filho, topic: topicDaFaixa(f), note: noteDaFaixa(f) };
       });
     }
+    // 051/FR-004 — uma das duas relações do mapa que FECHAM por conta. Etiqueta, não cor.
+    posicaoNode.tags = [...(posicaoNode.tags ?? []), "soma · cliques = impressões × CTR"];
   }
 
   // 034/US2 — a penetração no Top 3, na folha que define o KPI. Leitura SEPARADA da de cima e na
@@ -972,7 +1022,7 @@ export default async function MapaDoBoardPage() {
               note: `A janela ${janela.inicio} → ${janela.fim} não teve uma impressão sequer: não há URL para avaliar. Não é "nenhuma URL atinge a régua" — é nenhuma URL, e os dois pedem trabalho oposto.`,
             }
           : (() => {
-              const c = conformidadeDeCtr(paginasDoGap!, janela);
+              const c = conformidade!;
               return {
                 id: "ctrGap-medido",
                 topic: topicDaConformidade(c),
@@ -1816,6 +1866,53 @@ export default async function MapaDoBoardPage() {
     tamNode.children = [filho, ...(tamNode.children ?? [])];
   }
 
+  // ── 051/US3: a fila 80/20, sobre valores que a página JÁ leu — nenhuma requisição nova ─────────
+  const fila = filaDoMapa({
+    abaixo: conformidade ? conformidade.abaixo : null,
+    largura,
+    vitais: ["lcp", "inp", "cls", "ttfb"].map((id) => {
+      const limite = (CATALOGO as Record<string, { balizador: { limite?: number } }>)[id].balizador.limite as number;
+      if (!lidoCampo) return { chave: id, valor: null, limite, falhou: true };
+      const r = vitalPorOrigem(lidoCampo.origens, id) as { estado: string; medida?: { p75: number } };
+      if (r.estado === "medido") return { chave: id, valor: r.medida!.p75, limite };
+      return { chave: id, valor: null, limite, falhou: r.estado === "falhou" || r.estado === "sem-chave" };
+    }),
+  });
+
+  // ── 051/US1: a cadeia depois do clique, com a conta de /okr/atma ───────────────────────────────
+  // Só CONTAGENS (FR-012): valor em reais não entra no mapa. E nenhuma taxa até o clique (FR-003) —
+  // o clique lê 28 dias fechando em D-3, a cadeia lê a época da Atma.
+  const fichaLida = await fichaAtma;
+  const erroDaFicha = fichaLida && "erro" in fichaLida ? fichaLida.erro : fichaLida ? null : "projeto atma não encontrado";
+  const cadeia = fichaLida && !("erro" in fichaLida) && fichaLida.marcosCadeia.length ? fichaLida : null;
+  const valorDoMarco = (m: { celula: { valor: number } | { naoApurado: string } }) => ("valor" in m.celula ? String(m.celula.valor) : "?");
+  const cliqueRamo = acharNo(dados.nodeData as No, "clique");
+  if (cliqueRamo) {
+    const noDaCadeia: No = cadeia
+      ? {
+          id: "depois-do-clique",
+          topic: `→ Depois do clique: ${cadeia.marcosCadeia.map(valorDoMarco).join(" → ")}`,
+          tags: ["soma · cada degrau sai do anterior", ...(cadeia.veredito.celula ? [`trava em ${cadeia.veredito.celula}`] : [])],
+          note: `A mesma cadeia de /okr/atma, com a mesma conta: ${cadeia.marcosCadeia.map((m) => `${valorDoMarco(m)} ${m.nome}`).join(" → ")}. Janela ${cadeia.janelas.conversao.inicio} → ${cadeia.janelas.conversao.fim} — ${cadeia.janelas.conversao.porque}. É soma porque cada degrau é um pedaço do anterior. Não há taxa até o clique: o clique lê 28 dias fechando em D-3 e a cadeia lê a época, e dividir um pelo outro seria dividir períodos diferentes.`,
+        }
+      : {
+          id: "depois-do-clique",
+          topic: `→ Depois do clique · ∅ ${erroDaFicha ? "erro na fonte" : "sem cadeia"}`,
+          note: erroDaFicha
+            ? `A composição de /okr/atma falhou agora (${erroDaFicha}). Não é cadeia zerada: a leitura volta na próxima abertura.`
+            : "O perfil da Atma não declara degraus de conversão, então não há cadeia para ligar ao clique.",
+        };
+    cliqueRamo.children = [...(cliqueRamo.children ?? []), noDaCadeia];
+  }
+  // G3/G25 — a hora da apuração (a tela lê ao abrir) e o crawl que estourou a promessa diária:
+  // mesma tolerância de 2 dias de /okr/[slug]/aquisicao desde que o crawl virou diário.
+  const apuradoEm = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const crawlAtrasado = corrida ? (Date.now() - Date.parse(`${corrida.dia}T00:00:00Z`)) / 864e5 > 2 : false;
+  const porClasse = (Object.keys(CLASSES) as (keyof typeof CLASSES)[]).map((k) => ({
+    k,
+    n: Object.values(CATALOGO as Record<string, { classe?: string }>).filter((i) => i.classe === k).length,
+  }));
+
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase
   // do cabeçalho dizia "as seis faixas" quando elas eram a única coisa medida aqui, e ficou estreita
   // quando a 034, a 035, a 036 e esta penduraram uma leitura em quatro folhas. Escrever "quatro"
@@ -1869,6 +1966,125 @@ export default async function MapaDoBoardPage() {
       <section className="card ag-section" data-info="gsc">
         <p className="eyebrow">Referência · board de GSC · mapa completo</p>
         <h1 className="ficha-nome">O board do Whimsical inteiro, e o que cada KPI quer dizer</h1>
+
+        {/* ── 051 · A RESPOSTA ANTES DA PROSA ─────────────────────────────────────────────────────
+            O painel responde UMA pergunta: onde o trabalho de busca da Atma rende mais, e ele chega
+            ao dinheiro? Nível 1 é a cadeia — a lição da BSC, medida que não chega ao resultado é
+            lista. Nível 2 é a fila (80/20). Nível 3 é a legenda. A prosa do board vem depois. */}
+        <div className="mapa-resposta">
+          {/* G24 — sem cadeia o bloco guarda a altura: a fila não sobe para o lugar da resposta. */}
+          <section className={`ficha-bloco mapa-n1${cadeia ? "" : " mapa-n1--ausente"}`} aria-labelledby="mapa-cadeia-h">
+            <h2 className="ficha-bloco-h" id="mapa-cadeia-h">
+              Depois do clique
+            </h2>
+            {cadeia ? (
+              <>
+                <p className="ficha-veredito mapa-n1-resposta">
+                  {cadeia.veredito.celula && <strong>{cadeia.veredito.celula}: </strong>}
+                  {cadeia.veredito.motivo}
+                </p>
+                <CadeiaDiagrama
+                  marcos={cadeia.marcosCadeia}
+                  taxas={cadeia.taxasCadeia}
+                  veredito={cadeia.veredito}
+                  janela={{ inicio: cadeia.janelas.conversao.inicio, fim: cadeia.janelas.conversao.fim }}
+                />
+                <p className="foot">
+                  Janela da cadeia: <strong>{cadeia.janelas.conversao.inicio} → {cadeia.janelas.conversao.fim}</strong> —{" "}
+                  {cadeia.janelas.conversao.porque}. A mesma conta de <a href="/okr/atma">/okr/atma</a>.
+                  {cliques28 !== null ? (
+                    <>
+                      {" "}Antes dela, o Search Console contou <strong>{br(cliques28)} cliques</strong> em {janela.inicio} →{" "}
+                      {janela.fim}.
+                    </>
+                  ) : null}{" "}
+                  Não há taxa entre os dois números: as janelas são diferentes. Apurado ao abrir a página, em {apuradoEm}.
+                </p>
+              </>
+            ) : (
+              <p className="foot">
+                ∅{" "}
+                {erroDaFicha
+                  ? `erro na fonte — a composição de /okr/atma falhou agora (${erroDaFicha}). Não é cadeia zerada.`
+                  : "sem cadeia — o perfil da Atma não declara degraus de conversão."}
+              </p>
+            )}
+          </section>
+
+          <section className="ficha-bloco" aria-labelledby="mapa-fila-h">
+            <h2 className="ficha-bloco-h" id="mapa-fila-h">
+              Primeiro na fila
+            </h2>
+            {fila.porMoeda.size === 0 ? (
+              <p className="foot">Nada abaixo da régua nesta janela.</p>
+            ) : (
+              [...fila.porMoeda].map(([moeda, itens]) => {
+                const topo = Math.abs(itens[0].delta);
+                return (
+                  <div className="mapa-fila" key={moeda}>
+                    {/* G32 — o número mais destacado do bloco diz de quando e de onde veio, no
+                        próprio bloco: a janela do cabeçalho da página fica longe demais. */}
+                    <h3 className="mapa-fila-h">
+                      {ROTULO_DA_MOEDA[moeda] ?? moeda}
+                      {moeda === "cliques"
+                        ? ` · Search Console, ${janela.inicio} → ${janela.fim}`
+                        : moeda === "pp" && corrida
+                          ? ` · crawl de página de ${corrida.dia}${crawlAtrasado ? " — atrasado: a corrida é diária" : ""}`
+                          : moeda === "ms" || moeda === "cls"
+                            ? " · CrUX, p75 de 28 dias"
+                            : ""}
+                    </h3>
+                    <ol className="mapa-fila-lista">
+                      {itens.map((it: ItemDaFila, i: number) => (
+                        <li key={`${it.chave}-${it.alvo ?? i}`}>
+                          <span className="mapa-fila-v">{valorDaFila(moeda, it)}</span>{" "}
+                          <span className="mapa-fila-alvo">{it.alvo ? new URL(it.alvo).pathname : cat[it.chave].nome}</span>
+                          <span className="mapa-fila-det">{detalheDaFila(moeda, it)}</span>
+                          {/* Um tom só: o comprimento já codifica a distância, e ele é o que mostra
+                              a concentração que o número sozinho esconde. */}
+                          <div className="ficha-barra-trilho" aria-hidden="true">
+                            <div className="ficha-barra-preenche" style={{ width: `${topo > 0 ? (Math.abs(it.delta) / topo) * 100 : 0}%` }} />
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                );
+              })
+            )}
+            <p className="foot">
+              Moedas diferentes não se comparam, e nenhuma lista soma: os degraus de busca não são independentes, e
+              somar contaria o mesmo clique duas vezes. Fora da fila: {fila.fora.recusa} folhas sem faixa publicada,{" "}
+              {fila.fora.norma} normas (sim ou não, sem distância), {fila.fora.semColetor} sem coletor e{" "}
+              {fila.fora.procedimento} procedimento
+              {fila.fora.dentroDaRegua.length ? `; dentro da régua: ${nomesDas(fila.fora.dentroDaRegua)}` : ""}
+              {fila.fora.semAmostra.length ? `; sem amostra: ${nomesDas(fila.fora.semAmostra)}` : ""}
+              {fila.fora.semLeitura.length ? `; sem leitura agora: ${nomesDas(fila.fora.semLeitura)}` : ""}. Também{" "}
+              {fila.sobreposicao}.
+            </p>
+          </section>
+
+          <section className="ficha-bloco" aria-labelledby="mapa-ler-h">
+            <h2 className="ficha-bloco-h" id="mapa-ler-h">
+              Como ler as etiquetas
+            </h2>
+            <ul className="mapa-legenda">
+              <li>
+                <span className="mb-tag">soma</span> a conta fecha: cliques = impressões × CTR em cada faixa de posição, e
+                cada degrau da cadeia sai do anterior. Só esses dois nós fecham assim.
+              </li>
+              {porClasse.map(({ k, n }) => (
+                <li key={k}>
+                  <span className="mb-tag">{CLASSES[k].rotulo}</span> {n} folhas. {CLASSES[k].nota}
+                  {k === "alavanca"
+                    ? " A etiqueta nomeia a ação semanal: contar essa ação é o indicador preditivo do 4DX, e o hub ainda não tem fonte para contar."
+                    : ""}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
         <p className="foot">
           As <strong>{Object.keys(cat).length} folhas</strong> do board com os níveis que a{" "}
           <a href="/gsc">árvore de procedência</a> não desenha: o título numerado, a família dentro do
