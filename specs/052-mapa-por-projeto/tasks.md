@@ -128,8 +128,8 @@ O escopo de busca já entrou no T008.
 ### Implementação
 
 - [X] T025 [US4] Em `lib/crux.mjs:39`, `SLUGS_DE_CAMPO = ["atma", "sirius"]`. Comentário com o porquê de a lista seguir separada de `SLUGS_DE_BUSCA` (research D9: outra fonte, outra quota) e com o efeito em `/okr/sirius` (`lib/ficha-dados.ts:93`). T024 fica verde
-- [ ] T026 [US4] Depois do deploy (Phase 8, T034), disparar por `workflow_dispatch` as três corridas `.github/workflows/serie-gsc.yml`, `.github/workflows/indexacao.yml` e `.github/workflows/paginas.yml` (`gh workflow run <arquivo>`), fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT (hora pelo PowerShell, não pelo `date` do Git Bash). Conferir que cada resposta traz `sirius` nas mesmas listas em que traz `atma` (contrato § Corridas) e que nenhuma estourou o tempo (research D8)
-- [ ] T027 [US4] Rodar as consultas de quickstart §4 no banco do hub: `max(dia)` de `hub_gsc_dia`, `hub_indexacao` e `hub_pagina_corrida` para `atma` e `sirius` com a data do dia; zero lacunas na série do Sirius desde 06/09 (FR-012); `hub_indexacao` do Sirius com `motivo IS NULL` e `inspecionadas = declaradas`; `/okr/sirius/aquisicao` sem "⚠️ Fora do escopo" e com os KPIs do Search Console. No dia seguinte, depois das 06:30 BRT, repetir as três consultas de `max(dia)`: a SC-003 fala das corridas agendadas
+- [X] T026 [US4] Depois do deploy (Phase 8, T034), disparar por `workflow_dispatch` as três corridas `.github/workflows/serie-gsc.yml`, `.github/workflows/indexacao.yml` e `.github/workflows/paginas.yml` (`gh workflow run <arquivo>`), fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT (hora pelo PowerShell, não pelo `date` do Git Bash). Conferir que cada resposta traz `sirius` nas mesmas listas em que traz `atma` (contrato § Corridas) e que nenhuma estourou o tempo (research D8)
+- [X] T027 [US4] Rodar as consultas de quickstart §4 no banco do hub: `max(dia)` de `hub_gsc_dia`, `hub_indexacao` e `hub_pagina_corrida` para `atma` e `sirius` com a data do dia; zero lacunas na série do Sirius desde 06/09 (FR-012); `hub_indexacao` do Sirius com `motivo IS NULL` e `inspecionadas = declaradas`; `/okr/sirius/aquisicao` sem "⚠️ Fora do escopo" e com os KPIs do Search Console. No dia seguinte, depois das 06:30 BRT, repetir as três consultas de `max(dia)`: a SC-003 fala das corridas agendadas
 
 **Checkpoint**: SC-003 medida no banco.
 
@@ -152,7 +152,7 @@ preferência no mesmo push do escopo, para que a primeira corrida já reclassifi
 - [X] T031 [P] Atualizar os comentários que citam o caminho antigo da tela para `app/gsc/mapa/[slug]/page.tsx`: `lib/board-gsc.mjs:48` e `lib/inventario.mjs:19`
 - [X] T032 `npm test` (suíte inteira) e `npx tsc --noEmit` limpos (quickstart §1)
 - [X] T033 `ui-verification` em `/gsc/mapa/sirius` e `/gsc/mapa/atma`: larguras de 1440, 768 e 360 px, o seletor só com o teclado (SC-006), o console limpo e a árvore de acessibilidade do `<nav>` (quickstart §6)
-- [ ] T034 Commit (mensagem em inglês) e push em `main` fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT (Princípio IV e plan § Constraints). O deploy leva ~15 min: conferir `/gsc/mapa/sirius`, `/gsc/mapa/atma` e o 307 de `/gsc/mapa` em produção duas vezes antes de seguir para T026
+- [X] T034 Commit (mensagem em inglês) e push em `main` fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT (Princípio IV e plan § Constraints). O deploy leva ~15 min: conferir `/gsc/mapa/sirius`, `/gsc/mapa/atma` e o 307 de `/gsc/mapa` em produção duas vezes antes de seguir para T026
 - [ ] T035 SC-004, sete dias depois do deploy (quickstart §5): no mapa do Sirius em produção, nenhuma das 11 folhas que leem o banco (crescimento não-marca, marca, schema, título, intenção, profundidade, frescor, links, indexação limpa, rejeição de rastreio e active index) diz "nenhuma corrida gravada"
 
 ---
