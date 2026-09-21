@@ -7,10 +7,10 @@ on:
     # 30 min depois da corrida de indexação (05:47) de propósito, para as duas não dividirem o
     # container.
     #
-    # SEMANAL, e a segunda-feira é a escolha certa: estrutura interna de links e título mudam por
-    # DEPLOY, não por hora. Rodar diariamente gastaria a rede do cliente para reescrever o mesmo
-    # número.
-    - cron: "17 9 * * 1"
+    # DIÁRIA desde 21/09/2026, por decisão do dono: título e links mudam por deploy, e o mapa tem
+    # que mostrar a troca no dia seguinte, não na segunda que vem. Custo: ~30 páginas de um host só,
+    # em lotes de 4 (~30 s). Nos dias sem deploy a corrida regrava o mesmo número — aceito.
+    - cron: "17 9 * * *"
   workflow_dispatch:
 
 jobs:

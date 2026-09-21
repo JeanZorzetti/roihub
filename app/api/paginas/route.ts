@@ -1,4 +1,4 @@
-// A corrida SEMANAL que lê o que há dentro das páginas do site (024).
+// A corrida DIÁRIA (semanal até 21/09/2026) que lê o que há dentro das páginas do site (024).
 //
 // A 022 mediu 9 de 36 URLs da Atma indexadas, com 19 lidas e RECUSADAS pelo Googlebot. Nenhum
 // conserto técnico move essa classe: o que move está dentro da página e em como o site liga uma à

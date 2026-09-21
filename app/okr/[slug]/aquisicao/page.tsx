@@ -556,7 +556,7 @@ async function lerApuracao(slug: string): Promise<Apuracao | { erro: string } | 
  * 024 — a última corrida do crawl de página, no mesmo idioma de três estados de `lerApuracao()`.
  *
  * A tela LÊ O GRAVADO E NUNCA BUSCA: com `revalidate = 3600`, uma página que crawleasse ao carregar
- * transformaria cada visita numa varredura do site do cliente — e a corrida semanal existe
+ * transformaria cada visita numa varredura do site do cliente — e a corrida diária existe
  * exatamente para isso não acontecer.
  */
 async function lerCrawl(slug: string): Promise<CrawlDePagina | { erro: string } | null> {
@@ -1048,8 +1048,9 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // Esta tabela é o lugar único da história. Cada bloco abaixo perde a sua versão e fica com um
   // selo que aponta para cá. Não é ressalva nova: é a mesma, hasteada.
   // 028 — `cobreAte` é o dia mais recente que a fonte cobre, e `tolerancia` é a cadência que ELA
-  // promete. Os dois existem para o `<Frescor>`: sem a tolerância por fonte, o crawl semanal de
-  // 4 dias apareceria atrasado ao lado da indexação diária de 4 dias, que está.
+  // promete. Os dois existem para o `<Frescor>`: sem a tolerância por fonte, a série do Search
+  // Console, que chega com 3 dias de atraso por natureza, apareceria atrasada ao lado das corridas
+  // diárias.
   const instrumentos: {
     nome: string;
     mede: string;
@@ -1060,8 +1061,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
     tolerancia: number;
   }[] = [];
   const TOLERANCIA_D3 = ATRASO_PROMETIDO_DIAS + FOLGA_DIAS; // as fontes que prometem D-3
-  const TOLERANCIA_DIARIA = 2; // a corrida das 05:47, com um dia de folga
-  const TOLERANCIA_SEMANAL = 7 + FOLGA_DIAS; // a corrida de segunda 06:17
+  // As duas corridas diárias (indexação 05:47, crawl 06:17 desde 21/09/2026), com um dia de folga.
+  const TOLERANCIA_DIARIA = 2;
   if (diasSeparados?.length) {
     // `hostDoVeredito` sai do SEGMENTO que o veredito usa, e ele só existe quando há separação
     // marca / não-marca — ou seja, em 1 dos 35 projetos. Cair em "host não identificado" nos
@@ -1146,12 +1147,12 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
         "erro" in crawl
           ? `A leitura da corrida falhou agora (${crawl.erro}).`
           : crawlSemLinks
-            ? "A corrida casou os links contra o domínio ANTIGO, que o 301 da home já tinha desmentido, e descartou todos como externos: zero aresta. Por isso as órfãs, a periferia, a profundidade e a densidade contextual ficam sem veredito — e as órfãs exibidas seriam falsas. Corrigido no hub em 18/09; a próxima corrida de segunda mede certo."
+            ? "A corrida casou os links contra o domínio ANTIGO, que o 301 da home já tinha desmentido, e descartou todos como externos: zero aresta. Por isso as órfãs, a periferia, a profundidade e a densidade contextual ficam sem veredito — e as órfãs exibidas seriam falsas. Corrigido no hub em 18/09; a próxima corrida mede certo."
             : paginado
               ? `${br(paginado.visitadas)} página(s) visitadas de ${br(paginado.declaradas)} declaradas no sitemap.`
               : "Nenhuma corrida completa gravada.",
       cobreAte: paginado?.dia ?? null,
-      tolerancia: TOLERANCIA_SEMANAL,
+      tolerancia: TOLERANCIA_DIARIA,
     });
   }
   if (vitais) {

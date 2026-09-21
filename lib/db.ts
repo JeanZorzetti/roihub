@@ -377,7 +377,7 @@ function ensure(): Promise<unknown> {
       );
       -- Uma linha por URL POR CORRIDA (024/D8). Ao contrario da 022, o detalhe por URL E
       -- persistido: a SC-006 pergunta QUAIS paginas sao orfas ou perifericas, e agregado nao
-      -- responde isso. Sao ~36 linhas por semana, nao 35 projetos x milhares de URLs por dia.
+      -- responde isso. Sao ~30 linhas por dia (um projeto), nao 35 projetos x milhares de URLs por dia.
       --
       -- NENHUM campo ausente vira zero, e as colunas anulaveis sao a regra, nao tolerancia:
       --   profundidade NULL = ORFA (jamais 0 — 0 e a home)
