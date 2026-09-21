@@ -16,7 +16,7 @@ corrida de página (024).
 | `app/gsc/mapa/page.tsx` | Bloco 044: nós em Canibalização e Cadência, e o nó "∅ sem coletor" na Cobertura Semântica. |
 | `lib/gsc-delta.mjs` | `MEDIDO_POR.canibalizacao` credita as duas funções, primeiro a que abre o nó. |
 | `app/okr/[slug]/aquisicao/page.tsx` | A frase "N passaram de 12 meses" era falsa desde 19/09 (o prazo é 6 **ou** 12 por intenção). |
-| `test/` | +1 teste (1.198 no total). |
+| `test/` | +1 teste (1.197 no total). |
 
 ## O número (Atma, janela 22/08 → 18/09, corrida de 21/09)
 
