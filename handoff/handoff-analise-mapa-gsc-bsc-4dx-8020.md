@@ -4,6 +4,19 @@
 credencial do hub) em `/gsc/mapa`, `/okr/atma` e `/okr/atma/aquisicao`. Janela do GSC 22/08 → 18/09 (28d, D-3);
 cadeia da Atma 31/07 → 21/09.
 
+## 0. Atualização diária (acrescentado na mesma tarde, commit `51ed418`)
+
+| Fonte | Folhas | Cadência |
+|---|---|---|
+| Search Console e CrUX lidos AO VIVO a cada abertura (`force-dynamic`, sem cache) | 17 | diária: a janela de 28 dias anda 1 dia por dia (GSC fecha em D-3; CrUX é média de 28 dias) |
+| `hub_gsc_dia` (05:17) e `hub_indexacao` (05:47) | 5 | diária. Crescimento não-marca e buscas de marca são MENSAIS por definição |
+| `hub_pagina` (crawl de página, 06:17) | 6 (+ metade do schema) | **era só às segundas; diária desde 21/09** por pedido do dono |
+| `data/inventario-de-termos.json` e `data/demanda-estimada.json` | — | congelados DE PROPÓSITO: são a régua, não a medida |
+
+A tolerância de "dado velho" do crawl em `/okr/[slug]/aquisicao` caiu de 9 dias para 2. **A prova fica para
+amanhã:** `hub_pagina_corrida` tem que ganhar a linha de 22/09, e a tela tem que mostrar "Crawl de página"
+em 22/09. O Actions atrasa esses crons em horas: o crawl de 21/09, agendado para 06:17, gravou às 12:55 BRT.
+
 ## 1. Cobertura: 25 de 31 folhas com número
 
 São 32 folhas no `CATALOGO`. `checklistGsc` é procedimento, então sobram 31 métricas.
