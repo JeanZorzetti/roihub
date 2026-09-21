@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { filaDoDia, repartir, amostra, classificar, classificarRich, agregar } from "../lib/indexacao-corrida.mjs";
+import { filaDoDia, repartir, amostra, classificar, classificarRich, agregar, taxasDeIndexacao } from "../lib/indexacao-corrida.mjs";
 
 const linha = (extra) => ({ url: "https://a/1", propriedade: "sc-domain:a", verdict: "", coverage: "", ultimoCrawl: "", erro: "", ...extra });
 const indexada = (n = 1) => Array.from({ length: n }, () => linha({ verdict: "PASS", coverage: "Submitted and indexed" }));
@@ -159,6 +159,22 @@ test("tudo falhou é não apurado (null), nunca 0%", () => {
   assert.equal(r.taxa, null, "0% aqui reportaria como desindexado um site que ninguém perguntou");
   assert.equal(r.rejeicao, null);
   assert.equal(agregar([]).taxa, null);
+});
+
+// 043 — a tela lê as CONTAGENS gravadas e refaz a divisão. Se a leitura do banco der outro número
+// que a corrida, as duas telas que abrem este KPI discordam sobre o mesmo dia.
+test("as razões refeitas das contagens gravadas são as da corrida", () => {
+  const r = agregar([
+    ...indexada(18),
+    ...Array.from({ length: 7 }, () => linha({ coverage: "Discovered - currently not indexed" })),
+    linha({ coverage: "URL is unknown to Google" }),
+    ...falha(2),
+  ]);
+  const t = taxasDeIndexacao(r);
+  assert.equal(t.taxa, r.taxa);
+  assert.equal(t.rejeicao, r.rejeicao);
+  assert.equal(t.base, 26, "a falha sai do denominador; o 'unknown' fica nele, em outras");
+  assert.deepEqual(taxasDeIndexacao({ inspecionadas: 3, falhas: 3, indexadas: 0, rastreadasNaoIndexadas: 0, descobertasNaoIndexadas: 0 }), { base: 0, taxa: null, rejeicao: null });
 });
 
 // A invariante do data-model: se quebrar, uma URL caiu em dois baldes ou em nenhum.

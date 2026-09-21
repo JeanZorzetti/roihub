@@ -361,6 +361,22 @@
    "estados": "Vital: 6 (fora do escopo de campo / sem chave / falhou / nenhuma origem com amostra / a origem responde sem ESTE vital / medido). Pass Rate: 4 (sem leitura do GSC / falhou / não apurável com motivo / medido).",
    "pior_caso": "Topic mais longo: 98 chars (TTFB medido no domínio anterior), 3 linhas no nó de 240px. A régua quebra entre número e unidade (\"≤ 2,5 / s\") porque formatarValor usa espaço comum — cosmético, compartilhado com a ficha, não mexido.",
    "verificacao": "1195/1195 testes (2 novos para vitalPorOrigem), tsc limpo; conferido no dev server em /gsc/mapa (mapa 1280 com o ramo expandido e painel do TTFB, lista a 390 sem overflow, console limpo) e /okr/atma/aquisicao (Pass Rate idêntico: 0 de 10). PENDENTE: a ficha (lib/ficha-dados.ts) segue perguntando só pela origem do card."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo POSIÇÃO MÉDIA › \"2. KPIs de Rastreabilidade e Saúde do Índice (Index Health)\": Taxa de Indexação Limpa, Taxa de Rejeição de Rastreio, Profundidade de Clique)",
+   "corrida": "1a (043) — as três folhas de Index Health medidas com as corridas que já existiam (022 e 024)",
+   "pergunta": "Quantas URLs que a Atma submete o Google indexou, quantas ele deixou em 'Descoberta/Rastreada, mas não indexada', e a quantos cliques da home as páginas estão?",
+   "forma": "Um nó -medido à frente de cada folha, como 034–042. Topic = fração + contagem com denominador nomeado ('URLs do sitemap', 'páginas'). Sem glifo de veredito: as três folhas são `recusa` (a meta do board fica no nó abaixo). Note = corrida, propriedade, baldes separados, dias desde a troca de domínio (calculado de dominioAnterior.data), páginas linkadas fora do sitemap.",
+   "descartada": "(a) um nó só no grupo com a conjunção: as três têm denominadores diferentes (25 do sitemap × 30 páginas da corrida). (b) inspecionar as URLs ao abrir a tela para nomear as 7 fora do índice: requisição nova por abertura e quota; a apuração diária grava só contagens. (c) filtrar 'transacionais e pilares' na profundidade: o hub não classifica tipo de página — mede o superconjunto e diz isso.",
+   "fonte": "hub_indexacao (corrida diária /api/indexacao, URL Inspection, 2026-09-21, sc-domain:usealigner.com) + hub_pagina (corrida de página disparada à mão em 2026-09-21 12:28 UTC, workflow paginas.yml, a primeira depois do conserto de hostDaTravessia). Funções: lib/indexacao-corrida.mjs#taxasDeIndexacao (nova, pura, testada — a divisão vivia em agregar() e em /okr/[slug]/aquisicao), #classificar; lib/grafo.mjs#profundidades.",
+   "granularidade": "Indexação 18/25 (72%), 7 'Discovered - currently not indexed', 0 'Crawled'. Profundidade: 1 a 0, 9 a 1, 16 a 2, 3 a 3, 1 a 4 (/blog/3, paginação); 0 órfãs; 5 páginas linkadas fora do sitemap. A corrida de 14/09 tinha 35 órfãs por causa do host declarado velho — não serve de série.",
+   "latencia": "Zero requisição nova: as duas leituras do banco já eram feitas pela tela (a de indexação só subiu para fora do bloco do schema).",
+   "estados": "Índice: 5 (sem banco / nenhuma corrida / corrida com motivo / todas as inspeções falharam / medido). Profundidade: 3 (sem corrida ou corrida com motivo / corrida sem página / medido).",
+   "pior_caso": "Topic mais longo: rejeição com 'outro estado' > 0, ~130 chars, 3 linhas no nó.",
+   "achado": "A URL Inspection ALTERNA entre 'Discovered - currently not indexed' e 'URL is unknown to Google' na MESMA URL em chamadas seguidas (medido 3× em 21/09 em /blog/1, /blog/2, /blog/sorriso-perfeito-15-dicas, /contato). classificar() põe 'unknown' em outras: a fração de rejeição oscila entre 16% e 28% sem o site mudar; o total fora do índice (7) e as indexadas (18) são estáveis. A nota do nó declara.",
+   "segundo_achado": "rejeicaoRastreio constava `semColetor` ('o hub não lê o relatório de cobertura') com a razão calculada em agregar() desde a 022 e testada por nome — o erro de 19/09 (profundidade e links marcados sem coletor) repetido na folha vizinha. Virou `recusa` (falta régua, não fonte) e entrou em MEDIDO_POR.",
+   "verificacao": "1196/1196 testes (+1), tsc limpo; conferido no dev server em /gsc/mapa: lista servidor com os três nós e as notas, contador 18 folhas com leitura própria (eram 15), mapa com o grupo expandido e as três folhas abertas, console limpo."
   }
  ]
 }

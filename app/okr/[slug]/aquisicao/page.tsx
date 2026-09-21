@@ -14,6 +14,7 @@ import {
 } from "@/lib/db";
 import { gscSeries, gscConsultas, gscPaginas, gscLigado } from "@/lib/gsc";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
+import { taxasDeIndexacao } from "@/lib/indexacao-corrida.mjs";
 import { mesesDaSerie, janelaDeFoco, assinaturaDeHosts } from "@/lib/serie-gsc.mjs";
 import { marcaDeclarada, completude, crescimentoNaoMarca, causaDaAusencia, variacao, razaoDeMarca, semanasNaoMarca, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { ga4Canais, ga4Cobertura } from "@/lib/ga4";
@@ -726,9 +727,8 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
   // Denominador da taxa = inspecionadas − falhas (022, FR-008). A falha sai dos DOIS lados: erro de
   // quota contado como não-indexação inverteria o sinal, e quanto mais o sistema falhasse pior o
   // site pareceria. Zero ⇒ `null`, "não apurado", nunca 0%.
-  const base = idx ? idx.inspecionadas - idx.falhas : 0;
-  const taxaIdx = idx && base > 0 ? idx.indexadas / base : null;
-  const rejeicao = idx && base > 0 ? (idx.rastreadasNaoIndexadas + idx.descobertasNaoIndexadas) / base : null;
+  // 043 — a divisão mora em `taxasDeIndexacao`, a mesma que a corrida e /gsc/mapa usam.
+  const { base, taxa: taxaIdx, rejeicao } = idx ? taxasDeIndexacao(idx) : { base: 0, taxa: null, rejeicao: null };
   const amostrado = !!idx && idx.inspecionadas < idx.declaradas;
   // 026 — a propriedade que a corrida usou cobre o host que o card declara? `sc-domain:x` cobre
   // `a.b.x`; uma propriedade de prefixo cobre só o próprio host. Divergir é a assinatura de uma

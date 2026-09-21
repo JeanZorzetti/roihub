@@ -13,7 +13,7 @@ import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritm
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
 import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado, type PaginaCrawl } from "@/lib/db";
 import { canonizar, correspondenciaDeIntencao, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
-import { coberturaRich, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
+import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
 
@@ -993,9 +993,11 @@ export default async function MapaDoBoardPage() {
   // sobre as MESMAS páginas desta corrida, e duas leituras da mesma tabela poderiam cair em dias
   // diferentes se uma corrida gravasse entre as duas.
   const crawl = dbOn() ? await lerCrawlDePagina("atma") : null;
+  // 043 — hasteada pelo mesmo motivo do `crawl`: a Indexação Limpa e a Rejeição de Rastreio leem a
+  // MESMA apuração que o schema, e duas leituras podiam cair em corridas diferentes.
+  const apuracao = dbOn() ? await lerIndexacao("atma") : null;
   const schemaNode = acharNo(dados.nodeData as No, "schema");
   if (schemaNode) {
-    const apuracao = dbOn() ? await lerIndexacao("atma") : null;
     const sintaxe = crawl ? taxaCobertura(crawl.paginas) : null;
     const cob = apuracao ? coberturaRich(apuracao) : { julgadas: null, fracao: null };
     // Os CINCO estados de ausência, do mais específico ao mais genérico, e nenhum publica `0%`:
@@ -1227,6 +1229,111 @@ export default async function MapaDoBoardPage() {
   }
   const passNode = acharNo(dados.nodeData as No, "urlsBoas");
   if (passNode) passNode.children = [noDoPassRate(lidoCampo?.pass ?? null, janela), ...(passNode.children ?? [])];
+
+  // ── 043: "2. KPIs de Rastreabilidade e Saúde do Índice" ────────────────────────────────────
+  //
+  // ZERO REQUISIÇÃO NOVA: as duas razões do índice saem da apuração diária de `/api/indexacao` (022),
+  // a mesma que abre o schema acima, e a profundidade sai da corrida de página (024). A Rejeição de
+  // Rastreio constava como "sem coletor" com a razão calculada em `agregar()` desde a 022.
+  const semApuracao = !dbOn()
+    ? "sem banco · a apuração mora em `hub_indexacao`"
+    : !apuracao
+      ? "nenhuma corrida de indexação gravada"
+      : apuracao.motivo
+        ? `a corrida de ${apuracao.dia} não inspecionou URL nenhuma (\`${apuracao.motivo}\`)`
+        : null;
+  const taxas = apuracao && !apuracao.motivo ? taxasDeIndexacao(apuracao) : null;
+  const porqueSemTaxa =
+    semApuracao ?? (taxas && taxas.base === 0 ? `as ${br(apuracao!.inspecionadas)} inspeções da corrida de ${apuracao!.dia} falharam` : null);
+  if (apuracao && taxas && !porqueSemTaxa) {
+    const a = apuracao;
+    const fora = a.rastreadasNaoIndexadas + a.descobertasNaoIndexadas + a.outras;
+    const daCorrida = `Corrida de ${a.dia} na propriedade ${a.propriedade ?? "(não gravada)"}: ${br(a.inspecionadas)} de ${br(a.declaradas)} URLs do sitemap inspecionadas uma a uma na URL Inspection${a.inspecionadas < a.declaradas ? " — AMOSTRA: o orçamento não cobriu o sitemap inteiro, e a fração é da amostra" : ""}${a.falhas ? `; ${br(a.falhas)} com falha, fora do numerador e do denominador (erro de cota não é desindexação)` : ""}. Fora do índice: ${br(a.descobertasNaoIndexadas)} descobertas e não lidas, ${br(a.rastreadasNaoIndexadas)} rastreadas e recusadas, ${br(a.outras)} em outro estado.`;
+    const foraDoSitemap =
+      corrida && corrida.linkadasNaoDeclaradas > 0
+        ? ` A corrida de página de ${corrida.dia} achou ${br(corrida.linkadasNaoDeclaradas)} páginas linkadas que o sitemap não declara: não foram submetidas, então não entram neste denominador — e a corrida de indexação não as inspeciona.`
+        : "";
+    const anterior = atma?.dominioAnterior;
+    const aposTroca =
+      anterior && diaUtc(a.dia) >= diaUtc(anterior.data)
+        ? ` A apuração é de ${diaUtc(a.dia) - diaUtc(anterior.data)} dias depois da troca de domínio de ${anterior.data}: URL do domínio novo que o Googlebot ainda não visitou aparece como descoberta, não como recusada.`
+        : "";
+
+    const idxNode = acharNo(dados.nodeData as No, "indexacaoLimpa");
+    if (idxNode)
+      idxNode.children = [
+        {
+          id: "indexacaoLimpa-medido",
+          topic: `Medido: ${pct1(taxas.taxa!)} · ${br(a.indexadas)} de ${br(taxas.base)} URLs do sitemap no índice · ${br(fora)} fora`,
+          note: `${daCorrida}${aposTroca}${foraDoSitemap} A meta de ≥ 95% está no nó abaixo como o board escreveu, e o selo ◇ diz por que não é régua: quem submete só o que já indexa bate 100% sem fazer nada.`,
+        },
+        ...(idxNode.children ?? []),
+      ];
+
+    const rejNode = acharNo(dados.nodeData as No, "rejeicaoRastreio");
+    if (rejNode)
+      rejNode.children = [
+        {
+          id: "rejeicaoRastreio-medido",
+          topic: `Medido: ${pct1(taxas.rejeicao!)} · ${br(a.descobertasNaoIndexadas + a.rastreadasNaoIndexadas)} de ${br(taxas.base)} URLs do sitemap · ${br(a.descobertasNaoIndexadas)} descobertas e não lidas, ${br(a.rastreadasNaoIndexadas)} rastreadas e recusadas${a.outras ? ` · ${br(a.outras)} em outro estado` : ""}`,
+          // O "unknown" foi MEDIDO alternando com "Discovered" na mesma URL, em chamadas seguidas.
+          // Sem a frase, uma corrida que caia do outro lado parece o site melhorando.
+          note: `Os dois status que o board nomeia, contados separados por \`classificar()\` porque pedem consertos opostos: descoberta e não lida é o Googlebot que ainda não foi lá (rastreio, link interno, solicitar indexação); rastreada e recusada é ele ter lido e dito não (trabalho editorial). ${daCorrida}${aposTroca} O denominador é o sitemap inspecionado, não o inventário inteiro que o board cita: a URL Inspection só olha o que a corrida pede.${foraDoSitemap} Medido em 21/09/2026: a URL Inspection alterna entre “Discovered - currently not indexed” e “URL is unknown to Google” na MESMA URL em chamadas seguidas, e a segunda cai em “outro estado”, fora do numerador — esta fração oscila entre corridas sem o site mudar; o total fora do índice (${br(fora)}) não. A meta de < 5% está no nó abaixo e não é régua: ninguém publica a faixa.`,
+        },
+        ...(rejNode.children ?? []),
+      ];
+  } else {
+    for (const chave of ["indexacaoLimpa", "rejeicaoRastreio"]) {
+      const no = acharNo(dados.nodeData as No, chave);
+      if (no)
+        no.children = [
+          {
+            id: `${chave}-medido`,
+            topic: `∅ não apurado · ${porqueSemTaxa}`,
+            note: "A fração sai da corrida diária de `/api/indexacao`, que inspeciona na URL Inspection cada URL do sitemap. Sem corrida que tenha inspecionado alguma URL não há denominador — e “não apurado” nunca é 0%, que reportaria como desindexado um site que ninguém perguntou.",
+          },
+          ...(no.children ?? []),
+        ];
+    }
+  }
+
+  // A profundidade é julgada pelo 3 do BOARD, que é a meta escrita no nó abaixo — o hub usa
+  // `PROFUNDIDADE_MAX` (4), e a divergência já vive em `DIVERGENCIAS.profundidadeClique`. O `note`
+  // traz as duas contagens para que a leitura não dependa de quem ganhar essa decisão.
+  const CLIQUES_DO_BOARD = 3;
+  const profNode = acharNo(dados.nodeData as No, "profundidadeClique");
+  if (profNode) {
+    const pags = corrida?.paginas ?? [];
+    const filho: No =
+      semCorrida || !pags.length
+        ? {
+            id: "profundidadeClique-medido",
+            topic: `∅ não apurado · ${semCorrida ?? "a corrida não gravou página nenhuma"}`,
+            note: "A profundidade sai da travessia em largura que a corrida de página faz a partir da home (`profundidades()`). Sem corrida não há grafo de links para percorrer.",
+          }
+        : (() => {
+            // `null` é ÓRFÃ — página do sitemap que nenhum link alcança. Reprova: inalcançável é mais
+            // fundo que qualquer número, e nunca é 0 (a raiz é o único 0).
+            const passa = (limite: number) => pags.filter((p) => p.profundidade !== null && p.profundidade <= limite).length;
+            const noBoard = passa(CLIQUES_DO_BOARD);
+            const fundas = pags.filter((p) => p.profundidade !== null && p.profundidade > CLIQUES_DO_BOARD);
+            const caminho = (u: string) => { try { return new URL(u).pathname; } catch { return u; } };
+            const quais = fundas.slice(0, 2).map((p) => `${caminho(p.url)} a ${p.profundidade}`).join(", ");
+            // Da home para fora: `lerCrawlDePagina` entrega por PERIFERIA (órfã e mais funda primeiro).
+            const porNivel = new Map<number, number>();
+            for (const p of pags) porNivel.set(p.profundidade ?? Infinity, (porNivel.get(p.profundidade ?? Infinity) ?? 0) + 1);
+            const distribuicao = [...porNivel]
+              .sort(([a], [b]) => a - b)
+              .map(([k, n]) => (k === Infinity ? `${br(n)} órfãs` : `${br(n)} a ${k}`))
+              .join(", ");
+            return {
+              id: "profundidadeClique-medido",
+              topic: `Medido: ${pct1(noBoard / pags.length)} · ${br(noBoard)} de ${br(pags.length)} páginas a ≤ ${CLIQUES_DO_BOARD} cliques da home${fundas.length ? ` · ${quais}${fundas.length > 2 ? ` e mais ${br(fundas.length - 2)}` : ""}` : ""} · ${br(corrida!.orfas)} órfãs`,
+              note: `Corrida de página de ${corrida!.dia}: travessia em largura a partir da home, link de menu contando como clique. Por profundidade: ${distribuicao}. O denominador é TODA página da corrida (${br(corrida!.declaradas)} declaradas no sitemap, ${br(corrida!.linkadasNaoDeclaradas)} linkadas fora dele), não só "transacionais e pilares": o hub não classifica tipo de página, então mede o conjunto que contém as duas — se todas passam, as do board passam, e uma que reprova aqui pode não ser pilar. Órfã é página do sitemap que nenhum link alcança, e reprova. A meta é a do board, ≤ ${CLIQUES_DO_BOARD} cliques, no nó abaixo; pela régua do hub (\`PROFUNDIDADE_MAX\`, ${DIVERGENCIAS.profundidadeClique.hub}) são ${br(passa(DIVERGENCIAS.profundidadeClique.hub))} de ${br(pags.length)}. Nenhum dos dois números tem fonte.`,
+            };
+          })();
+    profNode.children = [filho, ...(profNode.children ?? [])];
+  }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase
   // do cabeçalho dizia "as seis faixas" quando elas eram a única coisa medida aqui, e ficou estreita

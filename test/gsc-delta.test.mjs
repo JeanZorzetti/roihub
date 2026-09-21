@@ -155,6 +155,8 @@ test("as quatro naturezas de ausência de régua são distinguíveis", () => {
   // medido por `grafo.mjs` desde sempre: falta régua, não falta coletor
   assert.equal(regua("profundidadeClique").natureza, "recusa");
   assert.equal(regua("linksInternos").natureza, "recusa");
+  // 043 — medida pela corrida de indexação desde a 022: falta régua, não coletor
+  assert.equal(regua("rejeicaoRastreio").natureza, "recusa");
 });
 
 // ---------- coletor: o erro de 19/09 não pode voltar ----------
@@ -169,12 +171,13 @@ test("nenhuma folha é `semColetor` e medida ao mesmo tempo", () => {
   }
 });
 
-test("as três folhas sem coletor são exatamente as que ninguém mede", () => {
+test("as duas folhas sem coletor são exatamente as que ninguém mede", () => {
   const semColetor = Object.entries(CATALOGO)
     .filter(([, { balizador: b }]) => b.tipo === "semColetor")
     .map(([k]) => k)
     .sort();
-  assert.deepEqual(semColetor, ["referringDomains", "rejeicaoRastreio", "tamBusca"]);
+  // 043 — `rejeicaoRastreio` saiu: `agregar()` a calcula desde a 022.
+  assert.deepEqual(semColetor, ["referringDomains", "tamBusca"]);
 });
 
 // 032 — `activeIndexRatio` conta URLs e passou a contar sobre a leitura por PÁGINA, que é
