@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — FR-012 (valor em reais) e FR-013 (ação semanal contada?)
+- [x] No [NEEDS CLARIFICATION] markers remain — FR-012 e FR-013 respondidas pelo dono em 21/09 (Q1: A, Q2: A)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -33,4 +33,4 @@
 
 - "O fato que abre esta spec" cita rotas e números medidos, no padrão das specs 034–036 do repositório; os
   requisitos em si não prescrevem tecnologia.
-- Duas perguntas abertas aguardam o dono antes de `speckit-plan`.
+- As duas perguntas foram respondidas em 21/09 (Q1: A, Q2: A); a spec está pronta para `speckit-plan`.

@@ -37,6 +37,16 @@ Medido no ar em 21/09/2026 (janela do GSC 22/08 → 18/09; cadeia da Atma 31/07 
    (`/blog/quanto-custa-alinhador-invisivel`, 20.887 de 22.248 impressões) e o hub já calcula **153 cliques
    por 28 dias** abaixo da régua nela. Uma fila ligada hoje a poria em primeiro.
 
+## Clarifications
+
+### Session 2026-09-21
+
+- Q: O valor em reais da cadeia — o mapa mostra dinheiro, e com qual regra? → A: **O mapa mostra só
+  contagens.** `/okr/atma` passa a valer cada pessoa pelo **último orçamento** dela, não pela soma das
+  revisões. Valor em aberto hoje: R$ 10.907,99, contra R$ 24.670,98 somando.
+- Q: A ação semanal das alavancas é só nomeada ou também contada? → A: **Só nomeada no nó.** Não existe
+  fonte para contar "título reescrito" ou "indexação pedida", e contar fica para uma feature futura.
+
 ## Decisões já tomadas pelo dono (21/09/2026)
 
 - **BSC: sim no princípio, não no formato.** Nada de redesenhar o mapa nas 4 perspectivas (feitas para unidade
@@ -131,7 +141,9 @@ mostra soma em lugar nenhum.
 - Folha muda de natureza (ganha régua, perde coletor): a classe continua valendo; a fila só muda pela régua.
 - Métricas mensais por definição (crescimento não-marca, buscas de marca): não entram na fila.
 - Em 360px o canvas é decorativo: cadeia, classes e fila precisam estar também na lista servidor.
-- Valor em reais da cadeia: ver FR-012.
+- Pessoa com dois orçamentos no mesmo minuto: vale o mais recente pela data de criação; empate na data,
+  vale a última linha na ordem da fonte.
+- Orçamento sem pessoa identificável (órfão): continua no balde "sem lead", pelo próprio valor.
 
 ## Requirements *(mandatory)*
 
@@ -153,13 +165,14 @@ mostra soma em lugar nenhum.
 - **FR-010**: A fila MUST dizer quantas folhas ficaram de fora e por qual motivo (sem régua, sem amostra, sem
   coletor).
 - **FR-011**: Cadeia, classes e fila MUST aparecer também na lista servidor, não só dentro do mapa.
-- **FR-012**: O valor em reais da cadeia MUST [NEEDS CLARIFICATION: `/okr/atma` soma todos os orçamentos da
-  mesma pessoa e publica R$ 24.670,98 "em aberto"; os 4 pacientes têm 2 orçamentos cada, criados com minutos
-  de diferença (revisões ou alternativas do mesmo tratamento), e pelo último orçamento de cada um o valor é
-  R$ 10.907,99. A soma é regra fixada por teste na 019. O mapa mostra dinheiro, e com qual regra?]
-- **FR-013**: A ação semanal das alavancas MUST [NEEDS CLARIFICATION: só ser nomeada no nó, ou também contada
-  (quantas aconteceram na semana)? Contar exige uma fonte que o hub ainda não tem para "título reescrito" ou
-  "indexação pedida".]
+- **FR-012**: O mapa MUST mostrar só **contagens** na cadeia, nunca valor em reais.
+- **FR-012a**: `/okr/atma` MUST valer cada pessoa pelo **último orçamento** dela (o mais recente na janela,
+  líquido de desconto) no valor em aberto e no valor perdido. Hoje os 4 pacientes vivos têm 2 orçamentos
+  cada, criados com minutos de diferença (revisões ou alternativas do mesmo tratamento): R$ 10.907,99 em
+  aberto, não R$ 24.670,98. O total **enviado** continua contando documentos e diz isso no rótulo.
+- **FR-012b**: O ticket de `/okr/atma` MUST usar a mesma regra: média do último orçamento de cada pessoa.
+  Resolve o viés que o próprio código declara ("quem pediu 2 orçamentos pesa o dobro na média").
+- **FR-013**: A ação semanal das alavancas MUST ser só nomeada no nó, sem contagem.
 
 ### Key Entities
 
@@ -180,6 +193,8 @@ mostra soma em lugar nenhum.
   cliques/28d), e a tela não mostra nenhum total.
 - **SC-004**: Zero divergência entre os números da cadeia no mapa e em `/okr/atma` numa comparação no mesmo dia.
 - **SC-005**: Em 360px, a lista servidor carrega cadeia, classes e fila.
+- **SC-006**: `/okr/atma` publica o valor em aberto pelo último orçamento de cada pessoa (hoje R$ 10.907,99), e
+  o valor em aberto somado ao perdido é igual à soma dos últimos orçamentos das pessoas da janela.
 
 ## Assumptions
 
