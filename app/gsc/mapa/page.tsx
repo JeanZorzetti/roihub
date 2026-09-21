@@ -6,7 +6,8 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, queryToPageRatio, activeIndexRatio, strikingDistancePorTermo, termoPrincipal, totalImpressoes, urlsComImpressao } from "@/lib/kpis-busca.mjs";
+import DEMANDAS from "@/data/demanda-estimada.json";
+import { canibalizacao, canibalizacaoPorPagina, coberturaDaDemanda, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, queryToPageRatio, activeIndexRatio, strikingDistancePorTermo, termoPrincipal, totalImpressoes, urlsComImpressao } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
@@ -1763,6 +1764,56 @@ export default async function MapaDoBoardPage() {
     }
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     airNode.children = [filho, ...(airNode.children ?? [])];
+  }
+
+  // 050 — o TAM de busca como ESTIMATIVA, porque o hub não lê volume de mercado (`balizador` segue
+  // `semColetor`). O id termina em `-estimado` e não entra no contador de folhas medidas. O pico de
+  // impressões de cada termo em 9 janelas de 28 dias é piso do volume dele (`data/demanda-estimada.json`),
+  // e a leitura por termo da janela já está em memória: zero requisição nova. Medido em 21/09/2026:
+  // 8.749 ÷ 55.278 = 15,8%. A versão por posição (termo no Top 20 ponderado pelo pico) dá 72,9%, dentro
+  // da meta do board, porque a posição do GSC só conta as buscas em que o site apareceu.
+  const tamNode = acharNo(dados.nodeData as No, "tamBusca");
+  if (tamNode) {
+    const est = (DEMANDAS as Record<string, { procedencia: { congeladoEm: string; inventarioCongeladoEm: string; janelas: { inicio: string; fim: string; impressoes: number }[] }; termos: Record<string, number> } | undefined>).atma;
+    const falta = !inventario
+      ? "inventário de termos não declarado para este projeto"
+      : !est
+        ? "sem estimativa de demanda gravada"
+        : est.procedencia.inventarioCongeladoEm !== inventario.procedencia.congeladoEm
+          ? `a estimativa de demanda é do inventário de ${est.procedencia.inventarioCongeladoEm}, e o inventário em uso é de ${inventario.procedencia.congeladoEm}`
+          : !termosGsc
+            ? "sem leitura do Search Console"
+            : "erro" in termosGsc
+              ? `a leitura do Search Console falhou (${termosGsc.erro})`
+              : null;
+    let filho: No;
+    const c = falta ? null : coberturaDaDemanda((termosGsc as { linhas: { termo: string; impressoes: number; posicao: number | null }[] }).linhas, est!.termos);
+    if (!c) {
+      filho = {
+        id: "tamBusca-estimado",
+        topic: `∅ não estimado · ${falta ?? "a estimativa de demanda está vazia"}`,
+        note: "A estimativa divide as impressões da janela pelo pico de impressões de cada termo do inventário, congelado por `scripts/estimar-demanda.mjs`. Faltando o inventário, a estimativa ou a leitura, o número não existe, e “não estimado” nunca é 0%. Se o inventário for refeito, a estimativa tem de ser refeita junto: pico de um inventário não divide impressão de outro.",
+      };
+    } else {
+      const p = est!.procedencia;
+      const linhas = (termosGsc as { linhas: { termo: string; posicao: number | null }[] }).linhas;
+      const naFronteira = new Set(linhas.filter((l) => typeof l.posicao === "number" && l.posicao >= 1 && l.posicao <= 20).map((l) => l.termo));
+      const porPosicao = c.buracos.filter((b) => naFronteira.has(b.termo)).reduce((a, b) => a + b.pico, 0) / c.demanda;
+      const maior = p.janelas.reduce((a, j) => (j.impressoes > a.impressoes ? j : a));
+      const top = c.buracos.slice(0, 5);
+      const faltam = c.demanda - c.impressoes;
+      const posDe = (t: string) => {
+        const l = linhas.find((x) => x.termo === t);
+        return l && typeof l.posicao === "number" ? ` na posição ${l.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}` : "";
+      };
+      filho = {
+        id: "tamBusca-estimado",
+        topic: `Estimativa: ${pct1(c.fracao)} da demanda (teto) · ${br(c.impressoes)} de ${br(c.demanda)} impressões em 28 dias · proxy pelo GSC, não volume de mercado`,
+        note: `${br(c.impressoes)} impressões dos ${br(c.termos)} termos do inventário na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados, divididas pela demanda estimada: para cada termo, o maior número de impressões que ele teve numa janela de 28 dias entre ${p.janelas[0].inicio} e ${p.janelas[p.janelas.length - 1].fim} (${br(p.janelas.length)} janelas, congeladas em ${p.congeladoEm}), ou o de hoje, se for maior. ESTIMATIVA, não medida: o Search Console não informa volume de busca. Impressão só existe onde houve busca, então o pico de cada termo é um piso do volume dele. Como o denominador fica abaixo do real, a razão é TETO. O volume de mercado viria do Google Ads ou de uma base paga, e o hub não lê nenhum dos dois: por isso a folha continua sem coletor. Na janela de maior alcance (${maior.inicio} → ${maior.fim}) as mesmas contas davam ${pct1(maior.impressoes / c.demanda)}, número alto por construção, porque foi essa janela que definiu a maior parte dos picos. Maiores buracos: ${top.map((b) => `«${b.termo}» ${br(b.hoje)} de ${br(b.pico)}${posDe(b.termo)}`).join(", ")}. Os cinco somam ${br(top.reduce((a, b) => a + b.pico - b.hoje, 0))} das ${br(faltam)} impressões que faltam. Por posição, contando o pico dos termos entre 1,0 e 20,0 hoje, seriam ${pct1(porPosicao)}. Esse número não é usado porque a posição do GSC é a média só das buscas em que o site apareceu: termo na posição 3 com um punhado de impressões conta como coberto. Meta do board: 60% a 80% dos clusters de maior volume. É meta, não régua, e o hub não agrupa termos em cluster, então a estimativa soma termo a termo, como o “O que mede” do board.`,
+      };
+    }
+    // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: é estimativa e não tem régua.
+    tamNode.children = [filho, ...(tamNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

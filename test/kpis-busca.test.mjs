@@ -14,6 +14,7 @@ import {
   impressoesNoTop3,
   penetracaoNoTop3,
   penetracaoNoInventario,
+  coberturaDaDemanda,
   urlsComImpressao,
   strikingDistance,
   strikingDistancePorTermo,
@@ -784,6 +785,30 @@ test("termo com posicao null não entra no Top 3 mas conta na cobertura", () => 
   const r = penetracaoNoTop3([{ termo: "a", posicao: null, impressoes: 0, cliques: 0 }], inv("a", "b"));
   assert.equal(r.noTop3, 0);
   assert.equal(r.cobertura, 1);
+});
+
+// 050 — a estimativa do TAM é impressão sobre pico, termo a termo. Posição boa com pouca
+// impressão NÃO cobre: é o «invisalign» da Atma, na posição 3,6 com 24 de 6.934.
+test("coberturaDaDemanda: impressão sobre pico, fora do inventário ignorado, termo ausente vale 0", () => {
+  const r = coberturaDaDemanda(
+    [linhaTermo("a", 3.6, 24), linhaTermo("b", 30, 50), linhaTermo("fora", 1, 999)],
+    { a: 1000, b: 100, c: 100 },
+  );
+  assert.equal(r.impressoes, 74);
+  assert.equal(r.demanda, 1200);
+  assert.equal(r.termos, 3);
+  assert.equal(r.buracos[0].termo, "a", "o maior buraco abre a lista");
+});
+
+test("coberturaDaDemanda: hoje acima do pico sobe o denominador, nunca passa de 100%", () => {
+  const r = coberturaDaDemanda([linhaTermo("a", 1, 300)], { a: 100 });
+  assert.equal(r.demanda, 300);
+  assert.equal(r.fracao, 1);
+});
+
+test("coberturaDaDemanda: sem estimativa é null, nunca 0%", () => {
+  assert.equal(coberturaDaDemanda([linhaTermo("a", 1, 10)], null), null);
+  assert.equal(coberturaDaDemanda([linhaTermo("a", 1, 10)], {}), null);
 });
 
 // ── 035: strikingDistancePorTermo ───────────────────────────────────────────────────────────
