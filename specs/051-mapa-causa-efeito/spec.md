@@ -43,7 +43,7 @@ Medido no ar em 21/09/2026 (janela do GSC 22/08 → 18/09; cadeia da Atma 31/07 
 
 - Q: O valor em reais da cadeia — o mapa mostra dinheiro, e com qual regra? → A: **O mapa mostra só
   contagens.** `/okr/atma` passa a valer cada pessoa pelo **último orçamento** dela, não pela soma das
-  revisões. Valor em aberto hoje: R$ 10.907,99, contra R$ 24.670,98 somando.
+  revisões. Valor em aberto hoje: R$ 10.907,98, contra R$ 24.670,98 somando.
 - Q: A ação semanal das alavancas é só nomeada ou também contada? → A: **Só nomeada no nó.** Não existe
   fonte para contar "título reescrito" ou "indexação pedida", e contar fica para uma feature futura.
 
@@ -168,7 +168,7 @@ mostra soma em lugar nenhum.
 - **FR-012**: O mapa MUST mostrar só **contagens** na cadeia, nunca valor em reais.
 - **FR-012a**: `/okr/atma` MUST valer cada pessoa pelo **último orçamento** dela (o mais recente na janela,
   líquido de desconto) no valor em aberto e no valor perdido. Hoje os 4 pacientes vivos têm 2 orçamentos
-  cada, criados com minutos de diferença (revisões ou alternativas do mesmo tratamento): R$ 10.907,99 em
+  cada, criados com minutos de diferença (revisões ou alternativas do mesmo tratamento): R$ 10.907,98 em
   aberto, não R$ 24.670,98. O total **enviado** continua contando documentos e diz isso no rótulo.
 - **FR-012b**: O ticket de `/okr/atma` MUST usar a mesma regra: média do último orçamento de cada pessoa.
   Resolve o viés que o próprio código declara ("quem pediu 2 orçamentos pesa o dobro na média").
@@ -193,7 +193,7 @@ mostra soma em lugar nenhum.
   cliques/28d), e a tela não mostra nenhum total.
 - **SC-004**: Zero divergência entre os números da cadeia no mapa e em `/okr/atma` numa comparação no mesmo dia.
 - **SC-005**: Em 360px, a lista servidor carrega cadeia, classes e fila.
-- **SC-006**: `/okr/atma` publica o valor em aberto pelo último orçamento de cada pessoa (hoje R$ 10.907,99), e
+- **SC-006**: `/okr/atma` publica o valor em aberto pelo último orçamento de cada pessoa (hoje R$ 10.907,98), e
   o valor em aberto somado ao perdido é igual à soma dos últimos orçamentos das pessoas da janela.
 
 ## Assumptions

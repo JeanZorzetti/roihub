@@ -57,9 +57,9 @@ cada pessoa pelo último orçamento.
 
 - [x] T016 CSS do painel escopado a `[data-info="gsc"]` em `app/globals.css`, reusando as classes da ficha
 - [x] T017 `npm test` e `npx tsc --noEmit` verdes
-- [ ] T018 `ui-verification`: 1440/768/360px, console limpo, frame de `erro na fonte`; G31 (5 segundos) e G32 (procedência) sobre as imagens
-- [ ] T019 Commit e push fora das janelas; conferir a TELA duas vezes (~15 min); números do mapa × `/okr/atma` × banco no mesmo dia
-- [ ] T020 Handoff em `specs/051-mapa-causa-efeito/handoff-051.md` e memória
+- [x] T018 `ui-verification`: 1440/768/360px, console limpo, frame de `erro na fonte`; G31 (5 segundos) e G32 (procedência) sobre as imagens
+- [x] T019 Commit e push fora das janelas; conferir a TELA duas vezes (~15 min); números do mapa × `/okr/atma` × banco no mesmo dia
+- [x] T020 Handoff em `specs/051-mapa-causa-efeito/handoff-051.md` e memória
 
 ## Dependencies & Execution Order
 
