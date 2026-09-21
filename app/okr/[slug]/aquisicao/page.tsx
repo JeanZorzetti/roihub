@@ -35,9 +35,9 @@ import {
   PROFUNDIDADE_MAX,
   CADENCIA_MESES,
 } from "@/lib/grafo.mjs";
-import { passRate, CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
+import { CAP_URLS_PASS_RATE } from "@/lib/crux.mjs";
 import { regua as reguaDoBoard, idadeEmMeses } from "@/lib/gsc-delta.mjs";
-import { lerCampo } from "@/lib/crux";
+import { lerPassRate } from "@/lib/crux";
 import { Tabs } from "../../../tabs";
 import { WeekChart, type WeekPoint, type WeekCut } from "../../../viz";
 import { SerieComFoco, SerieEmTabela, type Foco } from "./serie";
@@ -584,35 +584,6 @@ async function lerSerieSeparada(
   if (!dbOn()) return null;
   try {
     return await lerDiasGsc(slug, janela.inicio, janela.fim);
-  } catch (e) {
-    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
-  }
-}
-
-/**
- * 023/US3 — o Core Web Vitals Pass Rate do board, sobre as URLs PRIORITÁRIAS: as de maior
- * impressão na janela curta, cortadas em `CAP_URLS_PASS_RATE`. Sem a ordenação o corte sortearia o
- * denominador; as que ficam de fora entram no texto como NÃO CONSULTADAS, nunca como reprovadas.
- *
- * 032 — a amostra é por URL e passa a sair da leitura por PÁGINA. Na Atma isso a tira de 14 URLs
- * para 29, e "não consultadas" de 4 para 19: a fração PODE mudar de valor, e isso é a medida
- * passando a ver o site inteiro, não regressão. O custo de rede não muda — `CAP_URLS_PASS_RATE`
- * continua 10 consultas ao CrUX.
- *
- * Em SÉRIE, pelo mesmo motivo de `app/api/gsc-serie/route.ts:36-38`: um punhado de POSTs
- * simultâneos ao mesmo endpoint do Google com a mesma chave é o caminho mais curto para o 429 que
- * transformaria a leitura inteira em falha por pressa. Só para `SLUGS_DE_CAMPO` (FR-014), e a
- * falha segue o idioma de `lerApuracao()`: não derruba a aba.
- */
-async function lerPassRate(slug: string, paginas: { pagina: string; impressoes: number }[] | null) {
-  if (!SLUGS_DE_CAMPO.includes(slug) || !paginas) return null;
-  // Cópia antes de ordenar: a MESMA lista alimenta as outras medidas por URL, e `sort` é no lugar.
-  const urls = [...paginas].sort((a, b) => b.impressoes - a.impressoes);
-  const prioritarias = urls.slice(0, CAP_URLS_PASS_RATE);
-  try {
-    const leituras = new Map();
-    for (const u of prioritarias) leituras.set(u.pagina, await lerCampo({ tipo: "url", valor: u.pagina }));
-    return { ...passRate(leituras, prioritarias.length), naoConsultadas: urls.length - prioritarias.length };
   } catch (e) {
     return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
   }

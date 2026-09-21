@@ -12,6 +12,7 @@ import {
   rodape,
   celulasDeVitais,
   passRate,
+  vitalPorOrigem,
 } from "../lib/crux.mjs";
 import { MEDIDORES } from "../lib/ficha.mjs";
 
@@ -271,4 +272,31 @@ test("porUrl existe também quando a fração não é apurável — a tela desen
   assert.equal(r.fracao, null);
   assert.equal(r.porUrl.length, 5);
   assert.ok(r.porUrl.every((u) => u.estado === "sem-amostra"));
+});
+
+// ── 042: qual origem responde por um vital, com domínio atual e anterior ────────────────────
+test("vitalPorOrigem: a origem atual sem amostra cede à anterior, e a tela sabe qual respondeu", () => {
+  // Estado medido na atma em 21/09/2026: usealigner.com 404, atma.roilabs.com.br com LCP/CLS/TTFB e sem INP.
+  const nova = { tipo: "origem", valor: "https://usealigner.com" };
+  const antiga = { tipo: "origem", valor: "https://atma.roilabs.com.br" };
+  const leituras = [
+    { alvo: nova, leitura: { estado: "sem-amostra" } },
+    { alvo: antiga, leitura: { estado: "record", record: record({ lcp: 1753, cls: "0.00", ttfb: 406 }) } },
+  ];
+  const lcp = vitalPorOrigem(leituras, "lcp");
+  assert.equal(lcp.estado, "medido");
+  assert.equal(lcp.alvo, antiga);
+  assert.equal(lcp.medida.p75, 1753);
+  assert.deepEqual(vitalPorOrigem(leituras, "inp"), { estado: "parcial", alvo: antiga });
+  // A atual com dado vence a anterior: a ordem declarada decide, não o melhor número.
+  const ambas = [{ alvo: nova, leitura: { estado: "record", record: record({ lcp: 3000 }) } }, leituras[1]];
+  assert.equal(vitalPorOrigem(ambas, "lcp").alvo, nova);
+});
+
+test("vitalPorOrigem: falha nunca vira sem-amostra, e sem-chave só quando nenhuma tem chave", () => {
+  const a = { tipo: "origem", valor: "https://a" };
+  const b = { tipo: "origem", valor: "https://b" };
+  assert.deepEqual(vitalPorOrigem([{ alvo: a, leitura: { estado: "sem-amostra" } }, { alvo: b, leitura: { estado: "falhou", erro: "HTTP 429" } }], "cls"), { estado: "falhou", erro: "HTTP 429" });
+  assert.deepEqual(vitalPorOrigem([{ alvo: a, leitura: { estado: "sem-chave" } }, { alvo: b, leitura: { estado: "sem-chave" } }], "cls"), { estado: "sem-chave" });
+  assert.deepEqual(vitalPorOrigem([{ alvo: a, leitura: { estado: "sem-amostra" } }, { alvo: b, leitura: { estado: "sem-amostra" } }], "cls"), { estado: "sem-amostra" });
 });

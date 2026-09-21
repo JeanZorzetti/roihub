@@ -1,9 +1,12 @@
 // A borda com a CrUX API (spec 023). Única responsabilidade: falar com a rede e traduzir o
 // resultado nos estados que `lib/crux.mjs` consome. Nenhuma regra de negócio mora aqui — nem
-// formatação, nem veredito, nem Pass Rate (Princípio III).
+// formatação, nem veredito, nem a conta do Pass Rate (Princípio III). O que mora aqui desde a 042
+// é a escolha de O QUE perguntar (`lerOrigens`, `lerPassRate`), porque ela decide as chamadas.
 //
 // Princípio V: a chave vai na query string da chamada e em LUGAR NENHUM mais. Nenhum
 // `console.log` do corpo, nenhum valor/prefixo/comprimento de `CRUX_API_KEY` em mensagem.
+
+import { CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO, passRate } from "@/lib/crux.mjs";
 
 export type Alvo = { tipo: "origem" | "url"; valor: string };
 
@@ -64,5 +67,52 @@ export async function lerCampo(alvo: Alvo): Promise<LeituraDaFonte> {
     // Inclui `JSON.parse` inválido e o `AbortError` do timeout. Truncado em 60, como em
     // `app/api/gsc-serie/route.ts:60`.
     return { estado: "falhou", erro: (e instanceof Error ? e.message : String(e)).slice(0, 60) };
+  }
+}
+
+/**
+ * 042 — a origem de CADA host declarado (`hostsDeclarados()`), na ordem dele: a atual primeiro, a
+ * anterior depois. Quem escolhe qual responde é `vitalPorOrigem()`, puro; aqui só se pergunta.
+ * Em SÉRIE, pelo mesmo motivo de `lerPassRate()`.
+ */
+export async function lerOrigens(hosts: string[]): Promise<{ alvo: Alvo; leitura: LeituraDaFonte }[]> {
+  const leituras = [];
+  for (const h of hosts) {
+    const alvo: Alvo = { tipo: "origem", valor: `https://${h}` };
+    leituras.push({ alvo, leitura: await lerCampo(alvo) });
+  }
+  return leituras;
+}
+
+/**
+ * 023/US3 — o Core Web Vitals Pass Rate do board, sobre as URLs PRIORITÁRIAS: as de maior
+ * impressão na janela curta, cortadas em `CAP_URLS_PASS_RATE`. Sem a ordenação o corte sortearia o
+ * denominador; as que ficam de fora entram no texto como NÃO CONSULTADAS, nunca como reprovadas.
+ *
+ * 032 — a amostra é por URL e passa a sair da leitura por PÁGINA. Na Atma isso a tira de 14 URLs
+ * para 29, e "não consultadas" de 4 para 19: a fração PODE mudar de valor, e isso é a medida
+ * passando a ver o site inteiro, não regressão. O custo de rede não muda — `CAP_URLS_PASS_RATE`
+ * continua 10 consultas ao CrUX.
+ *
+ * Em SÉRIE, pelo mesmo motivo de `app/api/gsc-serie/route.ts:36-38`: um punhado de POSTs
+ * simultâneos ao mesmo endpoint do Google com a mesma chave é o caminho mais curto para o 429 que
+ * transformaria a leitura inteira em falha por pressa. Só para `SLUGS_DE_CAMPO` (FR-014), e a
+ * falha segue o idioma de `lerApuracao()`: não derruba a aba.
+ *
+ * 042 — MUDOU-SE de `app/okr/[slug]/aquisicao/page.tsx` para cá: `/gsc/mapa` é o segundo
+ * consumidor, e a escolha das URLs prioritárias escrita duas vezes é como as duas telas passam a
+ * discordar sobre o mesmo Pass Rate.
+ */
+export async function lerPassRate(slug: string, paginas: { pagina: string; impressoes: number }[] | null) {
+  if (!SLUGS_DE_CAMPO.includes(slug) || !paginas) return null;
+  // Cópia antes de ordenar: a MESMA lista alimenta as outras medidas por URL, e `sort` é no lugar.
+  const urls = [...paginas].sort((a, b) => b.impressoes - a.impressoes);
+  const prioritarias = urls.slice(0, CAP_URLS_PASS_RATE);
+  try {
+    const leituras = new Map();
+    for (const u of prioritarias) leituras.set(u.pagina, await lerCampo({ tipo: "url", valor: u.pagina }));
+    return { ...passRate(leituras, prioritarias.length), naoConsultadas: urls.length - prioritarias.length };
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
   }
 }

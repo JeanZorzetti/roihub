@@ -14,6 +14,8 @@ import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
 import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado, type PaginaCrawl } from "@/lib/db";
 import { canonizar, correspondenciaDeIntencao, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
+import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
+import { lerOrigens, lerPassRate } from "@/lib/crux";
 
 import { Tabs } from "../../tabs";
 import { Mapa } from "./mapa";
@@ -551,6 +553,112 @@ function noteDaIntegridade(
   return `${fracao}${partes}${doHub}${terceira}`;
 }
 
+type Origens = Awaited<ReturnType<typeof lerOrigens>>;
+const hostDe = (origem: string) => origem.replace(/^https:\/\//, "");
+const ESTADO_DA_ORIGEM: Record<string, string> = {
+  record: "responde",
+  "sem-amostra": "sem amostra (404)",
+  "sem-chave": "sem chave",
+};
+const estadosDasOrigens = (origens: Origens) =>
+  origens
+    .map(({ alvo, leitura }) => `${hostDe(alvo.valor)} ${leitura.estado === "falhou" ? `falhou (${leitura.erro})` : ESTADO_DA_ORIGEM[leitura.estado]}`)
+    .join(" · ");
+const diaUtc = (s: string) => Date.parse(`${s}T00:00:00Z`) / 86_400_000;
+
+/**
+ * 042 — o nó de leitura de um vital. Os estados vêm de `vitalPorOrigem()` e são CINCO, nenhum com
+ * `0`: sem chave, falha, nenhuma origem com amostra, a origem responde sem ESTE vital (o INP da
+ * Atma), e medido. O `topic` diz de QUAL domínio é o número sempre que não é o do card — é o que
+ * impede "1,8 s" de ser lido como a velocidade de hoje de um domínio que a CrUX ainda não mede.
+ */
+function noDoVital(id: string, origens: Origens, anterior: { url: string; data: string } | null): No {
+  const idNo = `${id}-medido`;
+  const vital = VITAIS.find((v) => v.id === id)!;
+  const nome = id.toUpperCase();
+  const r = vitalPorOrigem(origens, id);
+  const quais = `Origens perguntadas, na ordem do card: ${estadosDasOrigens(origens)}.`;
+  if (r.estado === "sem-chave")
+    return { id: idNo, topic: "∅ não apurado · CRUX_API_KEY ausente", note: "Sem a chave da CrUX API no ambiente nenhuma origem é perguntada. Não é site sem amostra — é leitura desligada." };
+  if (r.estado === "falhou")
+    return { id: idNo, topic: `∅ não apurado · a CrUX falhou agora (${r.erro})`, note: `Falha, não ausência de amostra: a leitura volta na próxima abertura da tela. ${quais}` };
+  if (r.estado === "sem-amostra")
+    return {
+      id: idNo,
+      topic: `∅ sem amostra de campo · ${origens.length === 1 ? "a origem não tem" : `nenhuma das ${origens.length} origens tem`} visita suficiente na CrUX`,
+      note: `A CrUX responde 404 até a origem passar do limiar de tráfego dela. Não é site lento — é site não medido. ${quais}`,
+    };
+  if (r.estado === "parcial")
+    return {
+      id: idNo,
+      topic: `∅ sem amostra de ${nome} · ${hostDe(r.alvo.valor)} tem os outros vitais, este não`,
+      note: `A CrUX mede cada vital separadamente: a origem tem visita suficiente para os outros e não para o ${nome}${id === "inp" ? " (o INP só conta visita em que alguém clica ou digita, e o site tem pouca)" : ""}. Não é ${nome} ruim, é ${nome} não medido. ${quais}`,
+    };
+
+  const { medida, alvo } = r;
+  const dentro = medida.veredito === "dentro";
+  const veredito = `${dentro ? "✓ dentro" : "✗ fora"} da régua ≤ ${formatarValor(vital, vital.limite)}`;
+  const ehAnterior = anterior !== null && hostDe(alvo.valor) === hostsDeclarados({ url: anterior.url })[0];
+  const atual = origens[0];
+  const doAnterior = ehAnterior
+    ? ` · no domínio anterior — ${hostDe(atual.alvo.valor)} ${atual.leitura.estado === "sem-amostra" ? "ainda sem amostra" : atual.leitura.estado === "record" ? `sem ${nome}` : atual.leitura.estado === "falhou" ? "falhou agora" : "sem chave"}`
+    : "";
+  // A janela é da CrUX e atravessa a troca: dizer QUANTOS dias dela são do domínio antigo é o que
+  // separa "o site de hoje" de "o site medido até a troca".
+  let migracao = "";
+  if (ehAnterior && medida.janela) {
+    const total = diaUtc(medida.janela.fim) - diaUtc(medida.janela.inicio) + 1;
+    const antes = Math.max(0, Math.min(total, diaUtc(anterior!.data) - diaUtc(medida.janela.inicio)));
+    const fimDaUltima = new Date((diaUtc(anterior!.data) + total - 1) * 86_400_000).toISOString().slice(0, 10);
+    migracao = ` Esta é a origem ANTERIOR: ${antes} dos ${total} dias da janela são de antes da troca de domínio de ${anterior!.data}, e depois dela o 301 leva a visita para ${hostDe(atual.alvo.valor)}. É o site medido até a troca, não o de hoje — e a leitura desta origem deixa de existir quando a janela passar inteira para depois da troca (a que fecha em ${fimDaUltima}), ou antes, se a amostra cair abaixo do limiar da CrUX.`;
+  }
+  return {
+    id: idNo,
+    topic: `Medido: ${formatarValor(vital, medida.p75)} · ${veredito}${doAnterior}`,
+    note: `${rodape(medida, alvo)}.${migracao} ${quais}`,
+  };
+}
+
+/**
+ * 042 — o Pass Rate, com o MESMO `lerPassRate()` do bloco de `/okr/[slug]/aquisicao`. A folha tem
+ * `balizador: recusa` ("agregação inventada"), então nenhum glifo de veredito aparece: o 90% do
+ * board fica no nó da meta, abaixo, como o board escreveu — é a regra que a 034 fixou.
+ */
+function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { inicio: string; fim: string }): No {
+  const id = "urlsBoas-medido";
+  if (!pass)
+    return {
+      id,
+      topic: "∅ não apurado · sem leitura do Search Console para escolher as URLs",
+      note: "As URLs prioritárias são as de maior impressão na janela, e sem a leitura por página não há lista a perguntar à CrUX.",
+    };
+  if ("erro" in pass) return { id, topic: `∅ não apurado · a CrUX falhou agora (${pass.erro})`, note: "Falha, não ausência de amostra: a fração volta na próxima abertura da tela." };
+  const PALAVRA: Record<string, string> = { passa: "passam", reprova: "reprovam", parcial: "com dado parcial", "sem-amostra": "sem amostra", falhou: "falharam", "sem-chave": "sem chave", "nao-lida": "não lidas" };
+  const conta = (chave: (u: { url: string; estado: string }) => string) => {
+    const m = new Map<string, number>();
+    for (const u of pass.porUrl) m.set(chave(u), (m.get(chave(u)) ?? 0) + 1);
+    return m;
+  };
+  const porEstado = [...conta((u) => PALAVRA[u.estado] ?? u.estado)].map(([k, n]) => `${br(n)} ${k}`).join(", ");
+  const porHost = [...conta((u) => { try { return new URL(u.url).hostname; } catch { return u.url; } })].map(([h, n]) => `${br(n)} em ${h}`).join(", ");
+  const bom = VITAIS.filter((v) => !v.chaveCrux.startsWith("experimental_"))
+    .map((v) => `${v.id.toUpperCase()} ≤ ${formatarValor(v, v.limite)}`)
+    .join(", ");
+  const amostra = `As ${br(pass.consultadas)} URLs de maior impressão na janela ${janela.inicio} → ${janela.fim} (${porHost})${pass.naoConsultadas > 0 ? `; ${br(pass.naoConsultadas)} não consultadas (teto de ${CAP_URLS_PASS_RATE}) — não reprovadas` : ""}. Por URL: ${porEstado}.`;
+  const regra = ` "Bom" é ${bom} no p75 de campo; o TTFB fica fora. O board cita o relatório de Core Web Vitals do Search Console, que não tem API: a leitura aqui é a CrUX URL a URL, a fonte daquele relatório, e é o mesmo cálculo do bloco de Pass Rate de /okr/atma/aquisicao. A meta do board, no nó abaixo, é meta e não régua: "percentual de URLs aprovadas" não tem limiar publicado.`;
+  if (pass.fracao === null)
+    return {
+      id,
+      topic: `∅ não apurável · ${br(pass.comDado)} de ${br(pass.consultadas)} URLs prioritárias com os três vitais na CrUX`,
+      note: `${pass.motivo} ${amostra}${regra}`,
+    };
+  return {
+    id,
+    topic: `Medido: ${pct1(pass.fracao)} · ${br(pass.passam)} de ${br(pass.comDado)} URLs com os três vitais em "Bom" · ${br(pass.consultadas)} consultadas`,
+    note: `${amostra}${regra}`,
+  };
+}
+
 export default async function MapaDoBoardPage() {
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
@@ -565,6 +673,17 @@ export default async function MapaDoBoardPage() {
   const janela = descoberta();
   const hosts = atma ? hostsDeclarados(atma) : [];
   const paginasGsc = atma ? await gscPaginas(hosts, janela) : null;
+  // 042 — o campo (CrUX) COMEÇA aqui e só é esperado no bloco dos vitais, lá embaixo: são até 12
+  // POSTs em série (as origens declaradas e as URLs prioritárias), e sem sobrepor às leituras do
+  // Search Console que vêm a seguir eles somariam à latência da rota inteira. Nenhuma das duas
+  // funções lança.
+  const campo =
+    atma && SLUGS_DE_CAMPO.includes(atma.slug)
+      ? (async () => ({
+          origens: await lerOrigens(hosts),
+          pass: await lerPassRate(atma.slug, paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null),
+        }))()
+      : null;
   // 033/T071 — `null` tem TRÊS causas com consertos opostos (lista vazia, credencial ausente, host
   // fora de toda propriedade), e a tela afirmava a terceira sempre. Quem nomeia é `motivoDeAusencia`.
   const notaAusencia =
@@ -1088,6 +1207,26 @@ export default async function MapaDoBoardPage() {
         };
     tituloNode.children = [filho, ...(tituloNode.children ?? [])];
   }
+
+  // ── 042: Core Web Vitals e TTFB, no ramo "1. KPIs Técnicas" ────────────────────────────────
+  //
+  // Leitura de CAMPO: CrUX, p75, todos os dispositivos — a fonte e as funções da ficha
+  // (`medirRecord`/`rodape`) e do Pass Rate de /okr/[slug]/aquisicao (`lerPassRate`, que se mudou
+  // para `lib/crux.ts` para servir as duas). O que é novo é perguntar pelas DUAS origens
+  // declaradas. Medido em 21/09/2026: `usealigner.com` dá 404 e `atma.roilabs.com.br` responde
+  // LCP, CLS e TTFB na janela 23/08→19/09 — perguntar só pela do card publicaria "sem amostra" sobre
+  // 28 dias de campo, e só pela antiga publicaria o domínio velho como o de hoje.
+  const lidoCampo = campo ? await campo : null;
+  for (const id of ["lcp", "inp", "cls", "ttfb"]) {
+    const no = acharNo(dados.nodeData as No, id);
+    if (!no) continue;
+    const filho: No = lidoCampo
+      ? noDoVital(id, lidoCampo.origens, atma?.dominioAnterior ?? null)
+      : { id: `${id}-medido`, topic: "∅ não apurado · projeto fora do escopo de campo", note: "A leitura de campo só roda para `SLUGS_DE_CAMPO` (`lib/crux.mjs`)." };
+    no.children = [filho, ...(no.children ?? [])];
+  }
+  const passNode = acharNo(dados.nodeData as No, "urlsBoas");
+  if (passNode) passNode.children = [noDoPassRate(lidoCampo?.pass ?? null, janela), ...(passNode.children ?? [])];
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase
   // do cabeçalho dizia "as seis faixas" quando elas eram a única coisa medida aqui, e ficou estreita
