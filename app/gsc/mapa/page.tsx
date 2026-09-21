@@ -9,10 +9,10 @@ import INVENTARIOS from "@/data/inventario-de-termos.json";
 import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
-import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
+import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
 import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado, type PaginaCrawl } from "@/lib/db";
-import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondenciaDeIntencao, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
+import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondenciaDeIntencao, densidadeContextual, LINKS_POR_MIL_MAX, LINKS_POR_MIL_MIN, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
@@ -824,17 +824,19 @@ export default async function MapaDoBoardPage() {
   // A MESMA janela da aba de aquisição (`descobertaLonga`) e os MESMOS hosts declarados, senão as
   // duas telas leem recortes diferentes da série e citam meses, absolutos e picos que divergem
   // (SC-005). Falha do banco vira `{erro}` truncado, e nunca a string de conexão (Princípio V).
+  // 045 — HASTEADA para fora do bloco: a folha de buscas de marca lê a MESMA série, na mesma janela
+  // da aba de aquisição, e uma segunda leitura seria o recorte divergente que o parágrafo acima proíbe.
+  const longa = descobertaLonga() as { inicio: string; fim: string };
+  let serie: DiaSeparado[] | { erro: string } | null = null;
+  if (atma && dbOn()) {
+    try {
+      serie = await lerDiasGsc("atma", longa.inicio, longa.fim);
+    } catch (e) {
+      serie = { erro: (e instanceof Error ? e.message : String(e)).slice(0, 60) };
+    }
+  }
   const cnmNode = acharNo(dados.nodeData as No, "crescimentoNaoMarca");
   if (cnmNode) {
-    const longa = descobertaLonga() as { inicio: string; fim: string };
-    let serie: DiaSeparado[] | { erro: string } | null = null;
-    if (atma && dbOn()) {
-      try {
-        serie = await lerDiasGsc("atma", longa.inicio, longa.fim);
-      } catch (e) {
-        serie = { erro: (e instanceof Error ? e.message : String(e)).slice(0, 60) };
-      }
-    }
     // SEIS estados de tela, e nenhum publica `0`: os cinco da função pura + a leitura que falhou. A
     // falha é transitória e a ausência é estrutural — uma pede investigar credencial, a outra pede
     // declarar marca, e um `null` mudo faria as duas parecerem a mesma coisa (mesma razão da 030).
@@ -1434,6 +1436,103 @@ export default async function MapaDoBoardPage() {
       },
       ...(coberturaNode.children ?? []),
     ];
+  }
+
+  // ── 045: "4. KPIs de Autoridade e Conexões (PageRank Interno e Externo)" ──────────────────
+  //
+  // ZERO REQUISIÇÃO NOVA, como a 043 e a 044: a densidade lê a corrida de página da profundidade, a
+  // marca lê a série do banco que o crescimento não-marca já leu e os termos que a penetração já leu.
+  //
+  // O 5 a 10 é a meta do BOARD, escrita no nó abaixo, e conta links; o hub julga por 1.000 palavras
+  // desde 19/09 (`densidadeContextual`). O `note` traz as duas contagens, como a profundidade faz com
+  // o 3 contra o 4.
+  const LINKS_DO_BOARD = [5, 10] as const;
+  const linksNode = acharNo(dados.nodeData as No, "linksInternos");
+  if (linksNode) {
+    const pags = corrida?.paginas ?? [];
+    const filho: No =
+      semCorrida || !pags.length
+        ? {
+            id: "linksInternos-medido",
+            topic: `∅ não apurado · ${semCorrida ?? "a corrida não gravou página nenhuma"}`,
+            note: "A contagem sai dos links que a corrida de página extrai do HTML de cada página, menu fora (`densidades()`). Sem corrida não há link para contar, e “0 de N na faixa” acusaria de isolado um site que ninguém leu.",
+          }
+        : (() => {
+            const [min, max] = LINKS_DO_BOARD;
+            const abaixo = pags.filter((p) => p.linksContextuais < min).sort((a, b) => a.linksContextuais - b.linksContextuais);
+            const acima = pags.filter((p) => p.linksContextuais > max).sort((a, b) => b.linksContextuais - a.linksContextuais);
+            const dentro = pags.length - abaixo.length - acima.length;
+            const quais = (ps: PaginaCrawl[]) =>
+              ps.slice(0, 3).map((p) => `${caminhoDe(p.url)} (${br(p.linksContextuais)})`).join(", ") + (ps.length > 3 ? ` e mais ${br(ps.length - 3)}` : "");
+            const porHub = { dentro: 0, escasso: 0, excessivo: 0, semTexto: 0 };
+            for (const p of pags) porHub[densidadeContextual(p.linksContextuais, p.palavras)?.estado ?? "semTexto"] += 1;
+            return {
+              id: "linksInternos-medido",
+              topic: `Medido: ${br(dentro)} de ${br(pags.length)} páginas com ${min} a ${max} links contextuais apontando para elas · ${br(abaixo.length)} abaixo de ${min} · ${br(acima.length)} acima de ${max}`,
+              note: `Corrida de página de ${corrida!.dia}: links de uma página do site para outra, lidos no HTML servido, com menu e rodapé fora (o link que se repete em toda página não é voto editorial).${abaixo.length ? ` Com menos de ${min}: ${quais(abaixo)}.` : ""}${acima.length ? ` Com mais de ${max}: ${quais(acima)}.` : ""} O denominador é TODA página da corrida, não só as “páginas-alvo” do board: o hub não sabe quais você quer empurrar para o Top 3, então conta todas, e uma página abaixo da faixa aqui pode não ser alvo. Pela régua do hub (${LINKS_POR_MIL_MIN} a ${LINKS_POR_MIL_MAX} links por 1.000 palavras, \`densidadeContextual\`), ${br(porHub.dentro)} dentro, ${br(porHub.escasso)} abaixo e ${br(porHub.excessivo)} acima${porHub.semTexto ? `, ${br(porHub.semTexto)} sem texto lido` : ""}. A corrida grava QUANTOS links chegam, não DE ONDE vêm: o “partindo de páginas com alto tráfego orgânico” do board não dá para conferir com o que está gravado. O 5 a 10 é meta do board, não régua: nenhum estudo publica contagem de links internos, e o selo ◇ diz por quê.`,
+            };
+          })();
+    linksNode.children = [filho, ...(linksNode.children ?? [])];
+  }
+
+  // SEM COLETOR, como a cobertura semântica: o id não termina em `-medido` e não entra no contador.
+  const rdNode = acharNo(dados.nodeData as No, "referringDomains");
+  if (rdNode) {
+    rdNode.children = [
+      {
+        id: "referringDomains-sem-coletor",
+        topic: "∅ sem coletor · o hub não lê backlink de fonte nenhuma",
+        note: "A velocidade pede duas coisas que o hub não tem: os domínios que apontam para o site e a data em que cada um apareceu. A Search Analytics API não traz link nenhum. O relatório Links do Search Console lista os sites que mais apontam, mas só na interface (exportação manual, sem API) e sem data de primeira aparição. As bases que datam cada domínio (Ahrefs, Majestic, DataForSEO) são pagas, e a decisão registrada em `handoff/handoff-os-28-do-board-o-que-falta.md` é deixá-las de fora até o portfólio faturar. O coletor mais barato é manual: exportar o relatório Links a cada trimestre e contar os domínios que não estavam na exportação anterior. Sem coletor e sem régua: o “+3 a +10” é do board e não tem fonte.",
+      },
+      ...(rdNode.children ?? []),
+    ];
+  }
+
+  // A proporção é a MESMA da aba de aquisição (mesma série, mesma janela, `razaoDeMarca`); os meses
+  // entram porque a meta do board é o volume MENSAL crescente, e a razão sozinha não diz direção.
+  const marcaNode = acharNo(dados.nodeData as No, "buscasDeMarca");
+  if (marcaNode) {
+    const razao = Array.isArray(serie) ? razaoDeMarca(serie) : null;
+    let filho: No;
+    if (!Array.isArray(serie) || decl.motivo || razao === null) {
+      filho = {
+        id: "buscasDeMarca-medido",
+        topic: `∅ não apurado · ${
+          !Array.isArray(serie)
+            ? `banco indisponível (${serie ? serie.erro : atma ? "sem banco configurado para o hub" : "projeto atma não encontrado no hub"})`
+            : decl.motivo
+              ? "marca não declarada para este projeto"
+              : "a série gravada ainda não traz a separação de marca"
+        }`,
+        note: "A proporção sai da série diária gravada em `hub_gsc_dia`, com a separação marca/não-marca que a corrida das 05:17 faz a partir de `marca.termos` do card. Sem ela não há o que dividir, e “0% de marca” leria como “ninguém procura pelo nome”, que é uma afirmação sobre o site.",
+      };
+    } else {
+      const comMarca = serie.filter((d) => typeof d.impressoesMarca === "number");
+      const soma = (k: "impressoesMarca" | "impressoesPais") => comMarca.reduce((a, d) => a + (d[k] ?? 0), 0);
+      const meses = mesesFechados(serie, new Date().toISOString().slice(0, 10), "impressoesMarca") as unknown as { mes: string; impressoesMarca: number; diasZero: number }[];
+      const [pen, ult] = meses.slice(-2);
+      const pico = meses.reduce<(typeof meses)[number] | undefined>((a, m) => (!a || m.impressoesMarca > a.impressoesMarca ? m : a), undefined);
+      const direcao =
+        pen && ult
+          ? ` · ${br(ult.impressoesMarca)} em ${ult.mes}, contra ${br(pen.impressoesMarca)} em ${pen.mes}${pico && pico !== ult ? ` e ${br(pico.impressoesMarca)} no pico (${pico.mes})` : ""}`
+          : "";
+      const zerados = meses.filter((m) => m.diasZero > 0);
+      // A consulta de marca mais vista, da leitura por termo que a penetração já fez.
+      const termos = termosGsc && !("erro" in termosGsc) ? termosGsc.linhas : [];
+      const ehMarca = (t: string) => new RegExp(decl.padrao, "i").test(t);
+      const topoMarca = termos.filter((l) => ehMarca(l.termo)).sort((a, b) => b.impressoes - a.impressoes)[0];
+      // Medido em 21/09/2026: o site virou usealigner.com e o título da home diz "Use Aligner", mas
+      // a marca declarada ainda é `atma*`. Busca pelo nome do domínio cairia em NÃO-marca.
+      const nomeDoDominio = (hosts[0] ?? "").replace(/^www\./, "").split(".")[0];
+      const dominioFora = nomeDoDominio && !ehMarca(nomeDoDominio);
+      const comODominio = termos.filter((l) => l.termo.replace(/\s+/g, "").toLowerCase().includes(nomeDoDominio));
+      filho = {
+        id: "buscasDeMarca-medido",
+        topic: `Medido: ${pct1(razao)} das impressões do corte ${decl.pais} são de marca${direcao}`,
+        note: `Série gravada em \`hub_gsc_dia\`, ${comMarca[0].dia} → ${comMarca[comMarca.length - 1].dia}: ${br(soma("impressoesMarca"))} impressões de marca em ${br(soma("impressoesPais"))} do corte ${decl.pais}, a mesma série, janela e função (\`razaoDeMarca\`) da aba de aquisição. Termos de marca: ${decl.termos.join(", ")}. A meta do board é direção (volume mensal crescente), então o nó abre também com os meses. Meses fechados (calendário completo e 3 dias de folga, \`mesesFechados\`): ${meses.map((m) => `${m.mes} ${br(m.impressoesMarca)}`).join(" · ")}.${pen && ult && pen.impressoesMarca > 0 ? ` De ${pen.mes} para ${ult.mes}: ${ult.impressoesMarca > pen.impressoesMarca && ult.impressoesMarca < 11 * pen.impressoesMarca ? "+" : ""}${variacao(ult.impressoesMarca / pen.impressoesMarca - 1)}.` : ""}${pico && ult && pico !== ult ? ` ${ult.mes} está em ${pct1(ult.impressoesMarca / pico.impressoesMarca)} do pico de ${pico.mes}.` : ""} Impressão de marca mede a busca pelo nome só enquanto o site aparece para ela: um mês com o site fora do índice cai sem ninguém ter deixado de buscar.${zerados.length ? ` Dias sem nenhuma impressão de marca: ${zerados.map((m) => `${br(m.diasZero)} em ${m.mes}`).join(", ")}.` : ""}${topoMarca ? ` Na janela de 28 dias, a consulta de marca mais vista é «${topoMarca.termo}», ${br(topoMarca.impressoes)} impressões${topoMarca.posicao === null ? "" : ` na posição ${topoMarca.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}`}.` : ""}${dominioFora ? ` ⚠️ O domínio é ${hosts[0]} e nenhum termo declarado cobre «${nomeDoDominio}»: a busca pelo nome do domínio conta como NÃO-marca. Na janela de 28 dias, ${comODominio.length ? `${br(comODominio.length)} consulta(s) o contêm` : "nenhuma consulta o contém"}. Quando passar a ser buscado, declarar em \`marca.termos\` e refazer o backfill, senão ele infla o crescimento não-marca.` : ""} “Crescente” é direção, não faixa, e o selo ◇ diz por quê.`,
+      };
+    }
+    marcaNode.children = [filho, ...(marcaNode.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

@@ -233,6 +233,15 @@ test("mês fechado carrega o somatório de não-marca e a contagem de dias", () 
   assert.equal(fev.impressoesNaoMarca, 280);
 });
 
+// 045 — a folha de marca do board lê o volume MENSAL de marca pela mesma régua de calendário.
+test("mesesFechados soma a coluna pedida e devolve com o nome dela", () => {
+  const dias = serie.map((d) => ({ ...d, impressoesMarca: d.dia.startsWith("2026-03") ? 0 : 7 }));
+  const [fev, mar] = mesesFechados(dias, "2026-04-05", "impressoesMarca");
+  assert.deepEqual([fev.mes, fev.impressoesMarca, fev.diasZero], ["2026-02", 196, 0]);
+  assert.deepEqual([mar.mes, mar.impressoesMarca, mar.diasZero], ["2026-03", 0, 31]);
+  assert.equal(fev.impressoesNaoMarca, undefined, "a coluna de não-marca não vaza para a leitura de marca");
+});
+
 // (3) Primeiro mês fechado: "ainda não apurável", NUNCA 0% — um zero aqui viraria uma queda de
 // 100% na tela e mandaria consertar um problema que não existe (FR-009).
 test("crescimento com UM só mês fechado é `poucos-meses`, e explicitamente não é 0", () => {

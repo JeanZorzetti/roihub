@@ -394,6 +394,23 @@
    "pior_caso": "981 linhas consulta×página, 887 consultas, 73 disputadas; 30 páginas na corrida, 10 com data",
    "achado": "5 de 10 páginas com a primária disputada; 73 de 882 consultas não-marca em 2+ URLs (33,1% das impressões não-marca). O par que se repete (28 de 73) é /blog/quanto-custa-alinhador-invisivel à frente de /pacientes/precos: nas consultas de preço o post fica em 4–9 e a página de preço em 48–65, e ela só tem impressão pelo domínio anterior. Cadência: 40% (4 de 10 com data no prazo), 6 vencidas, 20 sem data — inclusive o post de preço (prazo 6 meses, 2025-10-20).",
    "obs": "A aba /okr/[slug]/aquisicao dizia \"6 passaram de 12 meses\": falso desde 19/09, quando o prazo virou 6 ou 12 por intenção — 2 das 6 venceram pelo de 6. Corrigido. O nó sem coletor da reescrita do título (040) usa id -medido e conta em \"folhas com leitura própria\"; o da cobertura semântica não conta, e a divergência ficou declarada no handoff."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo POSIÇÃO MÉDIA › \"4. KPIs de Autoridade e Conexões (PageRank Interno e Externo)\": Densidade de Links Internos, Referring Domains Velocity, Brand Demand Ratio)",
+   "corrida": "1a (045) — duas folhas medidas com a corrida de página e a série de marca que já existiam; a terceira ganha nó \"∅ sem coletor\"",
+   "pergunta": "Quantas páginas da Atma recebem de 5 a 10 links contextuais, e a busca pelo nome da marca está crescendo mês a mês?",
+   "forma": "Um nó à frente de cada folha, como 034–044. Links abre na unidade do board (páginas na faixa 5–10, abaixo, acima), com a régua do hub por 1.000 palavras na nota. Marca abre com a razão da aba de aquisição (mesma série e janela) e os dois últimos meses fechados mais o pico, porque a meta do board é direção mensal.",
+   "descartada": "abrir a marca só pela razão de 5,5% — ela não diz direção, e a meta do board é \"volume mensal crescente\"; e chamar jul→ago de crescimento sem o pico ao lado (é a volta da desindexação).",
+   "fonte": "hub_pagina (corrida de 2026-09-21); hub_gsc_dia 2026-01-18 → 2026-09-17 (corte bra); GSC por termo, janela 2026-08-22 → 2026-09-18",
+   "estados": [
+    "com dado",
+    "não apurado (sem corrida / banco indisponível / marca não declarada / série sem separação)",
+    "sem coletor (referring domains)"
+   ],
+   "pior_caso": "30 páginas na corrida; 243 dias de série; 7 meses fechados",
+   "achado": "Links: 5 de 30 páginas na faixa 5–10, 21 abaixo (/sobre com 0), 4 acima (/pacientes/enviar-exames 26). Régua do hub: 10 dentro, 14 abaixo, 6 acima. Marca: 5,5% (9.819 de 177.359); meses 1.649 → 1.910 → 2.240 (pico abr) → 1.803 → 722 → 171 → 448 (ago, 20% do pico). O site virou Use Aligner e nenhuma consulta da janela contém usealigner; «atma aligner» segue na posição 4,4.",
+   "gates": "G31 e G32 conferidos nos PNGs de 1470px (nó + painel). Canvas a 390px não conferido: a lista servidor é quem responde no celular, decisão da 032."
   }
  ]
 }
