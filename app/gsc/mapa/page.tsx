@@ -6,7 +6,7 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
 import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
-import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
+import { canibalizacao, canibalizacaoPorPagina, conformidadeDeCtr, consultasUnicas, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, noTop20, penetracaoNoInventario, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
@@ -1589,6 +1589,50 @@ export default async function MapaDoBoardPage() {
     }
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     cuNode.children = [filho, ...(cuNode.children ?? [])];
+  }
+
+  // 047 — o Top 20 na folha que o define, sobre as DUAS leituras que já estão em memória: zero
+  // requisição nova. O absoluto ("O que mede" do board) sai de `noTop20` sobre consulta×página, a
+  // MESMA função e a MESMA leitura da aba de aquisição — uma consulta entra se alguma página dela
+  // está entre 1,0 e 20,0. A fração do catálogo ("Meta: 60% do catálogo") sai da leitura por termo
+  // contra o inventário congelado da 034, a MESMA base da penetração no Top 3, para as duas frações
+  // serem comparáveis. Medido na Atma em 21/09/2026: 755 aqui, 751 na dimensão `query` sozinha, e
+  // 363 de 725 termos do inventário (50,1%). ⚠️ `noTop20` sobre `termosGsc` conta 0 ou 1: as linhas
+  // de lá trazem `termo`, não `query` — a mesma armadilha anotada na 046.
+  const t20Node = acharNo(dados.nodeData as No, "top20");
+  if (t20Node) {
+    let filho: No;
+    if (!consultasGsc || "erro" in consultasGsc) {
+      filho = {
+        id: "top20-medido",
+        topic: `∅ não apurado · ${consultasGsc ? "a leitura do Search Console falhou" : "sem leitura do Search Console"}`,
+        note: consultasGsc
+          ? `Falha transitória, não ausência de dado: ${consultasGsc.erro}. A medida volta na próxima leitura.`
+          : `${motivoDeAusencia({ ligado: gscLigado(), hosts })}. Sem a leitura não há posição para contar, e "0 consultas no Top 20" leria como site fora da primeira e da segunda página.`,
+      };
+    } else {
+      const linhas = consultasGsc.linhas;
+      const atual = noTop20(linhas);
+      const lidas = consultasUnicas(linhas).valor;
+      const porHost = hosts.map((h) => `${br(noTop20(linhas.filter((l) => l.hosts.includes(h))))} em ${h}`).join(", ");
+      const dentro = new Set(linhas.filter((l) => l.posicao >= 1 && l.posicao <= 20).map((l) => l.query));
+      const porConsulta = new Map<string, number>();
+      for (const l of linhas) if (dentro.has(l.query)) porConsulta.set(l.query, (porConsulta.get(l.query) ?? 0) + l.impressoes);
+      const cauda = [...porConsulta.values()].filter((v) => v === 1).length;
+      const termos = termosGsc && !("erro" in termosGsc) ? termosGsc.linhas : null;
+      const porTermo = termos ? termos.filter((l) => typeof l.posicao === "number" && l.posicao >= 1 && l.posicao <= 20).length : null;
+      const cat = termos ? penetracaoNoInventario(termos, inventario, 20) : null;
+      const catalogo = cat
+        ? ` CATÁLOGO: ${br(cat.dentro)} dos ${br(cat.total)} termos do inventário estão entre 1,0 e 20,0 (${pct1(cat.fracao)}), na leitura por termo que a penetração no Top 3 usa sobre o mesmo inventário (congelado em ${inventario!.procedencia.congeladoEm}, sem a marca própria).${cat.piso ? ` Só ${br(cat.cobertura)} deles tiveram impressão nesta janela, então a fração é PISO: os ${br(cat.total - cat.cobertura)} ausentes contam no denominador e não podem contar no numerador.` : ""}`
+        : ` A fração do catálogo não foi apurada: ${!inventario ? "o projeto não declara inventário de termos, e sem a lista não existe denominador" : termosGsc && "erro" in termosGsc ? `a leitura por termo falhou (${termosGsc.erro})` : "sem a leitura por termo"}.`;
+      filho = {
+        id: "top20-medido",
+        topic: `Medido: ${br(atual)} consultas entre as posições 1,0 e 20,0 (piso)${cat ? ` · ${pct1(cat.fracao)} do inventário (${br(cat.dentro)} de ${br(cat.total)} termos)` : ""}`,
+        note: `${br(atual)} das ${br(lidas)} consultas lidas tiveram ao menos uma página entre as posições 1,0 e 20,0 na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados: ${porHost}.${consultasGsc.truncado ? " ⚠️ A leitura bateu no teto de linhas da API em pelo menos um host." : ""} PISO, não total: a dimensão \`query\` do Search Console omite as consultas raras. ${br(cauda)} delas tiveram uma única impressão e entram e saem da contagem por acaso. Mesma função e mesma leitura consulta×página da aba de aquisição, então o número é o mesmo nas duas telas${porTermo === null ? "" : `; na dimensão \`query\` sozinha, onde o Google agrega a posição do termo entre as páginas, são ${br(porTermo)}`}.${catalogo} Meta do board: 60% do catálogo dentro do Top 20 — meta, não régua: o catálogo é escolhido por quem mede, então não há faixa de mercado para julgar contra.`,
+      };
+    }
+    // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
+    t20Node.children = [filho, ...(t20Node.children ?? [])];
   }
 
   // 037 — quantas folhas carregam leitura própria, COMPUTADO como todo número desta tela: a frase

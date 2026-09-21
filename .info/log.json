@@ -427,6 +427,22 @@
    "pior_caso": "887 consultas, 9.788 de 23.372 impressões nomeadas (41,9%), 352 com uma única impressão",
    "achado": "887 consultas (piso) contra 922 treze semanas antes (−3,8%) e 1.882 no pico (janela até 01/05) — 47% do pico. Série de 28d: 809 (fev) → 1.118 → 1.741 → 1.882 → 1.348 → 732 → 6 (jul) → 915 → 887. 872 das 887 ainda aparecem pelo domínio antigo atma.roilabs.com.br; usealigner.com responde por 41.",
    "gates": "Canvas a 1440px conferido (nó como 1º filho, contador 22 → 23, console limpo). Canvas a 360px não conferido: a lista servidor responde no celular (decisão da 032)."
+  },
+  {
+   "data": "2026-09-21",
+   "rota": "/gsc/mapa (ramo IMPRESSÕES › \"2. KPI de Limiar: Volume de Palavras-Chave no Top 20 (Posições 1 a 20)\")",
+   "corrida": "1a (047) — segunda folha do ramo IMPRESSÕES com leitura própria; zero requisição nova (as leituras consulta×página e por termo já estavam em memória)",
+   "pergunta": "Quantas consultas da Atma estão entre as posições 1 e 20 em 28 dias, e que fração do catálogo monitorado isso é?",
+   "forma": "Um nó à frente da folha, como 034–046. Abre pelo absoluto (o \"O que mede\" do board: noTop20 sobre consulta×página, mesma função e leitura da aba de aquisição) e pela fração do inventário congelado da 034 (a \"Meta: 60% do catálogo\"), na leitura por termo que a penetração no Top 3 usa, para as duas frações serem comparáveis.",
+   "descartada": "contar o absoluto na dimensão query sozinha (751 contra 755) — deixaria o mapa e a aba de aquisição discordando por 4 consultas; o número vai para a nota. E noTop20 sobre termosGsc: as linhas trazem termo e a contagem dá 0 ou 1.",
+   "fonte": "GSC consulta×página e GSC query, janela 2026-08-22 → 2026-09-18; data/inventario-de-termos.json (725 termos, congelado em 2026-09-20)",
+   "estados": [
+    "com dado (com ou sem fração do catálogo: sem inventário / leitura por termo falhou)",
+    "não apurado (sem leitura / leitura falhou)"
+   ],
+   "pior_caso": "755 de 887 consultas no Top 20, 312 com uma única impressão; 363 de 725 termos do inventário, só 453 com impressão (piso)",
+   "achado": "755 consultas no Top 20 (85% das lidas), mas o catálogo está em 50,1% — abaixo dos 60% do board. Série do inventário no Top 20 (28d): 60,3% (fev) → 74,8% → 87,7% → 85,7% (pico abr) → 78,1% → 56,4% → 0,6% (jul) → 53,0% → 50,1%. 752 das 755 aparecem pelo domínio antigo; usealigner.com responde por 8.",
+   "gates": "Canvas a 1440px conferido no next dev (nó como 1º filho da folha, contador 23 → 24, texto da nota lido do DOM, console limpo). 360px não conferido: a lista servidor responde no celular (decisão da 032)."
   }
  ]
 }

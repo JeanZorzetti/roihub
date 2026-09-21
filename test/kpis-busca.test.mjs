@@ -13,6 +13,7 @@ import {
   noTop20,
   impressoesNoTop3,
   penetracaoNoTop3,
+  penetracaoNoInventario,
   urlsComImpressao,
   strikingDistance,
   strikingDistancePorTermo,
@@ -767,6 +768,16 @@ test("inventário presente e janela sem nenhuma linha devolve 0 de N com cobertu
 test("posição 3,0 entra e 3,01 não", () => {
   assert.equal(penetracaoNoTop3([linhaTermo("a", 3)], inv("a")).noTop3, 1);
   assert.equal(penetracaoNoTop3([linhaTermo("a", 3.01)], inv("a")).noTop3, 0);
+});
+
+// 047 — a fronteira do Top 20 é a do board ("entre 1,0 e 20,0"): 20,0 entra, 20,01 não, e o
+// denominador continua sendo o inventário inteiro, não os termos que a janela devolveu.
+test("penetracaoNoInventario com ate 20: 20,0 entra, 20,01 não, ausente conta no total", () => {
+  const r = penetracaoNoInventario([linhaTermo("a", 20), linhaTermo("b", 20.01)], inv("a", "b", "c"), 20);
+  assert.equal(r.dentro, 1);
+  assert.equal(r.total, 3);
+  assert.equal(r.cobertura, 2);
+  assert.equal(r.piso, true);
 });
 
 test("termo com posicao null não entra no Top 3 mas conta na cobertura", () => {
