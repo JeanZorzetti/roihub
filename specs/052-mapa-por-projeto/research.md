@@ -131,6 +131,16 @@ em minúscula.
 - Como nenhuma `maxDuration` muda, o proxy do EasyPanel também não muda (Princípio IV). O cron do Actions
   (`--max-time` 360/780) não muda.
 
+> **⚠️ CORRIGIDO em 21/09/2026: a linha da indexação estava errada.** Os ~300 ms por inspeção eram
+> suposição herdada da 022, nunca medição. O medido é **~6,4 s por inspeção**: a Atma levou 2min40s para 25
+> URLs em 20/09, e na primeira corrida com os dois projetos (disparo manual das 22:11Z) o Sirius foi gravado
+> depois de 12min12s e a Atma aos **892 s**. Isso passou do `maxDuration` de 800 s, e o `curl` do Actions
+> desistiu em 780 s (`exit 28`, workflow vermelho). Os dados foram gravados assim mesmo, mas a Atma ficou por
+> último, e um restart no meio da corrida faria ela perder o dia. O conserto é inspecionar em lotes de
+> `INSPECOES_SIMULTANEAS = 4` (`lib/indexacao.mjs`, teste em `test/indexacao.test.mjs`): 139 URLs viram ~35
+> lotes, uns 4 min. Nenhuma `maxDuration` muda. O teto de 400 por corrida daria ~11 min, perto dos 800 s, e
+> subir o teto exige subir `maxDuration`, proxy e `--max-time` juntos.
+
 ## D9 — Campo (CrUX): `SLUGS_DE_CAMPO` ganha o Sirius
 
 - **Decisão**: `SLUGS_DE_CAMPO = ["atma", "sirius"]` e a asserção de `test/crux.test.mjs:49` acompanha. A lista

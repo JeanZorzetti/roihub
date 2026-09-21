@@ -17,8 +17,10 @@ import { melhorPropriedade } from "@/lib/gsc-consulta.mjs";
 
 export const runtime = "nodejs";
 // Rota NOVA: não altera a `maxDuration` de `/api/estado`, então o proxy do EasyPanel não muda
-// (Princípio IV). 400 inspeções em série a ~300 ms dão ~2 min; a folga até 800 é para sitemap
-// grande e rede lenta, não para gastar.
+// (Princípio IV). Cada inspeção leva ~6,4 s (medido em 21/09/2026, não os ~300 ms supostos), e
+// elas saem em lotes de `INSPECOES_SIMULTANEAS`: as 139 URLs de hoje (Atma + Sirius) dão ~4 min.
+// O teto de 400 por corrida daria ~11 min, perto dos 800 s. Subir o teto exige subir esta
+// `maxDuration`, o proxy do EasyPanel e o `--max-time` do workflow juntos.
 export const maxDuration = 800;
 
 type Propriedade = { orcamento: number; gastas: number; falhasDeQuota: number };
@@ -37,8 +39,9 @@ const num = (nome: string, padrao: number) => {
  * parado, e são 35 projetos × (robots + sitemap + filhos do índice).
  *
  * Ler sitemap é HTTP contra 35 hosts DIFERENTES e não custa quota do GSC — é o oposto da inspeção,
- * que continua em série logo abaixo porque ali são requisições ao MESMO endpoint do Google com a
- * mesma credencial, e disparar dezenas de uma vez é o caminho mais curto para um 429.
+ * que vai ao MESMO endpoint do Google com a mesma credencial: ela sai em lotes pequenos
+ * (`INSPECOES_SIMULTANEAS` em `lib/indexacao.mjs`), nunca dezenas de uma vez, que é o caminho mais
+ * curto para um 429.
  */
 async function emLotes<T, R>(itens: T[], n: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const saida: R[] = [];
