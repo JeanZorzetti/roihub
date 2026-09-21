@@ -2934,6 +2934,19 @@ export default async function AquisicaoPage({ params }: { params: Promise<{ slug
                 {alinhamento && (
                   <Leitura valor={pct(alinhamento.fracao)}>
                     de alinhamento de intenção ({br(alinhamento.avaliadas)} título(s))
+                    {/* 041 — a ressalva viaja com o número, nas DUAS telas. Sem ela esta leitura
+                        credita ao site um modificador que está no template: na Atma, 13 URLs
+                        servem o mesmo `<title>` e as 13 passam pela palavra "Preço" dele. */}
+                    {alinhamento.compartilhado.passam > 0 && alinhamento.compartilhado.fracaoPropria !== null && (
+                      <>
+                        {" "}
+                        · {br(alinhamento.compartilhado.passam)} deles vêm de{" "}
+                        {br(alinhamento.compartilhado.urls)} URLs que servem o MESMO título; entre
+                        títulos próprios são {pct(alinhamento.compartilhado.fracaoPropria)} (
+                        {br(alinhamento.compartilhado.passamProprias)} de{" "}
+                        {br(alinhamento.compartilhado.proprias)})
+                      </>
+                    )}
                   </Leitura>
                 )}
 

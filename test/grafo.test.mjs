@@ -13,6 +13,7 @@ import {
   taxaIntegridadeDoTitulo,
   taxaLarguraDoTitulo,
   taxaAlinhamento,
+  correspondenciaDeIntencao,
   taxaCobertura,
   cadencia,
   ordemDaPeriferia,
@@ -273,6 +274,72 @@ test("US2 — alinhamento de intenção conta só quem tem título", () => {
   assert.equal(r.avaliadas, 2);
   assert.equal(r.fracao, 0.5);
   assert.equal(r.ausentes[0].url, "https://x.com/2");
+});
+
+test("041 — título de fallback servido em várias URLs sai do lado da fração, não dentro dela", () => {
+  const fallback = "Alinhadores | Preço 50% Menor";
+  const r = taxaAlinhamento([
+    pag({ n: 1, titulo: fallback }),
+    pag({ n: 2, titulo: fallback }),
+    pag({ n: 3, titulo: fallback }),
+    pag({ n: 4, titulo: "Guia Completo", intencao: "informacional" }),
+    pag({ n: 5, titulo: "Página solta", intencao: "ausente" }),
+  ]);
+  assert.equal(r.fracao, 0.8, "a fração NÃO muda: /okr/[slug]/aquisicao publica este mesmo número");
+  assert.equal(r.compartilhado.urls, 3);
+  assert.equal(r.compartilhado.passam, 3, "as três passam pela mesma palavra do mesmo template");
+  assert.equal(r.compartilhado.titulos[0].urls, 3);
+  assert.equal(r.compartilhado.titulos[0].titulo, fallback);
+  assert.equal(r.compartilhado.proprias, 2);
+  assert.equal(r.compartilhado.fracaoPropria, 0.5, "entre títulos próprios a leitura é outra");
+});
+
+test("041 — todas as páginas com o MESMO título: fração própria é null, nunca NaN nem 0", () => {
+  const r = taxaAlinhamento([pag({ n: 1, titulo: "Igual" }), pag({ n: 2, titulo: "Igual" })]);
+  assert.equal(r.compartilhado.proprias, 0);
+  assert.equal(r.compartilhado.fracaoPropria, null);
+});
+
+test("041 — o MATCH só julga onde os DOIS lados declaram intenção", () => {
+  const r = correspondenciaDeIntencao(
+    [
+      pag({ n: 1, intencao: "comercial" }),
+      pag({ n: 2, intencao: "informacional" }),
+      pag({ n: 3, intencao: "comercial" }),
+    ],
+    new Map([
+      ["https://x.com/1", "comercial"],
+      ["https://x.com/2", "comercial"],
+      ["https://x.com/3", "ausente"],
+    ]),
+  );
+  assert.equal(r.avaliadas, 3);
+  assert.equal(r.decididas, 2, "a busca muda não entra no denominador do match");
+  assert.equal(r.casam, 1);
+  assert.equal(r.fracao, 0.5);
+  assert.equal(r.divergem[0].url, "https://x.com/2");
+  assert.equal(r.buscaMuda, 1);
+});
+
+test("041 — título 'ambos' atende qualquer busca declarada, e nenhuma busca muda dá fração null", () => {
+  const dois = new Map([["https://x.com/1", "informacional"], ["https://x.com/2", "comercial"]]);
+  const r = correspondenciaDeIntencao([pag({ n: 1, intencao: "ambos" }), pag({ n: 2, intencao: "ambos" })], dois);
+  assert.equal(r.casam, 2, "quem diz Guia E Preço atende as duas intenções");
+
+  const mudas = correspondenciaDeIntencao(
+    [pag({ n: 1 }), pag({ n: 2 })],
+    new Map([["https://x.com/1", "ausente"], ["https://x.com/2", "ausente"]]),
+  );
+  assert.equal(mudas.decididas, 0);
+  assert.equal(mudas.fracao, null, "zero casos julgados nunca é 0% de acerto");
+});
+
+test("041 — URL sem intenção de busca apurada fica fora das duas pontas do match", () => {
+  const r = correspondenciaDeIntencao(
+    [pag({ n: 1 }), pag({ n: 2 }), pag({ n: 3, titulo: null })],
+    new Map([["https://x.com/1", "comercial"]]),
+  );
+  assert.equal(r.avaliadas, 1, "sem termo apurado não há par para comparar");
 });
 
 test("US3 — 1 válida + 1 inválida + 1 ausente é 1/3, com os dois estados de falha SEPARADOS", () => {

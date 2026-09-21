@@ -8,11 +8,11 @@ import { lerInventario } from "@/lib/inventario.mjs";
 import INVENTARIOS from "@/data/inventario-de-termos.json";
 import { conformidadeDeCtr, impressoesNoTop3, LIMIAR_PAGINAS_DECIDIDAS, penetracaoNoTop3, porFaixaDePosicao, strikingDistancePorTermo, termoPrincipal, totalImpressoes } from "@/lib/kpis-busca.mjs";
 import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
-import { posicaoDoTermo } from "@/lib/pagina.mjs";
+import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
-import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado } from "@/lib/db";
-import { canonizar, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
+import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado, type PaginaCrawl } from "@/lib/db";
+import { canonizar, correspondenciaDeIntencao, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 
 import { Tabs } from "../../tabs";
@@ -434,6 +434,104 @@ function noteDoTermo(
       ? ` A leitura soma ${hosts.join(" + ")} por caminho, e a corrida visita só ${hosts[0]}: onde a impressão ainda acontece no domínio anterior, o termo principal é o que a página DELE ranqueava, comparado com o título que ${hosts[0]} serve hoje.`
       : "";
   return `${fracao}${ausentes}${fora}${termo}${operador}${migracao} Meta do board: termo nos ${TERMO_ATE} primeiros caracteres — meta, não régua: nenhum estudo publica posição em caracteres, o de títulos mede correspondência com o H1.`;
+}
+
+/** 041 — o modificador no título. O `topic` publica a fração da função do hub E o denominador que
+ *  sobra quando as URLs de título compartilhado saem: sem o segundo, a folha diz 54,3% sobre um
+ *  site em que 13 dos 19 aprovados são o mesmo `<title>`. */
+function noteDoAlinhamento(
+  a: NonNullable<ReturnType<typeof taxaAlinhamento>>,
+  ano: NonNullable<ReturnType<typeof contrafactualDoAno>>,
+  dia: string,
+): string {
+  const c = a.compartilhado;
+  const passam = a.avaliadas - a.ausentes.length;
+  const fracao = `${pct1(a.fracao)} dos títulos trazem um modificador de intenção explícito — ${br(passam)} de ${br(a.avaliadas)} páginas com título, corrida de ${dia}. É o número que \`lib/grafo.mjs#taxaAlinhamento\` devolve e o que /okr/atma/aquisicao publica na mesma janela.`;
+  // O achado, e ele precisa vir ANTES de qualquer conselho sobre título: a maioria dos aprovados
+  // não tem título próprio para ter modificador próprio.
+  const topo = c.titulos[0];
+  const defeito = topo
+    ? ` ${br(c.passam)} desses ${br(passam)} aprovados são a MESMA página do ponto de vista do título: ${br(topo.urls)} URLs servem o mesmo \`<title>\` — «${topo.titulo}» — e passam pela palavra que está no template, não numa decisão sobre cada página. Entre elas ${[...topo.paginas].sort((a: PaginaCrawl, b: PaginaCrawl) => caminhoDe(a.url).length - caminhoDe(b.url).length).slice(0, 4).map((p: PaginaCrawl) => caminhoDe(p.url)).join(", ")} — as mais rasas, que são as que mais recebem link interno —, conferidas no site em 21/09/2026 respondendo esse mesmo título: é defeito do site, não da corrida.`
+    : "";
+  const propria =
+    c.fracaoPropria !== null
+      ? ` Entre as ${br(c.proprias)} páginas com título PRÓPRIO a leitura é ${pct1(c.fracaoPropria)} (${br(c.passamProprias)} de ${br(c.proprias)}) — e são esses ${br(c.passamProprias)} títulos que alguém escreveu com intenção.`
+      : "";
+  // A régua do modificador comercial inclui o ano VIGENTE, e é a única parte dela que apodrece
+  // sozinha. O contrafactual é CALCULADO pela própria função, nunca escrito: um número de ano no
+  // texto vira mentira na virada de janeiro, que é o defeito que o parâmetro `ano` existe para
+  // impedir a duas linhas daqui.
+  const anoTxt = ano.soPeloAnterior
+    ? ` A lista de modificadores inclui o ANO VIGENTE (\`lib/pagina.mjs#modificadoresDeIntencao\`, ano por parâmetro para não apodrecer em janeiro): ${br(ano.comAnterior)} ${ano.comAnterior === 1 ? "título carimba" : "títulos carimbam"} ${ano.anterior} e ${br(ano.comVigente)} ${ano.comVigente === 1 ? "carimba" : "carimbam"} ${ano.vigente}, então a MESMA corrida daria ${pct1(ano.fracaoAnterior)} se o vigente ainda fosse ${ano.anterior}. ${br(ano.soPeloAnterior)} ${ano.soPeloAnterior === 1 ? "página passaria" : "páginas passariam"} só por isso — o conteúdo está datado no ano passado, e esse trabalho a fração não nomeia.`
+    : "";
+  return `${fracao}${defeito}${propria}${anoTxt} Meta do board: 100% das páginas-chave — norma, não régua: tem ou não tem o modificador, e binário não tem faixa de mercado para comparar.`;
+}
+
+/**
+ * 041 — o que a fração valeria se o ano vigente fosse o anterior, MEDIDO com a mesma função.
+ *
+ * Existe porque o modificador comercial do board inclui o ano corrente, e é a única régua da folha
+ * que muda de valor sem ninguém tocar no site: em 01/01 toda página datada no ano que fechou
+ * reprova de uma vez. O número aqui não é curiosidade — é o tamanho da dívida de conteúdo que a
+ * fração publicada esconde. Ver [[numero_no_ar_muda_sem_ninguem_tocar_no_kpi]].
+ */
+function contrafactualDoAno(paginas: PaginaCrawl[], vigente: number) {
+  const base = paginas.filter((p) => !p.erro && p.titulo !== null);
+  if (!base.length) return null;
+  const anterior = vigente - 1;
+  const recalc = base.map((p) => ({ ...p, intencao: modificadoresDeIntencao(p.titulo, anterior) }));
+  const comAnterior = taxaAlinhamento(recalc);
+  return {
+    vigente,
+    anterior,
+    fracaoAnterior: comAnterior!.fracao,
+    comVigente: base.filter((p) => p.titulo!.includes(String(vigente))).length,
+    comAnterior: base.filter((p) => p.titulo!.includes(String(anterior))).length,
+    // Quem passa SÓ por causa do ano: sem o ano no título, a mesma régua reprova.
+    soPeloAnterior: base.filter(
+      (p) =>
+        modificadoresDeIntencao(p.titulo, anterior) !== "ausente" &&
+        modificadoresDeIntencao(p.titulo!.replaceAll(String(anterior), ""), anterior) === "ausente",
+    ).length,
+  };
+}
+
+/** 041 — o MATCH, que é o que o nome da folha pede e `taxaAlinhamento` não mede. */
+function noteDoMatch(
+  m: NonNullable<ReturnType<typeof correspondenciaDeIntencao>>,
+  termoDe: (url: string) => string | null,
+  ehMarca: ((t: string) => boolean) | null,
+  janela: { inicio: string; fim: string },
+  dia: string,
+  hosts: string[],
+): string {
+  const abre = `A folha se chama Search Intent MATCH e a definição do board é "a correspondência entre o modificador de intenção DA BUSCA e o gancho do título" — dois lados. ${br(m.avaliadas)} URLs têm os dois: título na corrida de ${dia} e consulta com impressão na janela ${janela.inicio} → ${janela.fim}.`;
+  // Os termos saem do DADO. Escrevê-los no código faria a nota afirmar amanhã o que só é verdade
+  // nesta janela, que é o defeito que [[numero_no_ar_muda_sem_ninguem_tocar_no_kpi]] registra.
+  const exemplos = m.mudas
+    .map((p: PaginaCrawl) => termoDe(p.url))
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((t: string | null) => `"${t}"`)
+    .join(", ");
+  const muda = m.buscaMuda
+    ? ` Em ${br(m.buscaMuda)} ${m.buscaMuda === 1 ? "dela a consulta principal" : "delas a consulta principal"} NÃO traz modificador nenhum${exemplos ? ` (${exemplos})` : ""}, e busca muda não é título errado: não há intenção declarada contra a qual julgar o gancho.`
+    : "";
+  const resto =
+    m.fracao !== null
+      ? ` ${m.decididas === 1 ? "Sobra 1 par decidível" : `Sobram ${br(m.decididas)} pares decidíveis`}, ${m.casam === m.decididas ? (m.decididas === 1 ? "e ele casa" : "e todos casam") : `dos quais ${br(m.casam)} ${m.casam === 1 ? "casa" : "casam"}`}. Um percentual sobre ${br(m.decididas)} ${m.decididas === 1 ? "caso" : "casos"} seria ruído travestido de taxa — a 038 já recusou publicar índice abaixo de ${LIMIAR_PAGINAS_DECIDIDAS} URLs decididas na folha vizinha, e esta fica muito abaixo disso.`
+      : " Nenhum par decidível: sem busca com modificador, não há correspondência para medir.";
+  // A mesma ressalva da 040, e aqui ela é a causa do denominador de 10: o termo vem do domínio que
+  // ainda concentra a impressão, e é cobrado do título que o domínio atual serve. Quantos são de
+  // MARCA sai da declaração do card, nunca escrito: o termo muda toda semana.
+  const deMarca = ehMarca
+    ? m.mudas.map((p: PaginaCrawl) => termoDe(p.url)).filter((t: string | null) => t && ehMarca(t)).length
+    : 0;
+  const migracao =
+    hosts.length > 1
+      ? ` A leitura soma ${hosts.join(" + ")} por caminho e a corrida visita só ${hosts[0]}${deMarca ? `: ${br(deMarca)} ${deMarca === 1 ? "dos termos apurados é a MARCA" : "dos termos apurados são a MARCA"} declarada, que não carrega modificador de intenção por construção` : ""}.`
+      : "";
+  return `${abre}${muda}${resto}${migracao} Esta leitura entrou em 21/09/2026; antes dela a folha teria publicado só o lado do título.`;
 }
 
 /** 040 — a conjunção, que é o que o NOME do KPI pede e nenhuma das três metas sozinha responde. */
@@ -907,6 +1005,69 @@ export default async function MapaDoBoardPage() {
       },
       ...(reescritaNode.children ?? []),
     ];
+  }
+
+  // 041 — o alinhamento de intenção, DUAS leituras na mesma folha porque a definição do board tem
+  // dois lados e o hub só media um. A primeira (`intencao-medido`) é o modificador no título, que é
+  // a função que /okr/atma/aquisicao já publica; a segunda (`intencao-match`) é a correspondência
+  // com a intenção da BUSCA, que é o que dá nome à folha e nenhum coletor cruzava.
+  //
+  // O id do match NÃO termina em `-medido`, pela mesma razão da conjunção do título logo abaixo: o
+  // contador conta FOLHAS com leitura própria, e esta folha é uma só.
+  //
+  // Zero requisição nova: a corrida de página e a leitura consulta×página já estão carregadas.
+  const intencaoNode = acharNo(dados.nodeData as No, "intencao");
+  if (intencaoNode) {
+    const alinhamento = corrida ? taxaAlinhamento(corrida.paginas) : null;
+    const ano = corrida ? contrafactualDoAno(corrida.paginas, new Date().getFullYear()) : null;
+    const primeiro: No =
+      semCorrida || !alinhamento
+        ? {
+            id: "intencao-medido",
+            topic: `∅ não apurado · ${semCorrida ?? "nenhuma página com título na corrida"}`,
+            note: "O modificador é procurado no `<title>` que a corrida de página grava, e a classificação é gravada junto (`hub_pagina.intencao`) pela mesma `modificadoresDeIntencao()` que a régua usa. Sem corrida não há título, e sem título não há gancho para julgar.",
+          }
+        : {
+            id: "intencao-medido",
+            // O `topic` carrega os DOIS denominadores. Só a fração diria 54,3% sobre um site em que
+            // 13 dos 19 aprovados são o mesmo `<title>` — o defeito que a 038 pegou na imagem.
+            topic:
+              alinhamento.compartilhado.fracaoPropria !== null && alinhamento.compartilhado.urls > 0
+                ? `Medido: ${pct1(alinhamento.fracao)} · ${br(alinhamento.avaliadas - alinhamento.ausentes.length)} de ${br(alinhamento.avaliadas)} títulos com modificador · mas ${br(alinhamento.compartilhado.passam)} são o MESMO título de fallback · ${pct1(alinhamento.compartilhado.fracaoPropria)} (${br(alinhamento.compartilhado.passamProprias)} de ${br(alinhamento.compartilhado.proprias)}) entre títulos próprios`
+                : `Medido: ${pct1(alinhamento.fracao)} · ${br(alinhamento.avaliadas - alinhamento.ausentes.length)} de ${br(alinhamento.avaliadas)} títulos com modificador explícito`,
+            note: noteDoAlinhamento(alinhamento, ano!, corrida!.dia),
+          };
+    // O segundo lado precisa da leitura de busca ALÉM da corrida, e por isso tem motivo próprio —
+    // a mesma separação que a 040 fez entre a largura (só crawl) e o termo (crawl + Search Console).
+    const buscaPorUrl = new Map<string, string | null>(
+      (corrida?.paginas ?? []).map((pg) => {
+        const termo = linhasDoTermo ? termoPrincipal(linhasDoTermo, pg.url) : null;
+        return [pg.url, termo ? modificadoresDeIntencao(termo, new Date().getFullYear()) : null];
+      }),
+    );
+    const match = corrida && linhasDoTermo ? correspondenciaDeIntencao(corrida.paginas, buscaPorUrl) : null;
+    const segundo: No =
+      !match
+        ? {
+            id: "intencao-match",
+            topic: `∅ não apurado · ${semCorrida ?? semConsultas ?? "nenhuma URL da corrida teve consulta com impressão na janela"}`,
+            note: "O MATCH precisa das duas pontas: o gancho vem do título da corrida e a intenção da busca vem da consulta de maior impressão de cada URL, na leitura consulta×página. Faltando uma, não há par — e “sem par” nunca é “não casa”, que é o veredito oposto.",
+          }
+        : {
+            id: "intencao-match",
+            // Contagem e não percentual, pela regra que a 038 fixou: índice sobre punhado de casos
+            // é ruído travestido de taxa. A fração vai para o `note`, como evidência.
+            topic: `${match.decididas === 0 ? "∅" : "⚠"} ${br(match.decididas)} de ${br(match.avaliadas)} ${match.avaliadas === 1 ? "par" : "pares"} com intenção declarada nos DOIS lados · em ${br(match.buscaMuda)} a consulta principal não traz modificador`,
+            note: noteDoMatch(
+              match,
+              (url) => (linhasDoTermo ? termoPrincipal(linhasDoTermo, url) : null),
+              decl.motivo ? null : (t: string) => new RegExp(decl.padrao, "i").test(t),
+              janela,
+              corrida!.dia,
+              hosts,
+            ),
+          };
+    intencaoNode.children = [primeiro, segundo, ...(intencaoNode.children ?? [])];
   }
 
   // A conjunção, no nó do KPI. É GRUPO e não folha — por isso a busca é por `topic`, e por isso o
