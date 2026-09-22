@@ -477,6 +477,19 @@
    "pior_caso": "29 caminhos com impressão pelos dois hosts, 14 fora do sitemap; o domínio novo tem 8 dos 28 dias da janela",
    "achado": "77,8% (14 de 18 URLs indexadas do sitemap com impressão pelo domínio novo), acima da meta de 70% do board. As 4 indexadas sem impressão, pela URL Inspection URL a URL de 21/09: /blog/10-mitos-aparelho-invisivel, /blog/alinhador-invisivel-formatura-casamento-2026, /ortodontistas/seja-parceiro (Submitted and indexed, rastreadas em 14/09) e /blog/futuro-ortodontia-ia (indexada na corrida, Crawled - currently not indexed numa inspeção seguinte). Nenhuma das 4 teve impressão nem pelo domínio antigo na janela. As 7 fora do índice: /pacientes/precos, /contato, /ortodontistas, /blog, /blog/1, /blog/2, /blog/sorriso-perfeito-15-dicas. /pacientes/precos tem 418 impressões pelo domínio antigo e 0 pelo novo. Fora do sitemap, o domínio novo exibe /pacientes/antes-depois (18), /ortodontistas/modelos-parceria (3) e /ortodontistas/tecnologia (2).",
    "gates": "Canvas a 1440px conferido no next dev (folha expandida, nó como 1º filho antes da Fórmula, contador 25 → 26, nota lida do DOM, console limpo); tsc limpo; npm test 1199/1199. 360px não conferido: a lista servidor responde no celular (decisão da 032)."
+  },
+  {
+   "data": "2026-09-22",
+   "rota": "/gsc/mapa/[slug] (bloco \"O que fazer primeiro\" no lugar de \"Primeiro na fila\" + etiqueta de estado nas 32 folhas)",
+   "corrida": "1a (054) — zero requisição nova; as leituras que cada bloco de folha já fazia viram entrada de lib/proxima-acao.mjs",
+   "pergunta": "O que a equipe faz primeiro neste projeto, e qual KPI pede isso, com que número?",
+   "forma": "Lista ordenada por degrau (índice → desempenho → página certa → posição → snippet); uma entrada por alavanca; cada motivo com número, meta/régua, selo de origem em palavra e fonte; a primeira entrada é a resposta (17px, negrito). No mapa mental, uma etiqueta por folha com className próprio para quebrar linha dentro do nó de 240px.",
+   "descartada": "tabela KPI × ação (32 linhas servem para consultar, não dizem o primeiro); barra de impacto entre ações (moedas diferentes no mesmo degrau, a 051 já recusou comparar); nó-filho -acao por folha (32 nós a mais num mapa de 2.693px)",
+   "fonte": "as mesmas da página: Search Console (janela 28 dias, D-3), hub_indexacao, hub_pagina, hub_gsc_dia, CrUX",
+   "estados": "por folha: dispara, crítica, sem ação, não decide (◐), sem leitura (∅, motivo reaproveitado do nó); por bloco: degrau sem ação omitido e nomeado no rodapé; nenhuma regra disparou",
+   "pior_caso": "Sirius 22/09: 16 disparos em 11 entradas, bloco com ~1.780px de altura a 1440px; 360/768/1440 sem rolagem lateral",
+   "achado": "O 'Primeiro na fila' punha o CTR de /en/blog/whatsapp-api-oficial-meta-crm em primeiro enquanto 30 de 114 URLs do sitemap estavam fora do índice: a fila só via folha com régua publicada. A imagem pegou dois defeitos que o HTML não mostrava: alvos sem dizer de que KPI vinham (/contact sob 'links internos' lia como página de termo) e toLowerCase() transformando CTR em ctr.",
+   "gates": "G31 (cinco segundos): a primeira linha grande responde 'consertar o índice'; G32 (procedência): o número mais destacado (73,7%, 30 de 114) traz a corrida de indexação e a data na linha de baixo"
   }
  ]
 }
