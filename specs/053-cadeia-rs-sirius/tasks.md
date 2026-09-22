@@ -24,7 +24,7 @@ implementação em cada fase.
 - [X] T003 Rodar T002 (autorizado pelo dono em 22/09/2026) e conferir quickstart §3: `email` de `"Contact"`
   e colunas fora do grant dão `permission denied` (o `name` da empresa entrou no grant em 22/09, ver research D5), `INSERT` dá `permission denied`, e a query
   de research D4 roda.
-- [ ] T004 ⛔ Dono: copiar `SIRIUS_DATABASE_URL` do `.env` local para o ambiente do serviço `roihub` no
+- [X] T004 ⛔ Dono: copiar `SIRIUS_DATABASE_URL` do `.env` local para o ambiente do serviço `roihub` no
   EasyPanel.
 
 ---
@@ -92,15 +92,20 @@ implementação em cada fase.
 
 - [X] T019 `npm test` (suíte inteira) e `npx tsc --noEmit` limpos.
 - [X] T020 Commit (mensagem em inglês) e push em `main` fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT.
-- [ ] T021 Depois do deploy e do T004: quickstart §2 e §4 em produção (os números da ficha e do mapa iguais à
+- [X] T021 Depois do deploy e do T004: quickstart §2 e §4 em produção (os números da ficha e do mapa iguais à
   contagem direta, no mesmo dia).
+  - ✅ 22/09/2026: banco devolve 108 cadastros e 26 ativadas; `/okr/sirius` mostra 108 → 26 → 6 (trava 23,08%) e
+    `/gsc/mapa/sirius` repete os mesmos três números pela mesma composição.
 - [X] T022 SC-005: capturar de novo o HTML dos 8 projetos de T001 e comparar o texto de `<main>` com o de
   antes.
   - ✅ 22/09/2026: 7 idênticos; `polarisia` perdeu 1 buraco, e era o "visitante · GSC indisponível · falhou agora"
     transitório da captura de antes. Os 4 buracos permanentes (signup, ativado, trial, cobrança) são iguais.
-- [ ] T023 `ui-verification` em `/okr/sirius`: árvore de acessibilidade dos blocos novos, 360/768/1440 px e o
+- [X] T023 `ui-verification` em `/okr/sirius`: árvore de acessibilidade dos blocos novos, 360/768/1440 px e o
   console.
-- [ ] T024 ⛔ Quando o dono criar a chave restrita: gravar `SIRIUS_STRIPE_KEY` no EasyPanel e conferir que o lado
+  - ✅ 22/09/2026: `h2` "Quem pagou" com lista semântica, sem estouro horizontal nas 3 larguras, console limpo,
+    nenhuma resposta ≥400.
+- [ ] T024 ⛔ Falta só gravar a chave no EasyPanel (a chave existe e foi testada no local em 22/09: 1 sessão paga,
+  de outro produto, valor 0 — vira descarte "valor zero"; 0 assinaturas ativas). Quando o dono criar a chave restrita: gravar `SIRIUS_STRIPE_KEY` no EasyPanel e conferir que o lado
   Stripe sai de `não apurado` para `0` apurado (nenhuma venda pelo Stripe até hoje).
 
 ---
