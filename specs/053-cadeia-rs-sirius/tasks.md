@@ -104,9 +104,11 @@ implementação em cada fase.
   console.
   - ✅ 22/09/2026: `h2` "Quem pagou" com lista semântica, sem estouro horizontal nas 3 larguras, console limpo,
     nenhuma resposta ≥400.
-- [ ] T024 ⛔ Falta só gravar a chave no EasyPanel (a chave existe e foi testada no local em 22/09: 1 sessão paga,
+- [X] T024 ⛔ Falta só gravar a chave no EasyPanel (a chave existe e foi testada no local em 22/09: 1 sessão paga,
   de outro produto, valor 0 — vira descarte "valor zero"; 0 assinaturas ativas). Quando o dono criar a chave restrita: gravar `SIRIUS_STRIPE_KEY` no EasyPanel e conferir que o lado
   Stripe sai de `não apurado` para `0` apurado (nenhuma venda pelo Stripe até hoje).
+  - ✅ 22/09/2026: chave no ar. O "no mínimo" sumiu, e a ficha mostra "Cobranças do Stripe que não contam:
+    valor zero (1)" — o trial de outro produto da conta compartilhada. Já pagaram 6 · pagam hoje 1.
 
 ---
 
