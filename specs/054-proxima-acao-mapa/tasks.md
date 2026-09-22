@@ -40,8 +40,8 @@
 - [x] T011 [P] Entradas novas no `GLOSSARIO.md`: Próxima ação, Sem ação, Meta do board sem fonte, Degrau
 - [x] T012 [P] `handoff/gsc-template-de-melhoria.md` vira ponteiro, sem limiar (research D11)
 - [x] T013 `npm test` + `npx tsc --noEmit` verdes
-- [ ] T014 Verificação no navegador (ui-verification): Sirius e Atma em dev, 3 larguras, 32 etiquetas, bloco novo; depois do push, as mesmas conferências em produção
-- [ ] T015 Registro: `.info/log.json` (information-design Passo 8) e memória do projeto
+- [x] T014 Verificação no navegador (ui-verification): Sirius e Atma em dev, 3 larguras, 32 etiquetas, bloco novo; depois do push, as mesmas conferências em produção
+- [x] T015 Registro: `.info/log.json` (information-design Passo 8) e memória do projeto
 
 ## Dependencies
 
