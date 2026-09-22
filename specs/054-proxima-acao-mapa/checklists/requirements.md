@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — FR-006 (Q1) e FR-007 (Q2) aguardam o dono
+- [x] No [NEEDS CLARIFICATION] markers remain (Q1 e Q2 respondidas em 22/09)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -33,4 +33,4 @@
 
 - Caminhos citados (`handoff/gsc-template-de-melhoria.md`, URLs do Sirius) são referência ao dado
   medido, no estilo das specs 051–053, não desenho de implementação.
-- Q1 e Q2 precisam de resposta antes de `/speckit-plan`.
+- Q1 e Q2 respondidas pelo dono em 22/09/2026 (ver § Clarifications da spec).

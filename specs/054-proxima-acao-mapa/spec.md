@@ -31,7 +31,7 @@ Lido em 22/09/2026 no mapa do Sirius em produção (janela de 28 dias do própri
    | Origem do limiar | Folhas que disparam no Sirius |
    |---|---|
    | ◆ régua publicada (3) | CTR por posição (faixas 4–6 e 7–10 abaixo), CTR Gap (6 URLs, a primeira com CTR abaixo da metade da régua), largura do título (86 de 133 acima de 580px) |
-   | ▣ norma (2) | dados estruturados (8 de 84 URLs sem schema), intenção (81 de 133 títulos sem modificador) |
+   | ◇ norma, não régua (2) | dados estruturados (8 de 84 URLs sem schema), intenção (81 de 133 títulos sem modificador) |
    | ◇ meta do board, sem fonte (11) | penetração no Top 3 (0 de 18), striking distance (14 consultas), impressões no Top 3 (3%), termo no título (14 URLs), indexação limpa (73,7%), rejeição de rastreio (24,6%), profundidade (43 de 135 a mais de 3 cliques, 29 órfãs), frescor (38 vencidas, 64 sem data), links internos (84 páginas com menos de 5), Top 20 (3 de 18 termos), consultas por página (1,3, piso) |
 
    Não disparam: crescimento não-marca (+24,8% no mês), canibalização (0), buscas de marca
@@ -42,6 +42,15 @@ Lido em 22/09/2026 no mapa do Sirius em produção (janela de 28 dias do própri
    20 mandam, as três, para links internos e cobertura das páginas dos termos. Mostradas uma a uma, as
    16 ações viram 16 tarefas; somadas por alavanca, são bem menos. O dono precisa ler a semana, não o
    catálogo.
+
+## Clarifications
+
+### Session 2026-09-22
+
+- Q: A meta do board sem fonte (◇) dispara ação? → A: Sim, com a etiqueta "meta do board, sem fonte"
+  e aparência diferente do veredito ◆ (FR-006).
+- Q: O painel novo substitui o "Primeiro na fila" da 051? → A: Substitui; a ordem por impacto da fila
+  passa a ordenar os itens dentro de cada degrau (FR-007, FR-010).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -152,13 +161,15 @@ existe sem ele.
   aparecer como "dentro".
 - **FR-005**: O nó de uma folha que dispara DEVE mostrar, sem clique, a ação curta, o número lido e o
   limiar.
-- **FR-006**: Uma folha cujo limiar é meta do board sem fonte (◇) DEVE [NEEDS CLARIFICATION: disparar
-  ação? Hoje ela nunca emite veredito, e no Sirius 11 das 16 ações dependem disso — ver Q1]. A
-  origem do limiar DEVE estar escrita na ação, e o gatilho ◇ NÃO PODE ter a aparência do veredito ◆.
-- **FR-007**: O painel de ações DEVE [NEEDS CLARIFICATION: substituir o "Primeiro na fila" ou entrar
-  ao lado dele? — ver Q2] e listar as ações disparadas pela ordem de ataque: índice → técnico →
-  página certa (canibalização, intenção) → posição (cobertura, frescor, links internos) → snippet
-  (dados estruturados, título).
+- **FR-006**: Uma folha cujo limiar é meta do board sem fonte (◇) DEVE disparar ação, com a etiqueta
+  "meta do board, sem fonte" escrita na ação. O gatilho ◇ NÃO PODE ter a aparência do veredito ◆:
+  a meta dispara trabalho, não emite veredito, e a regra de procedência da 028/033 continua de pé
+  para o veredito.
+- **FR-007**: O painel de ações DEVE substituir o "Primeiro na fila" (051) e listar as ações
+  disparadas pela ordem de ataque: índice → técnico → página certa (canibalização, intenção) →
+  posição (cobertura, frescor, links internos) → snippet (dados estruturados, título). A ordem por
+  impacto que a fila já calcula passa a ordenar os itens dentro de cada degrau (FR-010), e o que a
+  fila contava como "fora" continua contado no painel.
 - **FR-008**: Uma folha de resultado NÃO DEVE aparecer no painel como ação própria. Ela aparece como
   motivo da alavanca para a qual aponta, com o número dela.
 - **FR-009**: Ações que apontam para a mesma alavanca DEVEM virar uma entrada só, com todos os KPIs
@@ -180,7 +191,7 @@ existe sem ele.
 ### Key Entities
 
 - **Regra**: pertence a uma folha do catálogo. Tem limiar, direção (abaixo/acima), origem (◆ régua
-  publicada, ▣ norma, ◇ meta do board), faixa crítica opcional, ação, alavanca de destino e degrau.
+  publicada, ◇ norma, não régua, ◇ meta do board, sem fonte — os selos que a folha já usa), faixa crítica opcional, ação, alavanca de destino e degrau.
 - **Disparo**: o resultado de aplicar a regra à leitura do dia. Tem o estado (FR-004), o número lido,
   os alvos e a ressalva (piso, faixa parcial).
 - **Degrau**: um passo da ordem de ataque. Agrupa as alavancas e dá a ordem do painel.
