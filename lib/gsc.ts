@@ -49,12 +49,25 @@ let sitesCache: { at: number; sites: Site[] } | null = null;
  *  de toda propriedade", e só este booleano separa as duas. Devolve booleano e nunca o valor. */
 export const gscLigado = () => Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
 
+/**
+ * Retry for every Search Console read, set once on the client. Measured on Sirius, 22/09/2026: one
+ * lost connection (`ETIMEDOUT`) or one 429 from the per-second quota failed the whole leaf for that
+ * page open, and the chain panel printed the failure as its answer. gaxios only retries when the
+ * request asks, and google-auth-library asks only for its own token calls. The searchAnalytics
+ * query is a POST that only reads, so POST is retried too; 429 and 5xx are in gaxios' default list.
+ */
+export const RETENTAR = {
+  retry: true,
+  retryConfig: { retry: 2, noResponseRetries: 2, httpMethodsToRetry: ["GET", "POST"] },
+};
+
 function getClient(): Promise<Client> | null {
   if (!gscLigado()) return null;
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON!;
   clientPromise ??= new GoogleAuth({
     credentials: JSON.parse(raw),
     scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
+    clientOptions: { transporterOptions: RETENTAR },
   }).getClient();
   return clientPromise;
 }

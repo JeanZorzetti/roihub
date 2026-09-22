@@ -5,8 +5,9 @@
 // no domínio antigo e 5 na posição 21 no novo, e é a MESMA página.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { mesclarPorCaminho, mesclarPorTermo, motivoDaFalha, motivoDeAusencia } from "../lib/gsc-hosts.mjs";
-import { gscConsultas, gscLigado, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts } from "../lib/gsc.ts";
+import { gscConsultas, gscLigado, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts, RETENTAR } from "../lib/gsc.ts";
 
 const ATUAL = "usealigner.com";
 const ANTIGO = "atma.roilabs.com.br";
@@ -716,4 +717,31 @@ test("motivoDaFalha keeps the cause that the 60-char cut threw away", () => {
   assert.equal(motivoDaFalha(nativo), "UND_ERR_CONNECT_TIMEOUT Connect Timeout Error");
   assert.equal(motivoDaFalha(new Error("HTTP 500")), "HTTP 500");
   assert.ok(motivoDaFalha(new Error("x".repeat(300))).length <= 80);
+});
+
+// Sirius, 22/09/2026: one lost connection (ETIMEDOUT) or one 429 from the per-second quota failed the
+// whole leaf for that page open, because gaxios only retries when the request asks for it and
+// google-auth-library asks only for its own token calls. The client `getClient()` builds must retry
+// both, on POST too (the searchAnalytics query is a POST that only reads).
+test("the Search Console client retries a lost connection and a 429, POST included", async () => {
+  const { GoogleAuth } = await import("google-auth-library");
+  const { generateKeyPairSync } = await import("node:crypto");
+  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048, privateKeyEncoding: { type: "pkcs8", format: "pem" }, publicKeyEncoding: { type: "spki", format: "pem" } });
+  const cliente = await new GoogleAuth({
+    credentials: { type: "service_account", client_email: "t@t.iam.gserviceaccount.com", private_key: privateKey },
+    scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
+    clientOptions: { transporterOptions: RETENTAR },
+  }).getClient();
+  cliente.getRequestHeaders = async () => new Headers();
+  const tentativas = async (resposta) => {
+    let n = 0;
+    cliente.transporter.defaults.fetchImplementation = async () => (n++, resposta());
+    await assert.rejects(cliente.request({ url: "https://example.invalid/q", method: "POST", data: {}, retryConfig: { ...RETENTAR.retryConfig, retryDelay: 1, retryDelayMultiplier: 1 } }));
+    return n;
+  };
+  assert.equal(await tentativas(() => { throw Object.assign(new Error(""), { code: "ETIMEDOUT" }); }), 3);
+  assert.equal(await tentativas(() => new Response("{}", { status: 429 })), 3);
+
+  const fonte = readFileSync(new URL("../lib/gsc.ts", import.meta.url), "utf8");
+  assert.match(fonte, /clientOptions: \{ transporterOptions: RETENTAR \}/, "getClient() must build the client with RETENTAR");
 });
