@@ -7,6 +7,7 @@
 // `console.log` do corpo, nenhum valor/prefixo/comprimento de `CRUX_API_KEY` em mensagem.
 
 import { CAP_URLS_PASS_RATE, SLUGS_DE_CAMPO, passRate } from "@/lib/crux.mjs";
+import { motivoDaFalha } from "@/lib/gsc-hosts.mjs";
 
 export type Alvo = { tipo: "origem" | "url"; valor: string };
 
@@ -66,7 +67,7 @@ export async function lerCampo(alvo: Alvo): Promise<LeituraDaFonte> {
   } catch (e) {
     // Inclui `JSON.parse` inválido e o `AbortError` do timeout. Truncado em 60, como em
     // `app/api/gsc-serie/route.ts:60`.
-    return { estado: "falhou", erro: (e instanceof Error ? e.message : String(e)).slice(0, 60) };
+    return { estado: "falhou", erro: motivoDaFalha(e) };
   }
 }
 
@@ -113,6 +114,6 @@ export async function lerPassRate(slug: string, paginas: { pagina: string; impre
     for (const u of prioritarias) leituras.set(u.pagina, await lerCampo({ tipo: "url", valor: u.pagina }));
     return { ...passRate(leituras, prioritarias.length), naoConsultadas: urls.length - prioritarias.length };
   } catch (e) {
-    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+    return { erro: motivoDaFalha(e) };
   }
 }

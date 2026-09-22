@@ -1,5 +1,5 @@
 import { GoogleAuth } from "google-auth-library";
-import { mesclarPorCaminho, mesclarPorTermo } from "./gsc-hosts.mjs";
+import { mesclarPorCaminho, mesclarPorTermo, motivoDaFalha } from "./gsc-hosts.mjs";
 import { somarSeriesPorHost } from "./serie-gsc.mjs";
 
 export type GscTrend = { current: number; previous: number; property: string } | null;
@@ -247,7 +247,7 @@ export async function lerHosts<T>(
       respostas.push({ host, propriedade, dados: await buscar(conectado, propriedade, host) });
     }
   } catch (e) {
-    return { erro: `${alvo}: ${(e instanceof Error ? e.message : String(e)).slice(0, 60)}` };
+    return { erro: `${alvo}: ${motivoDaFalha(e)}` };
   }
   if (respostas.length === 0) return null;
   return { respostas, encerrados };
@@ -451,7 +451,7 @@ export async function gscSerieDeUmHost(
     if (!property) return null; // host fora de toda propriedade — fato real (D1)
     return { property, days: await queryTimeseries(client, property, host, inicio, fim) };
   } catch (e) {
-    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+    return { erro: motivoDaFalha(e) };
   }
 }
 
@@ -523,7 +523,7 @@ export async function gscSerieFiltrada(
       })),
     };
   } catch (e) {
-    return { erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60) };
+    return { erro: motivoDaFalha(e) };
   }
 }
 

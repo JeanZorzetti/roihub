@@ -5,7 +5,7 @@
 // no domínio antigo e 5 na posição 21 no novo, e é a MESMA página.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mesclarPorCaminho, mesclarPorTermo, motivoDeAusencia } from "../lib/gsc-hosts.mjs";
+import { mesclarPorCaminho, mesclarPorTermo, motivoDaFalha, motivoDeAusencia } from "../lib/gsc-hosts.mjs";
 import { gscConsultas, gscLigado, gscPaginas, gscQueryPages, gscSeries, gscTrend, isoDaysAgo, lerPorHosts } from "../lib/gsc.ts";
 
 const ATUAL = "usealigner.com";
@@ -699,4 +699,21 @@ test("os hosts que contribuíram ficam na linha", () => {
     resposta(ANTIGO, termo("invisalign", 10400, 5, 1.1)),
   ]);
   assert.deepEqual(l.hosts, [ATUAL]);
+});
+
+// Sirius, 22/09/2026: the node read "request to https://searchconsole.googleapis.com/webmasters/v" —
+// the 60-char cut kept exactly the URL and dropped the cause, so a network failure could not be told
+// apart from any other. The reason must survive, with the system code first.
+test("motivoDaFalha keeps the cause that the 60-char cut threw away", () => {
+  const nodeFetch = Object.assign(
+    new Error("request to https://searchconsole.googleapis.com/webmasters/v3/sites failed, reason: read ECONNRESET"),
+    { code: "ECONNRESET" },
+  );
+  assert.equal(motivoDaFalha(nodeFetch), "read ECONNRESET");
+  const semTexto = Object.assign(new Error("request to https://x.googleapis.com/a failed, reason: "), { code: "ETIMEDOUT" });
+  assert.equal(motivoDaFalha(semTexto), "ETIMEDOUT");
+  const nativo = new TypeError("fetch failed", { cause: Object.assign(new Error("Connect Timeout Error"), { code: "UND_ERR_CONNECT_TIMEOUT" }) });
+  assert.equal(motivoDaFalha(nativo), "UND_ERR_CONNECT_TIMEOUT Connect Timeout Error");
+  assert.equal(motivoDaFalha(new Error("HTTP 500")), "HTTP 500");
+  assert.ok(motivoDaFalha(new Error("x".repeat(300))).length <= 80);
 });

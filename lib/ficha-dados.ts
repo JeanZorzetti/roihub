@@ -11,6 +11,7 @@ import { HOJE, coletarLeadsDoHub, coletarDoProjeto } from "@/lib/okr-coleta";
 import { montarNiveis, medidoresDeEventos, resolverTicket } from "@/lib/ficha.mjs";
 import { SLUGS_DE_CAMPO, celulasDeVitais } from "@/lib/crux.mjs";
 import { lerCampo, type Alvo } from "@/lib/crux";
+import { motivoDaFalha } from "@/lib/gsc-hosts.mjs";
 
 // A composição da ficha, UMA vez só. Existe porque a FR-021 (019) exige que a ação citada na dobra
 // e a citada em N6 venham da MESMA chamada de `evaluateAll()` — três telas (`/okr/[slug]`,
@@ -92,7 +93,7 @@ export async function dadosDaFicha(slug: string) {
   // virar erro por causa de um medidor.
   const alvoCrux: Alvo | null = SLUGS_DE_CAMPO.includes(slug) ? { tipo: "origem", valor: p.url.replace(/\/+$/, "") } : null;
   const cruxPromise = alvoCrux
-    ? lerCampo(alvoCrux).catch((e) => ({ estado: "falhou" as const, erro: e instanceof Error ? e.message.slice(0, 60) : "leitura de campo falhou" }))
+    ? lerCampo(alvoCrux).catch((e) => ({ estado: "falhou" as const, erro: motivoDaFalha(e) }))
     : null;
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
