@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — 2 abertos (FR-003 ativação, FR-005 retroativo sem prova)
+- [x] No [NEEDS CLARIFICATION] markers remain (FR-003 e FR-005 resolvidos em 22/09, ver Clarifications)
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
