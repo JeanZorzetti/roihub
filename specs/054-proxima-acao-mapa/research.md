@@ -66,9 +66,10 @@ Decisões tomadas no plano, com o que foi descartado. Leituras do Sirius em prod
 
 - **Decisão:** degraus na ordem fixa índice → desempenho → página certa → posição → snippet. Dentro
   do degrau: entrada crítica primeiro, depois a pedida por mais KPIs, depois a ordem declarada em
-  `ALAVANCAS`. Dentro da entrada, os alvos vêm na ordem da fila da 051 onde ela existe (cliques não
-  capturados no título, milissegundos nos vitais), porque `filaDoMapa()` continua sendo chamada e
-  passa a fornecer os alvos.
+  `ALAVANCAS`. Dentro da entrada, o motivo crítico vem primeiro e fornece os alvos; no título eles
+  saem da fila da 051 (cliques não capturados), porque `filaDoMapa()` continua sendo chamada para
+  isso. Os vitais não têm alvo por URL (a leitura é por origem), então a ordem em milissegundos não
+  entra. O painel diz de qual folha os alvos saíram (`alvosDe`).
 - **Por quê:** Q2. A fila deixa de ser um bloco e vira a ordem interna. Entradas de um mesmo degrau
   quase sempre têm moedas diferentes (links contam páginas, cobertura conta termos), então a ordem
   entre elas não pode ser por impacto sem comparar moedas.

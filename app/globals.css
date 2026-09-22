@@ -1589,6 +1589,9 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   padding: 0 4px;
   white-space: nowrap;
 }
+/* 054 — the action tag carries a sentence (action · reading · threshold): it wraps inside the 240px
+   node instead of stretching it past the box edge, which is the failure the node width exists to avoid. */
+[data-info="gsc"] .me-box me-tpc .tags span.me-acao { white-space: normal; color: var(--ink2); }
 
 /* ── o painel: é ele que torna `note` legível, porque a lib nunca renderiza o campo ── */
 [data-info="gsc"] .me-painel {
@@ -1651,6 +1654,14 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="gsc"] .mapa-fila-v { font-weight: 700; font-variant-numeric: tabular-nums; }
 [data-info="gsc"] .mapa-fila-alvo { overflow-wrap: anywhere; }
 [data-info="gsc"] .mapa-fila-det { display: block; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* 054 — "O que fazer primeiro": the first entry is the answer, the rest is evidence. The critical mark
+   is a word, never red: a ◇ target may trigger work but must not look like a verdict (FR-006). */
+[data-info="gsc"] .mapa-fila-lista > li:has(.mapa-acao-motivos) { max-width: 78ch; }
+[data-info="gsc"] .mapa-acao-porque { font-weight: 400; }
+[data-info="gsc"] .mapa-acao-primeira > .mapa-fila-alvo { font-size: 17px; font-weight: 700; line-height: 1.4; }
+[data-info="gsc"] .mapa-acao-motivos { margin: 4px 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+[data-info="gsc"] .mapa-acao-motivos li { margin: 0 0 6px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+[data-info="gsc"] .mapa-acao-motivos .mb-tag { margin: 0 0 0 4px; }
 [data-info="gsc"] .mapa-legenda { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--muted); max-width: 90ch; }
 [data-info="gsc"] .mapa-legenda .mb-tag { margin: 0 4px 0 0; }
 

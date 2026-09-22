@@ -20,6 +20,7 @@ import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondencia
 import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
+import { avaliar, DEGRAUS, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDADE_DO_BOARD, REGRAS, regraEmTexto } from "@/lib/proxima-acao.mjs";
 
 import { Tabs } from "../../../tabs";
 import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
@@ -78,7 +79,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: `Board GSC — ${nomeCurto}` };
 }
 
-type No = { id: string; topic: string; note?: string; tags?: string[]; children?: No[]; metadata?: unknown };
+// 054 — a tag may be an object: `mind-elixir` 5.15 copies `className` onto the span, which is how the
+// action tag wraps inside the 240px node while the seal tags stay on one line.
+type Tag = string | { text: string; className?: string };
+type No = { id: string; topic: string; note?: string; tags?: Tag[]; children?: No[]; metadata?: unknown };
+const textoDa = (t: Tag) => (typeof t === "string" ? t : t.text);
+
+// 054 — what each leaf block hands to `lib/proxima-acao.mjs#avaliar` (data-model §4).
+type Leitura =
+  | { valor: number; texto: string; fonte: string; alvos?: string[]; nAlvos?: number; piso?: boolean; ressalva?: string }
+  | { ausente: string }
+  | { indecisa: string };
+
+/** 054 — the absence reason the leaf node already prints ("∅ não apurado · X" → "X"): reused, never
+ *  rewritten, so the tag and the node cannot disagree on why there is no number. */
+const ausenteDe = (no: No): Leitura => ({ ausente: no.topic.replace(/^[∅◐] [^·]*·\s*/, "") });
+const semNumero = (no: No) => /^[∅◐]/.test(no.topic);
 
 /** Busca em profundidade por `id` — a árvore de `mapaDoBoard()` não tem índice, e os ids das
  *  folhas são literais (`chave` do catálogo, ver `lib/board-gsc.mjs#mapaDoBoard`). */
@@ -166,45 +182,6 @@ function noteDaPenetracao(
 type MedidaStriking = NonNullable<ReturnType<typeof strikingDistancePorTermo>>;
 
 const br = (n: number) => n.toLocaleString("pt-BR");
-
-// ── 051/US3 — a apresentação da fila. A regra (quem entra, em que moeda, em que ordem) mora em
-// `lib/gsc-delta.mjs#filaDoMapa`; aqui só se escreve.
-type ItemDaFila = {
-  chave: string;
-  alvo: string | null;
-  delta: number;
-  base: number | null;
-  detalhe: { ctr?: number; regua?: number; posicao?: number; acima?: number; avaliadas?: number; limite?: number };
-};
-
-const ROTULO_DA_MOEDA: Record<string, string> = {
-  cliques: "Cliques que faltam, por página",
-  pp: "Pontos percentuais fora da régua",
-  ms: "Milissegundos acima do limite",
-  cls: "CLS acima do limite",
-};
-
-const dec = (v: number, casas: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
-
-/** O número do item, na unidade da moeda. `Math.round` nos cliques, como /okr/atma/aquisicao, para
- *  as duas telas publicarem o MESMO "faltam N cliques" sobre a mesma conta. */
-function valorDaFila(moeda: string, it: ItemDaFila): string {
-  if (moeda === "cliques") return `faltam ${br(Math.round(it.delta))} cliques`;
-  if (moeda === "pp") return `${dec(it.delta, 1)} pp`;
-  if (moeda === "ms") return `+${br(Math.round(it.delta))} ms`;
-  return `+${dec(it.delta, 2)}`;
-}
-
-function detalheDaFila(moeda: string, it: ItemDaFila): string {
-  const d = it.detalhe;
-  // G8 — o CTR leva o denominador: "0%" sobre 12 impressões e sobre 20 mil são achados diferentes.
-  if (moeda === "cliques" && d.ctr !== undefined && d.regua !== undefined && d.posicao !== undefined)
-    return `CTR ${pct1(d.ctr)} sobre ${it.base !== null ? br(it.base) : "?"} impressões, contra a régua de ${pct1(d.regua)} na posição ${dec(d.posicao, 1)}`;
-  if (moeda === "pp" && d.acima !== undefined && d.avaliadas !== undefined) return `${br(d.acima)} de ${br(d.avaliadas)} títulos acima de 580px`;
-  return d.limite !== undefined ? `limite ${br(d.limite)}` : "";
-}
-
-const nomesDas = (chaves: string[]) => chaves.map((k) => (CATALOGO as Record<string, { nome: string }>)[k].nome).join(", ");
 
 /** 035 — o `topic` do striking distance: o número e a base, nada além. NENHUM glifo de veredito,
  *  pela mesma razão da penetração (FR-009): os 15% a 25% são meta do board, `balizador.tipo` desta
@@ -720,6 +697,8 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   const cadeiaDoPerfil = cadeiaLigada(p.perfil, p.slug);
 
   const dados = mapaDoBoard();
+  // 054 — every leaf block below records the reading it already computed. Nothing is read twice.
+  const leituras: Record<string, Leitura> = {};
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;
   const reguaDe = regua as (k: string) => { tem: boolean; meta: number | [number, number] | null };
   const medidoPor = MEDIDO_POR as Record<string, string | undefined>;
@@ -787,6 +766,19 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
     // 051/FR-004 — uma das duas relações do mapa que FECHAM por conta. Etiqueta, não cor.
     posicaoNode.tags = [...(posicaoNode.tags ?? []), "soma · cliques = impressões × CTR"];
   }
+  const fonteGsc = `Search Console, ${janela.inicio} → ${janela.fim}`;
+  // The value is the worst ratio (CI upper bound ÷ floor) among the bands the CI already puts
+  // below: the rule never re-judges a band the interval left undecided.
+  const faixasAbaixo = (faixas ?? []).filter((f) => f.veredito === "abaixo");
+  leituras.ctrPorPosicao = !faixas
+    ? { ausente: notaAusencia ?? "sem leitura do Search Console" }
+    : !faixas.some((f) => f.veredito === "abaixo" || f.veredito === "atinge")
+      ? { indecisa: "a amostra não decide nenhuma faixa" }
+      : {
+          valor: faixasAbaixo.length ? Math.min(...faixasAbaixo.map((f) => f.intervalo!.superior / f.regua!)) : 1,
+          texto: faixasAbaixo.length ? `${faixasAbaixo.map((f) => f.rotulo).join(", ")} abaixo do piso` : "nenhuma faixa decisiva abaixo do piso",
+          fonte: fonteGsc,
+        };
 
   // 034/US2 — a penetração no Top 3, na folha que define o KPI. Leitura SEPARADA da de cima e na
   // dimensão `query` sozinha: a de cima lê por PÁGINA e esta conta TERMO, e a agregação do Google
@@ -827,6 +819,9 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               topic: topicDaPenetracao(pen!),
               note: noteDaPenetracao(pen!, janela, inventario.procedencia),
             };
+    leituras.penetracaoTop3 = semNumero(filho)
+      ? ausenteDe(filho)
+      : { valor: pen!.fracao, texto: `${pct1(pen!.fracao)} (${pen!.noTop3} de ${pen!.total} termos)`, fonte: fonteGsc, piso: pen!.piso };
     // À FRENTE da fórmula e da meta: quem expande a folha está procurando o número, e a definição
     // do board é o que ele confere DEPOIS de achá-lo.
     penNode.children = [filho, ...(penNode.children ?? [])];
@@ -880,6 +875,15 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               topic: topicDoStriking(medida),
               note: noteDoStriking(medida, janela, inventario),
             };
+    leituras.strikingDistance = semNumero(filho) || !medida
+      ? ausenteDe(filho)
+      : {
+          valor: medida.total,
+          texto: `${br(medida.total)} ${medida.total === 1 ? "consulta" : "consultas"} entre 4,0 e 10,9`,
+          fonte: fonteGsc,
+          alvos: [...(medida.lista as { termo: string; impressoes: number }[])].sort((a, b) => b.impressoes - a.impressoes).map((l) => `«${l.termo}»`),
+          nAlvos: medida.total,
+        };
     // À FRENTE da métrica e da meta, pelo mesmo motivo da folha vizinha: quem expande está
     // procurando o número, e confere a definição do board DEPOIS de achá-lo.
     sdNode.children = [filho, ...(sdNode.children ?? [])];
@@ -927,7 +931,15 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
           : linhaDeCrescimento(medida),
         note: noteDoCrescimento(medida, ritmoDoSegmentoAtual(serie, hosts), decl),
       };
+      // A base month cut in the middle measures the COMEBACK, not growth (036): no rule on it.
+      leituras.crescimentoNaoMarca =
+        medida.estado !== "medido" || naoPreenchida
+          ? { ausente: filho.topic.replace(/^[∅◐] [^·]*·\s*/, "") }
+          : medida.baseInterrompida
+            ? { indecisa: `o mês-base ${medida.de} foi interrompido` }
+            : { valor: medida.valor, texto: `${medida.valor >= 0 ? "+" : ""}${pct1(medida.valor)} de ${medida.de} para ${medida.para}`, fonte: "série diária do Search Console (hub_gsc_dia)" };
     }
+    leituras.crescimentoNaoMarca ??= ausenteDe(filho);
     // À FRENTE da fórmula e da meta, pelo mesmo motivo das folhas vizinhas. Sem glifo de veredito
     // (FR-008): os 5% a 10% são meta do board, `balizador.tipo` é `recusa` e a folha segue `◇ sem fonte`.
     cnmNode.children = [filho, ...(cnmNode.children ?? [])];
@@ -1001,6 +1013,9 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
                 campea ? { caminho: new URL(campea[0]).pathname, fracao: campea[1] / medida.noTop3 } : null,
               ),
             };
+    leituras.impressoesTop3 = semNumero(filho) || !medida
+      ? ausenteDe(filho)
+      : { valor: medida.fracao, texto: `${pct1(medida.fracao)} das impressões`, fonte: fonteGsc };
     // À FRENTE da definição e da meta, pelo mesmo motivo das três folhas vizinhas: quem expande está
     // procurando o número, e confere a definição do board DEPOIS de achá-lo.
     impNode.children = [filho, ...(impNode.children ?? [])];
@@ -1046,6 +1061,24 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
                 note: noteDaConformidade(c, janela, paginasDoGap!.length, slug),
               };
             })();
+    // 054 — the worst URL decides the state; the targets come later, in the 051 queue's click order.
+    const c = conformidade;
+    const pior = c?.abaixo.length ? c.abaixo.reduce((a, u) => ((u.ctr ?? 0) / u.regua < (a.ctr ?? 0) / a.regua ? u : a)) : null;
+    leituras.ctrGap = semNumero(filho) || !c
+      ? ausenteDe(filho)
+      : c.porPagina.decididas === 0
+        ? { indecisa: "a amostra não decide nenhuma URL" }
+        : {
+            valor: pior ? (pior.ctr ?? 0) / pior.regua : 1,
+            texto: pior ? `${br(c.abaixo.length)} ${c.abaixo.length === 1 ? "URL" : "URLs"} abaixo, pior CTR ${pct1(pior.ctr ?? 0)} contra ${pct1(pior.regua)}` : "nenhuma URL decidida abaixo do piso",
+            fonte: fonteGsc,
+          };
+    // Below the page threshold the node itself refuses a fraction (it names the dominant URL instead).
+    leituras.conformidadeUrls = semNumero(filho) || !c
+      ? ausenteDe(filho)
+      : c.porPagina.decididas < LIMIAR_PAGINAS_DECIDIDAS || c.porPagina.fracao === null
+        ? { indecisa: `só ${br(c.porPagina.decididas)} ${c.porPagina.decididas === 1 ? "URL decidida" : "URLs decididas"}` }
+        : { valor: c.porPagina.fracao, texto: `${pct1(c.porPagina.fracao)} (${br(c.porPagina.atingem)} de ${br(c.porPagina.decididas)} URLs)`, fonte: fonteGsc };
     // À FRENTE da definição e da meta, pelo mesmo motivo das quatro folhas vizinhas.
     gapNode.children = [filho, ...(gapNode.children ?? [])];
   }
@@ -1103,6 +1136,13 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
                   topic: topicDoSchema(apuracao, cob),
                   note: noteDoSchema(apuracao, cob, sintaxe, crawl?.dia ?? null),
                 };
+    leituras.schema = semNumero(filho) || cob.fracao === null || !cob.julgadas
+      ? ausenteDe(filho)
+      : {
+          valor: cob.fracao,
+          texto: `${pct1(cob.fracao)} (${br(Math.round(cob.fracao * cob.julgadas))} de ${br(cob.julgadas)} URLs no índice)`,
+          fonte: `corrida de indexação de ${apuracao!.dia}`,
+        };
     schemaNode.children = [filho, ...(schemaNode.children ?? [])];
   }
 
@@ -1169,6 +1209,14 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             topic: `Medido: ${pct1(largura.fracao)} · ${br(largura.avaliadas - largura.estreitos.length - largura.largos.length)} de ${br(largura.avaliadas)} títulos na faixa · ${br(largura.largos.length)} acima de ${TITULO_PX_MAX}px · ${br(largura.estreitos.length)} abaixo de ${TITULO_PX_MIN}px`,
             note: noteDaLargura(largura, corrida!.dia),
           };
+    leituras.larguraTitulo = semNumero(filho) || !largura
+      ? ausenteDe(filho)
+      : {
+          valor: largura.largos.length,
+          texto: `${br(largura.largos.length)} de ${br(largura.avaliadas)} títulos acima de ${TITULO_PX_MAX}px`,
+          fonte: `crawl de página de ${corrida!.dia}`,
+          alvos: (largura.largos as PaginaCrawl[]).map((pg) => caminhoDe(pg.url)),
+        };
     larguraNode.children = [filho, ...(larguraNode.children ?? [])];
   }
 
@@ -1185,6 +1233,10 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
           topic: `Medido: ${pct1(integridade!.termo.passam / integridade!.termo.base)} · ${br(integridade!.termo.passam)} de ${br(integridade!.termo.base)} URLs com termo apurado · em ${br(integridade!.termo.ausentes)} o termo não está no título`,
           note: noteDoTermo(integridade!.termo, integridade!.semTermo, corrida!.visitadas, janela, corrida!.dia, hosts),
         };
+    const t = integridade?.termo;
+    leituras.termoNoTitulo = semNumero(filho) || !t
+      ? ausenteDe(filho)
+      : { valor: t.base - t.passam, texto: `${br(t.base - t.passam)} de ${br(t.base)} URLs sem o termo nos ${TERMO_ATE} primeiros caracteres`, fonte: `crawl de ${corrida!.dia} e ${fonteGsc}` };
     termoNode.children = [filho, ...(termoNode.children ?? [])];
   }
 
@@ -1201,6 +1253,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       },
       ...(reescritaNode.children ?? []),
     ];
+    leituras.reescritaTitulo = ausenteDe(reescritaNode.children[0]);
   }
 
   // 041 — o alinhamento de intenção, DUAS leituras na mesma folha porque a definição do board tem
@@ -1263,6 +1316,16 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               hosts,
             ),
           };
+    // The rule reads the title side (the modifier), the side with a denominator on every page; the
+    // match with the query stays as evidence in the node, where it is a count and not a rate (041).
+    leituras.intencao = semNumero(primeiro) || !alinhamento
+      ? ausenteDe(primeiro)
+      : {
+          valor: alinhamento.ausentes.length,
+          texto: `${br(alinhamento.ausentes.length)} de ${br(alinhamento.avaliadas)} títulos sem modificador`,
+          fonte: `crawl de página de ${corrida!.dia}`,
+          alvos: (alinhamento.ausentes as PaginaCrawl[]).map((pg) => caminhoDe(pg.url)),
+        };
     intencaoNode.children = [primeiro, segundo, ...(intencaoNode.children ?? [])];
   }
 
@@ -1300,10 +1363,20 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
     const filho: No = lidoCampo
       ? noDoVital(id, lidoCampo.origens, p.dominioAnterior ?? null)
       : { id: `${id}-medido`, topic: "∅ não apurado · projeto fora do escopo de campo", note: "A leitura de campo só roda para `SLUGS_DE_CAMPO` (`lib/crux.mjs`)." };
+    const v = lidoCampo ? (vitalPorOrigem(lidoCampo.origens, id) as { estado: string; medida?: { p75: number } }) : null;
+    const vital = VITAIS.find((x) => x.id === id)!;
+    leituras[id] = v?.estado === "medido" ? { valor: v.medida!.p75, texto: `p75 ${formatarValor(vital, v.medida!.p75)}`, fonte: "CrUX, p75 de 28 dias" } : ausenteDe(filho);
     no.children = [filho, ...(no.children ?? [])];
   }
   const passNode = acharNo(dados.nodeData as No, "urlsBoas");
-  if (passNode) passNode.children = [noDoPassRate(lidoCampo?.pass ?? null, janela, slug), ...(passNode.children ?? [])];
+  if (passNode) {
+    const noPass = noDoPassRate(lidoCampo?.pass ?? null, janela, slug);
+    const pass = lidoCampo?.pass;
+    leituras.urlsBoas = pass && !("erro" in pass) && pass.fracao !== null
+      ? { valor: pass.fracao, texto: `${pct1(pass.fracao)} (${br(pass.passam)} de ${br(pass.comDado)} URLs)`, fonte: "CrUX, p75 de 28 dias, URL a URL" }
+      : ausenteDe(noPass);
+    passNode.children = [noPass, ...(passNode.children ?? [])];
+  }
 
   // ── 043: "2. KPIs de Rastreabilidade e Saúde do Índice" ────────────────────────────────────
   //
@@ -1334,6 +1407,13 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         ? ` A apuração é de ${diaUtc(a.dia) - diaUtc(anterior.data)} dias depois da troca de domínio de ${anterior.data}: URL do domínio novo que o Googlebot ainda não visitou aparece como descoberta, não como recusada.`
         : "";
 
+    const fonteIdx = `corrida de indexação de ${a.dia}`;
+    leituras.indexacaoLimpa = { valor: taxas.taxa!, texto: `${pct1(taxas.taxa!)} (${br(fora)} de ${br(taxas.base)} fora do índice)`, fonte: fonteIdx, nAlvos: fora };
+    leituras.rejeicaoRastreio = {
+      valor: taxas.rejeicao!,
+      texto: `${pct1(taxas.rejeicao!)} (${br(a.descobertasNaoIndexadas)} descobertas, ${br(a.rastreadasNaoIndexadas)} recusadas)`,
+      fonte: fonteIdx,
+    };
     const idxNode = acharNo(dados.nodeData as No, "indexacaoLimpa");
     if (idxNode)
       idxNode.children = [
@@ -1359,6 +1439,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       ];
   } else {
     for (const chave of ["indexacaoLimpa", "rejeicaoRastreio"]) {
+      leituras[chave] = { ausente: porqueSemTaxa! };
       const no = acharNo(dados.nodeData as No, chave);
       if (no)
         no.children = [
@@ -1375,7 +1456,6 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   // A profundidade é julgada pelo 3 do BOARD, que é a meta escrita no nó abaixo — o hub usa
   // `PROFUNDIDADE_MAX` (4), e a divergência já vive em `DIVERGENCIAS.profundidadeClique`. O `note`
   // traz as duas contagens para que a leitura não dependa de quem ganhar essa decisão.
-  const CLIQUES_DO_BOARD = 3;
   const profNode = acharNo(dados.nodeData as No, "profundidadeClique");
   if (profNode) {
     const pags = corrida?.paginas ?? [];
@@ -1390,8 +1470,8 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             // `null` é ÓRFÃ — página do sitemap que nenhum link alcança. Reprova: inalcançável é mais
             // fundo que qualquer número, e nunca é 0 (a raiz é o único 0).
             const passa = (limite: number) => pags.filter((p) => p.profundidade !== null && p.profundidade <= limite).length;
-            const noBoard = passa(CLIQUES_DO_BOARD);
-            const fundas = pags.filter((p) => p.profundidade !== null && p.profundidade > CLIQUES_DO_BOARD);
+            const noBoard = passa(PROFUNDIDADE_DO_BOARD);
+            const fundas = pags.filter((p) => p.profundidade !== null && p.profundidade > PROFUNDIDADE_DO_BOARD);
             const caminho = (u: string) => { try { return new URL(u).pathname; } catch { return u; } };
             const quais = fundas.slice(0, 2).map((p) => `${caminho(p.url)} a ${p.profundidade}`).join(", ");
             // Da home para fora: `lerCrawlDePagina` entrega por PERIFERIA (órfã e mais funda primeiro).
@@ -1401,12 +1481,21 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               .sort(([a], [b]) => a - b)
               .map(([k, n]) => (k === Infinity ? `${br(n)} órfãs` : `${br(n)} a ${k}`))
               .join(", ");
+            const alem = pags.length - noBoard;
+            leituras.profundidadeClique = {
+              valor: alem,
+              texto: `${br(alem)} de ${br(pags.length)} páginas a mais de ${PROFUNDIDADE_DO_BOARD} cliques ou órfãs (${br(corrida!.orfas)} órfãs)`,
+              fonte: `crawl de página de ${corrida!.dia}`,
+              alvos: [...fundas].sort((a, b) => (b.profundidade ?? 0) - (a.profundidade ?? 0)).map((pg) => caminhoDe(pg.url)),
+              nAlvos: alem,
+            };
             return {
               id: "profundidadeClique-medido",
-              topic: `Medido: ${pct1(noBoard / pags.length)} · ${br(noBoard)} de ${br(pags.length)} páginas a ≤ ${CLIQUES_DO_BOARD} cliques da home${fundas.length ? ` · ${quais}${fundas.length > 2 ? ` e mais ${br(fundas.length - 2)}` : ""}` : ""} · ${br(corrida!.orfas)} órfãs`,
-              note: `Corrida de página de ${corrida!.dia}: travessia em largura a partir da home, link de menu contando como clique. Por profundidade: ${distribuicao}. O denominador é TODA página da corrida (${br(corrida!.declaradas)} declaradas no sitemap, ${br(corrida!.linkadasNaoDeclaradas)} linkadas fora dele), não só "transacionais e pilares": o hub não classifica tipo de página, então mede o conjunto que contém as duas — se todas passam, as do board passam, e uma que reprova aqui pode não ser pilar. Órfã é página do sitemap que nenhum link alcança, e reprova. A meta é a do board, ≤ ${CLIQUES_DO_BOARD} cliques, no nó abaixo; pela régua do hub (\`PROFUNDIDADE_MAX\`, ${DIVERGENCIAS.profundidadeClique.hub}) são ${br(passa(DIVERGENCIAS.profundidadeClique.hub))} de ${br(pags.length)}. Nenhum dos dois números tem fonte.`,
+              topic: `Medido: ${pct1(noBoard / pags.length)} · ${br(noBoard)} de ${br(pags.length)} páginas a ≤ ${PROFUNDIDADE_DO_BOARD} cliques da home${fundas.length ? ` · ${quais}${fundas.length > 2 ? ` e mais ${br(fundas.length - 2)}` : ""}` : ""} · ${br(corrida!.orfas)} órfãs`,
+              note: `Corrida de página de ${corrida!.dia}: travessia em largura a partir da home, link de menu contando como clique. Por profundidade: ${distribuicao}. O denominador é TODA página da corrida (${br(corrida!.declaradas)} declaradas no sitemap, ${br(corrida!.linkadasNaoDeclaradas)} linkadas fora dele), não só "transacionais e pilares": o hub não classifica tipo de página, então mede o conjunto que contém as duas — se todas passam, as do board passam, e uma que reprova aqui pode não ser pilar. Órfã é página do sitemap que nenhum link alcança, e reprova. A meta é a do board, ≤ ${PROFUNDIDADE_DO_BOARD} cliques, no nó abaixo; pela régua do hub (\`PROFUNDIDADE_MAX\`, ${DIVERGENCIAS.profundidadeClique.hub}) são ${br(passa(DIVERGENCIAS.profundidadeClique.hub))} de ${br(pags.length)}. Nenhum dos dois números tem fonte.`,
             };
           })();
+    leituras.profundidadeClique ??= ausenteDe(filho);
     profNode.children = [filho, ...(profNode.children ?? [])];
   }
 
@@ -1460,6 +1549,14 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               note: `Leitura consulta×página do Search Console, ${janela.inicio} → ${janela.fim}, hosts somados por caminho e URL canonizada. A meta do board conta PÁGINAS: das ${br(porPagina.avaliadas)} URLs cuja consulta de maior impressão (a primária, \`termoPrincipal\`, a mesma do título) não é a marca, ${br(d.length)} dividem essa consulta com outra URL do site${d.length ? `: ${quais}${d.length > 3 ? ` e mais ${br(d.length - 3)}` : ""}` : ""}. Contando CONSULTAS, como a aba de aquisição conta: ${br(canib.lista.length)} das ${br(new Set(foraDaMarca.map((l) => l.query)).size)} consultas fora da marca aparecem em 2+ URLs, com ${impFora ? pct1(impDisputa / impFora) : "—"} das impressões fora da marca${canib.removidas ? ` (${br(canib.removidas)} de marca ficam fora: buscar o nome da empresa traz o site inteiro por construção)` : canib.removidas === null ? " — sem marca declarada, nenhuma consulta de marca foi tirada" : ""}.${par ? ` O par que mais se repete é ${caminhoDe(par.a)} à frente de ${caminhoDe(par.b)}, em ${br(par.n)} das ${br(canib.lista.length)} consultas; a disputa que mais custa é «${topo.consulta}» (${br(topo.impressoes)} impressões), com ${topo.urls.slice(0, 2).map((u) => `${caminhoDe(u.url)} na posição ${pos(u.posicao)}`).join(" e ")}.` : ""}${soPeloAnterior ? ` ${caminhoDe(par.b)} só recebeu impressão pelo domínio anterior (${hostAnterior}); pelo ${hosts[0]}, nenhuma na janela.` : ""}${cruzaATroca ? ` A janela atravessa a troca de domínio de ${anterior044!.data}, e as duas pontas entram somadas.` : ""} O “6ª e 14ª” do board é exemplo de posição flutuante, não corte: a contagem é a literal (duas URLs com impressão na mesma consulta), sem limiar de distância, porque nenhum tem fonte. A meta 0 é norma, não régua: ausência de defeito não tem quartil.`,
             };
           })();
+    leituras.canibalizacao = semNumero(filho) || !porPagina
+      ? ausenteDe(filho)
+      : {
+          valor: porPagina.disputadas.length,
+          texto: `${br(porPagina.disputadas.length)} de ${br(porPagina.avaliadas)} páginas com a palavra-chave primária disputada`,
+          fonte: fonteGsc,
+          alvos: porPagina.disputadas.map((x: { url: string }) => caminhoDe(x.url)),
+        };
     canNode.children = [filho, ...(canNode.children ?? [])];
   }
 
@@ -1493,6 +1590,14 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               note: `Corrida de página de ${corrida!.dia}. A data é a que a própria página declara (\`dateModified\` do JSON-LD, depois \`article:modified_time\`, depois \`<time datetime>\`) — atualização, não publicação. O prazo é por intenção da página, ${politica}: política editorial do hub desde 19/09/2026, não régua (o board diz “6 a 12 meses” sem fonte, e o selo ◇ diz por quê).${v.length ? ` Vencidas: ${quais}${v.length > 3 ? ` e mais ${br(v.length - 3)}` : ""}.` : ""} As ${br(cad.semData.length)} páginas sem data ficam fora do numerador e do denominador: sem data declarada não é desatualizada. O denominador é toda página que declara data, não só os pilares do board: o hub não classifica tipo de página.`,
             };
           })();
+    leituras.frescor = semNumero(filho) || !cad
+      ? ausenteDe(filho)
+      : {
+          valor: cad.vencidas.length,
+          texto: `${br(cad.vencidas.length)} vencidas, ${br(cad.semData.length)} sem data`,
+          fonte: `crawl de página de ${corrida!.dia}`,
+          alvos: (cad.vencidas as PaginaCrawl[]).map((pg) => caminhoDe(pg.url)),
+        };
     frescorNode.children = [filho, ...(frescorNode.children ?? [])];
   }
 
@@ -1509,6 +1614,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       },
       ...(coberturaNode.children ?? []),
     ];
+    leituras.coberturaSemantica = ausenteDe(coberturaNode.children[0]);
   }
 
   // ── 045: "4. KPIs de Autoridade e Conexões (PageRank Interno e Externo)" ──────────────────
@@ -1519,7 +1625,6 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   // O 5 a 10 é a meta do BOARD, escrita no nó abaixo, e conta links; o hub julga por 1.000 palavras
   // desde 19/09 (`densidadeContextual`). O `note` traz as duas contagens, como a profundidade faz com
   // o 3 contra o 4.
-  const LINKS_DO_BOARD = [5, 10] as const;
   const linksNode = acharNo(dados.nodeData as No, "linksInternos");
   if (linksNode) {
     const pags = corrida?.paginas ?? [];
@@ -1537,6 +1642,12 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             const dentro = pags.length - abaixo.length - acima.length;
             const quais = (ps: PaginaCrawl[]) =>
               ps.slice(0, 3).map((p) => `${caminhoDe(p.url)} (${br(p.linksContextuais)})`).join(", ") + (ps.length > 3 ? ` e mais ${br(ps.length - 3)}` : "");
+            leituras.linksInternos = {
+              valor: abaixo.length,
+              texto: `${br(abaixo.length)} de ${br(pags.length)} páginas com menos de ${min} links contextuais`,
+              fonte: `crawl de página de ${corrida!.dia}`,
+              alvos: abaixo.map((pg) => caminhoDe(pg.url)),
+            };
             const porHub = { dentro: 0, escasso: 0, excessivo: 0, semTexto: 0 };
             for (const p of pags) porHub[densidadeContextual(p.linksContextuais, p.palavras)?.estado ?? "semTexto"] += 1;
             return {
@@ -1545,6 +1656,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               note: `Corrida de página de ${corrida!.dia}: links de uma página do site para outra, lidos no HTML servido, com menu e rodapé fora (o link que se repete em toda página não é voto editorial).${abaixo.length ? ` Com menos de ${min}: ${quais(abaixo)}.` : ""}${acima.length ? ` Com mais de ${max}: ${quais(acima)}.` : ""} O denominador é TODA página da corrida, não só as “páginas-alvo” do board: o hub não sabe quais você quer empurrar para o Top 3, então conta todas, e uma página abaixo da faixa aqui pode não ser alvo. Pela régua do hub (${LINKS_POR_MIL_MIN} a ${LINKS_POR_MIL_MAX} links por 1.000 palavras, \`densidadeContextual\`), ${br(porHub.dentro)} dentro, ${br(porHub.escasso)} abaixo e ${br(porHub.excessivo)} acima${porHub.semTexto ? `, ${br(porHub.semTexto)} sem texto lido` : ""}. A corrida grava QUANTOS links chegam, não DE ONDE vêm: o “partindo de páginas com alto tráfego orgânico” do board não dá para conferir com o que está gravado. O 5 a 10 é meta do board, não régua: nenhum estudo publica contagem de links internos, e o selo ◇ diz por quê.`,
             };
           })();
+    leituras.linksInternos ??= ausenteDe(filho);
     linksNode.children = [filho, ...(linksNode.children ?? [])];
   }
 
@@ -1559,6 +1671,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       },
       ...(rdNode.children ?? []),
     ];
+    leituras.referringDomains = ausenteDe(rdNode.children[0]);
   }
 
   // A proporção é a MESMA da aba de aquisição (mesma série, mesma janela, `razaoDeMarca`); os meses
@@ -1605,6 +1718,20 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         note: `Série gravada em \`hub_gsc_dia\`, ${comMarca[0].dia} → ${comMarca[comMarca.length - 1].dia}: ${br(soma("impressoesMarca"))} impressões de marca em ${br(soma("impressoesPais"))} do corte ${decl.pais}, a mesma série, janela e função (\`razaoDeMarca\`) da aba de aquisição. Termos de marca: ${decl.termos.join(", ")}. A meta do board é direção (volume mensal crescente), então o nó abre também com os meses. Meses fechados (calendário completo e 3 dias de folga, \`mesesFechados\`): ${meses.map((m) => `${m.mes} ${br(m.impressoesMarca)}`).join(" · ")}.${pen && ult && pen.impressoesMarca > 0 ? ` De ${pen.mes} para ${ult.mes}: ${ult.impressoesMarca > pen.impressoesMarca && ult.impressoesMarca < 11 * pen.impressoesMarca ? "+" : ""}${variacao(ult.impressoesMarca / pen.impressoesMarca - 1)}.` : ""}${pico && ult && pico !== ult ? ` ${ult.mes} está em ${pct1(ult.impressoesMarca / pico.impressoesMarca)} do pico de ${pico.mes}.` : ""} Impressão de marca mede a busca pelo nome só enquanto o site aparece para ela: um mês com o site fora do índice cai sem ninguém ter deixado de buscar.${zerados.length ? ` Dias sem nenhuma impressão de marca: ${zerados.map((m) => `${br(m.diasZero)} em ${m.mes}`).join(", ")}.` : ""}${topoMarca ? ` Na janela de 28 dias, a consulta de marca mais vista é «${topoMarca.termo}», ${br(topoMarca.impressoes)} impressões${topoMarca.posicao === null ? "" : ` na posição ${topoMarca.posicao.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}`}.` : ""}${dominioFora ? ` ⚠️ O domínio é ${hosts[0]} e nenhum termo declarado cobre «${nomeDoDominio}»: a busca pelo nome do domínio conta como NÃO-marca. Na janela de 28 dias, ${comODominio.length ? `${br(comODominio.length)} consulta(s) o contêm` : "nenhuma consulta o contém"}. Quando passar a ser buscado, declarar em \`marca.termos\` e refazer o backfill, senão ele infla o crescimento não-marca.` : ""} “Crescente” é direção, não faixa, e o selo ◇ diz por quê.`,
       };
     }
+    if (Array.isArray(serie) && !decl.motivo && razao !== null) {
+      const meses = mesesFechados(serie, new Date().toISOString().slice(0, 10), "impressoesMarca") as unknown as { mes: string; impressoesMarca: number }[];
+      // The board target is a DIRECTION (growing), so the rule counts closed months falling in a row.
+      let quedas = 0;
+      for (let i = meses.length - 1; i > 0 && meses[i].impressoesMarca < meses[i - 1].impressoesMarca; i--) quedas++;
+      const [pen, ult] = meses.slice(-2);
+      leituras.buscasDeMarca = meses.length < 2
+        ? { indecisa: "menos de dois meses fechados" }
+        : {
+            valor: quedas,
+            texto: `${br(ult.impressoesMarca)} em ${ult.mes} contra ${br(pen.impressoesMarca)} em ${pen.mes}${quedas ? ` · ${quedas} ${quedas === 1 ? "mês" : "meses"} em queda` : ""}`,
+            fonte: "série diária do Search Console (hub_gsc_dia)",
+          };
+    } else leituras.buscasDeMarca = ausenteDe(filho);
     marcaNode.children = [filho, ...(marcaNode.children ?? [])];
   }
 
@@ -1655,6 +1782,13 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         note: `${br(atual)} consultas distintas tiveram ao menos uma impressão na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados: ${porHost}.${consultasGsc.truncado ? " ⚠️ A leitura bateu no teto de linhas da API em pelo menos um host." : ""} PISO, não total: ${site ? `as consultas nomeadas somam ${br(nomeadas)} das ${br(site)} impressões que a leitura por página conta (${pct1(nomeadas / site)}); o resto` : "parte das impressões"} vem de consultas que o Search Console omite por privacidade, e quantas são não se sabe. ${br(cauda)} delas tiveram uma única impressão e entram e saem da contagem por acaso.${trimestre} Mesma função e mesma leitura da aba de aquisição, então o número é o mesmo nas duas telas. Meta do board: 10% a 20% ao trimestre — meta, não régua: o crescimento esperado depende da idade do site (novo cresce 200%, maduro 3%, e os dois podem ir bem).`,
       };
     }
+    if (consultasGsc && !("erro" in consultasGsc)) {
+      const atual = consultasUnicas(consultasGsc.linhas).valor;
+      const anterior = base && !("erro" in base) ? consultasUnicas(base.linhas).valor : null;
+      leituras.consultasUnicas = !anterior
+        ? { ausente: anterior === 0 ? "nenhuma consulta 13 semanas antes, sem base" : "a janela de 13 semanas antes não foi lida" }
+        : { valor: atual / anterior - 1, texto: `${br(atual)} consultas contra ${br(anterior)} 13 semanas antes`, fonte: fonteGsc, piso: true };
+    } else leituras.consultasUnicas = ausenteDe(filho);
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     cuNode.children = [filho, ...(cuNode.children ?? [])];
   }
@@ -1699,6 +1833,13 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         note: `${br(atual)} das ${br(lidas)} consultas lidas tiveram ao menos uma página entre as posições 1,0 e 20,0 na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados: ${porHost}.${consultasGsc.truncado ? " ⚠️ A leitura bateu no teto de linhas da API em pelo menos um host." : ""} PISO, não total: a dimensão \`query\` do Search Console omite as consultas raras. ${br(cauda)} delas tiveram uma única impressão e entram e saem da contagem por acaso. Mesma função e mesma leitura consulta×página da aba de aquisição, então o número é o mesmo nas duas telas${porTermo === null ? "" : `; na dimensão \`query\` sozinha, onde o Google agrega a posição do termo entre as páginas, são ${br(porTermo)}`}.${catalogo} Meta do board: 60% do catálogo dentro do Top 20 — meta, não régua: o catálogo é escolhido por quem mede, então não há faixa de mercado para julgar contra.`,
       };
     }
+    // The board target is on the CATALOG (the frozen inventory), not on the absolute count.
+    const cat20 = termosGsc && !("erro" in termosGsc) && inventario ? penetracaoNoInventario(termosGsc.linhas, inventario, 20) : null;
+    leituras.top20 = semNumero(filho)
+      ? ausenteDe(filho)
+      : !cat20
+        ? { ausente: !inventario ? "inventário de termos não declarado" : "sem a leitura por termo" }
+        : { valor: cat20.fracao, texto: `${pct1(cat20.fracao)} do inventário (${br(cat20.dentro)} de ${br(cat20.total)} termos)`, fonte: fonteGsc, piso: cat20.piso };
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     t20Node.children = [filho, ...(t20Node.children ?? [])];
   }
@@ -1756,6 +1897,10 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             note: `O numerador existe: ${br(lidas)} consultas distintas com impressão na janela ${janela.inicio} → ${janela.fim}.${concentracao} O denominador não: ${semDenominador}. Dividir por um número chutado publicaria uma razão falsa, e a contagem de URLs com impressão não é a de URLs indexadas.`,
           };
     }
+    const qp = consultasGsc && !("erro" in consultasGsc) && denominador !== null ? queryToPageRatio(consultasGsc.linhas, denominador) : null;
+    leituras.queryToPage = semNumero(filho) || !qp
+      ? ausenteDe(filho)
+      : { valor: qp.valor, texto: `${qp.valor.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} consultas por URL indexada`, fonte: fonteGsc, piso: true };
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     qpNode.children = [filho, ...(qpNode.children ?? [])];
   }
@@ -1828,7 +1973,10 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             topic: `∅ razão não apurada · ${br(n)} URLs do sitemap com impressão, ${br(a.indexadas)} indexadas`,
             note: `O numerador passou do denominador, o que só acontece se o índice encolheu entre a janela (${janela.inicio} → ${janela.fim}) e a corrida de ${a.dia}. Uma razão acima de 100% leria como meta folgada.`,
           };
+      if (r !== null)
+        leituras.activeIndexRatio = { valor: r, texto: `${pct1(r)} (${br(n)} de ${br(a.indexadas)} indexadas com impressão)`, fonte: `${fonteGsc} e corrida de indexação de ${a.dia}` };
     }
+    leituras.activeIndexRatio ??= ausenteDe(filho);
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: `balizador.tipo` é `recusa`.
     airNode.children = [filho, ...(airNode.children ?? [])];
   }
@@ -1879,22 +2027,37 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         note: `${br(c.impressoes)} impressões dos ${br(c.termos)} termos do inventário na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados, divididas pela demanda estimada: para cada termo, o maior número de impressões que ele teve numa janela de 28 dias entre ${p.janelas[0].inicio} e ${p.janelas[p.janelas.length - 1].fim} (${br(p.janelas.length)} janelas, congeladas em ${p.congeladoEm}), ou o de hoje, se for maior. ESTIMATIVA, não medida: o Search Console não informa volume de busca. Impressão só existe onde houve busca, então o pico de cada termo é um piso do volume dele. Como o denominador fica abaixo do real, a razão é TETO. O volume de mercado viria do Google Ads ou de uma base paga, e o hub não lê nenhum dos dois: por isso a folha continua sem coletor. Na janela de maior alcance (${maior.inicio} → ${maior.fim}) as mesmas contas davam ${pct1(maior.impressoes / c.demanda)}, número alto por construção, porque foi essa janela que definiu a maior parte dos picos. Maiores buracos: ${top.map((b) => `«${b.termo}» ${br(b.hoje)} de ${br(b.pico)}${posDe(b.termo)}`).join(", ")}. Os cinco somam ${br(top.reduce((a, b) => a + b.pico - b.hoje, 0))} das ${br(faltam)} impressões que faltam. Por posição, contando o pico dos termos entre 1,0 e 20,0 hoje, seriam ${pct1(porPosicao)}. Esse número não é usado porque a posição do GSC é a média só das buscas em que o site apareceu: termo na posição 3 com um punhado de impressões conta como coberto. Meta do board: 60% a 80% dos clusters de maior volume. É meta, não régua, e o hub não agrupa termos em cluster, então a estimativa soma termo a termo, como o “O que mede” do board.`,
       };
     }
+    // The estimate is a CEILING: below the target it proves "below"; at or above it proves nothing.
+    leituras.tamBusca = !c
+      ? ausenteDe(filho)
+      : c.fracao >= REGRAS.tamBusca!.limiar
+        ? { indecisa: "a estimativa é teto e passa da meta" }
+        : { valor: c.fracao, texto: `${pct1(c.fracao)} da demanda estimada`, fonte: fonteGsc, ressalva: "estimativa, teto" };
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: é estimativa e não tem régua.
     tamNode.children = [filho, ...(tamNode.children ?? [])];
   }
 
-  // ── 051/US3: a fila 80/20, sobre valores que a página JÁ leu — nenhuma requisição nova ─────────
-  const fila = filaDoMapa({
-    abaixo: conformidade ? conformidade.abaixo : null,
-    largura,
-    vitais: ["lcp", "inp", "cls", "ttfb"].map((id) => {
-      const limite = (CATALOGO as Record<string, { balizador: { limite?: number } }>)[id].balizador.limite as number;
-      if (!lidoCampo) return { chave: id, valor: null, limite, falhou: true };
-      const r = vitalPorOrigem(lidoCampo.origens, id) as { estado: string; medida?: { p75: number } };
-      if (r.estado === "medido") return { chave: id, valor: r.medida!.p75, limite };
-      return { chave: id, valor: null, limite, falhou: r.estado === "falhou" || r.estado === "sem-chave" };
-    }),
-  });
+  // ── 054: a próxima ação de cada folha, sobre as leituras acima — nenhuma requisição nova ───────
+  // The 051 queue survives as the order INSIDE the title entry (owner's Q2): the CTR Gap targets go
+  // in missed-clicks order, the one ranking the hub can defend within a single currency.
+  const porCliques = filaDoMapa({ abaixo: conformidade ? conformidade.abaixo : null, largura: null, vitais: [] }).porMoeda.get("cliques") as
+    | { alvo: string; delta: number }[]
+    | undefined;
+  if (porCliques?.length && "valor" in (leituras.ctrGap ?? {}))
+    leituras.ctrGap = {
+      ...(leituras.ctrGap as Extract<Leitura, { valor: number }>),
+      alvos: porCliques.map((it) => `${caminhoDe(it.alvo)} (faltam ${br(Math.round(it.delta))} cliques)`),
+      nAlvos: porCliques.length,
+    };
+  const disparos = avaliar(leituras);
+  for (const d of Object.values(disparos)) {
+    const no = acharNo(dados.nodeData as No, d.chave);
+    if (!no) continue;
+    no.tags = [...(no.tags ?? []), { text: etiqueta(d), className: "me-acao" }];
+    no.note = no.note ? `${no.note} ${regraEmTexto(d.chave)}` : regraEmTexto(d.chave);
+  }
+  const acoes = plano(disparos);
+  const nomesDe = (ds: { chave: string; motivo?: string | null }[]) => ds.map((d) => `${cat[d.chave].nome} (${d.motivo})`).join("; ");
 
   // ── 051/US1: a cadeia depois do clique, com a conta de /okr/atma ───────────────────────────────
   // Só CONTAGENS (FR-012): valor em reais não entra no mapa. E nenhuma taxa até o clique (FR-003) —
@@ -1982,8 +2145,8 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
     <li key={n.id}>
       <span className={`mb-n mb-n${Math.min(nivel, 3)}`}>{n.topic}</span>
       {n.tags?.map((t) => (
-        <span className="mb-tag" key={t}>
-          {t}
+        <span className="mb-tag" key={textoDa(t)}>
+          {textoDa(t)}
         </span>
       ))}
       {n.note ? <span className="mb-nota">{n.note}</span> : null}
@@ -2074,56 +2237,60 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             )}
           </section>
 
-          <section className="ficha-bloco" aria-labelledby="mapa-fila-h">
-            <h2 className="ficha-bloco-h" id="mapa-fila-h">
-              Primeiro na fila
+          {/* 054 — replaces the 051 queue (owner's Q2). One answer to "what first": attack order
+              across steps, one entry per lever, every reason with its number, threshold, origin and
+              source. No bar: entries in a step carry different currencies, and length would compare them. */}
+          <section className="ficha-bloco" aria-labelledby="mapa-acoes-h">
+            <h2 className="ficha-bloco-h" id="mapa-acoes-h">
+              O que fazer primeiro
             </h2>
-            {fila.porMoeda.size === 0 ? (
-              <p className="foot">Nada abaixo da régua nesta janela.</p>
+            {acoes.degraus.length === 0 ? (
+              <p className="foot">Nenhuma regra disparou nesta janela.</p>
             ) : (
-              [...fila.porMoeda].map(([moeda, itens]) => {
-                const topo = Math.abs(itens[0].delta);
-                return (
-                  <div className="mapa-fila" key={moeda}>
-                    {/* G32 — o número mais destacado do bloco diz de quando e de onde veio, no
-                        próprio bloco: a janela do cabeçalho da página fica longe demais. */}
-                    <h3 className="mapa-fila-h">
-                      {ROTULO_DA_MOEDA[moeda] ?? moeda}
-                      {moeda === "cliques"
-                        ? ` · Search Console, ${janela.inicio} → ${janela.fim}`
-                        : moeda === "pp" && corrida
-                          ? ` · crawl de página de ${corrida.dia}${crawlAtrasado ? " — atrasado: a corrida é diária" : ""}`
-                          : moeda === "ms" || moeda === "cls"
-                            ? " · CrUX, p75 de 28 dias"
-                            : ""}
-                    </h3>
-                    <ol className="mapa-fila-lista">
-                      {itens.map((it: ItemDaFila, i: number) => (
-                        <li key={`${it.chave}-${it.alvo ?? i}`}>
-                          <span className="mapa-fila-v">{valorDaFila(moeda, it)}</span>{" "}
-                          <span className="mapa-fila-alvo">{it.alvo ? new URL(it.alvo).pathname : cat[it.chave].nome}</span>
-                          <span className="mapa-fila-det">{detalheDaFila(moeda, it)}</span>
-                          {/* Um tom só: o comprimento já codifica a distância, e ele é o que mostra
-                              a concentração que o número sozinho esconde. */}
-                          <div className="ficha-barra-trilho" aria-hidden="true">
-                            <div className="ficha-barra-preenche" style={{ width: `${topo > 0 ? (Math.abs(it.delta) / topo) * 100 : 0}%` }} />
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                );
-              })
+              acoes.degraus.map((g, gi) => (
+                <div className="mapa-fila" key={g.id}>
+                  <h3 className="mapa-fila-h">
+                    {g.nome} <span className="mapa-acao-porque">· {g.porque}</span>
+                  </h3>
+                  <ol className="mapa-fila-lista">
+                    {g.entradas.map((e, i) => (
+                      <li key={e.alavanca} className={gi === 0 && i === 0 ? "mapa-acao-primeira" : undefined}>
+                        <span className="mapa-fila-alvo">
+                          {e.critica ? <strong className="mapa-acao-critica">‼ crítica · </strong> : null}
+                          {e.acao}
+                        </span>
+                        <ul className="mapa-acao-motivos">
+                          {e.motivos.map((m) => (
+                            <li key={m.chave}>
+                              <strong>{cat[m.chave].nome}</strong>: {m.texto} · {m.meta}
+                              {m.piso ? " · piso: o número real pode ser maior" : ""}
+                              {m.ressalva ? ` · ${m.ressalva}` : ""} <span className="mb-tag">{ORIGEM[m.origem as keyof typeof ORIGEM]}</span>
+                              <span className="mapa-fila-det">{m.fonte}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {e.alvos.length ? (
+                          <span className="mapa-fila-det">
+                            Alvos ({cat[e.alvosDe!].nome}): {e.alvos.join(", ")}
+                            {e.nAlvos > e.alvos.length ? ` e mais ${br(e.nAlvos - e.alvos.length)}` : ""}
+                          </span>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))
             )}
             <p className="foot">
-              Moedas diferentes não se comparam, e nenhuma lista soma: os degraus de busca não são independentes, e
-              somar contaria o mesmo clique duas vezes. Fora da fila: {fila.fora.recusa} folhas sem faixa publicada,{" "}
-              {fila.fora.norma} normas (sim ou não, sem distância), {fila.fora.semColetor} sem coletor e{" "}
-              {fila.fora.procedimento} procedimento
-              {fila.fora.dentroDaRegua.length ? `; dentro da régua: ${nomesDas(fila.fora.dentroDaRegua)}` : ""}
-              {fila.fora.semAmostra.length ? `; sem amostra: ${nomesDas(fila.fora.semAmostra)}` : ""}
-              {fila.fora.semLeitura.length ? `; sem leitura agora: ${nomesDas(fila.fora.semLeitura)}` : ""}. Também{" "}
-              {fila.sobreposicao}.
+              {DEGRAUS.filter((g) => !acoes.degraus.some((d) => d.id === g.id)).length
+                ? `Sem ação: ${DEGRAUS.filter((g) => !acoes.degraus.some((d) => d.id === g.id)).map((g) => g.nome).join(", ")}. `
+                : ""}
+              {acoes.semAcao.length} folhas sem ação pela regra
+              {acoes.naoDecide.length ? `; a amostra não decide: ${nomesDe(acoes.naoDecide)}` : ""}
+              {acoes.semLeitura.length ? `; sem leitura, então sem ação: ${nomesDe(acoes.semLeitura)}` : ""}. A regra de cada folha
+              está no painel do nó e na lista abaixo do mapa. Antes de agir, confira o que o hub não sabe: o país do público que
+              gera a impressão, a data da última mudança de cada página e se a janela atravessa migração. Apurado ao abrir a
+              página, em {apuradoEm}.
             </p>
           </section>
 
