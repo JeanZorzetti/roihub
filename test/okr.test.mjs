@@ -19,6 +19,7 @@ import {
   valorEmRisco,
   ultimoPorPessoa,
   cadeiaLigada,
+  CADEIAS_DO_PROJETO,
 } from "../lib/okr.mjs";
 import { conversao } from "../lib/janelas.mjs";
 
@@ -823,4 +824,53 @@ test("019/T028 — `status` do lead não entra em nada: manda o `motivo` (contra
   );
   assert.equal(r.perdidos.pessoas, 1);
   assert.equal(r.vivos.pessoas, 0);
+});
+
+// ── 053/T005 — a cadeia do Sirius: ajuste por projeto, trial omitido, taxa recusada por janela ─────
+
+const coletadoSirius = { cliques: apurado(62), signups: apurado(108), ativados: apurado(32), vendas: apurado(6) };
+
+test("053 — no sirius, signup e ativado leem os coletores do ajuste, e o trial sai com o motivo", () => {
+  const f = montarFicha({ slug: "sirius", perfil: "A", coletado: coletadoSirius });
+  assert.deepEqual(f.marcos.map((m) => m.chave), ["visitante", "signup", "ativado", "cobranca"]);
+  assert.deepEqual(f.marcos.find((m) => m.chave === "signup").celula, apurado(108));
+  assert.deepEqual(f.marcos.find((m) => m.chave === "ativado").celula, apurado(32));
+  assert.deepEqual(f.marcos.find((m) => m.chave === "cobranca").celula, apurado(6));
+  assert.equal(f.omitidos.length, 1);
+  assert.equal(f.omitidos[0].chave, "trial");
+  assert.match(f.omitidos[0].motivo, /degrau de 100%/);
+});
+
+test("053 — com época declarada, a taxa visitante → signup é recusada por janela, e as seguintes dividem", () => {
+  const f = montarFicha({ slug: "sirius", perfil: "A", coletado: coletadoSirius, epoca: { data: "2026-03-17" } });
+  assert.equal(f.taxas[0].de, "visitante");
+  assert.ok(!ehApurado(f.taxas[0].celula));
+  assert.match(f.taxas[0].celula.naoApurado, /janelas diferentes/);
+  assert.match(f.taxas[0].celula.naoApurado, /2026-03-17/);
+  assert.ok(ehApurado(f.taxas[1].celula), "signup → ativado estão na mesma janela e dividem");
+});
+
+test("053 — sem época, a taxa do visitante segue a regra de sempre (nenhum projeto muda sem declarar)", () => {
+  const f = montarFicha({ slug: "sirius", perfil: "A", coletado: { ...coletadoSirius, cliques: apurado(500) } });
+  assert.ok(ehApurado(f.taxas[0].celula), "sem época a razão sai como sempre saiu");
+  // 108 cadastros contra 62 cliques: `razao()` já recusava (numerador > denominador) — a recusa por
+  // janela é outra e só existe com época.
+  const g = montarFicha({ slug: "sirius", perfil: "A", coletado: coletadoSirius });
+  assert.doesNotMatch(g.taxas[0].celula.naoApurado, /janelas diferentes/);
+});
+
+test("053 — cadeiaLigada('A', 'sirius') fica ligada; o perfil A sozinho e os outros slugs não mudam", () => {
+  assert.deepEqual(cadeiaLigada("A", "sirius"), { ligada: true, semColetor: [] });
+  assert.deepEqual(cadeiaLigada("A"), { ligada: false, semColetor: ["signup", "ativado", "trial pago"] });
+  assert.deepEqual(cadeiaLigada("A", "polarisia"), cadeiaLigada("A"));
+});
+
+test("053 — os outros 8 projetos do perfil A seguem sem coletor em signup e ativado, e com o trial (SC-005)", () => {
+  for (const slug of ["polarisia", "estetiacrm", "reviewshield", "context", "seo-forecaster", "cannibal_scan", "compass", "vertice"]) {
+    assert.equal(CADEIAS_DO_PROJETO[slug], undefined, `${slug} não pode ganhar ajuste nesta spec`);
+    const f = montarFicha({ slug, perfil: "A", coletado: coletadoSirius });
+    assert.equal(f.marcos.length, 5, slug);
+    assert.match(f.marcos.find((m) => m.chave === "signup").celula.naoApurado, /sem coletor/, slug);
+    assert.deepEqual(f.omitidos, [], slug);
+  }
 });

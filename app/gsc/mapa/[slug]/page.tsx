@@ -717,7 +717,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   const nomeCurto = p.nome.split(" — ")[0];
   // 052/research D3 — o painel "Depois do clique" só chama `dadosDaFicha()` quando o PERFIL
   // declara todo degrau com coletor (FR-010): a Atma (perfil D) segue chamando, como sempre.
-  const cadeiaDoPerfil = cadeiaLigada(p.perfil);
+  const cadeiaDoPerfil = cadeiaLigada(p.perfil, p.slug);
 
   const dados = mapaDoBoard();
   const cat = CATALOGO as Record<string, { nome: string; ramo: string }>;

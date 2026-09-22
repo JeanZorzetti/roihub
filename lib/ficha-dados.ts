@@ -97,8 +97,9 @@ export async function dadosDaFicha(slug: string) {
 
   // ── T013a: a montagem, na ordem do contrato — coleta → montarFicha → posicaoDeAtaque → projetar → montarNiveis.
   const { porPipeline, erroLeads } = await coletarLeadsDoHub();
-  const { cliques, leads, contatados, respondeu, ticket, vendas, impressoes, orcamentos, motivos, ga4, ga4ev, orcamentosSemLead, serieGsc, linhasOrc, leadsPorId, paginas, janelas } = await coletarDoProjeto(p, { porPipeline, erroLeads });
-  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, contatados, respondeu, vendas, orcamentos }, declaracoes: p.declaracoes });
+  const { cliques, leads, contatados, respondeu, ticket, vendas, impressoes, orcamentos, motivos, ga4, ga4ev, orcamentosSemLead, serieGsc, linhasOrc, leadsPorId, paginas, janelas, saas } = await coletarDoProjeto(p, { porPipeline, erroLeads });
+  // 053: `signups`/`ativados` só existem no SaaS com cadeia ligada; nos outros o marco segue "sem coletor".
+  const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads, contatados, respondeu, vendas, orcamentos, ...(saas ? { signups: saas.signups, ativados: saas.ativados } : {}) }, declaracoes: p.declaracoes, epoca: p.epoca ?? null });
   // 018/FR-007/FR-011: a cadeia de Conversão só existe A PARTIR de `lead` — `visitante` é
   // Descoberta e ligá-lo à cadeia seria taxa cruzando janelas. Enquanto `PERFIS.D.marcos` ainda
   // começa em `visitante` (US2/T024 tira `visitante` e `contatado` de lá), a página filtra na
@@ -285,5 +286,7 @@ export async function dadosDaFicha(slug: string) {
     nomeCurto,
     nomeDescricao,
     necessarioNaJanela,
+    // 053: a cadeia SaaS (pagantes com a fonte, divergências, descartes do Stripe) — `null` fora dela.
+    saas,
   };
 }

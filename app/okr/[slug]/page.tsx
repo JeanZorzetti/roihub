@@ -10,6 +10,7 @@ import { canaisDoN4, razaoDoKr } from "@/lib/ficha-visual.mjs";
 // ação citada na dobra tem que vir da MESMA chamada de `evaluateAll()` que a citada em N6.
 import { dadosDaFicha, type CelulaFicha } from "@/lib/ficha-dados";
 import { Buracos } from "./buracos";
+import { Pagantes } from "./pagantes";
 import { ValorEmRisco } from "./risco";
 import { Projecao, num } from "../projecao";
 import { Tabs } from "../../tabs";
@@ -52,7 +53,7 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
     p, ficha, veredito, mercado, projecao, niveis, janelas, motivos,
     buracos, risco, degrauFinal, pendentes, cliques, iniciaEmVisitante,
     marcosCadeia, taxasCadeia, ticketCel, metaComTicket, n5, proximoBuraco,
-    nomeCurto, nomeDescricao, necessarioNaJanela,
+    nomeCurto, nomeDescricao, necessarioNaJanela, saas,
   } = dados;
   // US1-AC5: `motivos === null` (a fonte não devolve a coluna) e `motivos.motivos.length === 0`
   // (devolve e ninguém foi palitado) são dois estados diferentes, e nenhum dos dois vira
@@ -108,6 +109,12 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
                 Janela desta cadeia: <strong>{janelas.conversao.inicio} → {janelas.conversao.fim}</strong> — {janelas.conversao.porque}
               </p>
               <CadeiaDiagrama marcos={marcosCadeia} taxas={taxasCadeia} veredito={veredito} janela={{ inicio: janelas.conversao.inicio, fim: janelas.conversao.fim }} />
+              {/* 053: degrau que o ajuste do projeto tirou da cadeia — sai com o motivo, nunca calado. */}
+              {ficha.omitidos?.map((o) => (
+                <p className="foot" key={o.chave}>
+                  Fora da cadeia: <strong>{o.nome}</strong> — {o.motivo}.
+                </p>
+              ))}
             </>
           ) : (
             <p className="foot">Sem cadeia: {(ficha.semPerfil as { naoApurado: string } | undefined)?.naoApurado ?? "perfil não declarado"}.</p>
@@ -250,6 +257,10 @@ export default async function FichaPage({ params }: { params: Promise<{ slug: st
 
         {/* BLOCO 3 — os buracos de medição, contados e nomeados (FR-004/FR-005). */}
         <Buracos buracos={buracos} veredito={veredito} />
+
+        {/* 053 — o degrau final aberto por conta, com a fonte de cada uma. Depois dos três blocos da
+            019/FR-001, que seguem sem nada entre eles. */}
+        {saas && <Pagantes saas={saas} />}
 
         {/* BLOCO 4 — o PLACAR: o que a meta exige (os dois lados da FR-012) e o que está em risco.
             "Quanto falta" deixou de ser bloco separado do valor em risco — são a mesma pergunta. */}

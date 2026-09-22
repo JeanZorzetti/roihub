@@ -14,15 +14,15 @@ implementação em cada fase.
 
 ## Phase 1: Setup
 
-- [ ] T001 Capturar em produção, ANTES de qualquer push de código, o HTML de `/okr/<slug>` dos 8 projetos do
+- [X] T001 Capturar em produção, ANTES de qualquer push de código, o HTML de `/okr/<slug>` dos 8 projetos do
   perfil A que não são o Sirius (polarisia, estetiacrm, reviewshield, context, seo-forecaster, cannibal_scan,
   compass, vertice), no scratchpad. É o "antes" da SC-005, e sem ele a comparação é impossível depois.
-- [ ] T002 Escrever `scripts/sirius-usuario-leitura.mjs`: lê a conexão de administrador do `.env` do Sirius
+- [X] T002 Escrever `scripts/sirius-usuario-leitura.mjs`: lê a conexão de administrador do `.env` do Sirius
   (`CRM/crm-project/.env`), gera 32 bytes aleatórios de senha, cria `roihub_leitura` com os grants por coluna
   de research D8 (idempotente: `ALTER ROLE … PASSWORD` se já existir) e grava `SIRIUS_DATABASE_URL` no `.env`
   do hub. Nunca imprime a senha nem a URL (Princípio V).
-- [ ] T003 Rodar T002 (autorizado pelo dono em 22/09/2026) e conferir quickstart §3: `name` de
-  `"Organization"` e `email` de `"Contact"` dão `permission denied`, `INSERT` dá `permission denied`, e a query
+- [X] T003 Rodar T002 (autorizado pelo dono em 22/09/2026) e conferir quickstart §3: `email` de `"Contact"`
+  e colunas fora do grant dão `permission denied` (o `name` da empresa entrou no grant em 22/09, ver research D5), `INSERT` dá `permission denied`, e a query
   de research D4 roda.
 - [ ] T004 ⛔ Dono: copiar `SIRIUS_DATABASE_URL` do `.env` local para o ambiente do serviço `roihub` no
   EasyPanel.
@@ -31,17 +31,17 @@ implementação em cada fase.
 
 ## Phase 2: Foundational (a regra pura)
 
-- [ ] T005 [P] Em `test/okr.test.mjs`, testes que falham: `montarFicha` com `slug: "sirius"` liga `signup` a
+- [X] T005 [P] Em `test/okr.test.mjs`, testes que falham: `montarFicha` com `slug: "sirius"` liga `signup` a
   `signups` e `ativado` a `ativados`, omite `trial` (e expõe `{chave, motivo}` em `omitidos`); com `epoca`, a
   taxa `visitante → signup` sai `não apurado` com "janelas diferentes"; `cadeiaLigada("A", "sirius")` é
   `ligada`; e, para cada um dos outros 8 slugs do perfil A, `montarFicha` devolve o mesmo que antes.
-- [ ] T006 Em `lib/okr.mjs`: `CADEIAS_DO_PROJETO`, e `montarFicha`/`cadeiaLigada` com `slug` (e `epoca` na
+- [X] T006 Em `lib/okr.mjs`: `CADEIAS_DO_PROJETO`, e `montarFicha`/`cadeiaLigada` com `slug` (e `epoca` na
   ficha), até T005 passar.
-- [ ] T007 [P] Criar `test/saas.test.mjs` e registrá-lo em `package.json` no mesmo commit: `celulasDaConta`
+- [X] T007 [P] Criar `test/saas.test.mjs` e registrá-lo em `package.json` no mesmo commit: `celulasDaConta`
   (conta de teste fora; cadastro pela data; ativado só com contato próprio), `classificarSessoesStripe` (os 5
   motivos de descarte, nominais), `pagantes` (união por conta sem duplicar; declarada + Stripe = uma conta com
   duas fontes; `pagaHoje`; divergência "plano pago sem pagamento ativo"; conta declarada não encontrada).
-- [ ] T008 Criar `lib/saas.mjs` até T007 passar.
+- [X] T008 Criar `lib/saas.mjs` até T007 passar.
 
 ---
 
@@ -50,39 +50,39 @@ implementação em cada fase.
 **Independent Test**: `/okr/sirius` e `/gsc/mapa/sirius` mostram signup e ativado iguais à contagem direta
 (quickstart §2).
 
-- [ ] T009 [US1] Em `lib/okr-coleta.ts`, ler o banco do Sirius por `SIRIUS_DATABASE_URL` com a query de
+- [X] T009 [US1] Em `lib/okr-coleta.ts`, ler o banco do Sirius por `SIRIUS_DATABASE_URL` com a query de
   research D4, uma conexão, falha fechada (`{erro}` com o código, nunca a URL); devolver as linhas.
-- [ ] T010 [US1] Em `lib/ficha-dados.ts`, passar `slug` e `epoca` a `montarFicha`, e montar `signups`/`ativados`
+- [X] T010 [US1] Em `lib/ficha-dados.ts`, passar `slug` e `epoca` a `montarFicha`, e montar `signups`/`ativados`
   com `celulasDaConta` na janela de conversão. Sem a env: `não apurado · SIRIUS_DATABASE_URL ausente`.
-- [ ] T011 [P] [US1] Em `data/projects.json`, card `sirius`: `epoca` `{ "data": "2026-03-17", "porque":
-  "primeira conta real do produto (Cartopel)" }`.
-- [ ] T012 [US1] Em `app/okr/[slug]/page.tsx`, mostrar o degrau omitido com o motivo, e a taxa recusada com o
+- [X] T011 [P] [US1] Em `data/projects.json`, card `sirius`: `epoca` `{ "data": "2026-03-17", "porque":
+  "primeira conta real do produto" }`.
+- [X] T012 [US1] Em `app/okr/[slug]/page.tsx`, mostrar o degrau omitido com o motivo, e a taxa recusada com o
   texto de research D3.
-- [ ] T013 [P] [US1] Em `app/gsc/mapa/[slug]/page.tsx`, `cadeiaLigada(p.perfil, p.slug)`.
+- [X] T013 [P] [US1] Em `app/gsc/mapa/[slug]/page.tsx`, `cadeiaLigada(p.perfil, p.slug)`.
 
 ---
 
 ## Phase 4: User Story 2 — pagante com a fonte dita (P1)
 
-**Independent Test**: a ficha mostra "já pagou" 6 e "paga hoje" 1, cada conta com a fonte, e a Boxer como
+**Independent Test**: a ficha mostra "já pagou" 6 e "paga hoje" 1, cada conta com a fonte, e a Cliente F como
 "plano PRO sem pagamento ativo".
 
-- [ ] T014 [US2] Em `data/projects.json`, card `sirius`: `pagantesDeclarados` com os ids COMPLETOS das 6
+- [X] T014 [US2] Em `data/projects.json`, card `sirius`: `pagantesDeclarados` com os ids COMPLETOS das 6
   contas (buscados no banco, conferidos contra a tabela de Clarifications da spec).
-- [ ] T015 [P] [US2] Criar `lib/stripe-leitura.ts`: `GET /v1/checkout/sessions?status=complete` (paginado, com
+- [X] T015 [P] [US2] Criar `lib/stripe-leitura.ts`: `GET /v1/checkout/sessions?status=complete` (paginado, com
   `expand[]=data.payment_intent.latest_charge`) e `GET /v1/subscriptions?status=active` por `fetch`, com
   `SIRIUS_STRIPE_KEY`. Sem a chave, `{erro: "chave do Stripe ausente"}`. Erro HTTP, `{erro}` com o status,
   nunca a chave.
-- [ ] T016 [US2] Em `lib/okr-coleta.ts`/`lib/ficha-dados.ts`, a célula `vendas` do Sirius passa a ser
+- [X] T016 [US2] Em `lib/okr-coleta.ts`/`lib/ficha-dados.ts`, a célula `vendas` do Sirius passa a ser
   `pagantes(...).vendas`, e a ficha recebe `pagaHoje`, `divergencias` e `descartes`.
-- [ ] T017 [US2] Em `app/okr/[slug]/page.tsx`, mostrar "paga hoje", as divergências e os descartes do Stripe,
+- [X] T017 [US2] Em `app/okr/[slug]/page.tsx`, mostrar "paga hoje", as divergências e os descartes do Stripe,
   cada um com a fonte e a data.
 
 ---
 
 ## Phase 5: User Story 3 — o card para de afirmar o que não mediu (P2)
 
-- [ ] T018 [P] [US3] Reescrever a `receitaNota` do Sirius em `data/projects.json` e o resumo do Sirius em
+- [X] T018 [P] [US3] Reescrever a `receitaNota` do Sirius em `data/projects.json` e o resumo do Sirius em
   `data/resumos.json` com o número medido, a data e a fonte. Não tocar os corpora de calibração (research
   D11).
 
@@ -90,7 +90,7 @@ implementação em cada fase.
 
 ## Phase 6: Polish
 
-- [ ] T019 `npm test` (suíte inteira) e `npx tsc --noEmit` limpos.
+- [X] T019 `npm test` (suíte inteira) e `npx tsc --noEmit` limpos.
 - [ ] T020 Commit (mensagem em inglês) e push em `main` fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT.
 - [ ] T021 Depois do deploy e do T004: quickstart §2 e §4 em produção (os números da ficha e do mapa iguais à
   contagem direta, no mesmo dia).

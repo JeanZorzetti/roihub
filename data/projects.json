@@ -58,7 +58,23 @@
       "declaradaEm": "2026-09-21"
     },
     "receita": 9,
-    "receitaNota": "3 vendas orgânicas AFIRMADAS, nunca checadas: o banco de produção é a fonte viva e não foi consultado uma vez sequer. `vendas` fica ausente de propósito — 'não olhei' não vira 'não vendeu'. Ligar a fonte é o próximo commit da frente do dinheiro (o atma já está ligado no Mercado Pago). ⚠️ TENTADO em 31/07 e BLOQUEADO por rede, não por falta de credencial: o `.env` tem a URL completa e `31.97.23.166:5434` devolve ETIMEDOUT da máquina de dev — o mesmo padrão do `:5499` do sofia-next. O esquema já foi lido e a query é conhecida: `Organization` tem `tier`, `stripeSubscriptionId`, `mercadoPagoSubscriptionId`, `billingStartDate` e — o campo que importa — `isTestAccount` ('exclude from revenue metrics'), então a contagem honesta é tier != FREE E isTestAccount = false. Falta só alcançar a porta",
+    "receitaNota": "Medido em 22/09/2026 (spec 053). Já pagaram 6 contas, pela declaração do dono (os ids estão em `pagantesDeclarados`, e a ficha mostra o nome das empresas lido do banco do produto). Hoje só 1 paga, e as outras 5 cancelaram. Só a que paga hoje tem prova de gateway (assinatura no Mercado Pago), e o Stripe não tem nenhuma venda desde a migração de 07/07. A frase antiga (\"3 vendas: 2 PRO + 1 Business\") estava errada: o único BUSINESS do banco é conta de teste.",
+    "epoca": {
+      "data": "2026-03-17",
+      "porque": "primeira conta real do produto"
+    },
+    "pagantesDeclarados": {
+      "declaradoEm": "2026-09-22",
+      "fonte": "declaração do dono (Jean) em 22/09/2026, sem extrato; a lista é de quem JÁ pagou",
+      "contas": [
+        { "conta": "b79b1f21-52ae-47f0-bbdf-cf9c76b562cb", "pagaHoje": true },
+        { "conta": "e83b0cb1-edc1-4bec-b75e-c651202d38e7", "pagaHoje": false },
+        { "conta": "9c46f7ac-32b2-4130-adb6-bd66e5d2e75c", "pagaHoje": false },
+        { "conta": "2fd529c2-f142-43a4-a04d-766dcd515292", "pagaHoje": false },
+        { "conta": "3733aa94-b188-4b43-a3ce-632332dfc69b", "pagaHoje": false },
+        { "conta": "5270e104-081b-4f28-b79b-24c526344cf9", "pagaHoje": false }
+      ]
+    },
     "blockers": 2,
     "blockersLista": [],
     "seoSeed": 6,

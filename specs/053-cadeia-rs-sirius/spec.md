@@ -25,7 +25,7 @@ Medido em 22/09/2026, direto no banco de produção do Sirius (só contagens e d
    | Criou contato próprio | 32 (mar 10 · abr 19 · mai 2 · **jun 0 · jul 0 · ago 0** · set 1) | contato criado 5 min ou mais depois da conta |
    | Plano pago no banco | 3 na 1ª leitura (2 PRO, 1 STARTER), 2 na 2ª (ver fato 9) | plano da conta |
    | Pago com prova no gateway | **1** (PRO de março, assinatura no Mercado Pago) | id de assinatura do gateway |
-   | Já pagou (declarado pelo dono) | **6**, e só **1 paga hoje** (Cartopel) | declaração de 22/09/2026 |
+   | Já pagou (declarado pelo dono) | **6**, e só **1 paga hoje** (Cliente A) | declaração de 22/09/2026 |
 
 3. **Toda conta nova ganha 5 deals de exemplo.** 45 contas têm deals criados em menos de 5 minutos, com os
    mesmos títulos ("Consultoria + CRM" 43 vezes, "CRM para Construtora" 41). Por isso "tem deal" não serve
@@ -42,7 +42,7 @@ Medido em 22/09/2026, direto no banco de produção do Sirius (só contagens e d
 7. **O hub afirma "3 vendas orgânicas: 2 PRO + 1 Business".** O único BUSINESS do banco é conta de teste.
 8. **O rastreamento de eventos do produto nunca gravou nada.** A tabela de atividade do usuário está vazia,
    então ativação não pode sair dela.
-9. **O plano mudou DURANTE a medição.** O VOE COM KENNEDY estava STARTER na primeira leitura de 22/09 e FREE
+9. **O plano mudou DURANTE a medição.** O Cliente D estava STARTER na primeira leitura de 22/09 e FREE
    na segunda, com `updatedAt` de 22/09 às 15:09. O plano do banco se mexe sem pagamento nenhum, e é por isso
    que ele não entra como prova (ver Clarifications).
 
@@ -60,24 +60,24 @@ Medido em 22/09/2026, direto no banco de produção do Sirius (só contagens e d
   São 32 contas reais: mar 10 · abr 19 · mai 2 · jun 0 · jul 0 · ago 0 · set 1. O corte de 5 minutos tira os
   contatos de exemplo, que nascem com a conta como os deals (72 contas têm contato, 32 depois do corte).
 - Q: No retroativo, quem conta como pagante? → A: **a lista declarada pelo dono em 22/09/2026**, e não o plano
-  gravado no banco: Boxer Embalagens, London Finance, VOE COM KENNEDY, Wordseg, 3A3 Consultoria e Cartopel (o
-  dono citou Wordseg duas vezes). Casamento por nome com as contas do banco, feito em 22/09:
+  gravado no banco: Cliente F, Cliente E, Cliente D, Cliente C, Cliente B e Cliente A (o
+  dono citou Cliente C duas vezes). Casamento por nome com as contas do banco, feito em 22/09:
 
   | Declarada | Conta no banco | Criada | Plano no banco | Prova de gateway |
   |---|---|---|---|---|
-  | Cartopel | Cartopel | 17/03 | PRO | ✅ assinatura no Mercado Pago |
-  | 3A3 Consultoria | 3A3 Consultoria | 18/03 | FREE | — |
-  | Wordseg | `worldseg` (grafado com L; único nome parecido) | 25/03 | FREE, cobrança desde 01/04 | — |
-  | VOE COM KENNEDY | VOE COM KENNEDY LTDA | 31/03 | FREE, cobrança desde 16/04 | — |
-  | London Finance | London Finance | 14/04 | FREE | — |
-  | Boxer Embalagens | Boxer Embalagens de 29/04 (a de 11/05 é cadastro duplicado, 0 contato) | 29/04 | PRO | — |
+  | Cliente A | Cliente A | 17/03 | PRO | ✅ assinatura no Mercado Pago |
+  | Cliente B | Cliente B | 18/03 | FREE | — |
+  | Cliente C | a conta de grafia diferente | 25/03 | FREE, cobrança desde 01/04 | — |
+  | Cliente D | Cliente D | 31/03 | FREE, cobrança desde 16/04 | — |
+  | Cliente E | Cliente E | 14/04 | FREE | — |
+  | Cliente F | Cliente F de 29/04 (a de 11/05 é cadastro duplicado, 0 contato) | 29/04 | PRO | — |
 
   São **6 contas que já pagaram**, e o banco diz 2 planos pagos. Quatro estão no plano FREE, e só uma tem prova
   de gateway.
-- Q: A lista é de quem paga hoje? → A: **não, é de quem já pagou.** Hoje só a **Cartopel** paga, e as outras 5
-  cancelaram. Então o degrau "primeira cobrança aprovada" é 6, e "pagam hoje" é 1. A Boxer Embalagens segue no
+- Q: A lista é de quem paga hoje? → A: **não, é de quem já pagou.** Hoje só a **Cliente A** paga, e as outras 5
+  cancelaram. Então o degrau "primeira cobrança aprovada" é 6, e "pagam hoje" é 1. A Cliente F segue no
   plano **PRO sem pagar** (7 usuários, 1.248 contatos próprios): o produto entrega plano pago a quem não paga.
-- Q: Wordseg é a conta `worldseg`? → A: sim.
+- Q: Cliente C é a conta a conta de grafia diferente? → A: sim.
 - Q: O hub pode ter um usuário só de leitura no banco do Sirius? → A: sim, autorizado em 22/09/2026.
 - Q: E a chave do Stripe? → A: o dono cria a chave restrita só de leitura. Até ela existir, o lado do Stripe
   fica "não apurado".
@@ -125,7 +125,7 @@ que as 6 declaradas são exatamente as da tabela de Clarifications.
 1. **Given** uma conta com plano pago no banco que não está na lista declarada nem tem cobrança no Stripe,
    **When** os pagantes são contados, **Then** ela aparece separada, como "plano pago sem prova de pagamento", e
    não entra no número de pagantes.
-2. **Given** uma ex-pagante declarada que segue num plano pago no produto (a Boxer, PRO), **When** a ficha abre,
+2. **Given** uma ex-pagante declarada que segue num plano pago no produto (a Cliente F, PRO), **When** a ficha abre,
    **Then** ela conta em "já pagou", não em "paga hoje", e a tela marca a divergência ("plano PRO sem pagamento
    ativo").
 3. **Given** uma cobrança aprovada no Stripe com o id de uma conta real, **When** a coleta roda, **Then** a
@@ -159,7 +159,7 @@ Sirius sem data e fonte.
 
 - **Conta criada com o rastreio de trial anterior ao recurso** (16 contas sem data de início de trial): não
   muda nada, porque o trial não é degrau.
-- **Conta duplicada** (a Boxer tem duas): só a conta casada na declaração conta como pagante. A outra segue
+- **Conta duplicada** (a Cliente F tem duas): só a conta casada na declaração conta como pagante. A outra segue
   como cadastro comum.
 - **Cobrança do Stripe sem id de conta** (checkout avulso, fundador, serviço): aparece como "cobrança sem conta
   do Sirius", separada, e não entra na cadeia.
@@ -184,13 +184,13 @@ Sirius sem data e fonte.
 - **FR-005**: O degrau de pagante DEVE somar duas fontes, cada conta uma vez só: as 6 contas declaradas pelo
   dono em 22/09/2026 (retroativo) e as contas com a primeira cobrança aprovada no Stripe com o id da conta
   (novos). O plano gravado no banco NÃO é fonte.
-- **FR-012**: A lista declarada DEVE morar no card do Sirius, com a data da declaração, o nome dito pelo dono e
-  o id da conta casada. A tela DEVE mostrar a fonte ao lado de cada pagante. Uma conta que está na lista e
+- **FR-012**: A lista declarada DEVE morar no card do Sirius com a data da declaração e o id da conta casada,
+  nunca o nome (o repo do hub é público). O nome da empresa sai do banco do produto. A tela DEVE mostrar a fonte ao lado de cada pagante. Uma conta que está na lista e
   também paga no Stripe conta uma vez, com as duas fontes.
 - **FR-013**: Uma conta num plano pago do produto que não paga hoje (fora da lista ativa e sem assinatura
   ativa no Stripe) DEVE aparecer marcada como "plano pago sem pagamento ativo". Ela não entra em "paga hoje".
 - **FR-014**: A ficha DEVE mostrar "paga hoje" separado de "já pagou". Para o retroativo, "paga hoje" é o que
-  a declaração diz (a Cartopel). Para os novos, é uma assinatura ativa no Stripe. Cada número tem a fonte e a
+  a declaração diz (a Cliente A). Para os novos, é uma assinatura ativa no Stripe. Cada número tem a fonte e a
   data ao lado. "Paga hoje" é o N1 do perfil SaaS ("clientes pagantes na janela").
 - **FR-006**: Cobranças do Stripe de teste, reembolsadas, de conta de teste ou sem id de conta DEVEM ser
   descartadas e listadas por motivo, nunca somadas em silêncio.
@@ -235,17 +235,17 @@ Sirius sem data e fonte.
 - **O corte de 5 minutos** separa os deals de exemplo dos criados pelo usuário. Ele sai da medição de 22/09
   (os de exemplo nascem no mesmo minuto da conta). Se o produto mudar a semente, o corte muda junto.
 - **O extrato do Mercado Pago do Sirius não é lido.** O retroativo vem da declaração do dono, e a conta do
-  Mercado Pago que o hub lê é a da Atma. A assinatura do Cartopel no banco aparece como prova extra ao lado
+  Mercado Pago que o hub lê é a da Atma. A assinatura do Cliente A no banco aparece como prova extra ao lado
   da declaração.
 - **As pagantes declaradas não têm data de primeira cobrança.** A tela conta as 6 na janela da época e diz que
   a data não foi declarada. Ela não reparte essas 6 por mês.
-- **Wordseg é a conta `worldseg`**, único nome parecido no banco. Se o dono corrigir, só a linha do card muda.
+- **Cliente C é a conta a conta de grafia diferente**, único nome parecido no banco. Se o dono corrigir, só a linha do card muda.
 - **Valor em reais fica fora.** A cadeia mostra contagens, como decidido na 051. MRR é outra spec.
 
 ## Fora do escopo
 
 - Consertar o rastreamento de eventos do produto (a tabela vazia).
 - Consertar o produto: a semente de deals e contatos, o `CONVERTED` em conta FREE, as 4 pagantes no plano FREE,
-  a conta duplicada da Boxer.
+  a conta duplicada da Cliente F.
 - MRR, ticket e taxa de churn (a contagem "5 de 6 cancelaram" aparece como fato declarado, sem taxa).
 - Ligar a cadeia de qualquer outro projeto.

@@ -11,7 +11,7 @@ Princípio V: a tela e o log mostram o NOME da variável, nunca o valor.
 
 ## Card do Sirius (`data/projects.json`)
 
-- `epoca`: `{ "data": "2026-03-17", "porque": "primeira conta real do produto (Cartopel)" }`
+- `epoca`: `{ "data": "2026-03-17", "porque": "primeira conta real do produto" }`
 - `pagantesDeclarados`: formato em data-model.md.
 - `receitaNota`: reescrita com o número medido, a data e a fonte (FR-011).
 

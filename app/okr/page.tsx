@@ -41,10 +41,10 @@ export default async function OkrPage() {
 
   const linhas = await Promise.all(
     projects.map(async (p) => {
-      const { cliques, leads: leadsCel, contatados, respondeu, ticket, vendas, orcamentos, janelas } = await coletarDoProjeto(p, { porPipeline, erroLeads });
+      const { cliques, leads: leadsCel, contatados, respondeu, ticket, vendas, orcamentos, janelas, saas } = await coletarDoProjeto(p, { porPipeline, erroLeads });
       // SC-001: a lista e a ficha leem o MESMO `coletado`. Passar menos aqui faria a `/okr` julgar
       // a posição de ataque por uma cadeia mais curta que a que a ficha exibe.
-      const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, contatados, respondeu, vendas, orcamentos }, declaracoes: p.declaracoes });
+      const ficha = montarFicha({ slug: p.slug, perfil: p.perfil, coletado: { cliques, leads: leadsCel, contatados, respondeu, vendas, orcamentos, ...(saas ? { signups: saas.signups, ativados: saas.ativados } : {}) }, declaracoes: p.declaracoes, epoca: p.epoca ?? null });
       // 018/FR-022/FR-034: mesma resolução da ficha — apurado vence declarado antes de projetar().
       const ticketCel = resolverTicket(ticket, p.meta ?? null);
       const metaComTicket = ticketCel.estado === "nao-apurado" ? (p.meta ?? null) : { ...p.meta, ticket: (ticketCel as { valor: number }).valor };

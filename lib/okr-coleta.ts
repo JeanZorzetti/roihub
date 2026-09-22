@@ -7,6 +7,8 @@ import { pipelineDe, celulaDeLeads, celulasDeOrcamento, celulaDeContato, celulaD
 import { dbOn, listLeads } from "@/lib/db";
 import { ga4Canais, ga4Eventos, type LeituraGa4, type EventosGa4 } from "@/lib/ga4";
 import { descoberta, comportamento, conversao, hoje } from "@/lib/janelas.mjs";
+import { celulasDaConta, classificarSessoesStripe, pagantes } from "@/lib/saas.mjs";
+import { lerStripeSirius } from "@/lib/stripe-leitura";
 
 // A coleta das três células da 009 (cliques, leads, vendas), extraída de app/okr/page.tsx sem
 // mudar comportamento (011, decisão D5): "se aparecer uma segunda [entrada], isto vira `lib/`" —
@@ -72,6 +74,69 @@ export const FONTES_PROPRIAS: Record<
     },
   },
 };
+
+/**
+ * 053/research D4 — o banco do produto dos projetos SaaS com cadeia ligada (hoje só o Sirius), lido
+ * pelo usuário `roihub_leitura`, que tem grant só nestas colunas: o nome da EMPRESA, e nada de nome,
+ * e-mail ou telefone dos contatos dela (LGPD).
+ * `ativado` é o 1º contato criado 5 min ou mais depois da conta — os de exemplo nascem com ela.
+ */
+export const CONTAS_SAAS: Record<string, { env: string; sql: string }> = {
+  sirius: {
+    env: "SIRIUS_DATABASE_URL",
+    sql: `SELECT o.id, o.name AS nome, to_char(o."createdAt", 'YYYY-MM-DD') AS criado, o."isTestAccount" AS teste, o.tier::text AS tier,
+            to_char((SELECT min(x."createdAt") FROM "Contact" x
+                     WHERE x."organizationId" = o.id AND x."createdAt" >= o."createdAt" + interval '5 minutes'), 'YYYY-MM-DD') AS ativado
+          FROM "Organization" o`,
+  },
+};
+
+type LinhaConta = { id: string; nome: string | null; criado: string; teste: boolean; tier: string; ativado: string | null };
+
+async function lerContasSaas(slug: string): Promise<{ rows: LinhaConta[] } | { erro: string } | null> {
+  const f = CONTAS_SAAS[slug];
+  if (!f) return null;
+  if (!process.env[f.env]) return { erro: `${f.env} ausente` };
+  const pool = new Pool({ connectionString: process.env[f.env], max: 1 });
+  try {
+    return { rows: (await pool.query(f.sql)).rows as LinhaConta[] };
+  } catch (e) {
+    const err = e as { code?: string; message?: string };
+    return { erro: err?.code ?? String(err?.message ?? "erro").slice(0, 60) };
+  } finally {
+    await pool.end();
+  }
+}
+
+type PagantesDeclarados = { declaradoEm: string; fonte?: string; contas: { nome?: string; conta: string; pagaHoje: boolean }[] };
+
+/**
+ * A cadeia SaaS de um projeto: cadastro e ativação do banco dele, pagantes da declaração do dono unida
+ * ao Stripe (research D5–D7). `null` = projeto sem cadeia SaaS ligada. Falha do banco derruba os três
+ * degraus em `falhou-agora`, nunca em `0`: sem o banco não há como descartar conta de teste.
+ */
+async function coletarSaas(p: { slug: string; pagantesDeclarados?: PagantesDeclarados }, janela: Janela) {
+  const [contas, stripe] = await Promise.all([lerContasSaas(p.slug), CONTAS_SAAS[p.slug] ? lerStripeSirius() : null]);
+  if (!contas) return null;
+  if ("erro" in contas) {
+    const cel = naoApurado(`fonte própria indisponível (${contas.erro})`, "falhou-agora");
+    return { signups: cel, ativados: cel, vendas: cel, pagaHoje: cel, contas: [], divergencias: [], naoEncontradas: [], pagaramSemAtivar: [], descartes: [], erroStripe: null };
+  }
+  const contasPorId = new Map(contas.rows.map((l) => [l.id, l]));
+  const classificado = stripe && !("erro" in stripe) ? classificarSessoesStripe(stripe.sessoes, contasPorId) : null;
+  const r = pagantes({
+    declarados: p.pagantesDeclarados,
+    stripe: classificado && stripe && !("erro" in stripe) ? { cobrancas: classificado.cobrancas, assinaturasAtivas: stripe.assinaturasAtivas } : { erro: stripe && "erro" in stripe ? stripe.erro : "Stripe não lido" },
+    contasPorId,
+    janela,
+  });
+  return {
+    ...celulasDaConta(contas.rows, janela),
+    ...r,
+    descartes: classificado?.descartes ?? [],
+    erroStripe: stripe && "erro" in stripe ? stripe.erro : null,
+  };
+}
 
 export async function lerFontePropria(slug: string) {
   const f = FONTES_PROPRIAS[slug];
@@ -139,7 +204,7 @@ export async function coletarLeadsDoHub(): Promise<{
  * coleta e devolve as três janelas junto, para a tela colar cada uma no número que ela produziu.
  */
 export async function coletarDoProjeto(
-  p: { slug: string; url: string; vendas?: { data: string }[]; ga4?: { propertyId: string }; epoca?: { data: string; porque: string } },
+  p: { slug: string; url: string; vendas?: { data: string }[]; ga4?: { propertyId: string }; epoca?: { data: string; porque: string }; pagantesDeclarados?: PagantesDeclarados },
   {
     porPipeline,
     erroLeads,
@@ -167,10 +232,14 @@ export async function coletarDoProjeto(
   leadsPorId: Map<string, { motivo: string | null }>;
   paginas: GscPaginas;
   janelas: { descoberta: Janela; comportamento: Janela; conversao: Janela };
+  // 053: a cadeia SaaS (cadastro, ativação, pagantes) — `null` fora de CONTAS_SAAS.
+  saas: Awaited<ReturnType<typeof coletarSaas>>;
 }> {
   const janelaDescoberta = descoberta(agora);
   const janelaComportamento = comportamento(agora);
   const janelaConversao = conversao(agora, p.epoca ?? null);
+  // 053: dispara junto com o GSC e o GA4 abaixo; o banco do produto e o Stripe não somam latência.
+  const saasP = coletarSaas(p, janelaConversao);
 
   // cliques — o GSC, na janela de DESCOBERTA. Host de fornecedor (`*.vercel.app`) fica FORA de
   // toda propriedade: isso NÃO é "zero tráfego", é "não há onde olhar", e o conserto é domínio
@@ -264,9 +333,13 @@ export async function coletarDoProjeto(
 
   // vendas — AUSENTE é "não olhei", `[]` é "olhei, zero". A distinção inteira do template. Continua
   // na janela de DESCOBERTA (research D2): esta spec não move o `vendas` do card de lugar nenhum.
-  const vendas: Celula = Array.isArray(p.vendas)
-    ? apurado(p.vendas.filter((v) => v?.data && v.data >= janelaDescoberta.inicio && v.data <= janelaDescoberta.fim).length)
-    : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
+  const saas = await saasP;
+  // 053: no SaaS com cadeia ligada, `vendas` é a união declaração ∪ Stripe (lib/saas.mjs), nunca o campo do card.
+  const vendas: Celula = saas
+    ? saas.vendas
+    : Array.isArray(p.vendas)
+      ? apurado(p.vendas.filter((v) => v?.data && v.data >= janelaDescoberta.inicio && v.data <= janelaDescoberta.fim).length)
+      : naoApurado("sem régua de dinheiro (campo `vendas` ausente no card)");
 
   return {
     cliques,
@@ -286,6 +359,7 @@ export async function coletarDoProjeto(
     leadsPorId,
     paginas,
     janelas: { descoberta: janelaDescoberta, comportamento: janelaComportamento, conversao: janelaConversao },
+    saas,
   };
 }
 

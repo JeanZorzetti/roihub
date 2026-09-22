@@ -91,15 +91,18 @@ com o corte, 32.
   "declaradoEm": "2026-09-22",
   "fonte": "declaração do dono (Jean) em 22/09/2026, sem extrato",
   "contas": [
-    { "nome": "Cartopel", "conta": "<id completo>", "pagaHoje": true },
-    { "nome": "3A3 Consultoria", "conta": "<id>", "pagaHoje": false },
-    { "nome": "Wordseg", "conta": "<id de worldseg>", "pagaHoje": false },
-    { "nome": "VOE COM KENNEDY", "conta": "<id>", "pagaHoje": false },
-    { "nome": "London Finance", "conta": "<id>", "pagaHoje": false },
-    { "nome": "Boxer Embalagens", "conta": "<id da de 29/04>", "pagaHoje": false }
+    { "conta": "<id completo>", "pagaHoje": true },
+    { "conta": "<id>", "pagaHoje": false }
+    // … as 6
   ]
 }
 ```
+
+**O card guarda só o id, nunca o nome (corrigido em 22/09/2026).** O repo do hub é PÚBLICO: a lista de quem
+pagou e de quem cancelou é dado do cliente do Sirius. O nome da empresa é lido ao vivo do banco do produto
+(grant na coluna `name`, research D8), e a ficha fica atrás da autenticação do hub. A primeira versão desta
+spec, com os nomes, chegou ao GitHub nos commits `127f18e` e `0282598`.
+
 
 A célula `vendas` do Sirius ("primeira cobrança aprovada") é a UNIÃO, por id de conta, das declaradas e das
 contas com a 1ª cobrança aprovada no Stripe. Uma conta nas duas conta uma vez, com as duas fontes.
@@ -112,7 +115,7 @@ janela da época, e a tela diz que a data não foi declarada. Não entram em cor
 
 ## D6 — "Paga hoje", o N1 do perfil
 
-`pagaHoje = true` na declaração (hoje só a Cartopel) ∪ contas com assinatura `active` no Stripe e
+`pagaHoje = true` na declaração (hoje só a Cliente A) ∪ contas com assinatura `active` no Stripe e
 `organization_id` de conta real. A ficha mostra "já pagou" e "paga hoje" lado a lado, cada um com a fonte.
 
 ## D7 — O Stripe
@@ -139,13 +142,13 @@ janela da época, e a tela diz que a data não foi declarada. Não entram em cor
 CREATE ROLE roihub_leitura LOGIN PASSWORD '<32 bytes aleatórios>' CONNECTION LIMIT 2;
 GRANT CONNECT ON DATABASE siriusdb TO roihub_leitura;
 GRANT USAGE ON SCHEMA public TO roihub_leitura;
-GRANT SELECT (id, "createdAt", "isTestAccount", tier, "stripeSubscriptionId", "mercadoPagoSubscriptionId")
+GRANT SELECT (id, name, "createdAt", "isTestAccount", tier, "stripeSubscriptionId", "mercadoPagoSubscriptionId")
   ON "Organization" TO roihub_leitura;
 GRANT SELECT ("organizationId", "createdAt") ON "Contact" TO roihub_leitura;
 ```
 
 Grant **por coluna**: a tabela de contatos guarda nome, telefone e e-mail dos clientes dos clientes
-(dado pessoal, LGPD). O hub só precisa de conta e data. A senha nunca aparece em log, commit nem chat
+(dado pessoal, LGPD). O hub só precisa de conta, data e o nome da EMPRESA (que não é dado pessoal). A senha nunca aparece em log, commit nem chat
 (Princípio V): ela é gerada no script, gravada no `.env` local do hub como `SIRIUS_DATABASE_URL` e copiada
 pelo dono para o ambiente do serviço `roihub` no EasyPanel.
 
@@ -159,7 +162,7 @@ venda nova aparece na próxima abertura (SC-004).
 
 A ficha lista, sem somar na cadeia:
 
-- **Plano pago sem pagamento ativo:** conta com `tier` pago que não paga hoje (em 22/09: a Boxer, PRO).
+- **Plano pago sem pagamento ativo:** conta com `tier` pago que não paga hoje (em 22/09: a Cliente F, PRO).
 - **Pagante declarada no plano FREE:** informação, não erro (as 4 que cancelaram).
 
 ## D11 — As frases "3 vendas"
