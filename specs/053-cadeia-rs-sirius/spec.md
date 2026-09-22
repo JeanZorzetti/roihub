@@ -25,7 +25,7 @@ Medido em 22/09/2026, direto no banco de produção do Sirius (só contagens e d
    | Criou contato próprio | 32 (mar 10 · abr 19 · mai 2 · **jun 0 · jul 0 · ago 0** · set 1) | contato criado 5 min ou mais depois da conta |
    | Plano pago no banco | 3 na 1ª leitura (2 PRO, 1 STARTER), 2 na 2ª (ver fato 9) | plano da conta |
    | Pago com prova no gateway | **1** (PRO de março, assinatura no Mercado Pago) | id de assinatura do gateway |
-   | Pagante declarada pelo dono | **6** (ver Clarifications) | declaração de 22/09/2026 |
+   | Já pagou (declarado pelo dono) | **6**, e só **1 paga hoje** (Cartopel) | declaração de 22/09/2026 |
 
 3. **Toda conta nova ganha 5 deals de exemplo.** 45 contas têm deals criados em menos de 5 minutos, com os
    mesmos títulos ("Consultoria + CRM" 43 vezes, "CRM para Construtora" 41). Por isso "tem deal" não serve
@@ -72,7 +72,15 @@ Medido em 22/09/2026, direto no banco de produção do Sirius (só contagens e d
   | London Finance | London Finance | 14/04 | FREE | — |
   | Boxer Embalagens | Boxer Embalagens de 29/04 (a de 11/05 é cadastro duplicado, 0 contato) | 29/04 | PRO | — |
 
-  São **6 pagantes**, e o banco diz 2. Quatro estão no plano FREE, e só um tem prova de gateway.
+  São **6 contas que já pagaram**, e o banco diz 2 planos pagos. Quatro estão no plano FREE, e só uma tem prova
+  de gateway.
+- Q: A lista é de quem paga hoje? → A: **não, é de quem já pagou.** Hoje só a **Cartopel** paga, e as outras 5
+  cancelaram. Então o degrau "primeira cobrança aprovada" é 6, e "pagam hoje" é 1. A Boxer Embalagens segue no
+  plano **PRO sem pagar** (7 usuários, 1.248 contatos próprios): o produto entrega plano pago a quem não paga.
+- Q: Wordseg é a conta `worldseg`? → A: sim.
+- Q: O hub pode ter um usuário só de leitura no banco do Sirius? → A: sim, autorizado em 22/09/2026.
+- Q: E a chave do Stripe? → A: o dono cria a chave restrita só de leitura. Até ela existir, o lado do Stripe
+  fica "não apurado".
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -103,8 +111,8 @@ cadeia são iguais nas duas telas e batem com uma contagem direta no banco.
 
 ### User Story 2 — Pagante com a fonte dita (Priority: P1)
 
-O dono vê quantas contas pagam, e cada uma aparece com a fonte: "declarada pelo dono em 22/09/2026" para as
-6 do retroativo, ou "cobrança aprovada no Stripe" para as novas.
+O dono vê quantas contas já pagaram e quantas pagam hoje, e cada uma aparece com a fonte: "declarada pelo dono
+em 22/09/2026" para as 6 do retroativo, ou "cobrança aprovada no Stripe" para as novas.
 
 **Why this priority**: é o número que o card afirma sem ter checado. Hoje o hub diz 3, o banco diz 2 planos
 pagos, e o dono declara 6.
@@ -117,8 +125,9 @@ que as 6 declaradas são exatamente as da tabela de Clarifications.
 1. **Given** uma conta com plano pago no banco que não está na lista declarada nem tem cobrança no Stripe,
    **When** os pagantes são contados, **Then** ela aparece separada, como "plano pago sem prova de pagamento", e
    não entra no número de pagantes.
-2. **Given** uma pagante declarada que está no plano FREE do produto, **When** a ficha abre, **Then** ela conta
-   como pagante e a tela marca a divergência ("pagante declarada, plano FREE no produto").
+2. **Given** uma ex-pagante declarada que segue num plano pago no produto (a Boxer, PRO), **When** a ficha abre,
+   **Then** ela conta em "já pagou", não em "paga hoje", e a tela marca a divergência ("plano PRO sem pagamento
+   ativo").
 3. **Given** uma cobrança aprovada no Stripe com o id de uma conta real, **When** a coleta roda, **Then** a
    conta entra como pagante a partir da data da cobrança.
 4. **Given** uma cobrança do Stripe de conta de teste, reembolsada ou em modo de teste, **When** a coleta roda,
@@ -178,9 +187,11 @@ Sirius sem data e fonte.
 - **FR-012**: A lista declarada DEVE morar no card do Sirius, com a data da declaração, o nome dito pelo dono e
   o id da conta casada. A tela DEVE mostrar a fonte ao lado de cada pagante. Uma conta que está na lista e
   também paga no Stripe conta uma vez, com as duas fontes.
-- **FR-013**: Uma pagante cujo plano no produto é FREE DEVE aparecer marcada como divergência, sem sair da
-  contagem. Um plano pago no banco fora da lista e sem cobrança no Stripe DEVE aparecer como "plano pago sem
-  prova de pagamento", fora da contagem.
+- **FR-013**: Uma conta num plano pago do produto que não paga hoje (fora da lista ativa e sem assinatura
+  ativa no Stripe) DEVE aparecer marcada como "plano pago sem pagamento ativo". Ela não entra em "paga hoje".
+- **FR-014**: A ficha DEVE mostrar "paga hoje" separado de "já pagou". Para o retroativo, "paga hoje" é o que
+  a declaração diz (a Cartopel). Para os novos, é uma assinatura ativa no Stripe. Cada número tem a fonte e a
+  data ao lado. "Paga hoje" é o N1 do perfil SaaS ("clientes pagantes na janela").
 - **FR-006**: Cobranças do Stripe de teste, reembolsadas, de conta de teste ou sem id de conta DEVEM ser
   descartadas e listadas por motivo, nunca somadas em silêncio.
 - **FR-007**: A ficha (`/okr/sirius`) e o mapa (`/gsc/mapa/sirius`) DEVEM mostrar os mesmos números da cadeia,
@@ -197,8 +208,8 @@ Sirius sem data e fonte.
 - **Conta do Sirius**: uma organização no banco do produto, com data de criação, plano, marca de teste e ids de
   gateway.
 - **Ativação**: o evento, escrito e datado, que separa uso real dos deals de exemplo.
-- **Pagante declarada**: conta que o dono afirma que paga, com a data da declaração e o id da conta casada.
-  É fonte de retroativo, e a tela a mostra como declaração, não como extrato.
+- **Pagante declarada**: conta que o dono afirma que já pagou, com a data da declaração, o id da conta casada
+  e se ainda paga. É fonte de retroativo, e a tela a mostra como declaração, não como extrato.
 - **Prova de pagamento**: uma cobrança aprovada no Stripe com o id da conta.
 - **Descarte**: uma cobrança que não entra, com o motivo nomeado.
 
@@ -236,5 +247,5 @@ Sirius sem data e fonte.
 - Consertar o rastreamento de eventos do produto (a tabela vazia).
 - Consertar o produto: a semente de deals e contatos, o `CONVERTED` em conta FREE, as 4 pagantes no plano FREE,
   a conta duplicada da Boxer.
-- MRR, ticket e churn.
+- MRR, ticket e taxa de churn (a contagem "5 de 6 cancelaram" aparece como fato declarado, sem taxa).
 - Ligar a cadeia de qualquer outro projeto.
