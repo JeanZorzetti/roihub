@@ -14,27 +14,27 @@ Com `SIRIUS_DATABASE_URL` (o usuário só de leitura):
 ```sql
 -- cadastros reais na época
 SELECT count(*) FROM "Organization" WHERE NOT "isTestAccount" AND "createdAt" >= '2026-03-17';
--- ativadas
-SELECT count(DISTINCT o.id) FROM "Organization" o JOIN "Contact" x ON x."organizationId" = o.id
+-- ativadas (1º deal próprio)
+SELECT count(DISTINCT o.id) FROM "Organization" o JOIN "Deal" d ON d."organizationId" = o.id
 WHERE NOT o."isTestAccount" AND o."createdAt" >= '2026-03-17'
-  AND x."createdAt" >= o."createdAt" + interval '5 minutes';
--- a ativação é contato OU deal: some as contas da mesma query trocando "Contact" por "Deal", sem repetir conta
+  AND d."createdAt" >= o."createdAt" + interval '5 minutes';
 ```
 
-Em 22/09/2026: 108 cadastros e 34 ativadas (32 só por contato). A ficha deve mostrar os mesmos números no mesmo dia.
+Em 22/09/2026: 108 cadastros e 26 ativadas. A ficha deve mostrar os mesmos números no mesmo dia.
 
 ## 3. O usuário só de leitura não lê dado pessoal
 
 ```sql
 SELECT name FROM "Organization" LIMIT 1;   -- funciona: nome da EMPRESA (grant de 22/09)
 SELECT "trialEndsAt" FROM "Organization" LIMIT 1;  -- deve falhar: coluna fora do grant
-SELECT email FROM "Contact" LIMIT 1;       -- deve falhar
+SELECT "createdAt" FROM "Contact" LIMIT 1; -- deve falhar: grant revogado em 22/09
+SELECT title FROM "Deal" LIMIT 1;          -- deve falhar: só conta e data
 INSERT INTO "Organization" DEFAULT VALUES; -- deve falhar
 ```
 
 ## 4. As telas
 
-- `/okr/sirius`: signup 108, ativado 34, primeira cobrança aprovada 6 (declaradas), paga hoje 1, trial
+- `/okr/sirius`: signup 108, ativado 26, primeira cobrança aprovada 6 (declaradas), paga hoje 1, trial
   omitido com o motivo, taxa clique → signup recusada por janela, a Cliente F listada como "plano PRO sem
   pagamento ativo".
 - `/gsc/mapa/sirius`: o painel "Depois do clique" com os mesmos números.

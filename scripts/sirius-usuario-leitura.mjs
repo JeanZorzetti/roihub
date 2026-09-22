@@ -42,8 +42,8 @@ try {
     // `name` é nome de EMPRESA, e é o que deixa o card guardar só o id das pagantes (o repo é público).
     `GRANT SELECT (id, name, "createdAt", "isTestAccount", tier, "stripeSubscriptionId", "mercadoPagoSubscriptionId") ON "Organization" TO ${USUARIO}`,
   );
-  await c.query(`GRANT SELECT ("organizationId", "createdAt") ON "Contact" TO ${USUARIO}`);
-  // 053 — ativação é contato OU deal próprio (decisão do dono, 22/09/2026): o deal só por conta e data.
+  // 053 — ativação é o 1º deal próprio (decisão do dono, 22/09/2026): o deal só por conta e data. A tabela de
+  // contatos não entra (o grant dela foi revogado quando a ativação deixou de ler contato).
   await c.query(`GRANT SELECT ("organizationId", "createdAt") ON "Deal" TO ${USUARIO}`);
   console.log(`${USUARIO}: ${existe ? "senha trocada" : "criado"}, grants por coluna aplicados`);
 } finally {

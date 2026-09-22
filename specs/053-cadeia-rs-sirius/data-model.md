@@ -11,7 +11,7 @@ Nenhuma tabela nova no banco do hub. Tudo é lido ao vivo de duas fontes e de um
 | `teste` | boolean | `true` sai de toda contagem |
 | `tier` | `FREE`/`STARTER`/`PRO`/`BUSINESS` | só serve para a divergência (D10), nunca como prova de pagamento |
 | `tem_stripe`, `tem_mp` | boolean | prova extra ao lado da declaração |
-| `ativado` | `YYYY-MM-DD` ou `null` | 1º contato OU deal criado 5 min ou mais depois da conta |
+| `ativado` | `YYYY-MM-DD` ou `null` | 1º deal criado 5 min ou mais depois da conta |
 
 ## Pagante declarada (card do Sirius, `pagantesDeclarados`)
 

@@ -57,9 +57,10 @@ Medido em 22/09/2026, direto no banco de produção do Sirius (só contagens e d
 ### Session 2026-09-22
 
 - Q: O que conta como "ativado"? → A: primeiro "criou 1 contato 5 minutos ou mais depois de abrir a conta" (opção
-  B). **Revisto pelo dono em 22/09/2026 para "criou 1 contato OU 1 deal próprio"**: uma pagante usou só deals (33)
-  e nenhum contato, e outra só contatos. Com contato OU deal são **34** contas (mar 10 · abr 21 · mai 2 · jun 0 ·
-  jul 0 · ago 0 · set 1), e as 6 pagantes entram todas. O texto abaixo é o da primeira resposta:
+  B). Depois "contato OU deal". **Fechado pelo dono em 22/09/2026: ativação é o 1º DEAL próprio** — deal é o
+  núcleo do CRM, e contato pode ser só uma importação. São **26** contas (mar 9 · abr 15 · mai 1 · jun 0 · jul 0 ·
+  ago 0 · set 1). Uma das 6 pagantes (906 contatos, nenhum deal próprio) fica FORA de "ativado", e a ficha a
+  nomeia — a taxa ativado → cobrança não é subconjunto exato. O texto abaixo é o da primeira resposta:
   São 32 contas reais: mar 10 · abr 19 · mai 2 · jun 0 · jul 0 · ago 0 · set 1. O corte de 5 minutos tira os
   contatos de exemplo, que nascem com a conta como os deals (72 contas têm contato, 32 depois do corte).
 - Q: No retroativo, quem conta como pagante? → A: **a lista declarada pelo dono em 22/09/2026**, e não o plano
@@ -103,7 +104,7 @@ cadeia são iguais nas duas telas e batem com uma contagem direta no banco.
 
 1. **Given** as 108 contas reais de 22/09, **When** a ficha abre, **Then** o cadastro mostra o número de
    contas na janela da cadeia, sem as de teste.
-2. **Given** uma conta cujos únicos contatos e deals são de exemplo (criados nos 5 primeiros minutos), **When** a
+2. **Given** uma conta cujos únicos deals são de exemplo (criados nos 5 primeiros minutos), **When** a
    ativação é contada, **Then** ela não conta como ativada.
 3. **Given** o degrau de trial, **When** a cadeia é montada para o Sirius, **Then** ele não aparece como
    degrau, e a tela diz por quê ("todo cadastro ganha trial: degrau de 100%").
@@ -181,8 +182,8 @@ Sirius sem data e fonte.
   credencial da aplicação.
 - **FR-002**: O degrau de cadastro DEVE contar as contas criadas na janela da cadeia, sem as marcadas como
   teste.
-- **FR-003**: O degrau de ativação DEVE contar as contas que criaram ao menos 1 contato OU 1 deal 5 minutos ou
-  mais depois de abrir a conta, e a ficha DEVE trazer essa definição escrita.
+- **FR-003**: O degrau de ativação DEVE contar as contas que criaram ao menos 1 deal 5 minutos ou mais depois de
+  abrir a conta, e a ficha DEVE trazer essa definição escrita. Pagante sem deal próprio DEVE ser nomeada.
 - **FR-004**: O degrau de trial NÃO DEVE aparecer na cadeia do Sirius, e a tela DEVE dizer por quê.
 - **FR-005**: O degrau de pagante DEVE somar duas fontes, cada conta uma vez só: as 6 contas declaradas pelo
   dono em 22/09/2026 (retroativo) e as contas com a primeira cobrança aprovada no Stripe com o id da conta

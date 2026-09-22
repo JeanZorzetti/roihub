@@ -67,24 +67,22 @@ SELECT o.id,
        o.tier,
        o."stripeSubscriptionId" IS NOT NULL AS tem_stripe,
        o."mercadoPagoSubscriptionId" IS NOT NULL AS tem_mp,
-       to_char(LEAST(
-         (SELECT min(x."createdAt") FROM "Contact" x WHERE x."organizationId" = o.id
-            AND x."createdAt" >= o."createdAt" + interval '5 minutes'),
-         (SELECT min(d."createdAt") FROM "Deal" d WHERE d."organizationId" = o.id
-            AND d."createdAt" >= o."createdAt" + interval '5 minutes')), 'YYYY-MM-DD') AS ativado
+       to_char((SELECT min(d."createdAt") FROM "Deal" d
+                WHERE d."organizationId" = o.id
+                  AND d."createdAt" >= o."createdAt" + interval '5 minutes'), 'YYYY-MM-DD') AS ativado
 FROM "Organization" o
 ```
 
 - **Cadastro** = contas com `teste = false` e `criado` na janela.
-- **Ativado** = das mesmas, as com `ativado` não nulo (1º contato OU deal próprio 5 min ou mais depois da conta;
-  revisto pelo dono em 22/09, ver Clarifications da spec). A
+- **Ativado** = das mesmas, as com `ativado` não nulo (1º DEAL próprio 5 min ou mais depois da conta; fechado
+  pelo dono em 22/09 depois de duas revisões, ver Clarifications da spec). A
   data de ativação é a do contato; a janela filtra pela data do cadastro, como a Atma filtra o orçamento pelo
   lead de origem.
-- Medido em 22/09: 108 cadastros e 34 ativadas na época (32 só por contato), com 0 ativações em junho, julho e
-  agosto.
+- Medido em 22/09: 108 cadastros e 26 ativadas na época (32 por contato, 34 por contato OU deal), com 0
+  ativações em junho, julho e agosto. Uma pagante não tem deal próprio e fica fora do degrau.
 
-**Por que 5 minutos.** Os contatos e deals de exemplo nascem no mesmo minuto da conta. 72 contas têm contato;
-com o corte, 32.
+**Por que 5 minutos.** Os contatos e deals de exemplo nascem no mesmo minuto da conta. 68 contas têm deal; com o
+corte, 26.
 
 ## D5 — Quem pagou: a declaração e o Stripe, cada conta uma vez
 
@@ -152,11 +150,13 @@ GRANT CONNECT ON DATABASE siriusdb TO roihub_leitura;
 GRANT USAGE ON SCHEMA public TO roihub_leitura;
 GRANT SELECT (id, name, "createdAt", "isTestAccount", tier, "stripeSubscriptionId", "mercadoPagoSubscriptionId")
   ON "Organization" TO roihub_leitura;
-GRANT SELECT ("organizationId", "createdAt") ON "Contact" TO roihub_leitura;
+GRANT SELECT ("organizationId", "createdAt") ON "Deal" TO roihub_leitura;
+-- a tabela de contatos NÃO entra: o grant dela foi revogado quando a ativação passou a ler só deal (22/09).
 ```
 
-Grant **por coluna**: a tabela de contatos guarda nome, telefone e e-mail dos clientes dos clientes
-(dado pessoal, LGPD). O hub só precisa de conta, data e o nome da EMPRESA (que não é dado pessoal). A senha nunca aparece em log, commit nem chat
+Grant **por coluna**: as tabelas do produto guardam nome, telefone e e-mail dos clientes dos clientes (dado
+pessoal, LGPD), e o deal guarda título e valor. O hub só precisa de conta, data e o nome da EMPRESA (que não é
+dado pessoal). A senha nunca aparece em log, commit nem chat
 (Princípio V): ela é gerada no script, gravada no `.env` local do hub como `SIRIUS_DATABASE_URL` e copiada
 pelo dono para o ambiente do serviço `roihub` no EasyPanel.
 

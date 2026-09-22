@@ -28,7 +28,7 @@ export function Pagantes({ saas }: { saas: Saas }) {
           {saas.pagaramSemAtivar.length > 0 && (
             <p className="foot">
               {saas.pagaramSemAtivar.join(", ")} {saas.pagaramSemAtivar.length === 1 ? "pagou" : "pagaram"} sem passar por “ativado”
-              (nenhum contato nem deal próprio). A taxa ativado → cobrança divide todas as pagantes pelas ativadas, e{" "}
+              (nenhum deal próprio). A taxa ativado → cobrança divide todas as pagantes pelas ativadas, e{" "}
               {saas.pagaramSemAtivar.length === 1 ? "essa conta não está" : "essas contas não estão"} entre as ativadas.
             </p>
           )}
