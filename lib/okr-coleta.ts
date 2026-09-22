@@ -120,7 +120,10 @@ async function coletarSaas(p: { slug: string; pagantesDeclarados?: PagantesDecla
   if (!contas) return null;
   if ("erro" in contas) {
     const cel = naoApurado(`fonte própria indisponível (${contas.erro})`, "falhou-agora");
-    return { signups: cel, ativados: cel, vendas: cel, pagaHoje: cel, contas: [], divergencias: [], naoEncontradas: [], pagaramSemAtivar: [], descartes: [], erroStripe: null };
+    // `erroStripe` NUNCA `null` aqui: sem o banco nada do Stripe foi classificado, e `null` fazia a ficha
+    // dizer "Stripe lido: nenhuma cobrança descartada" (visto em produção em 22/09/2026).
+    const erroStripe = stripe && "erro" in stripe ? stripe.erro : "não classificado sem o banco do produto";
+    return { signups: cel, ativados: cel, vendas: cel, pagaHoje: cel, contas: [], divergencias: [], naoEncontradas: [], pagaramSemAtivar: [], descartes: [], erroStripe };
   }
   const contasPorId = new Map(contas.rows.map((l) => [l.id, l]));
   const classificado = stripe && !("erro" in stripe) ? classificarSessoesStripe(stripe.sessoes, contasPorId) : null;

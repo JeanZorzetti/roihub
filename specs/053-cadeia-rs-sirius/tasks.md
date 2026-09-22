@@ -91,11 +91,13 @@ implementação em cada fase.
 ## Phase 6: Polish
 
 - [X] T019 `npm test` (suíte inteira) e `npx tsc --noEmit` limpos.
-- [ ] T020 Commit (mensagem em inglês) e push em `main` fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT.
+- [X] T020 Commit (mensagem em inglês) e push em `main` fora de 23:30–01:00, 08:00–08:45 e 05:15–06:40 BRT.
 - [ ] T021 Depois do deploy e do T004: quickstart §2 e §4 em produção (os números da ficha e do mapa iguais à
   contagem direta, no mesmo dia).
-- [ ] T022 SC-005: capturar de novo o HTML dos 8 projetos de T001 e comparar o texto de `<main>` com o de
+- [X] T022 SC-005: capturar de novo o HTML dos 8 projetos de T001 e comparar o texto de `<main>` com o de
   antes.
+  - ✅ 22/09/2026: 7 idênticos; `polarisia` perdeu 1 buraco, e era o "visitante · GSC indisponível · falhou agora"
+    transitório da captura de antes. Os 4 buracos permanentes (signup, ativado, trial, cobrança) são iguais.
 - [ ] T023 `ui-verification` em `/okr/sirius`: árvore de acessibilidade dos blocos novos, 360/768/1440 px e o
   console.
 - [ ] T024 ⛔ Quando o dono criar a chave restrita: gravar `SIRIUS_STRIPE_KEY` no EasyPanel e conferir que o lado
