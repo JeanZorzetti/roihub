@@ -140,6 +140,10 @@ em minúscula.
 > `INSPECOES_SIMULTANEAS = 4` (`lib/indexacao.mjs`, teste em `test/indexacao.test.mjs`): 139 URLs viram ~35
 > lotes, uns 4 min. Nenhuma `maxDuration` muda. O teto de 400 por corrida daria ~11 min, perto dos 800 s, e
 > subir o teto exige subir `maxDuration`, proxy e `--max-time` juntos.
+>
+> **Conferido em 22/09/2026:** a corrida agendada com os lotes de 4 fez 139 inspeções em **4m47s**, verde,
+> com 0 falha de quota (Atma 25/25 às 13:41:09Z, Sirius 114/114 às 13:44:36Z). No mesmo dia a latência em
+> série, medida à parte, era 7,2 s por URL, ou uns 17 min para as 139.
 
 ## D9 — Campo (CrUX): `SLUGS_DE_CAMPO` ganha o Sirius
 
