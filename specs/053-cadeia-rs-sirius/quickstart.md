@@ -18,9 +18,10 @@ SELECT count(*) FROM "Organization" WHERE NOT "isTestAccount" AND "createdAt" >=
 SELECT count(DISTINCT o.id) FROM "Organization" o JOIN "Contact" x ON x."organizationId" = o.id
 WHERE NOT o."isTestAccount" AND o."createdAt" >= '2026-03-17'
   AND x."createdAt" >= o."createdAt" + interval '5 minutes';
+-- a ativação é contato OU deal: some as contas da mesma query trocando "Contact" por "Deal", sem repetir conta
 ```
 
-Em 22/09/2026: 108 e 32. A ficha deve mostrar os mesmos números no mesmo dia.
+Em 22/09/2026: 108 cadastros e 34 ativadas (32 só por contato). A ficha deve mostrar os mesmos números no mesmo dia.
 
 ## 3. O usuário só de leitura não lê dado pessoal
 
@@ -33,7 +34,7 @@ INSERT INTO "Organization" DEFAULT VALUES; -- deve falhar
 
 ## 4. As telas
 
-- `/okr/sirius`: signup 108, ativado 32, primeira cobrança aprovada 6 (declaradas), paga hoje 1, trial
+- `/okr/sirius`: signup 108, ativado 34, primeira cobrança aprovada 6 (declaradas), paga hoje 1, trial
   omitido com o motivo, taxa clique → signup recusada por janela, a Cliente F listada como "plano PRO sem
   pagamento ativo".
 - `/gsc/mapa/sirius`: o painel "Depois do clique" com os mesmos números.

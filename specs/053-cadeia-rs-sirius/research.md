@@ -67,17 +67,21 @@ SELECT o.id,
        o.tier,
        o."stripeSubscriptionId" IS NOT NULL AS tem_stripe,
        o."mercadoPagoSubscriptionId" IS NOT NULL AS tem_mp,
-       to_char((SELECT min(x."createdAt") FROM "Contact" x
-                WHERE x."organizationId" = o.id
-                  AND x."createdAt" >= o."createdAt" + interval '5 minutes'), 'YYYY-MM-DD') AS ativado
+       to_char(LEAST(
+         (SELECT min(x."createdAt") FROM "Contact" x WHERE x."organizationId" = o.id
+            AND x."createdAt" >= o."createdAt" + interval '5 minutes'),
+         (SELECT min(d."createdAt") FROM "Deal" d WHERE d."organizationId" = o.id
+            AND d."createdAt" >= o."createdAt" + interval '5 minutes')), 'YYYY-MM-DD') AS ativado
 FROM "Organization" o
 ```
 
 - **Cadastro** = contas com `teste = false` e `criado` na janela.
-- **Ativado** = das mesmas, as com `ativado` não nulo (1º contato próprio 5 min ou mais depois da conta). A
+- **Ativado** = das mesmas, as com `ativado` não nulo (1º contato OU deal próprio 5 min ou mais depois da conta;
+  revisto pelo dono em 22/09, ver Clarifications da spec). A
   data de ativação é a do contato; a janela filtra pela data do cadastro, como a Atma filtra o orçamento pelo
   lead de origem.
-- Medido em 22/09: 108 cadastros e 32 ativadas na época, com 0 ativações em junho, julho e agosto.
+- Medido em 22/09: 108 cadastros e 34 ativadas na época (32 só por contato), com 0 ativações em junho, julho e
+  agosto.
 
 **Por que 5 minutos.** Os contatos e deals de exemplo nascem no mesmo minuto da conta. 72 contas têm contato;
 com o corte, 32.
@@ -125,8 +129,12 @@ janela da época, e a tela diz que a data não foi declarada. Não entram em cor
 - **Primeira cobrança:** `GET /v1/checkout/sessions?status=complete&expand[]=data.payment_intent.latest_charge`,
   paginado. Conta = `metadata.organization_id`, ou `client_reference_id` se não houver (é o que o webhook do
   Sirius já faz). Aprovada = `payment_status = "paid"`. A data é a da sessão.
-- **Descartes, nominais (FR-006):** `livemode = false` (modo de teste) · sem id de conta · conta de teste no
-  banco · cobrança reembolsada · não paga.
+- **Descartes, nominais (FR-006):** `livemode = false` (modo de teste) · não paga · **valor zero** · sem id de
+  conta · conta de teste no banco · cobrança reembolsada.
+- **A conta Stripe é COMPARTILHADA (medido em 22/09/2026).** A única sessão paga da conta era um trial de outro
+  produto do portfólio, em dólar e com valor 0,00, com `metadata.userId` e sem `organization_id`. Por isso
+  "valor zero" é descarte próprio (`paid` não quer dizer que entrou dinheiro), e o descarte sem conta avisa que
+  pode ser outro produto. Assinaturas ativas: 0.
 - **Paga hoje:** `GET /v1/subscriptions?status=active`, com `metadata.organization_id` (o checkout repassa a
   metadata para a assinatura).
 - **Sem chave, ou erro:** `não apurado` com o motivo ("chave do Stripe ausente" / "Stripe indisponível"), e

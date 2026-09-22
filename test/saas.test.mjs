@@ -22,14 +22,15 @@ test("053 — cadastro conta as contas reais criadas na janela; ativado só as c
   assert.deepEqual(ativados, apurado(3), "a conta só com contatos de exemplo não ativou");
 });
 
-const sessao = (o) => ({ id: "cs_1", livemode: true, pago: true, conta: "cartopel", data: "2026-10-01", reembolsada: false, ...o });
+const sessao = (o) => ({ id: "cs_1", livemode: true, pago: true, valor: 9700, conta: "cartopel", data: "2026-10-01", reembolsada: false, ...o });
 
-test("053 — sessões do Stripe: os cinco descartes são nominais, e o resto vira cobrança", () => {
+test("053 — sessões do Stripe: os descartes são nominais (valor zero incluso), e o resto vira cobrança", () => {
   const { cobrancas, descartes } = classificarSessoesStripe(
     [
       sessao({ id: "ok" }),
       sessao({ id: "t", livemode: false }),
       sessao({ id: "np", pago: false }),
+      sessao({ id: "vz", valor: 0 }),
       sessao({ id: "sc", conta: null }),
       sessao({ id: "ct", conta: "teste" }),
       sessao({ id: "rb", reembolsada: true }),
@@ -40,7 +41,7 @@ test("053 — sessões do Stripe: os cinco descartes são nominais, e o resto vi
   assert.deepEqual(cobrancas.map((c) => c.id), ["ok"]);
   assert.deepEqual(
     descartes.map((d) => `${d.id}:${d.motivo}`),
-    ["t:modo de teste", "np:não paga", "sc:sem conta do Sirius", "ct:conta de teste", "rb:reembolsada", "nf:conta não encontrada no banco"],
+    ["t:modo de teste", "np:não paga", "vz:valor zero", "sc:sem conta do Sirius (a conta Stripe é compartilhada com outros produtos)", "ct:conta de teste", "rb:reembolsada", "nf:conta não encontrada no banco"],
   );
 });
 

@@ -79,14 +79,17 @@ export const FONTES_PROPRIAS: Record<
  * 053/research D4 — o banco do produto dos projetos SaaS com cadeia ligada (hoje só o Sirius), lido
  * pelo usuário `roihub_leitura`, que tem grant só nestas colunas: o nome da EMPRESA, e nada de nome,
  * e-mail ou telefone dos contatos dela (LGPD).
- * `ativado` é o 1º contato criado 5 min ou mais depois da conta — os de exemplo nascem com ela.
+ * `ativado` é o 1º contato OU deal criado 5 min ou mais depois da conta — os de exemplo nascem com ela.
+ * Contato OU deal por decisão do dono (22/09/2026): uma pagante usou só deals (33) e nenhum contato.
  */
 export const CONTAS_SAAS: Record<string, { env: string; sql: string }> = {
   sirius: {
     env: "SIRIUS_DATABASE_URL",
     sql: `SELECT o.id, o.name AS nome, to_char(o."createdAt", 'YYYY-MM-DD') AS criado, o."isTestAccount" AS teste, o.tier::text AS tier,
-            to_char((SELECT min(x."createdAt") FROM "Contact" x
-                     WHERE x."organizationId" = o.id AND x."createdAt" >= o."createdAt" + interval '5 minutes'), 'YYYY-MM-DD') AS ativado
+            to_char(LEAST(
+              (SELECT min(x."createdAt") FROM "Contact" x WHERE x."organizationId" = o.id AND x."createdAt" >= o."createdAt" + interval '5 minutes'),
+              (SELECT min(d."createdAt") FROM "Deal" d WHERE d."organizationId" = o.id AND d."createdAt" >= o."createdAt" + interval '5 minutes')
+            ), 'YYYY-MM-DD') AS ativado
           FROM "Organization" o`,
   },
 };

@@ -11,7 +11,7 @@ Nenhuma tabela nova no banco do hub. Tudo é lido ao vivo de duas fontes e de um
 | `teste` | boolean | `true` sai de toda contagem |
 | `tier` | `FREE`/`STARTER`/`PRO`/`BUSINESS` | só serve para a divergência (D10), nunca como prova de pagamento |
 | `tem_stripe`, `tem_mp` | boolean | prova extra ao lado da declaração |
-| `ativado` | `YYYY-MM-DD` ou `null` | 1º contato criado 5 min ou mais depois da conta |
+| `ativado` | `YYYY-MM-DD` ou `null` | 1º contato OU deal criado 5 min ou mais depois da conta |
 
 ## Pagante declarada (card do Sirius, `pagantesDeclarados`)
 
@@ -19,7 +19,7 @@ Nenhuma tabela nova no banco do hub. Tudo é lido ao vivo de duas fontes e de um
 |---|---|
 | `declaradoEm` | data da declaração, obrigatória |
 | `fonte` | texto que a tela mostra ao lado |
-| `contas[].nome` | o nome que o dono disse |
+| `contas[].nome` | **não existe no card**: o repo do hub é público. O nome da empresa é lido do banco do produto |
 | `contas[].conta` | id completo da organização. **Validação:** existe no banco e não é de teste; se não existir, a tela diz "conta declarada não encontrada" |
 | `contas[].pagaHoje` | boolean |
 
@@ -33,8 +33,8 @@ Nenhuma tabela nova no banco do hub. Tudo é lido ao vivo de duas fontes e de um
 | `reembolsada` | `payment_intent.latest_charge.refunded` |
 | `livemode` | da sessão |
 
-**Descarte** = `{ id, motivo }`, com motivo em: `modo de teste`, `sem conta do Sirius`, `conta de teste`,
-`reembolsada`, `não paga`.
+**Descarte** = `{ id, motivo }`, com motivo em: `modo de teste`, `não paga`, `valor zero`, `sem conta do Sirius`,
+`conta de teste`, `reembolsada`, `conta não encontrada no banco`.
 
 ## Células da cadeia (o formato que `montarFicha()` já lê)
 

@@ -7,7 +7,7 @@
 const API = "https://api.stripe.com/v1";
 const PAGINAS_MAX = 20;
 
-type Sessao = { id: string; livemode: boolean; pago: boolean; conta: string | null; data: string; reembolsada: boolean };
+type Sessao = { id: string; livemode: boolean; pago: boolean; valor: number; conta: string | null; data: string; reembolsada: boolean };
 export type LeituraStripe = { sessoes: Sessao[]; assinaturasAtivas: { conta: string }[] } | { erro: string };
 
 async function listar(chave: string, caminho: string, params: string) {
@@ -45,6 +45,9 @@ export async function lerStripeSirius(): Promise<LeituraStripe> {
         livemode: s.livemode === true,
         // `no_payment_required` é cupom de 100% ou trial: não é cobrança.
         pago: s.payment_status === "paid",
+        // Centavos. Medido em 22/09/2026: a conta Stripe é COMPARTILHADA com outros produtos, e a única
+        // sessão paga era um trial de outro produto com valor 0 — "paid" não quer dizer que entrou dinheiro.
+        valor: Number(s.amount_total ?? 0),
         conta: contaDe(s),
         data: new Date(Number(s.created) * 1000).toISOString().slice(0, 10),
         // ponytail: só o reembolso de checkout avulso (payment_intent) é visto; o da 1ª fatura de assinatura
