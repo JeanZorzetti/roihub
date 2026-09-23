@@ -178,6 +178,18 @@ function ensure(): Promise<unknown> {
         responsavel TEXT NOT NULL,
         atualizado TIMESTAMPTZ NOT NULL DEFAULT now()
       );
+      -- 055: "feito, aguardando o Google" por projeto e alavanca do mapa de GSC. Sem marca e a
+      -- ausencia de linha, como em hub_acao_dono; desfazer e DELETE. leituras e o texto de cada
+      -- motivo no dia da marca, em TEXT e nao jsonb: o leitor faz JSON.parse do que leu.
+      CREATE TABLE IF NOT EXISTS hub_mapa_marca (
+        projeto TEXT NOT NULL,
+        alavanca TEXT NOT NULL,
+        responsavel TEXT NOT NULL,
+        marcado DATE NOT NULL,
+        reler DATE NOT NULL,
+        leituras TEXT NOT NULL,
+        PRIMARY KEY (projeto, alavanca)
+      );
       CREATE TABLE IF NOT EXISTS seo_publications (
         id BIGSERIAL PRIMARY KEY,
         project_slug TEXT NOT NULL,
@@ -863,6 +875,44 @@ export async function setDono(key: string, responsavel: string | null): Promise<
      ON CONFLICT (key) DO UPDATE SET responsavel = $2, atualizado = now()`,
     [key, responsavel]
   );
+}
+
+// ── Marca de alavanca do mapa de GSC (hub_mapa_marca) — 055 ────────────────────
+export type MarcaDoMapa = {
+  projeto: string;
+  alavanca: string;
+  responsavel: string;
+  marcado: string;
+  reler: string;
+  leituras: Record<string, string>;
+};
+
+export async function listMarcas(projeto: string): Promise<MarcaDoMapa[]> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT projeto, alavanca, responsavel, to_char(marcado, 'YYYY-MM-DD') AS marcado,
+            to_char(reler, 'YYYY-MM-DD') AS reler, leituras
+       FROM hub_mapa_marca WHERE projeto = $1`,
+    [projeto]
+  );
+  return r.rows.map((x: Omit<MarcaDoMapa, "leituras"> & { leituras: string }) => ({ ...x, leituras: JSON.parse(x.leituras) }));
+}
+
+/** Marcar de novo substitui: a tela precisa do estado atual, e histórico de marca não tem leitor. */
+export async function setMarca(m: MarcaDoMapa): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_mapa_marca (projeto, alavanca, responsavel, marcado, reler, leituras)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (projeto, alavanca) DO UPDATE
+       SET responsavel = $3, marcado = $4, reler = $5, leituras = $6`,
+    [m.projeto, m.alavanca, m.responsavel, m.marcado, m.reler, JSON.stringify(m.leituras)]
+  );
+}
+
+export async function delMarca(projeto: string, alavanca: string): Promise<void> {
+  await ensure();
+  await pool().query(`DELETE FROM hub_mapa_marca WHERE projeto = $1 AND alavanca = $2`, [projeto, alavanca]);
 }
 
 export async function insertTask(t: Omit<Task, "id">): Promise<void> {

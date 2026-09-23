@@ -15,12 +15,14 @@ import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
-import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, type Apuracao, type DiaSeparado, type PaginaCrawl } from "@/lib/db";
+import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, listMarcas, type Apuracao, type DiaSeparado, type MarcaDoMapa, type PaginaCrawl } from "@/lib/db";
 import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondenciaDeIntencao, densidadeContextual, LINKS_POR_MIL_MAX, LINKS_POR_MIL_MIN, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
-import { avaliar, DEGRAUS, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDADE_DO_BOARD, REGRAS, regraEmTexto } from "@/lib/proxima-acao.mjs";
+import { ALAVANCAS, avaliar, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDADE_DO_BOARD, REGRAS, regraEmTexto, textoDoDegrauVazio } from "@/lib/proxima-acao.mjs";
+import { RESPONSAVEIS, rotuloResp, todaySP } from "@/lib/agenda.mjs";
+import { desmarcar, marcar } from "./actions";
 
 import { Tabs } from "../../../tabs";
 import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
@@ -2056,7 +2058,23 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
     no.tags = [...(no.tags ?? []), { text: etiqueta(d), className: "me-acao" }];
     no.note = no.note ? `${no.note} ${regraEmTexto(d.chave)}` : regraEmTexto(d.chave);
   }
-  const acoes = plano(disparos);
+  // 055: the "done" marks come from the hub's own database, never from an external source. A
+  // failed read keeps the panel (every entry active) and says so in the footer: silence would pass
+  // for "nothing marked".
+  const hoje = todaySP();
+  let marcas: MarcaDoMapa[] = [];
+  let marcasFalharam = false;
+  if (dbOn()) {
+    try {
+      marcas = await listMarcas(slug);
+    } catch {
+      marcasFalharam = true;
+    }
+  }
+  const acoes = plano(disparos, { marcas, hoje });
+  const podeMarcar = dbOn() && !marcasFalharam;
+  const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+  const primeiroNome = (id: string) => rotuloResp(id).split(" ")[0];
   const nomesDe = (ds: { chave: string; motivo?: string | null }[]) => ds.map((d) => `${cat[d.chave].nome} (${d.motivo})`).join("; ");
 
   // ── 051/US1: a cadeia depois do clique, com a conta de /okr/atma ───────────────────────────────
@@ -2244,47 +2262,101 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             <h2 className="ficha-bloco-h" id="mapa-acoes-h">
               O que fazer primeiro
             </h2>
-            {acoes.degraus.length === 0 ? (
-              <p className="foot">Nenhuma regra disparou nesta janela.</p>
-            ) : (
-              acoes.degraus.map((g, gi) => (
-                <div className="mapa-fila" key={g.id}>
-                  <h3 className="mapa-fila-h">
-                    {g.nome} <span className="mapa-acao-porque">· {g.porque}</span>
-                  </h3>
+            {/* 055: all five steps, always — a hidden step read as a lost task ("1" then "3"), and
+                on Sirius it was hidden for lack of readings, not because it passed. */}
+            {acoes.degraus.map((g) => (
+              <div className="mapa-fila" key={g.id}>
+                <h3 className="mapa-fila-h">
+                  {g.nome} {g.estado === "aguardando" ? <strong className="mapa-marca-degrau">· aguardando </strong> : null}
+                  <span className="mapa-acao-porque">· {g.porque}</span>
+                </h3>
+                {g.estado === "vazio" ? (
+                  <p className="mapa-degrau-vazio">{textoDoDegrauVazio(g, (k) => cat[k].nome)}</p>
+                ) : (
                   <ol className="mapa-fila-lista">
-                    {g.entradas.map((e, i) => (
-                      <li key={e.alavanca} className={gi === 0 && i === 0 ? "mapa-acao-primeira" : undefined}>
-                        <span className="mapa-fila-alvo">
-                          {e.critica ? <strong className="mapa-acao-critica">‼ crítica · </strong> : null}
-                          {e.acao}
-                        </span>
-                        <ul className="mapa-acao-motivos">
-                          {e.motivos.map((m) => (
-                            <li key={m.chave}>
-                              <strong>{cat[m.chave].nome}</strong>: {m.texto} · {m.meta}
-                              {m.piso ? " · piso: o número real pode ser maior" : ""}
-                              {m.ressalva ? ` · ${m.ressalva}` : ""} <span className="mb-tag">{ORIGEM[m.origem as keyof typeof ORIGEM]}</span>
-                              <span className="mapa-fila-det">{m.fonte}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        {e.alvos.length ? (
-                          <span className="mapa-fila-det">
-                            Alvos ({cat[e.alvosDe!].nome}): {e.alvos.join(", ")}
-                            {e.nAlvos > e.alvos.length ? ` e mais ${br(e.nAlvos - e.alvos.length)}` : ""}
+                    {g.entradas.map((e) => {
+                      const classe = [acoes.primeira?.alavanca === e.alavanca ? "mapa-acao-primeira" : "", e.apresentacao === "aguardando" ? "mapa-acao-aguardando" : ""]
+                        .filter(Boolean)
+                        .join(" ");
+                      const curta = ALAVANCAS[e.alavanca as keyof typeof ALAVANCAS].curta;
+                      return (
+                        <li key={e.alavanca} className={classe || undefined}>
+                          {e.marca ? (
+                            <span className="mapa-marca">
+                              {e.apresentacao === "voltou"
+                                ? `Ainda dispara · feito em ${diaMes(e.marca.marcado)} por ${primeiroNome(e.marca.responsavel)} · o prazo de releitura venceu em ${diaMes(e.marca.reler)}`
+                                : `Aguardando · feito em ${diaMes(e.marca.marcado)} por ${primeiroNome(e.marca.responsavel)} · reler em ${diaMes(e.marca.reler)}`}
+                            </span>
+                          ) : null}
+                          <span className="mapa-fila-alvo">
+                            {e.critica ? <strong className="mapa-acao-critica">‼ crítica · </strong> : null}
+                            {e.acao}
                           </span>
-                        ) : null}
-                      </li>
-                    ))}
+                          {e.leituraFalhou ? (
+                            <span className="mapa-fila-det">Sem leitura hoje ({e.leituraFalhou}): a marca continua até a releitura.</span>
+                          ) : null}
+                          <ul className="mapa-acao-motivos">
+                            {e.motivos.map((m) => (
+                              <li key={m.chave}>
+                                <strong>{cat[m.chave].nome}</strong>: {m.texto ?? "sem leitura hoje"}
+                                {e.marca ? (m.novo ? " · novo desde a marca" : m.naMarca === m.texto ? " · igual à marca" : ` · na marca ${m.naMarca}`) : ""} · {m.meta}
+                                {m.piso ? " · piso: o número real pode ser maior" : ""}
+                                {m.ressalva ? ` · ${m.ressalva}` : ""} <span className="mb-tag">{ORIGEM[m.origem as keyof typeof ORIGEM]}</span>
+                                <span className="mapa-fila-det">{m.fonte ?? m.motivo}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          {e.alvos.length ? (
+                            <span className="mapa-fila-det">
+                              Alvos ({cat[e.alvosDe!].nome}): {e.alvos.join(", ")}
+                              {e.nAlvos > e.alvos.length ? ` e mais ${br(e.nAlvos - e.alvos.length)}` : ""}
+                            </span>
+                          ) : null}
+                          {podeMarcar && e.apresentacao !== "aguardando" ? (
+                            <form action={marcar} className="mapa-marca-form">
+                              <input type="hidden" name="projeto" value={slug} />
+                              <input type="hidden" name="alavanca" value={e.alavanca} />
+                              {/* The reading "at the mark" travels with the form (research D1); cut to the
+                                  300 characters lerMarca() accepts, or the mark would silently not save. */}
+                              <input
+                                type="hidden"
+                                name="leituras"
+                                value={JSON.stringify(Object.fromEntries(e.motivos.filter((m) => m.texto).map((m) => [m.chave, String(m.texto).slice(0, 300)])))}
+                              />
+                              <fieldset>
+                                <legend>Marcar como feito</legend>
+                                <label htmlFor={`reler-${e.alavanca}`}>reler em</label>
+                                <select id={`reler-${e.alavanca}`} name="dias" defaultValue="14">
+                                  <option value="7">7 dias</option>
+                                  <option value="14">14 dias</option>
+                                  <option value="28">28 dias</option>
+                                </select>
+                                {(RESPONSAVEIS as { id: string; label: string }[]).map((r) => (
+                                  <button key={r.id} name="responsavel" value={r.id} className="ag-dono-b" aria-label={`${r.label.split(" ")[0]}: marcar como feito · ${curta}`}>
+                                    {r.label.split(" ")[0]}
+                                  </button>
+                                ))}
+                              </fieldset>
+                            </form>
+                          ) : null}
+                          {podeMarcar && e.marca ? (
+                            <form action={desmarcar} className="mapa-marca-form">
+                              <input type="hidden" name="projeto" value={slug} />
+                              <input type="hidden" name="alavanca" value={e.alavanca} />
+                              <button className="ag-dono-b" aria-label={`Desfazer a marca · ${curta}`}>
+                                Desfazer a marca
+                              </button>
+                            </form>
+                          ) : null}
+                        </li>
+                      );
+                    })}
                   </ol>
-                </div>
-              ))
-            )}
+                )}
+              </div>
+            ))}
             <p className="foot">
-              {DEGRAUS.filter((g) => !acoes.degraus.some((d) => d.id === g.id)).length
-                ? `Sem ação: ${DEGRAUS.filter((g) => !acoes.degraus.some((d) => d.id === g.id)).map((g) => g.nome).join(", ")}. `
-                : ""}
+              {marcasFalharam ? "As marcas de feito não foram lidas agora (banco do hub): todas as entradas aparecem como ativas. " : ""}
               {acoes.semAcao.length} folhas sem ação pela regra
               {acoes.naoDecide.length ? `; a amostra não decide: ${nomesDe(acoes.naoDecide)}` : ""}
               {acoes.semLeitura.length ? `; sem leitura, então sem ação: ${nomesDe(acoes.semLeitura)}` : ""}. A regra de cada folha

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { CATALOGO } from "../lib/gsc-delta.mjs";
 import { BENCHMARK } from "../lib/kpis-busca.mjs";
-import { ALAVANCAS, DEGRAUS, REGRAS, avaliar, etiqueta, metaTexto, plano, regraEmTexto } from "../lib/proxima-acao.mjs";
+import { ALAVANCAS, DEGRAUS, REGRAS, avaliar, etiqueta, lerMarca, metaTexto, plano, regraEmTexto, textoDoDegrauVazio } from "../lib/proxima-acao.mjs";
 
 // The Sirius map as read in production on 22/09/2026 (spec 054, "O fato que abre esta spec").
 const F = "fixture";
@@ -118,7 +118,7 @@ test("Sirius, 22/09: 32 states, index first, links once, title in the snippet st
   assert.equal(Object.values(ds).filter((d) => d.estado === "dispara" || d.estado === "critica").length, 16);
 
   const p = plano(ds);
-  assert.deepEqual(p.degraus.map((g) => g.id), ["indice", "pagina", "posicao", "snippet"]);
+  assert.deepEqual(p.degraus.filter((g) => g.entradas.length).map((g) => g.id), ["indice", "pagina", "posicao", "snippet"]);
   assert.equal(p.degraus[0].entradas[0].alavanca, "indexacao");
 
   const todas = p.degraus.flatMap((g) => g.entradas.map((e) => e.alavanca));
@@ -138,4 +138,120 @@ test("Sirius, 22/09: 32 states, index first, links once, title in the snippet st
 
   assert.deepEqual(p.naoDecide.map((d) => d.chave), ["conformidadeUrls"]);
   assert.equal(p.semLeitura.length, 9);
+});
+
+// ── 055: the five steps always, and the "done" mark ────────────────────────────────────────────
+
+test("the five steps always; the empty one counts its leaves and never reads as passed (055/US1)", () => {
+  const p = plano(avaliar(SIRIUS));
+  assert.deepEqual(p.degraus.map((g) => g.id), DEGRAUS.map((g) => g.id), "a hidden step reads as a lost task (Sirius, 23/09: 1 then 3)");
+  const d = p.degraus[1];
+  assert.equal(d.estado, "vazio");
+  assert.deepEqual(d.contagem, { semDisparo: 0, naoDecide: 0, semLeitura: 5 });
+  assert.deepEqual(d.semLeituraPorMotivo, [
+    { motivo: "sem amostra de campo", chaves: ["lcp", "inp", "cls", "ttfb"] },
+    { motivo: "0 de 10 URLs prioritárias na CrUX", chaves: ["urlsBoas"] },
+  ]);
+  assert.deepEqual(p.primeira, { degrau: "indice", alavanca: "indexacao" });
+});
+
+test("a procedure is not 'inside': the checklist belongs to no step (055/D4)", () => {
+  const p = plano(avaliar({}));
+  assert.ok(p.degraus.every((g) => g.estado === "vazio"));
+  const soma = p.degraus.reduce((s, g) => s + g.contagem.semDisparo + g.contagem.naoDecide + g.contagem.semLeitura, 0);
+  assert.equal(soma, Object.values(REGRAS).filter(Boolean).length);
+  assert.equal(p.degraus.reduce((s, g) => s + g.contagem.semDisparo, 0), 0);
+  assert.equal(p.primeira, null);
+
+  const vitais = { lcp: 1000, inp: 100, cls: 0.05, ttfb: 300 };
+  const dentro = plano(avaliar({ ...Object.fromEntries(Object.entries(vitais).map(([k, v]) => [k, { valor: v, texto: "", fonte: F }])), urlsBoas: { valor: 1, texto: "", fonte: F } }));
+  assert.deepEqual(dentro.degraus[1].contagem, { semDisparo: 5, naoDecide: 0, semLeitura: 0 });
+});
+
+const CTX = { slugs: ["atma", "sirius"], hoje: "2026-09-23" };
+const FORM = { projeto: "sirius", alavanca: "indexacao", responsavel: "jean", dias: "14", leituras: JSON.stringify({ indexacaoLimpa: "73,7% (30 fora)" }) };
+
+test("the mark form is validated in one pure place (055/contract)", () => {
+  assert.deepEqual(lerMarca(FORM, CTX), {
+    projeto: "sirius",
+    alavanca: "indexacao",
+    responsavel: "jean",
+    marcado: "2026-09-23",
+    reler: "2026-10-07",
+    leituras: { indexacaoLimpa: "73,7% (30 fora)" },
+  });
+  const ruins = [
+    ["projeto", "outro"],
+    ["alavanca", "toString"],
+    ["responsavel", "ana"],
+    ["dias", "3"],
+    ["leituras", "{"],
+    ["leituras", "[]"],
+    ["leituras", JSON.stringify({ constructor: "x" })],
+    ["leituras", JSON.stringify({ indexacaoLimpa: 5 })],
+    ["leituras", JSON.stringify({ indexacaoLimpa: "x".repeat(301) })],
+  ];
+  for (const [k, v] of ruins) assert.equal(lerMarca({ ...FORM, [k]: v }, CTX), null, `${k}=${v}`);
+});
+
+const marca = (alavanca, leituras, extra = {}) => ({ projeto: "sirius", alavanca, responsavel: "jean", marcado: "2026-09-23", reler: "2026-10-07", leituras, ...extra });
+const INDICE = [
+  marca("indexacao", { indexacaoLimpa: "73,7% (30 fora)" }),
+  marca("poda", { rejeicaoRastreio: "24,6% (28 de 114)" }),
+  marca("profundidade", { profundidadeClique: "43 a mais de 3 cliques, 29 órfãs" }),
+];
+
+test("a mark within its deadline dims the entry and moves the first task on (055/US2)", () => {
+  const ds = avaliar(SIRIUS);
+  const um = plano(ds, { marcas: [INDICE[0]], hoje: "2026-09-24" });
+  assert.deepEqual(um.degraus[0].entradas.map((e) => e.alavanca), ["poda", "profundidade", "indexacao"], "the marked entry goes last in its step");
+  assert.equal(um.degraus[0].estado, "com-acao");
+  assert.deepEqual(um.primeira, { degrau: "indice", alavanca: "poda" });
+
+  const todos = plano(ds, { marcas: INDICE, hoje: "2026-09-24" });
+  const g = todos.degraus[0];
+  assert.equal(g.estado, "aguardando");
+  assert.ok(g.entradas.every((e) => e.apresentacao === "aguardando"));
+  const idx = g.entradas.find((e) => e.alavanca === "indexacao");
+  assert.deepEqual([idx.motivos[0].naMarca, idx.motivos[0].novo, idx.marca.reler], ["73,7% (30 fora)", false, "2026-10-07"]);
+  assert.deepEqual(todos.primeira, { degrau: "pagina", alavanca: "intencao" }, "SC-003: step 3 leads once step 1 waits");
+  assert.equal(ds.indexacaoLimpa.naMarca, undefined, "the mark never writes into the leaf's dispatch (FR-010)");
+});
+
+test("a mark that expires while the rule still fires comes back; one that stops firing disappears (055/US3)", () => {
+  const ds = avaliar(SIRIUS);
+  const vencida = plano(ds, { marcas: INDICE, hoje: "2026-10-07" });
+  const idx = vencida.degraus[0].entradas[0];
+  assert.deepEqual([idx.alavanca, idx.apresentacao], ["indexacao", "voltou"]);
+  assert.deepEqual(vencida.primeira, { degrau: "indice", alavanca: "indexacao" });
+
+  const resolvida = plano(ds, { marcas: [marca("canibalizacao", { canibalizacao: "2 páginas disputadas" })], hoje: "2026-09-24" });
+  assert.ok(!resolvida.degraus.flatMap((g) => g.entradas).some((e) => e.alavanca === "canibalizacao"));
+  assert.doesNotThrow(() => plano(ds, { marcas: [marca("naoExiste", {})], hoje: "2026-09-24" }));
+});
+
+test("a failed reading keeps the mark instead of passing for solved; a new reason is flagged (055/edges)", () => {
+  const ds = avaliar(SIRIUS);
+  const p = plano(ds, { marcas: [marca("vitais", { lcp: "2.100 ms" }), marca("links", { penetracaoTop3: "0% (0 de 18 termos)" })], hoje: "2026-10-30" });
+  const vitais = p.degraus[1];
+  assert.equal(vitais.estado, "aguardando");
+  assert.equal(vitais.entradas[0].leituraFalhou, "sem amostra de campo");
+  assert.equal(vitais.entradas[0].apresentacao, "aguardando", "past the deadline, an unread rule cannot say 'still fires'");
+  const links = p.degraus[3].entradas.find((e) => e.alavanca === "links");
+  assert.deepEqual(links.motivos.map((m) => [m.chave, m.novo]), [["penetracaoTop3", false], ["linksInternos", true], ["strikingDistance", true], ["impressoesTop3", true]]);
+});
+
+test("the empty step says why in the glossary's words, never as a pass (055/ux-writing)", () => {
+  const nomes = { lcp: "LCP", inp: "INP", cls: "CLS", ttfb: "TTFB", urlsBoas: "% de URLs com status Bom" };
+  const nome = (k) => nomes[k] ?? k;
+  const leitura = (v) => ({ valor: v, texto: "", fonte: F });
+  const vitais = { lcp: leitura(1000), inp: leitura(100), cls: leitura(0.05), ttfb: leitura(300), urlsBoas: leitura(1) };
+
+  const semLeitura = textoDoDegrauVazio(plano(avaliar(SIRIUS)).degraus[1], nome);
+  assert.equal(semLeitura, "∅ sem ação · 5 folhas sem leitura: LCP, INP, CLS e TTFB (sem amostra de campo); % de URLs com status Bom (0 de 10 URLs prioritárias na CrUX)");
+  const semDisparo = textoDoDegrauVazio(plano(avaliar(vitais)).degraus[1], nome);
+  assert.equal(semDisparo, "sem ação · nenhuma das 5 folhas disparou");
+  const misto = textoDoDegrauVazio(plano(avaliar({ lcp: leitura(1000) })).degraus[1], nome);
+  assert.equal(misto, "sem ação · 1 sem disparo, 4 sem leitura: INP, CLS, TTFB e % de URLs com status Bom (leitura não ligada nesta tela)");
+  for (const t of [semLeitura, semDisparo, misto]) assert.doesNotMatch(t, /dentro|\bok\b|✓|aprovad/i, t);
 });
