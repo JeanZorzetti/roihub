@@ -9,6 +9,7 @@ import {
   densidades,
   dedupPorUrl,
   fronteira,
+  resolverArestas,
   agregar,
   taxaIntegridadeDoTitulo,
   taxaLarguraDoTitulo,
@@ -186,6 +187,24 @@ test("URL que REDIRECIONA sai da fronteira pela origem, não só pelo destino", 
   const vistas = new Set([HOME, "https://x.com/quiz", "https://x.com/quiz-alinhador"]);
   assert.deepEqual(fronteira(arestas, vistas), [], "a origem redirecionada voltou à fronteira: travessia infinita");
   assert.deepEqual(fronteira(arestas, new Set([HOME])), ["https://x.com/quiz"]);
+});
+
+test("link que passa por REDIRECT chega ao destino: profundidade e densidade seguem o 307", () => {
+  // Sirius, 23/09/2026: `/blog` linka `/pt-BR/blog/x`, que responde 307 para `/blog/x`. A página
+  // é guardada pelo destino, a aresta pelo href — sem resolver, 26 posts linkados saíam órfãos.
+  const BLOG = "https://x.com/blog";
+  const POST = "https://x.com/blog/x";
+  const PREFIXADO = "https://x.com/pt-BR/blog/x";
+  const arestas = resolverArestas(
+    [
+      { de: HOME, para: BLOG, ancora: "Blog" },
+      { de: BLOG, para: PREFIXADO, ancora: "Post" },
+    ],
+    new Map([[PREFIXADO, POST]]),
+  );
+  assert.equal(profundidades(arestas, HOME, 100).mapa.get(POST), 2, "o post ficou órfão atrás do redirect");
+  assert.equal(densidades(arestas, new Set()).get(POST), 1, "o voto foi para a URL que redireciona, não para a página");
+  assert.deepEqual(resolverArestas([{ de: HOME, para: A, ancora: "A" }], new Map())[0].para, A, "aresta sem redirect conhecido fica como está");
 });
 
 // ── A PK que a corrida não pode estourar ────────────────────────────────────

@@ -20,6 +20,7 @@ import {
   profundidades,
   densidades,
   fronteira,
+  resolverArestas,
   dedupPorUrl,
   agregar,
 } from "@/lib/grafo.mjs";
@@ -150,11 +151,13 @@ export async function POST() {
       // dois lados: o que foi pedido e onde caiu.
       const vistas = new Set<string>();
       const arestas: { de: string; para: string; ancora: string }[] = [];
+      const destinos = new Map<string, string>();
       let tetoAtingido = false;
 
       const registrar = (b: Buscada) => {
         vistas.add(b.pedida);
         vistas.add(b.url);
+        destinos.set(b.pedida, b.url);
         buscadas.set(b.url, b);
         for (const l of b.extraida?.links ?? []) {
           const destino = canonizar(l.href, b.url);
@@ -203,9 +206,10 @@ export async function POST() {
       }
 
       // ── As duas leituras do mesmo grafo (D2) ────────────────────────────
-      const nav = navegacao(arestas, buscadas.size);
-      const contextuais = densidades(arestas, nav);
-      const prof = profundidades(arestas, home, teto);
+      const resolvidas = resolverArestas(arestas, destinos);
+      const nav = navegacao(resolvidas, buscadas.size);
+      const contextuais = densidades(resolvidas, nav);
+      const prof = profundidades(resolvidas, home, teto);
 
       const linhas: PaginaCrawl[] = dedupPorUrl(
         [...buscadas.values()].map((b) => ({
