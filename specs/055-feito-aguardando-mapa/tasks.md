@@ -35,6 +35,6 @@ Testes antes do código em cada fase (Princípio II). Tudo em `test/proxima-acao
 ## Fase 3 — Entrega
 
 - [x] T013 `npm test` verde; `tsc --noEmit` sem erro nos arquivos tocados.
-- [ ] T014 Commit e push fora das janelas do Princípio IV.
-- [ ] T015 Quickstart em produção: 5 degraus, marca das duas entradas do degrau 1 do Sirius, Atma
+- [x] T014 Commit e push fora das janelas do Princípio IV.
+- [x] T015 Quickstart em produção: 5 degraus, marca das duas entradas do degrau 1 do Sirius, Atma
   sem marca, desfazer, passagem de teclado.
