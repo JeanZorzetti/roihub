@@ -21,7 +21,7 @@ Tudo mora em `lib/proxima-acao.mjs` (D1). Nenhuma tabela nova, nenhuma leitura n
 | `profundidade` | indice | linkar as fundas | Linkar as páginas fundas e órfãs a partir da home, do menu ou de um hub |
 | `vitais` | desempenho | corrigir os vitais | Corrigir os vitais reprovados nas URLs prioritárias |
 | `canibalizacao` | pagina | consolidar a disputa | Escolher uma página por consulta disputada e consolidar a outra |
-| `intencao` | pagina | modificador no título | Pôr o modificador de intenção no título: Preço, Planos, Como, Guia |
+| `intencao` | pagina | modificador no título | Pôr o modificador de intenção no título: Guia, Passo a passo, Preço, Planos, Grátis |
 | `links` | posicao | apontar links internos | Apontar links contextuais para as páginas dos termos, a partir de páginas com tráfego |
 | `cobertura` | posicao | cobrir o termo | Criar página ou seção para os termos e subtemas sem cobertura |
 | `frescor` | posicao | revisar as vencidas | Revisar dados, preços e ano das páginas vencidas e declarar a data |
