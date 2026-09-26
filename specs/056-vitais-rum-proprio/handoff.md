@@ -27,10 +27,11 @@ apagadas, e o mapa do Sirius só troca de fonte na primeira visita real (researc
 
 ## Gotchas
 
-- O clone `C:\dev\sirius` estava **68 commits atrás** e tem um commit local nunca empurrado,
-  `9a0b5e81 feat(leads): send contact and calculator leads…` (01/09). O remoto tem a versão irmã
-  `bcb2c86f` (só o contato). O coletor subiu por uma worktree sobre `origin/main`, e o clone ficou
-  como estava. Decidir se o `9a0b5e81` morre ou vira PR.
+- O clone `C:\dev\sirius` estava **68 commits atrás**, com um commit local nunca empurrado:
+  `9a0b5e81 feat(leads)` (01/09). Ele já estava no remoto como `bcb2c86f` ("Cherry-picked from
+  9a0b5e81"), e a rota da calculadora tinha sido removida como código morto em `cbc3f32`. O `main`
+  local foi alinhado a `origin/main` com `reset --keep`, e o `9a0b5e81` fica só no reflog. Não
+  empurrar.
 - O `main` do Sirius exige o status check "All Checks Passed ✓". O push de admin passa com aviso.
 - Playwright headless não esconde a aba: CLS e INP só saem simulando `visibilitychange`. O agente
   `HeadlessChrome` é recusado de propósito, então o teste real precisa de outro agente.
