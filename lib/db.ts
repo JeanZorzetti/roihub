@@ -190,6 +190,18 @@ function ensure(): Promise<unknown> {
         leituras TEXT NOT NULL,
         PRIMARY KEY (projeto, alavanca)
       );
+      -- 056: uma medida de campo por metrica por visita, do RUM proprio (lib/rum.mjs). Nada aqui
+      -- identifica o visitante: sem IP, sem cookie, sem parametro de URL. Sem chave primaria porque
+      -- nenhuma linha e lida ou apagada sozinha; o mapa le a janela e a retencao apaga por idade.
+      CREATE TABLE IF NOT EXISTS hub_vitais (
+        projeto TEXT NOT NULL,
+        host TEXT NOT NULL,
+        caminho TEXT NOT NULL,
+        metrica TEXT NOT NULL,
+        valor DOUBLE PRECISION NOT NULL,
+        em TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS hub_vitais_projeto_em ON hub_vitais (projeto, em);
       CREATE TABLE IF NOT EXISTS seo_publications (
         id BIGSERIAL PRIMARY KEY,
         project_slug TEXT NOT NULL,
@@ -913,6 +925,47 @@ export async function setMarca(m: MarcaDoMapa): Promise<void> {
 export async function delMarca(projeto: string, alavanca: string): Promise<void> {
   await ensure();
   await pool().query(`DELETE FROM hub_mapa_marca WHERE projeto = $1 AND alavanca = $2`, [projeto, alavanca]);
+}
+
+// ── Vitais de campo próprios (hub_vitais) — 056 ────────────────────────────────
+export type MedidaDeCampo = { projeto: string; host: string; caminho: string; metrica: string; valor: number };
+export type LeituraDoRum = {
+  instalado: boolean;
+  janela: { inicio: string; fim: string };
+  medidas: Omit<MedidaDeCampo, "projeto">[];
+};
+
+export async function gravarVital(m: MedidaDeCampo): Promise<void> {
+  await ensure();
+  await pool().query(`INSERT INTO hub_vitais (projeto, host, caminho, metrica, valor) VALUES ($1, $2, $3, $4, $5)`, [
+    m.projeto,
+    m.host,
+    m.caminho,
+    m.metrica,
+    m.valor,
+  ]);
+}
+
+/**
+ * The 28 days that close yesterday (FR-012), plus whether the project ever sent a beacon: without
+ * one, the map keeps the CrUX text instead of "no visit in the RUM" (research D8). Retention runs
+ * here, as `liberarAnexosVencidos` runs on the board render: no new cron in the night window.
+ */
+export async function lerRum(projeto: string): Promise<LeituraDoRum> {
+  await ensure();
+  await pool().query(`DELETE FROM hub_vitais WHERE em < now() - interval '90 days'`);
+  const cab = await pool().query(
+    `SELECT EXISTS (SELECT 1 FROM hub_vitais WHERE projeto = $1) AS instalado,
+            to_char(current_date - 28, 'YYYY-MM-DD') AS inicio, to_char(current_date - 1, 'YYYY-MM-DD') AS fim`,
+    [projeto]
+  );
+  const r = await pool().query(
+    `SELECT host, caminho, metrica, valor FROM hub_vitais
+      WHERE projeto = $1 AND em >= current_date - 28 AND em < current_date`,
+    [projeto]
+  );
+  const { instalado, inicio, fim } = cab.rows[0];
+  return { instalado, janela: { inicio, fim }, medidas: r.rows };
 }
 
 export async function insertTask(t: Omit<Task, "id">): Promise<void> {

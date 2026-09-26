@@ -34,6 +34,10 @@ export function middleware(req: NextRequest) {
       : NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // 056 — o beacon de campo vem do navegador do visitante, que não tem segredo nenhum para mandar.
+  // A rota só grava numa tabela que só o mapa lê, e filtra origem, agente e valor sozinha.
+  if (req.nextUrl.pathname === "/api/vitais") return NextResponse.next();
+
   const pass = process.env.HUB_PASS;
   if (!pass) {
     // Fail closed em produção: hub lista blockers e notas internas de todos os projetos.

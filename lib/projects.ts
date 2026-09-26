@@ -1,6 +1,7 @@
 import curated from "@/data/projects.json";
 import { listRepos } from "@/lib/github";
-import { mergeProjects, reposSemSite, deBusca } from "@/lib/projects.mjs";
+import { mergeProjects, reposSemSite, deBusca, hostsDeclarados } from "@/lib/projects.mjs";
+import { SLUGS_DE_CAMPO } from "@/lib/crux.mjs";
 
 // Ponto único de entrada da lista de projetos do hub. Todo consumidor (ranking, SEO, infra,
 // insights, agenda) passa por aqui — nenhum importa data/projects.json direto, senão a aba
@@ -144,6 +145,13 @@ export async function listReposSemSite(): Promise<{ name: string; url: string; p
  *  o tem (declará-lo lá seria uma segunda lista de hosts, que FR-001 proíbe). */
 export function dominioAnteriorDoSlug(slug: string): { url: string } | null {
   return (curated as Curated[]).find((p) => p.slug === slug)?.dominioAnterior ?? null;
+}
+
+/** 056 — the field-scope project a beacon's host belongs to, or `null`. Reads the curation directly,
+ *  like `dominioAnteriorDoSlug()`: `listProjects()` would call the GitHub API on every beacon, and
+ *  the `url` that declares the host only exists in the curation. `host` arrives without `www.`. */
+export function slugDeCampoDoHost(host: string): string | null {
+  return (curated as Curated[]).find((p) => SLUGS_DE_CAMPO.includes(p.slug) && hostsDeclarados(p).includes(host))?.slug ?? null;
 }
 
 /** Só os projetos com `ficha` curada, para o menu da aba OKR. Lê a curadoria direto porque `ficha`

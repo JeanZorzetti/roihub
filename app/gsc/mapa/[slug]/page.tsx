@@ -15,11 +15,12 @@ import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
-import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, listMarcas, type Apuracao, type DiaSeparado, type MarcaDoMapa, type PaginaCrawl } from "@/lib/db";
+import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, lerRum, listMarcas, type Apuracao, type LeituraDoRum, type DiaSeparado, type MarcaDoMapa, type PaginaCrawl } from "@/lib/db";
 import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondenciaDeIntencao, densidadeContextual, LINKS_POR_MIL_MAX, LINKS_POR_MIL_MIN, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
 import { lerOrigens, lerPassRate } from "@/lib/crux";
+import { leituraRum, passRateMisto, valoresDe } from "@/lib/rum.mjs";
 import { ALAVANCAS, avaliar, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDADE_DO_BOARD, REGRAS, regraEmTexto, textoDoDegrauVazio } from "@/lib/proxima-acao.mjs";
 import { RESPONSAVEIS, rotuloResp, todaySP } from "@/lib/agenda.mjs";
 import { desmarcar, marcar } from "./actions";
@@ -648,12 +649,64 @@ function noDoVital(id: string, origens: Origens, anterior: { url: string; data: 
   };
 }
 
+type Rum = LeituraDoRum | { erro: string };
+
+/**
+ * 056 — the vital leaf read from our own RUM, for when no declared origin has a CrUX sample of this
+ * vital (research D8). Same ruler and the same "✓ dentro / ✗ fora" as `noDoVital`; the verdict comes
+ * from the 033 interval (`leituraRum`), and every state names the source and the n.
+ */
+function noDoVitalRum(id: string, rum: Rum, cruxNo: No): { no: No; leitura: Leitura } {
+  const idNo = `${id}-medido`;
+  const vital = VITAIS.find((v) => v.id === id)!;
+  const nome = id.toUpperCase();
+  const lim = formatarValor(vital, vital.limite);
+  const semCrux = `Por que não a CrUX: ${cruxNo.topic.replace(/^∅ [^·]*·\s*/, "")}.`;
+  if ("erro" in rum) {
+    const no = { id: idNo, topic: `∅ não apurado · a leitura do RUM próprio falhou agora (${rum.erro})`, note: `Falha do banco do hub, não falta de visita: a leitura volta na próxima abertura da tela. ${semCrux}` };
+    return { no, leitura: ausenteDe(no) };
+  }
+  const { inicio, fim } = rum.janela;
+  const l = leituraRum(valoresDe(rum.medidas, id), id);
+  if (!l.n) {
+    const no = {
+      id: idNo,
+      topic: "∅ sem leitura · nenhuma visita no RUM próprio em 28 dias",
+      note: `O coletor já mandou visitas deste projeto, mas nenhuma com ${nome} em ${inicio} → ${fim}.${id === "inp" ? " O INP só existe em visita em que alguém clica ou digita." : ""} ${semCrux}`,
+    };
+    return { no, leitura: ausenteDe(no) };
+  }
+  const visitas = `${br(l.n)} ${l.n === 1 ? "visita" : "visitas"}`;
+  const acima = `${pct1(l.fracaoAcima!)} acima de ${lim}`;
+  const fonte = `p75 de campo do RUM próprio · ${visitas} com ${nome} em ${inicio} → ${fim} · todos os dispositivos`;
+  const faixa = `${pct1(l.fracaoAcima!)} das visitas ficaram acima de ${lim}; com 95% de confiança, entre ${pct1(l.intervalo!.inferior)} e ${pct1(l.intervalo!.superior)}`;
+  const mesmaLib = "O RUM mede com a biblioteca do Google que alimenta a CrUX, mas conta todo navegador, e a CrUX só o Chrome.";
+  if (l.veredito === "nao-decide")
+    return {
+      no: {
+        id: idNo,
+        topic: `◐ não decide · RUM próprio, ${visitas}, ${acima}`,
+        note: `${fonte}. ${faixa}: o intervalo cruza os 25% que a régua do p75 permite, então a amostra ainda não diz se o p75 passa de ${lim}. Cada visita nova estreita o intervalo. ${semCrux} ${mesmaLib}`,
+      },
+      leitura: { indecisa: `RUM próprio: a amostra não decide · ${visitas}, ${acima}` },
+    };
+  const p75 = formatarValor(vital, l.p75!);
+  return {
+    no: {
+      id: idNo,
+      topic: `Medido: ${p75} · ${l.veredito === "dentro" ? "✓ dentro" : "✗ fora"} da régua ≤ ${lim} · RUM próprio, ${visitas}`,
+      note: `${fonte}. ${faixa}, contra os 25% que a régua do p75 permite. ${semCrux} ${mesmaLib}`,
+    },
+    leitura: { valor: l.p75!, texto: `p75 ${p75}`, fonte: "RUM próprio, p75 de 28 dias", ressalva: `RUM próprio · ${visitas}` },
+  };
+}
+
 /**
  * 042 — o Pass Rate, com o MESMO `lerPassRate()` do bloco de `/okr/[slug]/aquisicao`. A folha tem
  * `balizador: recusa` ("agregação inventada"), então nenhum glifo de veredito aparece: o 90% do
  * board fica no nó da meta, abaixo, como o board escreveu — é a regra que a 034 fixou.
  */
-function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { inicio: string; fim: string }, slug: string): No {
+function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { inicio: string; fim: string }, slug: string, rum: number | null = null): No {
   const id = "urlsBoas-medido";
   if (!pass)
     return {
@@ -662,7 +715,7 @@ function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { i
       note: "As URLs prioritárias são as de maior impressão na janela, e sem a leitura por página não há lista a perguntar à CrUX.",
     };
   if ("erro" in pass) return { id, topic: `∅ não apurado · a CrUX falhou agora (${pass.erro})`, note: "Falha, não ausência de amostra: a fração volta na próxima abertura da tela." };
-  const PALAVRA: Record<string, string> = { passa: "passam", reprova: "reprovam", parcial: "com dado parcial", "sem-amostra": "sem amostra", falhou: "falharam", "sem-chave": "sem chave", "nao-lida": "não lidas" };
+  const PALAVRA: Record<string, string> = { passa: "passam", reprova: "reprovam", parcial: "com dado parcial", "sem-amostra": "sem amostra", falhou: "falharam", "sem-chave": "sem chave", "nao-lida": "não lidas", indecisa: "sem decisão no RUM próprio" };
   const conta = (chave: (u: { url: string; estado: string }) => string) => {
     const m = new Map<string, number>();
     for (const u of pass.porUrl) m.set(chave(u), (m.get(chave(u)) ?? 0) + 1);
@@ -674,16 +727,16 @@ function noDoPassRate(pass: Awaited<ReturnType<typeof lerPassRate>>, janela: { i
     .map((v) => `${v.id.toUpperCase()} ≤ ${formatarValor(v, v.limite)}`)
     .join(", ");
   const amostra = `As ${br(pass.consultadas)} URLs de maior impressão na janela ${janela.inicio} → ${janela.fim} (${porHost})${pass.naoConsultadas > 0 ? `; ${br(pass.naoConsultadas)} não consultadas (teto de ${CAP_URLS_PASS_RATE}) — não reprovadas` : ""}. Por URL: ${porEstado}.`;
-  const regra = ` "Bom" é ${bom} no p75 de campo; o TTFB fica fora. O board cita o relatório de Core Web Vitals do Search Console, que não tem API: a leitura aqui é a CrUX URL a URL, a fonte daquele relatório, e é o mesmo cálculo do bloco de Pass Rate de /okr/${slug}/aquisicao. A meta do board, no nó abaixo, é meta e não régua: "percentual de URLs aprovadas" não tem limiar publicado.`;
+  const regra = ` "Bom" é ${bom} no p75 de campo; o TTFB fica fora. O board cita o relatório de Core Web Vitals do Search Console, que não tem API: a leitura aqui é a CrUX URL a URL, a fonte daquele relatório, e é o mesmo cálculo do bloco de Pass Rate de /okr/${slug}/aquisicao. A meta do board, no nó abaixo, é meta e não régua: "percentual de URLs aprovadas" não tem limiar publicado.${rum === null ? "" : " Onde a CrUX não tem amostra da URL, entra o RUM próprio (056): a URL passa com os três vitais decididos dentro pelo intervalo de 95% contra 25% de visitas acima do limite, e fica sem decisão enquanto a amostra não decide."}`;
   if (pass.fracao === null)
     return {
       id,
-      topic: `∅ não apurável · ${br(pass.comDado)} de ${br(pass.consultadas)} URLs prioritárias com os três vitais na CrUX`,
+      topic: `∅ não apurável · ${br(pass.comDado)} de ${br(pass.consultadas)} URLs prioritárias com ${rum === null ? "os três vitais na CrUX" : "veredito nos três vitais, pela CrUX ou pelo RUM próprio"}`,
       note: `${pass.motivo} ${amostra}${regra}`,
     };
   return {
     id,
-    topic: `Medido: ${pct1(pass.fracao)} · ${br(pass.passam)} de ${br(pass.comDado)} URLs com os três vitais em "Bom" · ${br(pass.consultadas)} consultadas`,
+    topic: `Medido: ${pct1(pass.fracao)} · ${br(pass.passam)} de ${br(pass.comDado)} URLs com os três vitais em "Bom" · ${br(pass.consultadas)} consultadas${rum ? ` · RUM próprio em ${br(rum)}` : ""}`,
     note: `${amostra}${regra}`,
   };
 }
@@ -728,6 +781,9 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         pass: await lerPassRate(p.slug, paginasGsc && !("erro" in paginasGsc) ? paginasGsc.paginas : null),
       }))()
     : null;
+  // 056 — our own field sample (RUM), from the hub's database: zero external request (FR-013).
+  const rum: Promise<Rum> | null =
+    campo && dbOn() ? lerRum(p.slug).catch((e: unknown) => ({ erro: e instanceof Error ? e.message.slice(0, 80) : "a leitura falhou" })) : null;
   // 033/T071 — `null` tem TRÊS causas com consertos opostos (lista vazia, credencial ausente, host
   // fora de toda propriedade), e a tela afirmava a terceira sempre. Quem nomeia é `motivoDeAusencia`.
   const notaAusencia =
@@ -1359,23 +1415,38 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   // LCP, CLS e TTFB na janela 23/08→19/09 — perguntar só pela do card publicaria "sem amostra" sobre
   // 28 dias de campo, e só pela antiga publicaria o domínio velho como o de hoje.
   const lidoCampo = campo ? await campo : null;
+  // 056/D8 — the RUM stands in only where no origin has a CrUX sample of the vital, and only for a
+  // project that ever sent a beacon: without that, Atma's INP would lose the CrUX's "parcial" reason.
+  const lidoRum = rum ? await rum : null;
+  const rumServe = lidoRum && ("erro" in lidoRum || lidoRum.instalado) ? lidoRum : null;
   for (const id of ["lcp", "inp", "cls", "ttfb"]) {
     const no = acharNo(dados.nodeData as No, id);
     if (!no) continue;
-    const filho: No = lidoCampo
+    const cruxNo: No = lidoCampo
       ? noDoVital(id, lidoCampo.origens, p.dominioAnterior ?? null)
       : { id: `${id}-medido`, topic: "∅ não apurado · projeto fora do escopo de campo", note: "A leitura de campo só roda para `SLUGS_DE_CAMPO` (`lib/crux.mjs`)." };
     const v = lidoCampo ? (vitalPorOrigem(lidoCampo.origens, id) as { estado: string; medida?: { p75: number } }) : null;
     const vital = VITAIS.find((x) => x.id === id)!;
-    leituras[id] = v?.estado === "medido" ? { valor: v.medida!.p75, texto: `p75 ${formatarValor(vital, v.medida!.p75)}`, fonte: "CrUX, p75 de 28 dias" } : ausenteDe(filho);
-    no.children = [filho, ...(no.children ?? [])];
+    const doRum = rumServe && (v?.estado === "sem-amostra" || v?.estado === "parcial") ? noDoVitalRum(id, rumServe, cruxNo) : null;
+    leituras[id] =
+      doRum?.leitura ??
+      (v?.estado === "medido" ? { valor: v.medida!.p75, texto: `p75 ${formatarValor(vital, v.medida!.p75)}`, fonte: "CrUX, p75 de 28 dias" } : ausenteDe(cruxNo));
+    no.children = [doRum?.no ?? cruxNo, ...(no.children ?? [])];
   }
   const passNode = acharNo(dados.nodeData as No, "urlsBoas");
   if (passNode) {
-    const noPass = noDoPassRate(lidoCampo?.pass ?? null, janela, slug);
-    const pass = lidoCampo?.pass;
+    // 056/D9 — the RUM judges only the URLs the CrUX has no sample of.
+    const crux = lidoCampo?.pass ?? null;
+    const misto = crux && !("erro" in crux) && rumServe && !("erro" in rumServe) ? (passRateMisto(crux, rumServe.medidas) as typeof crux & { rum: number }) : null;
+    const pass = misto ?? crux;
+    const noPass = noDoPassRate(pass, janela, slug, misto ? misto.rum : null);
     leituras.urlsBoas = pass && !("erro" in pass) && pass.fracao !== null
-      ? { valor: pass.fracao, texto: `${pct1(pass.fracao)} (${br(pass.passam)} de ${br(pass.comDado)} URLs)`, fonte: "CrUX, p75 de 28 dias, URL a URL" }
+      ? {
+          valor: pass.fracao,
+          texto: `${pct1(pass.fracao)} (${br(pass.passam)} de ${br(pass.comDado)} URLs)`,
+          fonte: "CrUX, p75 de 28 dias, URL a URL",
+          ...(misto?.rum ? { ressalva: `RUM próprio em ${br(misto.rum)} de ${br(pass.comDado)} URLs` } : {}),
+        }
       : ausenteDe(noPass);
     passNode.children = [noPass, ...(passNode.children ?? [])];
   }

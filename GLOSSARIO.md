@@ -39,3 +39,5 @@ no mesmo commit que o usa.
 | Ainda dispara | "Ainda dispara · feito em <dd/mm> por <nome> · o prazo de releitura venceu em <dd/mm>" | reaberto, pendente, atrasado | entrada marcada cuja releitura venceu com a regra ainda disparando (055) |
 | Na marca | "· na marca <leitura>", "· igual à marca", "· novo desde a marca" | antes, anterior, baseline | motivo de entrada marcada (055) — a leitura guardada no dia da marca, ao lado da de hoje |
 | Desfazer a marca | botão da entrada marcada | desmarcar, remover, cancelar | entrada do bloco "O que fazer primeiro" (055) |
+| RUM próprio | "RUM próprio, <n> visitas" no nó; "RUM próprio · <n> visitas" na próxima ação | RUM, real user monitoring, analytics, dado interno | folhas de vital de /gsc/mapa/<slug> (056) — só onde a CrUX não tem amostra do vital; nunca somado à CrUX na mesma folha |
+| Não decide | "◐ não decide · <fonte>, <n> visitas, <x>% acima de <limite>" | inconclusivo, indefinido, pendente, sem dados | folha com amostra cujo intervalo de 95% cruza a régua (033, 056) — tem número, falta amostra; nunca "sem leitura" |
