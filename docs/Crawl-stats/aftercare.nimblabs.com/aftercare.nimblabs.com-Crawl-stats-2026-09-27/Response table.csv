@@ -1,0 +1,6 @@
+Response,Total requests ratio
+OK (200),0.8908
+Not found (404),0.0713
+DNS error,0.0349
+Page could not be reached,0.0015
+robots.txt not available,0.0015
