@@ -1,10 +1,25 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ativarPlano, criarPlano, dbOn, decidirMeta as gravarDecisao, listMetas, listPlanos, setPremissas, type MetaDecidida } from "@/lib/db";
-import { SLUGS_DE_BUSCA } from "@/lib/projects";
+import DEMANDAS from "@/data/demanda-estimada.json";
+import {
+  ativarPlano,
+  criarPlano,
+  dbOn,
+  decidirItem as gravarItem,
+  decidirMeta as gravarDecisao,
+  listMetas,
+  listPlanos,
+  setIntencao,
+  setPaginaResponsavel,
+  setPremissas,
+  type MetaDecidida,
+} from "@/lib/db";
+import { projetosDeBusca, SLUGS_DE_BUSCA } from "@/lib/projects";
+import { hostsDeclarados } from "@/lib/projects.mjs";
+import { projectBySlug } from "@/lib/autopublish-projects.mjs";
 import { todaySP } from "@/lib/agenda.mjs";
-import { lerDecisao, lerPlano, metasExigidas } from "@/lib/plano.mjs";
+import { lerDecisao, lerDemanda, lerItem, lerNucleo, lerPlano, metasExigidas } from "@/lib/plano.mjs";
 
 /**
  * The four writes of the plan (057). Validation lives in the pure `lerPlano`/`lerDecisao`; input outside
@@ -57,6 +72,41 @@ export async function ativar(fd: FormData): Promise<void> {
   if (metasExigidas().some((m) => !decididas.has(`${m.chave}@${m.prazo}`))) return;
   await ativarPlano(projeto, versao);
   revalidar(projeto);
+}
+
+/**
+ * 058/D11: the core's forms validate against the same seeds and hosts the page shows: the cluster
+ * seeds of the frozen demand, and the project's declared hosts.
+ */
+async function contextoDoNucleo(fd: FormData) {
+  const projeto = String(fd.get("projeto") ?? "");
+  const p = SLUGS_DE_BUSCA.includes(projeto) ? (await projetosDeBusca()).find((x) => x.slug === projeto) : undefined;
+  const demanda = lerDemanda((DEMANDAS as Record<string, { procedencia?: Record<string, unknown>; termos?: Record<string, number> }>)[projeto], projectBySlug(projeto));
+  return { slugs: SLUGS_DE_BUSCA, sementes: demanda?.clusters.map((c) => c.semente) ?? [], hosts: p ? hostsDeclarados(p) : [] };
+}
+
+export async function decidirIntencao(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const n = lerNucleo(Object.fromEntries(fd), await contextoDoNucleo(fd));
+  if (!n || n.intencao === undefined) return;
+  await setIntencao(n.projeto, n.semente, n.intencao, n.por);
+  revalidar(n.projeto);
+}
+
+export async function apontarPagina(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const n = lerNucleo(Object.fromEntries(fd), await contextoDoNucleo(fd));
+  if (!n || n.pagina === undefined) return;
+  await setPaginaResponsavel(n.projeto, n.semente, n.pagina, n.por);
+  revalidar(n.projeto);
+}
+
+export async function decidirItem(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const i = lerItem(Object.fromEntries(fd), await contextoDoNucleo(fd));
+  if (!i) return;
+  await gravarItem(i);
+  revalidar(i.projeto);
 }
 
 /**

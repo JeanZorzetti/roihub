@@ -26,8 +26,14 @@ import {
   semanaComCards,
   semanaDoPrazo,
   vistaDoPlano,
+  propostaDeIntencao,
+  perguntasPropostas,
+  aplicarNucleo,
+  lerNucleo,
+  lerItem,
 } from "../lib/plano.mjs";
 import { addDaysISO } from "../lib/agenda.mjs";
+import { modificadoresDeIntencao } from "../lib/pagina.mjs";
 
 const SLUGS = ["atma", "sirius", "tapepro"];
 
@@ -844,4 +850,157 @@ test("vistaDoPlano: each meta keeps its state word and final value, with no auth
     ],
   );
   assert.deepEqual(presenteNaVista(v, 5), []);
+});
+
+// ── 058 US2 · the core (núcleo) ────────────────────────────────────────────────
+
+test("propostaDeIntencao: the hub's own classifier, weighted by volume; no declaring term → null (D11)", async () => {
+  const { default: DEMANDAS } = await import("../data/demanda-estimada.json", { with: { type: "json" } });
+  const gomada = lerDemanda(DEMANDAS.tapepro, null).clusters.find((c) => c.semente === "fita-gomada");
+  const declarado = gomada.termos.filter((t) => modificadoresDeIntencao(t.termo, 2026) !== "ausente").reduce((a, t) => a + (t.volume ?? 0), 0);
+  assert.ok(declarado > 0);
+  assert.deepEqual(propostaDeIntencao(gomada, 2026), { classe: "comercial", volumeDeclarado: declarado, volumeTotal: gomada.volume });
+  assert.equal(propostaDeIntencao({ volume: 100, termos: [{ termo: "fita gomada", volume: 100 }] }, 2026), null);
+  const c = (info, com) => ({ volume: info + com, termos: [{ termo: "guia da fita", volume: info }, { termo: "fita preço", volume: com }] });
+  assert.equal(propostaDeIntencao(c(10, 30), 2026).classe, "comercial");
+  assert.equal(propostaDeIntencao(c(30, 10), 2026).classe, "informacional");
+  assert.equal(propostaDeIntencao(c(20, 20), 2026).classe, "ambos");
+});
+
+test("perguntasPropostas: frozen terms that start with an interrogative word, with their volume (D12)", async () => {
+  const c = {
+    termos: [
+      { termo: "como aplicar fita gomada", volume: 50 },
+      { termo: "o que é fita gomada", volume: 20 },
+      { termo: "Quanto custa fita gomada", volume: null },
+      { termo: "pra que serve fita kraft", volume: 10 },
+      { termo: "fita gomada", volume: 900 },
+      { termo: "fita gomada preço", volume: 70 },
+      { termo: "comoda de fita", volume: 5 },
+    ],
+  };
+  assert.deepEqual(perguntasPropostas(c), [
+    { texto: "como aplicar fita gomada", volume: 50 },
+    { texto: "o que é fita gomada", volume: 20 },
+    { texto: "Quanto custa fita gomada", volume: null },
+    { texto: "pra que serve fita kraft", volume: 10 },
+  ]);
+  const { default: DEMANDAS } = await import("../data/demanda-estimada.json", { with: { type: "json" } });
+  assert.deepEqual(lerDemanda(DEMANDAS.tapepro, null).clusters.flatMap(perguntasPropostas), []);
+});
+
+const TP = "https://t.com/produtos/fita-gomada/";
+const APONTADA = "https://t.com/blog/transparente";
+const TERMOS_NUCLEO = [
+  { termo: "fita gomada", volume: 1000 },
+  { termo: "fita gomada kraft", volume: 200 },
+  { termo: "fita transparente", volume: 500 },
+  { termo: "como usar fita transparente", volume: 40 },
+  { termo: "fita transparente personalizada", volume: 90 },
+];
+const DECISOES_NUCLEO = [
+  { semente: "fita-transparente", intencao: "informacional", pagina: APONTADA },
+  { semente: "nao-existe", intencao: "comercial", pagina: null },
+];
+const ITENS_NUCLEO = [
+  { semente: "fita-transparente", tipo: "pergunta", texto: "como usar fita transparente", detalhe: null, estado: "removida" },
+  { semente: "fita-gomada", tipo: "pergunta", texto: "qual a largura da fita gomada", detalhe: "https://t.com/blog/largura", estado: "aceita" },
+  { semente: "fita-gomada", tipo: "pergunta", texto: "fita gomada gruda em plástico", detalhe: null, estado: "respondida" },
+  { semente: "fita-gomada", tipo: "entidade", texto: "papel kraft", detalhe: "material", estado: "aceita" },
+  { semente: "fita-gomada", tipo: "entidade", texto: "3M", detalhe: "outra", estado: "removida" },
+  { semente: "nao-existe", tipo: "entidade", texto: "x", detalhe: "outra", estado: "aceita" },
+];
+const ESTADOS_NUCLEO = { [TP]: { estado: "ativa", classe: "indexada", motivo: null }, [APONTADA]: { estado: "fora-do-indice", classe: "outra", motivo: null } };
+const nucleoDe = (termos) => aplicarNucleo(comTermos(termos, [{ url: TP, titulo: "Fita gomada kraft", h1: null }], ESTADOS_NUCLEO), { decisoes: DECISOES_NUCLEO, itens: ITENS_NUCLEO, estados: ESTADOS_NUCLEO, ano: 2026 });
+
+test("aplicarNucleo: the owner's decisions win, the defaults fill the rest, terms keep their cobertoPor (D11)", () => {
+  const antes = comTermos(TERMOS_NUCLEO, [{ url: TP, titulo: "Fita gomada kraft", h1: null }], ESTADOS_NUCLEO);
+  const cs = nucleoDe(TERMOS_NUCLEO);
+  const de = (s) => cs.find((c) => c.semente === s);
+  assert.equal(cs.length, antes.length, "a row whose seed is not a cluster is ignored");
+
+  const tr = de("fita-transparente");
+  assert.deepEqual(tr.intencao, { valor: "informacional", proposta: null, decidida: true });
+  assert.equal(tr.pagina, APONTADA);
+  assert.deepEqual(tr.paginaResponsavel, { alvo: APONTADA, origem: "dono" });
+  assert.equal(tr.estadoDaPagina.estado, "fora-do-indice");
+  assert.deepEqual(tr.perguntas, [], "a removida proposal is left out");
+  assert.ok(agendaDePaginas(antes, { capacidade: 3 }).some((p) => p.tipo === "cluster" && p.semente === "fita-transparente"));
+  assert.ok(!agendaDePaginas(cs, { capacidade: 3 }).some((p) => p.tipo === "cluster" && p.semente === "fita-transparente"), "a pointed page stops the planned cluster page");
+  for (const c of cs) assert.deepEqual(c.termos.map((t) => t.cobertoPor), antes.find((a) => a.semente === c.semente).termos.map((t) => t.cobertoPor), c.semente);
+
+  const go = de("fita-gomada");
+  assert.deepEqual(go.paginaResponsavel, { alvo: TP, origem: "cobertura" });
+  assert.equal(go.intencao.decidida, false);
+  assert.deepEqual(go.perguntas, [
+    { texto: "qual a largura da fita gomada", origem: "dono", volume: null, pagina: "https://t.com/blog/largura", estado: "aceita" },
+    { texto: "fita gomada gruda em plástico", origem: "dono", volume: null, pagina: TP, estado: "respondida" },
+  ]);
+  assert.deepEqual(go.entidades, [{ nome: "papel kraft", tipo: "material" }]);
+  assert.deepEqual(de("fita-transparente-personalizada").paginaResponsavel, { alvo: "«fita transparente personalizada»", origem: "planejada" });
+});
+
+test("aplicarNucleo: a proposed question keeps its term's volume and state; decisions survive a regrouped demand (FR-015)", () => {
+  const com = [...TERMOS_NUCLEO, { termo: "como aplicar fita gomada", volume: 30 }];
+  const go = nucleoDe(com).find((c) => c.semente === "fita-gomada");
+  assert.deepEqual(go.perguntas[0], { texto: "como aplicar fita gomada", origem: "termo", volume: 30, pagina: TP, estado: "proposta" });
+  const mais = nucleoDe([...com, { termo: "fita gomada larga", volume: 60 }]);
+  const base = nucleoDe(com);
+  for (const s of ["fita-gomada", "fita-transparente"]) {
+    const [a, b] = [base, mais].map((cs) => cs.find((c) => c.semente === s));
+    assert.deepEqual([b.intencao.valor, b.paginaResponsavel, b.perguntas, b.entidades], [a.intencao.valor, a.paginaResponsavel, a.perguntas, a.entidades], s);
+  }
+});
+
+test("SC-001 with the core: the view strips the owner's page state too", () => {
+  const cs = nucleoDe(TERMOS_NUCLEO);
+  assert.ok(cs.some((c) => c.estadoDaPagina), "aplicarNucleo sets the state: scheduling reads it");
+  const v = vistaDoPlano({ propostas: [], montado: null, clusters: cs, hoje: INICIO, semanaAtual: 1, inicio: INICIO });
+  assert.deepEqual(presenteNaVista(v, 1), []);
+  assert.ok(v.clusters.every((c) => "paginaResponsavel" in c && "intencao" in c && "perguntas" in c && "entidades" in c));
+});
+
+const CTX_NUCLEO = { slugs: SLUGS, sementes: ["fita-gomada", "fita-transparente"], hosts: ["t.com"] };
+const NUCLEO = { projeto: "tapepro", semente: "fita-gomada", responsavel: "jean" };
+
+test("lerNucleo: intent from the three classes, page on the project's hosts or empty; anything else is null", () => {
+  assert.deepEqual(lerNucleo({ ...NUCLEO, intencao: "comercial" }, CTX_NUCLEO), { projeto: "tapepro", semente: "fita-gomada", por: "jean", intencao: "comercial" });
+  assert.deepEqual(lerNucleo({ ...NUCLEO, pagina: "https://www.t.com/p/x" }, CTX_NUCLEO), { projeto: "tapepro", semente: "fita-gomada", por: "jean", pagina: "https://www.t.com/p/x" });
+  assert.deepEqual(lerNucleo({ ...NUCLEO, pagina: "" }, CTX_NUCLEO), { projeto: "tapepro", semente: "fita-gomada", por: "jean", pagina: null });
+  const ruim = [
+    { intencao: "transacional" },
+    { intencao: "" },
+    { semente: "outra", intencao: "comercial" },
+    { projeto: "outro", intencao: "comercial" },
+    { responsavel: "joao", intencao: "comercial" },
+    { pagina: "/p/x" },
+    { pagina: "https://outro.com/p/x" },
+    { pagina: "javascript:alert(1)" },
+    {},
+  ];
+  for (const r of ruim) assert.equal(lerNucleo({ ...NUCLEO, ...r }, CTX_NUCLEO), null, JSON.stringify(r));
+});
+
+test("lerItem: question or entity, text 1–200, kind from the list, answering page on the hosts", () => {
+  const P = { ...NUCLEO, tipo: "pergunta", texto: "  como aplicar fita gomada ", estado: "aceita", detalhe: "" };
+  assert.deepEqual(lerItem(P, CTX_NUCLEO), { projeto: "tapepro", semente: "fita-gomada", tipo: "pergunta", texto: "como aplicar fita gomada", detalhe: null, estado: "aceita", por: "jean" });
+  assert.equal(lerItem({ ...P, estado: "respondida", detalhe: "https://t.com/blog/x" }, CTX_NUCLEO).detalhe, "https://t.com/blog/x");
+  const E = { ...NUCLEO, tipo: "entidade", texto: "papel kraft", estado: "aceita", detalhe: "material" };
+  assert.equal(lerItem(E, CTX_NUCLEO).detalhe, "material");
+  assert.equal(lerItem({ ...E, detalhe: "marca própria" }, CTX_NUCLEO).detalhe, "marca própria");
+  assert.equal(lerItem({ ...E, estado: "removida", detalhe: "" }, CTX_NUCLEO).estado, "removida");
+  const ruim = [
+    { ...P, semente: "outra" },
+    { ...P, tipo: "termo" },
+    { ...P, texto: "" },
+    { ...P, texto: "   " },
+    { ...P, texto: "x".repeat(201) },
+    { ...P, estado: "talvez" },
+    { ...P, detalhe: "https://outro.com/x" },
+    { ...P, responsavel: "joao" },
+    { ...E, estado: "respondida" },
+    { ...E, detalhe: "concorrente" },
+    { ...E, detalhe: "" },
+  ];
+  for (const r of ruim) assert.equal(lerItem(r, CTX_NUCLEO), null, JSON.stringify(r));
 });

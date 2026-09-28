@@ -222,6 +222,31 @@ function ensure(): Promise<unknown> {
       );
       -- 057/D14: the support-page floor of FR-005a, a premise of the version like the other three.
       ALTER TABLE hub_plano ADD COLUMN IF NOT EXISTS piso_apoio INT NOT NULL DEFAULT 100;
+      -- 058/D11: the core of each cluster, keyed by seed so it survives versions and consultations.
+      -- intencao and pagina are null until the owner decides; a row whose seed left the demand is
+      -- ignored, never deleted.
+      CREATE TABLE IF NOT EXISTS hub_nucleo (
+        projeto TEXT NOT NULL,
+        semente TEXT NOT NULL,
+        intencao TEXT,
+        pagina TEXT,
+        decidido_por TEXT NOT NULL,
+        decidido_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, semente)
+      );
+      -- 058/D11: questions and entities of a cluster. detalhe = entity kind, or the page that answers
+      -- the question (null = the cluster page). estado: aceita | removida | respondida.
+      CREATE TABLE IF NOT EXISTS hub_nucleo_item (
+        projeto TEXT NOT NULL,
+        semente TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        texto TEXT NOT NULL,
+        detalhe TEXT,
+        estado TEXT NOT NULL,
+        decidido_por TEXT NOT NULL,
+        decidido_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, semente, tipo, texto)
+      );
       -- 056: uma medida de campo por metrica por visita, do RUM proprio (lib/rum.mjs). Nada aqui
       -- identifica o visitante: sem IP, sem cookie, sem parametro de URL. Sem chave primaria porque
       -- nenhuma linha e lida ou apagada sozinha; o mapa le a janela e a retencao apaga por idade.
@@ -1103,6 +1128,47 @@ export async function ativarPlano(projeto: string, versao: number): Promise<bool
   } finally {
     cliente.release();
   }
+}
+
+// ── Núcleo do plano (hub_nucleo + hub_nucleo_item) — 058 ───────────────────────
+export type DecisaoDoNucleo = { semente: string; intencao: string | null; pagina: string | null };
+export type ItemDoNucleo = { projeto: string; semente: string; tipo: string; texto: string; detalhe: string | null; estado: string; por: string };
+
+export async function listNucleo(projeto: string): Promise<{ decisoes: DecisaoDoNucleo[]; itens: Omit<ItemDoNucleo, "projeto" | "por">[] }> {
+  await ensure();
+  const [d, i] = await Promise.all([
+    pool().query(`SELECT semente, intencao, pagina FROM hub_nucleo WHERE projeto = $1`, [projeto]),
+    pool().query(`SELECT semente, tipo, texto, detalhe, estado FROM hub_nucleo_item WHERE projeto = $1 ORDER BY decidido_em, texto`, [projeto]),
+  ]);
+  return { decisoes: d.rows, itens: i.rows };
+}
+
+/** Each decision touches only its own column: choosing the intent never resets the pointed page. */
+export async function setIntencao(projeto: string, semente: string, intencao: string, por: string): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_nucleo (projeto, semente, intencao, decidido_por) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (projeto, semente) DO UPDATE SET intencao = $3, decidido_por = $4, decidido_em = now()`,
+    [projeto, semente, intencao, por]
+  );
+}
+
+export async function setPaginaResponsavel(projeto: string, semente: string, pagina: string | null, por: string): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_nucleo (projeto, semente, pagina, decidido_por) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (projeto, semente) DO UPDATE SET pagina = $3, decidido_por = $4, decidido_em = now()`,
+    [projeto, semente, pagina, por]
+  );
+}
+
+export async function decidirItem(i: ItemDoNucleo): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_nucleo_item (projeto, semente, tipo, texto, detalhe, estado, decidido_por) VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (projeto, semente, tipo, texto) DO UPDATE SET detalhe = $5, estado = $6, decidido_por = $7, decidido_em = now()`,
+    [i.projeto, i.semente, i.tipo, i.texto, i.detalhe, i.estado, i.por]
+  );
 }
 
 // ── Vitais de campo próprios (hub_vitais) — 056 ────────────────────────────────

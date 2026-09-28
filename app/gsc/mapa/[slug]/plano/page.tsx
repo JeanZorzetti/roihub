@@ -5,10 +5,10 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscPaginas } from "@/lib/gsc";
 import { descoberta } from "@/lib/janelas.mjs";
 import { ALAVANCAS, ORIGEM, REGRAS, metaTexto } from "@/lib/proxima-acao.mjs";
-import { CABECALHOS, PISO_VOLUME, kpisDoBoard, metasExigidas, nomeDe, normalizar, vistaDoPlano } from "@/lib/plano.mjs";
+import { CABECALHOS, INTENCOES, PISO_VOLUME, TIPOS_DE_ENTIDADE, kpisDoBoard, metasExigidas, nomeDe, normalizar, vistaDoPlano } from "@/lib/plano.mjs";
 import { RESPONSAVEIS, rotuloResp } from "@/lib/agenda.mjs";
 import { Tabs } from "../../../../tabs";
-import { aprovarPropostas, ativar, criarVersao, decidirMeta, salvarPremissas } from "./actions";
+import { apontarPagina, aprovarPropostas, ativar, criarVersao, decidirIntencao, decidirItem, decidirMeta, salvarPremissas } from "./actions";
 import { dadosDoPlano } from "./dados";
 
 // Reads the database and the Search Console on open, like the map.
@@ -209,6 +209,183 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
     </form>
   );
 
+  // 058 US2 — the core: one block per cluster, by volume (contracts/ui.md §5). Every state is a word.
+  type ClusterV = (typeof v.clusters)[number];
+  const nomeDoAlvo = (a: string) => (a.startsWith("http") ? caminho(a) : a);
+  const ORIGEM_DA_PAGINA: Record<string, string> = { dono: "apontada pelo dono", cobertura: "a página do cluster no site", planejada: "página a criar" };
+  const quem = (id: string) => (
+    <>
+      <label htmlFor={id}>quem decide</label>
+      <select id={id} name="responsavel" defaultValue={atual?.criadoPor ?? "jean"}>
+        {(RESPONSAVEIS as { id: string; label: string }[]).map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.label.split(" ")[0]}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+  const ocultos = (c: ClusterV) => (
+    <>
+      <input type="hidden" name="projeto" value={slug} />
+      <input type="hidden" name="semente" value={c.semente} />
+    </>
+  );
+  const blocoDoNucleo = (c: ClusterV) => {
+    const nome = c.semente.replaceAll("-", " ");
+    const id = `nucleo-${c.semente}`;
+    const intencao = c.intencao.decidida
+      ? `${c.intencao.valor} · decidida`
+      : c.intencao.proposta
+        ? `${c.intencao.proposta.classe} · proposta pelo hub: ${br(c.intencao.proposta.volumeDeclarado)} de ${br(c.intencao.proposta.volumeTotal)} buscas/mês declaram intenção`
+        : "sem proposta: nenhum termo do cluster declara intenção";
+    return (
+      <div className="mapa-fila" key={c.semente}>
+        <h3 className="mapa-fila-h" id={`${id}-h`}>
+          {nome} · {br(c.volume)} buscas/mês
+        </h3>
+        <ul className="mapa-acao-motivos" aria-labelledby={`${id}-h`}>
+          <li>
+            <strong>Intenção:</strong> {intencao}
+          </li>
+          <li>
+            <strong>Página responsável:</strong>{" "}
+            {c.paginaResponsavel ? `${nomeDoAlvo(c.paginaResponsavel.alvo)} · ${ORIGEM_DA_PAGINA[c.paginaResponsavel.origem]}` : "nenhuma: o cluster não tem volume"}
+          </li>
+          <li>
+            <strong>Perguntas:</strong>{" "}
+            {c.perguntas.length ? (
+              <ul>
+                {c.perguntas.map((q) => (
+                  <li key={q.texto}>
+                    «{q.texto}» · {q.origem === "termo" ? `da demanda${q.volume !== null ? `, ${br(q.volume)} buscas/mês` : ""}` : "do dono"} ·{" "}
+                    {q.estado === "proposta"
+                      ? "proposta, sem decisão"
+                      : q.estado === "respondida"
+                        ? `respondida por ${nomeDoAlvo(q.pagina ?? "")}`
+                        : `aceita: ${nomeDoAlvo(q.pagina ?? "")} vai responder`}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              "nenhuma pergunta proposta pela demanda: declare as do cliente"
+            )}
+          </li>
+          <li>
+            <strong>Entidades:</strong> {c.entidades.length ? c.entidades.map((e) => `${e.nome} (${e.tipo})`).join(" · ") : "nenhuma declarada"}
+          </li>
+          <li>
+            <strong>Próxima tarefa:</strong>{" "}
+            {c.proxima ? `${ALAVANCAS[c.proxima.alavanca as keyof typeof ALAVANCAS].curta} · semana ${c.proxima.semana}, a partir de ${dm(c.proxima.inicio)}` : "nada planejado"}
+          </li>
+        </ul>
+        {podeGravar ? (
+          <details className="plano-nucleo-editar">
+            <summary>Editar o núcleo de {nome}</summary>
+            <form action={decidirIntencao} className="mapa-marca-form">
+              {ocultos(c)}
+              <fieldset>
+                <legend>Intenção de {nome}</legend>
+                <label htmlFor={`${id}-intencao`}>intenção</label>
+                <select id={`${id}-intencao`} name="intencao" defaultValue={c.intencao.valor ?? INTENCOES[1]}>
+                  {INTENCOES.map((x) => (
+                    <option key={x} value={x}>
+                      {x}
+                    </option>
+                  ))}
+                </select>
+                {quem(`${id}-intencao-quem`)}
+                <button className="ag-dono-b">Salvar intenção</button>
+              </fieldset>
+            </form>
+            <form action={apontarPagina} className="mapa-marca-form">
+              {ocultos(c)}
+              <fieldset>
+                <legend>Página responsável por {nome}</legend>
+                <label htmlFor={`${id}-pagina`}>endereço completo da página (vazio volta para a padrão)</label>
+                <input id={`${id}-pagina`} type="url" name="pagina" defaultValue={c.paginaResponsavel?.origem === "dono" ? c.paginaResponsavel.alvo : ""} placeholder="https://" />
+                {quem(`${id}-pagina-quem`)}
+                <button className="ag-dono-b">Salvar página</button>
+              </fieldset>
+            </form>
+            {c.perguntas.map((q, i) => (
+              <form action={decidirItem} className="mapa-marca-form" key={q.texto}>
+                {ocultos(c)}
+                <input type="hidden" name="tipo" value="pergunta" />
+                <input type="hidden" name="texto" value={q.texto} />
+                <fieldset>
+                  <legend>Pergunta «{q.texto}»</legend>
+                  <label htmlFor={`${id}-q${i}-pagina`}>página que responde (vazio = a responsável)</label>
+                  <input id={`${id}-q${i}-pagina`} type="url" name="detalhe" defaultValue={q.pagina?.startsWith("http") && q.pagina !== c.paginaResponsavel?.alvo ? q.pagina : ""} placeholder="https://" />
+                  {quem(`${id}-q${i}-quem`)}
+                  <button name="estado" value="aceita" className="ag-dono-b" aria-label={`Aceitar a pergunta «${q.texto}»: a página vai responder`}>
+                    Aceitar
+                  </button>
+                  <button name="estado" value="respondida" className="ag-dono-b" aria-label={`A pergunta «${q.texto}» já é respondida por esta página`}>
+                    Já respondida
+                  </button>
+                  <button name="estado" value="removida" className="ag-dono-b" aria-label={`Remover a pergunta «${q.texto}»`}>
+                    Remover
+                  </button>
+                </fieldset>
+              </form>
+            ))}
+            <form action={decidirItem} className="mapa-marca-form">
+              {ocultos(c)}
+              <input type="hidden" name="tipo" value="pergunta" />
+              <input type="hidden" name="estado" value="aceita" />
+              <fieldset>
+                <legend>Nova pergunta em {nome}</legend>
+                <label htmlFor={`${id}-nova-q`}>pergunta do cliente</label>
+                <input id={`${id}-nova-q`} name="texto" required maxLength={200} />
+                <label htmlFor={`${id}-nova-q-pagina`}>página que vai responder (vazio = a responsável)</label>
+                <input id={`${id}-nova-q-pagina`} type="url" name="detalhe" placeholder="https://" />
+                {quem(`${id}-nova-q-quem`)}
+                <button className="ag-dono-b">Adicionar pergunta</button>
+              </fieldset>
+            </form>
+            {c.entidades.map((e, i) => (
+              <form action={decidirItem} className="mapa-marca-form" key={e.nome}>
+                {ocultos(c)}
+                <input type="hidden" name="tipo" value="entidade" />
+                <input type="hidden" name="texto" value={e.nome} />
+                <input type="hidden" name="detalhe" value={e.tipo ?? ""} />
+                <input type="hidden" name="estado" value="removida" />
+                <fieldset>
+                  <legend>Entidade {e.nome}</legend>
+                  {quem(`${id}-e${i}-quem`)}
+                  <button className="ag-dono-b" aria-label={`Remover a entidade ${e.nome}`}>
+                    Remover
+                  </button>
+                </fieldset>
+              </form>
+            ))}
+            <form action={decidirItem} className="mapa-marca-form">
+              {ocultos(c)}
+              <input type="hidden" name="tipo" value="entidade" />
+              <input type="hidden" name="estado" value="aceita" />
+              <fieldset>
+                <legend>Nova entidade em {nome}</legend>
+                <label htmlFor={`${id}-nova-e`}>nome</label>
+                <input id={`${id}-nova-e`} name="texto" required maxLength={200} />
+                <label htmlFor={`${id}-nova-e-tipo`}>tipo</label>
+                <select id={`${id}-nova-e-tipo`} name="detalhe" defaultValue="produto">
+                  {TIPOS_DE_ENTIDADE.map((x) => (
+                    <option key={x} value={x}>
+                      {x}
+                    </option>
+                  ))}
+                </select>
+                {quem(`${id}-nova-e-quem`)}
+                <button className="ag-dono-b">Adicionar entidade</button>
+              </fieldset>
+            </form>
+          </details>
+        ) : null}
+      </div>
+    );
+  };
+
   type SemanaV = (typeof v.semanas)[number];
   const tarefasDa = (s: SemanaV) =>
     s.tarefas.length ? (
@@ -288,6 +465,23 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
               {tarefasDa(semana)}
               {marcosDa(semana)}
             </>
+          )}
+        </section>
+
+        <section className="ficha-bloco" aria-labelledby="plano-nucleo-h">
+          <h2 className="ficha-bloco-h" id="plano-nucleo-h">
+            Núcleo: o que cada cluster vai atender
+          </h2>
+          {v.clusters.length ? (
+            <>
+              <p className="foot">
+                Intenção, página, perguntas e entidades valem para SEO, respostas e IA de uma vez, e continuam valendo em toda nova versão e nova consulta de demanda. A intenção
+                proposta usa a mesma regra que classifica títulos e consultas.
+              </p>
+              {v.clusters.map(blocoDoNucleo)}
+            </>
+          ) : (
+            <p className="mapa-degrau-vazio">∅ sem cluster: falta a demanda congelada, ou o projeto não declara produtos.</p>
           )}
         </section>
 

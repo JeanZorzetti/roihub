@@ -109,7 +109,7 @@ the starting point of the demand metas, the state of the cluster pages and the m
   - It adds **Ponto de partida**: per demand meta (`top20`, `tamBusca`, `pagina1`), the meta, the deadline, "hoje X (janela, Search Console)" and the distance, or "ponto de partida não lido: motivo".
   - It adds **Páginas dos clusters**: each URL in the clusters' `estados`, with the `ESTADO_PAGINA` words and the reason.
   - With no active version the metas are the preview's (`soAtivo` falls back to `PREMISSAS_PADRAO`). The block says "prévia com as premissas padrão" and shows neither "Esta semana" nor Marcos. The capacity suggestion (~line 2540) stays.
-- [ ] T010 [US1] Run `npm test`, commit T003–T009, and push outside the windows. In production:
+- [X] T010 [US1] Run `npm test`, commit T003–T009, and push outside the windows. In production:
   - `curl` `/gsc/mapa/tapepro/plano` and grep 0 hits for "Hoje:", "distância", "fora do índice", "feito em", "aprovada por" and "Versões" (SC-001);
   - `grep -n gscTermos "app/gsc/mapa/[slug]/plano/page.tsx"` returns nothing (SC-009);
   - `/gsc/mapa/tapepro` shows the starting point of the three demand metas and the page states (SC-002).
@@ -128,15 +128,15 @@ entities and the next task. Change the proposed intent without leaving the scree
 
 ### Tests for US2
 
-- [ ] T011 [US2] Test `propostaDeIntencao` (D11) in `test/plano.test.mjs`:
+- [X] T011 [US2] Test `propostaDeIntencao` (D11) in `test/plano.test.mjs`:
   - On the Tape Pro "fita gomada" cluster it returns `{classe: "comercial", volumeDeclarado, volumeTotal}`. `volumeTotal` is the cluster volume, and `volumeDeclarado` is the sum of its terms that `modificadoresDeIntencao` does not call `ausente` (160 on 28/09). Assert against the fixture, not the literal.
   - A cluster with no declaring term returns `null`.
   - Weights go by volume, and a tie between `informacional` and `comercial` gives `ambos`.
-- [ ] T012 [US2] Test `perguntasPropostas` (D12) in `test/plano.test.mjs`:
+- [X] T012 [US2] Test `perguntasPropostas` (D12) in `test/plano.test.mjs`:
   - `como aplicar fita gomada`, `o que é fita gomada`, `Quanto custa fita gomada` (accent and case) and `pra que serve fita kraft` are questions, with their volume;
   - `fita gomada` and `fita gomada preço` are not;
   - Tape Pro's frozen demand has none, so the list is empty.
-- [ ] T013 [US2] Test `aplicarNucleo` in `test/plano.test.mjs`:
+- [X] T013 [US2] Test `aplicarNucleo` in `test/plano.test.mjs`:
   - A decided intent wins over the proposal (`decidida: true`).
   - An owner-pointed page becomes `pagina` with origin `dono`, and `agendaDePaginas` no longer queues that cluster's page. Every term keeps its `cobertoPor` (research D11, analyze U1).
   - A cluster with no page and volume > 0 has `paginaResponsavel = {alvo: rotuloDaPagina(semente), origem: "planejada"}`.
@@ -145,7 +145,7 @@ entities and the next task. Change the proposed intent without leaving the scree
   - A row whose seed is not a cluster is ignored.
   - The same rows applied to the demand regrouped with one more term (a new consultation or version) keep every decision (FR-015).
   - SC-001 again: the T003 walk over `vistaDoPlano` with the applied clusters finds no `estadoDaPagina`, including the one `aplicarNucleo` sets for the owner's page.
-- [ ] T014 [US2] Test `lerNucleo` and `lerItem` in `test/plano.test.mjs`. They reject:
+- [X] T014 [US2] Test `lerNucleo` and `lerItem` in `test/plano.test.mjs`. They reject:
   - a seed that is not a cluster seed, and an `intencao` outside the three classes;
   - a `pagina` that is not an absolute URL on the project's hosts (empty is accepted and means "back to default");
   - a `tipo` outside `pergunta`/`entidade`, and a `texto` of 0 or more than 200 characters;
@@ -154,26 +154,26 @@ entities and the next task. Change the proposed intent without leaving the scree
 
 ### Implementation for US2
 
-- [ ] T015 [P] [US2] In `lib/db.ts`, add `hub_nucleo` and `hub_nucleo_item` to `ensure()` after the `hub_plano` lines (~224), exactly as in data-model.md §1. Add:
+- [X] T015 [P] [US2] In `lib/db.ts`, add `hub_nucleo` and `hub_nucleo_item` to `ensure()` after the `hub_plano` lines (~224), exactly as in data-model.md §1. Add:
   - `listNucleo(projeto)` → `{decisoes, itens}`;
   - `setIntencao(projeto, semente, intencao, por)` and `setPaginaResponsavel(projeto, semente, pagina | null, por)`, each an upsert on the PK that touches only its own column;
   - `decidirItem(i)`, an upsert on `(projeto, semente, tipo, texto)`.
-- [ ] T016 [US2] Implement in `lib/plano.mjs`, with no `Date.now()` (the caller passes `ano`):
+- [X] T016 [US2] Implement in `lib/plano.mjs`, with no `Date.now()` (the caller passes `ano`):
   - `propostaDeIntencao(cluster, ano)`, which imports `modificadoresDeIntencao` from `./pagina.mjs` (no second classifier);
   - `perguntasPropostas(cluster)`;
   - `aplicarNucleo(clusters, {decisoes, itens, estados, ano})`. It sets the owner's `pagina` (with its `estadoDaPagina` from `estados`), `intencao`, `paginaResponsavel`, `perguntas` and `entidades`, and never touches a term's `cobertoPor`. It runs BEFORE `agendaDePaginas`, so a pointed page stops the planned cluster page;
   - in `vistaDoPlano`, pass the core fields through and strip `estadoDaPagina`;
   - `lerNucleo(c, {slugs, sementes, hosts})` and `lerItem(c, {slugs, sementes, hosts})`, following `lerMarca`: bad input returns `null`.
-- [ ] T017 [US2] In `app/gsc/mapa/[slug]/plano/dados.ts`:
+- [X] T017 [US2] In `app/gsc/mapa/[slug]/plano/dados.ts`:
   - Read `listNucleo(slug)` in the existing `Promise.all` (~line 37).
   - Apply `aplicarNucleo` right after `cobrir` and before `propor`/`montar`.
   - Derive each cluster's `proxima` (lever and week) from the 057 calendar until T037: the first week ≥ the current one with a task whose `alvos` include the answering page. `null` means "nada planejado".
-- [ ] T018 [US2] Add to `app/gsc/mapa/[slug]/plano/actions.ts`:
+- [X] T018 [US2] Add to `app/gsc/mapa/[slug]/plano/actions.ts`:
   - `decidirIntencao` and `apontarPagina` (`lerNucleo` → `setIntencao` / `setPaginaResponsavel`);
   - `decidirItem` (`lerItem` → `decidirItem`).
 
   Each one reads the seeds from `lerDemanda` of the frozen entry and the hosts with the same `hostsDeclarados` the page uses, writes nothing on `null`, and calls `revalidar(projeto)`.
-- [ ] T019 [US2] Invoke `accessibility` and `ux-writing`, then add the **Núcleo** block to `app/gsc/mapa/[slug]/plano/page.tsx` (contracts/ui.md §5), rendered from `vistaDoPlano(...).clusters`, never from `d.clusters` (analyze C1). One block per cluster, by volume, shows:
+- [X] T019 [US2] Invoke `accessibility` and `ux-writing`, then add the **Núcleo** block to `app/gsc/mapa/[slug]/plano/page.tsx` (contracts/ui.md §5), rendered from `vistaDoPlano(...).clusters`, never from `d.clusters` (analyze C1). One block per cluster, by volume, shows:
   - the intent: decided; or proposed, with its basis ("comercial em 160 de 14.470 buscas/mês"); or "nenhum termo do cluster declara intenção";
   - the answering page, as a path or planned label, with its origin in words;
   - the questions with their answering page, or "nenhuma pergunta proposta pela demanda: declare as do cliente";

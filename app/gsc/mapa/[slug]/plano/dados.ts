@@ -1,8 +1,8 @@
 import DEMANDAS from "@/data/demanda-estimada.json";
-import { dbOn, lerCrawlDePagina, lerIndexacaoPorUrl, listMarcas, listMetas, listPlanos, type MarcaDoMapa, type MetaDecidida, type Plano } from "@/lib/db";
+import { dbOn, lerCrawlDePagina, lerIndexacaoPorUrl, listMarcas, listMetas, listNucleo, listPlanos, type MarcaDoMapa, type MetaDecidida, type Plano } from "@/lib/db";
 import type { GscPaginas } from "@/lib/gsc";
 import { projectBySlug } from "@/lib/autopublish-projects.mjs";
-import { cobrir, estadoDaPagina, lerDemanda, montar, PREMISSAS_PADRAO, propor, segundaDe, SEMANAS } from "@/lib/plano.mjs";
+import { aplicarNucleo, cobrir, estadoDaPagina, lerDemanda, montar, PREMISSAS_PADRAO, propor, segundaDe, SEMANAS } from "@/lib/plano.mjs";
 import { todaySP } from "@/lib/agenda.mjs";
 
 type Partida = { top20?: number | null; tamBusca?: number | null; pagina1?: number | null } | null;
@@ -31,10 +31,11 @@ export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = f
   let decisoes: MetaDecidida[] = [];
   let marcas: MarcaDoMapa[] = [];
   let classes: Awaited<ReturnType<typeof lerIndexacaoPorUrl>> = null;
+  let nucleo: Awaited<ReturnType<typeof listNucleo>> = { decisoes: [], itens: [] };
   const falhas: string[] = [];
   if (dbOn()) {
     try {
-      [crawl, planos, marcas, classes] = await Promise.all([lerCrawlDePagina(slug), listPlanos(slug), listMarcas(slug), lerIndexacaoPorUrl(slug)]);
+      [crawl, planos, marcas, classes, nucleo] = await Promise.all([lerCrawlDePagina(slug), listPlanos(slug), listMarcas(slug), lerIndexacaoPorUrl(slug), listNucleo(slug)]);
     } catch (e) {
       falhas.push(`banco do hub: ${erro(e)}`);
     }
@@ -54,7 +55,8 @@ export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = f
     : PREMISSAS_PADRAO;
   const inicio = atual?.inicio ?? segundaDe(hoje)!;
   const estados = Object.fromEntries((crawl?.paginas ?? []).map((pg) => [pg.url, estadoDaPagina(pg.url, { classes, impressoes: paginas })]));
-  const clusters = demanda ? cobrir(demanda.clusters, crawl?.paginas ?? null, { estados }) : [];
+  // 058/D11: the owner's core decisions go in before the schedule, so a pointed page stops the planned one.
+  const clusters = demanda ? aplicarNucleo(cobrir(demanda.clusters, crawl?.paginas ?? null, { estados }), { ...nucleo, estados, ano: Number(hoje.slice(0, 4)) }) : [];
   const semCluster = demanda?.semCluster ?? [];
   // The ruled leaves' metas do not depend on demand; without frozen demand only the demand metas go.
   const propostas: Proposta[] = propor(clusters, { premissas, inicio, semCluster, partida, marcas }).filter((m) => demanda || m.origem !== "demanda");
