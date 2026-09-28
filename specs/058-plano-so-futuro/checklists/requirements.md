@@ -31,6 +31,6 @@
 
 ## Notes
 
-- FR-025 resolvido no clarify de 28/09: esforço em horas, capacidade em horas por semana por pessoa.
+- FR-025 resolvido no clarify de 28/09 (2ª resposta, opção C): esforço em minutos do dono só para ordenar; capacidade = 3 páginas novas por semana (057).
 - Nomes de fonte (Search Console, DataForSEO) e de specs anteriores (054, 055, 057) são vocabulário do
   domínio do hub, como na 057, não detalhe de implementação.

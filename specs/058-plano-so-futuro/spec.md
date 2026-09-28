@@ -41,10 +41,15 @@ Lido no código e na tela em 28/09/2026:
 
 ### Session 2026-09-28
 
-- Q: Em que unidade o esforço é medido, e o que ele limita por semana? → A: Em **horas**. A capacidade
-  vira **horas por semana por pessoa** (Jean e Maria), e toda tarefa do backlog ocupa essa capacidade,
-  não só a criação de página. O limite de 3 páginas novas por semana da 057 sai. O dono declara a
-  estimativa padrão por alavanca e as horas de cada pessoa (FR-025, FR-025a).
+- Q: Em que unidade o esforço é medido, e o que ele limita por semana? → A: Em horas, com capacidade em
+  horas por semana por pessoa. **Substituída pela pergunta seguinte, no mesmo dia.**
+- Q: As tarefas são executadas pelo Claude a pedido do dono, e o dono só pede e revisa. O que limita a
+  semana? → A: **Só o ritmo de páginas novas: 3 por semana** (a capacidade da 057 FR-010 volta, com a
+  sugestão de subir quando a indexação limpa das páginas novas passar de 90%). O esforço vira **minutos
+  do dono** (pedir, revisar e o que só ele faz: pedir indexação no Search Console, backlinks, marca) e
+  serve só para ordenar o backlog. Nenhuma outra tarefa ocupa capacidade (FR-025, FR-025a). Motivo: com
+  o tempo do dono quase zero, horas não seguram nada, e o que segura o ritmo é o Google absorver as
+  páginas (Tape Pro com 0 de 23 URLs indexadas em 28/09).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -137,8 +142,10 @@ esforço, responsável e prazo, trocar o responsável e ver a troca sobreviver a
 6. **Given** uma tarefa com responsável ou esforço editados pelo dono, **When** o plano é remontado ou
    ganha nova versão, **Then** a edição continua lá enquanto a tarefa (mesma alavanca, mesmo alvo)
    existir.
-7. **Given** Jean com 6 horas por semana e três tarefas dele de 3 horas cada, **When** o plano agenda,
-   **Then** duas entram na semana corrente e a terceira na seguinte, na ordem do backlog.
+7. **Given** capacidade de 3 páginas novas por semana e 4 páginas na fila, **When** o plano agenda,
+   **Then** 3 páginas entram na semana corrente e a 4ª na seguinte, e as tarefas que não são página
+   nova (título, schema, indexação, pergunta, card do mapa) entram na primeira semana que as
+   dependências permitem, sem ocupar capacidade.
 
 ---
 
@@ -250,23 +257,23 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
   move: o volume dos termos que a página alvo cobre ou vai cobrir, vezes a fração de clique da régua na
   posição-alvo de 180 dias (a mesma conta da meta de cliques da 057). A conta fica à mostra. Tarefa cujo
   alvo não pertence a nenhum cluster tem impacto "não calculável", com o motivo, nunca 0.
-- **FR-025**: O esforço DEVE ser medido em horas e vir de uma estimativa padrão por alavanca, declarada
-  pelo dono com o selo "◇ política do dono, sem fonte", editável por tarefa.
-- **FR-025a**: A capacidade DEVE ser declarada em horas por semana por pessoa (Jean e Maria), com o selo
-  "◇ política do dono, sem fonte". Uma tarefa entra na semana do responsável dela, na ordem do backlog
-  (FR-026), enquanto couber nas horas dele; a que não cabe vai para a semana seguinte. Tarefa maior que a
-  capacidade semanal inteira do responsável fica "a fazer", com o aviso "não cabe numa semana de
-  {pessoa}: dividir ou trocar o responsável". Isso substitui o limite de páginas novas por semana da 057
-  FR-010. Sem capacidade declarada, nenhuma tarefa é agendada, e o plano diz isso antes de qualquer
-  tarefa (como a 057 FR-018).
+- **FR-025**: O esforço DEVE ser medido em **minutos do dono** (pedir, revisar e o que só ele faz) e vir
+  de uma estimativa padrão por alavanca, com o selo "◇ política do dono, sem fonte", editável por
+  tarefa. O esforço serve só para ordenar o backlog (FR-026) e não limita nenhuma semana.
+- **FR-025a**: A única capacidade DEVE ser a de **páginas novas por semana** da 057 FR-010 (padrão 3),
+  que vale para página de cluster e página de apoio. As demais tarefas entram na primeira semana que as
+  dependências permitem, a partir da semana corrente. A sugestão de subir a capacidade quando a
+  indexação limpa das páginas novas passar de 90% continua, no mapa, e o plano nunca a sobe sozinho.
+  Com capacidade 0, nenhuma página nova é agendada, e o plano diz isso antes de qualquer tarefa (057
+  FR-018).
 - **FR-026**: A ordem do backlog DEVE respeitar a dependência por alvo: numa mesma página, a tarefa de
   degrau anterior (índice → desempenho → página certa → posição → snippet) vem antes; tarefa que depende
   de página não vem antes da página nascer (057 FR-012). Entre tarefas sem dependência, vem primeiro a de
   maior impacto por esforço; impacto "não calculável" vai para o fim da lista, na ordem da 054 (emenda
   do plan, research D7: o degrau deixou de ser faixa global e ficou como ordem dentro de cada alvo).
 - **FR-027**: O estado de uma tarefa DEVE ser um de três, todos futuros: **agendada** (tem semana),
-  **a fazer** (sem semana: passou do prazo de 180 dias na capacidade declarada, ou não cabe numa semana)
-  ou **bloqueada** (espera outra tarefa, que é nomeada).
+  **a fazer** (página nova que não cabe nas semanas até o prazo de 180 dias com a capacidade declarada,
+  ou página com data fixa numa semana já cheia) ou **bloqueada** (espera outra tarefa, que é nomeada).
 - **FR-028**: O prazo DEVE ser a semana em que a tarefa está agendada. O dono pode fixar uma data, e a
   data fixa vence a ordem.
 - **FR-029**: Responsável, esforço e data fixa editados pelo dono DEVEM sobreviver a remontagem e a nova
@@ -293,9 +300,6 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
 - US4 cenário 1 ("cada meta de demanda mostra o ponto de partida lido e a distância"): passa para o mapa.
 - FR-011a: a semana corrente do plano deixa de só apontar para o mapa; os cards entram no backlog
   (FR-020). O bloco "Plano · semana N" do mapa continua.
-- FR-010: a capacidade deixa de ser "páginas novas por semana" e passa a ser horas por semana por
-  pessoa, consumidas por toda tarefa (FR-025a). A sugestão de subir a capacidade quando a indexação limpa
-  das páginas novas passar de 90% sai junto.
 - FR-014: o responsável passa a ser por tarefa (FR-023), com o da versão como padrão.
 - FR-017 "as anteriores ficam legíveis": continuam gravadas, fora da tela do plano (FR-006).
 
@@ -310,8 +314,9 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
 - **Tarefa**: alavanca da 054 + alvo. Tem origens (calendário, card do mapa, pergunta), impacto com a
   conta, esforço, responsável, prazo, estado e a tarefa que a bloqueia. Derivada a cada montagem; só as
   edições do dono são gravadas, pela chave alavanca + alvo.
-- **Esforço padrão**: horas por alavanca, com selo de política do dono. Pertence à versão do plano.
-- **Capacidade**: horas por semana de cada pessoa, com selo de política do dono. Pertence à versão do
+- **Esforço padrão**: minutos do dono por alavanca (e por pergunta), com selo de política do dono.
+  Pertence à versão do plano.
+- **Capacidade**: páginas novas por semana (057), com selo de política do dono. Pertence à versão do
   plano.
 
 ## Success Criteria *(mandatory)*
@@ -333,8 +338,8 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
   vier.
 - **SC-007**: Uma edição de responsável, esforço ou data fixa sobrevive a uma nova versão do plano. Um
   teste reprova se ela se perder.
-- **SC-007a**: Nenhuma semana do plano soma mais horas de uma pessoa do que a capacidade declarada
-  dela. Um teste reprova se somar.
+- **SC-007a**: Nenhuma semana do plano tem mais páginas novas do que a capacidade declarada, e nenhuma
+  outra tarefa fica fora de semana por falta de capacidade. Um teste reprova se acontecer.
 - **SC-008**: Num projeto com meta declarada no OKR, o dono responde "o plano entrega os cliques que o
   OKR pede?" lendo uma linha do plano, sem abrir o OKR.
 - **SC-009**: Abrir o plano faz uma leitura externa a menos do que hoje: nenhuma leitura do Search

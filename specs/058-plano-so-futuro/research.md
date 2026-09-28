@@ -119,65 +119,67 @@ This keeps the global ranking and guarantees SC-006 without a topological sort.
 replaces "vai para o fim do seu degrau". Degrau is no longer a global tier; it stays the order inside
 one target.
 
-## D8 — Scheduling by person-hours
+## D8 — Scheduling: only new pages take capacity (clarify, option C)
 
-This is a greedy list schedule, deterministic, pure:
+The tasks are executed by Claude when the owner asks, and the owner only asks and reviews. So hours do
+not hold the pace; what does is Google absorbing the pages (Tape Pro: 0 of 23 indexed on 28/09). The
+schedule is a greedy list, deterministic, pure:
 
 - Weeks run from `max(1, semanaAtual)` to `SEMANAS` (26). Past weeks take nothing (FR-005).
-- Tasks with a fixed date go first, into their week, if they fit. One that does not fit becomes
-  "a fazer" with "a data fixada não cabe: semana DD/MM de {pessoa} já tem X h de Y h".
-- The rest go in D7 order, each into the earliest week that satisfies all three conditions:
-  - it is no earlier than the week of every dependency (the same week is fine);
-  - it is no earlier than its `naoAntes` (a planned page's indexing = creation week +
-    `semanasAteIndexar`);
-  - the responsible person's remaining hours that week ≥ the task's effort.
-- A task whose effort is above the person's weekly hours becomes "a fazer" with "não cabe numa semana de
-  {pessoa}: dividir ou trocar o responsável".
-- A task past week 26 becomes "a fazer".
-- A task whose dependency is not scheduled becomes "bloqueada", and the dependency is named.
-- With no hours declared for anyone, nothing is scheduled, and the first line says so (FR-025a).
+- **Only a new page takes capacity**, meaning the `cobertura` of a `planejada:` target (cluster or
+  support page). The limit is `capacidade` pages per week, 3 by default (057 FR-010).
+- Pages with a fixed date go first, into their week, if the week has room. One that does not fit
+  becomes "a fazer" with "a data fixada não cabe: a semana DD/MM já tem N páginas novas".
+- The rest go in D7 order:
+  - a new page goes into the earliest week ≥ its dependencies with room;
+  - any other task goes into the earliest week that satisfies both its dependencies (the same week is
+    fine) and its `naoAntes` (a planned page's indexing = creation week + `semanasAteIndexar`).
+- A task with a fixed date that is not a new page goes to that week, provided its dependencies allow
+  it. Otherwise it is "bloqueada".
+- A new page past week 26 becomes "a fazer", and a task depending on an unscheduled one becomes
+  "bloqueada", naming it.
+- With capacity 0, no new page is scheduled, and the first line says so (057 FR-018).
 
-**Invariant, tested (SC-007a)**: for each person and week, the sum of scheduled efforts ≤ that person's
-hours.
+**Invariant, tested (SC-007a)**: no week has more new pages than `capacidade`, and no task other than a
+new page is ever "a fazer".
+
+Effort (owner minutes, D10) only orders the list (D7). It never moves a task to another week.
 
 ## D9 — The metas read page weeks from the schedule
 
-`agendaDePaginas` keeps its queue (which pages, in which order, what each covers) and loses `semana`.
-The creation week of each planned page is the week the scheduler gave its `cobertura` task (`null` if
-it is "a fazer" or "bloqueada"). `propor` and `montar` receive that map instead of `capacidade`.
-`donos`, `entrega`, `valores`, `naoCabe` and the milestones are unchanged. The `conta` text says
-"páginas criadas nas semanas que o backlog agenda com X h/semana" instead of "N páginas novas por
-semana". Because the schedule starts at the current week, the metas recompute as weeks pass, as 057
-already did (`naoCabe` shows an approved meta that no longer fits).
+`agendaDePaginas` keeps its queue: which pages, in which order, and what each covers. It loses
+`semana`. The creation week of each planned page is the week the scheduler gave its `cobertura` task,
+or `null` if it is "a fazer" or "bloqueada". `propor` and `montar` receive that map, so the metas and
+the backlog cannot disagree. `donos`, `entrega`, `valores`, `naoCabe` and the milestones are unchanged.
+Because the schedule starts at the current week, the metas recompute as weeks pass, as 057 already
+did: `naoCabe` shows an approved meta that no longer fits.
 
-## D10 — Premises in hours
+## D10 — Effort in the owner's minutes, ordering only
 
-`hub_plano` gains `horas JSONB` (`{"jean": h, "maria": h}`) and `esforco JSONB` (`{alavanca: h,
-"pergunta": h}`), and drops `capacidade`. The table has 0 rows in production (fact above), so nothing
-migrates. The support-page floor and the two maturation premises stay. `pergunta` is an effort key,
-not a lever: a question section is far smaller than a new page, and both are `cobertura`.
+`hub_plano` keeps `capacidade` (pages per week) and gains `esforco TEXT` (`{alavanca | "pergunta":
+minutes}`). The table has 0 rows in production (fact above). `pergunta` is an effort key, not a lever:
+a question section is smaller than a new page, and both are `cobertura`. A card with no target list
+(`*`) counts as one unit.
 
-**Proposed defaults**: "◇ política do dono, sem fonte". The owner confirms or changes them before
-implement.
+**Defaults** ("◇ política do dono, sem fonte", proposed 28/09 and accepted with option C). Minutes of
+the owner, per target:
 
-| Key | Hours | Per |
+| Key | Min | Who executes · what the owner does |
 |---|---|---|
-| indexacao | 0.5 | target (`*` = 1 unit) |
-| poda | 1 | target |
-| profundidade | 0.5 | target |
-| vitais | 3 | target |
-| canibalizacao | 2 | target |
-| intencao | 0.5 | target |
-| links | 1 | target |
-| cobertura | 4 | target (a new page) |
-| pergunta | 1 | question |
-| frescor | 1 | target |
-| backlinks | 3 | target |
-| marca | 2 | target |
-| schema | 1 | target |
-| titulo | 0.5 | target |
-| jean | ? h/week | — |
-| maria | ? h/week | — |
+| cobertura (new page) | 10 | Claude writes, titles, marks up, links, publishes · asks and reads before it goes live |
+| pergunta | 5 | Claude · approves the answer |
+| titulo | 2 | Claude · approves |
+| intencao | 2 | Claude · approves |
+| schema | 2 | Claude · asks |
+| links | 3 | Claude · approves |
+| profundidade | 2 | Claude · asks |
+| vitais | 3 | Claude · asks |
+| canibalizacao | 5 | Claude, with 301 or merge · decides which page stays |
+| poda | 5 | Claude · decides consolidate, enrich or deindex |
+| frescor | 10 | Claude, with the owner's data · sends the new price table |
+| indexacao | 2 | Claude fixes sitemap and links · **the owner clicks "Solicitar indexação" in the Search Console (no API)** |
+| backlinks | 60 | Claude finds the sites and drafts the contact · **the owner sends and negotiates** |
+| marca | 60 | **the owner**: social, clients, partners |
 
 ## D11 — The core (núcleo): two tables keyed by project and seed
 
@@ -214,7 +216,7 @@ return.
 `hub_plano_tarefa (projeto, chave, responsavel, esforco, prazo, atualizado)`, PK `(projeto, chave)`.
 This is per project, not per version, because it must survive a new version (FR-029). A row whose
 task no longer exists is ignored. Defaults when there is no row: responsible = the version's
-`criadoPor`; effort = `esforco[alavanca]` (or `esforco.pergunta`), times 1 per target; fixed date =
+`criadoPor`; effort = `esforco[alavanca]` minutes (or `esforco.pergunta`), per target; fixed date =
 none.
 
 ## D14 — The OKR line
@@ -242,6 +244,6 @@ The block renders whenever the project has frozen demand, not only with an activ
 - this week's scheduled tasks, from the same backlog, with the 055 mark state of their lever;
 - the 057 milestone comparison, unchanged.
 
-The capacity suggestion ("indexação limpa > 90%: considerar subir a capacidade") is removed: capacity
-is now hours (spec, "O que muda na 057"). `semanaComCards` is deleted, because the backlog merges
-cards for every week.
+The capacity suggestion ("indexação limpa > 90%: considerar subir a capacidade") stays, as in 057:
+it reads the present, so it belongs on the map. `semanaComCards` is deleted, because the backlog
+merges cards for every week.

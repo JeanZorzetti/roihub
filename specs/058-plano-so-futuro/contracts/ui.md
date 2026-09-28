@@ -19,19 +19,19 @@ Blocks, top to bottom:
    - "versão N ativa" and/or "versão M em rascunho";
    - otherwise "prévia com as premissas padrão".
 2. **Avisos**, only when they change the plan, and always phrased as consequence:
-   - no hours declared;
+   - capacity 0 (no new page is scheduled);
    - no frozen demand;
    - no map snapshot;
    - "nenhuma página existente conta nas metas até a próxima leitura de impressões";
    - `naoCabe`;
    - tasks past 26 weeks.
 3. **Esta semana**: the tasks scheduled in the current week, in backlog order, with responsible and
-   hours. Shows "Nada mais planejado para esta semana" plus the next week that has a task. Or, before
+   the owner's minutes. Shows "Nada mais planejado para esta semana" plus the next week that has a task. Or, before
    the start, "O plano começa em DD/MM".
 4. **Backlog**: one row per task, in D7 order. The columns:
    - task (lever action + target label);
    - impact (clicks per month, or "não calculável: motivo");
-   - effort (h);
+   - effort (owner minutes, ordering only);
    - responsible;
    - due (week start DD/MM, or the fixed date);
    - state (agendada / a fazer / bloqueada) with the reason.
@@ -54,13 +54,13 @@ Blocks, top to bottom:
    - or "o OKR de {projeto} não exige cliques ainda: {motivo}";
    - or "o OKR não respondeu: {motivo}".
 7. **Calendário**: the weeks from the current one to week 26. Quiet weeks collapse as in 057. Each week
-   shows its tasks and the hours used per person out of their capacity ("Jean 5,5 de 6 h").
+   shows its tasks and the new pages out of the capacity ("páginas novas: 2 de 3").
 8. **Demanda**: 057's block minus page state (moved to the map). The terms covered per page and the
    uncovered terms stay: they are the input of the future pages.
 9. **Premissas**:
    - start date;
-   - hours per week per person;
-   - default effort per lever plus `pergunta`;
+   - new pages per week (capacity, the only limit);
+   - default owner minutes per lever plus `pergunta`, with who executes and what the owner does;
    - weeks to index;
    - weeks to stabilize;
    - support-page floor.
@@ -88,11 +88,11 @@ Each action validates the form with a pure `ler*` in `.mjs`. Input outside the c
 
 | Action | Validator | Writes | Contract |
 |---|---|---|---|
-| `criarVersao`, `salvarPremissas` | `lerPlano` (changed) | `hub_plano` | adds `horas.{id}` and `esforco.{chave}`; removes `capacidade` |
+| `criarVersao`, `salvarPremissas` | `lerPlano` (changed) | `hub_plano` | adds `esforco.{chave}` (minutes); keeps `capacidade` |
 | `decidirIntencao` | `lerNucleo` | `hub_nucleo` | `projeto`, `semente` (must be a cluster seed of the frozen demand), `intencao` ∈ informacional\|comercial\|ambos, `responsavel` |
 | `apontarPagina` | `lerNucleo` | `hub_nucleo` | `pagina`: an absolute URL on one of the project's hosts, or empty (back to the default) |
 | `decidirItem` | `lerItem` | `hub_nucleo_item` | `tipo` ∈ pergunta\|entidade; `texto` 1–200 chars; `estado` ∈ aceita\|removida\|respondida (respondida only for pergunta); `detalhe`: entity kind from the fixed list, or the answering page URL on the project's hosts |
-| `editarTarefa` | `lerTarefa` | `hub_plano_tarefa` | `chave` ≤ 600 chars with a known lever prefix; `responsavel` ∈ RESPONSAVEL_IDS or empty; `esforco` 0.25–80 or empty; `prazo`: a date, snapped to its Monday, or empty |
+| `editarTarefa` | `lerTarefa` | `hub_plano_tarefa` | `chave` ≤ 600 chars with a known lever prefix; `responsavel` ∈ RESPONSAVEL_IDS or empty; `esforco` integer minutes 0–600 or empty; `prazo`: a date, snapped to its Monday, or empty |
 
 `decidirMeta`, `aprovarPropostas` and `ativar` are unchanged.
 

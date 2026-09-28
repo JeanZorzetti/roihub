@@ -19,9 +19,11 @@ On top of that, the plan gains three things:
    It is stored per project and seed, so it survives versions.
 2. **One backlog**: every future task (planned pages, 057 D15 page tasks, the map's cards, questions)
    as lever + target.
-   - Impact is projected clicks/month, and effort is hours.
+   - Impact is projected clicks/month, and effort is the owner's minutes, because Claude executes on
+     request (clarify, option C).
    - The order is impact ÷ effort, with the 054 step order kept inside each target.
-   - It is scheduled on hours per person per week (clarify Q1), from the current week.
+   - It is scheduled from the current week, and only new pages take capacity (3 per week, as 057).
+     Everything else goes to the first week its dependencies allow.
    - The metas read page-creation weeks from that schedule.
 3. **The OKR line**: the 180-day clicks next to the goal tree's requirement.
 
@@ -36,7 +38,8 @@ Node 22.
 
 **Storage**: Postgres. All tables are `IF NOT EXISTS` in `ensure()` ([data-model.md](data-model.md)):
 - new: `hub_nucleo`, `hub_nucleo_item`, `hub_plano_tarefa`, `hub_mapa_disparo`;
-- `hub_plano`: + `horas`, + `esforco`, − `capacidade` (0 rows in production on 28/09).
+- `hub_plano`: + `esforco` (owner minutes per lever). `capacidade` stays (0 rows in production on
+  28/09).
 
 **Testing**: `node --test`:
 - `test/plano.test.mjs` (existing, registered) for the core and the metas;
@@ -97,8 +100,8 @@ lib/
 ├── backlog.mjs                    # NEW: gerarTarefas, impacto, ordenar, agendar (pure)
 ├── plano.mjs                      # agendaDePaginas loses `semana`; propor/montar take page weeks;
 │                                  #   + propostaDeIntencao, perguntasPropostas, aplicarNucleo,
-│                                  #   lerNucleo, lerItem, lerTarefa; lerPlano in hours;
-│                                  #   PREMISSAS_PADRAO gains horas/esforco; − semanaComCards
+│                                  #   lerNucleo, lerItem, lerTarefa; lerPlano + esforco;
+│                                  #   PREMISSAS_PADRAO gains esforco; − semanaComCards
 ├── db.ts                          # + 4 tables, hub_plano columns; list/set functions
 app/gsc/mapa/[slug]/
 ├── page.tsx                       # snapshot upsert; plan block per research D15 (partida,
@@ -113,8 +116,8 @@ test/
 └── backlog.test.mjs               # NEW, registered: SC-004, SC-006, SC-007, SC-007a, D4, D5, D7, D8
 ```
 
-**Structure Decision**: the backlog is its own pure module. It is a scheduling problem (tasks, hours,
-dependencies), separate from the demand math in `plano.mjs`, which imports it. `plano.mjs` stays the
+**Structure Decision**: the backlog is its own pure module. It is a scheduling problem (tasks, page
+capacity, dependencies), separate from the demand math in `plano.mjs`, which imports it. `plano.mjs` stays the
 only place that knows clusters and metas, and `backlog.mjs` does not know them. It receives tasks with
 impact already attached.
 
@@ -134,14 +137,13 @@ impact already attached.
 3. **Backlog (US3)**, in this order:
    1. the snapshot table and the map's upsert. Deploy it and open the map, so that the data exists
       before step 4 reads it;
-   2. the `hub_plano` hours/effort columns plus `hub_plano_tarefa`;
+   2. the `hub_plano.esforco` column plus `hub_plano_tarefa`;
    3. `backlog.mjs` with its tests;
    4. `plano.mjs` metas from scheduled weeks;
-   5. the backlog, week and calendar blocks, the task edit form, and the premises in hours.
+   5. the backlog, week and calendar blocks, the task edit form, and the effort minutes in the premises.
 4. **OKR (US4)**: the OKR line in `dados.ts` and the metas block.
 
-Before slice 3's step 2, the owner confirms the default efforts and the hours of Jean and Maria
-(research D10 table).
+The default efforts (research D10 table, owner minutes) were accepted on 28/09 together with option C.
 
 ## Risks
 

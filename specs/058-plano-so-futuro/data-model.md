@@ -10,19 +10,17 @@ when SQL reads them, and no reader here does.
 
 | Column | Change | Meaning |
 |---|---|---|
-| `capacidade` | **dropped** (`DROP COLUMN IF EXISTS`; 0 rows in production on 28/09) | pages per week, replaced by `horas` |
-| `horas` | **new** `TEXT NOT NULL DEFAULT '{}'` | `{"jean": number, "maria": number}`, hours per week per person (FR-025a) |
-| `esforco` | **new** `TEXT NOT NULL DEFAULT '{}'` | `{alavanca \| "pergunta": number}`, default hours per target (FR-025) |
+| `esforco` | **new** `TEXT NOT NULL DEFAULT '{}'` | `{alavanca \| "pergunta": number}`, default owner minutes per target (FR-025), ordering only |
 
-Unchanged: `projeto, versao, criado, criado_por, inicio, semanas_indexar, semanas_estabilizar,
-piso_apoio, estado`.
+Unchanged: `projeto, versao, criado, criado_por, inicio, capacidade` (new pages per week, the only
+limit, FR-025a), `semanas_indexar, semanas_estabilizar, piso_apoio, estado`.
 
 Validation lives in `lerPlano`, which rejects the form when any of these is off:
-- hours per person: 0–60, at most 2 decimals;
-- the effort of each key: 0.25–80;
-- keys: `RESPONSAVEL_IDS` for `horas`; `ALAVANCAS` + `pergunta` for `esforco`.
+- the minutes of each effort key: integer 0–600;
+- effort keys: `ALAVANCAS` + `pergunta`;
+- `capacidade`: 0–20, as in 057.
 
-A missing key means its default: hours 0, effort from `PREMISSAS_PADRAO.esforco`.
+A missing key means its default from `PREMISSAS_PADRAO.esforco`.
 
 ### `hub_nucleo` (new) — the core, per cluster
 
@@ -58,7 +56,7 @@ PK `(projeto, semente, tipo, texto)`. Editing a question's text is two writes: t
 | `projeto` | TEXT | slug |
 | `chave` | TEXT | `alavanca\|alvo` (research D4), ≤ 600 chars |
 | `responsavel` | TEXT NULL | override; null = the version's default |
-| `esforco` | TEXT NULL | override hours (JSON number in TEXT); null = default |
+| `esforco` | TEXT NULL | override minutes (JSON integer in TEXT); null = default |
 | `prazo` | DATE NULL | fixed Monday; null = the scheduler's week |
 | `atualizado` | TIMESTAMPTZ DEFAULT now() | |
 
@@ -99,7 +97,8 @@ failure is swallowed.
   origens: ("pagina-nova" | "pagina-existente" | "mapa" | "pergunta")[],
   briefing: { intencao, perguntas, entidades } | null,   // FR-016, creation and question tasks
   impacto: { cliques: number, conta: string } | { naoCalculavel: string },
-  esforco: { horas: number, editado: boolean },
+  esforco: { minutos: number, editado: boolean },          // ordering only
+  paginaNova: boolean,                                     // takes capacity (research D8)
   responsavel: { id: string, editado: boolean },
   prazoFixo: string | null,
   naoAntes: number | null,                               // week
@@ -113,7 +112,7 @@ failure is swallowed.
 
 ### Semana (057, changed)
 
-`{n, inicio, tarefas: Tarefa[] (the scheduled ones), horas: {jean, maria} used, marcos}`. It starts at
+`{n, inicio, tarefas: Tarefa[] (the scheduled ones), paginasNovas: number, marcos}`. It starts at
 the current week.
 
 ### Linha do OKR (new)
