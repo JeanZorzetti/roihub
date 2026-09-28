@@ -70,6 +70,31 @@ CREATE TABLE IF NOT EXISTS hub_plano_meta (
 );
 ```
 
+### Added by the clarification of 2026-09-28 (research D12–D14)
+
+```sql
+-- 057/D14: the new premise of FR-005a, on the plan version like the other three.
+ALTER TABLE hub_plano ADD COLUMN IF NOT EXISTS piso_apoio INT NOT NULL DEFAULT 100;  -- "◇ política do dono, sem fonte"
+
+-- 057/D12: the per-URL verdict the indexing run already reads and used to drop. One row per URL per
+-- run. Written as DELETE (projeto, dia) + multi-row INSERT, like hub_pagina, so a URL that left the
+-- sitemap disappears instead of lingering. classe = classificar() from lib/indexacao-corrida.mjs.
+-- 'falha' is "not read", never "out of the index".
+CREATE TABLE IF NOT EXISTS hub_indexacao_url (
+  projeto TEXT NOT NULL,
+  dia DATE NOT NULL,
+  url TEXT NOT NULL,
+  classe TEXT NOT NULL,                   -- indexada | rastreada_nao_indexada | descoberta_nao_indexada | outra | falha
+  PRIMARY KEY (projeto, dia, url)
+);
+
+-- 057/D14: the H1 next to the title. NULL on rows before the change = "not read", not "no H1".
+ALTER TABLE hub_pagina ADD COLUMN IF NOT EXISTS h1 TEXT;
+```
+
+`PaginaCrawl` (TS) gains `h1: string | null`. `lerIndexacaoPorUrl(projeto)` returns the latest day,
+`{dia, classes: Record<url, classe>}`, or `null` when there has never been a run.
+
 State transitions:
 - `hub_plano.estado`: `rascunho` → `ativo` (when every meta has a decision; activating a version moves
   the previous `ativo` to `encerrado`) → `encerrado`.
@@ -80,10 +105,12 @@ State transitions:
 
 | Object | Shape | From |
 |---|---|---|
-| Cluster | `{semente, termos: [{termo, volume, segmento?}], volume, pagina: url \| null}` | `agrupar()` over the frozen demand, plus `lerCrawlDePagina()` for `pagina` |
+| Cluster | `{semente, termos: [{termo, volume, segmento?, cobertoPor: url \| rótulo \| null}], volume, pagina: url \| null, estadoDaPagina}` | `agrupar()` over the frozen demand, plus `lerCrawlDePagina()` for `pagina` and `cobertoPor` (D14), plus `estadoDaPagina()` (D13) |
+| EstadoDaPagina | `ativa \| indexada-sem-impressao \| fora-do-indice \| sem-leitura` | `estadoDaPagina(url, {classes, impressoes})`: `hub_indexacao_url` × `gscPaginas` (D13) |
+| PaginaAgendada | `{tipo: cluster \| apoio-segmento \| apoio-termo, semente, segmento?, termo?, volume, semana, alvo, cobre: string[]}` | `agendaDePaginas()`; `apoio-termo` = FR-005a, `volume ≥ pisoApoio`, not covered (D14) |
 | MetaProposta | `{chave, prazo, origem, valor, op, conta, aviso?, partida?}` | `propor()` over clusters, `REGRAS`, `benchmark()`, the plan premises and, for demand metas, the `gscTermos` starting point (research D11) |
 | Semana | `{n, inicio, tarefas: Tarefa[], marcos: {chave: valor}}` | `montar()`, over the approved metas (research D11) |
-| Tarefa | `{alavanca, alvos: string[], kpis: string[], responsavel, feita: boolean}` | `montar()`, plus 055 marcas (`feita` = marca `marcado` ≥ week start) |
+| Tarefa | `{alavanca, alvos: string[], kpis: string[], responsavel, feita: boolean, origem: ("calendario" \| "mapa")[]}` | `montar()`, plus 055 marcas (`feita` = marca `marcado` ≥ week start). A week-1 task for an existing page that is not `ativa` (D15) is part of the calendar. `semanaComCards()` adds `"mapa"` to the current week only (D16) |
 | Comparacao | `{chave, marco, lido, estado, sugerirRefazer}`, where estado ∈ `nao-chegou \| no-marco \| abaixo \| acima \| sem-leitura` | `comparar()` over marcos, the map's `leituras` and the reading of the window shifted 7 days back (research D11) |
 
 Validation (`lerDecisao`, `lerPlano`) is pure and tested, like `lerMarca` (055). Input outside the
@@ -93,4 +120,5 @@ contract writes nothing:
 - `prazo` must be 90 or 180;
 - `valor` must be finite;
 - `capacidade` must be an integer from 0 to 20;
+- `pisoApoio` must be an integer from 1 to 100000;
 - the premises must be integers from 0 to 26.

@@ -31,7 +31,31 @@ break:
   - a deadline that does not fit → "não cabe no prazo".
 - **`comparar`**: a reading `{ausente}` → `sem-leitura`, never `no-marco`; a milestone in the future
   → `nao-chegou`.
-- **`lerDecisao` / `lerPlano`**: reject bad responsavel, key, horizon, value and capacity.
+- **`lerDecisao` / `lerPlano`**: reject bad responsavel, key, horizon, value, capacity and
+  `pisoApoio`.
+- **Clarification of 2026-09-28** (research D12–D16):
+  - `estadoDaPagina`:
+    - `indexada` + impressions → `ativa`;
+    - `indexada` absent from a complete reading → `indexada-sem-impressao`;
+    - `indexada` + truncated or failed reading → `sem-leitura`;
+    - `falha` or missing URL → `sem-leitura`, never `fora-do-indice`.
+  - `cobreTermo`:
+    - "fita gomada kraft" is covered by the title "Fita Gomada Kraft 70mm", in any order, without
+      accents;
+    - it is not covered by a title that has only "fita gomada";
+    - it is not covered by mixing half the words from the title and half from the H1;
+    - `fitas` ≠ `fita`.
+  - `agendaDePaginas`: an uncovered term with volume ≥ `pisoApoio` becomes an `apoio-termo`; one
+    below the floor does not; one already covered by a queued page does not.
+  - `montar`:
+    - a non-`ativa` page gets `indexacao` or `links`/`frescor`/`backlinks` in week 1;
+    - that page enters no milestone without a marca;
+    - with a marca in week 3, it matures in week 3 + `semanasAteEstabilizar`.
+  - `semanaComCards`: the same lever merges into one task (union of targets); an `aguardando` entry
+    stays out; a future week receives no card.
+  - **SC-008**: the Tape Pro scenario of 28/09 (2 cluster pages, 0 impressions) → week 1 is not
+    empty, and no demand meta exceeds the terms covered by title/H1. The test fails on "semana vazia"
+    and on 100% page 1 with 2 pages.
 
 ## 2. Demand, Tape Pro
 
@@ -73,3 +97,18 @@ Curate with `--excluir` and `--mover`, then add `--gravar`. Then:
   (SC-005).
 - `/gsc/mapa/tapepro` shows "Plano · semana 1 de 26" with the demand milestones as `nao-chegou`.
 - Take screenshots of both routes at 3 widths, plus a keyboard pass (`ui-verification`).
+
+## 5. Clarification of 2026-09-28, in production
+
+- After the deploy, outside the windows, trigger one indexing run by hand (`POST /api/indexacao`, the
+  same way the workflow does). Then check that `hub_indexacao_url` has one row per Tape Pro sitemap
+  URL. Before that run, every page says `sem leitura` and has the `indexacao` task, which is expected.
+- After the next daily crawl, `hub_pagina.h1` is filled for Tape Pro. Until then, the Demanda block
+  says "H1 não lido nesta corrida".
+- `/gsc/mapa/tapepro/plano`:
+  - the two product pages show their state;
+  - week 1 is not empty;
+  - the 90-day `top20` meta counts only what `ativa` pages cover by title or H1;
+  - the demand `conta` lists terms and volume per page.
+- `/gsc/mapa/tapepro`: the "Plano · semana N" block shows the map's cards with their origin, and one
+  task per lever.

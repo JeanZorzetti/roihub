@@ -154,6 +154,10 @@ normalized seed as a path segment sequence, or the seed in its title. Tape Pro t
 `/produtos/{fita-gomada,…}`, so the three product clusters start covered, and the plan begins with
 support pages and uncovered clusters.
 
+**Superseded in part by D12–D15 (clarify 2026-09-28)**: "covered" still names which page belongs to a
+cluster, but it no longer makes the page count. The page counts only when it is `ativa` (D13), and it
+counts only the terms its title or H1 cover (D14).
+
 ## D8 — Montage algorithm (FR-010 to FR-014, FR-018)
 
 **Decision**: `montar({inicio, capacidade, semanasAteIndexar, semanasAteEstabilizar, clusters})`
@@ -212,6 +216,149 @@ janela)` takes the window as a parameter.
   and 050 demand, whose source is the GSC floor. `consultar-demanda.mjs --gravar` refuses to overwrite
   an entry whose `procedencia.fonte` is not DataForSEO, and exits naming the entry. Replacing it would
   move the denominator of leaves that already have readings.
+
+## D12 — Per-URL index verdict is stored by the run that already reads it (FR-007a)
+
+Read in the code on 2026-09-28: `/api/indexacao` already inspects every sitemap URL of the projects in
+`SLUGS_DE_BUSCA` and gets one verdict per URL (`inspecionarIndexacao` → `linhas`). Then `agregar()`
+throws the URL away and `hub_indexacao` keeps only the counts.
+
+**Decision**: the same run also writes the per-URL class to a new table `hub_indexacao_url (projeto,
+dia, url, classe)`. `classe` is the output of `classificar()` from `lib/indexacao-corrida.mjs`, reused
+as is: `indexada | rastreada_nao_indexada | descoberta_nao_indexada | outra | falha`. The write is
+DELETE by `(projeto, dia)` plus a multi-row INSERT, the same as `hub_pagina` (024), so a URL that left
+the sitemap does not linger as a ghost. `lerIndexacaoPorUrl(slug)` returns the latest day as
+`{dia, classes: Map<url, classe>}`.
+
+**Rationale**: it costs 0 extra inspections. The route already paid about 6.4 s per URL for this
+answer, and it drops it on the floor. The volume is about 160 rows a day (Atma, Sirius and Tape Pro).
+That is the same order as `hub_pagina`, which already keeps every URL of every run.
+
+**Consequences**:
+- A URL outside the sitemap is never inspected, so it stays "sem leitura". That is the honest
+  answer.
+- Until the first run after deploy, every page is "sem leitura" and gets the `indexacao` task. The
+  quickstart triggers one run by hand, outside the night window.
+- `falha` is "sem leitura", never "fora do índice": a 429 is not a verdict.
+
+**Alternative rejected**: inspecting the covering pages on plan open. That is 6.4 s per URL inside a
+page render, and it spends quota on read (write on read, D6).
+
+## D13 — Page state: indexing × impressions (FR-007a)
+
+**Decision**: a pure function `estadoDaPagina(url, {classes, impressoes})` returns one of four states:
+
+| Index reading | Impression reading | State |
+|---|---|---|
+| `indexada` | ≥ 1 in the window | `ativa` |
+| `indexada` | absent from a complete reading | `indexada-sem-impressao` |
+| `rastreada_nao_indexada`, `descoberta_nao_indexada` or `outra` | any | `fora-do-indice` |
+| missing URL, `falha` or no run | any | `sem-leitura` |
+| `indexada` | read failed, or the reading was `truncado` | `sem-leitura` |
+
+The impressions come from `gscPaginas(hosts, janela)`, over the same window the map uses:
+- **Map**: it already makes this read (`paginasGsc`) and passes it into `dadosDoPlano`. That adds 0
+  calls.
+- **Plan route**: this becomes its second Search Console read, next to `gscTermos` (D6/D11). There is
+  still no DataForSEO call (SC-005).
+
+Google leaves out a row with zero impressions, so a URL absent from a complete reading means 0. A
+truncated or failed reading proves nothing about absence, so the state is `sem-leitura` and the plan's
+first line says why.
+
+URLs are matched by **path**: decoded, without the trailing slash, and only for the project's own hosts.
+A variant such as `/pt-BR/x` is a different path (memory `google_indexa_url_prefixada_pelo_link_interno`).
+Its impressions do not count for `/x`, and that is correct: the page the plan measures is not the one
+Google shows.
+
+## D14 — Term coverage by title or H1 (FR-007b, FR-005a)
+
+Read in the code: the crawl (`lib/pagina.mjs#extrair`, 024) stores `titulo` but not the H1.
+
+**Decision**:
+- `lib/pagina.mjs` gains `h1(html)`: the first `<h1>`, with tags removed and entities decoded, run over
+  `semScriptNemStyle(html)`. That avoids the greedy-regex defect that file already documents. It
+  returns `null` when there is no `<h1>`.
+- `hub_pagina` gains a nullable `h1 TEXT` (`ADD COLUMN IF NOT EXISTS`). NULL on older rows means "not
+  read", not "no H1". Until the next daily crawl, coverage uses the title only, and the plan says
+  "H1 não lido nesta corrida".
+- `cobreTermo(termo, texto)`: split `normalizar(termo)` and `normalizar(texto)` into words. It returns
+  true when **every** word of the term is a word of the text, in any order. A page covers a term when
+  its title covers it **or** its H1 covers it (each one alone, not the two mixed).
+- A **planned** page covers what its label covers:
+  - a cluster page: the seed;
+  - a segment support page: seed + segment;
+  - a term support page (FR-005a): the term itself.
+
+  The calendar cannot read a title that does not exist yet. The label is the promise that the page's
+  title will carry those words, and the page's `titulo` task (FR-012) is that promise.
+- `entrega()` changes unit: from "terms of mature clusters" to "terms whose covering page is mature". A
+  term covered by several pages takes the earliest maturity. The `conta` lists, for each page, the
+  terms and the volume it covers (FR-007b).
+
+**FR-005a, the term support page**: a cluster term with `volume ≥ pisoApoio` enters the queue as a
+support page labeled with the term, after the cluster pages and together with the segment support
+pages, by volume. It qualifies only when no existing page (any state) and no page already in the queue
+covers it. `pisoApoio` defaults to 100 and is a new premise on `hub_plano`, with the seal "◇ política do
+dono, sem fonte". It is edited in the same form as capacity.
+
+**Consequences of the literal rule, as clarified** (kept, and shown in the `conta`, not softened):
+- plural and singular are different words (`fita` ≠ `fitas`);
+- prepositions count (`fita gomada para caixa` needs `para`).
+
+Stemming or a stop-word list would be a second, unannounced matching rule. If the owner wants one,
+that is a new clarification.
+
+## D15 — Existing pages that are not `ativa` become week-1 tasks (FR-007a)
+
+**Decision**: in `montar()`, a covering page that is not `ativa` emits week-1 tasks:
+- `fora-do-indice` or `sem-leitura`: `indexacao`, with the URL as the target.
+- `indexada-sem-impressao`: the **posição** levers that act on an existing URL: `links`, `frescor`
+  and `backlinks`. These are the 054 levers with `degrau: "posicao"`, minus `cobertura` (the page
+  exists) and `marca` (it acts on the brand, not on a page).
+
+The same lever in the same week stays a single task with every target (054 FR-009).
+
+**Maturation**:
+- The page's creation week is the week of the first 055 marca on any of its levers with `marcado ≥
+  inicio`.
+- Maturation is that week + `semanasAteEstabilizar`.
+- With no marca, the creation week is `Infinity`: the page enters no milestone and no deadline.
+
+`montar` and `propor` receive `marcas`, and the 055 marca is per lever per project (there is no
+per-URL marca). One `indexacao` marca therefore starts the clock for every page that had that task.
+That is the same granularity 054/055 already use, and it adds no mechanism (FR-016).
+
+**Consequence for Tape Pro on 2026-09-28**: 2 cluster pages had 0 impressions since 07/08. Both are
+either `indexada-sem-impressao` or `fora-do-indice`, and week 1 has tasks. No demand meta counts those
+clusters before a marca, so the 90-day meta drops to what the math can actually deliver. That is
+SC-008.
+
+## D16 — The current week merges the map's cards, on the map (FR-011a)
+
+**Decision**: a pure function `semanaComCards(semana, entradas)`:
+- `entradas` is the output of the 054 `plano()`, keeping only entries whose `apresentacao` is `ativa`
+  or `voltou`. An entry that is `aguardando` has a vigente marca and stays hidden until `reler`.
+- An entry and a calendar task with the same lever become **one** task: the union of targets and KPIs,
+  plus `origem: ["calendario", "mapa"]`.
+- Cards without a calendar task are appended in the 054 order (degrau, then lever).
+- Future weeks never receive cards.
+
+**Where it renders**: the map's block "Plano · semana N". It already holds `acoes = plano(disparos,
+{marcas, hoje})` and the 32 readings, so the merge costs 0 reads. On the plan route, the current
+week's row shows the calendar tasks and then a line pointing to the map's block, something like "as
+alavancas que o mapa dispara hoje também são desta semana". The final copy comes from `ux-writing`.
+The row never shows "nada a fazer". The line carries no count, because the plan route cannot know one
+without the 32 readings.
+
+**Rationale**: D6 already rejected recomputing the 32 readings on the plan route. Doing it now would
+put a second copy of a 2,600-line page's readings next to the first, and the two screens could
+disagree. The map block is the week's reading, and the plan route is the calendar. SC-003 ("sem
+clicar") is met where the owner reads the week, which is the map.
+
+**Alternative rejected**: extracting the readings into a shared module. It is the right move the day a
+third screen needs them. Today it is a refactor of the largest file in the repo in order to repeat a
+list that already renders one click away.
 
 ## D10 — UI discipline
 
