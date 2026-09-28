@@ -1722,7 +1722,8 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
   [data-info="gsc"] .plano-backlog td[data-rotulo]::before { content: attr(data-rotulo) ": "; color: var(--muted); }
   [data-info="gsc"] .plano-backlog .plano-bl-det { padding-bottom: 10px; border-bottom: 1px solid var(--grid); }
   [data-info="gsc"] .plano-backlog .plano-bl-det td { grid-column: 1 / -1; padding-top: 4px; }
-  [data-info="gsc"] .plano-backlog summary { min-height: 44px; display: flex; align-items: center; }
+  /* 44px of touch target through padding: display:flex would drop the disclosure marker. */
+  [data-info="gsc"] .plano-backlog summary { padding: 12px 0; }
   [data-info="gsc"] .plano-backlog input, [data-info="gsc"] .plano-backlog select { font-size: 16px; }
   [data-info="gsc"] .plano-minutos input { font-size: 16px; }
 }

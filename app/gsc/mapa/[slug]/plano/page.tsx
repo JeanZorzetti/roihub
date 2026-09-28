@@ -508,7 +508,8 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
       <ul className="mapa-acao-motivos">
         {porAlavanca(s.tarefas).map((ts) => (
           <li key={`${ts[0].alavanca}|${ts[0].responsavel.id}`}>
-            <strong>{ALAVANCAS[ts[0].alavanca as keyof typeof ALAVANCAS].acao}</strong>: {ts.map((t) => t.alvo.rotulo).join(", ")} · {primeiroNome(ts[0].responsavel.id)} ·{" "}
+            <strong>{ALAVANCAS[ts[0].alavanca as keyof typeof ALAVANCAS].acao}</strong>: {ts.slice(0, 3).map((t) => t.alvo.rotulo).join(", ")}
+            {ts.length > 3 ? ` e mais ${ts.length - 3} (no backlog)` : ""} · {primeiroNome(ts[0].responsavel.id)} ·{" "}
             {ts.reduce((a, t) => a + t.esforco.minutos, 0)} min seus
             <span className="mapa-fila-det">Move: {[...new Set(ts.flatMap((t) => t.kpis))].map(nomeDe).join(", ")}</span>
           </li>

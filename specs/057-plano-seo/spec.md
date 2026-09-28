@@ -100,6 +100,7 @@ Lido em 28/09/2026:
 - Q: Onde o plano lê o ponto de partida? → A: Na tela do plano, com uma leitura do Search Console por
   termo (a mesma do mapa), só para as metas de demanda. As demais folhas mostram o ponto de partida no
   próprio mapa.
+  *Substituído pela 058 (FR-003, FR-007): o ponto de partida mora no bloco do plano no mapa; o `/plano` não lê o Search Console por termo.*
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -216,6 +217,7 @@ de zero.
 1. **Given** um projeto com mapa e leitura, **When** o dono pede a proposta, **Then** cada meta de demanda
    mostra o ponto de partida lido e a distância até a meta. A demanda desses projetos é a que o hub já tem
    (piso do GSC, 050), sem consulta paga.
+   *Substituído pela 058 (FR-001, FR-003): o ponto de partida e a distância aparecem no mapa, não no plano.*
 
 ---
 
@@ -309,12 +311,14 @@ de zero.
   (FR-016). Tarefa do calendário e card com a mesma alavanca viram UMA tarefa, com os alvos e os KPIs dos
   dois. As semanas futuras não projetam card: o mapa só lê o presente. As regras e os textos do card são
   os da 054, sem cópia no plano.
+  *Substituído pela 058 (FR-020): os cards do mapa entram no backlog do plano; o bloco "Plano · semana N" do mapa continua.*
 - **FR-012**: Uma tarefa que depende de página (links internos, título, schema, frescor) NÃO DEVE ser
   agendada antes da semana em que a página do cluster nasce.
 - **FR-013**: Os marcos semanais DEVEM usar premissas de maturação declaradas na tela (semanas até indexar
   e semanas até a posição estabilizar), com o selo existente "◇ política do dono, sem fonte". O dono pode editar. Nenhum selo novo é criado.
 - **FR-014**: Cada tarefa DEVE ter alavanca, alvo, responsável (Jean ou Maria, como na 055), semana e os
   KPIs que ela move, com o marco de cada um.
+  *Substituído pela 058 (FR-023): o responsável é por tarefa, com o da versão como padrão.*
 - **FR-015**: O plano DEVE comparar cada marco vencido com a leitura do mapa e dar um de cinco estados:
   **marco não chegou**, **no marco**, **abaixo do marco**, **acima do marco** ou **sem leitura** (com o
   motivo). "Sem leitura" nunca aparece como "no marco", e nenhum estado usa "ok" ou ✓ (glossário da 055).
@@ -322,6 +326,7 @@ de zero.
   dispara volta como "ainda dispara".
 - **FR-017**: O plano NUNCA DEVE mudar uma meta aprovada sozinho. Refazer a proposta cria uma nova versão
   do plano, e as anteriores ficam legíveis.
+  *Substituído pela 058 (FR-006): as versões anteriores continuam gravadas, fora da tela do plano.*
 - **FR-018**: Com capacidade zero, ou com o prazo impossível na capacidade declarada, o plano DEVE dizer
   isso antes de qualquer tarefa.
 - **FR-019**: As regras de proposta e de montagem DEVEM ser as mesmas para todos os projetos. Nenhuma
