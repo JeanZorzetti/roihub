@@ -46,9 +46,11 @@ break:
     - it is not covered by mixing half the words from the title and half from the H1;
     - `fitas` ≠ `fita`.
   - `agendaDePaginas`: an uncovered term with volume ≥ `pisoApoio` becomes an `apoio-termo`; one
-    below the floor does not; one already covered by a queued page does not.
+    below the floor does not; one already covered by a queued page does not. The seed of a cluster
+    that already has a page never becomes one: it becomes a week-1 `titulo` task on that page.
   - `montar`:
-    - a non-`ativa` page gets `indexacao` or `links`/`frescor`/`backlinks` in week 1;
+    - a non-`ativa` page gets `indexacao` or `links`/`frescor`/`backlinks` in week 1. A `sem-leitura`
+      page with an `indexada` verdict gets no task, only the first-line aviso;
     - that page enters no milestone without a marca;
     - with a marca in week 3, it matures in week 3 + `semanasAteEstabilizar`.
   - `semanaComCards`: the same lever merges into one task (union of targets); an `aguardando` entry
@@ -101,8 +103,10 @@ Curate with `--excluir` and `--mover`, then add `--gravar`. Then:
 ## 5. Clarification of 2026-09-28, in production
 
 - After the deploy, outside the windows, trigger one indexing run by hand (`POST /api/indexacao`, the
-  same way the workflow does). Then check that `hub_indexacao_url` has one row per Tape Pro sitemap
-  URL. Before that run, every page says `sem leitura` and has the `indexacao` task, which is expected.
+  same way the workflow does). Then check that every Tape Pro sitemap URL has a verdict in
+  `lerIndexacaoPorUrl`, adding up the days. The run inspects a cota-limited sample (research D12), so a
+  missing URL means it is past the cota, not a bug. Before that run, every page says `sem leitura` and
+  has the `indexacao` task, which is expected.
 - After the next daily crawl, `hub_pagina.h1` is filled for Tape Pro. Until then, the Demanda block
   says "H1 não lido nesta corrida".
 - `/gsc/mapa/tapepro/plano`:

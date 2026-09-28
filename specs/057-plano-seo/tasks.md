@@ -238,11 +238,11 @@ delivery" §6). Each one ships alone.
 - [ ] T042 [P] In `lib/db.ts` `ensure()`, add exactly the three statements of `data-model.md` "Added by the clarification": `hub_pagina.h1`, `hub_indexacao_url`, `hub_plano.piso_apoio`. Then:
   - `PaginaCrawl` (line 1542) gains `h1: string | null`. `gravarCrawlDePagina` (line 1583) inserts it and `lerCrawlDePagina` (line 1670) selects it;
   - add `gravarIndexacaoPorUrl(projeto, dia, linhas: {url, classe}[])`: DELETE by `(projeto, dia)` plus one multi-row INSERT in one transaction, like `gravarCrawlDePagina`;
-  - add `lerIndexacaoPorUrl(projeto)`: `{dia, classes: Record<url, classe>}` for the latest day, or `null` when there was never a run;
+  - add `lerIndexacaoPorUrl(projeto)`: the latest verdict of each URL, `Record<url, {classe, dia}>`, via `SELECT DISTINCT ON (url) url, classe, dia … ORDER BY url, dia DESC`, or `null` when there was never a run. It does not return "the latest day", because a day with a partial cota would erase the URLs it skipped (D12, analyze C2);
   - `Plano`, `listPlanos` (line 989), `criarPlano` and `setPremissas` (line 1023) carry `pisoApoio`
-- [ ] T043 In `app/api/indexacao/route.ts`, right after `inspecionarIndexacao` (line 155), call `gravarIndexacaoPorUrl(f.slug, dia, linhas.map((l) => ({ url: l.url, classe: classificar(l) })))`, importing `classificar` from `lib/indexacao-corrida.mjs:91`. It makes 0 extra inspections. The run inspects `amostra(inv.urls, f.cota)`: confirm `tapepro`'s cota covers its 23 URLs. A URL outside the day's sample is `sem-leitura` under the "latest day" read, and the completion note must say so if the cota is smaller than a project's sitemap
+- [ ] T043 In `app/api/indexacao/route.ts`, right after `inspecionarIndexacao` (line 155), call `gravarIndexacaoPorUrl(f.slug, dia, linhas.map((l) => ({ url: l.url, classe: classificar(l) })))`, importing `classificar` from `lib/indexacao-corrida.mjs:91`. It makes 0 extra inspections. Write only the URLs that were inspected. A day with cota 0 writes nothing and leaves the previous verdicts in place
 - [ ] T044 In `app/api/paginas/route.ts`, write `extraida.h1` into each `PaginaCrawl` row passed to `gravarCrawlDePagina` (line 241). A page with `extraida === null` writes `h1: null`
-- [ ] T045 Run `npm test` and `npx next build`. Commit T040–T044 alone with `git commit -- <paths>` and push outside 23:30–01:00 and 08:00–08:45 BRT. Then trigger one `POST /api/indexacao` by hand, the way the workflow does, and check that `hub_indexacao_url` has one row per Tape Pro sitemap URL (quickstart §5). No screen changes in this slice
+- [ ] T045 Run `npm test` and `npx next build`. Commit T040–T044 alone with `git commit -- <paths>` and push outside 23:30–01:00 and 08:00–08:45 BRT. Then trigger one `POST /api/indexacao` by hand, the way the workflow does, and check that every Tape Pro sitemap URL has a verdict in `lerIndexacaoPorUrl("tapepro")`, adding up the days (quickstart §5). If one is missing, record that day's cota for `tapepro` (from the route's JSON response): the URL is past the cota, and that is a budget finding (D12). No screen changes in this slice
 
 **Checkpoint**: the verdict and the H1 are stored. Nothing on screen changed yet
 
@@ -250,12 +250,12 @@ delivery" §6). Each one ships alone.
 
 **Goal**: an existing page counts only when `ativa`, a page counts only the terms its title or H1 cover, and a non-`ativa` page becomes a week-1 task
 
-**Independent Test**: `node --test test/plano.test.mjs` passes the SC-008 case: the Tape Pro scenario of 28/09 has a non-empty week 1 and no demand meta above the terms covered by title or H1
+**Independent Test**: `node --test test/plano.test.mjs` passes the SC-008 case: the Tape Pro scenario of 28/09 has a non-empty week 1, the 2 existing pages without a marca count no term, and no demand meta reaches 100%
 
 #### Tests
 
 - [ ] T046 [P] [US1] In `test/plano.test.mjs`, extend the `lerPlano` tests: `pisoApoio` must be an integer from 1 to 100000; `0`, `1.5`, `"abc"` and `100001` → `null`; a missing `pisoApoio` → the default 100
-- [ ] T047 [P] [US1] Write tests for `estadoDaPagina(url, {classes, impressoes})`, one per row of the D13 table:
+- [ ] T047 [P] [US1] Write tests for `estadoDaPagina(url, {classes, impressoes})`, where `classes` has the shape `lerIndexacaoPorUrl` returns (`Record<url, {classe, dia}>`). One test per row of the D13 table:
   - `indexada` + ≥ 1 impression → `ativa`;
   - `indexada` + absent from a complete reading → `indexada-sem-impressao`;
   - `rastreada_nao_indexada`, `descoberta_nao_indexada` or `outra` → `fora-do-indice`, whatever the impressions;
@@ -275,6 +275,7 @@ delivery" §6). Each one ships alone.
   - below the floor → nothing;
   - a term already covered by an existing page (in any state) or by a page earlier in the queue → nothing;
   - a term the owner excluded never enters;
+  - the seed of a cluster whose existing page (found by path) lacks the seed in its title and H1 → **no** `apoio-termo`. `montar` emits a week-1 `titulo` task with that URL as target instead (FR-005a exception, D14, analyze U2);
   - order: cluster pages first, then `apoio-segmento` and `apoio-termo` together by volume, at most `capacidade` per week
 - [ ] T050 [P] [US1] Extend the `propor` tests (D14, D15):
   - a demand meta counts a term only once its covering page is mature, and a term covered by several pages takes the earliest maturity;
@@ -282,20 +283,32 @@ delivery" §6). Each one ships alone.
   - the `conta` lists, per page, the terms it covers and their volume (FR-007b);
   - an `ativa` page still counts as created in week 0
 - [ ] T051 [P] [US2] Extend the `montar` tests (D15):
-  - `fora-do-indice` or `sem-leitura` → week-1 `indexacao` with the URL as a target;
+  - `fora-do-indice`, or `sem-leitura` with a verdict that is not `indexada` → week-1 `indexacao` with the URL as a target;
+  - `sem-leitura` with an `indexada` verdict (only the impression reading failed or was truncated) → **no** task, the first-line aviso names the failed reading, and the page enters no milestone (D15, analyze U1);
   - `indexada-sem-impressao` → week-1 `links`, `frescor` and `backlinks`. The test derives this list from `ALAVANCAS` (`degrau === "posicao"`, minus `cobertura` and `marca`), not a literal;
   - two non-`ativa` pages → one task per lever with both URLs (054 FR-009);
   - no marca → the page enters no milestone;
   - a marca `marcado` in week 3 → the page matures at week 3 + `semanasAteEstabilizar`
-- [ ] T052 [US2] Write the SC-008 test in `test/plano.test.mjs`: the Tape Pro scenario of 28/09, with the 70 frozen terms from `data/demanda-estimada.json`, 2 cluster pages whose titles and H1s are copied from the production crawl (`lerCrawlDePagina("tapepro")`, never invented), 0 impressions and no marca. Assert that week 1 is not empty, and that the 180-day `pagina1` meta is below 100% and never above the terms the 2 pages cover by title or H1. Run it against the current `lib/plano.mjs` first and see it fail
+- [ ] T052 [US2] Write the SC-008 test in `test/plano.test.mjs`. The scenario is Tape Pro on 28/09:
+  - the 70 frozen terms from `data/demanda-estimada.json`;
+  - 2 cluster pages, 0 impressions, no marca;
+  - the pages' title and H1 are read **once** from the live HTML of the 2 URLs, through `titulo()` and `h1()` (T041), and pasted into the fixture as literals. Never invent them. The test makes no network call and does not depend on T004 or the daily crawl (analyze D1).
+
+  Assert (analyze A1):
+  - week 1 is not empty;
+  - the 2 existing pages add **0** terms to every milestone and every meta, because they have no marca (FR-007a);
+  - the 180-day `pagina1` meta is ≤ the terms covered by the labels of the support pages scheduled up to week `SEMANAS − semanasAteEstabilizar`;
+  - that meta is < 100%.
+
+  Run it against the current `lib/plano.mjs` first and see it fail
 
 #### Implementation
 
 - [ ] T053 [US1] In `lib/plano.mjs`, add `pisoApoio: 100` to `PREMISSAS_PADRAO` (line 30) and accept it in `lerPlano` (line 589) as an integer from 1 to 100000
 - [ ] T054 [US1] Implement `estadoDaPagina(url, {classes, impressoes})` in `lib/plano.mjs`, following the D13 table
 - [ ] T055 [US1] Implement `cobreTermo(termo, texto)` over `normalizar` (line 90), and change `cobrir` (line 199) to fill `cobertoPor` per term from title or H1. Take the page state as an input to `cobrir`, not a lookup inside it
-- [ ] T056 [US1] In `agendaDePaginas` (line 228), add the `apoio-termo` branch behind `pisoApoio`, and give each `PaginaAgendada` its `cobre` words (seed, seed + segment, or the term), as in `data-model.md`. Change `entrega` (line 253) from "terms of mature clusters" to "terms whose covering page is mature". Put the creation-week rule of D15 (first marca `marcado ≥ inicio` on any of the page's levers, else `Infinity`) in one helper that both `propor` and `montar` call, so the two cannot disagree
-- [ ] T057 [US2] `propor` (line 303) and `montar` (line 372) receive `marcas`. `montar` emits the D15 week-1 tasks, merged with the calendar's own week-1 tasks by lever. Run T046–T052: all green
+- [ ] T056 [US1] In `agendaDePaginas` (line 228), add the `apoio-termo` branch behind `pisoApoio`, and give each `PaginaAgendada` its `cobre` words (seed, seed + segment, or the term), as in `data-model.md`. Change `entrega` (line 253) from "terms of mature clusters" to "terms whose covering page is mature". Put the creation-week rule of D15 (first marca `marcado ≥ inicio` on any of the page's levers, else `Infinity`) in one helper that both `propor` and `montar` call, so the two cannot disagree. The seed of a cluster that already has a page never becomes an `apoio-termo` (FR-005a exception). `agendaDePaginas` returns it as a `titulo` candidate for `montar` (T057)
+- [ ] T057 [US2] `propor` (line 303) and `montar` (line 372) receive `marcas`. `montar` emits the D15 week-1 tasks, plus the week-1 `titulo` task for a seed missing from its existing page's title and H1 (FR-005a exception), merged with the calendar's own week-1 tasks by lever. Run T046–T052: all green
 
 **Checkpoint**: the math no longer promises what the pages cannot deliver. No screen changed yet
 
@@ -354,7 +367,8 @@ delivery" §6). Each one ships alone.
 - **US4** depends on US1 + US2.
 - **Polish** comes last. T038 is a date, not a task that can run now.
 - **Phase 8** (clarification): 8.1 → deploy + one manual indexing run (T045) → 8.2 → 8.3 → 8.4.
-  - 8.2 can be coded while T045 waits for the deploy, because it is pure and needs no data.
+  - 8.2 can be coded while T045 waits for the deploy, because it is pure and needs no data. T052
+    needs only T041 (`h1()`, to read the 2 live pages once), not T004 or the crawl.
   - T052 (SC-008) is written before T053–T057 and must fail first.
   - T065 needs T064. T059 is needed by T060–T062 and T065.
   - **T037 and T038 move after Phase 8** (T070). T039 (`speckit-analyze`) runs last, over Phase 8 too.

@@ -169,7 +169,8 @@ responsável e o marco esperado ("semana 3: 23 → 35 URLs no sitemap, 30 indexa
    montado, **Then** a semana 1 tem a tarefa de indexação ou de posição para aquela URL, e nenhum marco
    conta aquele cluster antes de a tarefa ter marca de feito e a maturação passar.
 7. **Given** um projeto sem página nova a criar e com regras do mapa disparando, **When** o dono abre a
-   semana corrente, **Then** ela mostra as tarefas desses cards e nunca "nada a fazer".
+   semana corrente no bloco "Plano · semana N" do mapa, **Then** ela mostra as tarefas desses cards e
+   nunca "nada a fazer". A semana corrente da rota do plano aponta para esse bloco (FR-011a).
 
 ---
 
@@ -263,7 +264,10 @@ de zero.
   "◇ política do dono, sem fonte", editável) que nenhuma página do site cobre (FR-007b) DEVE virar
   candidato a página de apoio, com o rótulo semente + modificador, na fila por volume depois das páginas
   de cluster, dentro da capacidade (FR-010). Termo marcado com segmento continua candidato pela regra de
-  FR-005. Termos que o dono tirou (marca de concorrente, outra intenção) não entram na fila.
+  FR-005. Termos que o dono tirou (marca de concorrente, outra intenção) não entram na fila. Exceção: se
+  o termo descoberto é a **semente de um cluster que já tem página**, ele não vira página de apoio. Vira a
+  tarefa **título** naquela página na semana 1, porque duas páginas para o mesmo termo disputariam entre
+  si (decisão de 28/09, speckit-analyze U2).
 - **FR-006**: Cada um dos 18 KPIs DEVE ter exatamente uma meta proposta com uma origem declarada:
   **demanda** (KPIs contados em impressões, cliques, consultas ou termos), **régua publicada** (onde o
   hub já tem régua, a meta é a régua) ou **board** (o resto, com o selo "◇ meta do board, sem fonte").
@@ -298,7 +302,8 @@ de zero.
   90%, e nunca a aumenta sozinho.
 - **FR-011**: As tarefas DEVEM seguir a ordem de ataque e as alavancas da 054, sem criar alavanca nova. A
   criação de página de cluster é a alavanca "cobertura", já existente.
-- **FR-011a**: A semana corrente DEVE mostrar, junto das tarefas do calendário, os cards que o mapa do
+- **FR-011a**: A semana corrente, no bloco "Plano · semana N" do **mapa do projeto** (a rota do plano
+  aponta para esse bloco, porque só o mapa tem as 32 leituras), DEVE mostrar, junto das tarefas do calendário, os cards que o mapa do
   projeto dispara na leitura atual (regras da 054) e que não têm marca de feito vigente (055). Um card
   com marca some até a data de reler e volta como "ainda dispara" se a regra continuar disparando
   (FR-016). Tarefa do calendário e card com a mesma alavanca viram UMA tarefa, com os alvos e os KPIs dos
@@ -358,8 +363,10 @@ de zero.
   aparecem com um dos cinco estados de FR-015.
 - **SC-008**: Com a leitura de 28/09 da Tape Pro (2 páginas de cluster no ar, 0 impressão desde 07/08),
   a semana 1 do plano tem ao menos uma tarefa, e nenhuma meta de demanda projeta mais termos do que as
-  páginas cobrem pelo título ou pelo H1. Um teste com esse cenário reprova "semana vazia" e reprova 100%
-  na página 1 com 2 páginas.
+  páginas cobrem. Uma página existente cobre pelo título ou pelo H1 lidos no crawl, e só conta depois da
+  marca de feito (FR-007a). Uma página planejada cobre pelos termos do rótulo (FR-005a). Um teste com esse
+  cenário reprova "semana vazia", reprova qualquer termo contado para as 2 páginas sem marca e reprova
+  100% na página 1.
 
 ## Assumptions
 

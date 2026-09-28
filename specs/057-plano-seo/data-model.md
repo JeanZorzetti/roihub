@@ -92,8 +92,12 @@ CREATE TABLE IF NOT EXISTS hub_indexacao_url (
 ALTER TABLE hub_pagina ADD COLUMN IF NOT EXISTS h1 TEXT;
 ```
 
-`PaginaCrawl` (TS) gains `h1: string | null`. `lerIndexacaoPorUrl(projeto)` returns the latest day,
-`{dia, classes: Record<url, classe>}`, or `null` when there has never been a run.
+`PaginaCrawl` (TS) gains `h1: string | null`.
+
+`lerIndexacaoPorUrl(projeto)` returns the latest verdict of each URL, `Record<url, {classe, dia}>`
+(`DISTINCT ON (url) … ORDER BY url, dia DESC`), or `null` when there has never been a run. It does not
+return "the latest day", because the run inspects a cota-limited sample (research D12, speckit-analyze
+C2).
 
 State transitions:
 - `hub_plano.estado`: `rascunho` → `ativo` (when every meta has a decision; activating a version moves

@@ -219,16 +219,26 @@ janela)` takes the window as a parameter.
 
 ## D12 — Per-URL index verdict is stored by the run that already reads it (FR-007a)
 
-Read in the code on 2026-09-28: `/api/indexacao` already inspects every sitemap URL of the projects in
+Read in the code on 2026-09-28: `/api/indexacao` inspects the sitemap URLs of the projects in
 `SLUGS_DE_BUSCA` and gets one verdict per URL (`inspecionarIndexacao` → `linhas`). Then `agregar()`
 throws the URL away and `hub_indexacao` keeps only the counts.
+
+It does **not** inspect every URL every day (speckit-analyze C2). It inspects `amostra(urls, cota) =
+urls.slice(0, cota)`, where `repartir()` takes the cota from a budget of 400 inspections per run
+(`INSPECOES_POR_CORRIDA`) shared by all projects. The queue starts with the oldest reading. A project
+that comes late in the queue gets a partial cota, and the tail of its sitemap goes unread that day.
 
 **Decision**: the same run also writes the per-URL class to a new table `hub_indexacao_url (projeto,
 dia, url, classe)`. `classe` is the output of `classificar()` from `lib/indexacao-corrida.mjs`, reused
 as is: `indexada | rastreada_nao_indexada | descoberta_nao_indexada | outra | falha`. The write is
 DELETE by `(projeto, dia)` plus a multi-row INSERT, the same as `hub_pagina` (024), so a URL that left
-the sitemap does not linger as a ghost. `lerIndexacaoPorUrl(slug)` returns the latest day as
-`{dia, classes: Map<url, classe>}`.
+the sitemap does not linger as a ghost. `lerIndexacaoPorUrl(slug)` returns **the latest verdict of each
+URL**, each with its own day: `Record<url, {classe, dia}>` (`SELECT DISTINCT ON (url) … ORDER BY url, dia
+DESC`). It does not return "the latest day", because a day with a partial cota would erase the verdicts
+of the URLs it skipped.
+
+A URL that left the sitemap keeps its old verdict in the table, but it never reaches a screen. The plan
+looks up only the URLs of the latest page crawl.
 
 **Rationale**: it costs 0 extra inspections. The route already paid about 6.4 s per URL for this
 answer, and it drops it on the floor. The volume is about 160 rows a day (Atma, Sirius and Tape Pro).
@@ -237,6 +247,8 @@ That is the same order as `hub_pagina`, which already keeps every URL of every r
 **Consequences**:
 - A URL outside the sitemap is never inspected, so it stays "sem leitura". That is the honest
   answer.
+- A URL whose place in the sitemap is always beyond the cota is never read. It stays "sem leitura"
+  for good, and the page says so. That is a budget finding, not a plan bug.
 - Until the first run after deploy, every page is "sem leitura" and gets the `indexacao` task. The
   quickstart triggers one run by hand, outside the night window.
 - `falha` is "sem leitura", never "fora do índice": a 429 is not a verdict.
@@ -302,6 +314,16 @@ pages, by volume. It qualifies only when no existing page (any state) and no pag
 covers it. `pisoApoio` defaults to 100 and is a new premise on `hub_plano`, with the seal "◇ política do
 dono, sem fonte". It is edited in the same form as capacity.
 
+**The seed of a cluster that already has a page** (speckit-analyze U2, decided by Jean on 28/09):
+- The cluster page is found by path **or** title (D7), but term coverage reads only the title or the H1.
+  A page found by path whose title and H1 lack the seed therefore leaves the seed uncovered.
+- In that case the seed does **not** become an `apoio-termo`, because a second page for the same term
+  would compete with the first. The existing page gets a `titulo` task in week 1 instead, with that URL
+  as its target. The task is to put the seed in the title.
+- The rule is the same for every existing page:
+  - the page still does not count the seed until the crawl reads the new title;
+  - after that it follows FR-007a like any other page.
+
 **Consequences of the literal rule, as clarified** (kept, and shown in the `conta`, not softened):
 - plural and singular are different words (`fita` ≠ `fitas`);
 - prepositions count (`fita gomada para caixa` needs `para`).
@@ -312,7 +334,12 @@ that is a new clarification.
 ## D15 — Existing pages that are not `ativa` become week-1 tasks (FR-007a)
 
 **Decision**: in `montar()`, a covering page that is not `ativa` emits week-1 tasks:
-- `fora-do-indice` or `sem-leitura`: `indexacao`, with the URL as the target.
+- `fora-do-indice`, or `sem-leitura` whose index verdict is not `indexada` (missing, `falha`, no run):
+  `indexacao`, with the URL as the target.
+- `sem-leitura` with an `indexada` verdict: the page is indexed, and only the impression reading failed
+  or was truncated (speckit-analyze U1). **No task**, because asking to index an indexed page is the
+  wrong lever. The plan's first line names the failed reading. The page enters no milestone until a
+  complete reading exists.
 - `indexada-sem-impressao`: the **posição** levers that act on an existing URL: `links`, `frescor`
   and `backlinks`. These are the 054 levers with `degrau: "posicao"`, minus `cobertura` (the page
   exists) and `marca` (it acts on the brand, not on a page).
