@@ -372,7 +372,7 @@ o OKR exige Y; o plano cobre Z% do exigido".
   - "o OKR exige X–Y cliques por 28 dias; o plano projeta Z por mês aos 180 dias: cobre A–B%", with a link to `/okr/{slug}`;
   - "o OKR de {projeto} não exige cliques ainda: {motivo}";
   - "o OKR não respondeu: {motivo}".
-- [ ] T047 [US4] Run `npm test`, commit T043–T046, and push outside the windows. Then check both projects:
+- [X] T047 [US4] Run `npm test`, commit T043–T046, and push outside the windows. Then check both projects:
   - `/gsc/mapa/tapepro/plano` says "o OKR de Tape Pro não exige cliques ainda: sem meta declarada" (FR-031);
   - `/gsc/mapa/atma/plano` shows the band and the link (SC-008).
 
@@ -382,20 +382,20 @@ o OKR exige Y; o plano cobre Z% do exigido".
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T048 [P] Add entries to `GLOSSARIO.md`, next to the 057 ones: núcleo, backlog, impacto (cliques/mês projetados aos 180 dias), esforço (minutos do dono, só ordena), the task states (agendada / a fazer / bloqueada), and "cards do mapa lidos em"
-- [ ] T049 [P] In `specs/057-plano-seo/spec.md`, add a one-line "substituído pela 058 (FR-xxx)" note next to each item listed in 058's "O que muda na 057":
+- [X] T048 [P] Add entries to `GLOSSARIO.md`, next to the 057 ones: núcleo, backlog, impacto (cliques/mês projetados aos 180 dias), esforço (minutos do dono, só ordena), the task states (agendada / a fazer / bloqueada), and "cards do mapa lidos em"
+- [X] T049 [P] In `specs/057-plano-seo/spec.md`, add a one-line "substituído pela 058 (FR-xxx)" note next to each item listed in 058's "O que muda na 057":
   - clarify "Onde o plano lê o ponto de partida?";
   - US4 scenario 1;
   - FR-011a, FR-014 and FR-017.
-- [ ] T050 Sweep `lib/plano.mjs` and both routes for dead code. Grep for callers of `feita`, `leiturasDoPlano`, `comparar` and the `partida` parameter of `propor`. The map still uses the last three. Delete whatever has no caller, and run `npm test`
-- [ ] T051 Run `ui-verification` on `/gsc/mapa/tapepro/plano` and on the map's plan block, at 390, 768 and 1280 px:
+- [X] T050 Sweep `lib/plano.mjs` and both routes for dead code. Grep for callers of `feita`, `leiturasDoPlano`, `comparar` and the `partida` parameter of `propor`. The map still uses the last three. Delete whatever has no caller, and run `npm test`
+- [X] T051 Run `ui-verification` on `/gsc/mapa/tapepro/plano` and on the map's plan block, at 390, 768 and 1280 px:
   - keyboard through every form (núcleo, task edit, premises, metas);
   - states readable without color;
   - no horizontal scroll at 390 px;
   - a clean console.
 
   Record screenshots before and after (FR-041).
-- [ ] T052 Run the whole of quickstart.md in production (§1–§4). Then write the "Implementation notes" at the end of this file: commits, measured facts and the pending reading dates. Mark every task `[X]`
+- [X] T052 Run the whole of quickstart.md in production (§1–§4). Then write the "Implementation notes" at the end of this file: commits, measured facts and the pending reading dates. Mark every task `[X]`
 
 ---
 
@@ -472,3 +472,68 @@ Each step leaves `npm test` green and the plan readable. No step needs the next 
 - Every new form: validated by a pure `ler*`, and bad input writes nothing (the 055/057 pattern).
 - No new env var, no new lever, no new 055 mark mechanism (plan, Constraints).
 - The Tape Pro backlog will open dominated by indexing (0 of 23 URLs indexed on 28/09). That is expected, not a defect.
+
+---
+
+## Implementation notes (28/09/2026)
+
+### Commits (all on `main`, pushed)
+
+| Commit | Slice |
+|---|---|
+| `02693ce` | US1: `/plano` renders only from `vistaDoPlano`; starting point and page states move to the map |
+| `01bd2fb` | US2: the core (`hub_nucleo`, `hub_nucleo_item`), intent and question proposals, Núcleo block |
+| `7a79435` | US3 steps 1–2: map snapshot (`hub_mapa_disparo`), `hub_plano.esforco`, `hub_plano_tarefa` |
+| `ff89566` | US3: `lib/backlog.mjs`, plan tasks and impact, metas from the schedule, backlog screens, map week |
+| `b5a0cc5` | US4: `linhaDoOkr` and the OKR line under the 180-day clicks meta |
+| `ec2e282` | Polish: glossary, 057 superseded notes, dead import, two reading fixes from the 390 px screenshots |
+
+### Measured in production (Tape Pro, 28/09)
+
+- SC-001: 0 hits for "Hoje:", "distância", "fora do índice", "feito em", "aprovada por", "Versões" on `/plano`.
+  SC-009: `gscTermos` is gone from the plan route. SC-002: the map's plan block shows the three demand metas'
+  starting point and the 4 cluster pages as "fora do índice".
+- SC-003: the 3 clusters show the five lines. "fita gomada": comercial, proposed on 160 of 15.390
+  searches/month (research said 14.470; the demand was re-frozen by `3010413`, and the test reads the fixture).
+- Backlog: 51 tasks. SC-004: 51 of 51 rows complete, no impact 0. 45 are "não calculável: alvo fora dos
+  clusters": map cards (título, modificador, links) on blog and institutional pages that cover no demand
+  term. The first task is the intent modifier on `/produtos/fita-gomada`, 289,4 clicks/month for 2 minutes.
+- SC-005: the snapshot read at 18:45 fires cobertura, intencao, links, poda and titulo; the backlog's card
+  levers are the same five.
+- SC-007a: no week over 3 new pages; no task other than a new page is "a fazer". No new page is scheduled:
+  every cluster already has a page and no uncovered term reaches the 100 searches/month support floor.
+- SC-007 and FR-022 were checked with reversible writes, deleted after the check: Maria + 30 min on
+  `intencao|url:/produtos/fita-gomada` showed as "ajustado"; an accepted question made a `cobertura` task
+  ("não calculável: pergunta declarada, sem volume"), and marking it `respondida` removed it. **No plan
+  version was created in production** (`hub_plano` still has 0 rows): creating v1/v2 is the owner's
+  decision. That an edit survives a new version is structural (keyed by project, not version) and tested
+  (`aplicarEdicoes` across premises).
+- US4: Tape Pro prints "O OKR de Tapepro não exige cliques ainda: sem meta declarada" (FR-031). Atma's goal
+  tree stops at "tratamento INICIADO" (0 apurado, no market ruler for orçamento → tratamento), the same
+  step `/okr/atma` shows, so its line gives that reason instead of the band. **SC-008 is pending on data**,
+  not code: the band appears when the tree reaches the `visitante` layer.
+- T051 (playwright-core, Edge, production; the Playwright MCP was disconnected): no horizontal scroll at
+  390, 768 or 1280 px; 203 form fields, all labeled; no unnamed button; one `h1`, no heading skip; every
+  task state in words; keyboard opens the task and core disclosures with Enter and reaches every field;
+  console clean. The "before" screenshots could not be taken: US1–US3 were already live when T051 ran.
+  Two readings were fixed from the 390 px images: a card with 21 targets made a wall of paths in "Esta
+  semana" (now 3 + "e mais N"), and `display:flex` had removed the backlog summary's disclosure marker.
+- Side finding: the crawl holds a Tape Pro URL `/${d}` (a card targets `/$%7Bd%7D`), likely a template
+  literal leaking into a link on the site.
+
+### Decisions made while implementing
+
+- `propor`/`montar` take `semanaDaPagina`; without it they use `semanasDasPaginas` (the queue at capacity
+  from week 1, through `agendar`, not a second scheduler), so they stay callable on their own.
+- `agendar` takes `inicio`; a task carries `espera` (weeks after its dependencies) and `naoAntes` is output.
+  `comImpacto` takes `{agenda}` to know what a planned label covers.
+- "Cards do mapa lidos em" sits in the backlog footer, where the input is used, not next to the demand date.
+- The "podem faltar" warnings are one aviso with a `<details>` list: eight separate lines buried "Esta
+  semana". The plan route's own impression warning was removed; `montar`'s consequence line covers it.
+- `JUNTO_DA_PAGINA` stays (used by `tarefasDoPlano`); `feita` and `semanaComCards` were deleted with their tests.
+
+### Pending readings
+
+- **12/10**: the Tape Pro `indexacao` mark (28/09) reaches `reler`. If the 4 pages are still not `ativa`, their
+  index tasks come back to the backlog on their own.
+- **SC-008**: re-read `/gsc/mapa/atma/plano` once `/okr/atma`'s tree reaches the clicks layer.
