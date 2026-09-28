@@ -25,7 +25,7 @@ import { ALAVANCAS, avaliar, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDA
 import { RESPONSAVEIS, rotuloResp, todaySP } from "@/lib/agenda.mjs";
 import { desmarcar, marcar } from "./actions";
 import { dadosDoPlano } from "./plano/dados";
-import { comparar, ESTADOS, feita, leiturasDoPlano, nomeDe, semanaComCards } from "@/lib/plano.mjs";
+import { ATE_PAGINA1, comparar, ESTADO_PAGINA, ESTADOS, feita, leiturasDoPlano, nomeDe, semanaComCards } from "@/lib/plano.mjs";
 
 import { Tabs } from "../../../tabs";
 import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
@@ -2174,10 +2174,26 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   const primeiroNome = (id: string) => rotuloResp(id).split(" ")[0];
   const nomesDe = (ds: { chave: string; motivo?: string | null }[]) => ds.map((d) => `${cat[d.chave].nome} (${d.motivo})`).join("; ");
 
+  // ── 058/D15: the demand metas' starting point lives here, not on the plan: the same functions and
+  // the same window as the leaves above, so `top20` here equals the leaf on the same day.
+  const estDemanda = (DEMANDAS as unknown as Record<string, { procedencia: { inventarioCongeladoEm?: string }; termos: Record<string, number> } | undefined>)[slug];
+  let semPartida: string | null = null;
+  let partida: { top20: number | null; pagina1: number | null; tamBusca: number | null } | null = null;
+  if (!termosGsc) semPartida = motivoDeAusencia({ ligado: gscLigado(), hosts });
+  else if ("erro" in termosGsc) semPartida = `a leitura do Search Console falhou (${termosGsc.erro})`;
+  else if (!inventario) semPartida = "inventário de termos não declarado para este projeto";
+  else
+    partida = {
+      top20: penetracaoNoInventario(termosGsc.linhas, inventario, 20)?.fracao ?? null,
+      pagina1: penetracaoNoInventario(termosGsc.linhas, inventario, ATE_PAGINA1)?.fracao ?? null,
+      tamBusca:
+        estDemanda && estDemanda.procedencia.inventarioCongeladoEm === inventario.procedencia.congeladoEm ? (coberturaDaDemanda(termosGsc.linhas, estDemanda.termos)?.fracao ?? null) : null,
+    };
+
   // ── 057: the active plan's week against the readings above. No DataForSEO request (SC-005); one
   // extra Search Console read, the same window shifted 7 days back, and only with an active plan (D11).
   // D13: the page states come from the page-dimension read this map already made (0 extra reads).
-  const planoMapa = dbOn() ? await dadosDoPlano(slug, null, { soAtivo: true, paginas: paginasGsc }).catch(() => null) : null;
+  const planoMapa = await dadosDoPlano(slug, partida, { soAtivo: true, paginas: paginasGsc }).catch(() => null);
   const planoAtivo = planoMapa?.ativo && planoMapa.montado ? planoMapa : null;
   const semanaDoPlano =
     planoAtivo && planoAtivo.semanaAtual >= 1 && planoAtivo.semanaAtual <= planoAtivo.semanas ? planoAtivo.montado!.semanas[planoAtivo.semanaAtual - 1] : null;
@@ -2194,6 +2210,17 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       termosAntes && !("erro" in termosAntes) ? leiturasDoPlano(termosAntes.linhas, inventario, demandaPlano) : null;
     comparacoes = comparar(planoAtivo.montado!.semanas, agora, semanaDoPlano.n, anteriores);
   }
+  // 058/D15: what left the plan — the demand metas' starting point (against the decided value, or the
+  // proposal while undecided; a refused meta is not in the plan) and the state of each cluster page.
+  const partidaDoPlano = planoMapa?.demanda
+    ? (["top20", "tamBusca", "pagina1"] as const).flatMap((chave) => {
+        const m = planoMapa.propostas.find((x) => x.chave === chave && x.origem === "demanda" && x.valor !== null);
+        const dec = m ? planoMapa.decidida.get(`${chave}@${m.prazo}`) : undefined;
+        if (!m || dec?.estado === "recusada") return [];
+        return [{ chave, prazo: m.prazo, meta: (dec?.valor ?? m.valor) as number, hoje: typeof m.partida === "number" ? m.partida : null }];
+      })
+    : [];
+  const paginasDosClusters = [...new Map((planoMapa?.clusters ?? []).flatMap((c) => Object.entries(c.estados ?? {})))];
   const idxLimpa = leituras.indexacaoLimpa && "valor" in leituras.indexacaoLimpa ? leituras.indexacaoLimpa.valor : null;
   const fmtPlano = (k: string, v: number) =>
     ["top20", "tamBusca", "pagina1"].includes(k) ? pct1(v) : k === "cliques" ? `${br(Math.round(v))} cliques` : k === "impressoes" ? `${br(Math.round(v))} impressões` : br(v);
@@ -2487,22 +2514,58 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
             </p>
           </section>
 
-          {/* 057 — "Plano · semana N de M": only with an active version; the comparison lives where the
-              readings live. The state is glyph + words, never color (FR-015, FR-020). */}
-          {planoAtivo ? (
+          {/* 057 — "Plano · semana N de M"; 058/D15 — the block also holds what left the plan (the
+              starting point, the page states), so it renders whenever there is frozen demand. The
+              state is glyph + words, never color (FR-015, FR-020). */}
+          {planoMapa?.demanda ? (
             <section className="ficha-bloco" aria-labelledby="mapa-plano-h">
               <h2 className="ficha-bloco-h" id="mapa-plano-h">
-                Plano · {semanaDoPlano ? `semana ${semanaDoPlano.n} de ${planoAtivo.semanas}` : planoAtivo.semanaAtual < 1 ? `começa em ${diaMes(planoAtivo.inicio)}` : "terminou"}
+                Plano ·{" "}
+                {!planoAtivo
+                  ? "prévia com as premissas padrão"
+                  : semanaDoPlano
+                    ? `semana ${semanaDoPlano.n} de ${planoAtivo.semanas}`
+                    : planoAtivo.semanaAtual < 1
+                      ? `começa em ${diaMes(planoAtivo.inicio)}`
+                      : "terminou"}
               </h2>
               <p className="foot">
-                Versão {planoAtivo.ativo!.versao} ativa, início em {diaMes(planoAtivo.inicio)}. <a href={`/gsc/mapa/${slug}/plano`}>Abrir o plano de SEO</a>.
+                {planoAtivo
+                  ? `Versão ${planoAtivo.ativo!.versao} ativa, início em ${diaMes(planoAtivo.inicio)}.`
+                  : "Nenhuma versão ativa: as metas abaixo são a prévia com as premissas padrão."}{" "}
+                <a href={`/gsc/mapa/${slug}/plano`}>Abrir o plano de SEO</a>. O plano mostra só o que vai acontecer; onde o projeto está hoje fica aqui.
               </p>
+              <h3 className="mapa-fila-h">Ponto de partida das metas de demanda</h3>
+              <ul className="mapa-acao-motivos">
+                {partidaDoPlano.map((x) => (
+                  <li key={x.chave}>
+                    <strong>{nomeDe(x.chave)}</strong> · meta ≥ {pct1(x.meta)} em {x.prazo} dias ·{" "}
+                    {x.hoje !== null
+                      ? `hoje ${pct1(x.hoje)} (${janela.inicio} → ${janela.fim}, Search Console) · distância até a meta: ${x.meta - x.hoje >= 0 ? "+" : ""}${pct1(x.meta - x.hoje)}`
+                      : `ponto de partida não lido: ${semPartida ?? (x.chave === "tamBusca" ? "a demanda e o inventário não são da mesma data" : "sem leitura por termo")}`}
+                  </li>
+                ))}
+              </ul>
+              <h3 className="mapa-fila-h">Páginas dos clusters</h3>
+              {paginasDosClusters.length ? (
+                <ul className="mapa-acao-motivos">
+                  {paginasDosClusters.map(([url, e]) => (
+                    <li key={url}>
+                      <a href={url}>{decodeURIComponent(caminhoDe(url))}</a>: {ESTADO_PAGINA[e.estado]}
+                      {e.motivo ? ` (${e.motivo})` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mapa-degrau-vazio">Nenhuma página do último crawl é página de cluster nem cobre um termo da demanda.</p>
+              )}
               {semanaDoPlano ? (
                 <>
+                  <h3 className="mapa-fila-h">Esta semana</h3>
                   {semanaDoMapa?.tarefas.length ? (
                     <ul className="mapa-acao-motivos">
                       {semanaDoMapa.tarefas.map((t) => {
-                        const m = planoAtivo.marcas.find((x) => x.alavanca === t.alavanca);
+                        const m = planoMapa.marcas.find((x) => x.alavanca === t.alavanca);
                         const origem = t.origem.includes("calendario") ? (t.origem.includes("mapa") ? " · do calendário e do mapa" : "") : " · disparada pelo mapa";
                         return (
                           <li key={t.alavanca}>
@@ -2511,7 +2574,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
                             {origem}
                             {t.voltou && m
                               ? ` · Ainda dispara · feito em ${diaMes(m.marcado)}, o prazo de releitura venceu em ${diaMes(m.reler)}`
-                              : feita(t, semanaDoPlano, planoAtivo.marcas) && m
+                              : feita(t, semanaDoPlano, planoMapa.marcas) && m
                                 ? ` · feito em ${diaMes(m.marcado)} por ${primeiroNome(m.responsavel)}`
                                 : " · sem marca de feito"}
                           </li>
@@ -2521,6 +2584,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
                   ) : (
                     <p className="mapa-degrau-vazio">Nenhuma tarefa do calendário nesta semana, e o mapa não dispara nenhum card sem marca de feito.</p>
                   )}
+                  <h3 className="mapa-fila-h">Marcos desta semana</h3>
                   <ul className="mapa-acao-motivos">
                     {comparacoes.map((c) => (
                       <li key={c.chave}>
@@ -2537,13 +2601,13 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               <p className="foot">
                 As demais metas do plano são o limiar das regras deste mapa: quando uma fica abaixo, ela dispara em &ldquo;O que fazer primeiro&rdquo;, acima.
                 {idxLimpa !== null && idxLimpa > 0.9
-                  ? ` A indexação limpa está em ${pct1(idxLimpa)}, acima de 90%: dá para considerar subir a capacidade (hoje ${planoAtivo.premissas.capacidade} páginas por semana). A leitura é do sitemap inteiro: o hub não separa as páginas do plano.`
+                  ? ` A indexação limpa está em ${pct1(idxLimpa)}, acima de 90%: dá para considerar subir a capacidade (hoje ${planoMapa.premissas.capacidade} páginas por semana). A leitura é do sitemap inteiro: o hub não separa as páginas do plano.`
                   : ""}
               </p>
             </section>
           ) : (
             <p className="foot">
-              Sem plano de SEO ativo para {nomeCurto}. <a href={`/gsc/mapa/${slug}/plano`}>Abrir o plano</a>.
+              Sem demanda congelada para {nomeCurto}: o plano de SEO ainda não tem metas de demanda. <a href={`/gsc/mapa/${slug}/plano`}>Abrir o plano</a>.
             </p>
           )}
 

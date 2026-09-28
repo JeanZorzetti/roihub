@@ -46,8 +46,8 @@ I1–I3, U1–U5 and A1. The tasks below already carry them.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create `test/backlog.test.mjs` with one `node:test` import and register it in the `"test"` list in `package.json`, in the same commit (Principle II; `test/validade.test.mjs` fails otherwise)
-- [ ] T002 [P] Baseline: `npm test` green on `e310ba2`, and `git status --short -- lib/ app/gsc/mapa test package.json` clean. Anything staged by another writer stays out of every 058 commit
+- [X] T001 Create `test/backlog.test.mjs` with one `node:test` import and register it in the `"test"` list in `package.json`, in the same commit (Principle II; `test/validade.test.mjs` fails otherwise)
+- [X] T002 [P] Baseline: `npm test` green on `e310ba2`, and `git status --short -- lib/ app/gsc/mapa test package.json` clean. Anything staged by another writer stays out of every 058 commit
 
 ---
 
@@ -69,12 +69,12 @@ the starting point of the demand metas, the state of the cluster pages and the m
 
 ### Tests for US1
 
-- [ ] T003 [US1] SC-001 in `test/plano.test.mjs`: build `vistaDoPlano(...)` (T005) from the Tape Pro frozen demand (the fixture the file already imports at ~line 665), a version list with one `encerrado`, one `ativo` and one `rascunho`, decisions with `decididoPor`/`decididoEm`, 055 marks, and `semanaAtual = 5`. Walk the returned object recursively and fail on any of these:
+- [X] T003 [US1] SC-001 in `test/plano.test.mjs`: build `vistaDoPlano(...)` (T005) from the Tape Pro frozen demand (the fixture the file already imports at ~line 665), a version list with one `encerrado`, one `ativo` and one `rascunho`, decisions with `decididoPor`/`decididoEm`, 055 marks, and `semanaAtual = 5`. Walk the returned object recursively and fail on any of these:
   - the keys `partida`, `distancia`, `estadoDaPagina`, `estados`, `decididoPor`, `decididoEm`, `marcado`;
   - a version other than the active one and the draft;
   - a week with `n < 5`;
   - a meta `conta` containing any page-state word (`ativa`, `fora do índice`, `indexada, sem impressão`, `sem leitura`), "marca de feito" or "semana 1".
-- [ ] T004 [US1] FR-004/FR-005/FR-006 in `test/plano.test.mjs`, against `vistaDoPlano`:
+- [X] T004 [US1] FR-004/FR-005/FR-006 in `test/plano.test.mjs`, against `vistaDoPlano`:
   - `semanaAtual = 5` → the first week is 5;
   - `semanaAtual ≤ 0` → the weeks start at 1, and the view carries `comecaEm = inicio`;
   - a task whose lever has a 055 mark with `marcado ≥` the task week's start and `hoje < reler` is absent;
@@ -84,17 +84,17 @@ the starting point of the demand metas, the state of the cluster pages and the m
 
 ### Implementation for US1
 
-- [ ] T005 [US1] Add `vistaDoPlano({propostas, decisoes, montado, planos, clusters, marcas, hoje, semanaAtual})` to `lib/plano.mjs`. It is pure and is the only thing `plano/page.tsx` renders from, in every slice: T016 adds the core to it and T038 the backlog, so the SC-001 walk (T003) keeps guarding every block (analyze C1). It returns:
+- [X] T005 [US1] Add `vistaDoPlano({propostas, decisoes, montado, planos, clusters, marcas, hoje, semanaAtual})` to `lib/plano.mjs`. It is pure and is the only thing `plano/page.tsx` renders from, in every slice: T016 adds the core to it and T038 the backlog, so the SC-001 walk (T003) keeps guarding every block (analyze C1). It returns:
   - `versoes: {ativo: number|null, rascunho: number|null}`;
   - the metas without `partida`/`distancia`, each with `{estado, valorFinal}` from its decision;
   - `semanas` from `max(1, semanaAtual)`. A task whose lever has a vigente 055 mark (`marcado ≥` its week's start and `hoje < reler`) is dropped. An undone task of a past week joins the current week. `ponytail:` both rules live only until T037, when the scheduler never uses a past week and marks act through the origin rules (research D5);
   - the clusters without `estadoDaPagina`/`estados`. `cobertoPor` stays: it is the input of the future pages (contracts/ui.md §8).
-- [ ] T006 [US1] Rewrite the three texts in `lib/plano.mjs` that read the present, keeping only their future consequence (FR-001, research D1):
+- [X] T006 [US1] Rewrite the three texts in `lib/plano.mjs` that read the present, keeping only their future consequence (FR-001, research D1):
   - `contaPorPagina` (~line 458) drops the page-state words and "tarefa da semana 1": "Só conta depois que a tarefa da página for feita: /x, /y";
   - `regra()` inside `propor` (~line 507) says an existing page with a task counts from the week that task is done, without "ativa", "marca de feito" or "semana 1";
   - `montar`'s `semImpressao` warning (~line 630) says "nenhuma página existente conta nas metas até a próxima leitura de impressões" without the reasons (those are present readings; the map shows them).
-- [ ] T007 [US1] Move `ESTADO_PAGINA` from `app/gsc/mapa/[slug]/plano/page.tsx:56` to `lib/plano.mjs` as an export, and delete `ESTADO_TEXTO` (`lib/plano.mjs:452`), which T006 leaves unused. There is now one list of page-state words
-- [ ] T008 [P] [US1] Rewrite `app/gsc/mapa/[slug]/plano/page.tsx` to render only from `vistaDoPlano`:
+- [X] T007 [US1] Move `ESTADO_PAGINA` from `app/gsc/mapa/[slug]/plano/page.tsx:56` to `lib/plano.mjs` as an export, and delete `ESTADO_TEXTO` (`lib/plano.mjs:452`), which T006 leaves unused. There is now one list of page-state words
+- [X] T008 [P] [US1] Rewrite `app/gsc/mapa/[slug]/plano/page.tsx` to render only from `vistaDoPlano`:
   - Drop the `gscTermos` import and read and the `partida` block (lines ~78–105). Keep `gscPaginas`, because it decides scheduling (FR-002, FR-007), and call `dadosDoPlano(slug, null, {paginas})`.
   - In `linhaDaMeta`: remove "Hoje: … distância", "Ponto de partida …" and `jaAtingida`. The state shows the word only, with no "por X em DD/MM".
   - Remove "feito em" from `tarefasDa`, and the page state from the Demanda block (~lines 467, 475).
@@ -102,7 +102,7 @@ the starting point of the demand metas, the state of the cluster pages and the m
   - The header says "versão N ativa" and/or "versão M em rascunho", otherwise "prévia com as premissas padrão".
   - The `semImpressoes` warning (~line 120) becomes the consequence only.
   - The footer (~line 559) names the page-impression read as the only external read, and says why (it decides which week a page's task goes in).
-- [ ] T009 [P] [US1] In `app/gsc/mapa/[slug]/page.tsx`, move the starting point to the map (research D15):
+- [X] T009 [P] [US1] In `app/gsc/mapa/[slug]/page.tsx`, move the starting point to the map (research D15):
   - Compute `partida` from `termosGsc`, `inventario` and the frozen entry, with the block that T008 removed from the plan route: same functions, same window.
   - Pass it to `dadosDoPlano(slug, partida, {soAtivo: true, paginas: paginasGsc})` (~line 2180).
   - The plan block (~lines 2490–2552) renders whenever `planoMapa?.demanda` exists, not only with an active version.

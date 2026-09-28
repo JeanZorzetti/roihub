@@ -25,7 +25,9 @@ import {
   propor,
   semanaComCards,
   semanaDoPrazo,
+  vistaDoPlano,
 } from "../lib/plano.mjs";
+import { addDaysISO } from "../lib/agenda.mjs";
 
 const SLUGS = ["atma", "sirius", "tapepro"];
 
@@ -597,7 +599,7 @@ test("propor: a term counts once its covering page matures; a non-ativa page wit
   // not ativa, no marca: the page adds nothing
   const parada = t20({ estado: "indexada-sem-impressao", classe: "indexada", motivo: null });
   assert.equal(parada.valor, 0);
-  assert.match(parada.conta, /só conta depois da marca de feito/i);
+  assert.match(parada.conta, /só conta depois que a tarefa da página for feita: \/produtos\/fita-gomada\//i);
   // a posição marca in week 3 matures it at 3 + 4 = 7 ≤ 12
   assert.equal(t20({ estado: "indexada-sem-impressao", classe: "indexada", motivo: null }, [{ alavanca: "links", marcado: "2026-10-13" }]).valor, 2 / 3);
   // a marca of another page's lever does not start the clock
@@ -642,7 +644,7 @@ test("montar: indexed but the impression reading failed → no task, a first-lin
   const lido = { estado: "sem-leitura", classe: "indexada", motivo: "leitura de impressões truncada" };
   const m = semana1({ [G]: lido, [T]: lido }, { metas: [{ chave: "top20", prazo: 90, valor: 0 }] });
   assert.deepEqual(m.semanas[0].tarefas, []);
-  assert.match(m.avisos[0], /leitura de impressões truncada/);
+  assert.equal(m.avisos[0], "2 páginas existentes não contam nas metas até a próxima leitura de impressões.");
   assert.ok(m.semanas.slice(0, semanaDoPrazo(90) - 1).every((s) => s.marcos.top20 === null));
 });
 
@@ -718,4 +720,128 @@ test("semanaComCards: same lever → one task with the union; card-only in 054 o
   assert.deepEqual(links.origem, ["calendario", "mapa"]);
   assert.deepEqual(s.tarefas[1].origem, ["mapa"]);
   assert.equal(s.tarefas[2].voltou, true);
+});
+
+// ── 058 US1 · the plan only speaks of the future ───────────────────────────────
+
+/** SC-001: every key, version, week and meta text the screen receives, walked recursively. */
+function presenteNaVista(v, semanaAtual) {
+  const proibidas = ["partida", "distancia", "estadoDaPagina", "estados", "decididoPor", "decididoEm", "marcado", "planos"];
+  const palavras = [/\bativa\b/, /fora do índice/, /indexada, sem impressão/, /sem leitura/, /marca de feito/, /\bsemana 1\b/];
+  const achados = [];
+  const anda = (x, caminho) => {
+    if (Array.isArray(x)) return x.forEach((y, i) => anda(y, `${caminho}[${i}]`));
+    if (!x || typeof x !== "object") return;
+    for (const [k, y] of Object.entries(x)) {
+      if (proibidas.includes(k)) achados.push(`${caminho}.${k}`);
+      if (k === "n" && typeof y === "number" && y < Math.max(1, semanaAtual)) achados.push(`${caminho}.n = ${y}`);
+      if (k === "estado" && y === "encerrado") achados.push(`${caminho}: versão encerrada`);
+      if (k === "conta" && typeof y === "string") for (const p of palavras) if (p.test(y)) achados.push(`${caminho}.conta: ${p}`);
+      anda(y, `${caminho}.${k}`);
+    }
+  };
+  anda(v, "vista");
+  return achados;
+}
+
+const PLANOS_3 = [
+  { versao: 3, estado: "rascunho", criadoPor: "jean" },
+  { versao: 2, estado: "ativo", criadoPor: "jean" },
+  { versao: 1, estado: "encerrado", criadoPor: "maria" },
+];
+
+async function vistaDaTapePro(semanaAtual) {
+  const { default: DEMANDAS } = await import("../data/demanda-estimada.json", { with: { type: "json" } });
+  const d = lerDemanda(DEMANDAS.tapepro, null);
+  const crawl = [
+    { url: "https://tapepro.roilabs.com.br/produtos/fita-gomada/", titulo: "Fita Gomada Kraft Reforçada com Fios de Nylon 70mm | TapePro", h1: "Fita gomada kraft reforçada com fios de nylon" },
+    { url: "https://tapepro.roilabs.com.br/produtos/fita-transparente-comum/", titulo: "Fita Adesiva Transparente Comum 48mm × 100m por Volume | TapePro", h1: "Fita adesiva transparente comum" },
+  ];
+  const estados = { [crawl[0].url]: { estado: "fora-do-indice", classe: "outra", motivo: null }, [crawl[1].url]: { estado: "indexada-sem-impressao", classe: "indexada", motivo: null } };
+  const clusters = cobrir(d.clusters, crawl, { estados });
+  const marcas = [{ alavanca: "indexacao", responsavel: "jean", marcado: "2026-09-28", reler: "2026-10-12" }];
+  const propostas = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster: d.semCluster, marcas, partida: { top20: 0, tamBusca: 0, pagina1: 0 } });
+  const decisoes = [
+    { chave: "top20", prazo: 90, estado: "aprovada", valor: meta(propostas, "top20", 90).valor, decididoPor: "jean", decididoEm: "2026-09-28 10:00" },
+    { chave: "pagina1", prazo: 180, estado: "editada", valor: 0.5, decididoPor: "maria", decididoEm: "2026-09-28 10:01" },
+    { chave: "lcp", prazo: 90, estado: "recusada", valor: null, decididoPor: "jean", decididoEm: "2026-09-28 10:02" },
+  ];
+  const metas = propostas.filter((m) => m.valor !== null).map((m) => ({ chave: m.chave, prazo: m.prazo, valor: m.valor }));
+  const montado = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters, semCluster: d.semCluster, metas, marcas, responsavel: "jean" });
+  const hoje = addDaysISO(INICIO, 7 * (semanaAtual - 1) + 2);
+  return vistaDoPlano({ propostas, decisoes, montado, planos: PLANOS_3, clusters, marcas, hoje, semanaAtual, inicio: INICIO });
+}
+
+test("SC-001: the Tape Pro view carries no starting point, page state, mark, author, old version or past week", async () => {
+  const v = await vistaDaTapePro(5);
+  assert.deepEqual(presenteNaVista(v, 5), []);
+  assert.deepEqual(v.versoes, { ativo: 2, rascunho: 3 });
+  assert.ok(v.semanas.length > 0);
+  assert.ok(v.metas.some((m) => m.origem === "demanda"));
+  assert.ok(v.clusters.every((c) => c.termos.every((t) => "cobertoPor" in t)), "cobertoPor stays: it is the input of the future pages");
+});
+
+// Synthetic weeks: week 3 has a titulo task, week 5 a links task.
+const tarefaDe = (alavanca, alvo) => ({ alavanca, alvos: [alvo], kpis: ["x"], responsavel: "jean", origem: ["calendario"] });
+const MONTADO = {
+  avisos: [],
+  naoCabe: [],
+  agenda: [],
+  semanas: Array.from({ length: SEMANAS }, (_, i) => ({
+    n: i + 1,
+    inicio: addDaysISO(INICIO, 7 * i),
+    tarefas: i + 1 === 3 ? [tarefaDe("titulo", "/a")] : i + 1 === 5 ? [tarefaDe("links", "/b")] : [],
+    marcos: {},
+  })),
+};
+const SEMANA5 = addDaysISO(INICIO, 28);
+const vista = (over = {}) => vistaDoPlano({ propostas: [], decisoes: [], montado: MONTADO, planos: [], clusters: [], marcas: [], hoje: addDaysISO(SEMANA5, 2), semanaAtual: 5, inicio: INICIO, ...over });
+
+test("vistaDoPlano: the calendar starts at the current week, or at week 1 before the start (FR-005)", () => {
+  assert.equal(vista().semanas[0].n, 5);
+  assert.equal(vista().comecaEm, null);
+  for (const semanaAtual of [0, -3]) {
+    const v = vista({ semanaAtual, hoje: "2026-09-20" });
+    assert.equal(v.semanas[0].n, 1);
+    assert.equal(v.semanas.length, SEMANAS);
+    assert.equal(v.comecaEm, INICIO);
+  }
+});
+
+test("vistaDoPlano: a vigente 055 mark drops the task; past reler it is back; an undone past task joins this week (FR-004)", () => {
+  const marca = (alavanca, marcado, reler) => [{ alavanca, responsavel: "jean", marcado, reler }];
+  const alavancas = (v) => v.semanas[0].tarefas.map((t) => t.alavanca).sort();
+  assert.deepEqual(alavancas(vista()), ["links", "titulo"], "week 3's undone titulo is still future work");
+  assert.deepEqual(alavancas(vista({ marcas: marca("links", SEMANA5, addDaysISO(SEMANA5, 14)) })), ["titulo"]);
+  assert.deepEqual(alavancas(vista({ marcas: marca("links", SEMANA5, addDaysISO(SEMANA5, 1)) })), ["links", "titulo"], "past reler");
+  // a mark made before the task's week does not close it
+  assert.deepEqual(alavancas(vista({ marcas: marca("links", addDaysISO(SEMANA5, -1), addDaysISO(SEMANA5, 14)) })), ["links", "titulo"]);
+  // week 3's titulo, marked in week 4 and still waiting, stays out
+  assert.deepEqual(alavancas(vista({ marcas: marca("titulo", addDaysISO(INICIO, 22), addDaysISO(SEMANA5, 14)) })), ["links"]);
+  assert.equal(MONTADO.semanas[4].tarefas.length, 1, "no mutation");
+});
+
+test("vistaDoPlano: each meta keeps its state word and final value, with no author and no date (FR-006)", () => {
+  const propostas = [
+    { chave: "top20", prazo: 90, origem: "demanda", valor: 0.3, op: "<", conta: "c", partida: 0, distancia: 0.3 },
+    { chave: "pagina1", prazo: 180, origem: "demanda", valor: 0.4, op: "<", conta: "c" },
+    { chave: "lcp", prazo: 90, origem: "regua", valor: 2500, op: ">", conta: "c" },
+    { chave: "inp", prazo: 90, origem: "regua", valor: 200, op: ">", conta: "c" },
+  ];
+  const decisoes = [
+    { chave: "top20", prazo: 90, estado: "aprovada", valor: 0.3, decididoPor: "jean", decididoEm: "2026-09-28 10:00" },
+    { chave: "pagina1", prazo: 180, estado: "editada", valor: 0.5, decididoPor: "maria", decididoEm: "2026-09-28 10:00" },
+    { chave: "lcp", prazo: 90, estado: "recusada", valor: null, decididoPor: "jean", decididoEm: "2026-09-28 10:00" },
+  ];
+  const v = vista({ propostas, decisoes });
+  assert.deepEqual(
+    v.metas.map((m) => [m.chave, m.estado, m.valorFinal]),
+    [
+      ["top20", "aprovada", 0.3],
+      ["pagina1", "editada", 0.5],
+      ["lcp", "recusada", null],
+      ["inp", "proposta", null],
+    ],
+  );
+  assert.deepEqual(presenteNaVista(v, 5), []);
 });

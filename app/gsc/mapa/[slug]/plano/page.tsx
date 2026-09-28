@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import INVENTARIOS from "@/data/inventario-de-termos.json";
-import DEMANDAS from "@/data/demanda-estimada.json";
 import { projetosDeBusca } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
-import { gscLigado, gscPaginas, gscTermos } from "@/lib/gsc";
-import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
-import { lerInventario } from "@/lib/inventario.mjs";
-import { coberturaDaDemanda, penetracaoNoInventario } from "@/lib/kpis-busca.mjs";
+import { gscPaginas } from "@/lib/gsc";
 import { descoberta } from "@/lib/janelas.mjs";
 import { ALAVANCAS, ORIGEM, REGRAS, metaTexto } from "@/lib/proxima-acao.mjs";
-import { ATE_PAGINA1, CABECALHOS, PISO_VOLUME, feita, kpisDoBoard, metasExigidas, nomeDe, normalizar } from "@/lib/plano.mjs";
+import { CABECALHOS, PISO_VOLUME, kpisDoBoard, metasExigidas, nomeDe, normalizar, vistaDoPlano } from "@/lib/plano.mjs";
 import { RESPONSAVEIS, rotuloResp } from "@/lib/agenda.mjs";
 import { Tabs } from "../../../../tabs";
 import { aprovarPropostas, ativar, criarVersao, decidirMeta, salvarPremissas } from "./actions";
-import { dadosDoPlano, type Proposta } from "./dados";
+import { dadosDoPlano } from "./dados";
 
 // Reads the database and the Search Console on open, like the map.
 export const dynamic = "force-dynamic";
@@ -52,13 +47,6 @@ function metaEmTexto(m: { chave: string; valor: number }, regra: Regra | null): 
 }
 
 const SELO_DEMANDA = "◇ demanda do nicho";
-/** D13, in words: the state is never color alone (FR-020). */
-const ESTADO_PAGINA: Record<string, string> = {
-  ativa: "ativa: indexada e com impressão",
-  "indexada-sem-impressao": "indexada, sem impressão",
-  "fora-do-indice": "fora do índice",
-  "sem-leitura": "sem leitura",
-};
 const caminho = (url: string) => {
   try {
     return decodeURIComponent(new URL(url).pathname);
@@ -68,6 +56,10 @@ const caminho = (url: string) => {
 };
 const seloDe = (origem: string) => (origem === "demanda" ? SELO_DEMANDA : ORIGEM[origem as keyof typeof ORIGEM]);
 
+/**
+ * 058: this screen only speaks of the future (FR-001). Every block renders from `vistaDoPlano`, the one
+ * object the SC-001 test walks; the starting point, the page states and the marks live on the map.
+ */
 export default async function PlanoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const p = (await projetosDeBusca()).find((x) => x.slug === slug);
@@ -75,49 +67,24 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
   // The card name may carry an open parenthesis before " — " ("Tapepro (fitas adesivas — …)").
   const nomeCurto = p.nome.split(" — ")[0].replace(/\s*\([^)]*$/, "");
 
-  // D11 — the demand metas' starting point, with the same functions and the same window the map uses,
-  // so `top20` here equals the map's leaf on the same day. D13 — the page-dimension read of the same
-  // window, in parallel: with the stored per-URL verdict it decides whether an existing page counts.
-  const janela = descoberta();
-  const hosts = hostsDeclarados(p);
-  const inventario = lerInventario(slug, INVENTARIOS);
-  const est = (DEMANDAS as Record<string, { procedencia: { inventarioCongeladoEm?: string }; termos: Record<string, number> } | undefined>)[slug];
-  const [termosGsc, paginasGsc] = await Promise.all([gscTermos(hosts, janela), gscPaginas(hosts, janela)]);
-  const semImpressoes = !paginasGsc
-    ? motivoDeAusencia({ ligado: gscLigado(), hosts })
-    : "erro" in paginasGsc
-      ? `a leitura de impressões por página falhou (${paginasGsc.erro})`
-      : paginasGsc.truncado
-        ? "a leitura de impressões por página veio truncada"
-        : null;
-  let semPartida: string | null = null;
-  let partida: { top20: number | null; pagina1: number | null; tamBusca: number | null } | null = null;
-  if (!termosGsc) semPartida = motivoDeAusencia({ ligado: gscLigado(), hosts });
-  else if ("erro" in termosGsc) semPartida = `a leitura do Search Console falhou (${termosGsc.erro})`;
-  else if (!inventario) semPartida = "inventário de termos não declarado para este projeto";
-  else {
-    const mesmaBase = est && est.procedencia.inventarioCongeladoEm === inventario.procedencia.congeladoEm;
-    partida = {
-      top20: penetracaoNoInventario(termosGsc.linhas, inventario, 20)?.fracao ?? null,
-      pagina1: penetracaoNoInventario(termosGsc.linhas, inventario, ATE_PAGINA1)?.fracao ?? null,
-      tamBusca: mesmaBase ? (coberturaDaDemanda(termosGsc.linhas, est.termos)?.fracao ?? null) : null,
-    };
-  }
-
-  const d = await dadosDoPlano(slug, partida, { paginas: paginasGsc });
-  const { atual, montado, demanda, propostas } = d;
+  // FR-007: the only external read. The page impressions decide, with the stored per-URL verdict,
+  // which week each existing page's task goes in (FR-002). No per-term read: the starting point is on the map.
+  const paginasGsc = await gscPaginas(hostsDeclarados(p), descoberta());
+  const d = await dadosDoPlano(slug, null, { paginas: paginasGsc });
+  const { atual, montado, demanda } = d;
+  const v = vistaDoPlano({ propostas: d.propostas, decisoes: d.decisoes, montado, planos: d.planos, clusters: d.clusters, marcas: d.marcas, hoje: d.hoje, semanaAtual: d.semanaAtual, inicio: d.inicio });
   const rascunho = atual?.estado === "rascunho";
   const podeGravar = d.falhas.length === 0;
-  const decisaoDe = (m: Proposta) => d.decidida.get(`${m.chave}@${m.prazo}`) ?? null;
-  const faltam = atual ? metasExigidas().filter((m) => !d.decidida.has(`${m.chave}@${m.prazo}`)).length : null;
-  const semana = montado && d.semanaAtual >= 1 && d.semanaAtual <= d.semanas ? montado.semanas[d.semanaAtual - 1] : null;
+  const faltam = rascunho ? v.faltam : null;
+  const semana = v.semanas.find((s) => s.n === d.semanaAtual) ?? null;
+  const proxima = v.semanas.find((s) => s.n > d.semanaAtual && s.tarefas.length) ?? null;
   const proc = demanda?.procedencia as Record<string, unknown> | undefined;
   const consultadoEm = typeof proc?.consultadoEm === "string" ? proc.consultadoEm.slice(0, 10) : typeof proc?.congeladoEm === "string" ? proc.congeladoEm : null;
   const idadeDias = consultadoEm ? Math.floor((Date.parse(`${d.hoje}T12:00:00Z`) - Date.parse(`${consultadoEm}T12:00:00Z`)) / 864e5) : null;
+  const versoes = [v.versoes.ativo ? `Versão ${v.versoes.ativo} ativa` : null, v.versoes.rascunho ? `versão ${v.versoes.rascunho} em rascunho` : null].filter(Boolean).join(" · ");
 
-  // Block 1 — everything that makes the rest unreadable comes first (FR-018).
+  // Block 1 — everything that makes the rest unreadable comes first (FR-018), phrased as consequence.
   const avisos: string[] = [
-    ...(semImpressoes && demanda ? [`Estado das páginas sem leitura de impressões: ${semImpressoes}. Nenhuma página existente conta nas metas até a próxima leitura completa.`] : []),
     ...d.falhas,
     ...(!demanda
       ? [`Sem demanda congelada para este projeto. Rode \`node --env-file=.env scripts/consultar-demanda.mjs ${slug}\` para ver saldo e custo, depois com \`--consultar --gravar\`.`]
@@ -126,16 +93,16 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
       ? ["O projeto não declara produtos em lib/autopublish-projects.mjs: todos os termos ficam sem cluster e nenhuma página de cluster é agendada."]
       : []),
     ...(idadeDias !== null && idadeDias > 90 ? [`A demanda foi consultada há ${idadeDias} dias (${dm(consultadoEm!)}): vale consultar de novo antes de uma nova versão.`] : []),
-    ...(montado?.avisos ?? []),
+    ...v.avisos,
   ];
 
   const kpis = kpisDoBoard();
-  const porChave = new Map<string, Proposta[]>();
-  for (const m of propostas) porChave.set(m.chave, [...(porChave.get(m.chave) ?? []), m]);
+  type Meta = (typeof v.metas)[number];
+  const porChave = new Map<string, Meta[]>();
+  for (const m of v.metas) porChave.set(m.chave, [...(porChave.get(m.chave) ?? []), m]);
 
-  const linhaDaMeta = (m: Proposta) => {
+  const linhaDaMeta = (m: Meta) => {
     const regra = REGRAS_[m.chave] && !["top20", "tamBusca"].includes(m.chave) ? REGRAS_[m.chave] : null;
-    const dec = decisaoDe(m);
     const nome = nomeDe(m.chave);
     const id = `${m.chave}-${m.prazo}`;
     if (m.valor === null)
@@ -144,16 +111,16 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           <strong>{nome}</strong> · {m.prazo} dias · ∅ sem meta: {m.ausente}
         </li>
       );
-    const valorFinal = dec?.valor ?? null;
-    const jaAtingida = dec?.estado === "editada" && typeof m.partida === "number" && valorFinal !== null && valorFinal <= m.partida;
-    const estado = !dec
-      ? "proposta · sem decisão"
-      : dec.estado === "aprovada"
-        ? `aprovada por ${primeiroNome(dec.decididoPor)} em ${dm(dec.decididoEm ?? "")}`
-        : dec.estado === "editada"
-          ? `editada por ${primeiroNome(dec.decididoPor)} em ${dm(dec.decididoEm ?? "")}: ${fmt(m.chave, valorFinal!)} (proposta ${fmt(m.chave, dec.proposto)})`
-          : `recusada por ${primeiroNome(dec.decididoPor)} em ${dm(dec.decididoEm ?? "")}: fora do plano`;
-    const naoCabe = montado?.naoCabe.find((x) => x.chave === m.chave && x.prazo === m.prazo);
+    // FR-006: the state in words; who decided and when stay in the database.
+    const estado =
+      m.estado === "proposta"
+        ? "proposta · sem decisão"
+        : m.estado === "aprovada"
+          ? "aprovada"
+          : m.estado === "editada"
+            ? `editada: ${fmt(m.chave, m.valorFinal!)} (proposta ${fmt(m.chave, m.valor)})`
+            : "recusada: fora do plano";
+    const naoCabe = v.naoCabe.find((x) => x.chave === m.chave && x.prazo === m.prazo);
     return (
       <li key={id}>
         <span className="mapa-fila-alvo">
@@ -164,18 +131,6 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
         <span className="mapa-fila-det">{m.conta}</span>
         {m.aviso ? <span className="mapa-fila-det">⚠ {m.aviso}</span> : null}
         {naoCabe ? <span className="mapa-fila-det">⚠ {naoCabe.texto}</span> : null}
-        {m.origem === "demanda" && ["top20", "tamBusca", "pagina1"].includes(m.chave) ? (
-          <span className="mapa-fila-det">
-            {typeof m.partida === "number"
-              ? `Hoje: ${fmt(m.chave, m.partida)} (${janela.inicio} → ${janela.fim}, Search Console) · distância até a meta: ${m.distancia! >= 0 ? "+" : ""}${pct(m.distancia!)}`
-              : `Ponto de partida não lido: ${semPartida ?? (m.chave === "tamBusca" ? "a demanda e o inventário não são da mesma data" : "sem leitura por termo")}`}
-          </span>
-        ) : m.origem !== "demanda" ? (
-          <span className="mapa-fila-det">
-            Ponto de partida: na folha do <a href={`/gsc/mapa/${slug}`}>mapa</a>, onde a mesma regra já é lida.
-          </span>
-        ) : null}
-        {jaAtingida ? <span className="mapa-fila-det">⚠ a meta editada já foi atingida: hoje está em {fmt(m.chave, m.partida!)}</span> : null}
         {rascunho && podeGravar ? (
           <form action={decidirMeta} className="mapa-marca-form">
             <input type="hidden" name="projeto" value={slug} />
@@ -188,7 +143,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
             <fieldset>
               <legend>Decidir</legend>
               <label htmlFor={`quem-${id}`}>quem</label>
-              <select id={`quem-${id}`} name="responsavel" defaultValue={dec?.decididoPor ?? atual!.criadoPor}>
+              <select id={`quem-${id}`} name="responsavel" defaultValue={atual!.criadoPor}>
                 {(RESPONSAVEIS as { id: string; label: string }[]).map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.label.split(" ")[0]}
@@ -199,7 +154,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
                 Aprovar
               </button>
               <label htmlFor={`valor-${id}`}>outro valor{FRACAO.has(m.chave) || regra?.unidade === "%" ? " (fração: 0.6 = 60%)" : ""}</label>
-              <input id={`valor-${id}`} type="number" step="any" name="valor" defaultValue={valorFinal ?? m.valor} className="plano-valor" />
+              <input id={`valor-${id}`} type="number" step="any" name="valor" defaultValue={m.valorFinal ?? m.valor} className="plano-valor" />
               <button name="estado" value="editada" className="ag-dono-b" aria-label={`Aprovar com outro valor: ${nome}, ${m.prazo} dias`}>
                 Aprovar com outro valor
               </button>
@@ -254,56 +209,40 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
     </form>
   );
 
-  // D16: the map's cards join the current week on the map, which holds the 32 readings. No count here:
-  // this route cannot know it without them. The block exists on the map only with an active version.
-  const apontaMapa = (
-    <span className="mapa-fila-det">
-      As alavancas que o mapa dispara hoje também são desta semana:{" "}
-      {d.ativo ? (
-        <a href={`/gsc/mapa/${slug}#mapa-plano-h`}>ver a semana com os cards do mapa</a>
-      ) : (
-        <a href={`/gsc/mapa/${slug}#mapa-acoes-h`}>ver o que o mapa dispara hoje</a>
-      )}
-      .
-    </span>
-  );
-
-  const tarefasDa = (s: NonNullable<typeof semana>) =>
+  type SemanaV = (typeof v.semanas)[number];
+  const tarefasDa = (s: SemanaV) =>
     s.tarefas.length ? (
       <ul className="mapa-acao-motivos">
-        {s.tarefas.map((t) => {
-          const marca = d.marcas.find((m) => m.alavanca === t.alavanca);
-          return (
-            <li key={t.alavanca}>
-              <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.map((a) => (a.startsWith("http") ? caminho(a) : a)).join(", ")}
-              {t.responsavel ? ` · ${primeiroNome(t.responsavel)}` : ""}
-              {feita(t, s, d.marcas) && marca ? ` · feito em ${dm(marca.marcado)} (marca do mapa)` : ""}
-              <span className="mapa-fila-det">Move: {t.kpis.map(nomeDe).join(", ")}</span>
-            </li>
-          );
-        })}
+        {s.tarefas.map((t) => (
+          <li key={t.alavanca}>
+            <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.map((a) => (a.startsWith("http") ? caminho(a) : a)).join(", ")}
+            {t.responsavel ? ` · ${primeiroNome(t.responsavel)}` : ""}
+            <span className="mapa-fila-det">Move: {t.kpis.map(nomeDe).join(", ")}</span>
+          </li>
+        ))}
       </ul>
     ) : (
-      <p className="mapa-degrau-vazio">Nenhuma página nova nesta semana: {montado?.agenda.length ? "as páginas do plano já foram agendadas antes" : "não há cluster sem página para criar"}.</p>
+      <p className="mapa-degrau-vazio">
+        Nada mais planejado para esta semana.{proxima ? ` A próxima tarefa é da semana ${proxima.n}, a partir de ${dm(proxima.inicio)}.` : " Nenhuma semana adiante tem tarefa."}
+      </p>
     );
-  const marcosDa = (s: NonNullable<typeof semana>) => {
+  const marcosDa = (s: SemanaV) => {
     const pares = Object.entries(s.marcos);
     if (!pares.length) return null;
     return (
       <span className="mapa-fila-det">
         Marcos:{" "}
-        {pares.map(([k, v]) => `${nomeDe(k)} ${v === null ? "○ marco não chegou" : fmt(k, v)}`).join(" · ")}
+        {pares.map(([k, x]) => `${nomeDe(k)} ${x === null ? "○ marco não chegou" : fmt(k, x)}`).join(" · ")}
       </span>
     );
   };
 
   // Consecutive weeks with no task and the same milestones read as one row: 26 identical rows hide the
   // weeks where something changes. The current week always stands alone.
-  type SemanaM = NonNullable<typeof montado>["semanas"][number];
-  const blocos: { s: SemanaM; ate: SemanaM | null }[] = [];
-  for (const s of montado?.semanas ?? []) {
+  const blocos: { s: SemanaV; ate: SemanaV | null }[] = [];
+  for (const s of v.semanas) {
     const ultimo = blocos[blocos.length - 1];
-    const quieta = (x: SemanaM) => !x.tarefas.length && x.n !== d.semanaAtual;
+    const quieta = (x: SemanaV) => !x.tarefas.length && x.n !== d.semanaAtual;
     if (ultimo && quieta(s) && quieta(ultimo.s) && JSON.stringify(s.marcos) === JSON.stringify(ultimo.s.marcos)) ultimo.ate = s;
     else blocos.push({ s, ate: null });
   }
@@ -316,6 +255,10 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           <a href={`/gsc/mapa/${slug}`}>Mapa de {nomeCurto}</a> · plano de SEO
         </p>
         <h1 className="ficha-nome">Plano de SEO de {nomeCurto}: o que fazer esta semana e onde chegar em 90 e 180 dias</h1>
+        <p className="foot">
+          {versoes || "Prévia com as premissas padrão: nenhuma versão criada."} Onde o projeto está hoje (ponto de partida, estado das páginas, marcas de feito) fica no{" "}
+          <a href={`/gsc/mapa/${slug}#mapa-plano-h`}>mapa</a>.
+        </p>
 
         {avisos.length ? (
           <div className="plano-aviso" role="note" aria-label="Avisos do plano">
@@ -333,19 +276,17 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           </h2>
           {!montado ? (
             <p className="mapa-degrau-vazio">∅ sem calendário: falta a demanda congelada (aviso acima).</p>
+          ) : v.comecaEm ? (
+            <p className="mapa-degrau-vazio">O plano começa em {dm(v.comecaEm)}.</p>
           ) : !semana ? (
-            <p className="mapa-degrau-vazio">
-              {d.semanaAtual < 1 ? `O plano começa em ${dm(d.inicio)}.` : `O plano terminou: a semana ${d.semanas} foi a última. Crie uma nova versão.`}
-            </p>
+            <p className="mapa-degrau-vazio">O plano terminou: a semana {d.semanas} foi a última. Crie uma nova versão.</p>
           ) : (
             <>
               <p className="mapa-n1-resposta">
                 Semana {semana.n} de {d.semanas}, a partir de {dm(semana.inicio)}
-                {atual ? ` · versão ${atual.versao}, ${atual.estado}` : " · prévia, sem versão criada"}
               </p>
               {tarefasDa(semana)}
               {marcosDa(semana)}
-              {apontaMapa}
             </>
           )}
         </section>
@@ -362,7 +303,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
                 ? faltam
                   ? `Faltam ${faltam} ${faltam === 1 ? "meta" : "metas"} sem decisão para ativar a versão ${atual.versao}.`
                   : `Todas as metas da versão ${atual.versao} têm decisão.`
-                : `A versão ${atual.versao} está ${atual.estado}: para mudar uma meta, crie uma nova versão (abaixo, em Premissas).`
+                : `Para mudar uma meta da versão ${atual.versao}, crie uma nova versão (abaixo, em Premissas).`
               : "Crie a versão 1 (abaixo, em Premissas) para aprovar, editar ou recusar cada meta."}
           </p>
           {rascunho && podeGravar && faltam ? (
@@ -373,8 +314,8 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
                 type="hidden"
                 name="metas"
                 value={JSON.stringify(
-                  propostas
-                    .filter((m) => m.valor !== null && !decisaoDe(m))
+                  v.metas
+                    .filter((m) => m.valor !== null && m.estado === "proposta")
                     .map((m) => ({ chave: m.chave, prazo: m.prazo, origem: m.origem, proposto: m.valor, conta: m.conta.slice(0, 2000) })),
                 )}
               />
@@ -415,22 +356,25 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
 
         <section className="ficha-bloco" aria-labelledby="plano-cal-h">
           <h2 className="ficha-bloco-h" id="plano-cal-h">
-            Calendário: {d.semanas} semanas a partir de {dm(d.inicio)}
+            Calendário: {v.semanas.length ? `semanas ${v.semanas[0].n} a ${d.semanas}` : `${d.semanas} semanas`}
           </h2>
           {montado ? (
-            <ol className="plano-semanas">
-              {blocos.map(({ s, ate }) => (
-                <li key={s.n} className={s.n === d.semanaAtual ? "plano-agora" : undefined} aria-current={s.n === d.semanaAtual ? "date" : undefined}>
-                  <strong>
-                    {ate ? `Semanas ${s.n} a ${ate.n} · ${dm(s.inicio)} a ${dm(ate.inicio)}` : `Semana ${s.n} · ${dm(s.inicio)}`}
-                    {s.n === d.semanaAtual ? " · esta semana" : ""}
-                  </strong>
-                  {s.tarefas.length ? tarefasDa(s) : <span className="mapa-fila-det">sem tarefa nova{ate ? ", marcos iguais" : ""}</span>}
-                  {marcosDa(s)}
-                  {s.n === d.semanaAtual ? apontaMapa : null}
-                </li>
-              ))}
-            </ol>
+            v.semanas.length ? (
+              <ol className="plano-semanas">
+                {blocos.map(({ s, ate }) => (
+                  <li key={s.n} className={s.n === d.semanaAtual ? "plano-agora" : undefined} aria-current={s.n === d.semanaAtual ? "date" : undefined}>
+                    <strong>
+                      {ate ? `Semanas ${s.n} a ${ate.n} · ${dm(s.inicio)} a ${dm(ate.inicio)}` : `Semana ${s.n} · ${dm(s.inicio)}`}
+                      {s.n === d.semanaAtual ? " · esta semana" : ""}
+                    </strong>
+                    {s.tarefas.length ? tarefasDa(s) : <span className="mapa-fila-det">sem tarefa nova{ate ? ", marcos iguais" : ""}</span>}
+                    {marcosDa(s)}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mapa-degrau-vazio">Nenhuma semana adiante: o plano terminou. Crie uma nova versão.</p>
+            )
           ) : (
             <p className="mapa-degrau-vazio">∅ sem calendário: falta a demanda congelada.</p>
           )}
@@ -448,35 +392,25 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
                 {demanda.paga
                   ? `Volume mensal do Google Ads (DataForSEO), ${String(proc?.regiao ?? "")}, idioma ${String(proc?.idioma ?? "")}, consultado em ${consultadoEm ? dm(consultadoEm) + "/" + consultadoEm.slice(0, 4) : "?"} por US$ ${String(proc?.custoUsd ?? "?")}.`
                   : `Piso de impressões do Search Console (estimativa da 050, congelada em ${consultadoEm ?? "?"}): não é volume de mercado, e a demanda real é maior.`}{" "}
-                Total: {br(d.clusters.reduce((a, c) => a + c.volume, 0) + d.semCluster.reduce((a, t) => a + (t.volume ?? 0), 0))} buscas/mês em{" "}
-                {br(d.clusters.reduce((a, c) => a + c.termos.length, 0) + d.semCluster.length)} termos. Cobertura lida{" "}
-                {d.crawl ? `no crawl de ${dm(d.crawl.dia)}` : "sem crawl gravado ainda: todo cluster aparece sem página"}.
-                {d.crawl && d.crawl.paginas.every((pg) => pg.h1 === null) ? " H1 não lido nesta corrida: a cobertura usa só o título até o próximo crawl." : ""}{" "}
-                Um termo só conta para a página que tem todas as palavras dele no título ou no H1; a que não está ativa conta depois da marca de feito da tarefa da semana 1. Para mover ou tirar um termo, rode de novo com{" "}
-                <code>--mover &quot;termo=semente&quot;</code> ou <code>--excluir &quot;termo:motivo&quot;</code>: a lista congelada é a que conta.
+                Total: {br(v.clusters.reduce((a, c) => a + c.volume, 0) + d.semCluster.reduce((a, t) => a + (t.volume ?? 0), 0))} buscas/mês em{" "}
+                {br(v.clusters.reduce((a, c) => a + c.termos.length, 0) + d.semCluster.length)} termos.{" "}
+                {d.crawl ? "" : "Sem crawl gravado ainda: todo cluster aparece sem página. "}
+                Um termo só conta para a página que tem todas as palavras dele no título ou no H1; uma página existente com tarefa conta a partir da semana em que a tarefa for feita. Para mover ou tirar
+                um termo, rode de novo com <code>--mover &quot;termo=semente&quot;</code> ou <code>--excluir &quot;termo:motivo&quot;</code>: a lista congelada é a que conta.
               </p>
               <ul className="mapa-acao-motivos">
-                {d.clusters.map((c) => (
+                {v.clusters.map((c) => (
                   <li key={c.semente}>
                     <strong>{c.semente.replaceAll("-", " ")}</strong> · {c.termos.length} {c.termos.length === 1 ? "termo" : "termos"} · {br(c.volume)} buscas/mês ·{" "}
-                    {c.pagina ? (
-                      <a href={c.pagina}>{new URL(c.pagina).pathname}</a>
-                    ) : (
-                      "sem página"
-                    )}
-                    {c.estadoDaPagina ? ` (${ESTADO_PAGINA[c.estadoDaPagina.estado]}${c.estadoDaPagina.motivo ? `: ${c.estadoDaPagina.motivo}` : ""})` : ""}
-                    {Object.keys(c.segmentos).length ? ` · segmentos: ${Object.entries(c.segmentos).map(([s, v]) => `${s} ${br(v)}`).join(", ")}` : " · nenhum termo com segmento"}
+                    {c.pagina ? <a href={c.pagina}>{caminho(c.pagina)}</a> : "sem página"}
+                    {Object.keys(c.segmentos).length ? ` · segmentos: ${Object.entries(c.segmentos).map(([s, x]) => `${s} ${br(x)}`).join(", ")}` : " · nenhum termo com segmento"}
                     {/* D14: a page counts only the terms whose words are all in its title or its H1. */}
-                    {Object.entries(Object.groupBy(c.termos.filter((t) => t.cobertoPor), (t) => t.cobertoPor!)).map(([url, ts]) => {
-                      const e = c.estados?.[url];
-                      return (
-                        <span className="mapa-fila-det" key={url}>
-                          {caminho(url)}
-                          {e ? ` (${ESTADO_PAGINA[e.estado]}${e.motivo ? `: ${e.motivo}` : ""})` : ""} cobre pelo título ou H1 {ts!.length} {ts!.length === 1 ? "termo" : "termos"},{" "}
-                          {br(ts!.reduce((a, t) => a + (t.volume ?? 0), 0))} buscas/mês: {ts!.map((t) => t.termo).join(" · ")}
-                        </span>
-                      );
-                    })}
+                    {Object.entries(Object.groupBy(c.termos.filter((t) => t.cobertoPor), (t) => t.cobertoPor!)).map(([url, ts]) => (
+                      <span className="mapa-fila-det" key={url}>
+                        {caminho(url)} cobre pelo título ou H1 {ts!.length} {ts!.length === 1 ? "termo" : "termos"}, {br(ts!.reduce((a, t) => a + (t.volume ?? 0), 0))} buscas/mês:{" "}
+                        {ts!.map((t) => t.termo).join(" · ")}
+                      </span>
+                    ))}
                     {c.termos.some((t) => !t.cobertoPor) ? (
                       <span className="mapa-fila-det">
                         Sem página que cubra:{" "}
@@ -528,35 +462,16 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           </h2>
           <p className="foot">
             {d.premissas.capacidade} páginas novas por semana · {d.premissas.semanasAteIndexar} semanas até indexar · {d.premissas.semanasAteEstabilizar} semanas até a posição estabilizar ·
-            termo com {br(d.premissas.pisoApoio)} buscas/mês ou mais, sem página que o cubra, vira página de apoio.
-            Estimativas do dono, sem fonte: a própria {nomeCurto} refina com o que medir. O plano sugere subir a capacidade quando a indexação limpa das páginas novas passar de 90% (no
-            mapa), e nunca a sobe sozinho.
+            termo com {br(d.premissas.pisoApoio)} buscas/mês ou mais, sem página que o cubra, vira página de apoio. Estimativas do dono, sem fonte: a própria {nomeCurto} refina com o que medir.
           </p>
           {podeGravar
             ? rascunho
               ? formPremissas(salvarPremissas, `Salvar premissas da versão ${atual!.versao}`, atual!.versao)
               : formPremissas(criarVersao, atual ? `Criar a versão ${atual.versao + 1}` : "Criar a versão 1")
             : null}
-        </section>
-
-        <section className="ficha-bloco" aria-labelledby="plano-versoes-h">
-          <h2 className="ficha-bloco-h" id="plano-versoes-h">
-            Versões
-          </h2>
-          {d.planos.length ? (
-            <ul className="mapa-acao-motivos">
-              {d.planos.map((v) => (
-                <li key={v.versao}>
-                  Versão {v.versao} · {v.estado} · criada em {dm(v.criado)} por {primeiroNome(v.criadoPor)} · início {dm(v.inicio)} · {v.capacidade} páginas/semana, {v.semanasAteIndexar} até
-                  indexar, {v.semanasAteEstabilizar} até estabilizar, piso de apoio {br(v.pisoApoio)}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mapa-degrau-vazio">Nenhuma versão criada: o que está acima é a proposta com as premissas padrão.</p>
-          )}
           <p className="foot">
-            Abrir esta página não consulta volume de busca: a única leitura externa é a do Search Console ({janela.inicio} → {janela.fim}) para o ponto de partida das metas de demanda.
+            Abrir esta página não consulta volume de busca. A única leitura externa é a de impressões por página do Search Console: ela decide em que semana entra a tarefa de cada página
+            existente.
           </p>
         </section>
       </section>
