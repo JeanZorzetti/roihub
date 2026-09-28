@@ -61,7 +61,7 @@ test("lerDecisao rejects everything outside the contract", () => {
 const PLANO = { projeto: "tapepro", responsavel: "maria", inicio: "2026-09-30", capacidade: "3", semanasAteIndexar: "2", semanasAteEstabilizar: "12" };
 
 test("lerPlano snaps the start to Monday and accepts the bounds", () => {
-  assert.deepEqual(lerPlano(PLANO, { slugs: SLUGS }), { projeto: "tapepro", criadoPor: "maria", inicio: "2026-09-28", capacidade: 3, semanasAteIndexar: 2, semanasAteEstabilizar: 12 });
+  assert.deepEqual(lerPlano(PLANO, { slugs: SLUGS }), { projeto: "tapepro", criadoPor: "maria", inicio: "2026-09-28", capacidade: 3, semanasAteIndexar: 2, semanasAteEstabilizar: 12, pisoApoio: 100 });
   assert.ok(lerPlano({ ...PLANO, capacidade: "0" }, { slugs: SLUGS }));
   assert.ok(lerPlano({ ...PLANO, capacidade: "20", semanasAteIndexar: "0", semanasAteEstabilizar: "26" }, { slugs: SLUGS }));
 });
@@ -69,6 +69,14 @@ test("lerPlano snaps the start to Monday and accepts the bounds", () => {
 test("lerPlano rejects capacity outside 0–20 and premises outside 0–26", () => {
   const ruim = [{ capacidade: "21" }, { capacidade: "-1" }, { capacidade: "2.5" }, { capacidade: "" }, { semanasAteIndexar: "27" }, { semanasAteEstabilizar: "-1" }, { semanasAteEstabilizar: "1.5" }, { responsavel: "x" }, { inicio: "2026-02-31" }, { inicio: "ontem" }, { projeto: "outro" }];
   for (const r of ruim) assert.equal(lerPlano({ ...PLANO, ...r }, { slugs: SLUGS }), null, JSON.stringify(r));
+});
+
+// T046 · the support-page floor (FR-005a): an integer 1–100000, 100 when the form does not send it
+test("lerPlano: pisoApoio is an integer 1–100000, default 100", () => {
+  assert.equal(lerPlano({ ...PLANO, pisoApoio: "1" }, { slugs: SLUGS }).pisoApoio, 1);
+  assert.equal(lerPlano({ ...PLANO, pisoApoio: "100000" }, { slugs: SLUGS }).pisoApoio, 100000);
+  assert.equal(lerPlano(PLANO, { slugs: SLUGS }).pisoApoio, PREMISSAS_PADRAO.pisoApoio);
+  for (const v of ["0", "1.5", "abc", "100001", ""]) assert.equal(lerPlano({ ...PLANO, pisoApoio: v }, { slugs: SLUGS }), null, v);
 });
 
 // ── the 18 KPIs ────────────────────────────────────────────────────────────────

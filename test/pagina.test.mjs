@@ -4,6 +4,7 @@ import {
   semScriptNemStyle,
   contarPalavras,
   titulo,
+  h1,
   larguraDoTitulo,
   METODO_LARGURA,
   modificadoresDeIntencao,
@@ -66,6 +67,16 @@ test("título ausente é null; título vazio é string vazia — são coisas dif
   assert.equal(titulo("<html><head></head></html>"), null);
   assert.equal(titulo("<html><head><title></title></head></html>"), "");
   assert.equal(titulo("<title>Preços &amp; planos</title>"), "Preços & planos");
+});
+
+// 057/D14: the H1 is the second place a page names its subject.
+test("h1: the first <h1>, tags stripped, entities decoded, never inside <script>/<style>", () => {
+  assert.equal(h1("<h1>Fita Gomada</h1><h1>Outra</h1>"), "Fita Gomada");
+  assert.equal(h1('<h1 class="x"><span>Fita Gomada</span> &amp; <b>Kraft</b></h1>'), "Fita Gomada & Kraft");
+  assert.equal(h1("<script>var s='<h1>falso</h1>';</script><style>h1{}</style><h1>Real</h1>"), "Real");
+  assert.equal(h1("<script>document.write('<h1>falso</h1>')</script>"), null);
+  assert.equal(h1("<html><body><p>sem título</p></body></html>"), null, "no <h1> is null, never an empty string");
+  assert.equal(h1(null), null);
 });
 
 // ── Intenção: o ano é parâmetro (D9) ────────────────────────────────────────
@@ -184,6 +195,7 @@ test("extrair NÃO devolve palavras: 0 numa página que tem <h1>", () => {
   const r = extrair(MINIFICADO, 2026);
   assert.ok(r.palavras > 0, "a contradição interna que denunciou o D-84 é a asserção");
   assert.equal(r.titulo, "x");
+  assert.equal(r.h1, "Alinhador invisível em Goiânia");
   assert.equal(r.metodo, METODO_LARGURA);
   assert.equal(r.schema.estado, "ausente");
   assert.equal(r.dataDeclarada, null);
@@ -194,6 +206,7 @@ test("extrair NÃO devolve palavras: 0 numa página que tem <h1>", () => {
 test("extrair preenche as 17 colunas sem inventar zero para campo ausente", () => {
   const r = extrair("<html><head></head><body><a href=\"/a\">A</a></body></html>", 2026);
   assert.equal(r.titulo, null, "titulo ausente é null, não string vazia");
+  assert.equal(r.h1, null);
   assert.equal(r.larguraPx, null, "sem título não há largura — 0 px seria um título que cabe");
   assert.equal(r.intencao, "ausente");
   assert.equal(r.dataDeclarada, null);

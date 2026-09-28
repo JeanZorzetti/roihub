@@ -220,6 +220,8 @@ function ensure(): Promise<unknown> {
         decidido_em TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (projeto, versao, chave, prazo)
       );
+      -- 057/D14: the support-page floor of FR-005a, a premise of the version like the other three.
+      ALTER TABLE hub_plano ADD COLUMN IF NOT EXISTS piso_apoio INT NOT NULL DEFAULT 100;
       -- 056: uma medida de campo por metrica por visita, do RUM proprio (lib/rum.mjs). Nada aqui
       -- identifica o visitante: sem IP, sem cookie, sem parametro de URL. Sem chave primaria porque
       -- nenhuma linha e lida ou apagada sozinha; o mapa le a janela e a retencao apaga por idade.
@@ -405,6 +407,16 @@ function ensure(): Promise<unknown> {
       -- JSON {tipo: quantas URLs}. Coluna de TEXTO e nao jsonb: o unico leitor desenha a lista, e
       -- jsonb quebra quem faz JSON.parse do que leu ([[jsonb_breaks_code_that_json_parses]]).
       ALTER TABLE hub_indexacao ADD COLUMN IF NOT EXISTS rich_tipos TEXT;
+      -- 057/D12: the per-URL verdict the same run already reads and agregar() used to drop. One row
+      -- per inspected URL per run, DELETE (projeto, dia) + INSERT like hub_pagina. classe is
+      -- classificar() from lib/indexacao-corrida.mjs; 'falha' is "not read", never "out of the index".
+      CREATE TABLE IF NOT EXISTS hub_indexacao_url (
+        projeto TEXT NOT NULL,
+        dia DATE NOT NULL,
+        url TEXT NOT NULL,
+        classe TEXT NOT NULL,
+        PRIMARY KEY (projeto, dia, url)
+      );
       -- Crawl de pagina (024): uma linha por CORRIDA de um projeto num dia.
       --
       -- motivo NULL = apurou. Os tres motivos sao estados DIFERENTES e nunca somam num "0 paginas":
@@ -470,6 +482,8 @@ function ensure(): Promise<unknown> {
         erro TEXT,
         PRIMARY KEY (projeto, dia, url)
       );
+      -- 057/D14: the H1 next to the title. NULL on rows before the change = "not read", not "no H1".
+      ALTER TABLE hub_pagina ADD COLUMN IF NOT EXISTS h1 TEXT;
       -- Quadros de Marketing e Ideias. Nada aqui atravessa para hub_tasks ou para o ranking:
       -- o isolamento é o requisito central da feature, não um efeito colateral do desenho.
       -- Coluna é TABELA e não enum no .mjs (ao contrário de tipo/canal): FR-012 exige que o
@@ -968,6 +982,7 @@ export type Plano = {
   capacidade: number;
   semanasAteIndexar: number;
   semanasAteEstabilizar: number;
+  pisoApoio: number;
   estado: EstadoDoPlano;
 };
 export type NovoPlano = Omit<Plano, "versao" | "criado" | "estado">;
@@ -990,7 +1005,7 @@ export async function listPlanos(projeto: string): Promise<Plano[]> {
   await ensure();
   const r = await pool().query(
     `SELECT projeto, versao, to_char(criado, 'YYYY-MM-DD') AS criado, criado_por, to_char(inicio, 'YYYY-MM-DD') AS inicio,
-            capacidade, semanas_indexar, semanas_estabilizar, estado
+            capacidade, semanas_indexar, semanas_estabilizar, piso_apoio, estado
        FROM hub_plano WHERE projeto = $1 ORDER BY versao DESC`,
     [projeto]
   );
@@ -1003,6 +1018,7 @@ export async function listPlanos(projeto: string): Promise<Plano[]> {
     capacidade: x.capacidade,
     semanasAteIndexar: x.semanas_indexar,
     semanasAteEstabilizar: x.semanas_estabilizar,
+    pisoApoio: x.piso_apoio,
     estado: x.estado,
   }));
 }
@@ -1011,10 +1027,10 @@ export async function listPlanos(projeto: string): Promise<Plano[]> {
 export async function criarPlano(p: NovoPlano & { criado: string }): Promise<number> {
   await ensure();
   const r = await pool().query(
-    `INSERT INTO hub_plano (projeto, versao, criado, criado_por, inicio, capacidade, semanas_indexar, semanas_estabilizar, estado)
-     SELECT $1, COALESCE(MAX(versao), 0) + 1, $2, $3, $4, $5, $6, $7, 'rascunho' FROM hub_plano WHERE projeto = $1
+    `INSERT INTO hub_plano (projeto, versao, criado, criado_por, inicio, capacidade, semanas_indexar, semanas_estabilizar, piso_apoio, estado)
+     SELECT $1, COALESCE(MAX(versao), 0) + 1, $2, $3, $4, $5, $6, $7, $8, 'rascunho' FROM hub_plano WHERE projeto = $1
      RETURNING versao`,
-    [p.projeto, p.criado, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar]
+    [p.projeto, p.criado, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar, p.pisoApoio]
   );
   return r.rows[0].versao;
 }
@@ -1023,9 +1039,9 @@ export async function criarPlano(p: NovoPlano & { criado: string }): Promise<num
 export async function setPremissas(projeto: string, versao: number, p: Omit<NovoPlano, "projeto">): Promise<boolean> {
   await ensure();
   const r = await pool().query(
-    `UPDATE hub_plano SET criado_por = $3, inicio = $4, capacidade = $5, semanas_indexar = $6, semanas_estabilizar = $7
+    `UPDATE hub_plano SET criado_por = $3, inicio = $4, capacidade = $5, semanas_indexar = $6, semanas_estabilizar = $7, piso_apoio = $8
       WHERE projeto = $1 AND versao = $2 AND estado = 'rascunho'`,
-    [projeto, versao, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar]
+    [projeto, versao, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar, p.pisoApoio]
   );
   return (r.rowCount ?? 0) > 0;
 }
@@ -1535,6 +1551,43 @@ export async function ultimasApuracoes(): Promise<Record<string, string>> {
   return Object.fromEntries(r.rows.map((l) => [l.projeto, l.dia]));
 }
 
+/** 057/D12: the run's per-URL classes for one project and day. Only the inspected URLs: a day with
+ *  cota 0 passes nothing and leaves the previous verdicts in place. */
+export async function gravarIndexacaoPorUrl(projeto: string, dia: string, linhas: { url: string; classe: string }[]): Promise<void> {
+  if (!linhas.length) return;
+  await ensure();
+  const cliente = await pool().connect();
+  try {
+    await cliente.query("BEGIN");
+    await cliente.query(`DELETE FROM hub_indexacao_url WHERE projeto = $1 AND dia = $2`, [projeto, dia]);
+    const unicas = [...new Map(linhas.map((l) => [l.url, l])).values()];
+    const valores: unknown[] = [];
+    const tuplas = unicas.map((l, i) => {
+      valores.push(projeto, dia, l.url, l.classe);
+      return `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`;
+    });
+    await cliente.query(`INSERT INTO hub_indexacao_url (projeto, dia, url, classe) VALUES ${tuplas.join(", ")}`, valores);
+    await cliente.query("COMMIT");
+  } catch (e) {
+    await cliente.query("ROLLBACK");
+    throw e;
+  } finally {
+    cliente.release();
+  }
+}
+
+/** The latest verdict of EACH URL, each with its own day, or `null` when there was never a run. Not
+ *  "the latest day": a day with a partial cota would erase the URLs it skipped (D12, analyze C2). */
+export async function lerIndexacaoPorUrl(projeto: string): Promise<Record<string, { classe: string; dia: string }> | null> {
+  await ensure();
+  const r = await pool().query<{ url: string; classe: string; dia: string }>(
+    `SELECT DISTINCT ON (url) url, classe, to_char(dia, 'YYYY-MM-DD') AS dia
+       FROM hub_indexacao_url WHERE projeto = $1 ORDER BY url, dia DESC`,
+    [projeto]
+  );
+  return r.rows.length ? Object.fromEntries(r.rows.map((l) => [l.url, { classe: l.classe, dia: l.dia }])) : null;
+}
+
 // ── Crawl de página (hub_pagina_corrida + hub_pagina) — 024 ─────────────────
 
 /** Uma URL de uma corrida. Os `null` aqui são significado, não ausência de cuidado — ver os
@@ -1545,6 +1598,7 @@ export type PaginaCrawl = {
   profundidade: number | null;
   linksContextuais: number;
   titulo: string | null;
+  h1: string | null;
   tituloPx: number | null;
   tituloMetodo: string | null;
   intencao: string | null;
@@ -1620,7 +1674,7 @@ export async function gravarCrawlDePagina(
     if (paginas.length) {
       const valores: unknown[] = [];
       const tuplas = paginas.map((p, i) => {
-        const b = i * 18;
+        const b = i * 19;
         valores.push(
           projeto,
           corrida.dia,
@@ -1629,6 +1683,7 @@ export async function gravarCrawlDePagina(
           p.profundidade,
           p.linksContextuais,
           p.titulo,
+          p.h1,
           p.tituloPx,
           p.tituloMetodo,
           p.intencao,
@@ -1641,11 +1696,11 @@ export async function gravarCrawlDePagina(
           p.redirecionada,
           p.erro
         );
-        return `(${Array.from({ length: 18 }, (_, k) => `$${b + k + 1}`).join(", ")})`;
+        return `(${Array.from({ length: 19 }, (_, k) => `$${b + k + 1}`).join(", ")})`;
       });
       await cliente.query(
         `INSERT INTO hub_pagina (projeto, dia, url, no_sitemap, profundidade, links_contextuais,
-           titulo, titulo_px, titulo_metodo, intencao, schema_estado, schema_tipos, data_declarada,
+           titulo, h1, titulo_px, titulo_metodo, intencao, schema_estado, schema_tipos, data_declarada,
            palavras, conteudo_estado, status, redirecionada, erro)
          VALUES ${tuplas.join(", ")}`,
         valores
@@ -1681,7 +1736,7 @@ export async function lerCrawlDePagina(projeto: string): Promise<CrawlDePagina |
   const l = c.rows[0];
   if (!l) return null;
   const r = await pool().query(
-    `SELECT url, no_sitemap, profundidade, links_contextuais, titulo, titulo_px, titulo_metodo,
+    `SELECT url, no_sitemap, profundidade, links_contextuais, titulo, h1, titulo_px, titulo_metodo,
             intencao, schema_estado, schema_tipos, to_char(data_declarada, 'YYYY-MM-DD') AS data_declarada,
             palavras, conteudo_estado, status, redirecionada, erro
        FROM hub_pagina
@@ -1705,6 +1760,7 @@ export async function lerCrawlDePagina(projeto: string): Promise<CrawlDePagina |
       profundidade: p.profundidade,
       linksContextuais: p.links_contextuais,
       titulo: p.titulo,
+      h1: p.h1,
       tituloPx: p.titulo_px,
       tituloMetodo: p.titulo_metodo,
       intencao: p.intencao,

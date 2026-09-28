@@ -219,6 +219,7 @@ export async function POST() {
           profundidade: prof.mapa.has(b.url) ? prof.mapa.get(b.url) : null,
           linksContextuais: contextuais.get(b.url) ?? 0,
           titulo: b.extraida?.titulo ?? null,
+          h1: b.extraida?.h1 ?? null,
           tituloPx: b.extraida?.larguraPx ?? null,
           tituloMetodo: b.extraida?.metodo ?? null,
           intencao: b.extraida?.intencao ?? null,

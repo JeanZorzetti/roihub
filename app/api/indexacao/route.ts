@@ -8,10 +8,10 @@
 // PLANEJA antes de gastar — resolve a propriedade de todo mundo, monta a fila do rodízio e reparte
 // o orçamento — em vez de sair inspecionando e descobrir o teto no 429.
 import { projetosDeBusca } from "@/lib/projects";
-import { gravarIndexacao, ultimasApuracoes, dbOn } from "@/lib/db";
+import { gravarIndexacao, gravarIndexacaoPorUrl, ultimasApuracoes, dbOn } from "@/lib/db";
 import { buscar, urlDoSitemap } from "@/lib/conformidade.mjs";
 import { lerSitemap } from "@/lib/sitemap.mjs";
-import { filaDoDia, repartir, amostra, agregar } from "@/lib/indexacao-corrida.mjs";
+import { filaDoDia, repartir, amostra, agregar, classificar } from "@/lib/indexacao-corrida.mjs";
 import { clienteGsc, propriedades, inspecionarIndexacao } from "@/lib/indexacao.mjs";
 import { melhorPropriedade } from "@/lib/gsc-consulta.mjs";
 
@@ -159,6 +159,9 @@ export async function POST() {
       // significa que o limite real do Google é menor que o configurado, e o ajuste é por env.
       props[prop].falhasDeQuota += linhas.filter((l: { erro: string }) => /429|quota|rate/i.test(l.erro)).length;
       await gravarIndexacao(f.slug, { dia, propriedade: prop, declaradas: inv.urls.length, ...a, motivo: null });
+      // 057/D12: keep the per-URL verdict this run already paid for. 0 extra inspections; only the
+      // inspected URLs are written, so the ones past today's cota keep their previous verdict.
+      await gravarIndexacaoPorUrl(f.slug, dia, linhas.map((l: { url: string; erro: string }) => ({ url: l.url, classe: classificar(l) })));
       apurados.push({
         projeto: f.slug,
         declaradas: inv.urls.length,

@@ -46,7 +46,7 @@ export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = f
     }
   }
   const premissas = atual
-    ? { capacidade: atual.capacidade, semanasAteIndexar: atual.semanasAteIndexar, semanasAteEstabilizar: atual.semanasAteEstabilizar }
+    ? { capacidade: atual.capacidade, semanasAteIndexar: atual.semanasAteIndexar, semanasAteEstabilizar: atual.semanasAteEstabilizar, pisoApoio: atual.pisoApoio }
     : PREMISSAS_PADRAO;
   const inicio = atual?.inicio ?? segundaDe(hoje)!;
   const clusters = demanda ? cobrir(demanda.clusters, crawl?.paginas ?? null) : [];
