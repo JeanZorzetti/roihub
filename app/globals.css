@@ -1688,6 +1688,44 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="gsc"] .plano-premissas label { display: flex; flex-direction: column; gap: 2px; }
 [data-info="gsc"] .plano-premissas input, [data-info="gsc"] .plano-premissas select { font: inherit; min-height: 30px; width: 11em; }
 [data-info="gsc"] .mapa-legenda { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--muted); max-width: 90ch; }
+
+/* information-design · tabela ordenada + detalhe por linha · responde: qual tarefa faço agora, e em
+   que ordem vêm as seguintes? · fonte: backlogDoPlano (lib/plano.mjs) · 2026-09-28
+   A ordem É o dado (impacto ÷ seus minutos, degrau dentro da página): a primeira coluna numera, e os
+   números que se comparam na vertical (impacto, minutos, prazo) usam tabular-nums. */
+[data-info="gsc"] .plano-backlog { font-size: 13px; margin-top: 8px; }
+[data-info="gsc"] .plano-backlog th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--grid); }
+[data-info="gsc"] .plano-backlog td { padding: 8px; vertical-align: top; border-bottom: 1px solid var(--grid); }
+[data-info="gsc"] .plano-backlog .plano-bl-n { color: var(--muted); font-variant-numeric: tabular-nums; width: 2.5em; }
+[data-info="gsc"] .plano-backlog .plano-bl-num { font-variant-numeric: tabular-nums; }
+[data-info="gsc"] .plano-backlog tr:has(+ .plano-bl-det) td { border-bottom: none; padding-bottom: 2px; }
+[data-info="gsc"] .plano-backlog .plano-bl-det td { padding-top: 0; }
+[data-info="gsc"] .plano-backlog summary { cursor: pointer; font-size: 12px; color: var(--muted); min-height: 24px; }
+[data-info="gsc"] .plano-minutos { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 8px 16px; margin: 12px 0; padding: 0; border: 0; font-size: 12px; color: var(--muted); }
+[data-info="gsc"] .plano-minutos legend { padding: 0 0 4px; font-weight: 700; color: var(--ink2); }
+[data-info="gsc"] .plano-minutos label { display: grid; grid-template-columns: 1fr 5em; gap: 8px; align-items: center; }
+[data-info="gsc"] .plano-minutos input { font: inherit; min-height: 30px; width: 5em; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  /* Agir em um item → um cartão por tarefa. table e tbody saem do modelo de tabela junto com as
+     linhas: com o tbody em table-row-group o navegador cria uma tabela anônima por linha e só a
+     primeira aparece (aprendido na aba /aquisicao). */
+  [data-info="gsc"] .plano-backlog,
+  [data-info="gsc"] .plano-backlog tbody { display: block; }
+  [data-info="gsc"] .plano-backlog thead { display: none; }
+  [data-info="gsc"] .plano-backlog tr { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+  [data-info="gsc"] .plano-backlog td { display: block; border-bottom: none; padding: 0; min-width: 0; overflow-wrap: anywhere; }
+  [data-info="gsc"] .plano-backlog tr:not(.plano-bl-det) { padding-top: 10px; }
+  [data-info="gsc"] .plano-backlog .plano-bl-n { grid-row: 1; }
+  [data-info="gsc"] .plano-backlog .plano-bl-tarefa { grid-row: 1; font-weight: 600; }
+  [data-info="gsc"] .plano-backlog td[data-rotulo] { grid-column: 2; }
+  [data-info="gsc"] .plano-backlog td[data-rotulo]::before { content: attr(data-rotulo) ": "; color: var(--muted); }
+  [data-info="gsc"] .plano-backlog .plano-bl-det { padding-bottom: 10px; border-bottom: 1px solid var(--grid); }
+  [data-info="gsc"] .plano-backlog .plano-bl-det td { grid-column: 1 / -1; padding-top: 4px; }
+  [data-info="gsc"] .plano-backlog summary { min-height: 44px; display: flex; align-items: center; }
+  [data-info="gsc"] .plano-backlog input, [data-info="gsc"] .plano-backlog select { font-size: 16px; }
+  [data-info="gsc"] .plano-minutos input { font-size: 16px; }
+}
 [data-info="gsc"] .mapa-legenda .mb-tag { margin: 0 4px 0 0; }
 
 @media (max-width: 640px) {

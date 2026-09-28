@@ -13,7 +13,6 @@ import {
   cobrir,
   comparar,
   estadoDaPagina,
-  feita,
   kpisDoBoard,
   lerDemanda,
   leiturasDoPlano,
@@ -23,7 +22,6 @@ import {
   montar,
   normalizar,
   propor,
-  semanaComCards,
   semanaDoPrazo,
   vistaDoPlano,
   propostaDeIntencao,
@@ -31,7 +29,14 @@ import {
   aplicarNucleo,
   lerNucleo,
   lerItem,
+  lerTarefa,
+  tarefasDoPlano,
+  comImpacto,
+  backlogDoPlano,
+  semanasDasPaginas,
+  ESFORCO_PADRAO,
 } from "../lib/plano.mjs";
+import { juntar } from "../lib/backlog.mjs";
 import { addDaysISO } from "../lib/agenda.mjs";
 import { modificadoresDeIntencao } from "../lib/pagina.mjs";
 
@@ -72,7 +77,7 @@ test("lerDecisao rejects everything outside the contract", () => {
 const PLANO = { projeto: "tapepro", responsavel: "maria", inicio: "2026-09-30", capacidade: "3", semanasAteIndexar: "2", semanasAteEstabilizar: "12" };
 
 test("lerPlano snaps the start to Monday and accepts the bounds", () => {
-  assert.deepEqual(lerPlano(PLANO, { slugs: SLUGS }), { projeto: "tapepro", criadoPor: "maria", inicio: "2026-09-28", capacidade: 3, semanasAteIndexar: 2, semanasAteEstabilizar: 12, pisoApoio: 100 });
+  assert.deepEqual(lerPlano(PLANO, { slugs: SLUGS }), { projeto: "tapepro", criadoPor: "maria", inicio: "2026-09-28", capacidade: 3, semanasAteIndexar: 2, semanasAteEstabilizar: 12, pisoApoio: 100, esforco: ESFORCO_PADRAO });
   assert.ok(lerPlano({ ...PLANO, capacidade: "0" }, { slugs: SLUGS }));
   assert.ok(lerPlano({ ...PLANO, capacidade: "20", semanasAteIndexar: "0", semanasAteEstabilizar: "26" }, { slugs: SLUGS }));
 });
@@ -290,20 +295,24 @@ test("metasExigidas is exactly what propor proposes with a value", () => {
 });
 
 // ── agenda + T022 · montar ─────────────────────────────────────────────────────
-test("agendaDePaginas: uncovered clusters by volume first, then support pages, capacity per week", () => {
+test("agendaDePaginas: uncovered clusters by volume first, then support pages; the weeks come from the scheduler (D9)", () => {
   const { clusters } = demo({ coberto: false });
-  const ag = agendaDePaginas(clusters, { capacidade: 2 });
+  const ag = agendaDePaginas(clusters);
   assert.deepEqual(
-    ag.map((p) => [p.tipo, p.semente, p.segmento ?? p.termo ?? null, p.semana]),
+    ag.map((p) => [p.tipo, p.semente, p.segmento ?? p.termo ?? null]),
     [
-      ["cluster", "fita-gomada", null, 1],
-      ["cluster", "fita-transparente", null, 1],
-      ["cluster", "fita-transparente-personalizada", null, 2],
-      ["apoio-termo", "fita-gomada", "fita gomada preço", 2],
-      ["apoio-segmento", "fita-gomada", "e-commerce", 3],
+      ["cluster", "fita-gomada", null],
+      ["cluster", "fita-transparente", null],
+      ["cluster", "fita-transparente-personalizada", null],
+      ["apoio-termo", "fita-gomada", "fita gomada preço"],
+      ["apoio-segmento", "fita-gomada", "e-commerce"],
     ],
   );
-  assert.deepEqual(agendaDePaginas(clusters, { capacidade: 0 }).map((p) => p.semana), [null, null, null, null, null]);
+  assert.ok(ag.every((p) => !("semana" in p)));
+  const semana = semanasDasPaginas(ag, { capacidade: 2, inicio: INICIO });
+  assert.deepEqual(ag.map((p) => semana.get(p.alvo)), [1, 1, 2, 2, 3]);
+  const zero = semanasDasPaginas(ag, { capacidade: 0, inicio: INICIO });
+  assert.deepEqual(ag.map((p) => zero.get(p.alvo)), [null, null, null, null, null]);
 });
 
 function plano(opts = {}) {
@@ -311,44 +320,49 @@ function plano(opts = {}) {
   const premissas = { ...PREMISSAS_PADRAO, ...(opts.premissas ?? {}) };
   const propostas = propor(clusters, { premissas, inicio: INICIO, semCluster });
   const metas = (opts.metas ?? propostas).filter((m) => m.valor !== null).map((m) => ({ chave: m.chave, prazo: m.prazo, valor: m.valor }));
-  return { m: montar({ inicio: INICIO, ...premissas, clusters, semCluster, metas, responsavel: "jean" }), propostas };
+  return { m: montar({ inicio: INICIO, ...premissas, clusters, semCluster, metas }), propostas };
 }
 
-test("montar: capacity per week, nothing before its page, indexing at +N, same lever merged (SC-004)", () => {
-  const { m } = plano({ coberto: false, premissas: { capacidade: 1 } });
+test("backlog + montar: capacity per week, nothing before its page, indexing at +N, one task per lever and target (SC-004, D9)", () => {
+  const { clusters, semCluster } = demo({ coberto: false });
+  const premissas = { ...PREMISSAS_PADRAO, capacidade: 1 };
+  const b = backlogDoPlano(clusters, { premissas, inicio: INICIO, hoje: INICIO, semanaAtual: 1, responsavel: "jean" });
+  const m = montar({ inicio: INICIO, ...premissas, clusters, semCluster, metas: [], tarefas: b.backlog, semanaDaPagina: b.semanaDaPagina });
   assert.equal(m.semanas.length, SEMANAS);
   const criadaEm = new Map();
   for (const s of m.semanas) {
-    const cob = s.tarefas.filter((t) => t.alavanca === "cobertura");
-    assert.ok(cob.length <= 1, `semana ${s.n}: ${cob.length} tarefas de cobertura`);
-    const paginas = cob.flatMap((t) => t.alvos);
-    assert.ok(paginas.length <= 1, `semana ${s.n}: ${paginas.length} páginas`);
-    for (const p of paginas) criadaEm.set(p, s.n);
-    for (const t of s.tarefas) {
-      assert.ok(t.alavanca in ALAVANCAS, t.alavanca);
-      assert.equal(s.tarefas.filter((x) => x.alavanca === t.alavanca).length, 1, `${t.alavanca} duplicada na semana ${s.n}`);
-      if (["links", "titulo", "schema", "indexacao"].includes(t.alavanca))
-        for (const a of t.alvos) assert.ok(criadaEm.has(a) && criadaEm.get(a) <= s.n, `${t.alavanca} de ${a} antes da página`);
-      if (t.alavanca === "indexacao") for (const a of t.alvos) assert.equal(s.n, criadaEm.get(a) + PREMISSAS_PADRAO.semanasAteIndexar);
-      assert.equal(t.responsavel, "jean");
-      assert.ok(t.kpis.length > 0);
-    }
+    assert.ok(s.paginasNovas <= 1, `semana ${s.n}: ${s.paginasNovas} páginas`);
+    for (const t of s.tarefas.filter((t) => t.paginaNova)) criadaEm.set(t.alvo.valor, s.n);
   }
   assert.equal(criadaEm.size, 5);
-  for (const s of m.semanas) if (s.tarefas.some((t) => t.alavanca === "cobertura")) assert.equal(s.tarefas[0].alavanca, "cobertura", `semana ${s.n}`);
+  for (const t of b.backlog) {
+    assert.ok(t.alavanca in ALAVANCAS, t.alavanca);
+    assert.equal(b.backlog.filter((x) => x.chave === t.chave).length, 1, `${t.chave} duplicada`);
+    if (JUNTO.includes(t.alavanca) && t.alvo.tipo === "planejada") assert.equal(t.semana, criadaEm.get(t.alvo.valor), `${t.chave} fora da semana da página`);
+    if (t.alavanca === "indexacao" && t.alvo.tipo === "planejada") assert.equal(t.semana, criadaEm.get(t.alvo.valor) + PREMISSAS_PADRAO.semanasAteIndexar);
+    assert.equal(t.responsavel.id, "jean");
+    assert.ok(t.kpis.length > 0, t.chave);
+  }
+  // D9: the metas read the same weeks the backlog gave the pages
+  for (const [rotulo, n] of criadaEm) assert.equal(b.semanaDaPagina.get(rotulo), n);
+});
+const JUNTO = ["links", "titulo", "schema"];
+
+test("tarefasDoPlano: a covered cluster, including one created outside the plan, gets no page to create", () => {
+  const { clusters } = demo({ coberto: true });
+  const t = tarefasDoPlano(clusters, agendaDePaginas(clusters), { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO });
+  assert.ok(!t.some((x) => x.alavanca === "cobertura" && x.alvo.valor === "«fita gomada»"));
+  assert.ok(t.some((x) => x.alavanca === "cobertura" && x.alvo.valor === "«fita transparente»"));
 });
 
-test("montar: a covered cluster, including one created outside the plan, emits no coverage", () => {
-  const { m } = plano({ coberto: true });
-  const alvos = m.semanas.flatMap((s) => s.tarefas.filter((t) => t.alavanca === "cobertura").flatMap((t) => t.alvos));
-  assert.ok(!alvos.includes("«fita gomada»"));
-});
-
-test("montar: capacity 0 → first-line aviso and no coverage milestone (FR-018)", () => {
+test("montar: capacity 0 → first-line aviso and no coverage milestone; every page a fazer (FR-018)", () => {
   const { m } = plano({ premissas: { capacidade: 0 } });
   assert.match(m.avisos[0], /capacidade 0/i);
-  assert.ok(m.semanas.every((s) => !s.tarefas.some((t) => t.alavanca === "cobertura")));
   assert.ok(m.semanas.every((s) => !("paginas" in s.marcos)));
+  const { clusters } = demo({ coberto: false });
+  const b = backlogDoPlano(clusters, { premissas: { ...PREMISSAS_PADRAO, capacidade: 0 }, inicio: INICIO, hoje: INICIO, semanaAtual: 1, responsavel: "jean" });
+  assert.ok(b.backlog.filter((t) => t.paginaNova).every((t) => t.estado === "a-fazer"));
+  assert.ok([...b.semanaDaPagina.values()].every((s) => s === null));
 });
 
 test("montar: the milestone at each deadline is the approved meta; raising it flips to 'não cabe' (D11)", () => {
@@ -369,17 +383,6 @@ test("montar: a refused meta leaves no milestone", () => {
   const { propostas } = plano();
   const { m } = plano({ metas: propostas.filter((x) => x.chave !== "top20") });
   assert.ok(m.semanas.every((s) => !("top20" in s.marcos)));
-});
-
-// ── T023 · feita ───────────────────────────────────────────────────────────────
-test("feita: the 055 mark counts from the week start on", () => {
-  const t = { alavanca: "cobertura" };
-  const s = { inicio: "2026-10-05" };
-  assert.equal(feita(t, s, [{ alavanca: "cobertura", marcado: "2026-10-05" }]), true);
-  assert.equal(feita(t, s, [{ alavanca: "cobertura", marcado: "2026-10-09" }]), true);
-  assert.equal(feita(t, s, [{ alavanca: "cobertura", marcado: "2026-10-04" }]), false);
-  assert.equal(feita(t, s, [{ alavanca: "links", marcado: "2026-10-09" }]), false);
-  assert.equal(feita(t, s, []), false);
 });
 
 // ── T028 · comparar ────────────────────────────────────────────────────────────
@@ -528,17 +531,17 @@ test("agendaDePaginas: an uncovered term ≥ pisoApoio becomes an apoio-termo; b
     ],
     [{ url: "https://t.com/blog/kraft", titulo: "Kraft: a fita gomada", h1: null }],
   );
-  const ag = agendaDePaginas(cl, { capacidade: 3, pisoApoio: 100 });
+  const ag = agendaDePaginas(cl, { pisoApoio: 100 });
   assert.deepEqual(
-    ag.map((p) => [p.tipo, p.termo ?? null, p.semana]),
-    [["apoio-termo", "fita gomada personalizada", 1]],
+    ag.map((p) => [p.tipo, p.termo ?? null]),
+    [["apoio-termo", "fita gomada personalizada"]],
     "the blog page covers the seed (title), so the cluster has a page; kraft is covered; branca is below the floor",
   );
   const t = ag[0];
   assert.deepEqual(t.cobre, ["fita", "gomada", "personalizada"]);
   assert.equal(t.alvo, "«fita gomada personalizada»");
   // the seed of a cluster with no page is covered by the queued cluster page, never an apoio-termo
-  const semPagina = agendaDePaginas(comTermos([{ termo: "fita gomada", volume: 1000 }]), { capacidade: 3, pisoApoio: 100 });
+  const semPagina = agendaDePaginas(comTermos([{ termo: "fita gomada", volume: 1000 }]), { pisoApoio: 100 });
   assert.deepEqual(semPagina.map((p) => p.tipo), ["cluster"]);
 });
 
@@ -547,7 +550,7 @@ test("agendaDePaginas: an excluded term never enters (the frozen file does not c
     { procedencia: { fonte: "dataforseo", sementes: ["fita-gomada"], excluidos: { "fita gomada 3m": "marca de concorrente" } }, termos: { "fita gomada": 500, "fita gomada preço": 300 } },
     null,
   );
-  const ag = agendaDePaginas(cobrir(d.clusters, []), { capacidade: 3, pisoApoio: 100 });
+  const ag = agendaDePaginas(cobrir(d.clusters, []), { pisoApoio: 100 });
   assert.ok(!ag.some((p) => p.termo === "fita gomada 3m"));
   assert.ok(ag.some((p) => p.termo === "fita gomada preço"));
 });
@@ -557,11 +560,10 @@ test("agendaDePaginas: the seed missing from its existing page's title and H1 is
   const cl = comTermos([{ termo: "fita gomada", volume: 1000 }, { termo: "fita gomada larga", volume: 150 }], [{ url, titulo: "Fitas de papel | Loja", h1: "Rolo de papel" }]);
   assert.equal(cl[0].pagina, url, "found by path");
   assert.equal(cl[0].termos.find((t) => t.termo === "fita gomada").cobertoPor, null, "but its title and H1 do not cover the seed");
-  const ag = agendaDePaginas(cl, { capacidade: 3, pisoApoio: 100 });
+  const ag = agendaDePaginas(cl, { pisoApoio: 100 });
   assert.deepEqual(ag.map((p) => p.termo), ["fita gomada larga"]);
-  const m = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters: cl, metas: [], responsavel: "jean" });
-  const titulo = m.semanas[0].tarefas.find((t) => t.alavanca === "titulo");
-  assert.ok(titulo?.alvos.includes(url), "week-1 titulo on the existing page");
+  const ts = tarefasDoPlano(cl, ag, { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO });
+  assert.ok(ts.some((t) => t.chave === "titulo|url:/produtos/fita-gomada"), "a titulo task on the existing page");
 });
 
 test("agendaDePaginas: cluster pages first, then apoio-segmento and apoio-termo together by volume, capacity per week", () => {
@@ -572,9 +574,10 @@ test("agendaDePaginas: cluster pages first, then apoio-segmento and apoio-termo 
     { termo: "fita gomada branca", volume: 200 },
     { termo: "fita gomada larga", volume: 120 },
   ]);
-  const ag = agendaDePaginas(cl, { capacidade: 2, pisoApoio: 100 });
+  const ag = agendaDePaginas(cl, { pisoApoio: 100 });
+  const semana = semanasDasPaginas(ag, { capacidade: 2, inicio: INICIO });
   assert.deepEqual(
-    ag.map((p) => [p.tipo, p.semana]),
+    ag.map((p) => [p.tipo, semana.get(p.alvo)]),
     [
       ["cluster", 1],
       ["cluster", 1],
@@ -626,30 +629,40 @@ const POSICAO_DA_PAGINA = Object.keys(ALAVANCAS).filter((a) => ALAVANCAS[a].degr
 const G = "https://t.com/produtos/fita-gomada/";
 const T = "https://t.com/produtos/fita-transparente/";
 
+function clustersDe(estados) {
+  const termos = [{ termo: "fita gomada", volume: 1000 }, { termo: "fita transparente", volume: 500 }];
+  const crawl = [
+    { url: G, titulo: "Fita gomada", h1: null },
+    { url: T, titulo: "Fita transparente", h1: null },
+  ];
+  return comTermos(termos, crawl, estados);
+}
+const tarefasDe = (estados, ctx = {}) => {
+  const cl = clustersDe(estados);
+  return tarefasDoPlano(cl, agendaDePaginas(cl), { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO, ...ctx });
+};
+
 function semana1(estados, extra = {}) {
   const termos = [{ termo: "fita gomada", volume: 1000 }, { termo: "fita transparente", volume: 500 }];
   const crawl = [
     { url: G, titulo: "Fita gomada", h1: null },
     { url: T, titulo: "Fita transparente", h1: null },
   ];
-  return montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters: comTermos(termos, crawl, estados), metas: [], responsavel: "jean", ...extra });
+  return montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters: comTermos(termos, crawl, estados), metas: [], ...extra });
 }
 
-test("montar: fora-do-indice or unread index → week-1 indexacao with the URL; indexada-sem-impressao → the posição levers", () => {
-  const m = semana1({ [G]: { estado: "fora-do-indice", classe: "outra", motivo: null }, [T]: { estado: "sem-leitura", classe: null, motivo: "sem corrida" } });
-  const idx = m.semanas[0].tarefas.filter((t) => t.alavanca === "indexacao");
-  assert.equal(idx.length, 1, "two pages, one task per lever (054 FR-009)");
-  assert.deepEqual([...idx[0].alvos].sort(), [G, T]);
-  const pos = semana1({ [G]: { estado: "indexada-sem-impressao", classe: "indexada", motivo: null }, [T]: { estado: "ativa", classe: "indexada", motivo: null } });
-  assert.deepEqual(pos.semanas[0].tarefas.map((t) => t.alavanca).sort(), [...POSICAO_DA_PAGINA].sort());
-  for (const t of pos.semanas[0].tarefas) assert.deepEqual(t.alvos, [G]);
-  assert.ok(pos.semanas[0].tarefas.every((t) => t.origem.includes("calendario")));
+test("tarefasDoPlano: fora-do-indice or unread index → indexacao per URL; indexada-sem-impressao → the posição levers (D15)", () => {
+  const idx = tarefasDe({ [G]: { estado: "fora-do-indice", classe: "outra", motivo: null }, [T]: { estado: "sem-leitura", classe: null, motivo: "sem corrida" } });
+  assert.deepEqual(idx.map((t) => t.chave).sort(), ["indexacao|url:/produtos/fita-gomada", "indexacao|url:/produtos/fita-transparente"], "one task per lever and target (D4)");
+  const pos = tarefasDe({ [G]: { estado: "indexada-sem-impressao", classe: "indexada", motivo: null }, [T]: { estado: "ativa", classe: "indexada", motivo: null } });
+  assert.deepEqual(pos.map((t) => t.alavanca).sort(), [...POSICAO_DA_PAGINA].sort());
+  assert.ok(pos.every((t) => t.alvo.valor === "/produtos/fita-gomada" && t.origens.includes("pagina-existente")));
 });
 
 test("montar: indexed but the impression reading failed → no task, a first-line aviso, and no milestone", () => {
   const lido = { estado: "sem-leitura", classe: "indexada", motivo: "leitura de impressões truncada" };
   const m = semana1({ [G]: lido, [T]: lido }, { metas: [{ chave: "top20", prazo: 90, valor: 0 }] });
-  assert.deepEqual(m.semanas[0].tarefas, []);
+  assert.deepEqual(tarefasDe({ [G]: lido, [T]: lido }), []);
   assert.equal(m.avisos[0], "2 páginas existentes não contam nas metas até a próxima leitura de impressões.");
   assert.ok(m.semanas.slice(0, semanaDoPrazo(90) - 1).every((s) => s.marcos.top20 === null));
 });
@@ -669,7 +682,7 @@ test("montar: no marca → the page enters no milestone; a marca in week 3 matur
 
 // T052 · SC-008: Tape Pro on 28/09/2026. Title and H1 read ONCE from the live HTML on 2026-09-28
 // through titulo()/h1() and pasted here as literals. No network in the test.
-test("SC-008: Tape Pro 28/09 — week 1 not empty, the pages without marca count 0, page 1 below 100%", async () => {
+test("SC-008: Tape Pro 28/09 — the backlog is not empty, the pages without marca count 0, page 1 below 100%", async () => {
   const { default: DEMANDAS } = await import("../data/demanda-estimada.json", { with: { type: "json" } });
   // 70 frozen, 24 out of the catalog (third-party brands, colors, widths, other products): 46
   assert.equal(Object.keys(DEMANDAS.tapepro.termos).length, 46);
@@ -689,7 +702,8 @@ test("SC-008: Tape Pro 28/09 — week 1 not empty, the pages without marca count
     assert.ok(clusters.some((c) => c.termos.some((t) => t.cobertoPor)), "the live titles do cover some terms");
     const ms = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster: d.semCluster, marcas: [] });
     const metas = ms.filter((x) => x.valor !== null);
-    const m = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters, semCluster: d.semCluster, metas, marcas: [], responsavel: "jean" });
+    const b = backlogDoPlano(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO, semanaAtual: 1, responsavel: "jean" });
+    const m = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters, semCluster: d.semCluster, metas, tarefas: b.backlog, semanaDaPagina: b.semanaDaPagina });
 
     assert.ok(m.semanas[0].tarefas.length > 0, `${classe}: semana 1 vazia`);
     // the existing pages add 0 terms: no demand meta is above what the planned pages alone deliver
@@ -698,34 +712,13 @@ test("SC-008: Tape Pro 28/09 — week 1 not empty, the pages without marca count
     assert.equal(meta(ms, "top20", 90).valor, 0, `${classe}: top20 at 90 d`);
     // the ceiling: terms covered by the labels of pages scheduled up to week SEMANAS − estab
     const ate = SEMANAS - PREMISSAS_PADRAO.semanasAteEstabilizar;
-    const rotulos = m.agenda.filter((p) => p.semana !== null && p.semana <= ate).map((p) => p.cobre.join(" "));
+    const rotulos = m.agenda.filter((p) => (b.semanaDaPagina.get(p.alvo) ?? Infinity) <= ate).map((p) => p.cobre.join(" "));
     const comVolume = d.clusters.flatMap((c) => c.termos).filter((t) => typeof t.volume === "number");
     const teto = comVolume.filter((t) => rotulos.some((r) => cobreTermo(t.termo, r))).length / comVolume.length;
     const p1 = meta(ms, "pagina1", 180).valor;
     assert.ok(p1 <= teto + 1e-9, `${classe}: pagina1 ${p1} > ${teto}`);
     assert.ok(p1 < 1, `${classe}: 100% na página 1`);
   }
-});
-
-// T063 · semanaComCards (D16)
-test("semanaComCards: same lever → one task with the union; card-only in 054 order; aguardando out; no mutation", () => {
-  const semana = { n: 1, inicio: INICIO, marcos: {}, tarefas: [{ alavanca: "links", alvos: ["«fita gomada»"], kpis: ["linksInternos"], responsavel: "jean", origem: ["calendario"] }] };
-  const copia = structuredClone(semana);
-  const entrada = (alavanca, apresentacao, alvos, chaves) => ({ alavanca, apresentacao, alvos, motivos: chaves.map((chave) => ({ chave })), marca: null });
-  const s = semanaComCards(semana, [
-    entrada("links", "ativa", ["/blog/x"], ["orfas"]),
-    entrada("titulo", "voltou", ["/a"], ["ctrGap"]),
-    entrada("indexacao", "ativa", ["/b"], ["indexacao"]),
-    entrada("schema", "aguardando", ["/c"], ["schema"]),
-  ]);
-  assert.deepEqual(semana, copia);
-  assert.deepEqual(s.tarefas.map((t) => t.alavanca), ["links", "indexacao", "titulo"]);
-  const links = s.tarefas[0];
-  assert.deepEqual(links.alvos, ["«fita gomada»", "/blog/x"]);
-  assert.deepEqual(links.kpis, ["linksInternos", "orfas"]);
-  assert.deepEqual(links.origem, ["calendario", "mapa"]);
-  assert.deepEqual(s.tarefas[1].origem, ["mapa"]);
-  assert.equal(s.tarefas[2].voltou, true);
 });
 
 // ── 058 US1 · the plan only speaks of the future ───────────────────────────────
@@ -740,7 +733,8 @@ function presenteNaVista(v, semanaAtual) {
     if (!x || typeof x !== "object") return;
     for (const [k, y] of Object.entries(x)) {
       if (proibidas.includes(k)) achados.push(`${caminho}.${k}`);
-      if (k === "n" && typeof y === "number" && y < Math.max(1, semanaAtual)) achados.push(`${caminho}.n = ${y}`);
+      if ((k === "n" || k === "semana") && typeof y === "number" && y < Math.max(1, semanaAtual)) achados.push(`${caminho}.${k} = ${y}`);
+      if (k === "voltou") achados.push(`${caminho}.voltou`);
       if (k === "estado" && y === "encerrado") achados.push(`${caminho}: versão encerrada`);
       if (k === "conta" && typeof y === "string") for (const p of palavras) if (p.test(y)) achados.push(`${caminho}.conta: ${p}`);
       anda(y, `${caminho}.${k}`);
@@ -765,7 +759,7 @@ async function vistaDaTapePro(semanaAtual) {
   ];
   const estados = { [crawl[0].url]: { estado: "fora-do-indice", classe: "outra", motivo: null }, [crawl[1].url]: { estado: "indexada-sem-impressao", classe: "indexada", motivo: null } };
   const clusters = cobrir(d.clusters, crawl, { estados });
-  const marcas = [{ alavanca: "indexacao", responsavel: "jean", marcado: "2026-09-28", reler: "2026-10-12" }];
+  const marcas = [{ alavanca: "indexacao", responsavel: "jean", marcado: "2026-09-28", reler: "2026-10-12", leituras: {} }];
   const propostas = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster: d.semCluster, marcas, partida: { top20: 0, tamBusca: 0, pagina1: 0 } });
   const decisoes = [
     { chave: "top20", prazo: 90, estado: "aprovada", valor: meta(propostas, "top20", 90).valor, decididoPor: "jean", decididoEm: "2026-09-28 10:00" },
@@ -773,9 +767,13 @@ async function vistaDaTapePro(semanaAtual) {
     { chave: "lcp", prazo: 90, estado: "recusada", valor: null, decididoPor: "jean", decididoEm: "2026-09-28 10:02" },
   ];
   const metas = propostas.filter((m) => m.valor !== null).map((m) => ({ chave: m.chave, prazo: m.prazo, valor: m.valor }));
-  const montado = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters, semCluster: d.semCluster, metas, marcas, responsavel: "jean" });
   const hoje = addDaysISO(INICIO, 7 * (semanaAtual - 1) + 2);
-  return vistaDoPlano({ propostas, decisoes, montado, planos: PLANOS_3, clusters, marcas, hoje, semanaAtual, inicio: INICIO });
+  // the backlog in the input too (analyze C1): cards from a snapshot, one of them past its reler
+  const snapshot = { disparos: [{ chave: "ctrGap", alavanca: "titulo", estado: "dispara", alvos: ["/produtos/fita-gomada/ (faltam 3 cliques)"], nAlvos: 1 }], semLeitura: [] };
+  const b = backlogDoPlano(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje, semanaAtual, marcas: [...marcas, { alavanca: "titulo", responsavel: "maria", marcado: "2026-09-01", reler: "2026-09-15", leituras: {} }], responsavel: "jean", snapshot });
+  const montado = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters, semCluster: d.semCluster, metas, marcas, tarefas: b.backlog, semanaDaPagina: b.semanaDaPagina });
+  assert.ok(b.backlog.some((t) => t.voltou), "a card back past reler carries voltou into the view input");
+  return vistaDoPlano({ propostas, decisoes, montado, planos: PLANOS_3, clusters, backlog: b.backlog, semanaAtual, inicio: INICIO });
 }
 
 test("SC-001: the Tape Pro view carries no starting point, page state, mark, author, old version or past week", async () => {
@@ -814,17 +812,155 @@ test("vistaDoPlano: the calendar starts at the current week, or at week 1 before
   }
 });
 
-test("vistaDoPlano: a vigente 055 mark drops the task; past reler it is back; an undone past task joins this week (FR-004)", () => {
-  const marca = (alavanca, marcado, reler) => [{ alavanca, responsavel: "jean", marcado, reler }];
-  const alavancas = (v) => v.semanas[0].tarefas.map((t) => t.alavanca).sort();
-  assert.deepEqual(alavancas(vista()), ["links", "titulo"], "week 3's undone titulo is still future work");
-  assert.deepEqual(alavancas(vista({ marcas: marca("links", SEMANA5, addDaysISO(SEMANA5, 14)) })), ["titulo"]);
-  assert.deepEqual(alavancas(vista({ marcas: marca("links", SEMANA5, addDaysISO(SEMANA5, 1)) })), ["links", "titulo"], "past reler");
-  // a mark made before the task's week does not close it
-  assert.deepEqual(alavancas(vista({ marcas: marca("links", addDaysISO(SEMANA5, -1), addDaysISO(SEMANA5, 14)) })), ["links", "titulo"]);
-  // week 3's titulo, marked in week 4 and still waiting, stays out
-  assert.deepEqual(alavancas(vista({ marcas: marca("titulo", addDaysISO(INICIO, 22), addDaysISO(SEMANA5, 14)) })), ["links"]);
+test("vistaDoPlano: past weeks leave the screen, and the view filters no mark by itself (D5, D8)", () => {
+  const v = vista({ marcas: [{ alavanca: "links", responsavel: "jean", marcado: SEMANA5, reler: addDaysISO(SEMANA5, 14) }] });
+  assert.equal(v.semanas[0].n, 5);
+  assert.deepEqual(v.semanas[0].tarefas.map((t) => t.alavanca), ["links"], "marks act through each origin's ending rule, never here");
+  assert.ok(!v.semanas.some((s) => s.tarefas.some((t) => t.alavanca === "titulo")), "week 3 is past: the backlog never schedules it");
   assert.equal(MONTADO.semanas[4].tarefas.length, 1, "no mutation");
+});
+
+// ── 058 US3 · the plan's own tasks, impact and metas from the schedule ─────────
+const P_APONTADA = "https://t.com/blog/gomada";
+const MARCA_IDX = (marcado, reler) => [{ alavanca: "indexacao", responsavel: "jean", marcado, reler, leituras: {} }];
+
+test("tarefasDoPlano: a planned page gives cobertura, then links/titulo/schema on it and indexacao N weeks later, all with the briefing (D4, FR-016)", () => {
+  const cl = aplicarNucleo(comTermos([{ termo: "fita gomada", volume: 1000 }]), { ano: 2026 });
+  const ag = agendaDePaginas(cl);
+  const ts = tarefasDoPlano(cl, ag, { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO });
+  const k = (a) => `${a}|planejada:«fita gomada»`;
+  assert.deepEqual(ts.map((t) => t.chave), ["cobertura", "links", "titulo", "schema", "indexacao"].map(k));
+  const [cob, ...resto] = ts;
+  assert.equal(cob.paginaNova, true);
+  for (const t of resto) assert.deepEqual(t.depende, [k("cobertura")]);
+  assert.equal(ts.at(-1).espera, PREMISSAS_PADRAO.semanasAteIndexar);
+  for (const t of ts) {
+    assert.deepEqual(t.briefing, { intencao: null, perguntas: [], entidades: [] }, t.chave);
+    assert.ok(t.kpis.length > 0, t.chave);
+  }
+});
+
+test("tarefasDoPlano: an existing page's D15 lever ends by a vigente mark made on or after the start, and is back past reler (FR-004, D5)", () => {
+  const fora = { [G]: { estado: "fora-do-indice", classe: "outra", motivo: null }, [T]: { estado: "ativa", classe: "indexada", motivo: null } };
+  const idx = (ctx) => tarefasDe(fora, ctx).filter((t) => t.alavanca === "indexacao").map((t) => t.chave);
+  assert.deepEqual(idx({}), ["indexacao|url:/produtos/fita-gomada"]);
+  assert.deepEqual(idx({ marcas: MARCA_IDX("2026-09-29", "2026-10-13"), hoje: "2026-10-01" }), []);
+  assert.deepEqual(idx({ marcas: MARCA_IDX("2026-09-29", "2026-10-13"), hoje: "2026-10-13" }), ["indexacao|url:/produtos/fita-gomada"], "past reler, still not ativa");
+  assert.deepEqual(idx({ marcas: MARCA_IDX("2026-09-20", "2026-10-13"), hoje: "2026-10-01" }), ["indexacao|url:/produtos/fita-gomada"], "a mark before the start");
+  // a planned page's indexing ends by the crawl, never by the per-lever mark (analyze I3)
+  const cl = comTermos([{ termo: "fita gomada", volume: 1000 }]);
+  const ts = tarefasDoPlano(cl, agendaDePaginas(cl), { premissas: PREMISSAS_PADRAO, marcas: MARCA_IDX("2026-09-29", "2026-10-13"), inicio: INICIO, hoje: "2026-10-01" });
+  assert.ok(ts.some((t) => t.chave === "indexacao|planejada:«fita gomada»"));
+});
+
+test("tarefasDoPlano: a pointed page takes the cluster's own tasks; the covering page keeps its D15 tasks (analyze U1)", () => {
+  const cl = comTermos([{ termo: "fita gomada", volume: 1000 }, { termo: "fita gomada kraft", volume: 200 }], [{ url: G, titulo: "Fita gomada kraft", h1: null }], { [G]: { estado: "fora-do-indice", classe: "outra", motivo: null } });
+  const semTitulo = comTermos([{ termo: "fita gomada", volume: 1000 }], [{ url: G, titulo: "Fitas | Loja", h1: null }], { [G]: { estado: "ativa", classe: "indexada", motivo: null } });
+  const decisoes = [{ semente: "fita-gomada", intencao: "comercial", pagina: P_APONTADA }];
+  const itens = [{ semente: "fita-gomada", tipo: "pergunta", texto: "qual a largura", detalhe: null, estado: "aceita" }];
+  const a = aplicarNucleo(cl, { decisoes, itens, estados: {}, ano: 2026 });
+  const ts = tarefasDoPlano(a, agendaDePaginas(a), { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO });
+  assert.ok(ts.some((t) => t.chave === "indexacao|url:/produtos/fita-gomada"), "the page that covers the terms keeps its index task");
+  const q = ts.find((t) => t.chave === "cobertura|url:/blog/gomada");
+  assert.deepEqual(q.perguntas, ["qual a largura"]);
+  assert.deepEqual(q.briefing, { intencao: "comercial", perguntas: ["qual a largura"], entidades: [] });
+  const b = aplicarNucleo(semTitulo, { decisoes, estados: {}, ano: 2026 });
+  const tb = tarefasDoPlano(b, agendaDePaginas(b), { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO });
+  assert.ok(tb.some((t) => t.chave === "titulo|url:/blog/gomada"), "FR-005a: the seed goes into the pointed page's title");
+});
+
+test("tarefasDoPlano: an accepted question gives cobertura on its page; respondida gives nothing; on a planned page it merges (FR-022)", () => {
+  const cl = comTermos([{ termo: "fita gomada", volume: 1000 }, { termo: "fita transparente", volume: 500 }], [{ url: T, titulo: "Fita transparente", h1: null }], { [T]: { estado: "ativa", classe: "indexada", motivo: null } });
+  const itens = [
+    { semente: "fita-gomada", tipo: "pergunta", texto: "como aplicar fita gomada", detalhe: null, estado: "aceita" },
+    { semente: "fita-transparente", tipo: "pergunta", texto: "fita transparente amarela", detalhe: null, estado: "aceita" },
+    { semente: "fita-transparente", tipo: "pergunta", texto: "fita transparente derrete", detalhe: "https://t.com/blog/calor", estado: "respondida" },
+  ];
+  const a = aplicarNucleo(cl, { itens, estados: {}, ano: 2026 });
+  const ts = juntar(tarefasDoPlano(a, agendaDePaginas(a), { premissas: PREMISSAS_PADRAO, inicio: INICIO, hoje: INICIO }));
+  const pagina = ts.find((t) => t.chave === "cobertura|planejada:«fita gomada»");
+  assert.deepEqual(pagina.origens, ["pagina-nova", "pergunta"]);
+  assert.equal(pagina.paginaNova, true);
+  assert.deepEqual(pagina.perguntas, ["como aplicar fita gomada"]);
+  assert.ok(ts.some((t) => t.chave === "cobertura|url:/produtos/fita-transparente"));
+  assert.ok(!ts.some((t) => t.alvo.valor === "/blog/calor"), "respondida makes no task");
+});
+
+test("comImpacto: the terms each target moves × benchmark(7); missing data is never 0 (D6, SC-004)", () => {
+  const cl = aplicarNucleo(
+    comTermos(
+      [
+        { termo: "fita gomada", volume: 1000 },
+        { termo: "fita gomada kraft", volume: 200 },
+        { termo: "fita transparente", volume: 500 },
+        { termo: "fita transparente larga", volume: null },
+        { termo: "fita transparente personalizada", volume: null },
+        { termo: "fita transparente personalizada logo", volume: 30 },
+      ],
+      [{ url: G, titulo: "Fita gomada kraft", h1: null }],
+    ),
+    { itens: [{ semente: "fita-gomada", tipo: "pergunta", texto: "qual a cor", detalhe: null, estado: "aceita" }], estados: {}, ano: 2026 },
+  );
+  const agenda = agendaDePaginas(cl);
+  const t = (alavanca, tipo, valor, extra = {}) => ({ chave: tipo === "*" ? `${alavanca}|*` : `${alavanca}|${tipo}:${valor}`, alavanca, alvo: { tipo, valor, rotulo: valor }, origens: ["mapa"], perguntas: [], ...extra });
+  const r = comImpacto(
+    [
+      t("indexacao", "url", "/produtos/fita-gomada"),
+      t("cobertura", "planejada", "«fita transparente»"),
+      t("links", "termo", "«fita transparente larga»"),
+      t("links", "termo", "«fita gomada kraft»"),
+      t("links", "termo", "«durex»"),
+      t("indexacao", "*", "*"),
+      t("links", "url", "/blog/nada"),
+      t("cobertura", "url", "/produtos/fita-gomada", { origens: ["pergunta"], perguntas: ["qual a cor"] }),
+    ],
+    cl,
+    { agenda },
+  );
+  const ctr = benchmark(7);
+  const i = (k) => r.find((x) => x.chave === k).impacto;
+  assert.equal(i("indexacao|url:/produtos/fita-gomada").cliques, Math.round(1200 * ctr * 10) / 10);
+  assert.match(i("indexacao|url:/produtos/fita-gomada").conta, /fita gomada 1\.000 \+ fita gomada kraft 200 = 1\.200 buscas\/mês × .+% = .+ cliques\/mês/);
+  assert.equal(i("cobertura|planejada:«fita transparente»").cliques, Math.round(500 * ctr * 10) / 10);
+  assert.equal(i("links|termo:«fita transparente larga»").naoCalculavel, "termos abaixo do mínimo que o Google Ads informa");
+  assert.equal(i("links|termo:«fita gomada kraft»").cliques, Math.round(200 * ctr * 10) / 10);
+  assert.equal(i("links|termo:«durex»").naoCalculavel, "termo fora da demanda congelada");
+  assert.match(i("indexacao|*").naoCalculavel, /não lista/);
+  assert.match(i("links|url:/blog/nada").naoCalculavel, /fora dos clusters/);
+  assert.equal(i("cobertura|url:/produtos/fita-gomada").naoCalculavel, "pergunta declarada, sem volume");
+  for (const x of r) assert.ok(("cliques" in x.impacto && x.impacto.cliques > 0) || x.impacto.naoCalculavel, x.chave);
+});
+
+test("D9: the metas read the backlog's page weeks; a page a fazer counts nowhere; capacity 0 → every demand meta says no page matures", () => {
+  const { clusters, semCluster } = demo({ coberto: false });
+  const premissas = { ...PREMISSAS_PADRAO, capacidade: 1 };
+  const b = backlogDoPlano(clusters, { premissas, inicio: INICIO, hoje: INICIO, semanaAtual: 1, responsavel: "jean" });
+  const m = montar({ inicio: INICIO, ...premissas, clusters, semCluster, metas: [], tarefas: b.backlog, semanaDaPagina: b.semanaDaPagina });
+  assert.equal(m.semanas.length, SEMANAS);
+  for (const p of m.agenda) assert.equal(b.backlog.find((t) => t.chave === `cobertura|planejada:${p.alvo}`).semana, b.semanaDaPagina.get(p.alvo));
+  const nenhuma = new Map(m.agenda.map((p) => [p.alvo, null]));
+  const ms = propor(clusters, { premissas, inicio: INICIO, semCluster, semanaDaPagina: nenhuma });
+  for (const x of ms.filter((x) => x.origem === "demanda" && x.valor !== null)) assert.equal(x.aviso, "nenhuma página nova amadurece antes deste prazo com estas premissas", `${x.chave}@${x.prazo}`);
+  const cedo = propor(clusters, { premissas: { ...premissas, semanasAteEstabilizar: 4 }, inicio: INICIO, semCluster, semanaDaPagina: b.semanaDaPagina });
+  assert.ok(meta(cedo, "top20", 90).valor > 0, "the scheduled pages do count");
+});
+
+test("lerPlano: minutes per lever or pergunta, integers 1–600; an unknown key or 0 rejects the form (D10)", () => {
+  assert.equal(lerPlano({ ...PLANO, "esforco.indexacao": "5" }, { slugs: SLUGS }).esforco.indexacao, 5);
+  assert.equal(lerPlano({ ...PLANO, "esforco.pergunta": "600" }, { slugs: SLUGS }).esforco.pergunta, 600);
+  assert.deepEqual(lerPlano(PLANO, { slugs: SLUGS }).esforco, ESFORCO_PADRAO);
+  for (const r of [{ "esforco.indexacao": "0" }, { "esforco.indexacao": "601" }, { "esforco.indexacao": "1.5" }, { "esforco.indexacao": "" }, { "esforco.naoExiste": "3" }])
+    assert.equal(lerPlano({ ...PLANO, ...r }, { slugs: SLUGS }), null, JSON.stringify(r));
+});
+
+test("lerTarefa: known lever key ≤ 600, jean/maria, 1–600 minutes, a Monday not before this week; empty = default (D13)", () => {
+  const E = { projeto: "tapepro", chave: "indexacao|url:/a", responsavel: "maria", esforco: "30", prazo: "2026-10-07" };
+  const ctx = { slugs: SLUGS, hoje: "2026-09-30" };
+  assert.deepEqual(lerTarefa(E, ctx), { projeto: "tapepro", chave: "indexacao|url:/a", responsavel: "maria", esforco: 30, prazo: "2026-10-05" });
+  assert.deepEqual(lerTarefa({ ...E, responsavel: "", esforco: "", prazo: "" }, ctx), { projeto: "tapepro", chave: "indexacao|url:/a", responsavel: null, esforco: null, prazo: null });
+  assert.equal(lerTarefa({ ...E, prazo: "2026-09-29" }, ctx).prazo, "2026-09-28", "this week's Monday is fine");
+  const ruim = [{ chave: "foo|x" }, { chave: "indexacao" }, { chave: `indexacao|${"x".repeat(600)}` }, { responsavel: "joao" }, { esforco: "0" }, { esforco: "601" }, { esforco: "abc" }, { prazo: "2026-02-31" }, { prazo: "2026-09-21" }, { projeto: "outro" }];
+  for (const r of ruim) assert.equal(lerTarefa({ ...E, ...r }, ctx), null, JSON.stringify(r));
 });
 
 test("vistaDoPlano: each meta keeps its state word and final value, with no author and no date (FR-006)", () => {

@@ -5,10 +5,10 @@ import { hostsDeclarados } from "@/lib/projects.mjs";
 import { gscPaginas } from "@/lib/gsc";
 import { descoberta } from "@/lib/janelas.mjs";
 import { ALAVANCAS, ORIGEM, REGRAS, metaTexto } from "@/lib/proxima-acao.mjs";
-import { CABECALHOS, INTENCOES, PISO_VOLUME, TIPOS_DE_ENTIDADE, kpisDoBoard, metasExigidas, nomeDe, normalizar, vistaDoPlano } from "@/lib/plano.mjs";
+import { CABECALHOS, ESFORCO_PADRAO, INTENCOES, PISO_VOLUME, QUEM_FAZ, TIPOS_DE_ENTIDADE, kpisDoBoard, metasExigidas, nomeDe, normalizar, segundaDe, vistaDoPlano } from "@/lib/plano.mjs";
 import { RESPONSAVEIS, rotuloResp } from "@/lib/agenda.mjs";
 import { Tabs } from "../../../../tabs";
-import { apontarPagina, aprovarPropostas, ativar, criarVersao, decidirIntencao, decidirItem, decidirMeta, salvarPremissas } from "./actions";
+import { apontarPagina, aprovarPropostas, ativar, criarVersao, decidirIntencao, decidirItem, decidirMeta, editarTarefa, salvarPremissas } from "./actions";
 import { dadosDoPlano } from "./dados";
 
 // Reads the database and the Search Console on open, like the map.
@@ -72,7 +72,8 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
   const paginasGsc = await gscPaginas(hostsDeclarados(p), descoberta());
   const d = await dadosDoPlano(slug, null, { paginas: paginasGsc });
   const { atual, montado, demanda } = d;
-  const v = vistaDoPlano({ propostas: d.propostas, decisoes: d.decisoes, montado, planos: d.planos, clusters: d.clusters, marcas: d.marcas, hoje: d.hoje, semanaAtual: d.semanaAtual, inicio: d.inicio });
+  const v = vistaDoPlano({ propostas: d.propostas, decisoes: d.decisoes, montado, planos: d.planos, clusters: d.clusters, backlog: d.backlog, semanaAtual: d.semanaAtual, inicio: d.inicio });
+  const lidosEm = d.disparosLidosEm ? `${dm(d.disparosLidosEm.slice(0, 10))} ${d.disparosLidosEm.slice(11, 16)}` : null;
   const rascunho = atual?.estado === "rascunho";
   const podeGravar = d.falhas.length === 0;
   const faltam = rascunho ? v.faltam : null;
@@ -93,7 +94,10 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
       ? ["O projeto não declara produtos em lib/autopublish-projects.mjs: todos os termos ficam sem cluster e nenhuma página de cluster é agendada."]
       : []),
     ...(idadeDias !== null && idadeDias > 90 ? [`A demanda foi consultada há ${idadeDias} dias (${dm(consultadoEm!)}): vale consultar de novo antes de uma nova versão.`] : []),
-    ...v.avisos,
+    // Capacity 0 empties every week of new pages: it goes before anything else the plan says (057 FR-018).
+    ...v.avisos.filter((a) => a.startsWith("Capacidade 0")),
+    ...d.avisosDoBacklog,
+    ...v.avisos.filter((a) => !a.startsWith("Capacidade 0")),
   ];
 
   const kpis = kpisDoBoard();
@@ -195,7 +199,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           <input type="number" name="pisoApoio" min={1} max={100000} step={1} defaultValue={d.premissas.pisoApoio} required />
         </label>
         <label>
-          quem executa
+          quem responde por padrão
           <select name="responsavel" defaultValue={atual?.criadoPor ?? "jean"}>
             {(RESPONSAVEIS as { id: string; label: string }[]).map((r) => (
               <option key={r.id} value={r.id}>
@@ -204,10 +208,101 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
             ))}
           </select>
         </label>
-        <button className="ag-dono-b">{rotulo}</button>
       </fieldset>
+      {/* D10: the owner's minutes only order the backlog; they never move a task to another week. */}
+      <fieldset className="plano-minutos">
+        <legend>Seus minutos por tarefa, de 1 a 600: só ordenam o backlog</legend>
+        {(Object.keys(ESFORCO_PADRAO) as (keyof typeof ESFORCO_PADRAO)[]).map((k) => (
+          <label key={k}>
+            <span>
+              {k === "pergunta" ? "responder uma pergunta" : k === "cobertura" ? "criar uma página nova" : ALAVANCAS[k].curta} · <small>{QUEM_FAZ[k]}</small>
+            </span>
+            <input type="number" name={`esforco.${k}`} min={1} max={600} step={1} defaultValue={d.premissas.esforco?.[k] ?? ESFORCO_PADRAO[k]} required />
+          </label>
+        ))}
+      </fieldset>
+      <button className="ag-dono-b">{rotulo}</button>
     </form>
   );
+
+  // 058 US3 — the backlog, in D7 order, as the owner reads it. Every state is a word (FR-041).
+  type TarefaV = (typeof v.backlog)[number];
+  const ORIGEM_DA_TAREFA: Record<string, string> = { "pagina-nova": "página nova do plano", "pagina-existente": "página existente", mapa: "card do mapa", pergunta: "pergunta do núcleo" };
+  const nomeDaTarefa = (t: TarefaV) => `${ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].curta} · ${t.alvo.rotulo}`;
+  const impactoEm = (t: TarefaV) => ("cliques" in t.impacto ? `${br(t.impacto.cliques)} cliques/mês` : `não calculável: ${t.impacto.naoCalculavel}`);
+  const prazoDe = (t: TarefaV) => (t.semana === null ? "sem semana" : `semana ${t.semana} · ${dm(v.semanas.find((s) => s.n === t.semana)?.inicio ?? d.inicio)}${t.prazoFixo ? " (data fixada)" : ""}`);
+  const estadoDe = (t: TarefaV) =>
+    t.estado === "agendada" ? `agendada${t.motivo ? `: ${t.motivo}` : ""}` : `${t.estado === "a-fazer" ? "a fazer" : "bloqueada"}: ${t.motivo ?? "sem motivo registrado"}`;
+  const segundaDeHoje = segundaDe(d.hoje)!;
+  const linhaDoBacklog = (t: TarefaV, i: number) => {
+    const id = `tarefa-${i}`;
+    return [
+      <tr key={t.chave}>
+        <td className="plano-bl-n">{i + 1}</td>
+        <td className="plano-bl-tarefa">{nomeDaTarefa(t)}</td>
+        <td className="plano-bl-num" data-rotulo="impacto">
+          {impactoEm(t)}
+        </td>
+        <td className="plano-bl-num" data-rotulo="esforço">
+          {t.esforco.minutos} min{t.esforco.editado ? " · ajustado" : ""}
+        </td>
+        <td data-rotulo="responsável">
+          {primeiroNome(t.responsavel.id)}
+          {t.responsavel.editado ? " · ajustado" : ""}
+        </td>
+        <td className="plano-bl-num" data-rotulo="prazo">
+          {prazoDe(t)}
+        </td>
+        <td data-rotulo="estado">{estadoDe(t)}</td>
+      </tr>,
+      <tr key={`${t.chave}-det`} className="plano-bl-det">
+        <td colSpan={7}>
+          <details>
+            <summary>Conta, origem e ajuste · {nomeDaTarefa(t)}</summary>
+            <ul className="mapa-acao-motivos">
+              <li>{"cliques" in t.impacto ? t.impacto.conta : `Impacto não calculável: ${t.impacto.naoCalculavel}.`}</li>
+              <li>Vem de: {t.origens.map((o) => ORIGEM_DA_TAREFA[o] ?? o).join(" e ")}</li>
+              <li>Move: {t.kpis.map(nomeDe).join(", ")}</li>
+              {t.perguntas.length ? <li>Perguntas: {t.perguntas.map((q) => `«${q}»`).join(" · ")}</li> : null}
+              {t.briefing ? (
+                <li>
+                  Briefing do cluster: intenção {t.briefing.intencao ?? "sem decisão"} · perguntas{" "}
+                  {t.briefing.perguntas.length ? t.briefing.perguntas.map((q) => `«${q}»`).join(", ") : "nenhuma aceita"} · entidades{" "}
+                  {t.briefing.entidades.length ? t.briefing.entidades.map((e) => e.nome).join(", ") : "nenhuma declarada"}
+                  {t.perguntas.length ? ". Cada pergunta ganha um bloco de resposta com FAQPage no JSON-LD." : ""}
+                </li>
+              ) : null}
+            </ul>
+            {podeGravar ? (
+              <form action={editarTarefa} className="mapa-marca-form">
+                <input type="hidden" name="projeto" value={slug} />
+                <input type="hidden" name="chave" value={t.chave} />
+                <fieldset>
+                  <legend>Ajustar esta tarefa (vale em toda versão nova)</legend>
+                  <label htmlFor={`${id}-resp`}>responsável</label>
+                  <select id={`${id}-resp`} name="responsavel" defaultValue={t.responsavel.editado ? t.responsavel.id : ""}>
+                    <option value="">o da versão</option>
+                    {(RESPONSAVEIS as { id: string; label: string }[]).map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.label.split(" ")[0]}
+                      </option>
+                    ))}
+                  </select>
+                  <label htmlFor={`${id}-min`}>seus minutos (vazio = o da versão)</label>
+                  <input id={`${id}-min`} type="number" name="esforco" min={1} max={600} step={1} defaultValue={t.esforco.editado ? t.esforco.minutos : ""} className="plano-valor" />
+                  <label htmlFor={`${id}-prazo`}>data fixa (vazio = a do plano)</label>
+                  <input id={`${id}-prazo`} type="date" name="prazo" min={segundaDeHoje} defaultValue={t.prazoFixo ?? ""} />
+                  <button className="ag-dono-b" aria-label={`Salvar o ajuste de ${nomeDaTarefa(t)}`}>
+                    Salvar ajuste
+                  </button>
+                </fieldset>
+              </form>
+            ) : null}
+          </details>
+        </td>
+      </tr>,
+    ];
+  };
 
   // 058 US2 — the core: one block per cluster, by volume (contracts/ui.md §5). Every state is a word.
   type ClusterV = (typeof v.clusters)[number];
@@ -387,14 +482,20 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
   };
 
   type SemanaV = (typeof v.semanas)[number];
+  // One line per lever and responsible, in backlog order: 20 targets of one card are one line to read.
+  const porAlavanca = (ts: SemanaV["tarefas"]) => {
+    const g = new Map<string, SemanaV["tarefas"]>();
+    for (const t of ts) g.set(`${t.alavanca}|${t.responsavel.id}`, [...(g.get(`${t.alavanca}|${t.responsavel.id}`) ?? []), t]);
+    return [...g.values()];
+  };
   const tarefasDa = (s: SemanaV) =>
     s.tarefas.length ? (
       <ul className="mapa-acao-motivos">
-        {s.tarefas.map((t) => (
-          <li key={t.alavanca}>
-            <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.map((a) => (a.startsWith("http") ? caminho(a) : a)).join(", ")}
-            {t.responsavel ? ` · ${primeiroNome(t.responsavel)}` : ""}
-            <span className="mapa-fila-det">Move: {t.kpis.map(nomeDe).join(", ")}</span>
+        {porAlavanca(s.tarefas).map((ts) => (
+          <li key={`${ts[0].alavanca}|${ts[0].responsavel.id}`}>
+            <strong>{ALAVANCAS[ts[0].alavanca as keyof typeof ALAVANCAS].acao}</strong>: {ts.map((t) => t.alvo.rotulo).join(", ")} · {primeiroNome(ts[0].responsavel.id)} ·{" "}
+            {ts.reduce((a, t) => a + t.esforco.minutos, 0)} min seus
+            <span className="mapa-fila-det">Move: {[...new Set(ts.flatMap((t) => t.kpis))].map(nomeDe).join(", ")}</span>
           </li>
         ))}
       </ul>
@@ -437,12 +538,28 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           <a href={`/gsc/mapa/${slug}#mapa-plano-h`}>mapa</a>.
         </p>
 
-        {avisos.length ? (
+        {avisos.length || d.faltas.length ? (
           <div className="plano-aviso" role="note" aria-label="Avisos do plano">
             <ul>
               {avisos.map((a) => (
                 <li key={a}>⚠ {a}</li>
               ))}
+              {d.faltas.length ? (
+                <li>
+                  <details>
+                    <summary>
+                      ⚠ As tarefas de {d.faltas.length} {d.faltas.length === 1 ? "alavanca podem" : "alavancas podem"} faltar: havia folha sem leitura quando o mapa foi lido.
+                    </summary>
+                    <ul>
+                      {d.faltas.map((f) => (
+                        <li key={f.alavanca}>
+                          «{f.alavanca}»: {f.folhas}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </li>
+              ) : null}
             </ul>
           </div>
         ) : null}
@@ -465,6 +582,38 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
               {tarefasDa(semana)}
               {marcosDa(semana)}
             </>
+          )}
+        </section>
+
+        <section className="ficha-bloco" aria-labelledby="plano-backlog-h">
+          <h2 className="ficha-bloco-h" id="plano-backlog-h">
+            Backlog: {v.backlog.length} {v.backlog.length === 1 ? "tarefa" : "tarefas"}, na ordem em que vale a pena fazer
+          </h2>
+          {v.backlog.length ? (
+            <>
+              <p className="foot">
+                Ordem: cliques ganhos por minuto seu; numa mesma página, o degrau anterior vem antes (índice, desempenho, página certa, posição, snippet). Impacto são os cliques por mês
+                projetados aos 180 dias (posição 7 a 10) nos termos que a tarefa move; tarefas da mesma página não se somam. Só página nova ocupa a capacidade ({d.premissas.capacidade} por
+                semana); o resto entra na primeira semana que a dependência deixa.{lidosEm ? ` Cards do mapa lidos em ${lidosEm}.` : ""}
+              </p>
+              <table className="plano-backlog">
+                <caption className="sr-only">Backlog do plano de SEO de {nomeCurto}, na ordem de execução</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Tarefa</th>
+                    <th scope="col">Impacto</th>
+                    <th scope="col">Esforço</th>
+                    <th scope="col">Responsável</th>
+                    <th scope="col">Prazo</th>
+                    <th scope="col">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>{v.backlog.flatMap(linhaDoBacklog)}</tbody>
+              </table>
+            </>
+          ) : (
+            <p className="mapa-degrau-vazio">{demanda ? "Nenhuma tarefa futura: nada a criar, nenhuma página existente espera tarefa e o mapa não dispara card sem marca de feito." : "∅ sem backlog: falta a demanda congelada."}</p>
           )}
         </section>
 
@@ -560,8 +709,9 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
                     <strong>
                       {ate ? `Semanas ${s.n} a ${ate.n} · ${dm(s.inicio)} a ${dm(ate.inicio)}` : `Semana ${s.n} · ${dm(s.inicio)}`}
                       {s.n === d.semanaAtual ? " · esta semana" : ""}
+                      {!ate ? ` · páginas novas: ${s.paginasNovas} de ${d.premissas.capacidade}` : ""}
                     </strong>
-                    {s.tarefas.length ? tarefasDa(s) : <span className="mapa-fila-det">sem tarefa nova{ate ? ", marcos iguais" : ""}</span>}
+                    {s.tarefas.length ? tarefasDa(s) : <span className="mapa-fila-det">sem tarefa{ate ? ", marcos iguais" : ""}</span>}
                     {marcosDa(s)}
                   </li>
                 ))}

@@ -25,7 +25,7 @@ import { ALAVANCAS, avaliar, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDA
 import { RESPONSAVEIS, rotuloResp, todaySP } from "@/lib/agenda.mjs";
 import { desmarcar, marcar } from "./actions";
 import { dadosDoPlano } from "./plano/dados";
-import { ATE_PAGINA1, comparar, ESTADO_PAGINA, ESTADOS, feita, leiturasDoPlano, nomeDe, semanaComCards } from "@/lib/plano.mjs";
+import { ATE_PAGINA1, comparar, ESTADO_PAGINA, ESTADOS, leiturasDoPlano, nomeDe } from "@/lib/plano.mjs";
 
 import { Tabs } from "../../../tabs";
 import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
@@ -2149,16 +2149,15 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       nAlvos: porCliques.length,
     };
   const disparos = avaliar(leituras);
-  // 058/D3: the fired cards, and the ruled leaves with no reading, as the plan's backlog will read
-  // them. Fire-and-forget: the write never delays or breaks the map.
-  if (dbOn()) {
-    const ds = Object.values(disparos);
-    gravarDisparos(
-      slug,
-      ds.filter((d) => d.estado === "dispara" || d.estado === "critica").map((d) => ({ chave: d.chave, alavanca: d.alavanca!, estado: d.estado, alvos: d.alvos, nAlvos: d.nAlvos })),
-      ds.filter((d) => d.estado === "sem-leitura" && d.alavanca).map((d) => ({ chave: d.chave, alavanca: d.alavanca!, motivo: d.motivo ?? "sem leitura" })),
-    ).catch(() => {});
-  }
+  // 058/D3: the fired cards, and the ruled leaves with no reading, as the plan's backlog reads them:
+  // in memory for the plan block below, and written for /plano. Fire-and-forget: the write never
+  // delays or breaks the map.
+  const ds = Object.values(disparos);
+  const cardsDoMapa = {
+    disparos: ds.filter((d) => d.estado === "dispara" || d.estado === "critica").map((d) => ({ chave: d.chave, alavanca: d.alavanca!, estado: d.estado, alvos: d.alvos, nAlvos: d.nAlvos })),
+    semLeitura: ds.filter((d) => d.estado === "sem-leitura" && d.alavanca).map((d) => ({ chave: d.chave, alavanca: d.alavanca!, motivo: d.motivo ?? "sem leitura" })),
+  };
+  if (dbOn()) gravarDisparos(slug, cardsDoMapa.disparos, cardsDoMapa.semLeitura).catch(() => {});
   for (const d of Object.values(disparos)) {
     const no = acharNo(dados.nodeData as No, d.chave);
     if (!no) continue;
@@ -2203,12 +2202,10 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   // ── 057: the active plan's week against the readings above. No DataForSEO request (SC-005); one
   // extra Search Console read, the same window shifted 7 days back, and only with an active plan (D11).
   // D13: the page states come from the page-dimension read this map already made (0 extra reads).
-  const planoMapa = await dadosDoPlano(slug, partida, { soAtivo: true, paginas: paginasGsc }).catch(() => null);
+  const planoMapa = await dadosDoPlano(slug, partida, { soAtivo: true, paginas: paginasGsc, disparos: cardsDoMapa }).catch(() => null);
   const planoAtivo = planoMapa?.ativo && planoMapa.montado ? planoMapa : null;
   const semanaDoPlano =
     planoAtivo && planoAtivo.semanaAtual >= 1 && planoAtivo.semanaAtual <= planoAtivo.semanas ? planoAtivo.montado!.semanas[planoAtivo.semanaAtual - 1] : null;
-  // D16: this week's calendar plus the cards "O que fazer primeiro" fires today, one task per lever.
-  const semanaDoMapa = semanaDoPlano ? semanaComCards(semanaDoPlano, acoes.degraus.flatMap((g) => g.entradas)) : null;
   let comparacoes: ReturnType<typeof comparar> = [];
   if (planoAtivo && semanaDoPlano) {
     const estPlano = (DEMANDAS as unknown as Record<string, { procedencia: { fonte?: string }; termos: Record<string, number> } | undefined>)[slug];
@@ -2572,27 +2569,25 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               {semanaDoPlano ? (
                 <>
                   <h3 className="mapa-fila-h">Esta semana</h3>
-                  {semanaDoMapa?.tarefas.length ? (
+                  {semanaDoPlano.tarefas.length ? (
                     <ul className="mapa-acao-motivos">
-                      {semanaDoMapa.tarefas.map((t) => {
-                        const m = planoMapa.marcas.find((x) => x.alavanca === t.alavanca);
-                        const origem = t.origem.includes("calendario") ? (t.origem.includes("mapa") ? " · do calendário e do mapa" : "") : " · disparada pelo mapa";
+                      {[...Map.groupBy(semanaDoPlano.tarefas, (t) => t.alavanca)].map(([alavanca, ts]) => {
+                        // 058/D15: the backlog's tasks of this week, with the 055 mark state of their lever.
+                        const m = planoMapa.marcas.find((x) => x.alavanca === alavanca);
+                        const marca = !m
+                          ? "sem marca de feito"
+                          : hoje < m.reler
+                            ? `feito em ${diaMes(m.marcado)} por ${primeiroNome(m.responsavel)}`
+                            : `ainda dispara · feito em ${diaMes(m.marcado)}, a releitura venceu em ${diaMes(m.reler)}`;
                         return (
-                          <li key={t.alavanca}>
-                            <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.join(", ")}
-                            {t.responsavel ? ` · ${primeiroNome(t.responsavel)}` : ""}
-                            {origem}
-                            {t.voltou && m
-                              ? ` · Ainda dispara · feito em ${diaMes(m.marcado)}, o prazo de releitura venceu em ${diaMes(m.reler)}`
-                              : feita(t, semanaDoPlano, planoMapa.marcas) && m
-                                ? ` · feito em ${diaMes(m.marcado)} por ${primeiroNome(m.responsavel)}`
-                                : " · sem marca de feito"}
+                          <li key={alavanca}>
+                            <strong>{ALAVANCAS[alavanca as keyof typeof ALAVANCAS].acao}</strong>: {ts.map((t) => t.alvo.rotulo).join(", ")} · {marca}
                           </li>
                         );
                       })}
                     </ul>
                   ) : (
-                    <p className="mapa-degrau-vazio">Nenhuma tarefa do calendário nesta semana, e o mapa não dispara nenhum card sem marca de feito.</p>
+                    <p className="mapa-degrau-vazio">Nenhuma tarefa do backlog nesta semana.</p>
                   )}
                   <h3 className="mapa-fila-h">Marcos desta semana</h3>
                   <ul className="mapa-acao-motivos">

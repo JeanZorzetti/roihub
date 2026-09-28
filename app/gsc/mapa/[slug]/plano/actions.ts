@@ -8,6 +8,7 @@ import {
   dbOn,
   decidirItem as gravarItem,
   decidirMeta as gravarDecisao,
+  editarTarefa as gravarTarefa,
   listMetas,
   listPlanos,
   setIntencao,
@@ -19,7 +20,7 @@ import { projetosDeBusca, SLUGS_DE_BUSCA } from "@/lib/projects";
 import { hostsDeclarados } from "@/lib/projects.mjs";
 import { projectBySlug } from "@/lib/autopublish-projects.mjs";
 import { todaySP } from "@/lib/agenda.mjs";
-import { lerDecisao, lerDemanda, lerItem, lerNucleo, lerPlano, metasExigidas } from "@/lib/plano.mjs";
+import { lerDecisao, lerDemanda, lerItem, lerNucleo, lerPlano, lerTarefa, metasExigidas } from "@/lib/plano.mjs";
 
 /**
  * The four writes of the plan (057). Validation lives in the pure `lerPlano`/`lerDecisao`; input outside
@@ -107,6 +108,15 @@ export async function decidirItem(fd: FormData): Promise<void> {
   if (!i) return;
   await gravarItem(i);
   revalidar(i.projeto);
+}
+
+/** 058/D13: the owner's edit of one backlog task, kept by lever and target across versions. */
+export async function editarTarefa(fd: FormData): Promise<void> {
+  if (!dbOn()) return;
+  const t = lerTarefa(Object.fromEntries(fd), { slugs: SLUGS_DE_BUSCA, hoje: todaySP() });
+  if (!t) return;
+  await gravarTarefa(t);
+  revalidar(t.projeto);
 }
 
 /**

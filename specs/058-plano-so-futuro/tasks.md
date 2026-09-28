@@ -188,7 +188,7 @@ entities and the next task. Change the proposed intent without leaving the scree
   - add and remove for entities, with a kind select.
 
   Every field has a `<label>`, each form sits in a `fieldset` with a `legend`, and no state is conveyed by color alone.
-- [ ] T020 [US2] Run `npm test`, commit T011–T019, and push outside the windows. On `/gsc/mapa/tapepro/plano`:
+- [X] T020 [US2] Run `npm test`, commit T011–T019, and push outside the windows. On `/gsc/mapa/tapepro/plano`:
   - the 3 clusters show the five lines (SC-003);
   - changing the intent of "fita gomada", then creating a draft version, keeps the choice (US2 scenario 4).
 
@@ -212,7 +212,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - call `gravarDisparos(slug, …)` with no `await`, followed by `.catch(() => {})`;
   - write the `dispara`/`critica` dispatches, each as `{chave, alavanca, estado, alvos, nAlvos}`. These are the fields `plano()` reads;
   - write the `sem-leitura` ones as `{chave, alavanca, motivo}` in `semLeitura` (research D3, analyze U3).
-- [ ] T023 [US3] Run `npm test`, commit T021–T022, and push outside the windows. Open `/gsc/mapa/tapepro` once. Confirm with a `SELECT projeto, lido_em, length(disparos) FROM hub_mapa_disparo` that one row exists. Print no other column
+- [X] T023 [US3] Run `npm test`, commit T021–T022, and push outside the windows. Open `/gsc/mapa/tapepro` once. Confirm with a `SELECT projeto, lido_em, length(disparos) FROM hub_mapa_disparo` that one row exists. Print no other column
 
 ### Step 2 — storage for effort and edits
 
@@ -223,7 +223,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
 
 ### Step 3 — `lib/backlog.mjs`, test first
 
-- [ ] T025 [US3] D3/D4/D5 cards in `test/backlog.test.mjs`, against `deCards(snapshot, {marcas, hoje})`:
+- [X] T025 [US3] D3/D4/D5 cards in `test/backlog.test.mjs`, against `deCards(snapshot, {marcas, hoje})`:
   - a card with 3 targets gives 3 tasks, keyed `alavanca|url:/a`, … Targets come from the first reason with targets in full, not `plano()`'s 3-item cut;
   - `«termo»` becomes `termo:«termo»`;
   - `/a/ (faltam 12 cliques)` becomes the key `…|url:/a` and keeps the annotation in the label;
@@ -231,17 +231,17 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - a lever with a vigente mark (`hoje < reler`) gives no task, and past `reler` it is back;
   - each task carries `kpis` = the leaves that fired it (FR-002, analyze C2);
   - a `semLeitura` leaf returns `faltas: [{alavanca, folha, motivo}]` next to the tasks, which T038 prints as "as tarefas de {alavanca} podem faltar" (analyze U3).
-- [ ] T026 [US3] Test merging in `test/backlog.test.mjs`, against `juntar(tarefas)`:
+- [X] T026 [US3] Test merging in `test/backlog.test.mjs`, against `juntar(tarefas)`:
   - the same key from `pagina-existente` and `mapa` is one task with both origins;
   - a `*` task is dropped when a concrete task of the same lever exists, and kept otherwise;
   - the input is not mutated.
-- [ ] T027 [US3] Test ordering (D7, SC-006) in `test/backlog.test.mjs`, against `ordenar(tarefas)`:
+- [X] T027 [US3] Test ordering (D7, SC-006) in `test/backlog.test.mjs`, against `ordenar(tarefas)`:
   - tasks sort by impact ÷ effort, descending;
   - `null` impact goes after every number, in 054 order, then by key;
   - on one existing target, `indexacao` comes before a `posicao` lever and that before `snippet`, even when the later step has more impact;
   - on a planned target, `cobertura` comes first;
   - a generated case (every lever × 3 targets × random impact) never puts a task before one of an earlier step on the same target.
-- [ ] T028 [US3] Test scheduling (D8, SC-007a, US3 scenario 7) in `test/backlog.test.mjs`, against `agendar(tarefas, {capacidade, semanaAtual, semanas})`:
+- [X] T028 [US3] Test scheduling (D8, SC-007a, US3 scenario 7) in `test/backlog.test.mjs`, against `agendar(tarefas, {capacidade, semanaAtual, semanas})`:
   - with 4 new pages and capacity 3, three land in the current week and the fourth in the next;
   - non-page tasks land in the first week their dependencies allow, including the page's own week, and `indexacao` of a planned page lands no earlier than `naoAntes`;
   - a fixed date on a full week gives `a-fazer`, with "a data fixada não cabe: a semana DD/MM já tem N páginas novas";
@@ -253,12 +253,12 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - no week has an `n < semanaAtual`.
 
   Invariant over a generated case: no week has more new pages than `capacidade`, and only new pages are ever `a-fazer`.
-- [ ] T029 [US3] Test edits (D13, SC-007) in `test/backlog.test.mjs`, against `aplicarEdicoes(tarefas, edicoes, {responsavel, esforco})`:
+- [X] T029 [US3] Test edits (D13, SC-007) in `test/backlog.test.mjs`, against `aplicarEdicoes(tarefas, edicoes, {responsavel, esforco})`:
   - an edit of responsible, effort or fixed date survives when the task list is rebuilt from a different version's premises (same key);
   - the edit of a key that no longer exists is ignored;
   - with no edit, the responsible is the version's `criadoPor`, and the effort is `esforco[alavanca]` (or `esforco.pergunta` × the task's questions);
   - `editado` flags which values came from the owner.
-- [ ] T030 [US3] Implement `lib/backlog.mjs` (pure; it imports only `./proxima-acao.mjs`):
+- [X] T030 [US3] Implement `lib/backlog.mjs` (pure; it imports only `./proxima-acao.mjs`):
   - `deCards` calls `plano(snapshotComoDisparos, {marcas, hoje})` to reuse the 055 rule without copying it. It keeps entries with `apresentacao` `ativa`/`voltou`, and takes targets from `e.motivos.find((m) => m.alvos.length)?.alvos`;
   - `juntar`, `ordenar`, `agendar` and `aplicarEdicoes`;
   - one normalizer for target keys (decoded path, no trailing slash, annotation stripped).
@@ -267,7 +267,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
 
 ### Step 4 — `lib/plano.mjs`: tasks, impact, metas from the schedule
 
-- [ ] T031 [US3] Test `tarefasDoPlano` in `test/plano.test.mjs`:
+- [X] T031 [US3] Test `tarefasDoPlano` in `test/plano.test.mjs`:
   - A planned page gives `cobertura` (`paginaNova: true`, with briefing), plus `links`/`titulo`/`schema` on the same target depending on it, plus `indexacao` depending on it with `naoAntes = semana + semanasAteIndexar` (resolved after scheduling).
   - An existing covering page that is not `ativa` gives its D15 levers. A vigente mark of that lever (made on or after `inicio`, `hoje < reler`) removes them; past `reler`, a page still not `ativa` gets them back (FR-004, research D5, analyze I2).
   - An owner-pointed page leaves the D15 tasks of the pages that cover terms untouched (they follow `cobertoPor`); the cluster's own tasks (FR-005a `titulo`, questions) go to the pointed page (research D11, analyze U1).
@@ -275,7 +275,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - The FR-005a seed-missing-from-title case gives `titulo` on the URL.
   - Every task carries `kpis` from `kpisDa(alavanca)` (FR-002, analyze C2). Every task whose target is a cluster's answering page carries that cluster's briefing, whether it creates or adjusts the page (FR-016, analyze C3).
   - SC-001 again: the T003 walk over `vistaDoPlano` with the backlog in its input finds no page state, mark date or author.
-- [ ] T032 [US3] Test `comImpacto` (D6, SC-004) in `test/plano.test.mjs`:
+- [X] T032 [US3] Test `comImpacto` (D6, SC-004) in `test/plano.test.mjs`:
   - `url:` → the terms with `cobertoPor` = that page;
   - `planejada:` → the terms its label covers;
   - `termo:` → that term if frozen;
@@ -284,25 +284,25 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - a target whose terms all have `null` volume → `naoCalculavel: "termos abaixo do mínimo que o Google Ads informa"`, never 0 (research D6, analyze U5).
 
   Every task carries `cliques` or `naoCalculavel`, and never `0` for missing data. The `conta` reads like "… buscas/mês × 2,2% = N cliques/mês", using `benchmark(7)`, the same number as the 180-day click meta.
-- [ ] T033 [US3] Test D9 in `test/plano.test.mjs`:
+- [X] T033 [US3] Test D9 in `test/plano.test.mjs`:
   - `propor` and `montar` take `semanaDaPagina` (a `Map` from label to week or `null`);
   - a page that is `a-fazer` counts in no meta;
   - with capacity 0, every demand meta carries `SEM_NOVA`;
   - the week of each page in `montar` equals the week of its `cobertura` in the schedule;
   - `montar` still returns 26 weeks.
-- [ ] T034 [US3] Test `lerPlano` + `esforco` and `lerTarefa` in `test/plano.test.mjs`. The rules:
+- [X] T034 [US3] Test `lerPlano` + `esforco` and `lerTarefa` in `test/plano.test.mjs`. The rules:
   - effort keys are `ALAVANCAS` plus `pergunta`, integer minutes 1–600 (0 is rejected: effort divides impact), and a missing key takes its default;
   - `chave` is ≤ 600 characters and has a known lever prefix;
   - `responsavel` is `jean`/`maria` or empty;
   - `esforco` is 1–600 or empty;
   - `prazo` is a real date, snapped to its Monday (`segundaDe`), not before the Monday of `hoje`, or empty (analyze U4, U5).
-- [ ] T035 [US3] In `lib/plano.mjs`, handle premises and validators:
+- [X] T035 [US3] In `lib/plano.mjs`, handle premises and validators:
   - `PREMISSAS_PADRAO.esforco` takes the research D10 table (owner minutes, "◇ política do dono, sem fonte");
   - `lerPlano` gains `esforco.{chave}` fields;
   - add `lerTarefa(c, {slugs, hoje})`;
   - keep the D10 texts ("quem executa · o que o dono faz") next to `PREMISSAS_PADRAO.esforco`, so T040 prints them without copying.
-- [ ] T036 [US3] In `lib/plano.mjs`, add `tarefasDoPlano(clusters, agenda, {premissas, marcas, inicio, hoje})` and `comImpacto(tarefas, clusters)`, as tested in T031–T032. Each task gets `kpis` from `kpisDa(alavanca)`. Briefing (FR-016): every task whose target is a cluster's answering page (creating or adjusting it) and every question task carries `{intencao, perguntas, entidades}` of that cluster
-- [ ] T037 [US3] In `lib/plano.mjs`, apply D9:
+- [X] T036 [US3] In `lib/plano.mjs`, add `tarefasDoPlano(clusters, agenda, {premissas, marcas, inicio, hoje})` and `comImpacto(tarefas, clusters)`, as tested in T031–T032. Each task gets `kpis` from `kpisDa(alavanca)`. Briefing (FR-016): every task whose target is a cluster's answering page (creating or adjusting it) and every question task carries `{intencao, perguntas, entidades}` of that cluster
+- [X] T037 [US3] In `lib/plano.mjs`, apply D9:
   - `agendaDePaginas` loses `semana` (queue order and `cobre` stay);
   - `donos`, `propor` and `montar` read `semanaDaPagina`;
   - `montar` stops building tasks (the `poe` block, ~lines 573–600) and receives the scheduled tasks. Each week gets `tarefas` (backlog order) and `paginasNovas`, and all 26 weeks stay;
@@ -313,7 +313,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
 
 ### Step 5 — screens and forms
 
-- [ ] T038 [US3] Rewrite `dadosDoPlano` in `app/gsc/mapa/[slug]/plano/dados.ts` as the whole pipeline, in this order:
+- [X] T038 [US3] Rewrite `dadosDoPlano` in `app/gsc/mapa/[slug]/plano/dados.ts` as the whole pipeline, in this order:
   1. `cobrir` → `aplicarNucleo` → `agendaDePaginas`;
   2. `tarefasDoPlano` + `deCards` (the `disparos` option from the map, in memory; otherwise `lerDisparos(slug)`) → `juntar` → `comImpacto`;
   3. `aplicarEdicoes` (`listTarefas`, the version's `criadoPor` and `esforco`) → `ordenar` → `agendar({capacidade, semanaAtual, semanas: SEMANAS})`;
@@ -323,17 +323,17 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - with no snapshot: "as tarefas que o mapa dispara ainda não foram lidas: abra o mapa uma vez";
   - when the snapshot read fails: "as tarefas que o mapa dispara não entraram: {motivo}", with the rest built anyway;
   - for each `faltas` entry from `deCards`: "as tarefas de {alavanca} podem faltar: {folha} estava sem leitura quando o mapa foi lido ({motivo})" (analyze U3).
-- [ ] T039 [US3] In `app/gsc/mapa/[slug]/plano/actions.ts`:
+- [X] T039 [US3] In `app/gsc/mapa/[slug]/plano/actions.ts`:
   - add `editarTarefa` (`lerTarefa` → `editarTarefa` in `lib/db.ts`, then `revalidar`);
   - `criarVersao` and `salvarPremissas` pass `esforco` through to `criarPlano`/`setPremissas`.
-- [ ] T040 [US3] Invoke `information-design`, `responsive-design`, `accessibility` and `ux-writing`, then change `app/gsc/mapa/[slug]/plano/page.tsx` (contracts/ui.md §2–4, 7, 9). Every block renders from `vistaDoPlano`, never from `d.backlog` directly (analyze C1):
+- [X] T040 [US3] Invoke `information-design`, `responsive-design`, `accessibility` and `ux-writing`, then change `app/gsc/mapa/[slug]/plano/page.tsx` (contracts/ui.md §2–4, 7, 9). Every block renders from `vistaDoPlano`, never from `d.backlog` directly (analyze C1):
   - **Esta semana** lists the current week's scheduled tasks in backlog order, with responsible and owner minutes. With nothing left it says "Nada mais planejado para esta semana" and names the next week with a task. Before the start it says "O plano começa em DD/MM".
   - **Backlog** has one row per task, with the columns task, impact, effort, responsible, due and state + reason. The state is in words. A `<details>` holds the `conta`, the origins, the leaves the task moves ("Move: …", from `kpis`), the briefing and the edit form (responsible, minutes 1–600, fixed date from this week on). At ≤ 390 px each task is a card, with no horizontal scroll.
   - **Calendário** runs from the current week, shows "páginas novas: N de C", and collapses quiet weeks with the existing `blocos` logic (~line 300).
   - **Premissas** gets one minutes field per lever plus `pergunta`, each with who executes and what the owner does (research D10), all "◇ política do dono, sem fonte".
   - **Avisos**: capacity 0 comes first, then no snapshot and tasks past 26 weeks. "Cards do mapa lidos em DD/MM HH:mm" is provenance, printed next to the demand's date, not a warning.
   - Remove `apontaMapa` (~lines 257–269).
-- [ ] T041 [US3] In `app/gsc/mapa/[slug]/page.tsx`:
+- [X] T041 [US3] In `app/gsc/mapa/[slug]/page.tsx`:
   - pass the in-memory `disparos` to `dadosDoPlano` (so the map needs no snapshot read);
   - "Esta semana" in the plan block lists the backlog's current-week tasks, each with its lever's 055 mark state: "feito em DD/MM por X", "ainda dispara" or "sem marca de feito";
   - remove the `semanaComCards` import and call (~lines 28, 2185).
