@@ -200,15 +200,15 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 
 - [X] T031 [US4] Grep `lib/plano.mjs` and `app/gsc/mapa/[slug]/plano/` for `tapepro`, `atma` and `sirius`. There must be zero hits, because no rule is written per project (FR-019)
 - [X] T032 [US4] Run `node --env-file=.env scripts/consultar-demanda.mjs atma --consultar --gravar`. It must exit 1 naming the entry **before** any paid request, because Atma's entry comes from the GSC floor (D11, T016 guard). `git status` stays clean and the balance is unchanged
-- [ ] T033 [US4] Open `/gsc/mapa/atma/plano` and `/gsc/mapa/sirius/plano`: 200, blocks render, with no Tape-Pro-specific text. The demand block names the 050 GSC-floor source, not DataForSEO
+- [X] T033 [US4] Open `/gsc/mapa/atma/plano` and `/gsc/mapa/sirius/plano`: 200, blocks render, with no Tape-Pro-specific text. The demand block names the 050 GSC-floor source, not DataForSEO
 - [X] T034 [US4] On `/gsc/mapa/sirius/plano`, each demand meta shows the starting point read today and the distance to the meta, not a start from zero (US4 AC1). Compare `top20` with the value the map prints for the same leaf on the same day: they must match, because it is the same function over the same window
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T035 Run `npm test` (all green, `test/plano.test.mjs` included) and `npx next build`. Commit with `git commit -- <paths>` and push outside 23:30–01:00 and 08:00–08:45 BRT. Poll the screen for new text twice; a 200 is not proof
-- [ ] T036 Invoke `ui-verification` on `/gsc/mapa/tapepro/plano` and `/gsc/mapa/tapepro`: 3 widths, a keyboard pass through every form, the accessibility tree (no state by color alone, FR-020), a clean console, and the network tab with no DataForSEO or Google request (SC-005)
+- [X] T035 Run `npm test` (all green, `test/plano.test.mjs` included) and `npx next build`. Commit with `git commit -- <paths>` and push outside 23:30–01:00 and 08:00–08:45 BRT. Poll the screen for new text twice; a 200 is not proof
+- [X] T036 Invoke `ui-verification` on `/gsc/mapa/tapepro/plano` and `/gsc/mapa/tapepro`: 3 widths, a keyboard pass through every form, the accessibility tree (no state by color alone, FR-020), a clean console, and the network tab with no DataForSEO or Google request (SC-005)
 - [ ] T037 Quickstart §4 in production: approve every meta as Jean and activate. Check that `hub_plano_meta` has `decidido_por = 'jean'` on every row, and that editing an approved meta asks for a new version (SC-006). The map must show "Plano · semana 1 de 26" with the demand milestones as `nao-chegou`
 - [ ] T038 Schedule a re-read one week after activation for SC-007: 100% of Tape Pro's due milestones in one of the 5 states
 - [ ] T039 Re-run `speckit-analyze` on `specs/057-plano-seo/` after implementation, to catch drift between code and design
@@ -256,5 +256,5 @@ Then US2 (the calendar, the actual ask), US3 (weekly comparison, which needs one
 - **US4 (T034)**: Atma's plan `top20` starting point equals the map's leaf (35%, 254 of 725, same day and
   window). Sirius has no frozen demand (050 never estimated it), so its plan shows only the 29 rule
   metas; Atma declares no seeds, so its demand metas are 0 with the first-line warning.
-- **T004, T033, T035–T039** wait for the deploy, the next collector runs, Jean's approval and a week.
+- **Production 11:12 BRT**: 6 routes 200 at 1440/768/360, no horizontal scroll, clean console, zero requests to any other host (SC-005). T004 waits for the collectors on tapepro; T037 for Jean (after the D2 finding); T038 a week after activation; T039 analyze.
 
