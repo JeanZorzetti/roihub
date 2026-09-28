@@ -19,7 +19,8 @@ import {
 import type { GscPaginas } from "@/lib/gsc";
 import { projectBySlug } from "@/lib/autopublish-projects.mjs";
 import { ALAVANCAS } from "@/lib/proxima-acao.mjs";
-import { aplicarNucleo, backlogDoPlano, cobrir, ESFORCO_PADRAO, estadoDaPagina, lerDemanda, montar, nomeDe, PREMISSAS_PADRAO, propor, segundaDe, SEMANAS } from "@/lib/plano.mjs";
+import { aplicarNucleo, backlogDoPlano, cobrir, ESFORCO_PADRAO, estadoDaPagina, lerDemanda, linhaDoOkr, montar, nomeDe, PREMISSAS_PADRAO, propor, segundaDe, SEMANAS } from "@/lib/plano.mjs";
+import { dadosDaFicha } from "@/lib/ficha-dados";
 import { todaySP } from "@/lib/agenda.mjs";
 
 type Partida = { top20?: number | null; tamBusca?: number | null; pagina1?: number | null } | null;
@@ -44,13 +45,21 @@ const erro = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(
  * `soAtivo` builds the ACTIVE version (the map compares against it), not the draft.
  * `paginas` is the caller's page-dimension Search Console read (D13): it decides each page's state.
  * `disparos` is the map's in-memory cards; without it, the last snapshot the map wrote is read.
+ * `comOkr` (the plan route only: the map does not pay ~3.3 s) fetches the `/okr` goal tree when the
+ * project declares a meta in `listProjects()` (Principle I), in parallel with the DB reads (D14).
  */
 export async function dadosDoPlano(
   slug: string,
   partida: Partida,
-  { soAtivo = false, paginas = null, disparos = null }: { soAtivo?: boolean; paginas?: GscPaginas; disparos?: DisparosDoMapa | null } = {},
+  {
+    soAtivo = false,
+    paginas = null,
+    disparos = null,
+    comOkr = null,
+  }: { soAtivo?: boolean; paginas?: GscPaginas; disparos?: DisparosDoMapa | null; comOkr?: { temMeta: boolean } | null } = {},
 ) {
   const hoje = todaySP();
+  const ficha = comOkr?.temMeta ? dadosDaFicha(slug).catch((e: unknown) => ({ falhou: erro(e) })) : null;
   const demanda = lerDemanda((DEMANDAS as Record<string, { procedencia?: Record<string, unknown>; termos?: Record<string, number> }>)[slug], projectBySlug(slug));
 
   let crawl: Awaited<ReturnType<typeof lerCrawlDePagina>> = null;
@@ -128,6 +137,18 @@ export async function dadosDoPlano(
       if (d?.estado === "recusada") return [];
       return [{ chave: m.chave, prazo: m.prazo, valor: (d?.valor ?? m.valor) as number }];
     });
+  // D14: the plan's side is the 180-day clicks meta as decided — approved or edited, the proposal while
+  // undecided — and a refused one has nothing to compare (analyze A1).
+  let okr: ReturnType<typeof linhaDoOkr> | { falhou: string } | null = null;
+  if (comOkr) {
+    const m = propostas.find((x) => x.chave === "cliques" && x.prazo === 180);
+    const dec = m ? decidida.get("cliques@180") : undefined;
+    const lida = ficha ? await ficha : null;
+    okr =
+      lida && "falhou" in lida
+        ? { falhou: lida.falhou }
+        : linhaDoOkr(lida?.arvore ?? null, (dec?.valor ?? m?.valor ?? 0) as number, { temMeta: comOkr.temMeta && lida !== null, recusada: dec?.estado === "recusada" });
+  }
   const montado = b ? montar({ inicio, ...premissas, clusters, semCluster, metas: paraMontar, marcas, tarefas: b.backlog, semanaDaPagina: b.semanaDaPagina }) : null;
 
   // What is missing from the map's cards, as its consequence for the plan (research D3, analyze U3):
@@ -165,6 +186,7 @@ export async function dadosDoPlano(
     disparosLidosEm: snapshot?.lidoEm ?? null,
     avisosDoBacklog,
     faltas,
+    okr,
     semanaAtual,
     semanas: SEMANAS,
   };

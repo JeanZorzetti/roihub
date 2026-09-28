@@ -337,7 +337,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
   - pass the in-memory `disparos` to `dadosDoPlano` (so the map needs no snapshot read);
   - "Esta semana" in the plan block lists the backlog's current-week tasks, each with its lever's 055 mark state: "feito em DD/MM por X", "ainda dispara" or "sem marca de feito";
   - remove the `semanaComCards` import and call (~lines 28, 2185).
-- [ ] T042 [US3] Run `npm test` and commit T024–T041. Push outside the windows. Run quickstart §2 steps 1–5 on Tape Pro:
+- [X] T042 [US3] Run `npm test` and commit T024–T041. Push outside the windows. Run quickstart §2 steps 1–5 on Tape Pro:
   - every row has impact or "não calculável", effort, responsible, due and state (SC-004);
   - the backlog's `mapa`-origin levers equal the levers the map fires without a vigente mark, read the same minute (SC-005);
   - Maria + 30 min survive version 2 (SC-007);
@@ -356,19 +356,19 @@ the plan covers. It never invents a number (research D14).
 **Independent Test**: on a project with an OKR meta, one line reads "o plano projeta X cliques/mês aos 180 dias;
 o OKR exige Y; o plano cobre Z% do exigido".
 
-- [ ] T043 [US4] Test `linhaDoOkr(arvore, cliquesPlano, {temMeta, recusada})` in `test/plano.test.mjs`:
+- [X] T043 [US4] Test `linhaDoOkr(arvore, cliquesPlano, {temMeta, recusada})` in `test/plano.test.mjs`:
   - a `visitante` layer with `necessario {min, max}` (per 28 days) gives `{necessario, janelaDias: 28, necessarioMes, plano, fracao}`, with `necessarioMes = necessario × (365,25 / 12) / 28` and `fracao = {min: plano / necessarioMes.max, max: plano / necessarioMes.min}`. When `min = max` the band collapses to one value;
   - units (analyze I1): `necessario = 28` per 28 days and `plano = 30,4375` per month give `fracao = 1`, not 1,087. The case fails if the function divides month by 28 days;
   - `recusada: true` gives `{semComparacao: "a meta de cliques aos 180 dias foi recusada: nada a comparar"}` (analyze A1);
   - `temMeta: false` gives `{semComparacao: "sem meta declarada"}`;
   - `arvore.parou` before the `visitante` layer gives `{semComparacao: parou.motivo}`;
   - no branch returns a number that is not in the input.
-- [ ] T044 [US4] Implement `linhaDoOkr` in `lib/plano.mjs`. It is pure. It reads the layer whose `chave` is `visitante`, the one `lib/ficha-dados.ts:169` calls `camadaClique`
-- [ ] T045 [US4] In `app/gsc/mapa/[slug]/plano/dados.ts`, with a `comOkr` option that only the plan route passes (the map does not pay ~3.3 s):
+- [X] T044 [US4] Implement `linhaDoOkr` in `lib/plano.mjs`. It is pure. It reads the layer whose `chave` is `visitante`, the one `lib/ficha-dados.ts:169` calls `camadaClique`
+- [X] T045 [US4] In `app/gsc/mapa/[slug]/plano/dados.ts`, with a `comOkr` option that only the plan route passes (the map does not pay ~3.3 s):
   - read the project's `meta` from `listProjects()`, never `data/projects.json` (Principle I);
   - when there is a meta, call `dadosDaFicha(slug)` in parallel with the DB reads, catching failure as `{falhou: motivo}`;
   - return `linhaDoOkr(ficha.arvore, cliques180, {temMeta, recusada})`. `cliques180` is the 180-day clicks meta as decided: the approved or edited value, or the proposal while undecided; `recusada` when its decision is `recusada` (research D14, analyze A1).
-- [ ] T046 [US4] Invoke `ux-writing`, then print the OKR line under the 180-day clicks meta in `app/gsc/mapa/[slug]/plano/page.tsx` (contracts/ui.md §6). It takes one of three shapes:
+- [X] T046 [US4] Invoke `ux-writing`, then print the OKR line under the 180-day clicks meta in `app/gsc/mapa/[slug]/plano/page.tsx` (contracts/ui.md §6). It takes one of three shapes:
   - "o OKR exige X–Y cliques por 28 dias; o plano projeta Z por mês aos 180 dias: cobre A–B%", with a link to `/okr/{slug}`;
   - "o OKR de {projeto} não exige cliques ainda: {motivo}";
   - "o OKR não respondeu: {motivo}".

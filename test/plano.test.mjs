@@ -35,6 +35,7 @@ import {
   backlogDoPlano,
   semanasDasPaginas,
   ESFORCO_PADRAO,
+  linhaDoOkr,
 } from "../lib/plano.mjs";
 import { juntar } from "../lib/backlog.mjs";
 import { addDaysISO } from "../lib/agenda.mjs";
@@ -1139,4 +1140,28 @@ test("lerItem: question or entity, text 1–200, kind from the list, answering p
     { ...E, detalhe: "" },
   ];
   for (const r of ruim) assert.equal(lerItem(r, CTX_NUCLEO), null, JSON.stringify(r));
+});
+
+// ── 058 US4 · the OKR line (research D14) ──────────────────────────────────────
+const arvoreCom = (min, max) => ({ camadas: [{ chave: "lead", necessario: { min: 10, max: 10 } }, { chave: "visitante", necessario: { min, max } }], parou: null });
+
+test("linhaDoOkr: the tree's 28-day requirement converted to a month, and the covered fraction as a band", () => {
+  const r = linhaDoOkr(arvoreCom(200, 400), 300, { temMeta: true });
+  const mes = (x) => (x * (365.25 / 12)) / 28;
+  assert.deepEqual(r, { necessario: { min: 200, max: 400 }, janelaDias: 28, necessarioMes: { min: mes(200), max: mes(400) }, plano: 300, fracao: { min: 300 / mes(400), max: 300 / mes(200) } });
+  const um = linhaDoOkr(arvoreCom(100, 100), 50, { temMeta: true });
+  assert.equal(um.fracao.min, um.fracao.max, "min = max collapses the band");
+});
+
+test("linhaDoOkr: month against month — 28 per 28 days is 30,4375 a month, so 30,4375 a month covers 100% (analyze I1)", () => {
+  const r = linhaDoOkr(arvoreCom(28, 28), 30.4375, { temMeta: true });
+  assert.ok(Math.abs(r.fracao.min - 1) < 1e-12, `${r.fracao.min} ≠ 1: dividing a month by 28 days inflates it 8,7%`);
+});
+
+test("linhaDoOkr: no meta, a refused meta, or a tree that stopped before clicks → a reason, never a number", () => {
+  assert.deepEqual(linhaDoOkr(null, 300, { temMeta: false }), { semComparacao: "sem meta declarada" });
+  assert.deepEqual(linhaDoOkr(arvoreCom(1, 2), 300, { temMeta: true, recusada: true }), { semComparacao: "a meta de cliques aos 180 dias foi recusada: nada a comparar" });
+  const parada = { camadas: [{ chave: "lead", necessario: { min: 10, max: 10 } }], parou: { motivo: "sem divisor para chegar em visitante" } };
+  assert.deepEqual(linhaDoOkr(parada, 300, { temMeta: true }), { semComparacao: "sem divisor para chegar em visitante" });
+  for (const r of [linhaDoOkr(null, 300, { temMeta: false }), linhaDoOkr(parada, 300, { temMeta: true })]) assert.deepEqual(Object.keys(r), ["semComparacao"]);
 });

@@ -70,7 +70,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
   // FR-007: the only external read. The page impressions decide, with the stored per-URL verdict,
   // which week each existing page's task goes in (FR-002). No per-term read: the starting point is on the map.
   const paginasGsc = await gscPaginas(hostsDeclarados(p), descoberta());
-  const d = await dadosDoPlano(slug, null, { paginas: paginasGsc });
+  const d = await dadosDoPlano(slug, null, { paginas: paginasGsc, comOkr: { temMeta: Boolean(p.meta?.valor) } });
   const { atual, montado, demanda } = d;
   const v = vistaDoPlano({ propostas: d.propostas, decisoes: d.decisoes, montado, planos: d.planos, clusters: d.clusters, backlog: d.backlog, semanaAtual: d.semanaAtual, inicio: d.inicio });
   const lidosEm = d.disparosLidosEm ? `${dm(d.disparosLidosEm.slice(0, 10))} ${d.disparosLidosEm.slice(11, 16)}` : null;
@@ -105,6 +105,20 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
   const porChave = new Map<string, Meta[]>();
   for (const m of v.metas) porChave.set(m.chave, [...(porChave.get(m.chave) ?? []), m]);
 
+  // 058 US4 — does the plan deliver the clicks the OKR asks for? One line, never an invented number (D14).
+  const inteiro = (x: number) => Math.round(x).toLocaleString("pt-BR");
+  const faixa = (b: { min: number; max: number }, f: (x: number) => string) => (f(b.min) === f(b.max) ? f(b.min) : `${f(b.min)} a ${f(b.max)}`);
+  const linhaDoOkrEmTexto = (o: NonNullable<typeof d.okr>) =>
+    "falhou" in o ? (
+      `O OKR não respondeu: ${o.falhou}.`
+    ) : "semComparacao" in o ? (
+      o.semComparacao.startsWith("a meta de cliques") ? `${o.semComparacao.charAt(0).toUpperCase()}${o.semComparacao.slice(1)}.` : `O OKR de ${nomeCurto} não exige cliques ainda: ${o.semComparacao}.`
+    ) : (
+      <>
+        O <a href={`/okr/${slug}`}>OKR de {nomeCurto}</a> exige {faixa(o.necessario, inteiro)} cliques por 28 dias ({faixa(o.necessarioMes, inteiro)} por mês); o plano projeta{" "}
+        {inteiro(o.plano)} por mês aos 180 dias: cobre {faixa(o.fracao, pct)} do exigido.
+      </>
+    );
   const linhaDaMeta = (m: Meta) => {
     const regra = REGRAS_[m.chave] && !["top20", "tamBusca"].includes(m.chave) ? REGRAS_[m.chave] : null;
     const nome = nomeDe(m.chave);
@@ -135,6 +149,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
         <span className="mapa-fila-det">{m.conta}</span>
         {m.aviso ? <span className="mapa-fila-det">⚠ {m.aviso}</span> : null}
         {naoCabe ? <span className="mapa-fila-det">⚠ {naoCabe.texto}</span> : null}
+        {m.chave === "cliques" && m.prazo === 180 && d.okr ? <span className="mapa-fila-det">{linhaDoOkrEmTexto(d.okr)}</span> : null}
         {rascunho && podeGravar ? (
           <form action={decidirMeta} className="mapa-marca-form">
             <input type="hidden" name="projeto" value={slug} />
