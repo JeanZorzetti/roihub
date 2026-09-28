@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { lerInventario, validarInventario } from "../lib/inventario.mjs";
+import { readFileSync } from "node:fs";
+import { lerInventario, motivoForaDoCatalogo, validarInventario } from "../lib/inventario.mjs";
+import { PROJECTS } from "../lib/autopublish-projects.mjs";
+
+const json = (f) => JSON.parse(readFileSync(new URL(`../data/${f}.json`, import.meta.url), "utf8"));
+const INVENTARIO = json("inventario-de-termos");
+const DEMANDA = json("demanda-estimada");
 
 const PROCEDENCIA = {
   congeladoEm: "2026-09-20",
@@ -87,4 +93,33 @@ test("marca casa por palavra inteira, não por prefixo", () => {
 
 test("validarInventario aceita a entrada boa sem lançar", () => {
   assert.equal(validarInventario("atma", bom).total, 2);
+});
+
+// 057, 28/09: a demanda da Tape Pro congelou «fita gomada scotch», «transparente», «branca», «80mm»…
+// (1.470 de 17.030 buscas/mês) e o plano mandou criar página para eles. O catálogo declarado no
+// projeto é a régua; a mesma checagem da marca, na leitura.
+const CATALOGO = { "marca de terceiro": ["scotch", "3m"], "gomada é de papel": ["gomada transparente"] };
+
+test("termo fora do catálogo reprova na leitura, com o motivo", () => {
+  const p = { ...PROCEDENCIA, foraDoCatalogo: CATALOGO };
+  assert.throws(() => validarInventario("tapepro", { procedencia: p, termos: ["fita gomada", "fita gomada 3m"] }), /marca de terceiro.*fita gomada 3m/);
+});
+
+test("catálogo casa por palavra inteira: «transparente personalizada» não é «gomada transparente»", () => {
+  assert.equal(motivoForaDoCatalogo("fita transparente personalizada", CATALOGO), null);
+  assert.equal(motivoForaDoCatalogo("fita gomada transparente", CATALOGO), "gomada é de papel");
+});
+
+test("a demanda congelada respeita o catálogo declarado no projeto", () => {
+  for (const projeto of PROJECTS.filter((p) => p.foraDoCatalogo)) {
+    for (const [nome, arquivo] of [["inventario-de-termos", INVENTARIO], ["demanda-estimada", DEMANDA]]) {
+      const entrada = arquivo[projeto.slug];
+      if (!entrada) continue;
+      // Catálogo mudou no projeto e o JSON não foi recurado = régua velha no arquivo.
+      assert.deepEqual(entrada.procedencia.foraDoCatalogo, projeto.foraDoCatalogo, `${nome}/${projeto.slug}: procedencia.foraDoCatalogo difere do projeto`);
+      const termos = Array.isArray(entrada.termos) ? entrada.termos : Object.keys(entrada.termos);
+      const intruso = termos.find((t) => motivoForaDoCatalogo(t, projeto.foraDoCatalogo));
+      assert.equal(intruso, undefined, `${nome}/${projeto.slug}: «${intruso}» está fora do catálogo`);
+    }
+  }
 });

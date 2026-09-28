@@ -18,7 +18,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { projectBySlug } from "../lib/autopublish-projects.mjs";
-import { validarInventario } from "../lib/inventario.mjs";
+import { motivoForaDoCatalogo, validarInventario } from "../lib/inventario.mjs";
 import { regexDeMarca } from "../lib/marca.mjs";
 import { PISO_VOLUME, agrupar, normalizar } from "../lib/plano.mjs";
 
@@ -75,6 +75,7 @@ if (!regiao) sair(1, `sem região para o idioma ${projeto.language}: passe --reg
 const idioma = String(projeto.language).slice(0, 2);
 const host = new URL(projeto.siteUrl).hostname;
 const marca = [...new Set([slug, ...lista(opcao("--marca"))])];
+const foraDoCatalogo = projeto.foraDoCatalogo ?? {};
 
 async function api(caminho, corpo) {
   const r = await fetch(`${API}${caminho}`, {
@@ -145,7 +146,9 @@ const movidos = Object.fromEntries(
 const excluidos = {};
 const termos = [];
 for (const [termo, volume] of porTermo) {
+  const motivo = motivoForaDoCatalogo(termo, foraDoCatalogo);
   if (reMarca.test(termo)) quedas.marca++;
+  else if (motivo) excluidos[termo] = motivo;
   else if (Object.hasOwn(excluir, termo)) excluidos[termo] = excluir[termo];
   else if (volume === null && !ehSemente.has(normalizar(termo))) quedas.semVolume++;
   else if (volume !== null && volume < PISO_VOLUME) quedas.piso++;
@@ -158,7 +161,7 @@ const { clusters, semCluster } = agrupar(termos, { produtos, segmentos, movidos 
 const br = (n) => n.toLocaleString("pt-BR");
 const comVolume = termos.filter((t) => typeof t.volume === "number");
 console.log(`\ncusto real: ${usd(custo)} · ${br(porTermo.size)} termos devolvidos`);
-console.log(`mantidos: ${br(termos.length)} · fora: ${quedas.marca} de marca, ${quedas.piso} abaixo de ${PISO_VOLUME}/mês, ${quedas.semVolume} sem volume, ${Object.keys(excluidos).length} excluídos à mão`);
+console.log(`mantidos: ${br(termos.length)} · fora: ${quedas.marca} de marca, ${quedas.piso} abaixo de ${PISO_VOLUME}/mês, ${quedas.semVolume} sem volume, ${Object.keys(excluidos).length} excluídos (catálogo do projeto ou --excluir)`);
 console.log(`volume total: ${br(comVolume.reduce((a, t) => a + t.volume, 0))} buscas/mês em ${regiao}\n`);
 for (const c of clusters) {
   const segs = Object.entries(c.segmentos).map(([s, v]) => `${s} ${br(v)}`).join(", ");
@@ -185,6 +188,7 @@ const inventario = {
     dimensao: "volume Google Ads (DataForSEO keywords_for_keywords)",
     hosts: [host],
     excluiMarca: marca,
+    foraDoCatalogo,
     excluidos,
     porque: `termos do nicho com volume ≥ ${PISO_VOLUME}/mês em ${regiao}, a partir das sementes ${sementes.join(", ")}`,
   },
@@ -193,7 +197,7 @@ const inventario = {
 // Valida ANTES de tocar o disco: lista vazia, duplicado ou marca dentro reprova aqui, não no deploy.
 validarInventario(slug, inventario);
 const demanda = {
-  procedencia: { ...procedencia, inventarioCongeladoEm: hoje, regiao, idioma, custoUsd: custo, sementes: produtos, segmentos, movidos, excluidos, semVolume },
+  procedencia: { ...procedencia, inventarioCongeladoEm: hoje, regiao, idioma, custoUsd: custo, sementes: produtos, segmentos, movidos, foraDoCatalogo, excluidos, semVolume },
   termos: Object.fromEntries(comVolume.map((t) => [t.termo, t.volume])),
 };
 for (const [url, entrada] of [[INVENTARIO, inventario], [DEMANDA, demanda]]) {

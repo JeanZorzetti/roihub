@@ -663,7 +663,8 @@ test("montar: no marca → the page enters no milestone; a marca in week 3 matur
 // through titulo()/h1() and pasted here as literals. No network in the test.
 test("SC-008: Tape Pro 28/09 — week 1 not empty, the pages without marca count 0, page 1 below 100%", async () => {
   const { default: DEMANDAS } = await import("../data/demanda-estimada.json", { with: { type: "json" } });
-  assert.equal(Object.keys(DEMANDAS.tapepro.termos).length, 70);
+  // 70 frozen, 24 out of the catalog (third-party brands, colors, widths, other products): 46
+  assert.equal(Object.keys(DEMANDAS.tapepro.termos).length, 46);
   const d = lerDemanda(DEMANDAS.tapepro, null);
   const crawl = [
     { url: "https://tapepro.roilabs.com.br/produtos/fita-gomada/", titulo: "Fita Gomada Kraft Reforçada com Fios de Nylon 70mm | TapePro", h1: "Fita gomada kraft reforçada com fios de nylon" },
