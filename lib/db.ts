@@ -247,6 +247,27 @@ function ensure(): Promise<unknown> {
         decidido_em TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (projeto, semente, tipo, texto)
       );
+      -- 058/D3: the map's fired cards as last read, so the plan's backlog can take them without
+      -- redoing the map's 32 readings. disparos and sem_leitura are JSON in TEXT; the reader parses.
+      CREATE TABLE IF NOT EXISTS hub_mapa_disparo (
+        projeto TEXT PRIMARY KEY,
+        lido_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+        disparos TEXT NOT NULL,
+        sem_leitura TEXT NOT NULL DEFAULT '[]'
+      );
+      -- 058/D10: the owner's minutes per lever (and per question), ordering only.
+      ALTER TABLE hub_plano ADD COLUMN IF NOT EXISTS esforco TEXT NOT NULL DEFAULT '{}';
+      -- 058/D13: the owner's edits of one backlog task, keyed by lever and target, per project and
+      -- not per version, so they survive a new version. A row whose task no longer exists is ignored.
+      CREATE TABLE IF NOT EXISTS hub_plano_tarefa (
+        projeto TEXT NOT NULL,
+        chave TEXT NOT NULL,
+        responsavel TEXT,
+        esforco TEXT,
+        prazo DATE,
+        atualizado TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, chave)
+      );
       -- 056: uma medida de campo por metrica por visita, do RUM proprio (lib/rum.mjs). Nada aqui
       -- identifica o visitante: sem IP, sem cookie, sem parametro de URL. Sem chave primaria porque
       -- nenhuma linha e lida ou apagada sozinha; o mapa le a janela e a retencao apaga por idade.
@@ -1008,9 +1029,11 @@ export type Plano = {
   semanasAteIndexar: number;
   semanasAteEstabilizar: number;
   pisoApoio: number;
+  /** 058/D10: owner minutes per lever or "pergunta"; a missing key takes the default. */
+  esforco: Record<string, number>;
   estado: EstadoDoPlano;
 };
-export type NovoPlano = Omit<Plano, "versao" | "criado" | "estado">;
+export type NovoPlano = Omit<Plano, "versao" | "criado" | "estado" | "esforco"> & { esforco?: Record<string, number> };
 export type MetaDecidida = {
   projeto: string;
   versao: number;
@@ -1030,10 +1053,18 @@ export async function listPlanos(projeto: string): Promise<Plano[]> {
   await ensure();
   const r = await pool().query(
     `SELECT projeto, versao, to_char(criado, 'YYYY-MM-DD') AS criado, criado_por, to_char(inicio, 'YYYY-MM-DD') AS inicio,
-            capacidade, semanas_indexar, semanas_estabilizar, piso_apoio, estado
+            capacidade, semanas_indexar, semanas_estabilizar, piso_apoio, esforco, estado
        FROM hub_plano WHERE projeto = $1 ORDER BY versao DESC`,
     [projeto]
   );
+  const esforco = (s: string): Record<string, number> => {
+    try {
+      const o = JSON.parse(s);
+      return o && typeof o === "object" && !Array.isArray(o) ? o : {};
+    } catch {
+      return {};
+    }
+  };
   return r.rows.map((x) => ({
     projeto: x.projeto,
     versao: x.versao,
@@ -1044,6 +1075,7 @@ export async function listPlanos(projeto: string): Promise<Plano[]> {
     semanasAteIndexar: x.semanas_indexar,
     semanasAteEstabilizar: x.semanas_estabilizar,
     pisoApoio: x.piso_apoio,
+    esforco: esforco(x.esforco),
     estado: x.estado,
   }));
 }
@@ -1052,10 +1084,10 @@ export async function listPlanos(projeto: string): Promise<Plano[]> {
 export async function criarPlano(p: NovoPlano & { criado: string }): Promise<number> {
   await ensure();
   const r = await pool().query(
-    `INSERT INTO hub_plano (projeto, versao, criado, criado_por, inicio, capacidade, semanas_indexar, semanas_estabilizar, piso_apoio, estado)
-     SELECT $1, COALESCE(MAX(versao), 0) + 1, $2, $3, $4, $5, $6, $7, $8, 'rascunho' FROM hub_plano WHERE projeto = $1
+    `INSERT INTO hub_plano (projeto, versao, criado, criado_por, inicio, capacidade, semanas_indexar, semanas_estabilizar, piso_apoio, esforco, estado)
+     SELECT $1, COALESCE(MAX(versao), 0) + 1, $2, $3, $4, $5, $6, $7, $8, $9, 'rascunho' FROM hub_plano WHERE projeto = $1
      RETURNING versao`,
-    [p.projeto, p.criado, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar, p.pisoApoio]
+    [p.projeto, p.criado, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar, p.pisoApoio, JSON.stringify(p.esforco ?? {})]
   );
   return r.rows[0].versao;
 }
@@ -1064,9 +1096,9 @@ export async function criarPlano(p: NovoPlano & { criado: string }): Promise<num
 export async function setPremissas(projeto: string, versao: number, p: Omit<NovoPlano, "projeto">): Promise<boolean> {
   await ensure();
   const r = await pool().query(
-    `UPDATE hub_plano SET criado_por = $3, inicio = $4, capacidade = $5, semanas_indexar = $6, semanas_estabilizar = $7, piso_apoio = $8
+    `UPDATE hub_plano SET criado_por = $3, inicio = $4, capacidade = $5, semanas_indexar = $6, semanas_estabilizar = $7, piso_apoio = $8, esforco = $9
       WHERE projeto = $1 AND versao = $2 AND estado = 'rascunho'`,
-    [projeto, versao, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar, p.pisoApoio]
+    [projeto, versao, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar, p.pisoApoio, JSON.stringify(p.esforco ?? {})]
   );
   return (r.rowCount ?? 0) > 0;
 }
@@ -1168,6 +1200,49 @@ export async function decidirItem(i: ItemDoNucleo): Promise<void> {
     `INSERT INTO hub_nucleo_item (projeto, semente, tipo, texto, detalhe, estado, decidido_por) VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (projeto, semente, tipo, texto) DO UPDATE SET detalhe = $5, estado = $6, decidido_por = $7, decidido_em = now()`,
     [i.projeto, i.semente, i.tipo, i.texto, i.detalhe, i.estado, i.por]
+  );
+}
+
+// ── Fotografia dos cards do mapa (hub_mapa_disparo) — 058/D3 ───────────────────
+export type DisparoGravado = { chave: string; alavanca: string; estado: string; alvos: string[]; nAlvos: number };
+export type SemLeituraGravada = { chave: string; alavanca: string; motivo: string };
+
+export async function gravarDisparos(projeto: string, disparos: DisparoGravado[], semLeitura: SemLeituraGravada[]): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_mapa_disparo (projeto, lido_em, disparos, sem_leitura) VALUES ($1, now(), $2, $3)
+     ON CONFLICT (projeto) DO UPDATE SET lido_em = now(), disparos = $2, sem_leitura = $3`,
+    [projeto, JSON.stringify(disparos), JSON.stringify(semLeitura)]
+  );
+}
+
+/** `lidoEm` in São Paulo time, "YYYY-MM-DD HH:mm"; `null` when the map never wrote one. */
+export async function lerDisparos(projeto: string): Promise<{ lidoEm: string; disparos: DisparoGravado[]; semLeitura: SemLeituraGravada[] } | null> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT to_char(lido_em AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD HH24:MI') AS lido_em, disparos, sem_leitura FROM hub_mapa_disparo WHERE projeto = $1`,
+    [projeto]
+  );
+  const x = r.rows[0];
+  return x ? { lidoEm: x.lido_em, disparos: JSON.parse(x.disparos), semLeitura: JSON.parse(x.sem_leitura) } : null;
+}
+
+// ── Edições do dono numa tarefa do backlog (hub_plano_tarefa) — 058/D13 ────────
+export type EdicaoDeTarefa = { responsavel: string | null; esforco: number | null; prazo: string | null };
+
+export async function listTarefas(projeto: string): Promise<Map<string, EdicaoDeTarefa>> {
+  await ensure();
+  const r = await pool().query(`SELECT chave, responsavel, esforco, to_char(prazo, 'YYYY-MM-DD') AS prazo FROM hub_plano_tarefa WHERE projeto = $1`, [projeto]);
+  return new Map(r.rows.map((x) => [x.chave, { responsavel: x.responsavel, esforco: x.esforco === null ? null : JSON.parse(x.esforco), prazo: x.prazo }]));
+}
+
+/** Upsert on (projeto, chave); an empty field is stored as NULL and means "the default". */
+export async function editarTarefa(e: { projeto: string; chave: string } & EdicaoDeTarefa): Promise<void> {
+  await ensure();
+  await pool().query(
+    `INSERT INTO hub_plano_tarefa (projeto, chave, responsavel, esforco, prazo) VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (projeto, chave) DO UPDATE SET responsavel = $3, esforco = $4, prazo = $5, atualizado = now()`,
+    [e.projeto, e.chave, e.responsavel, e.esforco === null ? null : JSON.stringify(e.esforco), e.prazo]
   );
 }
 

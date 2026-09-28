@@ -207,8 +207,8 @@ effort, responsible and due week. Change the responsible, and see the change sur
 
 ### Step 1 — the map's snapshot (deploy first, so the data exists before step 5 reads it)
 
-- [ ] T021 [P] [US3] In `lib/db.ts`, add `hub_mapa_disparo` to `ensure()` (data-model.md §1), with the `sem_leitura` column. Add `gravarDisparos(projeto, disparos, semLeitura)`, an upsert with `lido_em = now()`, and `lerDisparos(projeto)` → `{lidoEm, disparos, semLeitura} | null`, with `JSON.parse` on read
-- [ ] T022 [US3] In `app/gsc/mapa/[slug]/page.tsx`, right after `const disparos = avaliar(leituras)` (~line 2151) and only when `dbOn()`:
+- [X] T021 [P] [US3] In `lib/db.ts`, add `hub_mapa_disparo` to `ensure()` (data-model.md §1), with the `sem_leitura` column. Add `gravarDisparos(projeto, disparos, semLeitura)`, an upsert with `lido_em = now()`, and `lerDisparos(projeto)` → `{lidoEm, disparos, semLeitura} | null`, with `JSON.parse` on read
+- [X] T022 [US3] In `app/gsc/mapa/[slug]/page.tsx`, right after `const disparos = avaliar(leituras)` (~line 2151) and only when `dbOn()`:
   - call `gravarDisparos(slug, …)` with no `await`, followed by `.catch(() => {})`;
   - write the `dispara`/`critica` dispatches, each as `{chave, alavanca, estado, alvos, nAlvos}`. These are the fields `plano()` reads;
   - write the `sem-leitura` ones as `{chave, alavanca, motivo}` in `semLeitura` (research D3, analyze U3).
@@ -216,7 +216,7 @@ effort, responsible and due week. Change the responsible, and see the change sur
 
 ### Step 2 — storage for effort and edits
 
-- [ ] T024 [P] [US3] In `lib/db.ts`, make the storage changes for effort and edits:
+- [X] T024 [P] [US3] In `lib/db.ts`, make the storage changes for effort and edits:
   - `ALTER TABLE hub_plano ADD COLUMN IF NOT EXISTS esforco TEXT NOT NULL DEFAULT '{}'`;
   - carry `esforco` through the `Plano` type, `listPlanos` (`JSON.parse`, falling back to `{}`), `criarPlano` and `setPremissas`;
   - add `hub_plano_tarefa` (data-model.md §1), `listTarefas(projeto)` → `Map<chave, {responsavel, esforco, prazo}>` and `editarTarefa(e)` (an upsert on `(projeto, chave)`; empty fields are stored as `NULL`).

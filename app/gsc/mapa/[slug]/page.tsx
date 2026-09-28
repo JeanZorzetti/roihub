@@ -15,7 +15,7 @@ import { motivoDeAusencia } from "@/lib/gsc-hosts.mjs";
 import { modificadoresDeIntencao, posicaoDoTermo } from "@/lib/pagina.mjs";
 import { marcaDeclarada, crescimentoNaoMarca, linhaDeCrescimento, mesesFechados, razaoDeMarca, variacao, ritmoDoSegmentoAtual } from "@/lib/marca.mjs";
 import { descoberta, descobertaLonga } from "@/lib/janelas.mjs";
-import { dbOn, lerCrawlDePagina, lerDiasGsc, lerIndexacao, lerRum, listMarcas, type Apuracao, type LeituraDoRum, type DiaSeparado, type MarcaDoMapa, type PaginaCrawl } from "@/lib/db";
+import { dbOn, gravarDisparos, lerCrawlDePagina, lerDiasGsc, lerIndexacao, lerRum, listMarcas, type Apuracao, type LeituraDoRum, type DiaSeparado, type MarcaDoMapa, type PaginaCrawl } from "@/lib/db";
 import { cadencia, cadenciaDe, CADENCIA_POR_INTENCAO, canonizar, correspondenciaDeIntencao, densidadeContextual, LINKS_POR_MIL_MAX, LINKS_POR_MIL_MIN, taxaAlinhamento, taxaCobertura, taxaIntegridadeDoTitulo, taxaLarguraDoTitulo, TERMO_ATE, TITULO_PX_MAX, TITULO_PX_MIN } from "@/lib/grafo.mjs";
 import { coberturaRich, taxasDeIndexacao, tiposDoBoard } from "@/lib/indexacao-corrida.mjs";
 import { CAP_URLS_PASS_RATE, formatarValor, rodape, SLUGS_DE_CAMPO, VITAIS, vitalPorOrigem } from "@/lib/crux.mjs";
@@ -2149,6 +2149,16 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       nAlvos: porCliques.length,
     };
   const disparos = avaliar(leituras);
+  // 058/D3: the fired cards, and the ruled leaves with no reading, as the plan's backlog will read
+  // them. Fire-and-forget: the write never delays or breaks the map.
+  if (dbOn()) {
+    const ds = Object.values(disparos);
+    gravarDisparos(
+      slug,
+      ds.filter((d) => d.estado === "dispara" || d.estado === "critica").map((d) => ({ chave: d.chave, alavanca: d.alavanca!, estado: d.estado, alvos: d.alvos, nAlvos: d.nAlvos })),
+      ds.filter((d) => d.estado === "sem-leitura" && d.alavanca).map((d) => ({ chave: d.chave, alavanca: d.alavanca!, motivo: d.motivo ?? "sem leitura" })),
+    ).catch(() => {});
+  }
   for (const d of Object.values(disparos)) {
     const no = acharNo(dados.nodeData as No, d.chave);
     if (!no) continue;
