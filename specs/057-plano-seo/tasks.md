@@ -7,7 +7,10 @@ description: "Task list for 057 — Plano de SEO por projeto"
 
 **Input**: Design documents from `specs/057-plano-seo/`
 
-**Prerequisites**: plan.md, spec.md, research.md (D1–D10), data-model.md, contracts/, quickstart.md
+**Prerequisites**: plan.md, spec.md, research.md (D1–D16), data-model.md, contracts/, quickstart.md
+
+Phases 1–7 (T001–T039) are the original plan, implemented in `676e0cc`. Phase 8 (T040–T070) is the
+clarification of 2026-09-28 (research D12–D16, FR-005a, FR-007a, FR-007b, FR-011a, SC-008).
 
 **Tests**: included. SC-004 asks for a test that fails, quickstart §1 lists the cases, and Principle II
 requires `node --test` registered in `package.json`. Test tasks come before the code they cover.
@@ -215,6 +218,132 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 
 ---
 
+## Phase 8: Clarification of 2026-09-28 (research D12–D16)
+
+**Why**: the implemented plan promised 100% of Tape Pro's 70 terms on page 1 from 2 pages that have
+had 0 impressions since 07/08, with an empty week. Four slices, in plan order (plan.md "Order of
+delivery" §6). Each one ships alone.
+
+### 8.1 Store what is already read (Foundational, no screen change)
+
+**Purpose**: the per-URL index verdict and the H1 exist in Postgres before any rule reads them (D12, D14)
+
+- [ ] T040 [P] Write tests in `test/pagina.test.mjs` for `h1(html)` (D14):
+  - the first `<h1>` wins over a second one;
+  - nested tags are stripped and entities decoded (`Fita Gomada &amp; Kraft` → `Fita Gomada & Kraft`);
+  - an `<h1>` inside `<script>` or `<style>` is ignored (run over `semScriptNemStyle`, `lib/pagina.mjs:31`);
+  - no `<h1>` → `null`, never `""`;
+  - `extrair()` returns `h1` next to `titulo`
+- [ ] T041 Implement `h1(html)` in `lib/pagina.mjs`, next to `titulo()` (line 77), and add `h1` to the `extrair()` return (line 295) and its typedef (line 11)
+- [ ] T042 [P] In `lib/db.ts` `ensure()`, add exactly the three statements of `data-model.md` "Added by the clarification": `hub_pagina.h1`, `hub_indexacao_url`, `hub_plano.piso_apoio`. Then:
+  - `PaginaCrawl` (line 1542) gains `h1: string | null`. `gravarCrawlDePagina` (line 1583) inserts it and `lerCrawlDePagina` (line 1670) selects it;
+  - add `gravarIndexacaoPorUrl(projeto, dia, linhas: {url, classe}[])`: DELETE by `(projeto, dia)` plus one multi-row INSERT in one transaction, like `gravarCrawlDePagina`;
+  - add `lerIndexacaoPorUrl(projeto)`: `{dia, classes: Record<url, classe>}` for the latest day, or `null` when there was never a run;
+  - `Plano`, `listPlanos` (line 989), `criarPlano` and `setPremissas` (line 1023) carry `pisoApoio`
+- [ ] T043 In `app/api/indexacao/route.ts`, right after `inspecionarIndexacao` (line 155), call `gravarIndexacaoPorUrl(f.slug, dia, linhas.map((l) => ({ url: l.url, classe: classificar(l) })))`, importing `classificar` from `lib/indexacao-corrida.mjs:91`. It makes 0 extra inspections. The run inspects `amostra(inv.urls, f.cota)`: confirm `tapepro`'s cota covers its 23 URLs. A URL outside the day's sample is `sem-leitura` under the "latest day" read, and the completion note must say so if the cota is smaller than a project's sitemap
+- [ ] T044 In `app/api/paginas/route.ts`, write `extraida.h1` into each `PaginaCrawl` row passed to `gravarCrawlDePagina` (line 241). A page with `extraida === null` writes `h1: null`
+- [ ] T045 Run `npm test` and `npx next build`. Commit T040–T044 alone with `git commit -- <paths>` and push outside 23:30–01:00 and 08:00–08:45 BRT. Then trigger one `POST /api/indexacao` by hand, the way the workflow does, and check that `hub_indexacao_url` has one row per Tape Pro sitemap URL (quickstart §5). No screen changes in this slice
+
+**Checkpoint**: the verdict and the H1 are stored. Nothing on screen changed yet
+
+### 8.2 Pure logic with tests (US1 + US2): the Tape Pro promise drops
+
+**Goal**: an existing page counts only when `ativa`, a page counts only the terms its title or H1 cover, and a non-`ativa` page becomes a week-1 task
+
+**Independent Test**: `node --test test/plano.test.mjs` passes the SC-008 case: the Tape Pro scenario of 28/09 has a non-empty week 1 and no demand meta above the terms covered by title or H1
+
+#### Tests
+
+- [ ] T046 [P] [US1] In `test/plano.test.mjs`, extend the `lerPlano` tests: `pisoApoio` must be an integer from 1 to 100000; `0`, `1.5`, `"abc"` and `100001` → `null`; a missing `pisoApoio` → the default 100
+- [ ] T047 [P] [US1] Write tests for `estadoDaPagina(url, {classes, impressoes})`, one per row of the D13 table:
+  - `indexada` + ≥ 1 impression → `ativa`;
+  - `indexada` + absent from a complete reading → `indexada-sem-impressao`;
+  - `rastreada_nao_indexada`, `descoberta_nao_indexada` or `outra` → `fora-do-indice`, whatever the impressions;
+  - `falha`, a missing URL or `classes === null` → `sem-leitura`, never `fora-do-indice`;
+  - `indexada` + a failed or `truncado` impression reading → `sem-leitura`.
+
+  Also the path match: decoded, no trailing slash, only the project's own hosts. `/pt-BR/x` does not lend its impressions to `/x`
+- [ ] T048 [P] [US1] Write tests for `cobreTermo(termo, texto)` (quickstart §1):
+  - "fita gomada kraft" is covered by "Fita Gomada Kraft 70mm", and by "Kraft Fita Gomada" (any order, no accents, no case);
+  - it is not covered by "Fita Gomada";
+  - `fitas` ≠ `fita`, and `para` counts;
+  - `null` text → `false`.
+
+  Then extend the `cobrir` tests: a term is covered when the title covers it **or** the H1 covers it, each alone. Half the words in the title and half in the H1 → not covered. Each term gets `cobertoPor` (URL or `null`), and each cluster gets `estadoDaPagina`
+- [ ] T049 [P] [US1] Extend the `agendaDePaginas` tests (FR-005a):
+  - an uncovered cluster term with volume ≥ `pisoApoio` → one `apoio-termo` whose `cobre` is the term;
+  - below the floor → nothing;
+  - a term already covered by an existing page (in any state) or by a page earlier in the queue → nothing;
+  - a term the owner excluded never enters;
+  - order: cluster pages first, then `apoio-segmento` and `apoio-termo` together by volume, at most `capacidade` per week
+- [ ] T050 [P] [US1] Extend the `propor` tests (D14, D15):
+  - a demand meta counts a term only once its covering page is mature, and a term covered by several pages takes the earliest maturity;
+  - an existing non-`ativa` page with no marca counts in no meta and no deadline;
+  - the `conta` lists, per page, the terms it covers and their volume (FR-007b);
+  - an `ativa` page still counts as created in week 0
+- [ ] T051 [P] [US2] Extend the `montar` tests (D15):
+  - `fora-do-indice` or `sem-leitura` → week-1 `indexacao` with the URL as a target;
+  - `indexada-sem-impressao` → week-1 `links`, `frescor` and `backlinks`. The test derives this list from `ALAVANCAS` (`degrau === "posicao"`, minus `cobertura` and `marca`), not a literal;
+  - two non-`ativa` pages → one task per lever with both URLs (054 FR-009);
+  - no marca → the page enters no milestone;
+  - a marca `marcado` in week 3 → the page matures at week 3 + `semanasAteEstabilizar`
+- [ ] T052 [US2] Write the SC-008 test in `test/plano.test.mjs`: the Tape Pro scenario of 28/09, with the 70 frozen terms from `data/demanda-estimada.json`, 2 cluster pages whose titles and H1s are copied from the production crawl (`lerCrawlDePagina("tapepro")`, never invented), 0 impressions and no marca. Assert that week 1 is not empty, and that the 180-day `pagina1` meta is below 100% and never above the terms the 2 pages cover by title or H1. Run it against the current `lib/plano.mjs` first and see it fail
+
+#### Implementation
+
+- [ ] T053 [US1] In `lib/plano.mjs`, add `pisoApoio: 100` to `PREMISSAS_PADRAO` (line 30) and accept it in `lerPlano` (line 589) as an integer from 1 to 100000
+- [ ] T054 [US1] Implement `estadoDaPagina(url, {classes, impressoes})` in `lib/plano.mjs`, following the D13 table
+- [ ] T055 [US1] Implement `cobreTermo(termo, texto)` over `normalizar` (line 90), and change `cobrir` (line 199) to fill `cobertoPor` per term from title or H1. Take the page state as an input to `cobrir`, not a lookup inside it
+- [ ] T056 [US1] In `agendaDePaginas` (line 228), add the `apoio-termo` branch behind `pisoApoio`, and give each `PaginaAgendada` its `cobre` words (seed, seed + segment, or the term), as in `data-model.md`. Change `entrega` (line 253) from "terms of mature clusters" to "terms whose covering page is mature". Put the creation-week rule of D15 (first marca `marcado ≥ inicio` on any of the page's levers, else `Infinity`) in one helper that both `propor` and `montar` call, so the two cannot disagree
+- [ ] T057 [US2] `propor` (line 303) and `montar` (line 372) receive `marcas`. `montar` emits the D15 week-1 tasks, merged with the calendar's own week-1 tasks by lever. Run T046–T052: all green
+
+**Checkpoint**: the math no longer promises what the pages cannot deliver. No screen changed yet
+
+### 8.3 Screens (US1, US2, US3)
+
+- [ ] T058 [US1] Invoke `ux-writing` and `accessibility` before writing any string. Settle the copy for: the 4 page states, the `sem-leitura` reasons, "H1 não lido nesta corrida", the support-page candidate mark, the `pisoApoio` label, the week row's pointer line to the map (D16) and the `origem` "disparada pelo mapa". No state by color alone (FR-020), and no "ok", ✓ or "dentro" (055 glossary)
+- [ ] T059 [US1] In `app/gsc/mapa/[slug]/plano/dados.ts`, `dadosDoPlano(slug, partida, {soAtivo, paginas})`:
+  - read `lerIndexacaoPorUrl(slug)` together with the existing `Promise.all` (line 33);
+  - take the page impressions from the `paginas` option (the `gscPaginas` result, or its error/truncation);
+  - compute each covering page's state with `estadoDaPagina`;
+  - pass `marcas` (already read) and `pisoApoio` from the plan version into `propor` (line 55) and `montar` (line 66)
+- [ ] T060 [US1] In `app/gsc/mapa/[slug]/plano/page.tsx`, read `gscPaginas(hosts, janela)` next to `gscTermos` (line 70), in parallel, and pass it into `dadosDoPlano`. Render the ui.md delta in block 2, Demanda:
+  - each covering page with its state in text;
+  - its covered terms and volume;
+  - the uncovered terms, with support-page candidates marked;
+  - "H1 não lido nesta corrida" when the latest crawl has no `h1`.
+
+  A failed or truncated impression reading goes in block 1, the first line, with the reason
+- [ ] T061 [US1] In `app/gsc/mapa/[slug]/plano/actions.ts`, `criarVersao` and `salvarPremissas` (line 31) read `pisoApoio` through `lerPlano`. In `plano/page.tsx`, block 4 (Premissas) gets the `pisoApoio` field in the same form, with the seal "◇ política do dono, sem fonte"
+- [ ] T062 [US2] In `plano/page.tsx`, block 5 (Calendário): week 1 shows the D15 tasks with their URLs. The current week's row ends with the pointer line to the map's block (`/gsc/mapa/[slug]#mapa-plano-h`), with no count. No week reads "nada a fazer"
+- [ ] T063 [P] [US3] Write tests in `test/plano.test.mjs` for `semanaComCards(semana, entradas)` (D16, quickstart §1):
+  - an entry and a calendar task with the same lever → one task, the union of targets and KPIs, `origem: ["calendario", "mapa"]`;
+  - a card-only lever → appended in 054 order (degrau, then lever), `origem: ["mapa"]`;
+  - an `aguardando` entry stays out, and a `voltou` entry enters;
+  - `semana` is not mutated
+- [ ] T064 [US3] Implement `semanaComCards` in `lib/plano.mjs`. It copies no 054 rule or text: it takes the `plano()` entries as they are
+- [ ] T065 [US3] In `app/gsc/mapa/[slug]/page.tsx`:
+  - pass the `paginasGsc` it already reads (line 775) into `dadosDoPlano` (line 2179). That adds 0 reads;
+  - the "Plano · semana N de M" block (line 2492) renders `semanaComCards(semanaAtual, entradas)`, where `entradas` are the `acoes.degraus` entries (line 2171) whose `apresentacao` is `ativa` or `voltou`;
+  - a card-only task shows its origin in text;
+  - the separate `voltou` set (line 2194) is removed if `semanaComCards` now covers "ainda dispara"; otherwise it stays
+
+**Checkpoint**: `/plano` shows state and coverage, and the map's week shows calendar and cards as one list
+
+### 8.4 Polish and production
+
+- [ ] T066 Grep `lib/plano.mjs` and `app/gsc/mapa/[slug]/plano/` for `tapepro`, `atma` and `sirius`: zero hits (FR-019). The only new number in `lib/plano.mjs` is `PREMISSAS_PADRAO.pisoApoio`
+- [ ] T067 Run `npm test` and `npx next build`. Commit 8.2 + 8.3 with `git commit -- <paths>`, push outside the windows, and poll the screen twice for the new text. A 200 is not proof
+- [ ] T068 Quickstart §5 in production, after the next daily crawl fills `hub_pagina.h1`:
+  - `/gsc/mapa/tapepro/plano`: the two product pages show their state, week 1 is not empty, the 90-day `top20` meta counts only what `ativa` pages cover by title or H1, and the demand `conta` lists terms and volume per page;
+  - `/gsc/mapa/tapepro`: the week block shows the map's cards with their origin, one task per lever.
+
+  Then check `/gsc/mapa/atma/plano` and `/gsc/mapa/sirius/plano` still return 200 with no project-specific text
+- [ ] T069 Invoke `ui-verification` on `/gsc/mapa/tapepro/plano` and `/gsc/mapa/tapepro`: 3 widths, a keyboard pass through the Premissas form, the accessibility tree (every page state and task origin in text), a clean console, and no DataForSEO request (SC-005)
+- [ ] T070 Existing plans (plan §6.4, no code). If any version is `ativo`, it stays `ativo`, and `naoCabe` lists each approved meta the new math no longer reaches. Redoing the proposal is a new version that Jean decides (FR-017), never automatic. **T037 waits for this phase**: Jean approves Tape Pro's metas on the new math, not on the 100% promise
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (T001–T002)** → **Foundational (T003–T007)** → stories.
@@ -224,6 +353,11 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 - **US3** depends on US2: an `ativo` version and `montar`.
 - **US4** depends on US1 + US2.
 - **Polish** comes last. T038 is a date, not a task that can run now.
+- **Phase 8** (clarification): 8.1 → deploy + one manual indexing run (T045) → 8.2 → 8.3 → 8.4.
+  - 8.2 can be coded while T045 waits for the deploy, because it is pure and needs no data.
+  - T052 (SC-008) is written before T053–T057 and must fail first.
+  - T065 needs T064. T059 is needed by T060–T062 and T065.
+  - **T037 and T038 move after Phase 8** (T070). T039 (`speckit-analyze`) runs last, over Phase 8 too.
 
 Inside each story: tests → pure functions → script/DB → screen → actions.
 
@@ -233,6 +367,10 @@ Inside each story: tests → pure functions → script/DB → screen → actions
 - US1: T008, T009 and T010 are all in `test/plano.test.mjs`. They can be written in one sitting, but they are not parallel across agents. T018 (map page) ∥ T011–T016.
 - US2: T022 ∥ T023 (same file, independent `describe` blocks).
 - The script (T014–T016) ∥ the pure functions (T011–T013), except that the script imports `agrupar` from T011.
+- Phase 8.1: T040 ∥ T042 (different files). T043 and T044 need T042.
+- Phase 8.2: T046–T051 are all in `test/plano.test.mjs`, one sitting, independent `describe` blocks.
+  T063 can join that sitting.
+- Phase 8.3: T058 (copy) ∥ T059 (data). T060–T062 share `plano/page.tsx`, so they are sequential.
 
 ## Implementation Strategy
 
