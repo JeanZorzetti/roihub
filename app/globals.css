@@ -1673,6 +1673,20 @@ textarea.ag-in { resize: vertical; font: inherit; font-size: 13px; }
 [data-info="gsc"] .mapa-marca-form fieldset { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; border: 0; font-size: 12px; color: var(--muted); }
 [data-info="gsc"] .mapa-marca-form legend { float: left; padding: 0; margin-right: 2px; font-weight: 700; color: var(--ink2); }
 [data-info="gsc"] .mapa-marca-form select { font: inherit; min-height: 26px; }
+/* information-design · lista de metas + calendário · responde: o que fazer esta semana e onde chegar
+   em 90 e 180 dias? · fonte: data/demanda-estimada.json + hub_plano/hub_plano_meta + crawl · 2026-09-28
+   057 — the warning is the only boxed element; the current week is marked in words ("esta semana"),
+   and the border only repeats it (FR-020). No new color. */
+[data-info="gsc"] .plano-aviso { margin: 12px 0; padding: 8px 12px; border: 1px solid var(--ink2); border-radius: 6px; font-size: 14px; line-height: 1.5; max-width: 90ch; }
+[data-info="gsc"] .plano-aviso ul { margin: 0; padding-left: 4px; list-style: none; }
+[data-info="gsc"] .plano-valor { width: 8em; font: inherit; min-height: 26px; }
+[data-info="gsc"] .plano-semanas { list-style: none; margin: 0; padding: 0; max-width: 90ch; }
+[data-info="gsc"] .plano-semanas > li { margin: 0 0 10px; padding-left: 10px; border-left: 2px solid var(--grid); font-size: 13px; }
+[data-info="gsc"] .plano-semanas > li.plano-agora { border-left: 4px solid var(--ink); }
+[data-info="gsc"] .plano-premissas fieldset { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin: 8px 0 0; padding: 0; border: 0; font-size: 12px; color: var(--muted); }
+[data-info="gsc"] .plano-premissas legend { padding: 0 0 4px; font-weight: 700; color: var(--ink2); }
+[data-info="gsc"] .plano-premissas label { display: flex; flex-direction: column; gap: 2px; }
+[data-info="gsc"] .plano-premissas input, [data-info="gsc"] .plano-premissas select { font: inherit; min-height: 30px; width: 11em; }
 [data-info="gsc"] .mapa-legenda { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; color: var(--muted); max-width: 90ch; }
 [data-info="gsc"] .mapa-legenda .mb-tag { margin: 0 4px 0 0; }
 

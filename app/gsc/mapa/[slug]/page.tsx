@@ -24,6 +24,8 @@ import { leituraRum, passRateMisto, valoresDe } from "@/lib/rum.mjs";
 import { ALAVANCAS, avaliar, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDADE_DO_BOARD, REGRAS, regraEmTexto, textoDoDegrauVazio } from "@/lib/proxima-acao.mjs";
 import { RESPONSAVEIS, rotuloResp, todaySP } from "@/lib/agenda.mjs";
 import { desmarcar, marcar } from "./actions";
+import { dadosDoPlano } from "./plano/dados";
+import { comparar, ESTADOS, feita, leiturasDoPlano, nomeDe } from "@/lib/plano.mjs";
 
 import { Tabs } from "../../../tabs";
 import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
@@ -2062,7 +2064,19 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   // da meta do board, porque a posição do GSC só conta as buscas em que o site apareceu.
   const tamNode = acharNo(dados.nodeData as No, "tamBusca");
   if (tamNode) {
-    const est = (DEMANDAS as Record<string, { procedencia: { congeladoEm: string; inventarioCongeladoEm: string; janelas: { inicio: string; fim: string; impressoes: number }[] }; termos: Record<string, number> } | undefined>)[slug];
+    // 057 — two sources: the 050 GSC impression floor (`janelas`) or the Google Ads volume from
+    // DataForSEO (`fonte`, `consultadoEm`). Only the floor makes the ratio a CEILING.
+    const est = (
+      DEMANDAS as unknown as Record<
+        string,
+        | {
+            procedencia: { congeladoEm: string; inventarioCongeladoEm: string; fonte?: string; consultadoEm?: string; regiao?: string; janelas?: { inicio: string; fim: string; impressoes: number }[] };
+            termos: Record<string, number>;
+          }
+        | undefined
+      >
+    )[slug];
+    const pago = String(est?.procedencia.fonte ?? "").startsWith("dataforseo");
     const falta = !inventario
       ? "inventário de termos não declarado para este projeto"
       : !est
@@ -2082,8 +2096,17 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
         topic: `∅ não estimado · ${falta ?? "a estimativa de demanda está vazia"}`,
         note: "A estimativa divide as impressões da janela pelo pico de impressões de cada termo do inventário, congelado por `scripts/estimar-demanda.mjs`. Faltando o inventário, a estimativa ou a leitura, o número não existe, e “não estimado” nunca é 0%. Se o inventário for refeito, a estimativa tem de ser refeita junto: pico de um inventário não divide impressão de outro.",
       };
-    } else {
+    } else if (pago) {
       const p = est!.procedencia;
+      const quando = (p.consultadoEm ?? p.congeladoEm).slice(0, 10);
+      const top = c.buracos.slice(0, 5);
+      filho = {
+        id: "tamBusca-estimado",
+        topic: `Estimativa: ${pct1(c.fracao)} da demanda · ${br(c.impressoes)} impressões em 28 dias ÷ ${br(c.demanda)} buscas/mês do Google Ads (DataForSEO, consultado em ${quando})`,
+        note: `${br(c.impressoes)} impressões dos ${br(c.termos)} termos do inventário na janela ${janela.inicio} → ${janela.fim} (28 dias, fecha em D-3), somados os hosts declarados, divididas pelo volume mensal de busca de cada termo no Google Ads (${p.regiao ?? "região não gravada"}), consultado pela DataForSEO em ${quando} e congelado por \`scripts/consultar-demanda.mjs\`. ESTIMATIVA: o volume do Google Ads é média mensal arredondada, e 28 dias não são um mês exato. Não é teto: o denominador é o volume de mercado, não um piso de impressões. Maiores buracos: ${top.map((b) => `«${b.termo}» ${br(b.hoje)} de ${br(b.pico)}`).join(", ")}. Meta do board: 60% a 80% dos clusters de maior volume. É meta, não régua.`,
+      };
+    } else {
+      const p = est!.procedencia as { congeladoEm: string; janelas: { inicio: string; fim: string; impressoes: number }[] };
       const linhas = (termosGsc as { linhas: { termo: string; posicao: number | null }[] }).linhas;
       const naFronteira = new Set(linhas.filter((l) => typeof l.posicao === "number" && l.posicao >= 1 && l.posicao <= 20).map((l) => l.termo));
       const porPosicao = c.buracos.filter((b) => naFronteira.has(b.termo)).reduce((a, b) => a + b.pico, 0) / c.demanda;
@@ -2101,11 +2124,14 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       };
     }
     // The estimate is a CEILING: below the target it proves "below"; at or above it proves nothing.
+    // 057: with the Google Ads volume the ratio is not a ceiling, so it reads both ways.
     leituras.tamBusca = !c
       ? ausenteDe(filho)
-      : c.fracao >= REGRAS.tamBusca!.limiar
-        ? { indecisa: "a estimativa é teto e passa da meta" }
-        : { valor: c.fracao, texto: `${pct1(c.fracao)} da demanda estimada`, fonte: fonteGsc, ressalva: "estimativa, teto" };
+      : pago
+        ? { valor: c.fracao, texto: `${pct1(c.fracao)} da demanda`, fonte: fonteGsc, ressalva: `volume Google Ads (DataForSEO), consultado em ${(est!.procedencia.consultadoEm ?? est!.procedencia.congeladoEm).slice(0, 10)}` }
+        : c.fracao >= REGRAS.tamBusca!.limiar
+          ? { indecisa: "a estimativa é teto e passa da meta" }
+          : { valor: c.fracao, texto: `${pct1(c.fracao)} da demanda estimada`, fonte: fonteGsc, ressalva: "estimativa, teto" };
     // À FRENTE da definição, como as folhas vizinhas. Sem glifo de veredito: é estimativa e não tem régua.
     tamNode.children = [filho, ...(tamNode.children ?? [])];
   }
@@ -2147,6 +2173,28 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
   const diaMes = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
   const primeiroNome = (id: string) => rotuloResp(id).split(" ")[0];
   const nomesDe = (ds: { chave: string; motivo?: string | null }[]) => ds.map((d) => `${cat[d.chave].nome} (${d.motivo})`).join("; ");
+
+  // ── 057: the active plan's week against the readings above. No DataForSEO request (SC-005); one
+  // extra Search Console read, the same window shifted 7 days back, and only with an active plan (D11).
+  const planoMapa = dbOn() ? await dadosDoPlano(slug, null, { soAtivo: true }).catch(() => null) : null;
+  const planoAtivo = planoMapa?.ativo && planoMapa.montado ? planoMapa : null;
+  const semanaDoPlano =
+    planoAtivo && planoAtivo.semanaAtual >= 1 && planoAtivo.semanaAtual <= planoAtivo.semanas ? planoAtivo.montado!.semanas[planoAtivo.semanaAtual - 1] : null;
+  let comparacoes: ReturnType<typeof comparar> = [];
+  if (planoAtivo && semanaDoPlano) {
+    const estPlano = (DEMANDAS as unknown as Record<string, { procedencia: { fonte?: string }; termos: Record<string, number> } | undefined>)[slug];
+    const demandaPlano = estPlano ? { termos: estPlano.termos, paga: String(estPlano.procedencia.fonte ?? "").startsWith("dataforseo") } : null;
+    const motivoTermos = !termosGsc ? motivoDeAusencia({ ligado: gscLigado(), hosts }) : "erro" in termosGsc ? `a leitura do Search Console falhou (${termosGsc.erro})` : "";
+    const agora = leiturasDoPlano(termosGsc && !("erro" in termosGsc) ? termosGsc.linhas : null, inventario, demandaPlano, motivoTermos);
+    const termosAntes = semanaDoPlano.n > 1 ? await gscTermos(hosts, descoberta(Date.now() - 7 * 864e5)) : null;
+    const anteriores =
+      termosAntes && !("erro" in termosAntes) ? leiturasDoPlano(termosAntes.linhas, inventario, demandaPlano) : null;
+    comparacoes = comparar(planoAtivo.montado!.semanas, agora, semanaDoPlano.n, anteriores);
+  }
+  const voltou = new Set(acoes.degraus.flatMap((g) => g.entradas.filter((e) => e.apresentacao === "voltou").map((e) => e.alavanca)));
+  const idxLimpa = leituras.indexacaoLimpa && "valor" in leituras.indexacaoLimpa ? leituras.indexacaoLimpa.valor : null;
+  const fmtPlano = (k: string, v: number) =>
+    ["top20", "tamBusca", "pagina1"].includes(k) ? pct1(v) : k === "cliques" ? `${br(Math.round(v))} cliques` : k === "impressoes" ? `${br(Math.round(v))} impressões` : br(v);
 
   // ── 051/US1: a cadeia depois do clique, com a conta de /okr/atma ───────────────────────────────
   // Só CONTAGENS (FR-012): valor em reais não entra no mapa. E nenhuma taxa até o clique (FR-003) —
@@ -2436,6 +2484,63 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               página, em {apuradoEm}.
             </p>
           </section>
+
+          {/* 057 — "Plano · semana N de M": only with an active version; the comparison lives where the
+              readings live. The state is glyph + words, never color (FR-015, FR-020). */}
+          {planoAtivo ? (
+            <section className="ficha-bloco" aria-labelledby="mapa-plano-h">
+              <h2 className="ficha-bloco-h" id="mapa-plano-h">
+                Plano · {semanaDoPlano ? `semana ${semanaDoPlano.n} de ${planoAtivo.semanas}` : planoAtivo.semanaAtual < 1 ? `começa em ${diaMes(planoAtivo.inicio)}` : "terminou"}
+              </h2>
+              <p className="foot">
+                Versão {planoAtivo.ativo!.versao} ativa, início em {diaMes(planoAtivo.inicio)}. <a href={`/gsc/mapa/${slug}/plano`}>Abrir o plano de SEO</a>.
+              </p>
+              {semanaDoPlano ? (
+                <>
+                  {semanaDoPlano.tarefas.length ? (
+                    <ul className="mapa-acao-motivos">
+                      {semanaDoPlano.tarefas.map((t) => {
+                        const m = planoAtivo.marcas.find((x) => x.alavanca === t.alavanca);
+                        return (
+                          <li key={t.alavanca}>
+                            <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.join(", ")} · {primeiroNome(t.responsavel)}
+                            {voltou.has(t.alavanca) && m
+                              ? ` · Ainda dispara · feito em ${diaMes(m.marcado)}, o prazo de releitura venceu em ${diaMes(m.reler)}`
+                              : feita(t, semanaDoPlano, planoAtivo.marcas) && m
+                                ? ` · feito em ${diaMes(m.marcado)} por ${primeiroNome(m.responsavel)}`
+                                : " · sem marca de feito"}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="mapa-degrau-vazio">Nenhuma página nova agendada nesta semana.</p>
+                  )}
+                  <ul className="mapa-acao-motivos">
+                    {comparacoes.map((c) => (
+                      <li key={c.chave}>
+                        {ESTADOS[c.estado as keyof typeof ESTADOS].glifo} <strong>{nomeDe(c.chave)}</strong>: {ESTADOS[c.estado as keyof typeof ESTADOS].texto}
+                        {c.marco !== null ? ` · marco ${fmtPlano(c.chave, c.marco)}` : ""}
+                        {c.lido !== null ? ` · lido ${fmtPlano(c.chave, c.lido)}` : ""}
+                        {c.motivo ? ` · ${c.motivo}` : ""}
+                        {c.sugerirRefazer ? " · abaixo do marco duas semanas seguidas: vale refazer a proposta desta meta numa nova versão" : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+              <p className="foot">
+                As demais metas do plano são o limiar das regras deste mapa: quando uma fica abaixo, ela dispara em &ldquo;O que fazer primeiro&rdquo;, acima.
+                {idxLimpa !== null && idxLimpa > 0.9
+                  ? ` A indexação limpa está em ${pct1(idxLimpa)}, acima de 90%: dá para considerar subir a capacidade (hoje ${planoAtivo.premissas.capacidade} páginas por semana). A leitura é do sitemap inteiro: o hub não separa as páginas do plano.`
+                  : ""}
+              </p>
+            </section>
+          ) : (
+            <p className="foot">
+              Sem plano de SEO ativo para {nomeCurto}. <a href={`/gsc/mapa/${slug}/plano`}>Abrir o plano</a>.
+            </p>
+          )}
 
           <section className="ficha-bloco" aria-labelledby="mapa-ler-h">
             <h2 className="ficha-bloco-h" id="mapa-ler-h">

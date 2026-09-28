@@ -190,6 +190,36 @@ function ensure(): Promise<unknown> {
         leituras TEXT NOT NULL,
         PRIMARY KEY (projeto, alavanca)
       );
+      -- 057: uma linha por versao do plano de SEO. Proposta nova e versao nova; nada e
+      -- sobrescrito (FR-017). estado: rascunho | ativo | encerrado.
+      CREATE TABLE IF NOT EXISTS hub_plano (
+        projeto TEXT NOT NULL,
+        versao INT NOT NULL,
+        criado DATE NOT NULL,
+        criado_por TEXT NOT NULL,
+        inicio DATE NOT NULL,
+        capacidade INT NOT NULL,
+        semanas_indexar INT NOT NULL,
+        semanas_estabilizar INT NOT NULL,
+        estado TEXT NOT NULL,
+        PRIMARY KEY (projeto, versao)
+      );
+      -- 057: a decisao do dono sobre cada meta proposta. A proposta e recalculada; a linha guarda
+      -- o valor proposto no dia da decisao (FR-009). proposto e valor sao numero JSON em TEXT.
+      CREATE TABLE IF NOT EXISTS hub_plano_meta (
+        projeto TEXT NOT NULL,
+        versao INT NOT NULL,
+        chave TEXT NOT NULL,
+        prazo INT NOT NULL,
+        origem TEXT NOT NULL,
+        proposto TEXT NOT NULL,
+        valor TEXT,
+        conta TEXT NOT NULL,
+        estado TEXT NOT NULL,
+        decidido_por TEXT NOT NULL,
+        decidido_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (projeto, versao, chave, prazo)
+      );
       -- 056: uma medida de campo por metrica por visita, do RUM proprio (lib/rum.mjs). Nada aqui
       -- identifica o visitante: sem IP, sem cookie, sem parametro de URL. Sem chave primaria porque
       -- nenhuma linha e lida ou apagada sozinha; o mapa le a janela e a retencao apaga por idade.
@@ -925,6 +955,138 @@ export async function setMarca(m: MarcaDoMapa): Promise<void> {
 export async function delMarca(projeto: string, alavanca: string): Promise<void> {
   await ensure();
   await pool().query(`DELETE FROM hub_mapa_marca WHERE projeto = $1 AND alavanca = $2`, [projeto, alavanca]);
+}
+
+// ── Plano de SEO (hub_plano + hub_plano_meta) — 057 ────────────────────────────
+export type EstadoDoPlano = "rascunho" | "ativo" | "encerrado";
+export type Plano = {
+  projeto: string;
+  versao: number;
+  criado: string;
+  criadoPor: string;
+  inicio: string;
+  capacidade: number;
+  semanasAteIndexar: number;
+  semanasAteEstabilizar: number;
+  estado: EstadoDoPlano;
+};
+export type NovoPlano = Omit<Plano, "versao" | "criado" | "estado">;
+export type MetaDecidida = {
+  projeto: string;
+  versao: number;
+  chave: string;
+  prazo: number;
+  origem: string;
+  proposto: number;
+  valor: number | null;
+  conta: string;
+  estado: "aprovada" | "editada" | "recusada";
+  decididoPor: string;
+  decididoEm?: string;
+};
+
+/** Newest version first. */
+export async function listPlanos(projeto: string): Promise<Plano[]> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT projeto, versao, to_char(criado, 'YYYY-MM-DD') AS criado, criado_por, to_char(inicio, 'YYYY-MM-DD') AS inicio,
+            capacidade, semanas_indexar, semanas_estabilizar, estado
+       FROM hub_plano WHERE projeto = $1 ORDER BY versao DESC`,
+    [projeto]
+  );
+  return r.rows.map((x) => ({
+    projeto: x.projeto,
+    versao: x.versao,
+    criado: x.criado,
+    criadoPor: x.criado_por,
+    inicio: x.inicio,
+    capacidade: x.capacidade,
+    semanasAteIndexar: x.semanas_indexar,
+    semanasAteEstabilizar: x.semanas_estabilizar,
+    estado: x.estado,
+  }));
+}
+
+/** A new version, always `rascunho`, numbered after the last one of the project. */
+export async function criarPlano(p: NovoPlano & { criado: string }): Promise<number> {
+  await ensure();
+  const r = await pool().query(
+    `INSERT INTO hub_plano (projeto, versao, criado, criado_por, inicio, capacidade, semanas_indexar, semanas_estabilizar, estado)
+     SELECT $1, COALESCE(MAX(versao), 0) + 1, $2, $3, $4, $5, $6, $7, 'rascunho' FROM hub_plano WHERE projeto = $1
+     RETURNING versao`,
+    [p.projeto, p.criado, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar]
+  );
+  return r.rows[0].versao;
+}
+
+/** Premises change only while the version is a draft: an active plan changes by a new version. */
+export async function setPremissas(projeto: string, versao: number, p: Omit<NovoPlano, "projeto">): Promise<boolean> {
+  await ensure();
+  const r = await pool().query(
+    `UPDATE hub_plano SET criado_por = $3, inicio = $4, capacidade = $5, semanas_indexar = $6, semanas_estabilizar = $7
+      WHERE projeto = $1 AND versao = $2 AND estado = 'rascunho'`,
+    [projeto, versao, p.criadoPor, p.inicio, p.capacidade, p.semanasAteIndexar, p.semanasAteEstabilizar]
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+export async function listMetas(projeto: string, versao: number): Promise<MetaDecidida[]> {
+  await ensure();
+  const r = await pool().query(
+    `SELECT projeto, versao, chave, prazo, origem, proposto, valor, conta, estado, decidido_por,
+            to_char(decidido_em AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD HH24:MI') AS decidido_em
+       FROM hub_plano_meta WHERE projeto = $1 AND versao = $2`,
+    [projeto, versao]
+  );
+  return r.rows.map((x) => ({
+    projeto: x.projeto,
+    versao: x.versao,
+    chave: x.chave,
+    prazo: x.prazo,
+    origem: x.origem,
+    proposto: JSON.parse(x.proposto),
+    valor: x.valor === null ? null : JSON.parse(x.valor),
+    conta: x.conta,
+    estado: x.estado,
+    decididoPor: x.decidido_por,
+    decididoEm: x.decidido_em,
+  }));
+}
+
+/** Upsert, only while the version is `rascunho` (FR-017, SC-006). Returns whether it wrote. */
+export async function decidirMeta(m: MetaDecidida): Promise<boolean> {
+  await ensure();
+  const r = await pool().query(
+    `INSERT INTO hub_plano_meta (projeto, versao, chave, prazo, origem, proposto, valor, conta, estado, decidido_por)
+     SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+      WHERE EXISTS (SELECT 1 FROM hub_plano WHERE projeto = $1 AND versao = $2 AND estado = 'rascunho')
+     ON CONFLICT (projeto, versao, chave, prazo) DO UPDATE
+       SET origem = $5, proposto = $6, valor = $7, conta = $8, estado = $9, decidido_por = $10, decidido_em = now()`,
+    [m.projeto, m.versao, m.chave, m.prazo, m.origem, JSON.stringify(m.proposto), m.valor === null ? null : JSON.stringify(m.valor), m.conta, m.estado, m.decididoPor]
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+/** One transaction: the previous `ativo` becomes `encerrado`, this draft becomes `ativo`. */
+export async function ativarPlano(projeto: string, versao: number): Promise<boolean> {
+  await ensure();
+  const cliente = await pool().connect();
+  try {
+    await cliente.query("BEGIN");
+    const r = await cliente.query(`UPDATE hub_plano SET estado = 'ativo' WHERE projeto = $1 AND versao = $2 AND estado = 'rascunho'`, [projeto, versao]);
+    if (!r.rowCount) {
+      await cliente.query("ROLLBACK");
+      return false;
+    }
+    await cliente.query(`UPDATE hub_plano SET estado = 'encerrado' WHERE projeto = $1 AND versao <> $2 AND estado = 'ativo'`, [projeto, versao]);
+    await cliente.query("COMMIT");
+    return true;
+  } catch (e) {
+    await cliente.query("ROLLBACK");
+    throw e;
+  } finally {
+    cliente.release();
+  }
 }
 
 // ── Vitais de campo próprios (hub_vitais) — 056 ────────────────────────────────
