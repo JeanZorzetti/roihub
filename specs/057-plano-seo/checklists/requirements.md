@@ -34,5 +34,5 @@
 - Names of hub files (`SLUGS_DE_BUSCA`, `lib/kpis-busca.mjs#BENCHMARK`, `insights.json`) and the volume
   source (DataForSEO) appear only in "O fato que abre esta spec" and "Assumptions", as provenance of the
   numbers. This follows the house precedent of 054/055. No FR prescribes a stack.
-- Seal wording "◇ premissa do plano, sem fonte" (FR-013) is new. 054 said "no new seal", but that rule was
-  about the map. Confirm in `/speckit-clarify` if the owner wants it folded into an existing seal.
+- Clarify 28/09: maturation premises reuse the existing seal "◇ política do dono, sem fonte" (FR-013);
+  no new seal, consistent with 054.

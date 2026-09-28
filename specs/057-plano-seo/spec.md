@@ -50,6 +50,23 @@ Lido em 28/09/2026:
   mapa já mede.
 - Q: De onde vêm as metas de um projeto do zero? → A: Do volume de busca do nicho. O hub propõe e o dono
   aprova ou edita cada meta.
+- Q: Quantas páginas novas por semana a Tape Pro consegue publicar? → A: O que o hub recomendar. A
+  capacidade inicial é **3 páginas novas por semana** (1 página de cluster + 2 de apoio), produzidas à
+  mão pelo dono. Motivo: o site tem 23 URLs, o crawl tem só 62,2% de respostas OK e site novo indexa
+  devagar. Três páginas indexadas por semana valem mais que sete na fila de "descoberta, não indexada",
+  e volume alto de páginas parecidas cai na política de conteúdo em escala do Google. A capacidade é
+  editável, e o plano sobe o número quando a indexação limpa das páginas novas passar de 90%.
+- Q: Qual a fonte do volume de busca, já que o crédito grátis da DataForSEO acabou (saldo US$ −0,003 em
+  28/09)? → A: Recarregar US$ 50 na DataForSEO e usar a API. O volume é exato, não em faixa, e há uma
+  fonte só.
+- Q: Qual é a posição-alvo das metas que vêm da demanda? → A: A mesma para todos os clusters, em dois
+  degraus: Top 20 aos 90 dias e Top 10 (faixa 7–10 da régua) aos 180 dias. Não há consulta de
+  dificuldade de palavra.
+- Q: As premissas de maturação ganham selo novo? → A: Não. Usam o selo existente "◇ política do dono,
+  sem fonte" (FR-013).
+- Q: Como os termos viram clusters? → A: Por regra fixa: o termo entra no cluster do termo semente que
+  ele contém, e o dono move o que ficar errado antes de aprovar. Não há sobreposição de SERP nem LLM
+  (FR-005).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -191,29 +208,41 @@ de zero.
   segmentos, foco editorial). O dono pode acrescentar ou tirar termos semente antes da consulta.
 - **FR-003**: O volume de busca DEVE ser consultado **só por ação explícita do dono** e gravado com data,
   região, idioma, fonte e custo. Abrir o plano ou o mapa NÃO DEVE consultar volume.
+- **FR-003a**: Antes de consultar, o hub DEVE mostrar o número de termos, o custo estimado e o saldo da
+  fonte. Com saldo insuficiente, o hub NÃO DEVE consultar e DEVE dizer quanto falta.
 - **FR-004**: A região padrão da consulta DEVE ser a que o projeto declara servir (Tape Pro:
   `areaServed: "BR"`, Brasil). O dono pode trocar antes de consultar.
 - **FR-005**: Os termos DEVEM ser agrupados em clusters, e cada cluster DEVE mostrar a soma do volume, o
-  número de termos e a página do site que o cobre, ou "sem página".
+  número de termos e a página do site que o cobre, ou "sem página". O agrupamento DEVE seguir uma regra
+  fixa, sem custo e sem variar entre rodadas: o termo entra no cluster do termo semente que ele contém.
+  Se contém um produto e um segmento, entra no cluster do produto, marcado com o segmento (candidato a
+  página de apoio). Se contém dois produtos, entra no do termo semente mais longo. Se não contém nenhum,
+  fica em "sem cluster" até o dono decidir. O dono DEVE poder mover um termo de cluster antes de aprovar,
+  e a mudança fica gravada.
 - **FR-006**: Cada um dos 18 KPIs DEVE ter exatamente uma meta proposta com uma origem declarada:
   **demanda** (KPIs contados em impressões, cliques, consultas ou termos), **régua publicada** (onde o
   hub já tem régua, a meta é a régua) ou **board** (o resto, com o selo "◇ meta do board, sem fonte").
 - **FR-007**: Toda meta com origem na demanda DEVE mostrar a conta: volume do cluster, posição-alvo,
   fração esperada naquela posição e prazo. A fração de clique por posição DEVE ser a mesma régua de CTR
-  que o hub já usa para julgar. Nenhum número dessa régua é escrito duas vezes.
+  que o hub já usa para julgar. Nenhum número dessa régua é escrito duas vezes. A posição-alvo é a mesma
+  para todos os clusters: **Top 20 no prazo de 90 dias** e **faixa 7–10 no prazo de 180 dias**. A meta
+  de clique de 180 dias usa a fração da faixa 7–10. A de 90 dias não conta clique fora da página 1,
+  porque não há régua para isso.
 - **FR-008**: Cada meta DEVE ter prazo. O padrão é 90 e 180 dias a partir da aprovação, e o dono pode
   mudar.
 - **FR-009**: O dono DEVE aprovar, editar ou recusar cada meta separadamente. O hub DEVE gravar quem
   decidiu, quando, o valor proposto e o valor final. Editar uma meta NÃO DEVE apagar o responsável nem o
   histórico das tarefas já ligadas a ela.
-- **FR-010**: O plano DEVE ter uma capacidade declarada (páginas novas por semana e quem executa). Nenhuma
-  semana DEVE ter mais criação de página do que a capacidade.
+- **FR-010**: O plano DEVE ter uma capacidade declarada (páginas novas por semana e quem executa), com
+  padrão de 3 por semana. Nenhuma semana DEVE ter mais criação de página do que a capacidade. O plano
+  DEVE sugerir aumentar a capacidade só quando a indexação limpa das páginas criadas pelo plano passar de
+  90%, e nunca a aumenta sozinho.
 - **FR-011**: As tarefas DEVEM seguir a ordem de ataque e as alavancas da 054, sem criar alavanca nova. A
   criação de página de cluster é a alavanca "cobertura", já existente.
 - **FR-012**: Uma tarefa que depende de página (links internos, título, schema, frescor) NÃO DEVE ser
   agendada antes da semana em que a página do cluster nasce.
 - **FR-013**: Os marcos semanais DEVEM usar premissas de maturação declaradas na tela (semanas até indexar
-  e semanas até a posição estabilizar), com o selo "◇ premissa do plano, sem fonte". O dono pode editar.
+  e semanas até a posição estabilizar), com o selo existente "◇ política do dono, sem fonte". O dono pode editar. Nenhum selo novo é criado.
 - **FR-014**: Cada tarefa DEVE ter alavanca, alvo, responsável (Jean ou Maria, como na 055), semana e os
   KPIs que ela move, com o marco de cada um.
 - **FR-015**: O plano DEVE comparar cada marco vencido com a leitura do mapa e dar um de cinco estados:
@@ -267,18 +296,21 @@ de zero.
 
 - **Fonte de volume**: Google Ads Search Volume via DataForSEO, a mesma fonte do OpenSEO, que não tem API
   própria. A decisão de 28/09/2026 (opção c) abre exceção **só para o volume de busca** à regra do handoff
-  de deixar bases pagas de fora até o portfólio faturar. Backlinks pagos continuam fora. O custo esperado
-  é de centavos de dólar por consulta, com até 1.000 termos por requisição.
+  de deixar bases pagas de fora até o portfólio faturar. Backlinks pagos continuam fora. O crédito grátis
+  acabou (saldo US$ −0,003 em 28/09), e o dono decidiu recarregar US$ 50, a recarga mínima. Cada consulta
+  custa em torno de US$ 0,05 a 0,09, com até 1.000 termos por requisição, então a recarga cobre centenas
+  de propostas.
 - A chave da DataForSEO hoje mora no `.env` do OpenSEO local. Levá-la para o ambiente do hub é tarefa do
   plano de implementação, seguindo o Princípio V (validar na entrada, `503` só com o nome da variável).
 - A Tape Pro é B2B nacional (`areaServed: "BR"`, foco "comprador e distribuidor, não consumidor final").
   Termos de consumidor final são candidatos a sair antes da aprovação.
 - A fração de visibilidade por posição usa a régua de CTR do hub (`lib/kpis-busca.mjs#BENCHMARK`). Ela
   cobra menos que a tabela do board, e a meta sai conservadora de propósito.
-- As premissas de maturação começam como estimativa do dono, com selo "sem fonte", e são refinadas com o
+- As premissas de maturação começam como estimativa do dono, com o selo "◇ política do dono, sem fonte", e são refinadas com o
   que a própria Tape Pro medir. O plano não finge que elas têm fonte.
-- O robô de autopublicação está parado desde 29/07. A capacidade inicial da Tape Pro é o que o dono
-  declarar para produção manual, até o robô voltar. Religar o robô não faz parte desta spec.
+- O robô de autopublicação está parado desde 29/07. A capacidade inicial da Tape Pro é de 3 páginas por
+  semana à mão (clarificação de 28/09). Religar o robô não faz parte desta spec. Se ele voltar, as
+  páginas dele contam na leitura, mas não na capacidade do plano.
 - O hub planeja e acompanha, mas não executa: nenhum site é alterado por esta feature.
 
 ## Fora do escopo
