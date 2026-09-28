@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   if (faltando.length) return Response.json({ error: "ambiente incompleto", faltando }, { status: 503 });
 
   // Princípio I: os projetos vêm de `listProjects()`, nunca de `data/projects.json` — e a corrida
-  // percorre SÓ os de `SLUGS_DE_BUSCA` (hoje, a Atma). O board de busca é dela; varrer os 35 era
+  // percorre SÓ os de `SLUGS_DE_BUSCA`. O board de busca é dela; varrer os 35 era
   // escopo errado, não escopo generoso.
   const projetos = await projetosDeBusca();
 

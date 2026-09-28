@@ -123,8 +123,10 @@ export async function listProjects(): Promise<Project[]> {
  *  052 (21/09/2026): o Sirius volta ao escopo para ter mapa — a mesma lista decide quem tem
  *  corrida e quem tem mapa (FR-003). Lista e não constante porque "primeiras servidas" é
  *  sequência, não exclusão permanente: abrir para o terceiro projeto é acrescentar um slug aqui,
- *  sem tocar em rota nenhuma. */
-export const SLUGS_DE_BUSCA = ["atma", "sirius"];
+ *  sem tocar em rota nenhuma.
+ *
+ *  057 (28/09/2026): a Tapepro entra para ganhar mapa antes do plano de SEO (FR-001). */
+export const SLUGS_DE_BUSCA = ["atma", "sirius", "tapepro"];
 
 /** Os projetos que as corridas de busca percorrem e que têm mapa, na ordem de `SLUGS_DE_BUSCA`.
  *  `deBusca()` (lib/projects.mjs) exige card curado e `url` — quem não tem site não tem o que

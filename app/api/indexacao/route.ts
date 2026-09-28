@@ -67,8 +67,8 @@ export async function POST() {
   const dia = new Date().toISOString().slice(0, 10);
 
   // Princípio I: os projetos vêm de `listProjects()`, nunca de `data/projects.json` — e a corrida
-  // percorre SÓ os de `SLUGS_DE_BUSCA` (hoje, a Atma). Com um projeto só, o planejamento abaixo
-  // (rodízio + repartição de orçamento) continua correto e simplesmente nunca precisa cortar.
+  // percorre SÓ os de `SLUGS_DE_BUSCA`. Com poucos projetos, o planejamento abaixo (rodízio +
+  // repartição de orçamento) continua correto e simplesmente nunca precisa cortar.
   const projetos = await projetosDeBusca();
 
   const cliente = await clienteGsc();
