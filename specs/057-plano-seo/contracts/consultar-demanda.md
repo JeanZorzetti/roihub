@@ -26,3 +26,5 @@ Rules:
   (`movidos`, `excluidos`).
 - An API error or a partial response writes nothing (spec edge case "consulta que falha").
 - Writing re-runs `validarInventario` on the result before touching disk.
+- `--gravar` refuses to overwrite an existing entry whose `procedencia.fonte` is not DataForSEO (the
+  034 inventory and 050 GSC-floor demand of Atma and Sirius), exits 1 and names the entry (research D11).

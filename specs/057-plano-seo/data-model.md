@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS hub_plano (
 CREATE TABLE IF NOT EXISTS hub_plano_meta (
   projeto TEXT NOT NULL,
   versao INT NOT NULL,
-  chave TEXT NOT NULL,                    -- CATALOGO key, or "cliques" | "impressoes" (headline)
-  prazo INT NOT NULL,                     -- 90 | 180 (days from inicio)
+  chave TEXT NOT NULL,                    -- CATALOGO key, or "cliques" | "impressoes" | "pagina1" (headline)
+  prazo INT NOT NULL,                     -- 90 | 180, fixed horizons (days from inicio); the owner moves inicio (FR-008)
   origem TEXT NOT NULL,                   -- demanda | regua | norma | meta | politica
   proposto TEXT NOT NULL,                 -- JSON number, as proposed
   valor TEXT,                             -- JSON number, final; NULL when recusada
@@ -81,10 +81,10 @@ State transitions:
 | Object | Shape | From |
 |---|---|---|
 | Cluster | `{semente, termos: [{termo, volume, segmento?}], volume, pagina: url \| null}` | `agrupar()` over the frozen demand, plus `lerCrawlDePagina()` for `pagina` |
-| MetaProposta | `{chave, prazo, origem, valor, op, conta, aviso?}` | `propor()` over clusters, `REGRAS`, `benchmark()` and the plan premises |
-| Semana | `{n, inicio, tarefas: Tarefa[], marcos: {chave: valor}}` | `montar()` |
+| MetaProposta | `{chave, prazo, origem, valor, op, conta, aviso?, partida?}` | `propor()` over clusters, `REGRAS`, `benchmark()`, the plan premises and, for demand metas, the `gscTermos` starting point (research D11) |
+| Semana | `{n, inicio, tarefas: Tarefa[], marcos: {chave: valor}}` | `montar()`, over the approved metas (research D11) |
 | Tarefa | `{alavanca, alvos: string[], kpis: string[], responsavel, feita: boolean}` | `montar()`, plus 055 marcas (`feita` = marca `marcado` ≥ week start) |
-| Comparacao | `{chave, marco, lido, estado}`, where estado ∈ `nao-chegou \| no-marco \| abaixo \| acima \| sem-leitura` | `comparar()` over marcos and the map's `leituras` |
+| Comparacao | `{chave, marco, lido, estado, sugerirRefazer}`, where estado ∈ `nao-chegou \| no-marco \| abaixo \| acima \| sem-leitura` | `comparar()` over marcos, the map's `leituras` and the reading of the window shifted 7 days back (research D11) |
 
 Validation (`lerDecisao`, `lerPlano`) is pure and tested, like `lerMarca` (055). Input outside the
 contract writes nothing:

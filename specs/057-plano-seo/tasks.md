@@ -36,7 +36,7 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 
 - [ ] T003 Add `"tapepro"` to `SLUGS_DE_BUSCA` in `lib/projects.ts:127`. Fix the stale "hoje, a Atma" comments in `app/api/gsc-serie/route.ts:37` and `app/api/indexacao/route.ts:70` so they name the list instead of a project
 - [ ] T004 Run `npm test`, commit T003 alone, and push outside the windows. After the next `/api/gsc-serie`, `/api/indexacao` and `/api/paginas` runs, open `/gsc/mapa/tapepro`: it must return 200 with 32 leaves, each in one of the 5 states (SC-001). Confirm the indexing run's duration stays under `maxDuration` (about +2.5 min for 23 URLs, D9)
-- [ ] T005 [P] Write tests in `test/plano.test.mjs` for `lerDecisao` and `lerPlano`. They must reject: a `responsavel` other than `jean`/`maria`; a `chave` that is not a `CATALOGO` key (`lib/gsc-delta.mjs:291`) or `cliques`/`impressoes`; a `prazo` other than 90/180; a non-finite `valor`; `capacidade` outside the integers 0–20; premises outside the integers 0–26
+- [ ] T005 [P] Write tests in `test/plano.test.mjs` for `lerDecisao` and `lerPlano`. They must reject: a `responsavel` other than `jean`/`maria`; a `chave` that is not a `CATALOGO` key (`lib/gsc-delta.mjs:291`) or a headline (`cliques`/`impressoes`/`pagina1`); a `prazo` other than the fixed 90/180 (FR-008); a non-finite `valor`; `capacidade` outside the integers 0–20; premises outside the integers 0–26
 - [ ] T006 Implement `lerDecisao` and `lerPlano` in the new pure `lib/plano.mjs`, following `lerMarca` (`lib/proxima-acao.mjs:241`). Bad input returns `null` and writes nothing
 - [ ] T007 [P] In `lib/db.ts`, add `hub_plano` and `hub_plano_meta` to `ensure()` next to `hub_mapa_marca` (line 184), exactly as in `data-model.md` §2. Values stay TEXT, not jsonb. Add:
   - `listPlanos(projeto)`;
@@ -68,7 +68,10 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 - [ ] T010 [P] [US1] Write tests in `test/plano.test.mjs` for `propor` (D1, D2, FR-006, FR-007):
   - every `REGRAS` leaf (`lib/proxima-acao.mjs:74`) gets meta = `REGRAS[k].limiar` and origin = the leaf's own seal;
   - `checklistGsc` is absent;
-  - `top20` at 90 d, `strikingDistance` at 180 d and `tamBusca` at 180 d follow the D2 math and count a cluster only after `criadaNaSemana + semanasAteEstabilizar`;
+  - `top20` at 90 d, `tamBusca` at 180 d and the headline `pagina1` at 180 d (inventory at 1.0–10.9) follow the D2 math and count a cluster only after `criadaNaSemana + semanasAteEstabilizar`;
+  - `strikingDistance` keeps `REGRAS.strikingDistance.limiar` and gets no demand meta (D1, analyze I1);
+  - a cluster whose page already exists counts as created in week 0. With the defaults (12 weeks to stabilize), no plan page counts at 90 d, and that meta carries the aviso "nenhuma página nova amadurece antes deste prazo com estas premissas" (D2, analyze I2);
+  - given a `partida` reading, each demand meta carries it and the distance. Without one, `partida` is absent, not 0 (D11);
   - the 180-day headline cliques equal mature volume × `benchmark(7)`, imported from `lib/kpis-busca.mjs`;
   - the 90-day cliques and impressões are absent with a reason, never 0;
   - `crescimentoNaoMarca` and `consultasUnicas` carry the "base zero" aviso;
@@ -81,7 +84,7 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 - [ ] T012 [US1] Implement `cobrir(clusters, crawl)` in `lib/plano.mjs`
 - [ ] T013 [US1] Implement `agendaDePaginas(clusters, {capacidade, inicio})` and `propor(clusters, {premissas, inicio})` in `lib/plano.mjs`:
   - `agendaDePaginas` orders uncovered cluster pages by volume, then support pages (cluster × segment ≥ piso), at most `capacidade` per week. It returns the creation week of each page, and `montar` (US2) reuses it, so the two cannot disagree;
-  - `propor` imports `REGRAS` and `benchmark` and declares no limiar of its own (FR-002 of 054)
+  - `propor(clusters, {premissas, inicio, partida})` imports `REGRAS` and `benchmark` and declares no limiar of its own (FR-002 of 054). `partida` is `{top20, tamBusca, pagina1}` or `null`
 - [ ] T014 [US1] Create `scripts/consultar-demanda.mjs` in no-flag mode (`contracts/consultar-demanda.md`):
   - `DATAFORSEO_API_KEY` missing or blank → exit 2, naming only the variable;
   - seeds are the slug's `produtos` from `lib/autopublish-projects.mjs`, hyphens → spaces, overridable with `--sementes`;
@@ -95,7 +98,7 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
   - a seed with null volume stays as "volume abaixo do mínimo reportado";
   - run `agrupar`, then apply `--mover "termo=semente"` and `--excluir "termo:motivo"`;
   - print the actual `cost`, the clusters with volume and `semCluster`
-- [ ] T016 [US1] Add `--gravar` to `scripts/consultar-demanda.mjs`. It builds the `tapepro` entries of `data/inventario-de-termos.json` and `data/demanda-estimada.json` as in `data-model.md` §1 (`fonte`, `regiao`, `idioma`, `custoUsd`, `sementes`, `movidos`, `excluidos`). It runs `validarInventario` (`lib/inventario.mjs:43`) before touching disk, then prints the paths written
+- [ ] T016 [US1] Add `--gravar` to `scripts/consultar-demanda.mjs`. It builds the `tapepro` entries of `data/inventario-de-termos.json` and `data/demanda-estimada.json` as in `data-model.md` §1 (`fonte`, `regiao`, `idioma`, `custoUsd`, `sementes`, `movidos`, `excluidos`). It runs `validarInventario` (`lib/inventario.mjs:43`) before touching disk, then prints the paths written. Before any paid request, `--gravar` refuses a slug whose existing entry has a `procedencia.fonte` other than DataForSEO (the 034/050 entries of Atma and Sirius): exit 1, naming the entry (D11)
 - [ ] T017 [US1] Real run with Jean:
   - no flag, then `--consultar` (`git status` stays clean);
   - curate consumer-intent terms with `--excluir` and misplaced ones with `--mover`;
@@ -106,13 +109,13 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
   If the niche turns out tiny, record it as a finding (plan Risks), not a bug
 - [ ] T018 [P] [US1] In `app/gsc/mapa/[slug]/page.tsx`, the TAM ressalva says "estimativa, teto" only when `procedencia.fonte` is the GSC impression floor. For DataForSEO it names the source and the consultation date. Confirm Top 20, Top 3 penetration and TAM for `tapepro` no longer say "inventário de termos não declarado"
 - [ ] T019 [US1] Invoke the `information-design`, `accessibility` and `ux-writing` skills (D10) before writing the screen. Fix the copy of the aviso, the seals, the meta states and the form buttons
-- [ ] T020 [US1] Create `app/gsc/mapa/[slug]/plano/page.tsx`, a server component that returns 404 when the slug is not in `SLUGS_DE_BUSCA`. It reads the frozen JSON, `lerCrawlDePagina` (`lib/db.ts:1508`), `listPlanos` and `listMetas`. It makes no GSC or DataForSEO call (SC-005). It renders these blocks from `contracts/ui.md`:
+- [ ] T020 [US1] Create `app/gsc/mapa/[slug]/plano/page.tsx`, a server component that returns 404 when the slug is not in `SLUGS_DE_BUSCA`. It reads the frozen JSON, `lerCrawlDePagina` (`lib/db.ts:1508`), `listPlanos` and `listMetas`. It makes no DataForSEO call (SC-005). It makes one `gscTermos(hosts, janela)` read over the map's window and computes the `partida` for `top20`, `tamBusca` and `pagina1` with `penetracaoNoInventario` (20 and 10.9) and `coberturaDaDemanda` from `lib/kpis-busca.mjs`. A failed read leaves `partida` null and says why, the same way the map does (D11). It renders these blocks from `contracts/ui.md`:
   - 1, the "no frozen demand" aviso naming the command;
   - 2, Demanda, read-only, naming `--mover`/`--excluir`;
   - 3, Metas, grouped under the 18 KPIs, headlines first, each row with seal, `conta`, state and the approve/edit/refuse form with `responsavel`;
   - 6, Versões.
 
-  An edited meta below the starting point is accepted with the "já atingida" aviso when a starting point exists (see T034)
+  Demand metas show the starting point and the distance. An edited meta below the starting point is accepted with the "já atingida" aviso. REGRAS leaves link to the map for their starting point
 - [ ] T021 [US1] Create `app/gsc/mapa/[slug]/plano/actions.ts` with `criarVersao` and `decidirMeta`. Both validate with `lerPlano`/`lerDecisao`, return without writing on bad input, and call `revalidatePath` on `/gsc/mapa/[slug]` and `/gsc/mapa/[slug]/plano`. `decidirMeta` stores the proposed value, final value, state, author and date (FR-009)
 
 **Checkpoint**: US1 works alone. Demand, metas and decisions are on screen and in `hub_plano_meta`
@@ -137,12 +140,13 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
   - the same alavanca in the same week is one task with every target and KPI (054 FR-009);
   - `capacidade 0` → first-line aviso and no coverage milestone (FR-018);
   - a deadline that does not fit → "não cabe no prazo com esta capacidade" for that meta;
+  - `montar` takes the approved metas: the milestone at each deadline equals the approved value, and weekly milestones are what the schedule delivers. Raising an approved meta above what the schedule delivers flips that meta to "não cabe" with no change in capacity (D11, analyze I3);
   - only `ALAVANCAS` keys from `lib/proxima-acao.mjs:33` appear (FR-011)
 - [ ] T023 [P] [US2] Write tests in `test/plano.test.mjs` for `feita`: a task is done when the 055 marca for its alavanca has `marcado` ≥ the week start. Earlier or absent → not done
 
 ### Implementation for US2
 
-- [ ] T024 [US2] Implement `montar({inicio, capacidade, semanasAteIndexar, semanasAteEstabilizar, clusters, responsavel})` in `lib/plano.mjs`. It reuses `agendaDePaginas`, orders tasks by `DEGRAUS`, and fills each week's `marcos` for `top20`, `strikingDistance`, `tamBusca` and the headline cliques
+- [ ] T024 [US2] Implement `montar({inicio, capacidade, semanasAteIndexar, semanasAteEstabilizar, clusters, metas, responsavel})` in `lib/plano.mjs`. It reuses `agendaDePaginas`, orders tasks by `DEGRAUS`, and fills each week's `marcos` for `top20`, `tamBusca` and the headlines (cliques, `pagina1`). At each deadline the milestone is the approved meta from `listMetas` (D11)
 - [ ] T025 [US2] Implement `feita(tarefa, semana, marcas)` in `lib/plano.mjs`, taking marcas from `listMarcas` (`lib/db.ts:902`). No new mechanism (FR-016)
 - [ ] T026 [US2] Add `salvarPremissas` and `ativar` to `app/gsc/mapa/[slug]/plano/actions.ts`. `ativar` refuses while any meta has no decision. After `ativo`, a change requires `criarVersao` (FR-017)
 - [ ] T027 [US2] In `app/gsc/mapa/[slug]/plano/page.tsx`, add:
@@ -169,19 +173,20 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
   - a reading `{ausente}` → `sem-leitura` with the map's motivo, never `no-marco`;
   - `no-marco`, `abaixo` and `acima` at the edges;
   - no state label contains "ok", "✓" or "dentro" (055 glossary);
-  - `abaixo` for two consecutive weeks, when a previous reading is passed → `sugerirRefazer: true`, and the meta is not changed
+  - `abaixo` this week and `abaixo` for the previous reading against the previous week's milestone → `sugerirRefazer: true`, and the meta is not changed. A previous reading that is absent → `sugerirRefazer: false`, never a guess
 
 ### Implementation for US3
 
 - [ ] T029 [US3] Implement `comparar` in `lib/plano.mjs`
 - [ ] T030 [US3] In `app/gsc/mapa/[slug]/page.tsx`, add the "Plano · semana N de M" block right after "O que fazer primeiro" (around line 2334). It shows only with an `ativo` plan and links to `/plano`. It contains:
   - this week's tasks with their 055 marca;
-  - the demand leaves' milestone vs. the page's existing `leituras`, with glyph + text;
+  - the demand leaves' milestone vs. the page's existing `leituras`, with glyph + text. `pagina1` is read with `penetracaoNoInventario(termosGsc.linhas, inventario, 10.9)` over the `termosGsc` the page already has;
+  - one extra `gscTermos` read over the same window shifted 7 days back, only when an `ativo` plan exists, as the previous reading for `sugerirRefazer` (US3 AC3, D11). Nothing is written on read;
   - one line pointing to "O que fazer primeiro" for the REGRAS leaves;
   - a task marked done whose reler date passed and whose rule still fires, shown as "ainda dispara" (reuse `plano()` from `lib/proxima-acao.mjs:268`);
   - the capacity suggestion when `indexacaoLimpa` of the plan's pages is above 90% (FR-010), never changing it.
 
-  No new external request
+  No DataForSEO request
 
 **Checkpoint**: SC-007 is readable on the first weekly comparison after activation
 
@@ -194,13 +199,9 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 **Independent Test**: open `/gsc/mapa/sirius/plano` and see the metas starting from today's reading
 
 - [ ] T031 [US4] Grep `lib/plano.mjs` and `app/gsc/mapa/[slug]/plano/` for `tapepro`, `atma` and `sirius`. There must be zero hits, because no rule is written per project (FR-019)
-- [ ] T032 [US4] Run `scripts/consultar-demanda.mjs` in no-flag mode for `atma` and `sirius`. For both, the script must refuse `--gravar` without overwriting their existing GSC-floor inventory unless `--sementes` is given. Decide with Jean before spending
-- [ ] T033 [US4] Open `/gsc/mapa/atma/plano` and `/gsc/mapa/sirius/plano`: 200, blocks render, with no Tape-Pro-specific text
-- [ ] T034 [US4] ⚠️ Gap to settle in `speckit-analyze`: US4 AC1 and the edge case "meta editada abaixo do ponto de partida" need the current reading on the plan page. D6 keeps the readings only on the map, which reads GSC live. Options:
-  - (a) show the starting point only in the map's plan block;
-  - (b) the plan page reads the last stored series from the DB, not GSC.
-
-  Implement the chosen one in `lib/plano.mjs` (`propor` receives `pontoDePartida`) with a test in `test/plano.test.mjs`
+- [ ] T032 [US4] Run `node --env-file=.env scripts/consultar-demanda.mjs atma --consultar --gravar`. It must exit 1 naming the entry **before** any paid request, because Atma's entry comes from the GSC floor (D11, T016 guard). `git status` stays clean and the balance is unchanged
+- [ ] T033 [US4] Open `/gsc/mapa/atma/plano` and `/gsc/mapa/sirius/plano`: 200, blocks render, with no Tape-Pro-specific text. The demand block names the 050 GSC-floor source, not DataForSEO
+- [ ] T034 [US4] On `/gsc/mapa/sirius/plano`, each demand meta shows the starting point read today and the distance to the meta, not a start from zero (US4 AC1). Compare `top20` with the value the map prints for the same leaf on the same day: they must match, because it is the same function over the same window
 
 ---
 
@@ -210,7 +211,7 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 - [ ] T036 Invoke `ui-verification` on `/gsc/mapa/tapepro/plano` and `/gsc/mapa/tapepro`: 3 widths, a keyboard pass through every form, the accessibility tree (no state by color alone, FR-020), a clean console, and the network tab with no DataForSEO or Google request (SC-005)
 - [ ] T037 Quickstart §4 in production: approve every meta as Jean and activate. Check that `hub_plano_meta` has `decidido_por = 'jean'` on every row, and that editing an approved meta asks for a new version (SC-006). The map must show "Plano · semana 1 de 26" with the demand milestones as `nao-chegou`
 - [ ] T038 Schedule a re-read one week after activation for SC-007: 100% of Tape Pro's due milestones in one of the 5 states
-- [ ] T039 Run `speckit-analyze` on `specs/057-plano-seo/` (settles T034)
+- [ ] T039 Re-run `speckit-analyze` on `specs/057-plano-seo/` after implementation, to catch drift between code and design
 
 ---
 
@@ -221,7 +222,7 @@ never between 23:30–01:00 or 08:00–08:45 BRT.
 - **US1** depends on Foundational. **T017** (real spend) needs T014–T016 and T002.
 - **US2** depends on US1: approved metas and `agendaDePaginas`.
 - **US3** depends on US2: an `ativo` version and `montar`.
-- **US4** depends on US1 + US2. T034 waits for the analyze decision.
+- **US4** depends on US1 + US2.
 - **Polish** comes last. T038 is a date, not a task that can run now.
 
 Inside each story: tests → pure functions → script/DB → screen → actions.
@@ -237,4 +238,4 @@ Inside each story: tests → pure functions → script/DB → screen → actions
 
 **MVP = Foundational + US1**: Tape Pro has a map, the demand is frozen and the metas are approved. Stop here and validate. The demand number alone answers "is there a niche?" before any page is written.
 
-Then US2 (the calendar, the actual ask), US3 (weekly comparison, which needs one week of the `ativo` plan) and US4 (verification plus the T034 gap).
+Then US2 (the calendar, the actual ask), US3 (weekly comparison, which needs one week of the `ativo` plan) and US4 (verification on Atma and Sirius).

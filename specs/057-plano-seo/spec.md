@@ -68,6 +68,23 @@ Lido em 28/09/2026:
   ele contém, e o dono move o que ficar errado antes de aprovar. Não há sobreposição de SERP nem LLM
   (FR-005).
 
+### Session 2026-09-28 (speckit-analyze)
+
+- Q: A folha de striking distance (posições 4–10,9) ganha meta de demanda? → A: Não. Ela é fila de
+  oportunidade: um termo que sobe para o Top 3 sai dela, e uma meta de "mais termos em 4–10,9" contaria
+  isso como piora. Ela mantém a meta da 054. A demanda ganha uma projeção de cabeçalho, **termos do
+  inventário na página 1 (1,0–10,9)**, lida com a mesma função da penetração no Top 3 e no Top 20.
+- Q: Página que já existe conta para a meta de 90 dias? → A: Sim, como criada na semana 0. Com a
+  premissa padrão de 12 semanas até estabilizar, nenhuma página nova do plano amadurece antes dos 90 dias,
+  e a tela diz isso junto da meta.
+- Q: O dono muda o prazo? → A: Não. Os prazos são os dois degraus fixos, 90 e 180 dias. O dono muda a
+  data de início do plano.
+- Q: Atma e Sirius consultam volume pago? → A: Não. Usam a demanda que o hub já tem (piso do GSC, 050). A
+  consulta paga não sobrescreve demanda de outra fonte.
+- Q: Onde o plano lê o ponto de partida? → A: Na tela do plano, com uma leitura do Search Console por
+  termo (a mesma do mapa), só para as metas de demanda. As demais folhas mostram o ponto de partida no
+  próprio mapa.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Ver a demanda do nicho e aprovar as metas (Priority: P1)
@@ -154,7 +171,8 @@ marco 30 e leitura 22, "abaixo do marco", com a tarefa de indexação dessa sema
 2. **Given** uma folha sem leitura no mapa, **When** o plano compara, **Then** o estado é "sem leitura",
    com o motivo que o mapa já imprime, e nunca "no marco".
 3. **Given** um KPI abaixo do marco por duas semanas seguidas, **When** o dono abre o plano, **Then** o
-   plano sugere refazer a proposta daquele KPI, mas não muda a meta sozinho.
+   plano sugere refazer a proposta daquele KPI, mas não muda a meta sozinho. A semana anterior é lida na
+   hora, com a janela deslocada 7 dias, e nada é gravado ao abrir a tela.
 4. **Given** uma tarefa marcada como feita pela 055, **When** vence a data de reler e a regra da 054 ainda
    dispara, **Then** a tarefa volta ao plano como "ainda dispara", igual ao mapa.
 
@@ -173,8 +191,9 @@ de zero.
 
 **Acceptance Scenarios**:
 
-1. **Given** um projeto com mapa e leitura, **When** o dono pede a proposta, **Then** cada meta mostra o
-   ponto de partida lido e a distância até a meta.
+1. **Given** um projeto com mapa e leitura, **When** o dono pede a proposta, **Then** cada meta de demanda
+   mostra o ponto de partida lido e a distância até a meta. A demanda desses projetos é a que o hub já tem
+   (piso do GSC, 050), sem consulta paga.
 
 ---
 
@@ -227,9 +246,11 @@ de zero.
   que o hub já usa para julgar. Nenhum número dessa régua é escrito duas vezes. A posição-alvo é a mesma
   para todos os clusters: **Top 20 no prazo de 90 dias** e **faixa 7–10 no prazo de 180 dias**. A meta
   de clique de 180 dias usa a fração da faixa 7–10. A de 90 dias não conta clique fora da página 1,
-  porque não há régua para isso.
-- **FR-008**: Cada meta DEVE ter prazo. O padrão é 90 e 180 dias a partir da aprovação, e o dono pode
-  mudar.
+  porque não há régua para isso. Uma página que já existe conta como criada na semana 0. Quando nenhuma
+  página nova amadurece antes de um prazo, a meta daquele prazo diz isso. A folha de striking distance
+  (4–10,9) não recebe meta de demanda, e a projeção de termos na página 1 (1,0–10,9) ocupa o lugar dela.
+- **FR-008**: Cada meta DEVE ter prazo, um de dois degraus fixos: 90 ou 180 dias a partir do início do
+  plano. O dono muda a data de início, não o degrau.
 - **FR-009**: O dono DEVE aprovar, editar ou recusar cada meta separadamente. O hub DEVE gravar quem
   decidiu, quando, o valor proposto e o valor final. Editar uma meta NÃO DEVE apagar o responsável nem o
   histórico das tarefas já ligadas a ela.

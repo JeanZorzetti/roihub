@@ -7,12 +7,20 @@ works.
 
 **Decision**: For every `CATALOGO` leaf (31, minus `checklistGsc`, which is a procedure), the meta is
 the limiar that `lib/proxima-acao.mjs#REGRAS` already declares. The meta keeps the leaf's own seal
-(◆ régua, ◇ norma, ◇ meta do board, ◇ política do dono). Only three leaves get a demand-derived meta:
-`top20`, `strikingDistance` and `tamBusca`. The plan also shows two headline projections (impressões
-and cliques on the inventory terms), because no leaf counts absolute clicks.
+(◆ régua, ◇ norma, ◇ meta do board, ◇ política do dono). Only two leaves get a demand-derived meta:
+`top20` and `tamBusca`. The plan also shows three headline projections on the inventory terms
+(impressões, cliques and `pagina1`), because no leaf counts them.
+
+**`strikingDistance` keeps its `REGRAS` meta** (analyze I1, 2026-09-28). The leaf counts queries in
+positions 4.0–10.9, and its rule is `op ">" limiar 0`: it is an opportunity queue, and the board's goal
+is to move 15% to 25% of it into the Top 3. A demand meta of "N terms in 4–10.9" would read a term that
+climbs to position 3 as a loss. The page-1 target lives in the headline `pagina1` instead: the fraction
+of the inventory at positions 1.0–10.9, read by `penetracaoNoInventario(termos, inventario, 10.9)`, the
+same function and the same `query`-dimension reading that the map uses for the Top 3 and Top 20
+penetration.
 
 **Rationale**: FR-002 of 054 already forbids writing a limiar twice. `REGRAS` is the single home for
-"what counts as below". Reusing it means that for 28 of the 31 leaves, "abaixo do marco" is exactly
+"what counts as below". Reusing it means that for 29 of the 31 leaves, "abaixo do marco" is exactly
 054's "dispara". US3 then comes almost free for those leaves, and the two screens cannot disagree.
 
 **Refinement of spec FR-006**: the spec named three origins (demanda, régua, board). The code has four
@@ -31,11 +39,17 @@ impression leaves, which would be new leaves in the catalog and a new rule per l
 ## D2 — The demand math
 
 **Decision**: with clarify Q2 (Top 20 at 90 d, band 7–10 at 180 d):
-- A cluster counts toward a milestone only after `criadaNaSemana + semanasAteEstabilizar`.
+- A cluster counts toward a milestone only after `criadaNaSemana + semanasAteEstabilizar`. A cluster
+  whose page already exists (D7) counts as created in week 0 (analyze I2).
 - `top20` (fraction of the inventory in the Top 20), meta at 90 d = terms of mature clusters ÷ total
   terms.
-- `strikingDistance` (count of queries between 4.0 and 10.9), meta at 180 d = terms of clusters mature
-  by week 26.
+- **Consequence of the defaults, shown on screen**: 90 d is week 12.9, and a page created by the plan in
+  week 1 matures in week 13. With `semanasAteEstabilizar = 12`, the 90-day meta comes only from pages
+  that already exist. When no plan page matures before a deadline, the meta for that deadline carries
+  the aviso "nenhuma página nova amadurece antes deste prazo com estas premissas". This is not hidden
+  and not rounded up.
+- Headline `pagina1` (fraction of the inventory at positions 1.0–10.9), meta at 180 d = terms of
+  clusters mature by week 26 ÷ total terms.
 - `tamBusca` (impressions ÷ demand), meta at 180 d = volume of mature clusters ÷ total volume. A
   page-1 result is counted as an impression when the page loads, so impressions ≈ volume.
 - Headline cliques at 180 d = mature volume × `benchmark(7)`. That is 0.02, read from
@@ -121,7 +135,9 @@ with zero new mechanism.
 **Decision**:
 - `/gsc/mapa/[slug]/plano` (new route) holds US1 and US2: clusters, metas with approve, edit and refuse
   forms, capacity and premises, and the weekly calendar. It reads the frozen JSON, the DB and
-  `lerCrawlDePagina()`. It makes no GSC call and no DataForSEO call (SC-005).
+  `lerCrawlDePagina()`. It makes no DataForSEO call (SC-005). It makes **one** GSC read, `gscTermos`
+  over the map's own window, for the starting point of the demand metas only (`top20`, `tamBusca`,
+  `pagina1`), computed with the functions the map already uses. See D11.
 - `/gsc/mapa/[slug]` (existing) gets one block for US3: "Plano · semana N". It lists this week's tasks
   with their 055 marca, and the demand marcos against the `leituras` the page already built. The
   comparison lives where the readings live. The page's own rule is "nothing is read twice".
@@ -170,6 +186,32 @@ The plan suggests raising capacity when clean indexing of plan pages is above 90
 - the map.
 
 Well inside the GSC quota and `maxDuration`. There is no route change: 052 designed the list for this.
+
+## D11 — Decisions from speckit-analyze (2026-09-28)
+
+Read in the code before deciding: the map reads GSC live (`gscConsultas`, `gscPaginas`, `gscTermos` in
+`app/gsc/mapa/[slug]/page.tsx`). Only daily site totals are stored (`lerDiasGsc`). `gscTermos(hosts,
+janela)` takes the window as a parameter.
+
+- **Starting point (US4 AC1, "meta abaixo do ponto de partida")**: the plan page reads `gscTermos` once,
+  as in D6. A stored series cannot give `top20` or `pagina1`, because the query-dimension reading is
+  never stored. Showing the starting point only on the map would miss the moment of the proposal. For
+  the 29 `REGRAS` leaves the starting point is already on the map, and the plan page links to it.
+- **Two consecutive weeks below (US3 AC3)**: when a plan is `ativo`, the map reads `gscTermos` a second
+  time over the same 28-day window shifted 7 days back. `comparar` receives that previous reading
+  against the previous week's milestone. That is one more GSC call per host, only on projects with an
+  active plan, and nothing is written on read.
+- **Deadlines**: fixed at 90 and 180 days (clarify Q2). FR-008 now says the owner moves `inicio`, not
+  the horizon.
+- **Edited metas drive the milestones (analyze I3)**: `montar` receives the approved metas. The weekly
+  milestone is what the page schedule delivers that week. At each deadline, the milestone is the
+  approved value. If the schedule delivers less than the approved value by the deadline, that meta
+  carries "não cabe no prazo com esta capacidade". Raising a meta by hand can therefore show "não cabe"
+  without changing capacity.
+- **US4 uses the demand the hub already has (analyze U2)**: Atma and Sirius keep their 034 inventory
+  and 050 demand, whose source is the GSC floor. `consultar-demanda.mjs --gravar` refuses to overwrite
+  an entry whose `procedencia.fonte` is not DataForSEO, and exits naming the entry. Replacing it would
+  move the denominator of leaves that already have readings.
 
 ## D10 — UI discipline
 

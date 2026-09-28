@@ -26,10 +26,14 @@ Blocks, top to bottom:
    - origin seal;
    - the arithmetic (`conta`);
    - state;
+   - for demand metas, the starting point read by `gscTermos` and the distance to the meta (US4 AC1),
+     plus the "já atingida" aviso when an edited meta is below it;
    - a form to approve, edit (number input) or refuse, with `responsavel`.
 
-   The two headline projections (impressões, cliques) come first. Relative leaves on a zero base show
-   the "base zero" note.
+   The three headline projections (impressões, cliques, `pagina1`) come first. Relative leaves on a zero
+   base show the "base zero" note. A deadline that no new page reaches under the premises shows "nenhuma
+   página nova amadurece antes deste prazo com estas premissas". REGRAS leaves link to the map for their
+   starting point.
 4. **Premissas**: capacity and the two maturation premises, with the seal "◇ política do dono, sem
    fonte" and an edit form.
 5. **Calendário**: one row per week. Each row shows:
@@ -49,9 +53,11 @@ without writing on bad input, and calls `revalidatePath` on both routes.
 **Plano · semana N de M**, placed after "O que fazer primeiro". It appears only when an `ativo` plan
 exists, and it links to `/plano`. It shows:
 - this week's tasks, with their 055 marca;
-- for `top20`, `strikingDistance`, `tamBusca` and the headline clicks, the milestone against the
+- for `top20`, `tamBusca` and the headlines (cliques, `pagina1`), the milestone against the
   reading and one of the 5 states, in glyph and text, never color alone (FR-015, FR-020);
 - for REGRAS-based leaves, a single line pointing to "O que fazer primeiro", where the same rule
-  already fires.
+  already fires;
+- when a demand leaf was `abaixo` last week too, the suggestion to redo that meta's proposal (US3 AC3).
 
-The block makes no new external request (SC-005).
+The block makes no DataForSEO request (SC-005). It adds one `gscTermos` read over the window shifted 7
+days back, for last week's comparison, and writes nothing (research D11).

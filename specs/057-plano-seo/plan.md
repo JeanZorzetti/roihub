@@ -13,8 +13,9 @@ inventory and demand into the committed JSON files that the map already reads. T
 map, now switched on for `tapepro`, its denominators.
 
 A new route `/gsc/mapa/[slug]/plano` proposes a meta for each leaf of the 18 KPIs:
-- the existing `REGRAS` limiar for 28 of 31 leaves;
-- demand math for `top20`, `strikingDistance` and `tamBusca`, plus the headline click projection.
+- the existing `REGRAS` limiar for 29 of 31 leaves;
+- demand math for `top20` and `tamBusca`, plus three headline projections (impressões, cliques and
+  `pagina1`, the inventory on page 1). `strikingDistance` keeps its `REGRAS` meta (research D1, D11).
 
 The owner approves each meta in Postgres, and the route shows a weekly construction calendar bounded
 by capacity. A block on the existing map compares this week's milestones with the readings the map
@@ -39,7 +40,9 @@ from a local script only. No new package.
 
 **Project Type**: web app (single Next project).
 
-**Performance Goals**: opening either route adds 0 external requests. `montar()` runs over at most
+**Performance Goals**: opening either route makes 0 DataForSEO requests. The plan route adds one
+`gscTermos` read (starting point); the map adds one shifted `gscTermos` read only when a plan is `ativo`
+(research D11). `montar()` runs over at most
 26 weeks × a few dozen clusters, so it takes microseconds.
 
 **Constraints**:
