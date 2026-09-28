@@ -47,6 +47,9 @@ function metaEmTexto(m: { chave: string; valor: number }, regra: Regra | null): 
 }
 
 const SELO_DEMANDA = "◇ demanda do nicho";
+/** The owner's guide to this page (private claude.ai page; the vault copy is
+ *  Docs/Obsidian/80-dev/roihub-plano-seo-rotina-2026-09-28.html in the roilabs repo). */
+const GUIA_DO_PLANO = "https://claude.ai/artifact/5xTjp1ijSQ457HAqMruSVi";
 const caminho = (url: string) => {
   try {
     return decodeURIComponent(new URL(url).pathname);
@@ -551,7 +554,11 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
         <h1 className="ficha-nome">Plano de SEO de {nomeCurto}: o que fazer esta semana e onde chegar em 90 e 180 dias</h1>
         <p className="foot">
           {versoes || "Prévia com as premissas padrão: nenhuma versão criada."} Onde o projeto está hoje (ponto de partida, estado das páginas, marcas de feito) fica no{" "}
-          <a href={`/gsc/mapa/${slug}#mapa-plano-h`}>mapa</a>.
+          <a href={`/gsc/mapa/${slug}#mapa-plano-h`}>mapa</a>.{" "}
+          <a href={GUIA_DO_PLANO} target="_blank" rel="noopener noreferrer">
+            Como usar esta página
+          </a>{" "}
+          (guia com o exemplo da Tape Pro, abre em nova aba).
         </p>
 
         {avisos.length || d.faltas.length ? (
