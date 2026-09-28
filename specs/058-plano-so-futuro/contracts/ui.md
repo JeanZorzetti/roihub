@@ -22,6 +22,8 @@ Blocks, top to bottom:
    - capacity 0 (no new page is scheduled);
    - no frozen demand;
    - no map snapshot;
+   - leaves that were `sem-leitura` when the map was read: "as tarefas de {alavanca} podem faltar"
+     (research D3);
    - "nenhuma página existente conta nas metas até a próxima leitura de impressões";
    - `naoCabe`;
    - tasks past 26 weeks.
@@ -36,8 +38,8 @@ Blocks, top to bottom:
    - due (week start DD/MM, or the fixed date);
    - state (agendada / a fazer / bloqueada) with the reason.
 
-   The state is in words; a glyph can be added, color alone never. The row's `conta`, origins and
-   briefing sit in a disclosure (`<details>`). The edit form sits in the same disclosure (see Forms).
+   The state is in words; a glyph can be added, color alone never. The row's `conta`, origins, the
+   leaves it moves (`kpis`, FR-002) and briefing sit in a disclosure (`<details>`). The edit form sits in the same disclosure (see Forms).
    At phone width the table becomes one card per task, with no horizontal scroll.
 5. **Núcleo**: one block per cluster, by volume. Each block shows:
    - intent (the decided one, or the proposal with its volume basis, or "sem proposta");
@@ -49,9 +51,10 @@ Blocks, top to bottom:
    Forms per cluster (see Forms).
 6. **Metas**: as 057, grouped under the 18 KPIs, minus "Hoje / distância" (moved to the map) and minus
    the author and date. The 180-day clicks row carries the **OKR line** (research D14):
-   - "o OKR exige X–Y cliques por 28 dias; o plano projeta Z por mês aos 180 dias: cobre A–B%" with a
-     link to `/okr/{slug}`;
+   - "o OKR exige X–Y cliques por 28 dias (X'–Y' por mês); o plano projeta Z por mês aos 180 dias:
+     cobre A–B%" with a link to `/okr/{slug}`. The fraction divides month by month (research D14);
    - or "o OKR de {projeto} não exige cliques ainda: {motivo}";
+   - or "a meta de cliques aos 180 dias foi recusada: nada a comparar";
    - or "o OKR não respondeu: {motivo}".
 7. **Calendário**: the weeks from the current one to week 26. Quiet weeks collapse as in 057. Each week
    shows its tasks and the new pages out of the capacity ("páginas novas: 2 de 3").
@@ -88,11 +91,11 @@ Each action validates the form with a pure `ler*` in `.mjs`. Input outside the c
 
 | Action | Validator | Writes | Contract |
 |---|---|---|---|
-| `criarVersao`, `salvarPremissas` | `lerPlano` (changed) | `hub_plano` | adds `esforco.{chave}` (minutes); keeps `capacidade` |
+| `criarVersao`, `salvarPremissas` | `lerPlano` (changed) | `hub_plano` | adds `esforco.{chave}` (integer minutes 1–600); keeps `capacidade` |
 | `decidirIntencao` | `lerNucleo` | `hub_nucleo` | `projeto`, `semente` (must be a cluster seed of the frozen demand), `intencao` ∈ informacional\|comercial\|ambos, `responsavel` |
 | `apontarPagina` | `lerNucleo` | `hub_nucleo` | `pagina`: an absolute URL on one of the project's hosts, or empty (back to the default) |
 | `decidirItem` | `lerItem` | `hub_nucleo_item` | `tipo` ∈ pergunta\|entidade; `texto` 1–200 chars; `estado` ∈ aceita\|removida\|respondida (respondida only for pergunta); `detalhe`: entity kind from the fixed list, or the answering page URL on the project's hosts |
-| `editarTarefa` | `lerTarefa` | `hub_plano_tarefa` | `chave` ≤ 600 chars with a known lever prefix; `responsavel` ∈ RESPONSAVEL_IDS or empty; `esforco` integer minutes 0–600 or empty; `prazo`: a date, snapped to its Monday, or empty |
+| `editarTarefa` | `lerTarefa` | `hub_plano_tarefa` | `chave` ≤ 600 chars with a known lever prefix; `responsavel` ∈ RESPONSAVEL_IDS or empty; `esforco` integer minutes 1–600 or empty; `prazo`: a date, snapped to its Monday, not before the current week's Monday, or empty |
 
 `decidirMeta`, `aprovarPropostas` and `ativar` are unchanged.
 

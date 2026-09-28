@@ -42,8 +42,10 @@ Node 22.
   28/09).
 
 **Testing**: `node --test`:
-- `test/plano.test.mjs` (existing, registered) for the core and the metas;
-- new `test/backlog.test.mjs`, registered in `package.json` in the same commit.
+- `test/plano.test.mjs` (existing, registered) for the view (SC-001), the core, the plan's own tasks,
+  impact (SC-004), the metas and the OKR line;
+- new `test/backlog.test.mjs`, registered in `package.json` in the same commit, for cards, merging,
+  order, scheduling and edits (SC-006, SC-007, SC-007a).
 
 **Target Platform**: EasyPanel Docker (Linux).
 
@@ -70,7 +72,7 @@ Node 22.
 |---|---|---|
 | I. Contrato único de dados | The project meta for the OKR line comes from `listProjects()` / `dadosDaFicha`, never `data/projects.json` | ✅ |
 | II. `node --test`, registrado | `test/backlog.test.mjs` is added to the explicit list in the same commit; `validade.test.mjs` enforces it | ✅ |
-| III. `.mjs` puro / `.ts` na borda | These are all pure `.mjs`: generating tasks, impact, order, scheduling, the intent proposal, the question proposal, and the `lerNucleo`/`lerItem`/`lerTarefa`/`lerPlano` validation. `.ts` only reads, writes and renders | ✅ |
+| III. `.mjs` puro / `.ts` na borda | These are all pure `.mjs`: the plan's view, generating tasks, impact, order, scheduling, the intent proposal, the question proposal, the OKR line's arithmetic, and the `lerNucleo`/`lerItem`/`lerTarefa`/`lerPlano` validation. `.ts` only reads, writes and renders | ✅ |
 | IV. Push é deploy | The slices ship outside the two windows. No `maxDuration` change | ✅ |
 | V. Ambiente explícito, segredo nunca em log | No new env var; the snapshot holds dispatch keys and paths only | ✅ |
 | Stack fixa / sem framework novo | No dependency added | ✅ |
@@ -97,9 +99,12 @@ specs/058-plano-so-futuro/
 
 ```text
 lib/
-├── backlog.mjs                    # NEW: gerarTarefas, impacto, ordenar, agendar (pure)
-├── plano.mjs                      # agendaDePaginas loses `semana`; propor/montar take page weeks;
-│                                  #   + propostaDeIntencao, perguntasPropostas, aplicarNucleo,
+├── backlog.mjs                    # NEW (pure): deCards, juntar, ordenar, agendar, aplicarEdicoes;
+│                                  #   imports only proxima-acao.mjs, never clusters or metas
+├── plano.mjs                      # + vistaDoPlano (what /plano renders); agendaDePaginas loses
+│                                  #   `semana`; propor/montar take page weeks (montar keeps 26);
+│                                  #   + tarefasDoPlano, comImpacto, linhaDoOkr,
+│                                  #   propostaDeIntencao, perguntasPropostas, aplicarNucleo,
 │                                  #   lerNucleo, lerItem, lerTarefa; lerPlano + esforco;
 │                                  #   PREMISSAS_PADRAO gains esforco; − semanaComCards
 ├── db.ts                          # + 4 tables, hub_plano columns; list/set functions
@@ -108,18 +113,19 @@ app/gsc/mapa/[slug]/
 │                                  #   page states, scheduled week); dadosDoPlano with partida + disparos
 └── plano/
     ├── dados.ts                   # the whole pipeline: core → tasks → schedule → metas; snapshot
-    │                              #   or in-memory dispatches; OKR line
+    │                              #   or in-memory dispatches; fetches the OKR tree (plan route only)
     ├── page.tsx                   # future-only blocks (contracts/ui.md); − gscTermos read
     └── actions.ts                 # + decidirIntencao, apontarPagina, decidirItem, editarTarefa
 test/
-├── plano.test.mjs                 # core, metas from scheduled weeks, SC-001 view model
-└── backlog.test.mjs               # NEW, registered: SC-004, SC-006, SC-007, SC-007a, D4, D5, D7, D8
+├── plano.test.mjs                 # SC-001 view, core, plan tasks, SC-004 impact, D9 metas, OKR line
+└── backlog.test.mjs               # NEW, registered: D3–D5 cards, merge, D7/SC-006, D8/SC-007a, D13/SC-007
 ```
 
 **Structure Decision**: the backlog is its own pure module. It is a scheduling problem (tasks, page
 capacity, dependencies), separate from the demand math in `plano.mjs`, which imports it. `plano.mjs` stays the
-only place that knows clusters and metas, and `backlog.mjs` does not know them. It receives tasks with
-impact already attached.
+only place that knows clusters and metas, and `backlog.mjs` does not know them. So the plan's own tasks
+(pages, questions) and their impact come from `plano.mjs`; `backlog.mjs` receives them with impact
+attached, and adds the map's cards (analyze I4).
 
 ## Order of delivery (independent slices)
 
@@ -141,7 +147,8 @@ impact already attached.
    3. `backlog.mjs` with its tests;
    4. `plano.mjs` metas from scheduled weeks;
    5. the backlog, week and calendar blocks, the task edit form, and the effort minutes in the premises.
-4. **OKR (US4)**: the OKR line in `dados.ts` and the metas block.
+4. **OKR (US4)**: `linhaDoOkr` (pure, in `plano.mjs`), the tree fetch in `dados.ts`, and the metas
+   block.
 
 The default efforts (research D10 table, owner minutes) were accepted on 28/09 together with option C.
 

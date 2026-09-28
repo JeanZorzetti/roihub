@@ -16,7 +16,7 @@ Unchanged: `projeto, versao, criado, criado_por, inicio, capacidade` (new pages 
 limit, FR-025a), `semanas_indexar, semanas_estabilizar, piso_apoio, estado`.
 
 Validation lives in `lerPlano`, which rejects the form when any of these is off:
-- the minutes of each effort key: integer 0–600;
+- the minutes of each effort key: integer 1–600 (never 0: effort divides impact, research D6);
 - effort keys: `ALAVANCAS` + `pergunta`;
 - `capacidade`: 0–20, as in 057.
 
@@ -42,7 +42,7 @@ PK `(projeto, semente)`. Upsert on each decision.
 | `projeto`, `semente` | TEXT | cluster |
 | `tipo` | TEXT | pergunta \| entidade |
 | `texto` | TEXT | the question, or the entity's name (≤ 200 chars) |
-| `detalhe` | TEXT NULL | entity: produto \| material \| aplicação \| norma \| marca própria \| outra. Question: the answering page URL, or null for the cluster's page |
+| `detalhe` | TEXT NULL | entity: produto \| material \| aplicação \| norma \| marca própria \| outra. Question: the page that will answer it while `aceita` (its task's target) or already answers it once `respondida` (no task); null = the cluster's answering page (research D11) |
 | `estado` | TEXT | aceita \| removida \| respondida (respondida only for a question) |
 | `decidido_por`, `decidido_em` | | as above |
 
@@ -56,8 +56,8 @@ PK `(projeto, semente, tipo, texto)`. Editing a question's text is two writes: t
 | `projeto` | TEXT | slug |
 | `chave` | TEXT | `alavanca\|alvo` (research D4), ≤ 600 chars |
 | `responsavel` | TEXT NULL | override; null = the version's default |
-| `esforco` | TEXT NULL | override minutes (JSON integer in TEXT); null = default |
-| `prazo` | DATE NULL | fixed Monday; null = the scheduler's week |
+| `esforco` | TEXT NULL | override minutes, integer 1–600 (JSON integer in TEXT); null = default |
+| `prazo` | DATE NULL | fixed Monday, never before the current week when written; null = the scheduler's week. Once its week passes undone, it reads as the current week (research D8) |
 | `atualizado` | TIMESTAMPTZ DEFAULT now() | |
 
 PK `(projeto, chave)`. It is per project, not per version (FR-029). A row whose task no longer exists
@@ -70,6 +70,7 @@ is ignored.
 | `projeto` | TEXT PK | slug |
 | `lido_em` | TIMESTAMPTZ | when the map computed them |
 | `disparos` | TEXT | JSON `[{chave, alavanca, estado, alvos, nAlvos}]`, only `dispara`/`critica` |
+| `sem_leitura` | TEXT NOT NULL DEFAULT '[]' | JSON `[{chave, alavanca, motivo}]`, the ruled leaves that were `sem-leitura` (research D3, analyze U3) |
 
 The map upserts it after `avaliar(leituras)`. The write never delays or breaks the map, because its
 failure is swallowed.
@@ -95,7 +96,8 @@ failure is swallowed.
   alavanca: keyof ALAVANCAS,
   alvo: { tipo: "url" | "planejada" | "termo" | "*", valor: string, rotulo: string },
   origens: ("pagina-nova" | "pagina-existente" | "mapa" | "pergunta")[],
-  briefing: { intencao, perguntas, entidades } | null,   // FR-016, creation and question tasks
+  kpis: string[],                                        // FR-002 "o que ela move": kpisDa(alavanca), or the card's fired leaves
+  briefing: { intencao, perguntas, entidades } | null,   // FR-016: every task whose target is a cluster's answering page (create or adjust), and question tasks
   impacto: { cliques: number, conta: string } | { naoCalculavel: string },
   esforco: { minutos: number, editado: boolean },          // ordering only
   paginaNova: boolean,                                     // takes capacity (research D8)
@@ -112,13 +114,16 @@ failure is swallowed.
 
 ### Semana (057, changed)
 
-`{n, inicio, tarefas: Tarefa[] (the scheduled ones), paginasNovas: number, marcos}`. It starts at
-the current week.
+`{n, inicio, tarefas: Tarefa[] (the scheduled ones), paginasNovas: number, marcos}`. `montar` returns
+all 26 weeks, because the map's `comparar()` indexes `semanas[n - 1]` and the week before it. The
+plan's view (`vistaDoPlano`) starts the screen at the current week (analyze I4).
 
 ### Linha do OKR (new)
 
 It takes one of three shapes:
-- `{necessario: {min, max}, janelaDias: 28, plano: number, fracao: {min, max}}`;
+- `{necessario: {min, max}, janelaDias: 28, necessarioMes: {min, max}, plano: number, fracao: {min, max}}`,
+  where `necessarioMes = necessario × (365,25 / 12) / 28` and `fracao = plano ÷ necessarioMes`
+  (research D14);
 - `{semComparacao: motivo}`;
 - `{falhou: motivo}`.
 

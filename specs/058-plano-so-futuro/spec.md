@@ -178,10 +178,12 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
   dispara não entraram: {motivo}" como consequência para o plano, e monta o resto.
 - **Insumo ausente que muda o plano** (sem leitura de impressões por página): o aviso diz a consequência
   futura ("nenhuma página existente conta nas metas até a próxima leitura"), nunca a leitura.
-- **O dono troca a página responsável de um cluster**: as tarefas da página antiga saem do backlog, com
-  as edições delas. As do cluster que não dependem de página ficam.
-- **Pergunta que outra página do site já responde**: o dono aponta essa página como a que responde, e a
-  tarefa não é gerada.
+- **O dono troca a página responsável de um cluster**: a página apontada passa a receber o briefing, as
+  perguntas e as tarefas do cluster (título da semente, intenção), e a página planejada do cluster sai do
+  calendário. Os termos continuam contando pela página que os cobre no título ou H1, e as tarefas de
+  índice e posição dessa página ficam (decisão do dono, analyze U1, 28/09).
+- **Pergunta que outra página do site já responde**: o dono marca a pergunta como respondida por essa
+  página, e a tarefa não é gerada. Pergunta aceita com outra página apontada gera a tarefa nessa página.
 - **Termo em forma de pergunta e de marca**: fica fora, como já fica fora da demanda.
 - **Todas as tarefas da semana corrente com marca de feito**: "Esta semana" diz "nada mais planejado
   para esta semana" e mostra a próxima semana com tarefa.
@@ -226,7 +228,8 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
   comercial, ambos). O hub propõe a partir dos termos do cluster com a mesma regra, e o dono confirma ou
   troca. Nenhuma taxonomia nova.
 - **FR-012**: A página responsável DEVE ser a página que cobre o cluster (057 FR-007b) ou a página
-  planejada pelo calendário. O dono pode apontar outra página do site.
+  planejada pelo calendário. O dono pode apontar outra página do site. Apontar muda a página que responde
+  pelo cluster, não a página que cobre cada termo (FR-007b da 057).
 - **FR-013**: As perguntas propostas DEVEM sair dos termos da demanda congelada que começam por palavra
   interrogativa (como, qual, quanto, onde, o que, por que, para que). O dono aceita, edita, acrescenta ou
   tira. Nenhuma fonte paga de perguntas nesta spec.

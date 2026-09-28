@@ -44,6 +44,11 @@ reads the latest snapshot and applies the 055 marks itself: a lever with a marca
 `hoje < reler` is dropped (that is `plano()`'s "aguardando"). A lever past `reler` that still fires is
 kept (it is "voltou"). The plan prints "cards do mapa lidos em DD/MM HH:mm" as provenance of the input,
 like the demand's date.
+The snapshot also stores the ruled leaves that were `sem-leitura` when the map opened, each with its
+lever and reason (analyze U3). Without them, a Search Console failure on the map would silently drop
+the tasks those leaves could fire. The plan says the consequence: "as tarefas de {alavanca} podem
+faltar: {folha} estava sem leitura quando o mapa foi lido ({motivo})" (spec edge case "Mapa sem
+leitura").
 **Alternatives rejected**:
 - Extracting the 1,200 lines of readings into a shared function: the right shape long-term, but it
   is a refactor of the map, not of the plan, and each reading is interleaved with the tree node it
@@ -78,9 +83,13 @@ mechanism, which 057 FR-016 forbids. Each origin already has a way to end:
 | Origin | Ends when |
 |---|---|
 | Planned page (creation, links, título, schema, indexação) | the page shows up in the crawl: it stops being planned and becomes an existing page (then D15 applies, as in 057) |
-| Existing page not `ativa` (057 D15: `indexacao`, or the posição levers) | a 055 marca of that lever made on or after the plan's start (`criacaoDaPagina`, unchanged) |
+| Existing page not `ativa` (057 D15: `indexacao`, or the posição levers) | a vigente 055 marca of that lever (`hoje < reler`) made on or after the plan's start; past `reler` it comes back if the page is still not `ativa` (FR-004, analyze I2). The metas keep counting the page from that marca (`criacaoDaPagina`, unchanged) |
 | Map card | a vigente 055 marca of that lever (D3); it comes back past `reler` if it still fires |
 | Question | the owner records in the core that a page answers it (`respondida`) |
+
+Marks act only through these origin rules. The plan's view applies no per-lever filter of its own: one
+vigente `indexacao` marca would otherwise hide the indexing task of every planned page, which ends by
+the crawl (analyze I3).
 
 **Spec amendment (FR-022, US3 scenario 2)**: a question generates ONE task, lever `cobertura` on its
 answering page, whose briefing includes the answer block and its `FAQPage` markup. The separate
@@ -98,7 +107,11 @@ and 180-day target position as the 057 click meta. The terms each target moves:
 - `planejada:` → the terms its label covers (`cobreTermo(termo, cobre)`), as `donos()` counts them;
 - `termo:` → that term, if it is in the frozen demand;
 - question → the question's own term volume, if it came from a frozen term;
-- anything else (`*`, a path covering no term, an owner-declared question) → `null` with the reason.
+- anything else (`*`, a path covering no term, an owner-declared question) → `null` with the reason;
+- a target whose terms all have `null` volume → `null`, "termos abaixo do mínimo que o Google Ads
+  informa" (analyze U5): a `null` volume is missing data, and SC-004 forbids 0 for missing data.
+
+Effort is 1–600 minutes, never 0, so `impacto ÷ esforço` is always finite (analyze U5).
 
 The `conta` is shown ("fita gomada 12.100 + … = 14.470 buscas/mês × 2,2% = 318 cliques/mês").
 Impacts are not summed across tasks: several tasks on one page carry the same terms, and a total would
@@ -136,6 +149,9 @@ schedule is a greedy list, deterministic, pure:
     fine) and its `naoAntes` (a planned page's indexing = creation week + `semanasAteIndexar`).
 - A task with a fixed date that is not a new page goes to that week, provided its dependencies allow
   it. Otherwise it is "bloqueada".
+- A fixed date whose week has passed with the task undone is read as the current week, and the task
+  says "data fixada vencida" without printing the date (FR-005: no past week on the plan). The form
+  refuses a date before the current week's Monday (analyze U4).
 - A new page past week 26 becomes "a fazer", and a task depending on an unscheduled one becomes
   "bloqueada", naming it.
 - With capacity 0, no new page is scheduled, and the first line says so (057 FR-018).
@@ -197,6 +213,15 @@ The key is the seed, not the cluster object: clusters are regrouped from the fro
 open, and the seed is what stays stable across versions and consultations (FR-015). A row whose seed
 no longer exists is ignored, never deleted.
 
+**The owner's page (`pagina`)** is the page that answers for the cluster: it receives the briefing, the
+questions and the cluster's own tasks (FR-005a `titulo`, `intencao`), and it stops the planned cluster
+page. It does not move terms: each term keeps counting by the page that covers it in the title or H1
+(`cobertoPor`, 057 FR-007b), and that page keeps its D15 tasks (owner's decision, analyze U1, 28/09).
+
+**A question's `detalhe`** is the page that will answer it while `aceita` (the target of its
+`cobertura` task) and the page that already answers it once `respondida` (no task). Null = the
+cluster's answering page (analyze U2).
+
 **Intent proposal**: classify each term with `modificadoresDeIntencao(termo, ano)`, the same function
 as for titles and queries (no second classifier). Weight the declaring terms (≠ ausente) by volume and
 propose the heaviest class. With no declaring term there is no proposal ("nenhum termo do cluster
@@ -230,6 +255,15 @@ none.
   `min ≠ max`).
 - If the tree stopped before that layer, the plan prints `arvore.parou.motivo`.
 - A failure prints "o OKR não respondeu: {motivo}" and never breaks the plan.
+
+**Units (analyze I1)**: `necessario` is per 28-day window, and the plan's clicks are per month (monthly
+search volume × CTR). The line converts the requirement to a month, `necessario × (365,25 / 12) / 28`
+(× 1,087), prints both, and divides month by month. Dividing monthly clicks by a 28-day requirement
+would inflate the fraction by 8,7%.
+
+**The plan's side (analyze A1)** is the 180-day clicks meta as decided: the approved or edited value, or
+the proposal while undecided. A refused meta prints "a meta de cliques aos 180 dias foi recusada: nada a
+comparar".
 
 **Cost**: `dadosDaFicha` reads GSC, GA4, Postgres and CrUX (~3.3 s cold). It is paid only by
 projects with a declared meta (today: `atma`).
