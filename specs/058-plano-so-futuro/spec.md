@@ -125,8 +125,8 @@ esforço, responsável e prazo, trocar o responsável e ver a troca sobreviver a
 1. **Given** um card que o mapa dispara hoje, sem marca de feito vigente, **When** o plano é montado,
    **Then** ele entra no backlog como tarefa (alavanca e alvos), sem a leitura que o disparou.
 2. **Given** uma pergunta do núcleo que a página responsável não responde, **When** o plano é montado,
-   **Then** o backlog ganha a tarefa de cobrir a pergunta na página (alavanca "cobertura") e, depois
-   dela, a de schema na mesma página (alavanca "schema").
+   **Then** o backlog ganha uma tarefa de cobrir a pergunta na página (alavanca "cobertura"), com o
+   bloco de resposta e o schema dele no briefing (research D5).
 3. **Given** duas tarefas na mesma página, de degraus diferentes (por exemplo, índice e snippet),
    **When** o backlog é ordenado, **Then** a do degrau anterior vem primeiro, qualquer que seja o
    impacto.
@@ -239,9 +239,12 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
   "aponta para o mapa" da 057 FR-011a.
 - **FR-021**: Toda tarefa DEVE ser uma alavanca existente da 054 aplicada a um alvo. Nenhuma alavanca
   nova. A mesma alavanca no mesmo alvo vira uma tarefa só, com as origens somadas.
-- **FR-022**: Uma pergunta do núcleo que a página responsável não responde DEVE gerar a tarefa
-  "cobertura" (seção que responde a pergunta) na página e, depois dela, a tarefa "schema" na mesma
-  página. A pergunta conta como respondida quando o dono marca a tarefa como feita (055).
+- **FR-022**: Uma pergunta do núcleo que a página responsável não responde DEVE gerar uma tarefa
+  "cobertura" (seção que responde a pergunta, com o schema da resposta no briefing) na página. A
+  pergunta conta como respondida quando o dono registra no núcleo que uma página a responde. Emenda do
+  plan (research D5): a marca da 055 vale por alavanca e fecharia todas as tarefas "cobertura" e
+  "schema" do projeto de uma vez, por isso a pergunta termina pelo núcleo, e a tarefa "schema" separada
+  saiu.
 - **FR-023**: Cada tarefa DEVE ter impacto, esforço, responsável (Jean ou Maria), prazo e estado.
 - **FR-024**: O impacto DEVE ser os cliques por mês projetados aos 180 dias para os termos que a tarefa
   move: o volume dos termos que a página alvo cobre ou vai cobrir, vezes a fração de clique da régua na
@@ -259,7 +262,8 @@ cliques/mês aos 180 dias; o OKR exige Y; o plano cobre Z% do exigido".
 - **FR-026**: A ordem do backlog DEVE respeitar a dependência por alvo: numa mesma página, a tarefa de
   degrau anterior (índice → desempenho → página certa → posição → snippet) vem antes; tarefa que depende
   de página não vem antes da página nascer (057 FR-012). Entre tarefas sem dependência, vem primeiro a de
-  maior impacto por esforço; impacto "não calculável" vai para o fim do seu degrau.
+  maior impacto por esforço; impacto "não calculável" vai para o fim da lista, na ordem da 054 (emenda
+  do plan, research D7: o degrau deixou de ser faixa global e ficou como ordem dentro de cada alvo).
 - **FR-027**: O estado de uma tarefa DEVE ser um de três, todos futuros: **agendada** (tem semana),
   **a fazer** (sem semana: passou do prazo de 180 dias na capacidade declarada, ou não cabe numa semana)
   ou **bloqueada** (espera outra tarefa, que é nomeada).
