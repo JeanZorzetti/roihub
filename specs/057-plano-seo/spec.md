@@ -67,6 +67,21 @@ Lido em 28/09/2026:
 - Q: Como os termos viram clusters? → A: Por regra fixa: o termo entra no cluster do termo semente que
   ele contém, e o dono move o que ficar errado antes de aprovar. Não há sobreposição de SERP nem LLM
   (FR-005).
+- Q: Quando uma página que já existe conta como criada na semana 0? → A: Só quando está **indexada**
+  (inspeção de URL) **e** teve ao menos 1 impressão na janela do Search Console. Página não indexada
+  gera a tarefa **indexação** na semana 1. Página indexada sem impressão gera as tarefas de **posição**
+  na semana 1. Nos dois casos, a maturação conta a partir da semana em que a tarefa recebe a marca de
+  feito da 055, não da semana 0 (FR-007a). Motivo: em 28/09 a Tape Pro tinha as duas páginas de cluster
+  no ar desde julho, 0 impressão desde 07/08, e o plano prometia 100% dos termos na página 1 com a semana
+  vazia.
+- Q: O que a semana mostra além das tarefas de página? → A: As tarefas do calendário (páginas e
+  FR-007a) **mais** os cards que o mapa (054) dispara na leitura atual e que não têm marca de feito
+  vigente (055). A mesma alavanca vira uma tarefa só, com os alvos somados, na ordem de ataque (FR-011a).
+- Q: Quantos termos uma página conta quando amadurece (achado da D2)? → A: Só os termos cujas palavras
+  estão todas no título ou no H1 dela, lidos no crawl, em qualquer ordem e sem acento. Termo de cluster
+  com ≥ 100 buscas/mês que nenhuma página cobre vira candidato a página de apoio (semente + modificador).
+  O piso de 100 leva o selo "◇ política do dono, sem fonte" e é editável (FR-005a, FR-007b). Motivo: com
+  a contagem por cluster, 2 páginas da Tape Pro prometiam 100% dos 70 termos na página 1 aos 180 dias.
 
 ### Session 2026-09-28 (speckit-analyze)
 
@@ -74,9 +89,10 @@ Lido em 28/09/2026:
   oportunidade: um termo que sobe para o Top 3 sai dela, e uma meta de "mais termos em 4–10,9" contaria
   isso como piora. Ela mantém a meta da 054. A demanda ganha uma projeção de cabeçalho, **termos do
   inventário na página 1 (1,0–10,9)**, lida com a mesma função da penetração no Top 3 e no Top 20.
-- Q: Página que já existe conta para a meta de 90 dias? → A: Sim, como criada na semana 0. Com a
-  premissa padrão de 12 semanas até estabilizar, nenhuma página nova do plano amadurece antes dos 90 dias,
-  e a tela diz isso junto da meta.
+- Q: Página que já existe conta para a meta de 90 dias? → A: Sim, como criada na semana 0, desde que
+  esteja indexada e com impressão (clarificação de 28/09, FR-007a). Com a premissa padrão de 12 semanas
+  até estabilizar, nenhuma página nova do plano amadurece antes dos 90 dias, e a tela diz isso junto da
+  meta.
 - Q: O dono muda o prazo? → A: Não. Os prazos são os dois degraus fixos, 90 e 180 dias. O dono muda a
   data de início do plano.
 - Q: Atma e Sirius consultam volume pago? → A: Não. Usam a demanda que o hub já tem (piso do GSC, 050). A
@@ -149,6 +165,11 @@ responsável e o marco esperado ("semana 3: 23 → 35 URLs no sitemap, 30 indexa
    uma tarefa só por semana, com todos os KPIs que a pediram, como a 054 já faz no painel.
 5. **Given** capacidade zero (por exemplo, o robô de publicação parado), **When** o plano é montado,
    **Then** o plano diz isso na primeira linha e não mostra nenhum marco de cobertura como alcançável.
+6. **Given** um cluster cuja página existe mas está fora do índice ou sem impressão, **When** o plano é
+   montado, **Then** a semana 1 tem a tarefa de indexação ou de posição para aquela URL, e nenhum marco
+   conta aquele cluster antes de a tarefa ter marca de feito e a maturação passar.
+7. **Given** um projeto sem página nova a criar e com regras do mapa disparando, **When** o dono abre a
+   semana corrente, **Then** ela mostra as tarefas desses cards e nunca "nada a fazer".
 
 ---
 
@@ -238,6 +259,11 @@ de zero.
   página de apoio). Se contém dois produtos, entra no do termo semente mais longo. Se não contém nenhum,
   fica em "sem cluster" até o dono decidir. O dono DEVE poder mover um termo de cluster antes de aprovar,
   e a mudança fica gravada.
+- **FR-005a**: Um termo de cluster com volume ≥ **piso de página de apoio** (padrão 100 buscas/mês, selo
+  "◇ política do dono, sem fonte", editável) que nenhuma página do site cobre (FR-007b) DEVE virar
+  candidato a página de apoio, com o rótulo semente + modificador, na fila por volume depois das páginas
+  de cluster, dentro da capacidade (FR-010). Termo marcado com segmento continua candidato pela regra de
+  FR-005. Termos que o dono tirou (marca de concorrente, outra intenção) não entram na fila.
 - **FR-006**: Cada um dos 18 KPIs DEVE ter exatamente uma meta proposta com uma origem declarada:
   **demanda** (KPIs contados em impressões, cliques, consultas ou termos), **régua publicada** (onde o
   hub já tem régua, a meta é a régua) ou **board** (o resto, com o selo "◇ meta do board, sem fonte").
@@ -246,9 +272,21 @@ de zero.
   que o hub já usa para julgar. Nenhum número dessa régua é escrito duas vezes. A posição-alvo é a mesma
   para todos os clusters: **Top 20 no prazo de 90 dias** e **faixa 7–10 no prazo de 180 dias**. A meta
   de clique de 180 dias usa a fração da faixa 7–10. A de 90 dias não conta clique fora da página 1,
-  porque não há régua para isso. Uma página que já existe conta como criada na semana 0. Quando nenhuma
-  página nova amadurece antes de um prazo, a meta daquele prazo diz isso. A folha de striking distance
-  (4–10,9) não recebe meta de demanda, e a projeção de termos na página 1 (1,0–10,9) ocupa o lugar dela.
+  porque não há régua para isso. Uma página que já existe conta como criada na semana 0 só nas condições
+  de FR-007a. Quando nenhuma página nova amadurece antes de um prazo, a meta daquele prazo diz isso. A
+  folha de striking distance (4–10,9) não recebe meta de demanda, e a projeção de termos na página 1
+  (1,0–10,9) ocupa o lugar dela.
+- **FR-007a**: Uma página que já cobre um cluster DEVE ser classificada, pela última leitura, em um de
+  três estados: **ativa** (indexada e com ≥ 1 impressão na janela do Search Console), **indexada sem
+  impressão** ou **fora do índice**. Só a ativa conta como criada na semana 0. A fora do índice gera a
+  tarefa **indexação** na semana 1. A indexada sem impressão gera as tarefas de **posição** na semana 1.
+  Nesses dois casos, a maturação (FR-013) conta da semana em que a tarefa recebe a marca de feito da 055.
+  Enquanto a tarefa não tem marca, a página não amadurece e não entra em nenhum marco. Página sem leitura
+  de indexação fica "sem leitura", nunca "ativa", e também gera a tarefa de indexação.
+- **FR-007b**: Uma página DEVE contar, nas metas e nos marcos de demanda, só os termos que ela **cobre**:
+  todas as palavras do termo aparecem no título ou no H1 dela, lidos no crawl, em qualquer ordem, sem
+  acento e sem diferença de caixa. Os demais termos do cluster só contam quando alguma página os cobre.
+  A conta de cada meta de demanda DEVE dizer quantos termos e quanto volume cada página cobre.
 - **FR-008**: Cada meta DEVE ter prazo, um de dois degraus fixos: 90 ou 180 dias a partir do início do
   plano. O dono muda a data de início, não o degrau.
 - **FR-009**: O dono DEVE aprovar, editar ou recusar cada meta separadamente. O hub DEVE gravar quem
@@ -260,6 +298,12 @@ de zero.
   90%, e nunca a aumenta sozinho.
 - **FR-011**: As tarefas DEVEM seguir a ordem de ataque e as alavancas da 054, sem criar alavanca nova. A
   criação de página de cluster é a alavanca "cobertura", já existente.
+- **FR-011a**: A semana corrente DEVE mostrar, junto das tarefas do calendário, os cards que o mapa do
+  projeto dispara na leitura atual (regras da 054) e que não têm marca de feito vigente (055). Um card
+  com marca some até a data de reler e volta como "ainda dispara" se a regra continuar disparando
+  (FR-016). Tarefa do calendário e card com a mesma alavanca viram UMA tarefa, com os alvos e os KPIs dos
+  dois. As semanas futuras não projetam card: o mapa só lê o presente. As regras e os textos do card são
+  os da 054, sem cópia no plano.
 - **FR-012**: Uma tarefa que depende de página (links internos, título, schema, frescor) NÃO DEVE ser
   agendada antes da semana em que a página do cluster nasce.
 - **FR-013**: Os marcos semanais DEVEM usar premissas de maturação declaradas na tela (semanas até indexar
@@ -285,8 +329,8 @@ de zero.
 
 - **Consulta de demanda**: uma ida à fonte de volume. Tem projeto, data, região, idioma, fonte, custo e os
   termos com volume mensal. É imutável. Uma nova consulta é uma nova linha.
-- **Cluster**: grupo de termos com a mesma intenção. Tem volume somado, termos e a página que o cobre (ou
-  nenhuma).
+- **Cluster**: grupo de termos com a mesma intenção. Tem volume somado, termos, a página que o cobre (ou
+  nenhuma) e, por termo, a página que cobre aquele termo (FR-007b) ou nenhuma.
 - **Meta**: pertence a um KPI e a uma versão do plano. Tem valor, prazo, origem (demanda, régua ou board),
   a conta que a produziu, estado (proposta, aprovada, editada, recusada), quem decidiu e quando.
 - **Plano**: versão numerada por projeto. Tem as metas aprovadas, a capacidade declarada, as premissas de
@@ -312,6 +356,10 @@ de zero.
 - **SC-006**: Toda meta aprovada tem autor e data, e nenhuma meta aprovada muda sem nova versão do plano.
 - **SC-007**: Na primeira comparação semanal depois da aprovação, 100% dos marcos vencidos da Tape Pro
   aparecem com um dos cinco estados de FR-015.
+- **SC-008**: Com a leitura de 28/09 da Tape Pro (2 páginas de cluster no ar, 0 impressão desde 07/08),
+  a semana 1 do plano tem ao menos uma tarefa, e nenhuma meta de demanda projeta mais termos do que as
+  páginas cobrem pelo título ou pelo H1. Um teste com esse cenário reprova "semana vazia" e reprova 100%
+  na página 1 com 2 páginas.
 
 ## Assumptions
 
@@ -321,6 +369,9 @@ de zero.
   acabou (saldo US$ −0,003 em 28/09), e o dono decidiu recarregar US$ 50, a recarga mínima. Cada consulta
   custa em torno de US$ 0,05 a 0,09, com até 1.000 termos por requisição, então a recarga cobre centenas
   de propostas.
+- A inspeção de URL (`/api/indexacao`) hoje grava só a contagem por projeto e dia (`hub_indexacao`).
+  FR-007a precisa do veredito por URL, e guardá-lo é tarefa do plano de implementação. A impressão por
+  página vem da leitura do Search Console por página que o mapa já faz.
 - A chave da DataForSEO hoje mora no `.env` do OpenSEO local. Levá-la para o ambiente do hub é tarefa do
   plano de implementação, seguindo o Princípio V (validar na entrada, `503` só com o nome da variável).
 - A Tape Pro é B2B nacional (`areaServed: "BR"`, foco "comprador e distribuidor, não consumidor final").
