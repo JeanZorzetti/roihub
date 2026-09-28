@@ -1,7 +1,8 @@
 import DEMANDAS from "@/data/demanda-estimada.json";
-import { dbOn, lerCrawlDePagina, listMarcas, listMetas, listPlanos, type MarcaDoMapa, type MetaDecidida, type Plano } from "@/lib/db";
+import { dbOn, lerCrawlDePagina, lerIndexacaoPorUrl, listMarcas, listMetas, listPlanos, type MarcaDoMapa, type MetaDecidida, type Plano } from "@/lib/db";
+import type { GscPaginas } from "@/lib/gsc";
 import { projectBySlug } from "@/lib/autopublish-projects.mjs";
-import { cobrir, lerDemanda, montar, PREMISSAS_PADRAO, propor, segundaDe, SEMANAS } from "@/lib/plano.mjs";
+import { cobrir, estadoDaPagina, lerDemanda, montar, PREMISSAS_PADRAO, propor, segundaDe, SEMANAS } from "@/lib/plano.mjs";
 import { todaySP } from "@/lib/agenda.mjs";
 
 type Partida = { top20?: number | null; tamBusca?: number | null; pagina1?: number | null } | null;
@@ -18,8 +19,10 @@ const erro = (e: unknown) => (e instanceof Error ? e.message : String(e)).slice(
  *
  * `partida` is the GSC starting point the caller already read (D11); `null` keeps it absent.
  * `soAtivo` builds the calendar of the ACTIVE version (the map compares against it), not the draft.
+ * `paginas` is the caller's page-dimension Search Console read (D13): the map already has it, the plan
+ * route reads it next to `gscTermos`. It decides, with the stored per-URL verdict, each page's state.
  */
-export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = false } = {}) {
+export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = false, paginas = null }: { soAtivo?: boolean; paginas?: GscPaginas } = {}) {
   const hoje = todaySP();
   const demanda = lerDemanda((DEMANDAS as Record<string, { procedencia?: Record<string, unknown>; termos?: Record<string, number> }>)[slug], projectBySlug(slug));
 
@@ -27,10 +30,11 @@ export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = f
   let planos: Plano[] = [];
   let decisoes: MetaDecidida[] = [];
   let marcas: MarcaDoMapa[] = [];
+  let classes: Awaited<ReturnType<typeof lerIndexacaoPorUrl>> = null;
   const falhas: string[] = [];
   if (dbOn()) {
     try {
-      [crawl, planos, marcas] = await Promise.all([lerCrawlDePagina(slug), listPlanos(slug), listMarcas(slug)]);
+      [crawl, planos, marcas, classes] = await Promise.all([lerCrawlDePagina(slug), listPlanos(slug), listMarcas(slug), lerIndexacaoPorUrl(slug)]);
     } catch (e) {
       falhas.push(`banco do hub: ${erro(e)}`);
     }
@@ -49,10 +53,11 @@ export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = f
     ? { capacidade: atual.capacidade, semanasAteIndexar: atual.semanasAteIndexar, semanasAteEstabilizar: atual.semanasAteEstabilizar, pisoApoio: atual.pisoApoio }
     : PREMISSAS_PADRAO;
   const inicio = atual?.inicio ?? segundaDe(hoje)!;
-  const clusters = demanda ? cobrir(demanda.clusters, crawl?.paginas ?? null) : [];
+  const estados = Object.fromEntries((crawl?.paginas ?? []).map((pg) => [pg.url, estadoDaPagina(pg.url, { classes, impressoes: paginas })]));
+  const clusters = demanda ? cobrir(demanda.clusters, crawl?.paginas ?? null, { estados }) : [];
   const semCluster = demanda?.semCluster ?? [];
   // The ruled leaves' metas do not depend on demand; without frozen demand only the demand metas go.
-  const propostas: Proposta[] = propor(clusters, { premissas, inicio, semCluster, partida }).filter((m) => demanda || m.origem !== "demanda");
+  const propostas: Proposta[] = propor(clusters, { premissas, inicio, semCluster, partida, marcas }).filter((m) => demanda || m.origem !== "demanda");
 
   // Decided metas drive the calendar; while the draft is open, undecided ones preview at the proposal.
   const decidida = new Map(decisoes.map((d) => [`${d.chave}@${d.prazo}`, d]));
@@ -63,7 +68,7 @@ export async function dadosDoPlano(slug: string, partida: Partida, { soAtivo = f
       if (d?.estado === "recusada") return [];
       return [{ chave: m.chave, prazo: m.prazo, valor: (d?.valor ?? m.valor) as number }];
     });
-  const montado = demanda ? montar({ inicio, ...premissas, clusters, semCluster, metas: paraMontar, responsavel: atual?.criadoPor ?? "jean" }) : null;
+  const montado = demanda ? montar({ inicio, ...premissas, clusters, semCluster, metas: paraMontar, marcas, responsavel: atual?.criadoPor ?? "jean" }) : null;
   const semanaAtual = Math.floor((Date.parse(`${hoje}T12:00:00Z`) - Date.parse(`${inicio}T12:00:00Z`)) / (7 * 864e5)) + 1;
 
   return {

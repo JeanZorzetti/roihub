@@ -25,7 +25,7 @@ import { ALAVANCAS, avaliar, etiqueta, LINKS_DO_BOARD, ORIGEM, plano, PROFUNDIDA
 import { RESPONSAVEIS, rotuloResp, todaySP } from "@/lib/agenda.mjs";
 import { desmarcar, marcar } from "./actions";
 import { dadosDoPlano } from "./plano/dados";
-import { comparar, ESTADOS, feita, leiturasDoPlano, nomeDe } from "@/lib/plano.mjs";
+import { comparar, ESTADOS, feita, leiturasDoPlano, nomeDe, semanaComCards } from "@/lib/plano.mjs";
 
 import { Tabs } from "../../../tabs";
 import { CadeiaDiagrama } from "../../../okr/[slug]/celulas";
@@ -2176,10 +2176,13 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
 
   // ── 057: the active plan's week against the readings above. No DataForSEO request (SC-005); one
   // extra Search Console read, the same window shifted 7 days back, and only with an active plan (D11).
-  const planoMapa = dbOn() ? await dadosDoPlano(slug, null, { soAtivo: true }).catch(() => null) : null;
+  // D13: the page states come from the page-dimension read this map already made (0 extra reads).
+  const planoMapa = dbOn() ? await dadosDoPlano(slug, null, { soAtivo: true, paginas: paginasGsc }).catch(() => null) : null;
   const planoAtivo = planoMapa?.ativo && planoMapa.montado ? planoMapa : null;
   const semanaDoPlano =
     planoAtivo && planoAtivo.semanaAtual >= 1 && planoAtivo.semanaAtual <= planoAtivo.semanas ? planoAtivo.montado!.semanas[planoAtivo.semanaAtual - 1] : null;
+  // D16: this week's calendar plus the cards "O que fazer primeiro" fires today, one task per lever.
+  const semanaDoMapa = semanaDoPlano ? semanaComCards(semanaDoPlano, acoes.degraus.flatMap((g) => g.entradas)) : null;
   let comparacoes: ReturnType<typeof comparar> = [];
   if (planoAtivo && semanaDoPlano) {
     const estPlano = (DEMANDAS as unknown as Record<string, { procedencia: { fonte?: string }; termos: Record<string, number> } | undefined>)[slug];
@@ -2191,7 +2194,6 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
       termosAntes && !("erro" in termosAntes) ? leiturasDoPlano(termosAntes.linhas, inventario, demandaPlano) : null;
     comparacoes = comparar(planoAtivo.montado!.semanas, agora, semanaDoPlano.n, anteriores);
   }
-  const voltou = new Set(acoes.degraus.flatMap((g) => g.entradas.filter((e) => e.apresentacao === "voltou").map((e) => e.alavanca)));
   const idxLimpa = leituras.indexacaoLimpa && "valor" in leituras.indexacaoLimpa ? leituras.indexacaoLimpa.valor : null;
   const fmtPlano = (k: string, v: number) =>
     ["top20", "tamBusca", "pagina1"].includes(k) ? pct1(v) : k === "cliques" ? `${br(Math.round(v))} cliques` : k === "impressoes" ? `${br(Math.round(v))} impressões` : br(v);
@@ -2497,14 +2499,17 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
               </p>
               {semanaDoPlano ? (
                 <>
-                  {semanaDoPlano.tarefas.length ? (
+                  {semanaDoMapa?.tarefas.length ? (
                     <ul className="mapa-acao-motivos">
-                      {semanaDoPlano.tarefas.map((t) => {
+                      {semanaDoMapa.tarefas.map((t) => {
                         const m = planoAtivo.marcas.find((x) => x.alavanca === t.alavanca);
+                        const origem = t.origem.includes("calendario") ? (t.origem.includes("mapa") ? " · do calendário e do mapa" : "") : " · disparada pelo mapa";
                         return (
                           <li key={t.alavanca}>
-                            <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.join(", ")} · {primeiroNome(t.responsavel)}
-                            {voltou.has(t.alavanca) && m
+                            <strong>{ALAVANCAS[t.alavanca as keyof typeof ALAVANCAS].acao}</strong>: {t.alvos.join(", ")}
+                            {t.responsavel ? ` · ${primeiroNome(t.responsavel)}` : ""}
+                            {origem}
+                            {t.voltou && m
                               ? ` · Ainda dispara · feito em ${diaMes(m.marcado)}, o prazo de releitura venceu em ${diaMes(m.reler)}`
                               : feita(t, semanaDoPlano, planoAtivo.marcas) && m
                                 ? ` · feito em ${diaMes(m.marcado)} por ${primeiroNome(m.responsavel)}`
@@ -2514,7 +2519,7 @@ export default async function MapaDoBoardPage({ params }: { params: Promise<{ sl
                       })}
                     </ul>
                   ) : (
-                    <p className="mapa-degrau-vazio">Nenhuma página nova agendada nesta semana.</p>
+                    <p className="mapa-degrau-vazio">Nenhuma tarefa do calendário nesta semana, e o mapa não dispara nenhum card sem marca de feito.</p>
                   )}
                   <ul className="mapa-acao-motivos">
                     {comparacoes.map((c) => (

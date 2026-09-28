@@ -9,8 +9,10 @@ import {
   SEMANAS,
   agendaDePaginas,
   agrupar,
+  cobreTermo,
   cobrir,
   comparar,
+  estadoDaPagina,
   feita,
   kpisDoBoard,
   lerDemanda,
@@ -21,6 +23,7 @@ import {
   montar,
   normalizar,
   propor,
+  semanaComCards,
   semanaDoPrazo,
 } from "../lib/plano.mjs";
 
@@ -171,7 +174,8 @@ test("cobrir: the seed as a path segment sequence or in the title covers; otherw
 });
 
 // ── T010 · propor ──────────────────────────────────────────────────────────────
-// Two clusters: one already covered (week 0), one to create. 10 terms with volume in total.
+// Three clusters: fita-gomada has an ativa page whose title covers only "fita gomada" (week 0, D14);
+// the other two are to create. 10 terms with volume in total.
 function demo({ coberto = true } = {}) {
   const { clusters, semCluster } = agrupar(
     [
@@ -189,8 +193,9 @@ function demo({ coberto = true } = {}) {
     ],
     SEMENTES,
   );
-  const crawl = coberto ? [{ url: "https://t.com/produtos/fita-gomada", titulo: "Fita gomada" }] : [];
-  return { clusters: cobrir(clusters, crawl), semCluster };
+  const url = "https://t.com/produtos/fita-gomada";
+  const crawl = coberto ? [{ url, titulo: "Fita gomada", h1: null }] : [];
+  return { clusters: cobrir(clusters, crawl, { estados: { [url]: { estado: "ativa", classe: "indexada", motivo: null } } }), semCluster };
 }
 const INICIO = "2026-09-28";
 const meta = (ms, chave, prazo) => ms.find((m) => m.chave === chave && m.prazo === prazo);
@@ -216,21 +221,22 @@ test("propor: every REGRAS leaf gets its own limiar and seal; the checklist gets
   for (const k of ["crescimentoNaoMarca", "consultasUnicas"]) assert.match(meta(ms, k, 90).aviso, /base zero/);
 });
 
-test("propor: demand math follows maturation; existing pages are week 0 (D2)", () => {
+test("propor: demand math counts terms by covering page; an ativa page is week 0 (D2, D14)", () => {
   const { clusters, semCluster } = demo();
   const ms = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster });
-  // 10 terms with volume (the null one is out of both sides); 4 in the covered cluster.
+  // 10 terms with volume (the null one is out of both sides); the ativa page's title covers 1 of them.
   const t20 = meta(ms, "top20", 90);
   assert.equal(t20.origem, "demanda");
-  assert.equal(t20.valor, 4 / 10);
+  assert.equal(t20.valor, 1 / 10);
   // defaults: no page created by the plan matures by week 12
   assert.equal(t20.aviso, "nenhuma página nova amadurece antes deste prazo com estas premissas");
-  // by week 25 the two new cluster pages (weeks 1) mature: 4 + 3 + 2 of 10 (semCluster never)
+  // by week 25 the week-1 pages mature, each counting what its label covers: «fita transparente»,
+  // «fita transparente personalizada» and the apoio-termo «fita gomada preco» → 1 + 3 of 10
   const p1 = meta(ms, "pagina1", 180);
-  assert.equal(p1.valor, 9 / 10);
+  assert.equal(p1.valor, 4 / 10);
   assert.equal(p1.aviso, undefined);
   const volTotal = 400 + 100 + 50 + 30 + 200 + 60 + 40 + 90 + 30 + 100;
-  const volMaduro = volTotal - 100;
+  const volMaduro = 400 + 100 + 200 + 90;
   assert.equal(meta(ms, "tamBusca", 180).valor, volMaduro / volTotal);
   assert.equal(meta(ms, "impressoes", 180).valor, volMaduro);
   // clicks: mature volume × the ruler's 7–10 floor, imported, never retyped
@@ -250,10 +256,10 @@ test("propor: demand math follows maturation; existing pages are week 0 (D2)", (
   assert.match(t20.conta, /90 dias/);
 });
 
-test("propor: a created-in-week-0 cluster counts at 90 d only when stabilization fits", () => {
+test("propor: a week-1 page counts at 90 d only when stabilization fits", () => {
   const { clusters, semCluster } = demo();
   const curto = propor(clusters, { premissas: { ...PREMISSAS_PADRAO, semanasAteEstabilizar: 4 }, inicio: INICIO, semCluster });
-  assert.equal(meta(curto, "top20", 90).valor, 9 / 10);
+  assert.equal(meta(curto, "top20", 90).valor, 4 / 10);
   assert.equal(meta(curto, "top20", 90).aviso, undefined);
 });
 
@@ -261,7 +267,7 @@ test("propor: starting point and distance on demand metas; absent without a read
   const { clusters, semCluster } = demo();
   const com = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster, partida: { top20: 0.1, tamBusca: 0.05, pagina1: 0 } });
   assert.equal(meta(com, "top20", 90).partida, 0.1);
-  assert.equal(meta(com, "top20", 90).distancia, 0.4 - 0.1);
+  assert.equal(meta(com, "top20", 90).distancia, meta(com, "top20", 90).valor - 0.1);
   assert.equal(meta(com, "pagina1", 180).partida, 0);
   const sem = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster, partida: null });
   assert.equal("partida" in meta(sem, "top20", 90), false);
@@ -280,15 +286,16 @@ test("agendaDePaginas: uncovered clusters by volume first, then support pages, c
   const { clusters } = demo({ coberto: false });
   const ag = agendaDePaginas(clusters, { capacidade: 2 });
   assert.deepEqual(
-    ag.map((p) => [p.tipo, p.semente, p.segmento ?? null, p.semana]),
+    ag.map((p) => [p.tipo, p.semente, p.segmento ?? p.termo ?? null, p.semana]),
     [
       ["cluster", "fita-gomada", null, 1],
       ["cluster", "fita-transparente", null, 1],
       ["cluster", "fita-transparente-personalizada", null, 2],
-      ["apoio", "fita-gomada", "e-commerce", 2],
+      ["apoio-termo", "fita-gomada", "fita gomada preço", 2],
+      ["apoio-segmento", "fita-gomada", "e-commerce", 3],
     ],
   );
-  assert.deepEqual(agendaDePaginas(clusters, { capacidade: 0 }).map((p) => p.semana), [null, null, null, null]);
+  assert.deepEqual(agendaDePaginas(clusters, { capacidade: 0 }).map((p) => p.semana), [null, null, null, null, null]);
 });
 
 function plano(opts = {}) {
@@ -319,7 +326,7 @@ test("montar: capacity per week, nothing before its page, indexing at +N, same l
       assert.ok(t.kpis.length > 0);
     }
   }
-  assert.equal(criadaEm.size, 4);
+  assert.equal(criadaEm.size, 5);
   for (const s of m.semanas) if (s.tarefas.some((t) => t.alavanca === "cobertura")) assert.equal(s.tarefas[0].alavanca, "cobertura", `semana ${s.n}`);
 });
 
@@ -420,4 +427,294 @@ test("leiturasDoPlano: the map's functions over one read; a missing read or inve
   assert.ok("indecisa" in leiturasDoPlano(linhas, inv, { termos: { a: 100, b: 50 }, paga: false }).tamBusca);
   for (const v of Object.values(leiturasDoPlano(null, inv, null, "a leitura falhou"))) assert.deepEqual(v, { ausente: "a leitura falhou" });
   assert.ok("ausente" in leiturasDoPlano(linhas, null, null).top20);
+});
+
+// ── Clarification of 2026-09-28 (research D12–D16) ─────────────────────────────
+
+// T047 · estadoDaPagina: indexing verdict × impression reading (D13)
+const URL_A = "https://t.com/produtos/fita-gomada/";
+const classes = (classe) => ({ [URL_A]: { classe, dia: "2026-09-27" } });
+const LEITURA = (impressoes) => ({ paginas: [{ pagina: "https://t.com/produtos/fita-gomada", impressoes, cliques: 0, posicao: 30, hosts: ["t.com"] }], hosts: ["t.com"], encerrados: [], truncado: false });
+const VAZIA = { paginas: [], hosts: ["t.com"], encerrados: [], truncado: false };
+
+test("estadoDaPagina: one row per line of the D13 table", () => {
+  assert.equal(estadoDaPagina(URL_A, { classes: classes("indexada"), impressoes: LEITURA(3) }).estado, "ativa");
+  assert.equal(estadoDaPagina(URL_A, { classes: classes("indexada"), impressoes: VAZIA }).estado, "indexada-sem-impressao");
+  for (const c of ["rastreada_nao_indexada", "descoberta_nao_indexada", "outra"]) {
+    assert.equal(estadoDaPagina(URL_A, { classes: classes(c), impressoes: LEITURA(3) }).estado, "fora-do-indice", c);
+    assert.equal(estadoDaPagina(URL_A, { classes: classes(c), impressoes: { erro: "timeout" } }).estado, "fora-do-indice", c);
+  }
+  // a 429 is not a verdict; no run, or a URL past the cota, is not "out of the index"
+  for (const cl of [classes("falha"), null, { "https://t.com/outra": { classe: "indexada", dia: "2026-09-27" } }]) {
+    const e = estadoDaPagina(URL_A, { classes: cl, impressoes: LEITURA(3) });
+    assert.equal(e.estado, "sem-leitura", JSON.stringify(cl));
+    assert.ok(e.motivo, "sem-leitura always says why");
+    assert.notEqual(e.classe, "indexada");
+  }
+  // indexed, but the impression reading failed or was truncated: absence proves nothing
+  for (const imp of [{ erro: "timeout" }, null, { ...VAZIA, truncado: true }]) {
+    const e = estadoDaPagina(URL_A, { classes: classes("indexada"), impressoes: imp });
+    assert.equal(e.estado, "sem-leitura", JSON.stringify(imp));
+    assert.equal(e.classe, "indexada");
+    assert.ok(e.motivo);
+  }
+});
+
+test("estadoDaPagina: matched by decoded path without the trailing slash; /pt-BR/x does not lend to /x", () => {
+  const cl = { "https://t.com/p/a%C3%A7o/": { classe: "indexada", dia: "2026-09-27" } };
+  const imp = { ...VAZIA, paginas: [{ pagina: "https://t.com/p/aço", impressoes: 2, cliques: 0, posicao: 9, hosts: ["t.com"] }] };
+  assert.equal(estadoDaPagina("https://t.com/p/aço", { classes: cl, impressoes: imp }).estado, "ativa");
+  const prefixada = { ...VAZIA, paginas: [{ pagina: "https://t.com/pt-BR/p/aço", impressoes: 50, cliques: 0, posicao: 9, hosts: ["t.com"] }] };
+  assert.equal(estadoDaPagina("https://t.com/p/aço", { classes: cl, impressoes: prefixada }).estado, "indexada-sem-impressao");
+});
+
+// T048 · cobreTermo and coverage by title OR H1 (D14)
+test("cobreTermo: every word of the term in the text, any order, no accents, no case", () => {
+  assert.equal(cobreTermo("fita gomada kraft", "Fita Gomada Kraft 70mm"), true);
+  assert.equal(cobreTermo("fita gomada kraft", "Kraft Fita Gomada"), true);
+  assert.equal(cobreTermo("fita gomada reforçada", "FITA GOMADA REFORCADA"), true);
+  assert.equal(cobreTermo("fita gomada kraft", "Fita Gomada"), false);
+  assert.equal(cobreTermo("fitas gomadas", "fita gomada"), false, "fitas ≠ fita");
+  assert.equal(cobreTermo("fita gomada para caixa", "fita gomada caixa"), false, "para counts");
+  assert.equal(cobreTermo("fita gomada", null), false);
+  assert.equal(cobreTermo("", "fita"), false);
+});
+
+test("cobrir: a term is covered by the title OR the H1, each alone; each term gets cobertoPor", () => {
+  const { clusters } = agrupar(
+    [
+      { termo: "fita gomada kraft", volume: 50 },
+      { termo: "fita gomada branca", volume: 40 },
+      { termo: "fita gomada nylon", volume: 30 },
+      { termo: "fita gomada kraft branca", volume: 20 },
+    ],
+    SEMENTES,
+  );
+  const crawl = [
+    { url: "https://t.com/produtos/fita-gomada/", titulo: "Fita Gomada Kraft 70mm", h1: "Fita gomada branca" },
+    { url: "https://t.com/blog/fios-de-nylon-na-embalagem", titulo: "Fios de nylon na fita gomada", h1: null },
+  ];
+  const c = cobrir(clusters, crawl, { estados: { [crawl[0].url]: { estado: "ativa", classe: "indexada", motivo: null } } })[0];
+  const por = (t) => c.termos.find((x) => x.termo === t).cobertoPor;
+  assert.equal(por("fita gomada kraft"), crawl[0].url, "title");
+  assert.equal(por("fita gomada branca"), crawl[0].url, "H1");
+  assert.equal(por("fita gomada nylon"), crawl[1].url);
+  assert.equal(por("fita gomada kraft branca"), null, "half in the title, half in the H1 is not coverage");
+  assert.equal(c.estadoDaPagina.estado, "ativa");
+  assert.equal(c.estados[crawl[1].url].estado, "sem-leitura", "a page with no state read is sem-leitura, never ativa");
+});
+
+// T049 · agendaDePaginas with apoio-termo (FR-005a)
+function comTermos(termos, crawl = [], estados = {}) {
+  const { clusters } = agrupar(termos, SEMENTES);
+  return cobrir(clusters, crawl, { estados });
+}
+
+test("agendaDePaginas: an uncovered term ≥ pisoApoio becomes an apoio-termo; below, covered or queued, it does not", () => {
+  const cl = comTermos(
+    [
+      { termo: "fita gomada", volume: 1000 },
+      { termo: "fita gomada personalizada", volume: 300 },
+      { termo: "fita gomada branca", volume: 99 },
+      { termo: "fita gomada kraft", volume: 200 },
+    ],
+    [{ url: "https://t.com/blog/kraft", titulo: "Kraft: a fita gomada", h1: null }],
+  );
+  const ag = agendaDePaginas(cl, { capacidade: 3, pisoApoio: 100 });
+  assert.deepEqual(
+    ag.map((p) => [p.tipo, p.termo ?? null, p.semana]),
+    [["apoio-termo", "fita gomada personalizada", 1]],
+    "the blog page covers the seed (title), so the cluster has a page; kraft is covered; branca is below the floor",
+  );
+  const t = ag[0];
+  assert.deepEqual(t.cobre, ["fita", "gomada", "personalizada"]);
+  assert.equal(t.alvo, "«fita gomada personalizada»");
+  // the seed of a cluster with no page is covered by the queued cluster page, never an apoio-termo
+  const semPagina = agendaDePaginas(comTermos([{ termo: "fita gomada", volume: 1000 }]), { capacidade: 3, pisoApoio: 100 });
+  assert.deepEqual(semPagina.map((p) => p.tipo), ["cluster"]);
+});
+
+test("agendaDePaginas: an excluded term never enters (the frozen file does not carry it)", () => {
+  const d = lerDemanda(
+    { procedencia: { fonte: "dataforseo", sementes: ["fita-gomada"], excluidos: { "fita gomada 3m": "marca de concorrente" } }, termos: { "fita gomada": 500, "fita gomada preço": 300 } },
+    null,
+  );
+  const ag = agendaDePaginas(cobrir(d.clusters, []), { capacidade: 3, pisoApoio: 100 });
+  assert.ok(!ag.some((p) => p.termo === "fita gomada 3m"));
+  assert.ok(ag.some((p) => p.termo === "fita gomada preço"));
+});
+
+test("agendaDePaginas: the seed missing from its existing page's title and H1 is a titulo task, not an apoio-termo", () => {
+  const url = "https://t.com/produtos/fita-gomada/";
+  const cl = comTermos([{ termo: "fita gomada", volume: 1000 }, { termo: "fita gomada larga", volume: 150 }], [{ url, titulo: "Fitas de papel | Loja", h1: "Rolo de papel" }]);
+  assert.equal(cl[0].pagina, url, "found by path");
+  assert.equal(cl[0].termos.find((t) => t.termo === "fita gomada").cobertoPor, null, "but its title and H1 do not cover the seed");
+  const ag = agendaDePaginas(cl, { capacidade: 3, pisoApoio: 100 });
+  assert.deepEqual(ag.map((p) => p.termo), ["fita gomada larga"]);
+  const m = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters: cl, metas: [], responsavel: "jean" });
+  const titulo = m.semanas[0].tarefas.find((t) => t.alavanca === "titulo");
+  assert.ok(titulo?.alvos.includes(url), "week-1 titulo on the existing page");
+});
+
+test("agendaDePaginas: cluster pages first, then apoio-segmento and apoio-termo together by volume, capacity per week", () => {
+  const cl = comTermos([
+    { termo: "fita gomada", volume: 100 },
+    { termo: "fita transparente", volume: 50 },
+    { termo: "fita gomada para e-commerce", volume: 30 },
+    { termo: "fita gomada branca", volume: 200 },
+    { termo: "fita gomada larga", volume: 120 },
+  ]);
+  const ag = agendaDePaginas(cl, { capacidade: 2, pisoApoio: 100 });
+  assert.deepEqual(
+    ag.map((p) => [p.tipo, p.semana]),
+    [
+      ["cluster", 1],
+      ["cluster", 1],
+      ["apoio-termo", 2],
+      ["apoio-termo", 2],
+      ["apoio-segmento", 3],
+    ],
+  );
+  assert.deepEqual(ag.slice(2, 4).map((p) => p.termo), ["fita gomada branca", "fita gomada larga"]);
+});
+
+// T050 · propor counts terms by covering page, and existing pages only when ativa or marked (D14, D15)
+test("propor: a term counts once its covering page matures; a non-ativa page without marca counts nothing", () => {
+  const url = "https://t.com/produtos/fita-gomada/";
+  const termos = [
+    { termo: "fita gomada", volume: 1000 },
+    { termo: "fita gomada kraft", volume: 200 },
+    { termo: "fita gomada branca", volume: 50 },
+  ];
+  const crawl = [{ url, titulo: "Fita Gomada Kraft", h1: null }];
+  const premissas = { ...PREMISSAS_PADRAO, semanasAteEstabilizar: 4 };
+  const t20 = (estado, marcas = []) => meta(propor(comTermos(termos, crawl, { [url]: estado }), { premissas, inicio: INICIO, marcas }), "top20", 90);
+
+  // ativa: week 0, both covered terms by 90 d
+  const ativa = t20({ estado: "ativa", classe: "indexada", motivo: null });
+  assert.equal(ativa.valor, 2 / 3);
+  assert.match(ativa.conta, /\/produtos\/fita-gomada\/ cobre 2 termos, 1\.200 buscas\/mês/);
+  // not ativa, no marca: the page adds nothing
+  const parada = t20({ estado: "indexada-sem-impressao", classe: "indexada", motivo: null });
+  assert.equal(parada.valor, 0);
+  assert.match(parada.conta, /só conta depois da marca de feito/i);
+  // a posição marca in week 3 matures it at 3 + 4 = 7 ≤ 12
+  assert.equal(t20({ estado: "indexada-sem-impressao", classe: "indexada", motivo: null }, [{ alavanca: "links", marcado: "2026-10-13" }]).valor, 2 / 3);
+  // a marca of another page's lever does not start the clock
+  assert.equal(t20({ estado: "fora-do-indice", classe: "rastreada_nao_indexada", motivo: null }, [{ alavanca: "links", marcado: "2026-10-13" }]).valor, 0);
+});
+
+test("propor: a term covered by an existing page and a planned one takes the earliest maturity", () => {
+  const url = "https://t.com/blog/branca";
+  const termos = [{ termo: "fita gomada", volume: 1000 }, { termo: "fita gomada branca", volume: 300 }];
+  const crawl = [{ url, titulo: "Fita gomada branca", h1: null }];
+  // the blog page covers both terms; ativa → week 0 wins over nothing else
+  const ms = propor(comTermos(termos, crawl, { [url]: { estado: "ativa", classe: "indexada", motivo: null } }), { premissas: PREMISSAS_PADRAO, inicio: INICIO, marcas: [] });
+  assert.equal(meta(ms, "top20", 90).valor, 1);
+});
+
+// T051 · montar emits week-1 tasks for existing pages that are not ativa (D15)
+const POSICAO_DA_PAGINA = Object.keys(ALAVANCAS).filter((a) => ALAVANCAS[a].degrau === "posicao" && a !== "cobertura" && a !== "marca");
+const G = "https://t.com/produtos/fita-gomada/";
+const T = "https://t.com/produtos/fita-transparente/";
+
+function semana1(estados, extra = {}) {
+  const termos = [{ termo: "fita gomada", volume: 1000 }, { termo: "fita transparente", volume: 500 }];
+  const crawl = [
+    { url: G, titulo: "Fita gomada", h1: null },
+    { url: T, titulo: "Fita transparente", h1: null },
+  ];
+  return montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters: comTermos(termos, crawl, estados), metas: [], responsavel: "jean", ...extra });
+}
+
+test("montar: fora-do-indice or unread index → week-1 indexacao with the URL; indexada-sem-impressao → the posição levers", () => {
+  const m = semana1({ [G]: { estado: "fora-do-indice", classe: "outra", motivo: null }, [T]: { estado: "sem-leitura", classe: null, motivo: "sem corrida" } });
+  const idx = m.semanas[0].tarefas.filter((t) => t.alavanca === "indexacao");
+  assert.equal(idx.length, 1, "two pages, one task per lever (054 FR-009)");
+  assert.deepEqual([...idx[0].alvos].sort(), [G, T]);
+  const pos = semana1({ [G]: { estado: "indexada-sem-impressao", classe: "indexada", motivo: null }, [T]: { estado: "ativa", classe: "indexada", motivo: null } });
+  assert.deepEqual(pos.semanas[0].tarefas.map((t) => t.alavanca).sort(), [...POSICAO_DA_PAGINA].sort());
+  for (const t of pos.semanas[0].tarefas) assert.deepEqual(t.alvos, [G]);
+  assert.ok(pos.semanas[0].tarefas.every((t) => t.origem.includes("calendario")));
+});
+
+test("montar: indexed but the impression reading failed → no task, a first-line aviso, and no milestone", () => {
+  const lido = { estado: "sem-leitura", classe: "indexada", motivo: "leitura de impressões truncada" };
+  const m = semana1({ [G]: lido, [T]: lido }, { metas: [{ chave: "top20", prazo: 90, valor: 0 }] });
+  assert.deepEqual(m.semanas[0].tarefas, []);
+  assert.match(m.avisos[0], /leitura de impressões truncada/);
+  assert.ok(m.semanas.slice(0, semanaDoPrazo(90) - 1).every((s) => s.marcos.top20 === null));
+});
+
+test("montar: no marca → the page enters no milestone; a marca in week 3 matures it at 3 + semanasAteEstabilizar", () => {
+  const fora = { estado: "fora-do-indice", classe: "outra", motivo: null };
+  const metas = [{ chave: "pagina1", prazo: 180, valor: 1 }];
+  const sem = semana1({ [G]: fora, [T]: fora }, { metas });
+  assert.ok(sem.semanas.every((s, i) => i === semanaDoPrazo(180) - 1 || s.marcos.pagina1 === null));
+  assert.deepEqual(sem.naoCabe.map((x) => x.chave), ["pagina1"]);
+  const com = semana1({ [G]: fora, [T]: fora }, { metas, marcas: [{ alavanca: "indexacao", marcado: "2026-10-14" }] });
+  const madura = 3 + PREMISSAS_PADRAO.semanasAteEstabilizar;
+  assert.equal(com.semanas[madura - 2].marcos.pagina1, null);
+  assert.equal(com.semanas[madura - 1].marcos.pagina1, 1);
+  assert.deepEqual(com.naoCabe, []);
+});
+
+// T052 · SC-008: Tape Pro on 28/09/2026. Title and H1 read ONCE from the live HTML on 2026-09-28
+// through titulo()/h1() and pasted here as literals. No network in the test.
+test("SC-008: Tape Pro 28/09 — week 1 not empty, the pages without marca count 0, page 1 below 100%", async () => {
+  const { default: DEMANDAS } = await import("../data/demanda-estimada.json", { with: { type: "json" } });
+  assert.equal(Object.keys(DEMANDAS.tapepro.termos).length, 70);
+  const d = lerDemanda(DEMANDAS.tapepro, null);
+  const crawl = [
+    { url: "https://tapepro.roilabs.com.br/produtos/fita-gomada/", titulo: "Fita Gomada Kraft Reforçada com Fios de Nylon 70mm | TapePro", h1: "Fita gomada kraft reforçada com fios de nylon" },
+    { url: "https://tapepro.roilabs.com.br/produtos/fita-transparente-personalizada/", titulo: "Fita Adesiva Transparente Personalizada com Sua Marca | TapePro", h1: "Fita adesiva transparente personalizada" },
+    { url: "https://tapepro.roilabs.com.br/produtos/fita-transparente-comum/", titulo: "Fita Adesiva Transparente Comum 48mm × 100m por Volume | TapePro", h1: "Fita adesiva transparente comum" },
+  ];
+  // 0 impressions since 07/08: indexed or not, never ativa
+  const impressoes = { paginas: [], hosts: ["tapepro.roilabs.com.br"], encerrados: [], truncado: false };
+  const semPaginas = propor(cobrir(d.clusters, []), { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster: d.semCluster, marcas: [] });
+  for (const classe of ["indexada", "rastreada_nao_indexada"]) {
+    const cls = Object.fromEntries(crawl.map((p) => [p.url, { classe, dia: "2026-09-28" }]));
+    const estados = Object.fromEntries(crawl.map((p) => [p.url, estadoDaPagina(p.url, { classes: cls, impressoes })]));
+    const clusters = cobrir(d.clusters, crawl, { estados });
+    assert.ok(clusters.some((c) => c.termos.some((t) => t.cobertoPor)), "the live titles do cover some terms");
+    const ms = propor(clusters, { premissas: PREMISSAS_PADRAO, inicio: INICIO, semCluster: d.semCluster, marcas: [] });
+    const metas = ms.filter((x) => x.valor !== null);
+    const m = montar({ inicio: INICIO, ...PREMISSAS_PADRAO, clusters, semCluster: d.semCluster, metas, marcas: [], responsavel: "jean" });
+
+    assert.ok(m.semanas[0].tarefas.length > 0, `${classe}: semana 1 vazia`);
+    // the existing pages add 0 terms: no demand meta is above what the planned pages alone deliver
+    for (const x of ms.filter((x) => x.origem === "demanda" && x.valor !== null))
+      assert.ok(x.valor <= meta(semPaginas, x.chave, x.prazo).valor + 1e-9, `${classe}: ${x.chave}@${x.prazo} counts pages without marca`);
+    assert.equal(meta(ms, "top20", 90).valor, 0, `${classe}: top20 at 90 d`);
+    // the ceiling: terms covered by the labels of pages scheduled up to week SEMANAS − estab
+    const ate = SEMANAS - PREMISSAS_PADRAO.semanasAteEstabilizar;
+    const rotulos = m.agenda.filter((p) => p.semana !== null && p.semana <= ate).map((p) => p.cobre.join(" "));
+    const comVolume = d.clusters.flatMap((c) => c.termos).filter((t) => typeof t.volume === "number");
+    const teto = comVolume.filter((t) => rotulos.some((r) => cobreTermo(t.termo, r))).length / comVolume.length;
+    const p1 = meta(ms, "pagina1", 180).valor;
+    assert.ok(p1 <= teto + 1e-9, `${classe}: pagina1 ${p1} > ${teto}`);
+    assert.ok(p1 < 1, `${classe}: 100% na página 1`);
+  }
+});
+
+// T063 · semanaComCards (D16)
+test("semanaComCards: same lever → one task with the union; card-only in 054 order; aguardando out; no mutation", () => {
+  const semana = { n: 1, inicio: INICIO, marcos: {}, tarefas: [{ alavanca: "links", alvos: ["«fita gomada»"], kpis: ["linksInternos"], responsavel: "jean", origem: ["calendario"] }] };
+  const copia = structuredClone(semana);
+  const entrada = (alavanca, apresentacao, alvos, chaves) => ({ alavanca, apresentacao, alvos, motivos: chaves.map((chave) => ({ chave })), marca: null });
+  const s = semanaComCards(semana, [
+    entrada("links", "ativa", ["/blog/x"], ["orfas"]),
+    entrada("titulo", "voltou", ["/a"], ["ctrGap"]),
+    entrada("indexacao", "ativa", ["/b"], ["indexacao"]),
+    entrada("schema", "aguardando", ["/c"], ["schema"]),
+  ]);
+  assert.deepEqual(semana, copia);
+  assert.deepEqual(s.tarefas.map((t) => t.alavanca), ["links", "indexacao", "titulo"]);
+  const links = s.tarefas[0];
+  assert.deepEqual(links.alvos, ["«fita gomada»", "/blog/x"]);
+  assert.deepEqual(links.kpis, ["linksInternos", "orfas"]);
+  assert.deepEqual(links.origem, ["calendario", "mapa"]);
+  assert.deepEqual(s.tarefas[1].origem, ["mapa"]);
+  assert.equal(s.tarefas[2].voltou, true);
 });
