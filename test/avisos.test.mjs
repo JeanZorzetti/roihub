@@ -225,11 +225,11 @@ test("avisoDeTicket: enum desconhecido sai cru — inclusive 'constructor' — e
   assert.deepEqual(linhas.slice(1, 4), ["A &amp; B", "“&lt;script&gt;&amp;”", "constructor · prioridade CRITICAL"]);
 });
 
-test("avisoDeLead: Vértice avisa, sem o parêntese de 'Vértice Marketing (agência)'", () => {
+test("avisoDeLead: a Procura avisa pela pipeline verticemarketing, sem o parêntese de 'Procura (agência)'", () => {
   assert.equal(
     avisoDeLead({ ...lead, pipeline: "verticemarketing", origem: "verticemarketing:contato" }, pipelines),
     [
-      "🟢 <b>Lead novo · Vértice Marketing</b>",
+      "🟢 <b>Lead novo · Procura</b>",
       "Maria Souza, pelo formulário de contato",
       "maria@exemplo.com",
       "11 99999-0000",

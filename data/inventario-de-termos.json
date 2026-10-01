@@ -919,5 +919,112 @@
       "fita papel gomado",
       "preço de fita gomada"
     ]
+  },
+  "verticemarketing": {
+    "procedencia": {
+      "fonte": "dataforseo google_ads keywords_for_keywords",
+      "congeladoEm": "2026-10-01",
+      "consultadoEm": "2026-10-01T18:35:27.728Z",
+      "consultas": [
+        {
+          "arquivo": "docs/demanda/dataforseo-verticemarketing-2026-10-01T183527.json",
+          "fonte": "dataforseo google_ads keywords_for_keywords",
+          "regiao": "Goiania,State of Goias,Brazil",
+          "consultadoEm": "2026-10-01T18:35:27.728Z",
+          "custoUsd": 0.09
+        },
+        {
+          "arquivo": "docs/demanda/dataforseo-verticemarketing-2026-09-30-buscado-de-goiania.json",
+          "fonte": "dataforseo google_ads search_volume",
+          "regiao": "Goiania,State of Goias,Brazil",
+          "consultadoEm": "2026-09-30",
+          "custoUsd": 0.09,
+          "objetivo": "termos genéricos buscados de Goiânia"
+        },
+        {
+          "arquivo": "docs/demanda/dataforseo-verticemarketing-2026-09-30-cidade-no-texto.json",
+          "fonte": "dataforseo google_ads search_volume",
+          "regiao": "Brazil",
+          "consultadoEm": "2026-09-30",
+          "custoUsd": 0.09,
+          "objetivo": "termos com Goiânia/Aparecida no texto"
+        }
+      ],
+      "janela": {
+        "inicio": "2026-10-01",
+        "fim": "2026-10-01"
+      },
+      "piso": 20,
+      "dimensao": "volume Google Ads (DataForSEO keywords_for_keywords)",
+      "hosts": [
+        "procuramarketing.com"
+      ],
+      "excluiMarca": [
+        "verticemarketing",
+        "vertice marketing",
+        "vértice marketing",
+        "procura marketing"
+      ],
+      "foraDoCatalogo": {},
+      "excluidos": {
+        "page landing page": "variante do Google Ads com o mesmo volume de «landing page»",
+        "criacao de site": "variante do Google Ads com o mesmo volume de «criação de site»",
+        "criacao de sites": "variante do Google Ads com o mesmo volume de «criação de site»",
+        "criacao de um site": "variante do Google Ads com o mesmo volume de «criação de site»",
+        "agencia de marketing": "variante do Google Ads com o mesmo volume de «agência de marketing»",
+        "agências de marketing": "variante do Google Ads com o mesmo volume de «agência de marketing»",
+        "agência de mkt": "variante do Google Ads com o mesmo volume de «agência de marketing»",
+        "agencia de marketing digital": "variante do Google Ads com o mesmo volume de «agência de marketing digital»",
+        "agencia de mkt digital": "variante do Google Ads com o mesmo volume de «agência de marketing digital»",
+        "landing page oque é": "variante do Google Ads com o mesmo volume de «oque é landing page»",
+        "seost": "grafia que não nomeia serviço do site",
+        "agencia de publicidade": "variante do Google Ads com o mesmo volume de «agência de publicidade»",
+        "empresas de mkt digital": "variante do Google Ads com o mesmo volume de «empresa de marketing digital»",
+        "seogoogle": "variante do Google Ads com o mesmo volume de «seo google»",
+        "marketing agencia": "variante do Google Ads com o mesmo volume de «agencia marketing»",
+        "seo pack": "plugin de WordPress, não é busca pelo serviço",
+        "agenciamarketing": "variante do Google Ads com o mesmo volume de «agencia marketing»",
+        "seo brasileiro": "provável grafia de «CEO», não é busca pelo serviço",
+        "agencia de marketing médico": "nicho que o site não declara: não há página por nicho",
+        "agência de marketing médico": "nicho que o site não declara: não há página por nicho",
+        "digital agencia": "variante do Google Ads com o mesmo volume de «agência digital»",
+        "agências digitais": "variante do Google Ads com o mesmo volume de «agência digital»",
+        "agencia digitale": "variante do Google Ads com o mesmo volume de «agência digital»",
+        "* seo": "grafia com símbolo, sem volume reportado",
+        "seo &": "grafia com símbolo, sem volume reportado",
+        "criação de sites": "variante do Google Ads com o mesmo volume de «criação de site»",
+        "site para advogado": "nicho advogado saiu por decisão do dono em 30/09/2026",
+        "marketing médico": "nicho que o site não declara: não há página por nicho"
+      },
+      "porque": "termos do nicho com volume ≥ 20/mês em Goiania,State of Goias,Brazil + Brazil, a partir das sementes criacao de site, agencia de marketing, gestao de trafego, seo, landing page"
+    },
+    "termos": [
+      "landing page",
+      "agência de marketing",
+      "seo",
+      "criacao de sites profissionais",
+      "oque é landing page",
+      "oque seo",
+      "agência de publicidade",
+      "seo google",
+      "empresa de marketing digital",
+      "seo oque e",
+      "gestao de trafego",
+      "agencia marketing",
+      "empresas de marketing",
+      "agencia de trafego pago",
+      "agência digital",
+      "gestao de trafego pago",
+      "criação de site",
+      "gestor de tráfego",
+      "agência de marketing digital",
+      "criação de site em goiânia",
+      "criação de sites goiânia",
+      "agência de publicidade goiânia",
+      "agência de marketing digital goiânia",
+      "agência de marketing goiânia",
+      "marketing digital goiânia",
+      "criação de site goiânia"
+    ]
   }
 }

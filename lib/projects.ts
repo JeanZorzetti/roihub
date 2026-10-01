@@ -128,8 +128,11 @@ export async function listProjects(): Promise<Project[]> {
  *  057 (28/09/2026): a Tapepro entra para ganhar mapa antes do plano de SEO (FR-001).
  *
  *  01/10/2026: a ROI Labs entra (pedido do Jean). O host é o apex `roilabs.com.br`: o filtro de
- *  página `https://roilabs.com.br/` não casa os subdomínios da mesma `sc-domain`. */
-export const SLUGS_DE_BUSCA = ["atma", "sirius", "tapepro", "roilabs"];
+ *  página `https://roilabs.com.br/` não casa os subdomínios da mesma `sc-domain`.
+ *
+ *  01/10/2026: a Procura entra (pedido do Jean) no dia em que mudou para `procuramarketing.com`. O
+ *  slug segue `verticemarketing`: é a chave da pipeline que o formulário do site envia. */
+export const SLUGS_DE_BUSCA = ["atma", "sirius", "tapepro", "roilabs", "verticemarketing"];
 
 /** Os projetos que as corridas de busca percorrem e que têm mapa, na ordem de `SLUGS_DE_BUSCA`.
  *  `deBusca()` (lib/projects.mjs) exige card curado e `url` — quem não tem site não tem o que

@@ -128,8 +128,8 @@
     "proximaDecisao": "B2B têxtil fecha por formulário mesmo — quem atende esse lead quando ele chegar?"
   },
   "verticemarketing": {
-    "oQueE": "Site institucional de agência de marketing digital em português (repo vertex-landing-craft). NÃO confundir com o vertice, que é SaaS de onboarding.",
-    "paraQuem": "Empresa que contrataria serviço de agência.",
+    "oQueE": "Procura (até 30/09/2026, Vértice Marketing): site de agência de marketing em Goiânia e Aparecida de Goiânia, em procuramarketing.com (repo vertex-landing-craft). NÃO confundir com o vertice, que é SaaS de onboarding.",
+    "paraQuem": "Empresa de Goiânia e Aparecida de Goiânia que contrataria serviço de agência.",
     "estado": "no-ar",
     "dinheiro": "R$ 0 — a receita seria por serviço prestado; não há produto nem checkout.",
     "oQueTrava": "Nada mais no caminho do lead: era agência sem formulário funcionando (500 em produção, credencial do Sirius nunca configurada). Desde 16/08 o formulário grava no CRM do hub.",

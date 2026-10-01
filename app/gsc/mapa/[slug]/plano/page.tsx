@@ -84,6 +84,9 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
   const proxima = v.semanas.find((s) => s.n > d.semanaAtual && s.tarefas.length) ?? null;
   const proc = demanda?.procedencia as Record<string, unknown> | undefined;
   const consultadoEm = typeof proc?.consultadoEm === "string" ? proc.consultadoEm.slice(0, 10) : typeof proc?.congeladoEm === "string" ? proc.congeladoEm : null;
+  // A local business freezes more than one paid lookup (searched FROM the city, and with the city in the text):
+  // each term's volume belongs to the region of the lookup that brought it.
+  const consultas = Array.isArray(proc?.consultas) ? (proc.consultas as { regiao: string; consultadoEm: string; objetivo?: string }[]) : [];
   const idadeDias = consultadoEm ? Math.floor((Date.parse(`${d.hoje}T12:00:00Z`) - Date.parse(`${consultadoEm}T12:00:00Z`)) / 864e5) : null;
   const versoes = [v.versoes.ativo ? `Versão ${v.versoes.ativo} ativa` : null, v.versoes.rascunho ? `versão ${v.versoes.rascunho} em rascunho` : null].filter(Boolean).join(" · ");
 
@@ -756,7 +759,11 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
           ) : (
             <>
               <p className="foot">
-                {demanda.paga
+                {consultas.length > 1
+                  ? `Volume mensal do Google Ads (DataForSEO), idioma ${String(proc?.idioma ?? "")}, em ${consultas.length} consultas por US$ ${Number(proc?.custoUsd).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}: ${consultas
+                      .map((c) => `${c.regiao} em ${dm(c.consultadoEm.slice(0, 10))}/${c.consultadoEm.slice(0, 4)}${c.objetivo ? ` (${c.objetivo})` : ""}`)
+                      .join("; ")}. O volume de cada termo é o da região da consulta que o trouxe.`
+                  : demanda.paga
                   ? `Volume mensal do Google Ads (DataForSEO), ${String(proc?.regiao ?? "")}, idioma ${String(proc?.idioma ?? "")}, consultado em ${consultadoEm ? dm(consultadoEm) + "/" + consultadoEm.slice(0, 4) : "?"} por US$ ${String(proc?.custoUsd ?? "?")}.`
                   : `Piso de impressões do Search Console (estimativa da 050, congelada em ${consultadoEm ?? "?"}): não é volume de mercado, e a demanda real é maior.`}{" "}
                 Total: {br(v.clusters.reduce((a, c) => a + c.volume, 0) + d.semCluster.reduce((a, t) => a + (t.volume ?? 0), 0))} buscas/mês em{" "}
@@ -816,7 +823,7 @@ export default async function PlanoPage({ params }: { params: Promise<{ slug: st
                   {Object.entries(proc.excluidos as Record<string, string>)
                     .map(([t, m]) => `«${t}» (${m})`)
                     .join("; ")}
-                  . Termos abaixo de {PISO_VOLUME} buscas/mês e de marca ficam fora antes disso.
+                  . Termos abaixo de {typeof proc.piso === "number" ? proc.piso : PISO_VOLUME} buscas/mês e de marca ficam fora antes disso.
                 </p>
               ) : null}
             </>

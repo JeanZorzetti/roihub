@@ -423,18 +423,34 @@
   {
     "slug": "verticemarketing",
     "perfil": "C",
-    "nome": "Vértice Marketing — agência de marketing digital",
-    "url": "https://verticemarketing.roilabs.com.br/",
+    "nome": "Procura — agência de marketing em Goiânia e Aparecida",
+    "url": "https://procuramarketing.com/",
+    "dominioAnterior": {
+      "url": "https://verticemarketing.roilabs.com.br/",
+      "data": "2026-10-01",
+      "porque": "o domínio antigo responde 301 para o novo, e o 301 leva semanas para transferir os sinais",
+      "historico": "7 cliques e 69 impressões entre 11/01 e 28/09/2026 seguem em sc-domain:roilabs.com.br filtrada por verticemarketing.roilabs.com.br (conferido em 2026-10-01)"
+    },
+    "marca": {
+      "termos": ["vertice marketing", "vértice marketing", "procura marketing"],
+      "pais": "bra",
+      "declaradaEm": "2026-10-01"
+    },
     "repo": "vertex-landing-craft",
     "gscInicio": "2026-07-30",
     "receita": 3,
     "receitaNota": "Site institucional completo de agência; receita seria por serviço, sem produto nem checkout",
     "blockers": 2,
-    "blockersLista": [],
+    "blockersLista": [
+      {
+        "texto": "procuramarketing.com não tem propriedade no Search Console que a conta de serviço do hub leia (403 em sc-domain:procuramarketing.com, conferido em 01/10/2026). Sem ela o mapa só enxerga o host antigo e a indexação do domínio novo fica sem leitura. Verificar o domínio no Search Console e adicionar nimblabs@review-dispute-agent-498311.iam.gserviceaccount.com como usuário",
+        "humano": true
+      }
+    ],
     "seoSeed": 2,
     "decay": 2,
     "decayNota": "Next em 200, publica por git push, StructuredData e sitemap corretos",
-    "acaoDesc": "Renomeado de vertex-landing-craft → verticemarketing em 30/07 (host antigo em 308). Confirmado por título que NÃO canibaliza o vertice.roilabs.com.br: aquele é 'Vértice – Automated Client Onboarding', este é 'Vértice Marketing'. Produtos diferentes com nomes parecidos, não duplicata. **DECIDIDO em 16/08: é agência que capta cliente**, e a decisão descobriu que 'o site está pronto' era falso — `POST /api/leads` em produção devolvia 500 'Erro de configuração do servidor' porque `SIRIUS_API_KEY`/`SIRIUS_API_URL` nunca existiram na Vercel. `getConfig()` fazia `throw` fora do `try`, então a Server Action caía no catch e TODO visitante via 'Erro ao processar sua mensagem': nenhum lead jamais chegou. O 'backup' era `localStorage` do navegador do VISITANTE, e o `/admin/contacts` só lia a máquina do próprio admin — não havia armazenamento de lead nenhum. Consertado apontando para o CRM do hub (`POST /api/crm/leads`, pipeline `verticemarketing`) em vez do Sirius, com falha FECHADA: diferente do Polaris, este site não tem banco próprio, então best-effort perderia o lead em silêncio — hub fora do ar devolve erro ao visitante com e-mail e telefone reais.",
+    "acaoDesc": "Renomeado de vertex-landing-craft → verticemarketing em 30/07 (host antigo em 308). Confirmado por título que NÃO canibaliza o vertice.roilabs.com.br: aquele é 'Vértice – Automated Client Onboarding', este é 'Vértice Marketing'. Produtos diferentes com nomes parecidos, não duplicata. **DECIDIDO em 16/08: é agência que capta cliente**, e a decisão descobriu que 'o site está pronto' era falso — `POST /api/leads` em produção devolvia 500 'Erro de configuração do servidor' porque `SIRIUS_API_KEY`/`SIRIUS_API_URL` nunca existiram na Vercel. `getConfig()` fazia `throw` fora do `try`, então a Server Action caía no catch e TODO visitante via 'Erro ao processar sua mensagem': nenhum lead jamais chegou. O 'backup' era `localStorage` do navegador do VISITANTE, e o `/admin/contacts` só lia a máquina do próprio admin — não havia armazenamento de lead nenhum. Consertado apontando para o CRM do hub (`POST /api/crm/leads`, pipeline `verticemarketing`) em vez do Sirius, com falha FECHADA: diferente do Polaris, este site não tem banco próprio, então best-effort perderia o lead em silêncio — hub fora do ar devolve erro ao visitante com e-mail e telefone reais. 🔄 01/10/2026: a marca virou Procura (30/09, vertex-landing-craft@4861af1) e o site mudou para procuramarketing.com (692170b); verticemarketing.roilabs.com.br responde 301. O slug do hub continua `verticemarketing` de propósito: é a chave da pipeline que o formulário do site envia (`lib/actions/submit-lead.ts`), das tabelas do hub e dos avisos. Entrou em `SLUGS_DE_BUSCA` no mesmo dia para ter mapa e plano em /gsc/mapa/verticemarketing.",
     "acao": "Medir se a agência capta: o formulário agora entrega no CRM do hub — cobrar o 1º lead real",
     "familia": "venda",
     "estado": "no-ar"
