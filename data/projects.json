@@ -114,6 +114,11 @@
     "nome": "ROI Labs (site institucional)",
     "url": "https://roilabs.com.br/",
     "repo": "roilabs",
+    "marca": {
+      "termos": ["roilabs", "roi labs", "roi lab"],
+      "pais": "bra",
+      "declaradaEm": "2026-10-01"
+    },
     "receita": 4,
     "receitaNota": "Institucional; alimenta o funil do Goiânia",
     "blockers": 2,
