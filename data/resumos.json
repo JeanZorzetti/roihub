@@ -134,13 +134,5 @@
     "dinheiro": "R$ 0, por design.",
     "oQueTrava": "Nada. É o único em host de fornecedor (*.vercel.app) e isso é decisão do Jean, não pendência.",
     "proximaDecisao": null
-  },
-  "pathfinder": {
-    "oQueE": "Testes de autoconhecimento (MBTI, Big Five, Eneagrama) com conteúdo sobre propósito de carreira.",
-    "paraQuem": "Quem procura teste de personalidade — anunciado como gratuito.",
-    "estado": "no-ar-inutilizavel",
-    "dinheiro": "R$ 0 e sem caminho: o produto é anunciado como gratuito.",
-    "oQueTrava": "pathback.roilabs.com.br é NXDOMAIN (confirmado 31/07): o rewrite /api/* não tem para onde ir. O sitemap foi consertado em 30/07, o produto não.",
-    "proximaDecisao": "Sobe o backend ou o app vira 100% estático (os testes já rodam com dados locais)?"
   }
 }

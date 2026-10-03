@@ -483,43 +483,5 @@
     "acao": "",
     "familia": "nao-vende",
     "estado": "no-ar"
-  },
-  {
-    "slug": "pathfinder",
-    "nome": "Pathfinder — autoconhecimento e propósito",
-    "url": "https://pathfinder.roilabs.com.br/",
-    "repo": "pathfinder",
-    "receita": 1,
-    "receitaNota": "Anunciado como gratuito; sem preço e sem caminho de pagamento",
-    "blockers": 3,
-    "blockersLista": [
-      {
-        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 30/07: /sitemap.xml responde 200 com corpo XML e 36 URLs, geradas dos dados locais do frontend — e já foi submetido ao Search Console (commit aee6e09 + deploy pela CLI)",
-        "humano": false
-      },
-      {
-        "texto": "✅ MITIGADO 30/07: a página 404 agora injeta meta robots noindex, então URL inventada não vira página indexável",
-        "humano": false
-      },
-      {
-        "texto": "🚨 O BACKEND CONTINUA MORTO: o rewrite /api/* ainda aponta para pathback.roilabs.com.br (NXDOMAIN) — o sitemap conserta a descoberta, não o produto",
-        "humano": false
-      },
-      {
-        "texto": "⚠️ A Vercel deste projeto NÃO está ligada ao git: push não publica, deploy é `npx vercel deploy --prod` de dentro de frontend/",
-        "humano": false
-      },
-      {
-        "texto": "'URL is unknown to Google': ainda não descoberto — o sitemap só foi submetido em 30/07, então a medição é em ~7 dias",
-        "humano": false
-      }
-    ],
-    "seoSeed": 2,
-    "decay": 7,
-    "decayNota": "Home 200, mas o sitemap está 502 e o Google nunca descobriu o site",
-    "acaoDesc": "Aqui a cadeia inteira foi medida e fecha sozinha em 30/07. O robots.txt está no ar (200) e é caprichado — permite tudo, bloqueia /admin, /api, /dashboard, /journal, /profile, declara crawl-delay para Googlebot e Bingbot — e termina apontando 'Sitemap: https://pathfinder.roilabs.com.br/sitemap.xml', com o comentário honesto '(served via frontend proxy)'. Só que esse proxy está quebrado: /sitemap.xml devolve 502 com o corpo 'An error occurred with this application. DNS_HOSTNAME_NOT_FOUND'. Ou seja, o robots manda o Google buscar o sitemap, o sitemap responde erro de DNS, e o resultado é o que a URL Inspection mostra: 'URL is unknown to Google' — em nove meses no ar, o Google nunca descobriu o site. É o mesmo padrão de vitrine viva sobre backend morto que derrubou o cardiorisk, o tapevision e o potencialarquitetado, só que manifestado na rota do sitemap em vez de na API do produto — e por isso o grep de host NXDOMAIN nos repositórios não o pegaria. Segundo problema medido: /rota-que-nao-existe devolve 200, fallback de SPA, então qualquer URL inventada é página válida para o crawler (soft-404). Sem push desde 23/10/2025. O produto é anunciado como gratuito e não tem caminho de pagamento — receita 1, sem fingir tese comercial. ✅ EXECUTADO em 30/07 (commit aee6e09): o /sitemap.xml deixou de ser proxy. O rewrite morto saiu do vercel.json e entrou um public/sitemap.xml estático com 36 URLs, gerado por scripts/generate-sitemap.mjs a partir dos dados que já vivem no frontend (mbtiTypesData e blogArticles) — na Vercel o arquivo estático ganha do rewrite catch-all da SPA, então basta o deploy. Achado que só apareceu ao abrir o código: o sitemap do backend estava ERRADO para este app mesmo quando funcionava — ele listava /types/<slug> e /test, rotas que não existem no App.tsx; as reais são /mbti/<tipo> e /test/mbti|bigfive|enneagram. Ou seja, consertar o DNS do pathback teria devolvido um sitemap de 404s. O soft-404 foi mitigado no mesmo commit: a página NotFound injeta <meta name='robots' content='noindex, follow'>, e como o Googlebot renderiza JS, é o que existe sem SSR. `npm run build` passa (21,8s). 🚨 O push NÃO publicou: `vercel ls pathfinder` mostrava UMA deployment, de 2 dias atrás, depois do push — a Vercel deste projeto não escuta o git, mesma armadilha do CannibalScan. O deploy foi feito pela CLI de dentro de frontend/ (`vercel link --project pathfinder --yes` porque clone novo não tem .vercel, depois `vercel deploy --prod --yes`; `vercel --prod` sozinho só imprime o help). Conferido antes: rootDirectory null e framework vite, então subir de dentro de frontend/ serve a pasta certa. ✅ VERIFICADO NO AR às 23h30: /sitemap.xml em 200 com corpo <?xml e 36 <loc> — validado pelo CORPO, nunca pelo status — e /, /mbti/intj e /robots.txt seguem em 200. Sitemap submetido na sequência ao sc-domain:roilabs.com.br (siteFullUser). ⚠️ O que continua de pé: o backend. O rewrite /api/* ainda aponta para pathback.roilabs.com.br, NXDOMAIN. Consertar a descoberta não conserta o produto — não escrever em lugar nenhum que 'o pathfinder foi consertado'.",
-    "acao": "Medir em ~7 dias se o coverageState saiu de 'URL is unknown to Google' — o sitemap entrou em 30/07 e agora o gargalo é o backend morto, não a descoberta",
-    "familia": "cobranca",
-    "estado": "no-ar-inutilizavel"
   }
 ]
