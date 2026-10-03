@@ -1,0 +1,3656 @@
+{
+ "procedencia": {
+  "fonte": "dataforseo serp google organic live advanced",
+  "projeto": "potencialarquitetado",
+  "consultadoEm": "2026-10-03T19:22:44.117Z",
+  "regiao": "Brazil",
+  "idioma": "pt",
+  "device": "desktop",
+  "termos": [
+   "modelo de pdi",
+   "inteligência emocional",
+   "como desenvolver inteligência emocional",
+   "curso de liderança e gestão de pessoas",
+   "soft skills"
+  ],
+  "custoUsd": 0.01
+ },
+ "resposta": {
+  "cost": 0.01,
+  "tasks": [
+   {
+    "id": "10031922-1993-0139-0000-086fdd83791e",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "3.6022 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "modelo de pdi",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "modelo de pdi",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=modelo%20de%20pdi&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:22:15 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "images",
+       "organic",
+       "people_also_ask"
+      ],
+      "se_results_count": 98000,
+      "pages_count": 1,
+      "items_count": 11,
+      "items": [
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "title": "Plano de desenvolvimento Individual PDI pronto | Factorial",
+        "url": null,
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Plano de desenvolvimento Individual PDI pronto | Factorial",
+          "url": "https://factorialhr.com.br/modelos/plano-de-desenvolvimento-individual-pdi",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "3 exemplos de PDI preenchido e pronto para você usar",
+          "url": "https://flashapp.com.br/blog/exemplos-de-pdi-preenchido",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "Planilha para PDI grátis: faça gratuitamente com a Sólides",
+          "url": "https://solides.com.br/blog/recursos/lp-planilha-pdi/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: o que é, como elaborar e como aplicar [Modelo para baixar]",
+          "url": "https://twygo.com/blog/plano-de-desenvolvimento-individual-pdi/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:3"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: como funciona um plano de desenvolvimento individual ...",
+          "url": "https://www.pravaler.com.br/blog/profissoes/pdi-o-que-e-e-como-funciona-um-plano-de-desenvolvimento-individual/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:4"
+         },
+         {
+          "type": "images_element",
+          "alt": "Exemplos de PDI: 12 modelos prontos para a sua empresa - TOTVS",
+          "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:5"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de plano de desenvolvimento individual 1 | PDF",
+          "url": "https://pt.slideshare.net/slideshow/modelo-de-plano-de-desenvolvimento-individual-1/39825510",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:6"
+         },
+         {
+          "type": "images_element",
+          "alt": "Planilha] Modelo PDI - Plano de Desenvolvimento Individual ...",
+          "url": "https://blog.inboarding.co/planilha-modelo-pdi-plano-desenvolvimento-individual/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:7"
+         },
+         {
+          "type": "images_element",
+          "alt": "Planilha grátis] Modelo de PDI | Conteúdos | Convenia",
+          "url": "https://blog.convenia.com.br/web-stories/planilha-modelo-de-pdi-gratis/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-086fdd83791e:8"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de PDI - Plano de Desenvolvimento Individual da Criança",
+          "url": "https://br.pinterest.com/pin/857583954056532827/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtF84b92lASNP0LyqDUwMwV-8fwl4R7EjQavsKMHMUJaP4JO-XQ22gL-s&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "O que é Plano de Desenvolvimento Individual (PDI) e como fazer",
+          "url": "https://gestaodesegurancaprivada.com.br/plano-de-desenvolvimento-individual-pdi-o-que-e-como-fazer/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJELAGNREYq-L_ACAvF2fa6yifAGzho52siWNzq6vi3_PwdEtA0FoWilA&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Você já ouviu falar no PDI? O Programa de Desenvolvimento ...",
+          "url": "https://www.instagram.com/p/DCyyfFypJAc/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZ-sbgPm8C0aTUfDT817x27DbAXZRwwlPC0ZH2Ag-JuaohVh_TfI5CaE8&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Exemplo de PDI Plano de Desenvolvimento Individual",
+          "url": "https://blog.cohros.com.br/exemplo-pdi-plano-desenvolvimento-individual/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQVYrCvnIXDSCRIAt3hPVXS9trlZZ1EVKa9kUXj8vbSv2GbpezmttRcdEA&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de Plano de Desenvolvimento Individual | PDF",
+          "url": "https://pt.scribd.com/document/624131906/PDI",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIahn8JnECWh9PRAZG--zhjKqPDIzRdlTedLtCta84KY9ZFVrGS-gGOJI&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Planilha para PDI grátis: faça gratuitamente com a Sólides",
+          "url": "https://solides.com.br/blog/recursos/lp-planilha-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmiX505eavLSixRz4iXAqgMQylQis13Hn_fBG1dry14pNhhOCegO_cn4Q&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de PDI - Plano de Desenvolvimento Individual da Criança",
+          "url": "https://br.pinterest.com/pin/672091944417768488/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMiAuIPtOMVbuo90PGQR8tYbpr3c11tcBO2qbu8U-notF02xvM0jRGG6g&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Saiba como elaborar PDI com uso de IA - Intentus",
+          "url": "https://intentus.com.br/uso-de-ia-para-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeBmWD8YG-noAra_s3bafk7FGPa7NOZAqi2RMrUGvhB4AbvVzEsKCTxtw&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Como construir o seu Plano de Desenvolvimento Individual ...",
+          "url": "https://medium.com/ifood-tech/como-construir-o-seu-plano-de-desenvolvimento-individual-pdi-b20364e69e5",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRdTQoGQOiS0mWCS4aCAYGr14RoYxsP2qVD81sNchoILRIyO_gzo8EAmu8&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: o que é, como elaborar e como aplicar [Modelo para baixar]",
+          "url": "https://twygo.com/blog/plano-de-desenvolvimento-individual-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT74UExRIBOGuOJKpUkk9YTXFnZrl0gI3ed1dH34Tgd5gRWSMD-yDgCW0c&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de plano de desenvolvimento individual 1 | PDF",
+          "url": "https://pt.slideshare.net/slideshow/modelo-de-plano-de-desenvolvimento-individual-1/39825510",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQOQ2OID6v6frD4DEZhd1JDCAC4qZKsdu2jMvJM02LgX6oaMOpqqvekV-g&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de PDI para Educação Especial | PDF",
+          "url": "https://pt.scribd.com/document/726005629/32-PDI-MODELO-DE-PLANO-DE-DESENVOLVIMENTO-INDIVIDUAL",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStEmaLmvun_MQaiL283GlRXOV4ds92BWOB8BOTK-hSY3YkAApv44tydNomQg&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI e 9Box para desenvolvimento de carreira - Faberhaus Play",
+          "url": "https://faberhausplay.com.br/pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlOv7-7Cn1VPl8MsUp26xLrh6GQE-tLx3H6mCGEUD2B96guiQJzcVC1Qs&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI Plano de Desenvolvimento Individual",
+          "url": "https://blog.cohros.com.br/pdi-plano-de-desenvolvimento-individual/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsw1xDyUch8YvtT68ZoGaSw1wn_AKHXB-_3ojGsSOIA-31UCOrZGmb1LE&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Como Preencher o PDI",
+          "url": "https://pt.linkedin.com/pulse/como-preencher-o-pdi-andr%C3%A9a-murata",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSum9hvhmzdSC02yUJac2_haiqqFTYcqU9DP_DXGTs52-BuQzdBimo30sY&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Planilha para PDI grátis: faça gratuitamente com a Sólides",
+          "url": "https://solides.com.br/blog/recursos/lp-planilha-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3ohMUm6o68Vgm8fObAYtSSHDDfH55j4sVhRGEPkk9hSbsC0F1suher2U&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo de PDI - Plano de Desenvolvimento Individual da Criança",
+          "url": "https://de.pinterest.com/pin/318137161183831843/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWG5loqpaljh-Wrz5MtxY37rlmknNCXSPhF8zNyrXYFIT8ih9qfLo_lxM&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Os 10 principais modelos de planos de desenvolvimento ...",
+          "url": "https://www.slideteam.net/blog/modelos-de-plano-de-desenvolvimento-individual?lang=Portuguese",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0QeAqAZYBAtQ_gcyidBFXS92PMLLhjdl_mE9kng0Jcs-Ji2HAZ5sQSi0&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "3 exemplos de PDI preenchido e pronto para você usar",
+          "url": "https://flashapp.com.br/blog/exemplos-de-pdi-preenchido",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTm2GhzJmKQu9QnbsNT0cgtjspxDXGQyqyHunwpEMLydAysvK2HK5NIDGQ&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Os 10 principais modelos de planos de desenvolvimento ...",
+          "url": "https://www.slideteam.net/blog/modelos-de-plano-de-desenvolvimento-individual?lang=Portuguese",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkVOzQeFOcgRxk6EH-MsSdOMVyy1T4ItTg6B_J44qxC2q2ph51NWRUuw4&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: o que é, como elaborar e como aplicar [Modelo para baixar]",
+          "url": "https://twygo.com/blog/plano-de-desenvolvimento-individual-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJ_hqhahYxQJosuXFXezIj9pcfX4WNpQdKTb-rjvSO_gytlMuPLNg4siI&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI AEE-TDAH: Modelo e Orientações | PDF",
+          "url": "https://www.scribd.com/document/629922174/PLANO-DE-DESENVOLVIMENTO-INDIVIDUAL-PDI-TDAH",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTgV8MdZ0gPzoWBYiuRTTD4cnw88UeR4ycopDJxRLBB1N4WMXzuTMpod7g&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI Modelo editável de uma Matriz.docx",
+          "url": "https://pt.slideshare.net/slideshow/pdi-modelo-editvel-de-uma-matrizdocx/256650839",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3UrW_kkW1CuviM5EcL1A0G3ugf3vmmGIeYkYJsXVw6j-_xNej4Lhsk1E&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Exemplo de PDI Plano de Desenvolvimento Individual",
+          "url": "https://blog.cohros.com.br/exemplo-pdi-plano-desenvolvimento-individual/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-qsmAB1YHA1e5o-ARuCrRewtXm629yT5BCCU88YKi9hY8EGy80yrm3y0&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Os 10 principais modelos de planos de desenvolvimento ...",
+          "url": "https://www.slideteam.net/blog/modelos-de-plano-de-desenvolvimento-individual?lang=Portuguese",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpgJelHX-y1cjqFQJ5GKJ4EYzMHNYoEsXF4hLGli_JTHcODPXgo1n9w8Y&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PLANILHA] Modelo de PDI - Plano de Desenvolvimento ...",
+          "url": "https://br.pinterest.com/pin/planilha-modelo-de-pdi-plano-de-desenvolvimento-individual-in-2024--586101339036054664/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAP4WRom3UrFluLvu2OGJyAsGpEsh9ur4D0ft0iayGL7wfOG4lB3_Gyuw&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "3 exemplos de PDI preenchido e pronto para você usar",
+          "url": "https://flashapp.com.br/blog/exemplos-de-pdi-preenchido",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzendsgUdHS5z-ZH-lcx0ddjhLxhMI6JrmPTg57z2r0lvHLBitblcf_ds&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "domain": "cdp.trt5.jus.br",
+        "title": "Modelo de PDI",
+        "url": "https://cdp.trt5.jus.br/sites/default/files/cdp/modelo_pdi.pdf",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://cdp.trt5.jus.br › sites › default › files › cdp",
+        "website_name": "trt5.jus.br",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "MODELO PDI - Ciclo 2018/2019. Servidor. Matrícula. Posto de Trabalho. Unidade/Gerência. Gestor. Data do Empenho. COMPETÊNCIA TÉCNICA A SER DESENVOLVIDA.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "MODELO PDI - Ciclo 2018/2019"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[3]/div[1]/div[1]",
+        "domain": "pt.scribd.com",
+        "title": "Modelo de Plano de Desenvolvimento Individual | PDF",
+        "url": "https://pt.scribd.com/document/632095633/Modelo-PDI",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.scribd.com › document › Modelo-PDI",
+        "website_name": "Scribd",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O documento fornece instruções para preencher um Plano de Desenvolvimento Individual (PDI), incluindo analisar objetivos e desafios, identificar pontos fracos ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": {
+         "rating_type": "Max5",
+         "value": 5,
+         "votes_count": 1,
+         "rating_max": 5
+        },
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[4]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "Um **PDI (Plano de Desenvolvimento Individual)** `é um roteiro prático para alinhar metas de carreira e capacitação de um colaborador às necessidades da empresa`.[[1]](https://edulivre.org.br/videos/51894/como-fazer-um-plano-de-desenvolvimento-individual-pdi-modelo)[[2]](https://www.gupy.io/blog/exemplos-de-pdi)\n\n### Estrutura básica de um PDI\n\n- **Dados do colaborador:** Nome, cargo atual, gestor e data de início.\n- **Objetivo principal:** O que precisa ser alcançado (ex: transição para liderança, melhora em uma habilidade técnica).\n- **Metas SMART:** Objetivos específicos, mensuráveis, atingíveis, relevantes e temporais.\n- **Ações de desenvolvimento:** Cursos, leituras, mentorias ou projetos práticos.\n- **Prazo e indicadores:** Datas limite e como o sucesso será medido.[[1]](https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/)[[2]](https://www.edulivre.org.br/videos/51850/pdi-i-plano-de-desenvolvimento-individual)[[3]](https://www.serasaexperian.com.br/carreiras/blog-carreiras/exemplos-de-pdi-para-crescer-na-carreir/)[[4]](https://www.gupy.io/blog/exemplos-de-pdi)\n\n\n---\n\n### Modelo Prático de PDI\n\n| Competência / Habilidade | Meta SMART (O quê) | Ação Proposta (Como) | Prazo | Indicador de Sucesso |\n|---|---|---|---|---|\n| **Comunicação** | Praticar técnicas de comunicação assertiva em reuniões. | Fazer curso de oratória e aplicar feedbacks semanais. | 2 meses | Apresentar um projeto para o time sem suporte externo. |\n| **Habilidade Técnica** | Dominar ferramentas avançadas de análise de dados. | Inscrever-se em curso online da área e praticar na rotina. | 3 meses | Obter certificação ou entregar relatório automatizado. |\n| **Liderança** | Desenvolver gestão de equipes para assumir cargo sênior. | Fazer reuniões de alinhamento (*one-on-ones* ) e buscar mentoria. | 6 meses | Conduzir reuniões quinzenais com acompanhamento do gestor. |\n\nVocê pode baixar planilhas e modelos prontos em plataformas especializadas como a [TOTVS](https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/) ou a [Sólides](https://solides.com.br/blog/pdi/).[[1]](https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/)[[2]](https://solides.com.br/blog/pdi/)Se quiser, me diga:\n\n- Qual é o **cargo ou área** do colaborador?\n- Qual é o principal **desafio ou habilidade** que deseja desenvolver?\n\nEu posso criar um modelo personalizado para o seu caso.",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Um PDI (Plano de Desenvolvimento Individual) é um roteiro prático para alinhar metas de carreira e capacitação de um colaborador às necessidades da empresa.",
+          "markdown": "Um **PDI (Plano de Desenvolvimento Individual)** `é um roteiro prático para alinhar metas de carreira e capacitação de um colaborador às necessidades da empresa`.[[1]](https://edulivre.org.br/videos/51894/como-fazer-um-plano-de-desenvolvimento-individual-pdi-modelo)[[2]](https://www.gupy.io/blog/exemplos-de-pdi)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Educação Livre",
+            "domain": "edulivre.org.br",
+            "url": "https://edulivre.org.br/videos/51894/como-fazer-um-plano-de-desenvolvimento-individual-pdi-modelo",
+            "title": "- Como fazer um Plano de Desenvolvimento Individual (PDI) ...",
+            "text": "Como fazer um Plano de Desenvolvimento Individual (PDI) + Modelo monitorar o desempenho. individual de um colaborador é essencial ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/exemplos-de-pdi",
+            "title": "Exemplos de PDI: modelo pronto para aplicar na sua empresa",
+            "text": "PDI (Plano de Desenvolvimento Individual): - Alinha metas individuais às estratégias da empresa, retém talentos e desenvolve compe..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Estrutura básica de um PDI",
+          "text": "Dados do colaborador: Nome, cargo atual, gestor e data de início. Objetivo principal: O que precisa ser alcançado (ex: transição para liderança, melhora em uma habilidade técnica). Metas SMART: Objetivos específicos, mensuráveis, atingíveis, relevantes e temporais. Ações de desenvolvimento: Cursos, leituras, mentorias ou projetos práticos. Prazo e indicadores: Datas limite e como o sucesso será medido.",
+          "markdown": "- **Dados do colaborador:** Nome, cargo atual, gestor e data de início.\n- **Objetivo principal:** O que precisa ser alcançado (ex: transição para liderança, melhora em uma habilidade técnica).\n- **Metas SMART:** Objetivos específicos, mensuráveis, atingíveis, relevantes e temporais.\n- **Ações de desenvolvimento:** Cursos, leituras, mentorias ou projetos práticos.\n- **Prazo e indicadores:** Datas limite e como o sucesso será medido.[[1]](https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/)[[2]](https://www.edulivre.org.br/videos/51850/pdi-i-plano-de-desenvolvimento-individual)[[3]](https://www.serasaexperian.com.br/carreiras/blog-carreiras/exemplos-de-pdi-para-crescer-na-carreir/)[[4]](https://www.gupy.io/blog/exemplos-de-pdi)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "TOTVS",
+            "domain": "www.totvs.com",
+            "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/",
+            "title": "Exemplos de PDI: 12 modelos prontos para a sua empresa - TOTVS",
+            "text": "Explore nossos conteúdos * Gestão Hoteleira. * Gestão Industrial. * Gestão Logística. * Gestão para Assinatura de Documentos. * Ge..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Educação Livre",
+            "domain": "www.edulivre.org.br",
+            "url": "https://www.edulivre.org.br/videos/51850/pdi-i-plano-de-desenvolvimento-individual",
+            "title": "PDI I Plano de Desenvolvimento Individual",
+            "text": "PDI I Plano de Desenvolvimento Individual ativa o sininho porque assim semanalmente você vai receber conteúdos de desenvolvimento ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Serasa Experian",
+            "domain": "www.serasaexperian.com.br",
+            "url": "https://www.serasaexperian.com.br/carreiras/blog-carreiras/exemplos-de-pdi-para-crescer-na-carreir/",
+            "title": "5 exemplos de PDI prontos para crescer na carreira",
+            "text": "5 exemplos de PDI prontos para crescer na carreira * O que é PDI (plano de desenvolvimento individual)? * Como construir um PDI? C..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/exemplos-de-pdi",
+            "title": "Exemplos de PDI: modelo pronto para aplicar na sua empresa",
+            "text": "PDI (Plano de Desenvolvimento Individual): - Alinha metas individuais às estratégias da empresa, retém talentos e desenvolve compe..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Modelo Prático de PDI",
+          "text": "Competência / Habilidade Meta SMART (O quê) Ação Proposta (Como) Prazo Indicador de Sucesso\nComunicação Praticar técnicas de comunicação assertiva em reuniões. Fazer curso de oratória e aplicar feedbacks semanais. 2 meses Apresentar um projeto para o time sem suporte externo.\nHabilidade Técnica Dominar ferramentas avançadas de análise de dados. Inscrever-se em curso online da área e praticar na rotina. 3 meses Obter certificação ou entregar relatório automatizado.\nLiderança Desenvolver gestão de equipes para assumir cargo sênior. Fazer reuniões de alinhamento (one-on-ones) e buscar mentoria. 6 meses Conduzir reuniões quinzenais com acompanhamento do gestor.",
+          "markdown": "| Competência / Habilidade | Meta SMART (O quê) | Ação Proposta (Como) | Prazo | Indicador de Sucesso |\n|---|---|---|---|---|\n| **Comunicação** | Praticar técnicas de comunicação assertiva em reuniões. | Fazer curso de oratória e aplicar feedbacks semanais. | 2 meses | Apresentar um projeto para o time sem suporte externo. |\n| **Habilidade Técnica** | Dominar ferramentas avançadas de análise de dados. | Inscrever-se em curso online da área e praticar na rotina. | 3 meses | Obter certificação ou entregar relatório automatizado. |\n| **Liderança** | Desenvolver gestão de equipes para assumir cargo sênior. | Fazer reuniões de alinhamento (*one-on-ones* ) e buscar mentoria. | 6 meses | Conduzir reuniões quinzenais com acompanhamento do gestor. |",
+          "links": null,
+          "images": null,
+          "references": null
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Você pode baixar planilhas e modelos prontos em plataformas especializadas como a TOTVS ou a Sólides.",
+          "markdown": "Você pode baixar planilhas e modelos prontos em plataformas especializadas como a [TOTVS](https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/) ou a [Sólides](https://solides.com.br/blog/pdi/).[[1]](https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/)[[2]](https://solides.com.br/blog/pdi/)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "TOTVS",
+            "description": null,
+            "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/",
+            "domain": "www.totvs.com"
+           },
+           {
+            "type": "link_element",
+            "title": "Sólides",
+            "description": null,
+            "url": "https://solides.com.br/blog/pdi/",
+            "domain": "solides.com.br"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "TOTVS",
+            "domain": "www.totvs.com",
+            "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/",
+            "title": "Exemplos de PDI: 12 modelos prontos para a sua empresa - TOTVS",
+            "text": "Explore nossos conteúdos * Gestão Hoteleira. * Gestão Industrial. * Gestão Logística. * Gestão para Assinatura de Documentos. * Ge..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Sólides",
+            "domain": "solides.com.br",
+            "url": "https://solides.com.br/blog/pdi/",
+            "title": "PDI: como fazer Plano de Desenvolvimento Individual + EXEMPLO",
+            "text": "INCREVA-SE GRÁTIS NO DIA DO DP! * Categorias de Conteúdos Sólides. * Materiais Gratuitos. * Hubs de Conteúdo. Encontre os melhores..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se quiser, me diga:Qual é o cargo ou área do colaborador?\nQual é o principal desafio ou habilidade que deseja desenvolver?\nEu posso criar um modelo personalizado para o seu caso.",
+          "markdown": "Se quiser, me diga:\n\n- Qual é o **cargo ou área** do colaborador?\n- Qual é o principal **desafio ou habilidade** que deseja desenvolver?\n\nEu posso criar um modelo personalizado para o seu caso.",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "TOTVS",
+          "domain": "www.totvs.com",
+          "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/pdi-exemplos/",
+          "title": "Exemplos de PDI: 12 modelos prontos para a sua empresa - TOTVS",
+          "text": "Explore nossos conteúdos * Gestão Hoteleira. * Gestão Industrial. * Gestão Logística. * Gestão para Assinatura de Documentos. * Ge..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Educação Livre",
+          "domain": "edulivre.org.br",
+          "url": "https://edulivre.org.br/videos/51894/como-fazer-um-plano-de-desenvolvimento-individual-pdi-modelo",
+          "title": "- Como fazer um Plano de Desenvolvimento Individual (PDI) ...",
+          "text": "Como fazer um Plano de Desenvolvimento Individual (PDI) + Modelo monitorar o desempenho. individual de um colaborador é essencial ..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Gupy",
+          "domain": "www.gupy.io",
+          "url": "https://www.gupy.io/blog/exemplos-de-pdi",
+          "title": "Exemplos de PDI: modelo pronto para aplicar na sua empresa",
+          "text": "PDI (Plano de Desenvolvimento Individual): - Alinha metas individuais às estratégias da empresa, retém talentos e desenvolve compe..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Serasa Experian",
+          "domain": "www.serasaexperian.com.br",
+          "url": "https://www.serasaexperian.com.br/carreiras/blog-carreiras/exemplos-de-pdi-para-crescer-na-carreir/",
+          "title": "5 exemplos de PDI prontos para crescer na carreira",
+          "text": "5 exemplos de PDI prontos para crescer na carreira * O que é PDI (plano de desenvolvimento individual)? * Como construir um PDI? C..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Sólides",
+          "domain": "solides.com.br",
+          "url": "https://solides.com.br/blog/pdi/",
+          "title": "PDI: como fazer Plano de Desenvolvimento Individual + EXEMPLO",
+          "text": "INCREVA-SE GRÁTIS NO DIA DO DP! * Categorias de Conteúdos Sólides. * Materiais Gratuitos. * Hubs de Conteúdo. Encontre os melhores..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Educação Livre",
+          "domain": "www.edulivre.org.br",
+          "url": "https://www.edulivre.org.br/videos/51850/pdi-i-plano-de-desenvolvimento-individual",
+          "title": "PDI I Plano de Desenvolvimento Individual",
+          "text": "PDI I Plano de Desenvolvimento Individual ativa o sininho porque assim semanalmente você vai receber conteúdos de desenvolvimento ..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[6]/div[1]/div[1]",
+        "domain": "blog.empregare.com",
+        "title": "O Que é PDI na Empresa? Veja Como Funciona e Exemplos ...",
+        "url": "https://blog.empregare.com/o-que-e-pdi-na-empresa/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.empregare.com › Gestão de Pessoas",
+        "website_name": "EMPREGARE.com",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "1 de set. de 2026 — O PDI na empresa é uma ferramenta para transformar necessidades de desenvolvimento em objetivos, ações, prazos e evidências de evolução. Em vez ...",
+        "pre_snippet": "09/01/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-09-01 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "O que colocar no PDI exemplos?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Como elaborar o PDI?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "O que colocar no PDI do aluno?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quem deve elaborar o PDI?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]/div[1]",
+        "domain": "br.pinterest.com",
+        "title": "Plano de Desenvolvimento Individual da Criança",
+        "url": "https://br.pinterest.com/pin/845832373798706829/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://br.pinterest.com › pin",
+        "website_name": "Pinterest",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Modelo de PDI - Plano de Desenvolvimento Individual da Criança | Deficiências múltiplas, Ficha individual do aluno, Modelos de planejamento de aulas.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Plano de Desenvolvimento Individual da Criança"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[12]/div[1]/div[1]",
+        "domain": "conteudos.mindsight.com.br",
+        "title": "Planilha: Modelo de Plano de Desenvolvimento Individual",
+        "url": "https://conteudos.mindsight.com.br/modelo-de-pdi",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://conteudos.mindsight.com.br › modelo-de-pdi",
+        "website_name": "Mindsight",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Instruções de como fazer um bom PDI; · Um exemplo para você se inspirar; · Um template de PDI pronto para ser usado; · Uma versão em Google Sheets e Excel.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[14]/div[1]/div[1]",
+        "domain": "conteudo.siteware.com.br",
+        "title": "[TEMPLATE] Modelo PDI",
+        "url": "https://conteudo.siteware.com.br/material-template-one-pdi",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://conteudo.siteware.com.br › material-template-on...",
+        "website_name": "Siteware",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Foi pensando nisso que criamos um modelo completo de PDI! Com ele, fica fácil garantir que todos os colaboradores sejam desenvolvidos de forma eficaz! Preencha ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "modelo",
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[16]/div[1]/div[1]",
+        "domain": "pt.scribd.com",
+        "title": "PDI para Alunos com Deficiência | PDF | Percepção",
+        "url": "https://pt.scribd.com/document/522511317/Modelo-PDI-2020",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.scribd.com › document › Modelo-PDI-2020",
+        "website_name": "Scribd",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Este documento apresenta um modelo de Plano de Desenvolvimento Individual (PDI) para alunos com deficiência ou necessidades especiais. O PDI inclui seções ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "modelo",
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[18]/div[1]/div[1]",
+        "domain": "www.ticket.com.br",
+        "title": "Entenda o que é PDI e aprenda a fazer o seu",
+        "url": "https://www.ticket.com.br/blog/gestao-empresarial/pdi/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.ticket.com.br › Quem Somos",
+        "website_name": "Ticket",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "27 de dez. de 2023 — O PDI é uma ferramenta utilizada em diversos contextos para ajudar as pessoas a identificarem metas específicas de desenvolvimento e traçar uma ...",
+        "pre_snippet": "12/27/2023 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2023-12-27 00:00:00 +00:00",
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031922-1993-0139-0000-14adc073f8af",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "13.8665 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "inteligência emocional",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "inteligência emocional",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=intelig%C3%AAncia%20emocional&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:22:29 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "images",
+       "people_also_ask",
+       "video",
+       "organic"
+      ],
+      "se_results_count": 223000,
+      "pages_count": 1,
+      "items_count": 11,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "A inteligência emocional `é a capacidade de perceber, compreender, regular e usar as emoções — em si mesmo e nos outros — para orientar pensamentos e decisões de forma equilibrada`.[[1]](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional)\n\n### Os 5 Pilares da Inteligência Emocional\n\nSegundo o modelo popularizado por Daniel Goleman, a inteligência emocional divide-se em cinco pilares principais:[[1]](https://www.uniceuna.com.br/blog/posts/2023/inteligencia-emocional-importancia.asp)\n\n- **Autoconsciência:** Reconhecer os próprios sentimentos, como eles afetam suas ações, e dar nome a eles.\n- **Autorregulação (Controle Emocional):** Gerenciar reações e impulsos estressantes para evitar respostas desproporcionais.\n- **Automotivação:** Manter o foco em objetivos e persistir diante de adversidades com um senso interno de propósito.\n- **Empatia:** Compreender e se colocar no ponto de vista e nas emoções de outras pessoas sem julgamentos.\n- **Habilidades Sociais:** Construir relacionamentos saudáveis, resolver conflitos e promover ambientes colaborativos.[[1]](https://fia.com.br/blog/inteligencia-emocional/)[[2]](https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional)[[3]](https://online.pucrs.br/blog/pilares-inteligencia-emocional)\n\n### Por que é importante?\n\n- **Melhor tomada de decisão:** Ajuda a equilibrar razão e emoção em momentos críticos.\n- **Redução do estresse:** Facilita o enfrentamento da pressão diária e da ansiedade.\n- **Sucesso profissional:** É considerada uma das competências mais exigidas por empresas e líderes no mercado atual.[[1]](https://www.iberdrola.com/talentos/o-que-e-inteligencia-emocional)[[2]](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional)[[3]](https://www.tuasaude.com/inteligencia-emocional/)[[4]](https://www.youtube.com/watch?v=Aa6IEKfpnWk)\n\nVocê pode aprofundar seu conhecimento sobre o tema através de conteúdos práticos na [PUCRS Online](https://online.pucrs.br/blog/pilares-inteligencia-emocional) , guias especializados da [Na Prática](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional) ou artigos da [PUC-Rio](https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional).[[1]](https://online.pucrs.br/blog/pilares-inteligencia-emocional)[[2]](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional)[[3]](https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional)Se quiser continuar, me diga:\n\n- Você quer focar no **desenvolvimento pessoal** ou no **ambiente de trabalho**?\n- Gostaria de **dicas práticas** para treinar um pilar específico?",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "A inteligência emocional é a capacidade de perceber, compreender, regular e usar as emoções — em si mesmo e nos outros — para orientar pensamentos e decisões de forma equilibrada.",
+          "markdown": "A inteligência emocional `é a capacidade de perceber, compreender, regular e usar as emoções — em si mesmo e nos outros — para orientar pensamentos e decisões de forma equilibrada`.[[1]](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Na Prática",
+            "domain": "napratica.org.br",
+            "url": "https://napratica.org.br/noticias/o-que-e-inteligencia-emocional",
+            "title": "Inteligência Emocional: o que é, como desenvolver - Na Prática",
+            "text": "O conceito foi descrito academicamente em 1990 pelos psicólogos Peter Salovey e John Mayer, da Universidade de Yale, e mais tarde ..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Os 5 Pilares da Inteligência Emocional",
+          "text": "Segundo o modelo popularizado por Daniel Goleman, a inteligência emocional divide-se em cinco pilares principais:",
+          "markdown": "Segundo o modelo popularizado por Daniel Goleman, a inteligência emocional divide-se em cinco pilares principais:[[1]](https://www.uniceuna.com.br/blog/posts/2023/inteligencia-emocional-importancia.asp)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "UNICEUNA - Centro Universitário Natalense",
+            "domain": "www.uniceuna.com.br",
+            "url": "https://www.uniceuna.com.br/blog/posts/2023/inteligencia-emocional-importancia.asp",
+            "title": "Inteligência emocional: conheça sua definição, saiba qual é a sua ...",
+            "text": "A inteligência emocional é uma forma de compreender e lidar com as emoções, tanto as nossas quanto as dos outros. As emoções são p..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Autoconsciência: Reconhecer os próprios sentimentos, como eles afetam suas ações, e dar nome a eles. Autorregulação (Controle Emocional): Gerenciar reações e impulsos estressantes para evitar respostas desproporcionais. Automotivação: Manter o foco em objetivos e persistir diante de adversidades com um senso interno de propósito. Empatia: Compreender e se colocar no ponto de vista e nas emoções de outras pessoas sem julgamentos. Habilidades Sociais: Construir relacionamentos saudáveis, resolver conflitos e promover ambientes colaborativos.",
+          "markdown": "- **Autoconsciência:** Reconhecer os próprios sentimentos, como eles afetam suas ações, e dar nome a eles.\n- **Autorregulação (Controle Emocional):** Gerenciar reações e impulsos estressantes para evitar respostas desproporcionais.\n- **Automotivação:** Manter o foco em objetivos e persistir diante de adversidades com um senso interno de propósito.\n- **Empatia:** Compreender e se colocar no ponto de vista e nas emoções de outras pessoas sem julgamentos.\n- **Habilidades Sociais:** Construir relacionamentos saudáveis, resolver conflitos e promover ambientes colaborativos.[[1]](https://fia.com.br/blog/inteligencia-emocional/)[[2]](https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional)[[3]](https://online.pucrs.br/blog/pilares-inteligencia-emocional)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "FIA – Fundação Instituto de Administração",
+            "domain": "fia.com.br",
+            "url": "https://fia.com.br/blog/inteligencia-emocional/",
+            "title": "Inteligência Emocional: o que é, pilares e como desenvolver - FIA",
+            "text": "Refere-se à capacidade de reconhecer e compreender as próprias emoções, pensamentos e comportamentos. Pessoas autoconscientes têm ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Care Plus",
+            "domain": "www.careplus.com.br",
+            "url": "https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional",
+            "title": "Como desenvolver inteligência emocional? Veja dicas - Care Plus",
+            "text": "Como desenvolver inteligência emocional no dia a dia. O psicólogo e jornalista Daniel Goleman é um dos principais nomes que contri..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "PUCRS",
+            "domain": "online.pucrs.br",
+            "url": "https://online.pucrs.br/blog/pilares-inteligencia-emocional",
+            "title": "PUCRS Online | Quais são os cinco pilares da Inteligência Emocional?",
+            "text": "* Teoria: Daniel Goleman (pai da Inteligência Emocional). * 5 pilares: - Conhecer as próprias emoções (autoconhecimento/nomear sen..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Por que é importante?",
+          "text": "Melhor tomada de decisão: Ajuda a equilibrar razão e emoção em momentos críticos. Redução do estresse: Facilita o enfrentamento da pressão diária e da ansiedade. Sucesso profissional: É considerada uma das competências mais exigidas por empresas e líderes no mercado atual.",
+          "markdown": "- **Melhor tomada de decisão:** Ajuda a equilibrar razão e emoção em momentos críticos.\n- **Redução do estresse:** Facilita o enfrentamento da pressão diária e da ansiedade.\n- **Sucesso profissional:** É considerada uma das competências mais exigidas por empresas e líderes no mercado atual.[[1]](https://www.iberdrola.com/talentos/o-que-e-inteligencia-emocional)[[2]](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional)[[3]](https://www.tuasaude.com/inteligencia-emocional/)[[4]](https://www.youtube.com/watch?v=Aa6IEKfpnWk)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Iberdrola",
+            "domain": "www.iberdrola.com",
+            "url": "https://www.iberdrola.com/talentos/o-que-e-inteligencia-emocional",
+            "title": "Inteligência Emocional | O que é e como desenvolvê-la? - Iberdrola",
+            "text": "* Def: Capacidade de reconhecer sentimentos proprios/alheios, motivar-se e manejar relacoes (Daniel Goleman). * Marcos: Livro de D..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Na Prática",
+            "domain": "napratica.org.br",
+            "url": "https://napratica.org.br/noticias/o-que-e-inteligencia-emocional",
+            "title": "Inteligência Emocional: o que é, como desenvolver - Na Prática",
+            "text": "O conceito foi descrito academicamente em 1990 pelos psicólogos Peter Salovey e John Mayer, da Universidade de Yale, e mais tarde ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Tua Saúde",
+            "domain": "www.tuasaude.com",
+            "url": "https://www.tuasaude.com/inteligencia-emocional/",
+            "title": "Inteligência emocional: o que é, como desenvolver, pilares e importância - Tua Saúde",
+            "text": "- Def: Habilidades p/ identificar, gerenciar emoções próprias e influenciar alheias. (Autor: Dr. Daniel Goleman) - 5 Pilares: Auto..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=Aa6IEKfpnWk",
+            "title": "what is emotional intelligence and why does it matter?",
+            "text": "O QUE É E QUAL A IMPORTÂNCIA DA INTELIGÊNCIA EMOCIONAL? porque quando a gente Para para. pensar. nós vemos que Inteligência Emocio..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Você pode aprofundar seu conhecimento sobre o tema através de conteúdos práticos na PUCRS Online, guias especializados da Na Prática ou artigos da PUC-Rio.",
+          "markdown": "Você pode aprofundar seu conhecimento sobre o tema através de conteúdos práticos na [PUCRS Online](https://online.pucrs.br/blog/pilares-inteligencia-emocional) , guias especializados da [Na Prática](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional) ou artigos da [PUC-Rio](https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional).[[1]](https://online.pucrs.br/blog/pilares-inteligencia-emocional)[[2]](https://napratica.org.br/noticias/o-que-e-inteligencia-emocional)[[3]](https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "PUCRS Online",
+            "description": null,
+            "url": "https://online.pucrs.br/blog/pilares-inteligencia-emocional",
+            "domain": "online.pucrs.br"
+           },
+           {
+            "type": "link_element",
+            "title": "Na Prática",
+            "description": null,
+            "url": "https://napratica.org.br/noticias/o-que-e-inteligencia-emocional",
+            "domain": "napratica.org.br"
+           },
+           {
+            "type": "link_element",
+            "title": "PUC-Rio",
+            "description": null,
+            "url": "https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional",
+            "domain": "especializacao.ccec.puc-rio.br"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "PUCRS",
+            "domain": "online.pucrs.br",
+            "url": "https://online.pucrs.br/blog/pilares-inteligencia-emocional",
+            "title": "PUCRS Online | Quais são os cinco pilares da Inteligência Emocional?",
+            "text": "* Teoria: Daniel Goleman (pai da Inteligência Emocional). * 5 pilares: - Conhecer as próprias emoções (autoconhecimento/nomear sen..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Na Prática",
+            "domain": "napratica.org.br",
+            "url": "https://napratica.org.br/noticias/o-que-e-inteligencia-emocional",
+            "title": "Inteligência Emocional: o que é, como desenvolver - Na Prática",
+            "text": "O conceito foi descrito academicamente em 1990 pelos psicólogos Peter Salovey e John Mayer, da Universidade de Yale, e mais tarde ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "PUC-Rio Digital",
+            "domain": "especializacao.ccec.puc-rio.br",
+            "url": "https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional",
+            "title": "Inteligência emocional: o que é, importância e como desenvolver",
+            "text": "Inteligência Emocional (IE): - Definição: capacidade de perceber, compreender, utilizar e regular emoções. - Habilidades: identifi..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se quiser continuar, me diga:Você quer focar no desenvolvimento pessoal ou no ambiente de trabalho ?\nGostaria de dicas práticas para treinar um pilar específico?",
+          "markdown": "Se quiser continuar, me diga:\n\n- Você quer focar no **desenvolvimento pessoal** ou no **ambiente de trabalho**?\n- Gostaria de **dicas práticas** para treinar um pilar específico?",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "FIA – Fundação Instituto de Administração",
+          "domain": "fia.com.br",
+          "url": "https://fia.com.br/blog/inteligencia-emocional/",
+          "title": "Inteligência Emocional: o que é, pilares e como desenvolver - FIA",
+          "text": "Refere-se à capacidade de reconhecer e compreender as próprias emoções, pensamentos e comportamentos. Pessoas autoconscientes têm ..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "PUCRS",
+          "domain": "online.pucrs.br",
+          "url": "https://online.pucrs.br/blog/pilares-inteligencia-emocional",
+          "title": "PUCRS Online | Quais são os cinco pilares da Inteligência Emocional?",
+          "text": "* Teoria: Daniel Goleman (pai da Inteligência Emocional). * 5 pilares: - Conhecer as próprias emoções (autoconhecimento/nomear sen..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Na Prática",
+          "domain": "napratica.org.br",
+          "url": "https://napratica.org.br/noticias/o-que-e-inteligencia-emocional",
+          "title": "Inteligência Emocional: o que é, como desenvolver - Na Prática",
+          "text": "O conceito foi descrito academicamente em 1990 pelos psicólogos Peter Salovey e John Mayer, da Universidade de Yale, e mais tarde ..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "UNICEUNA - Centro Universitário Natalense",
+          "domain": "www.uniceuna.com.br",
+          "url": "https://www.uniceuna.com.br/blog/posts/2023/inteligencia-emocional-importancia.asp",
+          "title": "Inteligência emocional: conheça sua definição, saiba qual é a sua ...",
+          "text": "A inteligência emocional é uma forma de compreender e lidar com as emoções, tanto as nossas quanto as dos outros. As emoções são p..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Iberdrola",
+          "domain": "www.iberdrola.com",
+          "url": "https://www.iberdrola.com/talentos/o-que-e-inteligencia-emocional",
+          "title": "Inteligência Emocional | O que é e como desenvolvê-la? - Iberdrola",
+          "text": "* Def: Capacidade de reconhecer sentimentos proprios/alheios, motivar-se e manejar relacoes (Daniel Goleman). * Marcos: Livro de D..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Tua Saúde",
+          "domain": "www.tuasaude.com",
+          "url": "https://www.tuasaude.com/inteligencia-emocional/",
+          "title": "Inteligência emocional: o que é, como desenvolver, pilares e importância - Tua Saúde",
+          "text": "- Def: Habilidades p/ identificar, gerenciar emoções próprias e influenciar alheias. (Autor: Dr. Daniel Goleman) - 5 Pilares: Auto..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "PUC-Rio Digital",
+          "domain": "especializacao.ccec.puc-rio.br",
+          "url": "https://especializacao.ccec.puc-rio.br/blog/inteligencia-emocional",
+          "title": "Inteligência emocional: o que é, importância e como desenvolver",
+          "text": "Inteligência Emocional (IE): - Definição: capacidade de perceber, compreender, utilizar e regular emoções. - Habilidades: identifi..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Care Plus",
+          "domain": "www.careplus.com.br",
+          "url": "https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional",
+          "title": "Como desenvolver inteligência emocional? Veja dicas - Care Plus",
+          "text": "Como desenvolver inteligência emocional no dia a dia. O psicólogo e jornalista Daniel Goleman é um dos principais nomes que contri..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=Aa6IEKfpnWk",
+          "title": "what is emotional intelligence and why does it matter?",
+          "text": "O QUE É E QUAL A IMPORTÂNCIA DA INTELIGÊNCIA EMOCIONAL? porque quando a gente Para para. pensar. nós vemos que Inteligência Emocio..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQnvVsSkCiY43BdSYG2YX64fqrbUMSQ:1791055348158&q=intelig%C3%AAncia+emocional&udm=2&source=univ&fir=SpupxQrXLovGAM%252Ci6iw9x8W4YvEwM%252C_%253BLo1xsN-CcvPzTM%252COMf5jLFiIf9Q1M%252C_%253BFsyqFe9RQOESaM%252C17aMi0pYoYmx7M%252C_%253BT6zhUniUATDWWM%252CfZS2PNZ3Jes5NM%252C_%253Bg-0RgnsHVmS-DM%252CrzG4mdibFKPakM%252C_%253B5frIZuH1orZv3M%252Cu-zgvodrZfe4zM%252C_%253BMneneGPGBF7zlM%252CGdPHM96OOSk4RM%252C_%253BHyIiBNN8sR5eRM%252C1kgWNSpwuUlSRM%252C_%253BFuegbHnEdC-6YM%252CJ978OAXlI-787M%252C_&usg=AI4_-kR-iWYf8FjqQ6xh5mHumvHf8VB0oQ&sa=X&ved=2ahUKEwiI3bKOyZ6XAxV8XvEDHURICl8Q7Al6BAglEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Inteligência emocional: A teoria revolucionária que redefine o que é ser  inteligente | Amazon.com.br",
+          "url": "https://www.amazon.com.br/Intelig%C3%AAncia-emocional-Daniel-Goleman/dp/8573020806",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-14adc073f8af:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "A importância da Inteligência Emocional - Portal Juntos",
+          "url": "https://portaljuntos.com.br/importancia-inteligencia-emocional/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-14adc073f8af:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "Inteligência Emocional | O que é e como desenvolvê-la ...",
+          "url": "https://www.iberdrola.com/talentos/o-que-e-inteligencia-emocional",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-14adc073f8af:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "Os pilares da Inteligência Emocional – Suely Buriasco",
+          "url": "http://www.suelyburiasco.com.br/os-pilares-da-inteligencia-emocional/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRh1stq4lEWu5q1q5XmlzWKwakqGrT7aHFK-bFvf66C6mQzMML2DS05anw&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Inteligência Emocional - Psicóloga Fabíola Luciano ...",
+          "url": "https://psicologafabiola.com.br/inteligencia-emocional/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmg8edkBdb2RctWWGnfC93m6sTottOTdH1YUR7Ssivlqhs7F3DdDyw0-A&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Inteligência Emocional como desenvolver nesse momento?",
+          "url": "https://pt.linkedin.com/pulse/intelig%C3%AAncia-emocional-como-desenvolver-nesse-momento-mba",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6r9eKyhI0RWCk2sic9Bynhr28LgC58wnXZFD0ujQFfDg2RgciC0ybErU&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "INTELIGÊNCIA EMOCIONAL",
+          "url": "https://www.urcamp.edu.br/inteligencia-emocional",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTizqspH0HS-oo6i7D81voSQSF6xojxXeSa22c2ipWdKljr20gkKYwqloo&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Inteligência emocional no dia a dia | Katiane Vieira",
+          "url": "https://katianevieira.com.br/desenvolvimento-pessoal/inteligencia-emocional-no-dia-a-dia/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvel6N8jg4mJKU9tle0-d2tnylSbfbkihND65s6fScnTZjVOWHMGxv8Uo&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Os 5 pilares da Inteligência Emocional",
+          "url": "https://br.pinterest.com/pin/1055599907922364/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTywXfW_Iq6sEOFBjzZMlgqJ3tA8saygfXePQACC5ZU4kt3fFM6jezLeNo&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "O que é uma pessoa com inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 4 pilares da inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 7 hábitos para desenvolver a inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são as 5 habilidades da inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "video",
+        "rank_group": 1,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[5]/div[1]",
+        "items": [
+         {
+          "type": "video_element",
+          "source": "YouTube · Bruno Rocha",
+          "title": "O que é INTELIGÊNCIA EMOCIONAL e como ela vai ...",
+          "timestamp": "2025-06-18 00:00:00 +00:00",
+          "url": "https://www.youtube.com/watch?v=h79CT2Jpcx8"
+         },
+         {
+          "type": "video_element",
+          "source": "YouTube · ABTD - Associação Brasileira de T&D",
+          "title": "Inteligência Emocional: Nova Geração e Lições de Goleman",
+          "timestamp": "2026-07-03 00:00:00 +00:00",
+          "url": "https://www.youtube.com/watch?v=ZJC1zs5N6Z4"
+         },
+         {
+          "type": "video_element",
+          "source": "YouTube · Universo Unidavi",
+          "title": "O que é Inteligência Emocional?",
+          "timestamp": "2021-06-01 00:00:00 +00:00",
+          "url": "https://www.youtube.com/watch?v=C8i3jQWvivs"
+         },
+         {
+          "type": "video_element",
+          "source": "YouTube · Gabarra Advocacia Previdenciária",
+          "title": "Inteligência Emocional: Entendendo Emoções Próprias e Alheias",
+          "timestamp": "2026-09-26 19:22:28 +00:00",
+          "url": "https://m.youtube.com/shorts/JQ99IjifrJQ"
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[7]/div[1]/div[1]",
+        "domain": "escolakoru.com.br",
+        "title": "Inteligência Emocional: o que é, importância e ... - Escola Koru",
+        "url": "https://escolakoru.com.br/blog/post/inteligencia-emocional-o-que-e-importancia-e-como-desenvolver",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://escolakoru.com.br › blog › post › inteligencia-e...",
+        "website_name": "escolakoru.com.br",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "23 de mai. de 2023 — A inteligência emocional nos ajuda a reconhecer e compreender nossos sentimentos, evitando decisões impulsivas ou baseadas em reações emocionais ...",
+        "pre_snippet": "05/23/2023 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "A inteligência emocional nos ajuda a reconhecer e compreender nossos sentimentos"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2023-05-23 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[9]/div[1]/div[1]",
+        "domain": "blog.prozeducacao.com.br",
+        "title": "Inteligência emocional: o que é e 4 dicas para desenvolver!",
+        "url": "https://blog.prozeducacao.com.br/carreira/inteligencia-emocional/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.prozeducacao.com.br › carreira › inteligenc...",
+        "website_name": "Proz Educação",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Como citamos, a inteligência emocional é a capacidade de identificar e lidar com as emoções pessoais e as dos outros. Ou seja, é a habilidade que permite ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "é a capacidade de identificar e lidar com as emoções pessoais e as dos outros"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[11]/div[1]/div[1]",
+        "domain": "blog.escolaconquer.com.br",
+        "title": "Os 4 pilares da Inteligência Emocional: saiba tudo sobre!",
+        "url": "https://blog.escolaconquer.com.br/os-4-pilares-da-inteligencia-emocional/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.escolaconquer.com.br › os-4-pilares-da-inteli...",
+        "website_name": "Blog Conquer",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "17 de abr. de 2019 — Mas, então, o que é inteligência emocional? · 1. Autoconhecimento · 2. Gestão das emoções · 3. Empatia · 4. Sociabilidade. É como se juntássemos ...",
+        "pre_snippet": "04/17/2019 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "1. Autoconhecimento"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2019-04-17 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[13]/div[1]/div[1]",
+        "domain": "vidasimples.co",
+        "title": "Inteligência emocional: A chave para a liberdade",
+        "url": "https://vidasimples.co/colunista/inteligencia-emocional-a-chave-para-a-liberdade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://vidasimples.co › Colunistas",
+        "website_name": "Vida Simples",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Aprenda que desenvolver a inteligência emocional é o que nos ajuda a conduzir a vida de maneira mais satisfatória e equilibrada.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "inteligência emocional"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[14]/div[1]/div[1]/div[1]",
+        "domain": "www.youtube.com",
+        "title": "COMO TREINAR ESSA HABILIDADE ESSENCIAL?",
+        "url": "https://www.youtube.com/watch?v=DgVhyRKTM00",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "Mais de 44,2 mil visualizações  ·  há 9 anos",
+        "website_name": "YouTube · Patricia Meirelles Oficial",
+        "is_image": false,
+        "is_video": true,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": [
+         "is_video"
+        ],
+        "description": "Controlar suas emoções. Tão simples e tão complicado ao mesmo tempo! O que você pode fazer para desenvolver sua inteligência emocional ?",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "inteligência emocional"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2017-05-11 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[16]/div[1]/div[1]",
+        "domain": "www.ibccoaching.com.br",
+        "title": "Habilidades da Inteligência Emocional que o mercado ...",
+        "url": "https://www.ibccoaching.com.br/artigos-ibc/habilidades-da-inteligencia-emocional-que-o-mercado-procura/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.ibccoaching.com.br › Blog",
+        "website_name": "Instituto Brasileiro de Coaching",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Inteligência Emocional: quais são as habilidades mais procuradas pelo mercado? · 1. Trabalho em Equipe · 2. Comunicação eficiente · 3. Adaptação a mudanças · 4.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Trabalho em Equipe"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[17]/div[1]/div[1]/div[1]",
+        "domain": "www.youtube.com",
+        "title": "O QUE É INTELIGÊNCIA EMOCIONAL?",
+        "url": "https://www.youtube.com/shorts/HlgaSKLysVI",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "Mais de 940 visualizações  ·  há 2 anos",
+        "website_name": "YouTube · LÉO MARCONDES",
+        "is_image": false,
+        "is_video": true,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": [
+         "is_video"
+        ],
+        "description": "Você se sente culpado por ter sentimentos ruins? Não tem como controlar o que você sente, é natural sentir raiva, rancor, tristeza, ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": null,
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2024-08-04 00:00:00 +00:00",
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031922-1993-0139-0000-9e8366920ce3",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "5.7423 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "como desenvolver inteligência emocional",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "como desenvolver inteligência emocional",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=como%20desenvolver%20intelig%C3%AAncia%20emocional&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:22:35 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "organic",
+       "people_also_ask",
+       "video",
+       "images"
+      ],
+      "se_results_count": 218000,
+      "pages_count": 1,
+      "items_count": 11,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "Desenvolver a inteligência emocional `exige prática diária para reconhecer, compreender e gerenciar as próprias emoções e as dos outros`.[[1]](https://www.youtube.com/watch?v=p5qMzesyJnI)[[2]](https://www.tuasaude.com/inteligencia-emocional/)\n\n### Passos Práticos para Desenvolver a Inteligência Emocional\n\n- **Autoconsciência:** Preste atenção ao que você sente e dê nomes claros aos sentimentos, como raiva, medo ou ansiedade. Identifique também os gatilhos que provocam reações fortes no seu dia a dia.[[1]](https://www.youtube.com/watch?v=ssKMLdEtl9k)[[2]](https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional)[[3]](https://www.youtube.com/watch?v=w8O5hnFJDM4)[[4]](https://www.youtube.com/watch?v=zLNGLoYOdMk&t=390)\n- **Autorregulação:** Crie um intervalo de tempo entre um evento estressante e a sua resposta. Em vez de agir por impulso, gerencie as emoções para diminuir a intensidade delas antes de tomar uma atitude.[[1]](https://www.youtube.com/watch?v=w8O5hnFJDM4)[[2]](https://www.youtube.com/watch?v=cjypuzRfbpc)[[3]](https://www.youtube.com/watch?v=ssKMLdEtl9k)\n- **Empatia:** Esforce-se para se colocar no lugar do outro e compreender as perspectivas e sentimentos alheios sem julgamentos precipitados.[[1]](https://www.sad.ms.gov.br/artigo-8-dicas-para-desenvolver-sua-inteligencia-emocional/)[[2]](https://online.pucrs.br/blog/pilares-inteligencia-emocional)[[3]](https://www.youtube.com/watch?v=p5qMzesyJnI)\n- **Habilidades Sociais:** Pratique a escuta ativa, melhore sua comunicação e busque resolver conflitos de forma colaborativa e respeitosa.[[1]](https://exame.com/carreira/guia-de-carreira/7-dicas-para-melhorar-sua-inteligencia-emocional/)[[2]](https://www.youtube.com/watch?v=p5qMzesyJnI)\n- **Avaliação Diária:** No fim do dia, analise suas reações positivas e negativas para entender o que pode ser melhorado nas próximas situações. Você também pode ler orientações detalhadas no guia da [Tua Saúde](https://www.tuasaude.com/inteligencia-emocional/).[[1]](https://www.youtube.com/watch?v=w8O5hnFJDM4)[[2]](https://www.tuasaude.com/inteligencia-emocional/)\n\nVeja dicas práticas em vídeo sobre como desenvolver a inteligência emocional no cotidiano:\n\n![](https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQskqc6OVkEbK4cZtWhzMN_9VNWkyyIUbbDWbmzfzV9oT_tZSkd)\n7:50\n[](https://www.youtube.com/watch?v=cjypuzRfbpc) Entenda como desenvolver a INTELIGÊNCIA EMOCIONAL!12 mil visualizações  · há 2 anos![](https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.youtube.com&amp;client=AIM&amp;size=16&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL)\nYouTube · Eurekka\n\nSe você quiser, me conte:\n\n- Qual **situação ou ambiente** (trabalho, família, relacionamentos) mais desafia o seu controle emocional?\n- Você prefere focar em **exercícios de respiração/pausa** ou em **comunicação assertiva**?\n\nPosso direcionar as dicas para o seu principal desafio.",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Desenvolver a inteligência emocional exige prática diária para reconhecer, compreender e gerenciar as próprias emoções e as dos outros.",
+          "markdown": "Desenvolver a inteligência emocional `exige prática diária para reconhecer, compreender e gerenciar as próprias emoções e as dos outros`.[[1]](https://www.youtube.com/watch?v=p5qMzesyJnI)[[2]](https://www.tuasaude.com/inteligencia-emocional/)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=p5qMzesyJnI",
+            "title": "COMO DESENVOLVER A INTELIGÊNCIA EMOCIONAL",
+            "text": "COMO DESENVOLVER A INTELIGÊNCIA EMOCIONAL a psicologia ela descreve a inteligência emocional. como a capacidade de reconhecer e av..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Tua Saúde",
+            "domain": "www.tuasaude.com",
+            "url": "https://www.tuasaude.com/inteligencia-emocional/",
+            "title": "Inteligência emocional: o que é, como desenvolver, pilares e importância - Tua Saúde",
+            "text": "- Def: Habilidades p/ identificar, gerenciar emoções próprias e influenciar alheias. (Autor: Dr. Daniel Goleman) - 5 Pilares: Auto..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Passos Práticos para Desenvolver a Inteligência Emocional",
+          "text": "Autoconsciência: Preste atenção ao que você sente e dê nomes claros aos sentimentos, como raiva, medo ou ansiedade. Identifique também os gatilhos que provocam reações fortes no seu dia a dia. Autorregulação: Crie um intervalo de tempo entre um evento estressante e a sua resposta. Em vez de agir por impulso, gerencie as emoções para diminuir a intensidade delas antes de tomar uma atitude. Empatia: Esforce-se para se colocar no lugar do outro e compreender as perspectivas e sentimentos alheios sem julgamentos precipitados. Habilidades Sociais: Pratique a escuta ativa, melhore sua comunicação e busque resolver conflitos de forma colaborativa e respeitosa. Avaliação Diária: No fim do dia, analise suas reações positivas e negativas para entender o que pode ser melhorado nas próximas situações. Você também pode ler orientações detalhadas no guia da Tua Saúde.",
+          "markdown": "- **Autoconsciência:** Preste atenção ao que você sente e dê nomes claros aos sentimentos, como raiva, medo ou ansiedade. Identifique também os gatilhos que provocam reações fortes no seu dia a dia.[[1]](https://www.youtube.com/watch?v=ssKMLdEtl9k)[[2]](https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional)[[3]](https://www.youtube.com/watch?v=w8O5hnFJDM4)[[4]](https://www.youtube.com/watch?v=zLNGLoYOdMk&t=390)\n- **Autorregulação:** Crie um intervalo de tempo entre um evento estressante e a sua resposta. Em vez de agir por impulso, gerencie as emoções para diminuir a intensidade delas antes de tomar uma atitude.[[1]](https://www.youtube.com/watch?v=w8O5hnFJDM4)[[2]](https://www.youtube.com/watch?v=cjypuzRfbpc)[[3]](https://www.youtube.com/watch?v=ssKMLdEtl9k)\n- **Empatia:** Esforce-se para se colocar no lugar do outro e compreender as perspectivas e sentimentos alheios sem julgamentos precipitados.[[1]](https://www.sad.ms.gov.br/artigo-8-dicas-para-desenvolver-sua-inteligencia-emocional/)[[2]](https://online.pucrs.br/blog/pilares-inteligencia-emocional)[[3]](https://www.youtube.com/watch?v=p5qMzesyJnI)\n- **Habilidades Sociais:** Pratique a escuta ativa, melhore sua comunicação e busque resolver conflitos de forma colaborativa e respeitosa.[[1]](https://exame.com/carreira/guia-de-carreira/7-dicas-para-melhorar-sua-inteligencia-emocional/)[[2]](https://www.youtube.com/watch?v=p5qMzesyJnI)\n- **Avaliação Diária:** No fim do dia, analise suas reações positivas e negativas para entender o que pode ser melhorado nas próximas situações. Você também pode ler orientações detalhadas no guia da [Tua Saúde](https://www.tuasaude.com/inteligencia-emocional/).[[1]](https://www.youtube.com/watch?v=w8O5hnFJDM4)[[2]](https://www.tuasaude.com/inteligencia-emocional/)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "Tua Saúde",
+            "description": null,
+            "url": "https://www.tuasaude.com/inteligencia-emocional/",
+            "domain": "www.tuasaude.com"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=ssKMLdEtl9k",
+            "title": "Como desenvolver a inteligência emocional com práticas diárias",
+            "text": "Como desenvolver a inteligência emocional com práticas diárias e aí galera tudo bem com vocês aqui é o Henrique e seja muito bem-v..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Care Plus",
+            "domain": "www.careplus.com.br",
+            "url": "https://www.careplus.com.br/careplus-mais/o-que-e-e-como-desenvolver-inteligencia-emocional",
+            "title": "Como desenvolver inteligência emocional? Veja dicas - Care Plus",
+            "text": "Como desenvolver inteligência emocional no dia a dia. O psicólogo e jornalista Daniel Goleman é um dos principais nomes que contri..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=w8O5hnFJDM4",
+            "title": "Como Desenvolver INTELIGÊNCIA EMOCIONAL Na Prática",
+            "text": "Como Desenvolver INTELIGÊNCIA EMOCIONAL Na Prática em todas as pessoas precisam. aprender. a lidar com as suas próprias emoções. I..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=zLNGLoYOdMk&t=390",
+            "title": "COMO DESENVOLVER INTELIGÊNCIA EMOCIONAL NA ...",
+            "text": "COMO DESENVOLVER INTELIGÊNCIA EMOCIONAL NA PRÁTICA a reação ou seja como você responde a determinado evento ou situação Qual foi o..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=cjypuzRfbpc",
+            "title": "Entenda como desenvolver a INTELIGÊNCIA EMOCIONAL!",
+            "text": "Entenda como desenvolver a INTELIGÊNCIA EMOCIONAL! | Eurekka inteligência emocional o que é na verdade a inteligência emocional nã..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "SAD/MS",
+            "domain": "www.sad.ms.gov.br",
+            "url": "https://www.sad.ms.gov.br/artigo-8-dicas-para-desenvolver-sua-inteligencia-emocional/",
+            "title": "ARTIGO – 8 dicas para desenvolver sua inteligência emocional - SAD",
+            "text": "ARTIGO – 8 dicas para desenvolver sua inteligência emocional. Compartilhar: Publicado em 27 jun 2024 • por bbento@fazenda •. A int..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "PUCRS",
+            "domain": "online.pucrs.br",
+            "url": "https://online.pucrs.br/blog/pilares-inteligencia-emocional",
+            "title": "Quais são os cinco pilares da Inteligência Emocional? - PUCRS Online",
+            "text": "Os cinco pilares da Inteligência Emocional. Entender os cinco pilares da Inteligência Emocional é o primeiro passo para desenvolvê..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Exame",
+            "domain": "exame.com",
+            "url": "https://exame.com/carreira/guia-de-carreira/7-dicas-para-melhorar-sua-inteligencia-emocional/",
+            "title": "7 dicas para melhorar sua inteligência emocional | Exame",
+            "text": "7 dicas de inteligência emocional (IE) publicados em 5 dez 2024 por nIA Bot e Luiz Anversa na Exame: * 1. Pratique a auto-percepçã..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Veja dicas práticas em vídeo sobre como desenvolver a inteligência emocional no cotidiano: 7:50 Entenda como desenvolver a INTELIGÊNCIA EMOCIONAL! 12 mil visualizações · há 2 anos YouTube · Eurekka",
+          "markdown": "Veja dicas práticas em vídeo sobre como desenvolver a inteligência emocional no cotidiano:\n\n![](https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcQskqc6OVkEbK4cZtWhzMN_9VNWkyyIUbbDWbmzfzV9oT_tZSkd)\n7:50\n[](https://www.youtube.com/watch?v=cjypuzRfbpc) Entenda como desenvolver a INTELIGÊNCIA EMOCIONAL!12 mil visualizações  · há 2 anos![](https://encrypted-tbn2.gstatic.com/faviconV2?url=https://www.youtube.com&amp;client=AIM&amp;size=16&amp;type=FAVICON&amp;fallback_opts=TYPE,SIZE,URL)\nYouTube · Eurekka",
+          "links": null,
+          "images": null,
+          "references": null
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se você quiser, me conte:Qual situação ou ambiente (trabalho, família, relacionamentos) mais desafia o seu controle emocional?\nVocê prefere focar em exercícios de respiração/pausa ou em comunicação assertiva ?\nPosso direcionar as dicas para o seu principal desafio.",
+          "markdown": "Se você quiser, me conte:\n\n- Qual **situação ou ambiente** (trabalho, família, relacionamentos) mais desafia o seu controle emocional?\n- Você prefere focar em **exercícios de respiração/pausa** ou em **comunicação assertiva**?\n\nPosso direcionar as dicas para o seu principal desafio.",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[2]/div[1]/div[1]",
+        "domain": "keeps.com.br",
+        "title": "Inteligência Emocional: o que é e quais os seus 5 pilares",
+        "url": "https://keeps.com.br/inteligencia-emocional-o-que-e-e-quais-os-seus-5-pilares/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://keeps.com.br › inteligencia-emocional-o-que-e-e...",
+        "website_name": "Keeps LXP",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "São pilares da inteligência emocional: 1 – Autoconhecimento: a capacidade que temos de reconhecer nossas emoções no momento que acontecem. 2 -Automotivação: a ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "inteligência emocional"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[4]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 4 pilares da inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[4]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 7 hábitos para desenvolver a inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[4]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são 3 sinais de pessoas inteligentes?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[4]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são 3 exemplos de inteligência emocional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[4]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "video",
+        "rank_group": 1,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[6]/div[1]",
+        "items": [
+         {
+          "type": "video_element",
+          "source": "YouTube · Descomplique com a Professora Elizângela Coelho",
+          "title": "Educação Socioemocional: Como Desenvolver a Inteligência ...",
+          "timestamp": "2024-04-13 00:00:00 +00:00",
+          "url": "https://www.youtube.com/watch?v=cTpbA7alsJA"
+         },
+         {
+          "type": "video_element",
+          "source": "YouTube · Rejiano Vedovatto | Neuroreference®",
+          "title": "Aula 18 - 7 Formas de Desenvolver a Inteligência Emocional e ...",
+          "timestamp": "2022-11-29 00:00:00 +00:00",
+          "url": "https://www.youtube.com/watch?v=KROEU1_nNV4"
+         },
+         {
+          "type": "video_element",
+          "source": "YouTube · Canal Futurana",
+          "title": "COMO DESENVOLVER INTELIGÊNCIA EMOCIONAL",
+          "timestamp": "2021-10-04 00:00:00 +00:00",
+          "url": "https://www.youtube.com/watch?v=zZT8vnXVTtc"
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[8]/div[1]/div[1]",
+        "domain": "www.comschool.com.br",
+        "title": "Inteligência emocional: conheça técnicas importantes",
+        "url": "https://www.comschool.com.br/blog/5-tecnicas-de-inteligencia-emocional",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.comschool.com.br › blog › 5-tecnicas-de-i...",
+        "website_name": "Comschool",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "3 de set. de 2022 — Algumas atividades, como lidar com o estresse e a ansiedade, praticar a autopercepção corporal e emotiva, compreender os próprios limites e ter ...",
+        "pre_snippet": "09/03/2022 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "lidar com o estresse e a ansiedade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2022-09-03 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[10]/div[1]/div[1]",
+        "domain": "blog.prozeducacao.com.br",
+        "title": "Inteligência emocional: o que é e 4 dicas para desenvolver!",
+        "url": "https://blog.prozeducacao.com.br/carreira/inteligencia-emocional/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.prozeducacao.com.br › carreira › inteligenc...",
+        "website_name": "Proz Educação",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Um dos exercícios mais importantes para desenvolver a inteligência emocional é ser capaz de reduzir os pensamentos negativos e enfatizar os positivos. É preciso ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "ser capaz de reduzir os pensamentos negativos e enfatizar os positivos"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[12]/div[1]/div[1]",
+        "domain": "revistapegn.globo.com",
+        "title": "5 dicas para desenvolver sua inteligência emocional",
+        "url": "https://revistapegn.globo.com/Dia-a-dia/noticia/2015/04/5-dicas-para-desenvolver-sua-inteligencia-emocional.html",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://revistapegn.globo.com › noticia › 2015/04 › 5-d...",
+        "website_name": "Pequenas Empresas & Grandes Negócios",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "6 de abr. de 2015 — Faça um esforço diário para prestar atenção nos seus comportamentos e emoções. É importante também notar como você reage às mais diferentes ...",
+        "pre_snippet": "04/06/2015 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Faça um esforço diário para prestar atenção nos seus comportamentos e emoções"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2015-04-06 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[14]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQntiuZbex2pIdnFYqCbQ1OtCTztBTQ:1791055354289&q=como+desenvolver+intelig%C3%AAncia+emocional&udm=2&source=univ&fir=ha3_c16lE8k2sM%252COipq218kix-FyM%252C_%253B9wP0nnZ8Aix2zM%252C--bSXKFyW-DSKM%252C_%253BBnVXtowMOTfl-M%252C7uQ5r2yBQ0_5hM%252C_%253BFsyqFe9RQOESaM%252C17aMi0pYoYmx7M%252C_%253BkSpZEa3zZnACuM%252CVxM6q7rjUHqGIM%252C_%253BZGe-x188JpKiDM%252CRng8O3xPiPGP_M%252C_%253B1c9hA0FVWQutkM%252C4ePaAbMpIBmp0M%252C_%253BvppSFihtI5PmcM%252C9USd7eeo9ip4KM%252C_%253BCsBgNVeJ0mDuHM%252CdyaZGpsWRRIxOM%252C_&usg=AI4_-kQ1UwdBBoPcAFrkUpDoH_ZDP1R81A&sa=X&ved=2ahUKEwiahamRyZ6XAxXdU0EAHZ-7B-IQ7Al6BAhNEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Como desenvolver minha inteligência emocional? | Blog | Nube",
+          "url": "https://www.nube.com.br/blog/2024/04/11/como-desenvolver-minha-inteligencia-emocional",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcST98x3cHsk4OkNcgSb8tn9bHmEbIkXjdm0KCizWAcDn8L9Eb2Kc4qVaMk&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Dicas para desenvolver sua inteligência emocional - Blog 7COMm",
+          "url": "https://blog.7comm.com.br/dicas-para-desenvolver-sua-inteligencia-emocional/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTO7S3wsw67vNPVv1wuWOyYxlbSjSY5jkrcWhA-RxBBy_IDUEnjM73ZGW8&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Como desenvolver a Inteligência Emocional? - Jornal A Ponte",
+          "url": "https://jornalaponte.com.br/detalhes/colunistas/como-desenvolver-a-inteligencia-emocional",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdHzPsAqQG9OZCbkKxyw5_8Y4IcU-BbQjyibH4mcCN2SBN2_PzReK9wXI&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Inteligência Emocional | O que é e como desenvolvê-la ...",
+          "url": "https://www.iberdrola.com/talentos/o-que-e-inteligencia-emocional",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTX9JffVMwbEM3c2CFIdtbhqcq30h_GkETL-f7Bw_fMlFJ0HoPumc5XpHI&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "7 modos simples de estimular a inteligência emocional do seu ...",
+          "url": "https://www.tempojunto.com/2021/03/03/7-modos-simples-de-estimular-a-inteligencia-emocional-do-seu-filho/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTX4x_3HjELhBa49LMS9yl-POj0KmRjfWoZBfl6MO7QfPadgb90Qe1d1Ic&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "INTELIGÊNCIA EMOCIONAL: Como desenvolver o autoconhecimento ...",
+          "url": "https://www.amazon.com.br/INTELIG%C3%8ANCIA-EMOCIONAL-autoconhecimento-relacionamentos-desenvolvendo-ebook/dp/B08X2TNR71",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTUZR4NH3NnQzJj3wjXmLUZqgmHilv6eJPwfj0VVfzeTRyId1ha3uwlG4c&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Inteligência emocional: por que as empresas valorizam essa ...",
+          "url": "https://blog.manpowergroup.com.br/inteligencia-emocional-a-nova-exigencia-do-mundo-do-trabalho",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXazZUkNzg6uaJiiKRb7oWY2seku8eqIW3euX2agwrYhyMnIJng08B7Ac&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "O que é inteligência emocional e como desenvolver no trabalho?\"",
+          "url": "https://pt.linkedin.com/pulse/o-que-%C3%A9-intelig%C3%AAncia-emocional-e-como-desenvolver-louren%C3%A7o-gomes",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQCoVBUwjy3pMc1L2QwuM_OZqnm35K1MNzuGPjkSvCugkyJQXWcOoaQ2nQ&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Como Adquirir Inteligência Emocional",
+          "url": "https://www.evolucaopessoal.com.br/como-adquirir-inteligencia-emocional",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZVRe7OY4VYND_YAKjuup5lVVmxb5hKLDiMg3MYYTtnIiQk3WK6xY-wp0&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[16]/div[1]/div[1]",
+        "domain": "skillsandlead.pt",
+        "title": "Como melhorar a inteligência emocional?",
+        "url": "https://skillsandlead.pt/artigo/como-melhorar-a-inteligencia-emocional/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://skillsandlead.pt › artigo › como-melhorar-a-inteli...",
+        "website_name": "Skills and Lead",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "1. Compreender a Natureza das Emoções · 2. Desenvolver a Autoconsciência Emocional · 3. Regular as Emoções Através da Ação · 4. Identificar e Transformar Padrões e ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "1. Compreender a Natureza das Emoções"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[18]/div[1]/div[1]",
+        "domain": "ohquemfala.com.br",
+        "title": "Aprenda a desenvolver inteligência emocional no trabalho",
+        "url": "https://ohquemfala.com.br/blog/inteligencia-emocional-no-trabalho/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://ohquemfala.com.br › Blog",
+        "website_name": "Óh Quem Fala",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "2 de dez. de 2021 — Inteligência emocional é a competência que possibilita o gerenciamento das próprias emoções e como lidar com os sentimentos das pessoas.",
+        "pre_snippet": "12/02/2021 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Inteligência emocional"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2021-12-02 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[20]/div[1]/div[1]",
+        "domain": "catracalivre.com.br",
+        "title": "Inteligência emocional: 7 passos essenciais para sucesso ...",
+        "url": "https://catracalivre.com.br/saude-bem-estar/inteligencia-emocional-7-passos-essenciais-para-sucesso-na-vida-pessoal-e-profissional/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://catracalivre.com.br › Bem-Estar",
+        "website_name": "Catraca Livre",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "20 de jan. de 2026 — Reconhecer, compreender e lidar com as próprias emoções, assim como entender o que o outro sente, influencia diretamente decisões, ...",
+        "pre_snippet": "01/20/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Reconhecer, compreender e lidar com as próprias emoções"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-01-20 00:00:00 +00:00",
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031922-1993-0139-0000-866e0d2df795",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "3.4321 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "curso de liderança e gestão de pessoas",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "curso de liderança e gestão de pessoas",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=curso%20de%20lideran%C3%A7a%20e%20gest%C3%A3o%20de%20pessoas&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:22:39 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "organic",
+       "people_also_ask",
+       "related_searches"
+      ],
+      "se_results_count": 129,
+      "pages_count": 1,
+      "items_count": 12,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": true,
+        "markdown": null,
+        "items": null,
+        "references": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]",
+        "domain": "www.escolavirtual.gov.br",
+        "title": "curso: Liderança e Gestão De Equipes",
+        "url": "https://www.escolavirtual.gov.br/curso/373",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.escolavirtual.gov.br › curso",
+        "website_name": "Escola Virtual Gov",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Destinado a gestores, coordenadores e líderes que buscam aprimorar sua capacidade de inspirar, engajar e coordenar equipes com mais eficácia, promovendo um ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": null,
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[4]/div[1]/div[1]",
+        "domain": "www.sp.senac.br",
+        "title": "Gestão de Pessoas e Liderança - Cursos Livres",
+        "url": "https://www.sp.senac.br/cursos-livres/gestao-e-negocios/gestao-de-pessoas-e-lideranca",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.sp.senac.br › gestao-de-pessoas-e-lideranca",
+        "website_name": "Senac São Paulo",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Cursos Livres na área de Gestão e Negócios - Gestão de Pessoas e Liderança, rápidos e práticos, com 30% de desconto e opções imperdíveis de parcelamento.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Cursos",
+         "Gestão de Pessoas",
+         "Liderança"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[6]/div[1]/div[1]",
+        "domain": "loja.sebrae.com.br",
+        "title": "Gestão de pessoas",
+        "url": "https://loja.sebrae.com.br/gest-o-de-pessoas-1-371440100237",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://loja.sebrae.com.br › gest-o-de-pessoas-1-371440...",
+        "website_name": "Sebrae",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Este curso apresenta os fundamentos da gestão de pessoas e como eles podem fortalecer a cultura e o desempenho da sua empresa. Ele foi desenvolvido para ajudar ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "apresenta os fundamentos da gestão de pessoas"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]",
+        "domain": "app.santanderopenacademy.com",
+        "title": "Curso Santander Liderança",
+        "url": "https://app.santanderopenacademy.com/pt-BR/course/leadership",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://app.santanderopenacademy.com › leadership",
+        "website_name": "Santander Open Academy",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O que você aprenderá · Tipos de líderes. · Liderança situacional e trabalho em equipe. · Competências de um bom líder. · Preparação para liderar.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Tipos de líderes"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Qual o melhor curso de gestão de pessoas e liderança?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 4 tipos de líder?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Para que serve o curso de liderança e gestão de pessoas?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Qual o valor de um curso de liderança?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[12]/div[1]/div[1]",
+        "domain": "estacio.br",
+        "title": "Curso Livre em Liderança e Gestão de Equipes",
+        "url": "https://estacio.br/cursos-livres/lideranca-e-gestao-de-equipes?srsltid=AU7gw4WthCu6oalo_hBJlG5PdOsNQxHnLNXjn1Yhfndd60mg2ow6Mhd7",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://estacio.br › Cursos Livres",
+        "website_name": "Estácio",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Curso Estácio de 30 h que desenvolve competências para liderar com eficácia: coaching, feedback, motivação, delegação e empowerment.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Curso Estácio de 30 h"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[14]/div[1]/div[1]",
+        "domain": "agenciasebrae.com.br",
+        "title": "Cinco cursos gratuitos oferecem novos conteúdos sobre ...",
+        "url": "https://agenciasebrae.com.br/cultura-empreendedora/cinco-cursos-gratuitos-oferecem-novos-conteudos-sobre-gestao-de-pessoas-e-lideranca/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://agenciasebrae.com.br › cultura-empreendedora",
+        "website_name": "Agência Sebrae de Notícias",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "17 de nov. de 2025 — 1) Gestão de pessoas · 2) Gestão de equipe de vendas · 3) A liderança na gestão de equipes · 4) Recrutamento e seleção: como criar um time vencedor.",
+        "pre_snippet": "11/17/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Gestão de pessoas",
+         "liderança"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-11-17 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[16]/div[1]/div[1]",
+        "domain": "ee.insper.edu.br",
+        "title": "Liderança e Gestão de Pessoas",
+        "url": "https://ee.insper.edu.br/cursos/lideranca/lideranca-e-gestao-de-pessoas/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://ee.insper.edu.br › lideranca-e-gestao-de-pessoas",
+        "website_name": "Insper Educação Executiva",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "No curso, os executivos debatem tópicos fundamentais para a atuação consciente do líder como gestor de pessoas, mesclando conhecimentos, reflexões e exercícios ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "curso",
+         "pessoas"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[17]/div[1]/div[1]/div[1]",
+        "domain": "www.youtube.com",
+        "title": "Curso de liderança e gestão de pessoas: 7 dicas para fazer ...",
+        "url": "https://www.youtube.com/watch?v=ZeyeilfoPuY",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "Mais de 11,3 mil visualizações  ·  há 4 anos",
+        "website_name": "YouTube · Gilberto de Souza",
+        "is_image": false,
+        "is_video": true,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": [
+         "is_video"
+        ],
+        "description": null,
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": null,
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2022-07-27 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 9,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[19]/div[1]/div[1]",
+        "domain": "www.sp.senai.br",
+        "title": "Curso Estilos de Gestão e Liderança",
+        "url": "https://www.sp.senai.br/curso/estilos-de-gestao-e-lideranca/101782",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.sp.senai.br › estilos-de-gestao-e-lideranca",
+        "website_name": "SENAI - Portal",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O curso de Aperfeiçoamento Profissional de Estilos de Gestão e Liderança tem por objetivo o desenvolvimento de competências que permitam o reconhecimento dos ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "O curso de Aperfeiçoamento Profissional de Estilos de Gestão e Liderança"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "related_searches",
+        "rank_group": 1,
+        "rank_absolute": 12,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[2]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "items": [
+         "Curso de liderança e gestão de pessoas online",
+         "Curso de liderança e gestão de pessoas senai",
+         "Cursos de liderança e gestão de pessoas gratuito fgv",
+         "Cursos de liderança online gratuitos com certificado",
+         "Liderança e gestão de pessoas curso gratuito",
+         "Curso de liderança e gestão de pessoas presencial",
+         "Melhores cursos de liderança e gestão de pessoas",
+         "Curso de liderança e gestão de pessoas gratuito sebrae"
+        ],
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031922-1993-0139-0000-a778c2c03dc1",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "3.8556 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "soft skills",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "soft skills",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=soft%20skills&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:22:43 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "people_also_ask",
+       "organic",
+       "images",
+       "related_searches"
+      ],
+      "se_results_count": 134,
+      "pages_count": 1,
+      "items_count": 12,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "Soft skills são `habilidades comportamentais e competências interpessoais que definem como você interage com os outros, resolve problemas e conduz sua rotina de trabalho`.[[1]](https://pt.wikipedia.org/wiki/Soft_skills)[[2]](https://www.facebook.com/esprooficial/videos/voc%C3%AA-sabe-o-que-s%C3%A3o-as-softs-skills-conhe%C3%A7a-algumas-para-voc%C3%AA-se-aperfei%C3%A7oar-e-a/1284272916203296/)[[3]](https://www.youtube.com/watch?v=WYD6nn7tOvk)\n\nElas se diferenciam das [Hard Skills](https://pt.wikipedia.org/wiki/Soft_skills) — que representam o conhecimento técnico e específico de uma profissão, como dominar um software ou falar outro idioma. Enquanto o conhecimento técnico abre as portas para uma entrevista, as soft skills determinam o seu crescimento e permanência em uma empresa.[[1]](https://www.gupy.io/blog/soft-skills)[[2]](https://unileao.edu.br/blog-pos-graduacao/soft-skills/)[[3]](https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/)\n\n\n---\n\n### Principais Exemplos de Soft Skills\n\n- **Comunicação eficaz:** Saber se expressar com clareza e escutar ativamente o outro.\n- **Inteligência emocional:** Capacidade de gerenciar as próprias emoções e manter o equilíbrio sob pressão.\n- **Trabalho em equipe:** Habilidade de colaborar, respeitar opiniões divergentes e somar esforços rumo a um objetivo comum.\n- **Adaptabilidade (Flexibilidade):** Facilidade para lidar com mudanças rápidas de processos ou cenários.\n- **Resiliência:** Competência para se recuperar de erros e imprevistos sem travar diante de dificuldades.\n- **Proatividade e Pensamento Crítico:** Antecipar problemas e analisar cenários com cautela antes de tomar decisões.[[1]](https://fia.com.br/blog/soft-skills/)[[2]](https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/)[[3]](https://www.gupy.io/blog/soft-skills)[[4]](https://portal.anhembi.br/blog/soft-skills/)\n\n\n---\n\n### Como Desenvolver Soft Skills\nAo contrário do que muitos pensam, as competências comportamentais podem ser treinadas e aprimoradas ao longo da vida. Você pode seguir algumas práticas recomendadas pelo guia da [Gupy sobre Soft Skills](https://www.gupy.io/blog/soft-skills):[[1]](https://undertop.com.br/blogs/videos/voce-sabe-o-que-sao-soft-skills)[[2]](https://portal.anhembi.br/blog/soft-skills/)\n\n- **Busque autoconhecimento:** Entenda seus pontos fortes e os pontos que exigem mais paciência ou autocontrole.\n- **Peça feedbacks:** Ouça avaliações de colegas e gestores para identificar pontos cegos no seu comportamento.\n- **Invista em aprendizado contínuo:** Participe de mentorias, treinamentos corporativos e cursos voltados ao desenvolvimento humano.[[1]](https://online.pucrs.br/blog/soft-skills)[[2]](https://fia.com.br/blog/soft-skills/)[[3]](https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/)[[4]](https://portal.anhembi.br/blog/soft-skills/)\n\nSe você quiser focar em alguma área específica, me diga:\n\n- Você está se preparando para uma **entrevista**?\n- Quer desenvolver uma habilidade voltada à **liderança** ou ao **trabalho em equipe**?\n\nPosso te dar dicas práticas para o seu caso.",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Soft skills são habilidades comportamentais e competências interpessoais que definem como você interage com os outros, resolve problemas e conduz sua rotina de trabalho.",
+          "markdown": "Soft skills são `habilidades comportamentais e competências interpessoais que definem como você interage com os outros, resolve problemas e conduz sua rotina de trabalho`.[[1]](https://pt.wikipedia.org/wiki/Soft_skills)[[2]](https://www.facebook.com/esprooficial/videos/voc%C3%AA-sabe-o-que-s%C3%A3o-as-softs-skills-conhe%C3%A7a-algumas-para-voc%C3%AA-se-aperfei%C3%A7oar-e-a/1284272916203296/)[[3]](https://www.youtube.com/watch?v=WYD6nn7tOvk)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Wikipedia",
+            "domain": "pt.wikipedia.org",
+            "url": "https://pt.wikipedia.org/wiki/Soft_skills",
+            "title": "Soft skills – Wikipédia, a enciclopédia livre",
+            "text": "Soft skills é um termo em inglês usado por profissionais de recursos humanos para definir habilidades comportamentais, competência..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Facebook",
+            "domain": "www.facebook.com",
+            "url": "https://www.facebook.com/esprooficial/videos/voc%C3%AA-sabe-o-que-s%C3%A3o-as-softs-skills-conhe%C3%A7a-algumas-para-voc%C3%AA-se-aperfei%C3%A7oar-e-a/1284272916203296/",
+            "title": "Já parou para pensar como usar suas habilidades no ambiente de ...",
+            "text": "você sabia que além do desenvolvimento. técnico o mercado de trabalho também valoriza muito a soft. skills e o que são soft. skill..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=WYD6nn7tOvk",
+            "title": "O que são as 'soft skills'? | Do Micro ao Macro",
+            "text": "O que são as 'soft skills'? | Do Micro ao Macro você sabe o que são soft. skills são as habilidades. interpessoais e comportamenta..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Elas se diferenciam das Hard Skills — que representam o conhecimento técnico e específico de uma profissão, como dominar um software ou falar outro idioma. Enquanto o conhecimento técnico abre as portas para uma entrevista, as soft skills determinam o seu crescimento e permanência em uma empresa.",
+          "markdown": "Elas se diferenciam das [Hard Skills](https://pt.wikipedia.org/wiki/Soft_skills) — que representam o conhecimento técnico e específico de uma profissão, como dominar um software ou falar outro idioma. Enquanto o conhecimento técnico abre as portas para uma entrevista, as soft skills determinam o seu crescimento e permanência em uma empresa.[[1]](https://www.gupy.io/blog/soft-skills)[[2]](https://unileao.edu.br/blog-pos-graduacao/soft-skills/)[[3]](https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "Hard Skills",
+            "description": null,
+            "url": "https://pt.wikipedia.org/wiki/Soft_skills",
+            "domain": "pt.wikipedia.org"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/soft-skills",
+            "title": "Soft Skills: o que são, exemplos e como desenvolver - Gupy",
+            "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Soft Skills: exemplos e como desenvolver as competências do futuro * Treinamen..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Unileão – Centro Universitário Doutor Leão Sampaio",
+            "domain": "unileao.edu.br",
+            "url": "https://unileao.edu.br/blog-pos-graduacao/soft-skills/",
+            "title": "Blog Pós Graduação | Soft skills: conheça as 7 habilidades mais procuradas no mercado",
+            "text": "Soft skills (habilidades comportamentais/interpessoais essenciais): - 1. Colaboração (espírito coletivo) - 2. Flexibilidade (adapt..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Microlins",
+            "domain": "microlins.com.br",
+            "url": "https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/",
+            "title": "Soft Skills: o que são e 15 exemplos para a sua carreira - Microlins",
+            "text": "Converse com nossos especialistas no WhatsApp e garanta seu desconto exclusivo antes que acabe! * Fechar Abrir. ... * Curso de Ing..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Principais Exemplos de Soft Skills",
+          "text": "Comunicação eficaz: Saber se expressar com clareza e escutar ativamente o outro. Inteligência emocional: Capacidade de gerenciar as próprias emoções e manter o equilíbrio sob pressão. Trabalho em equipe: Habilidade de colaborar, respeitar opiniões divergentes e somar esforços rumo a um objetivo comum. Adaptabilidade (Flexibilidade): Facilidade para lidar com mudanças rápidas de processos ou cenários. Resiliência: Competência para se recuperar de erros e imprevistos sem travar diante de dificuldades. Proatividade e Pensamento Crítico: Antecipar problemas e analisar cenários com cautela antes de tomar decisões.",
+          "markdown": "- **Comunicação eficaz:** Saber se expressar com clareza e escutar ativamente o outro.\n- **Inteligência emocional:** Capacidade de gerenciar as próprias emoções e manter o equilíbrio sob pressão.\n- **Trabalho em equipe:** Habilidade de colaborar, respeitar opiniões divergentes e somar esforços rumo a um objetivo comum.\n- **Adaptabilidade (Flexibilidade):** Facilidade para lidar com mudanças rápidas de processos ou cenários.\n- **Resiliência:** Competência para se recuperar de erros e imprevistos sem travar diante de dificuldades.\n- **Proatividade e Pensamento Crítico:** Antecipar problemas e analisar cenários com cautela antes de tomar decisões.[[1]](https://fia.com.br/blog/soft-skills/)[[2]](https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/)[[3]](https://www.gupy.io/blog/soft-skills)[[4]](https://portal.anhembi.br/blog/soft-skills/)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "FIA – Fundação Instituto de Administração",
+            "domain": "fia.com.br",
+            "url": "https://fia.com.br/blog/soft-skills/",
+            "title": "Soft skills: o que são, exemplos e como desenvolver",
+            "text": "* Carreira e Desenvolvimento. * Soft skills: o que são e exemplos práticos para desenvolver. ... 2. ... 3. ... 4. ... 5. ... 6. .."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Microlins",
+            "domain": "microlins.com.br",
+            "url": "https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/",
+            "title": "Soft Skills: o que são e 15 exemplos para a sua carreira - Microlins",
+            "text": "Converse com nossos especialistas no WhatsApp e garanta seu desconto exclusivo antes que acabe! * Fechar Abrir. ... * Curso de Ing..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/soft-skills",
+            "title": "Soft Skills: o que são, exemplos e como desenvolver - Gupy",
+            "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Soft Skills: exemplos e como desenvolver as competências do futuro * Treinamen..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Anhembi Morumbi",
+            "domain": "portal.anhembi.br",
+            "url": "https://portal.anhembi.br/blog/soft-skills/",
+            "title": "Soft skills: o que é e qual a importância para o mercado de ...",
+            "text": "* Vida & Carreira. * Gestão & Negócios. * Soft skills. ... Soft skills: o que é e qual a importância para o mercado de trabalho? P..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Como Desenvolver Soft Skills",
+          "text": "Ao contrário do que muitos pensam, as competências comportamentais podem ser treinadas e aprimoradas ao longo da vida. Você pode seguir algumas práticas recomendadas pelo guia da Gupy sobre Soft Skills :",
+          "markdown": "Ao contrário do que muitos pensam, as competências comportamentais podem ser treinadas e aprimoradas ao longo da vida. Você pode seguir algumas práticas recomendadas pelo guia da [Gupy sobre Soft Skills](https://www.gupy.io/blog/soft-skills):[[1]](https://undertop.com.br/blogs/videos/voce-sabe-o-que-sao-soft-skills)[[2]](https://portal.anhembi.br/blog/soft-skills/)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "Gupy sobre Soft Skills",
+            "description": null,
+            "url": "https://www.gupy.io/blog/soft-skills",
+            "domain": "www.gupy.io"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Undertop",
+            "domain": "undertop.com.br",
+            "url": "https://undertop.com.br/blogs/videos/voce-sabe-o-que-sao-soft-skills",
+            "title": "você sabe o que são SOFT SKILLS?",
+            "text": "você sabe o que são SOFT SKILLS? você sabe o que são soft. skills soft skills são aquelas competências que nos dias de hoje vão te..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Anhembi Morumbi",
+            "domain": "portal.anhembi.br",
+            "url": "https://portal.anhembi.br/blog/soft-skills/",
+            "title": "Soft skills: o que é e qual a importância para o mercado de ...",
+            "text": "* Vida & Carreira. * Gestão & Negócios. * Soft skills. ... Soft skills: o que é e qual a importância para o mercado de trabalho? P..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Busque autoconhecimento: Entenda seus pontos fortes e os pontos que exigem mais paciência ou autocontrole. Peça feedbacks: Ouça avaliações de colegas e gestores para identificar pontos cegos no seu comportamento. Invista em aprendizado contínuo: Participe de mentorias, treinamentos corporativos e cursos voltados ao desenvolvimento humano.",
+          "markdown": "- **Busque autoconhecimento:** Entenda seus pontos fortes e os pontos que exigem mais paciência ou autocontrole.\n- **Peça feedbacks:** Ouça avaliações de colegas e gestores para identificar pontos cegos no seu comportamento.\n- **Invista em aprendizado contínuo:** Participe de mentorias, treinamentos corporativos e cursos voltados ao desenvolvimento humano.[[1]](https://online.pucrs.br/blog/soft-skills)[[2]](https://fia.com.br/blog/soft-skills/)[[3]](https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/)[[4]](https://portal.anhembi.br/blog/soft-skills/)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "PUCRS",
+            "domain": "online.pucrs.br",
+            "url": "https://online.pucrs.br/blog/soft-skills",
+            "title": "PUCRS Online | Soft Skills: o que são, sua importância e como desenvolvê-las",
+            "text": "Soft Skills: Habilidades interpessoais, comportamentais e mentais/emocionais adquiridas por experiências de vida. Pesquisa CashNet..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "FIA – Fundação Instituto de Administração",
+            "domain": "fia.com.br",
+            "url": "https://fia.com.br/blog/soft-skills/",
+            "title": "Soft skills: o que são, exemplos e como desenvolver",
+            "text": "* Carreira e Desenvolvimento. * Soft skills: o que são e exemplos práticos para desenvolver. ... 2. ... 3. ... 4. ... 5. ... 6. .."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Microlins",
+            "domain": "microlins.com.br",
+            "url": "https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/",
+            "title": "Soft Skills: o que são e 15 exemplos para a sua carreira - Microlins",
+            "text": "Converse com nossos especialistas no WhatsApp e garanta seu desconto exclusivo antes que acabe! * Fechar Abrir. ... * Curso de Ing..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Anhembi Morumbi",
+            "domain": "portal.anhembi.br",
+            "url": "https://portal.anhembi.br/blog/soft-skills/",
+            "title": "Soft skills: o que é e qual a importância para o mercado de ...",
+            "text": "* Vida & Carreira. * Gestão & Negócios. * Soft skills. ... Soft skills: o que é e qual a importância para o mercado de trabalho? P..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se você quiser focar em alguma área específica, me diga:Você está se preparando para uma entrevista ?\nQuer desenvolver uma habilidade voltada à liderança ou ao trabalho em equipe ?\nPosso te dar dicas práticas para o seu caso.",
+          "markdown": "Se você quiser focar em alguma área específica, me diga:\n\n- Você está se preparando para uma **entrevista**?\n- Quer desenvolver uma habilidade voltada à **liderança** ou ao **trabalho em equipe**?\n\nPosso te dar dicas práticas para o seu caso.",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "FIA – Fundação Instituto de Administração",
+          "domain": "fia.com.br",
+          "url": "https://fia.com.br/blog/soft-skills/",
+          "title": "Soft skills: o que são, exemplos e como desenvolver",
+          "text": "* Carreira e Desenvolvimento. * Soft skills: o que são e exemplos práticos para desenvolver. ... 2. ... 3. ... 4. ... 5. ... 6. .."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Gupy",
+          "domain": "www.gupy.io",
+          "url": "https://www.gupy.io/blog/soft-skills",
+          "title": "Soft Skills: o que são, exemplos e como desenvolver - Gupy",
+          "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Soft Skills: exemplos e como desenvolver as competências do futuro * Treinamen..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "PUCRS",
+          "domain": "online.pucrs.br",
+          "url": "https://online.pucrs.br/blog/soft-skills",
+          "title": "PUCRS Online | Soft Skills: o que são, sua importância e como desenvolvê-las",
+          "text": "Soft Skills: Habilidades interpessoais, comportamentais e mentais/emocionais adquiridas por experiências de vida. Pesquisa CashNet..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Wikipedia",
+          "domain": "pt.wikipedia.org",
+          "url": "https://pt.wikipedia.org/wiki/Soft_skills",
+          "title": "Soft skills – Wikipédia, a enciclopédia livre",
+          "text": "Soft skills é um termo em inglês usado por profissionais de recursos humanos para definir habilidades comportamentais, competência..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=WYD6nn7tOvk",
+          "title": "O que são as 'soft skills'? | Do Micro ao Macro",
+          "text": "O que são as 'soft skills'? | Do Micro ao Macro você sabe o que são soft. skills são as habilidades. interpessoais e comportamenta..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Anhembi Morumbi",
+          "domain": "portal.anhembi.br",
+          "url": "https://portal.anhembi.br/blog/soft-skills/",
+          "title": "Soft skills: o que é e qual a importância para o mercado de ...",
+          "text": "* Vida & Carreira. * Gestão & Negócios. * Soft skills. ... Soft skills: o que é e qual a importância para o mercado de trabalho? P..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Microlins",
+          "domain": "microlins.com.br",
+          "url": "https://microlins.com.br/blog/soft-skills/soft-skills-o-que-sao-exemplos/",
+          "title": "Soft Skills: o que são e 15 exemplos para a sua carreira - Microlins",
+          "text": "Converse com nossos especialistas no WhatsApp e garanta seu desconto exclusivo antes que acabe! * Fechar Abrir. ... * Curso de Ing..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Undertop",
+          "domain": "undertop.com.br",
+          "url": "https://undertop.com.br/blogs/videos/voce-sabe-o-que-sao-soft-skills",
+          "title": "você sabe o que são SOFT SKILLS?",
+          "text": "você sabe o que são SOFT SKILLS? você sabe o que são soft. skills soft skills são aquelas competências que nos dias de hoje vão te..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Unileão – Centro Universitário Doutor Leão Sampaio",
+          "domain": "unileao.edu.br",
+          "url": "https://unileao.edu.br/blog-pos-graduacao/soft-skills/",
+          "title": "Blog Pós Graduação | Soft skills: conheça as 7 habilidades mais procuradas no mercado",
+          "text": "Soft skills (habilidades comportamentais/interpessoais essenciais): - 1. Colaboração (espírito coletivo) - 2. Flexibilidade (adapt..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Facebook",
+          "domain": "www.facebook.com",
+          "url": "https://www.facebook.com/esprooficial/videos/voc%C3%AA-sabe-o-que-s%C3%A3o-as-softs-skills-conhe%C3%A7a-algumas-para-voc%C3%AA-se-aperfei%C3%A7oar-e-a/1284272916203296/",
+          "title": "Já parou para pensar como usar suas habilidades no ambiente de ...",
+          "text": "você sabia que além do desenvolvimento. técnico o mercado de trabalho também valoriza muito a soft. skills e o que são soft. skill..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são as soft skills?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são 20 exemplos de soft skills?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são as 7 habilidades?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são 15 exemplos de soft skills?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[5]/div[1]/div[1]",
+        "domain": "solides.com.br",
+        "title": "Soft skills: o que são, 16 exemplos, como desenvolver e ...",
+        "url": "https://solides.com.br/blog/conheca-soft-skills-para-desenvolver/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://solides.com.br › ... › Desenvolvimento de Carreira",
+        "website_name": "Sólides",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Quais são as soft skills mais procuradas? · 1. Comunicação eficaz · 2. Escrita · 3. Empatia · 4. Colaboração · 5. Organização ou planejamento · 6. Flexibilidade.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "1. Comunicação eficaz"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[7]/div[1]/div[1]",
+        "domain": "fia.com.br",
+        "title": "Soft skills: o que são e exemplos práticos para desenvolver",
+        "url": "https://fia.com.br/blog/soft-skills/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://fia.com.br › blog › soft-skills",
+        "website_name": "FIA – Fundação Instituto de Administração",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "6 de mar. de 2026 — Soft skills são habilidades e competências relacionadas ao comportamento humano. Entenda a importância e como desenvolver.",
+        "pre_snippet": "03/06/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "habilidades e competências relacionadas ao comportamento humano"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-03-06 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[9]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQnsYsQnfvOubUaYal5b4DQpzKJrdLQ:1791055361640&q=soft+skills&udm=2&source=univ&fir=pqKYVW4rAjZT6M%252Clqz64xtao0TVUM%252C_%253BtFMgvWTKCvL71M%252Ct5HV2lGwF34lhM%252C_%253BhjlqISH-dEC4pM%252C8xaq3CX1Axt-JM%252C_%253BKtKuQTvz74tR6M%252CZK5u76dmpn8KWM%252C_%253BQh9y8eTd6eI80M%252CiUNOdJOM8JalLM%252C_%253BoAuiRDftCZs9OM%252C7sbDQPrxRzmRTM%252C_%253BYWM26G0Odp9NGM%252C5rZCqa9FxBLOSM%252C_%253BUPInprRwR_-F2M%252CbPnWpzsN3b1d7M%252C_%253B3gpN8nRPgM1meM%252CgOkN1OfYhK7vSM%252C_&usg=AI4_-kQugp4mip2121AlaLPJTfbHsA06Cw&sa=X&ved=2ahUKEwjd4OmUyZ6XAxWkgf0HHZSRM4MQ7Al6BAg-EAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Soft Skills: Habilidades e competências profissionais ...",
+          "url": "https://www.nucleodoconhecimento.com.br/administracao/soft-skills",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-a778c2c03dc1:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "What are soft skills and how are they applied?",
+          "url": "https://www.theladders.com/career-advice/soft-skills-how-are-they-applied",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-a778c2c03dc1:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "What Are Soft Skills?",
+          "url": "https://www.thebalancemoney.com/what-are-soft-skills-2060852",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-a778c2c03dc1:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "Tips to Develop Soft Skills",
+          "url": "https://www.husson.edu/online/blog/2024/09/tips-to-improve-soft-skills",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-a0aSkSZTJg9YyLQe9g2uD8wkrGFz4LA2YMlP0bdT_pNpkV2tfG-PsR8&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Top 10 Soft Skills for Customer Service Jobs",
+          "url": "https://www.liveabout.com/top-soft-skills-for-customer-service-jobs-2063746",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEqbdAB9OEvqhhNtg2g7Q5pDlSOl7tBxl_4MtEITuyny3X9ZnsIs5XpBU&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Soft skills vs. hard skills | Definition, examples, and how ...",
+          "url": "https://www.bitesizelearning.co.uk/resources/soft-skills-meaning-examples-training",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtRiNpMcy5c1I25VyCKm1Fq8HjYOyhTw0yyFKzmVjeE_GZ1Q8nxK85Ql0&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "What are soft skills? + 45 examples | Zapier",
+          "url": "https://zapier.com/blog/soft-skills-examples/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTekFkPd9rmBL7PnKg6kWIk2x_BxbYKr_87hJU3cjYfC3eR-YL5wZnrBbc&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "O que é Habilidades comportamentais ou soft skills ...",
+          "url": "https://www.computerweekly.com/br/definicoe/Habilidades-comportamentais-soft-skills",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlcQ4yWltSIWEY2v4hkqZUsZj9KhgDMj5BdhXEF-fS6wL-1y4bpjooxo4&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Soft Skills vs. Hard Skills: Which Matters More for You...",
+          "url": "https://lifevitae.sg/blog/life-skills/soft-skills-vs-hard-skills-which-matters-more-for-your-future",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeHPSlKziettQosM1OrMgW7wj0-dCeQSvmkpslOLZtJlZIxIzAW6Q_nZk&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[11]/div[1]/div[1]",
+        "domain": "www.crossknowledge.com",
+        "title": "Soft skills: o que são, quais as principais e como desenvolver",
+        "url": "https://www.crossknowledge.com/pt/blog/soft-skills/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.crossknowledge.com › blog › soft-skills",
+        "website_name": "CrossKnowledge",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O que são as soft skills? · Comunicação; · Trabalho em equipe; · Liderança; · Habilidades interpessoais; · Flexibilidade; · Empatia; · Proatividade; ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "soft skills"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[12]/div[1]/div[1]/div[1]",
+        "domain": "www.youtube.com",
+        "title": "O que são as 'soft skills'? | Do Micro ao Macro",
+        "url": "https://www.youtube.com/watch?v=WYD6nn7tOvk",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "Mais de 2,5 mil visualizações  ·  há 1 ano",
+        "website_name": "YouTube · CartaCapital",
+        "is_image": false,
+        "is_video": true,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": [
+         "is_video"
+        ],
+        "description": "Você sabe o que são as \" soft skills \"? São as habilidades que podem auxiliar na interação com outras pessoas, seja na vida pessoal ou na ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "soft skills"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-01-24 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[14]/div[1]/div[1]",
+        "domain": "online.pucrs.br",
+        "title": "Soft Skills: o que são, sua importância e como desenvolvê- ...",
+        "url": "https://online.pucrs.br/blog/soft-skills",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://online.pucrs.br › ... › Listagem do blog",
+        "website_name": "PUCRS",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "As soft skills são habilidades que estão relacionadas à personalidade e ao comportamento humano. São as capacidades mentais, emocionais e sociais que as pessoas ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "habilidades que estão relacionadas à personalidade e ao comportamento humano"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[16]/div[1]/div[1]",
+        "domain": "napratica.org.br",
+        "title": "Soft Skills: que são, como desenvolver e as principais tipos",
+        "url": "https://napratica.org.br/noticias/como-desenvolver-soft-skills",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://napratica.org.br › Notícias",
+        "website_name": "Na Prática",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "2 de jul. de 2025 — Exemplos de soft skills: 7 habilidades em alta no mercado · #1. Resiliência · #2. Colaboração · #3. Flexibilidade · #4. Trabalhar sob pressão.",
+        "pre_snippet": "07/02/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "soft skills"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-07-02 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[18]/div[1]/div[1]",
+        "domain": "pt.wikipedia.org",
+        "title": "Soft skills – Wikipédia, a enciclopédia livre",
+        "url": "https://pt.wikipedia.org/wiki/Soft_skills",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.wikipedia.org › wiki › Soft_skills",
+        "website_name": "Wikipedia",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Soft skills é um termo em inglês usado por profissionais de recursos humanos para definir habilidades comportamentais, competências subjetivas difíceis de ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Soft skills"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[20]/div[1]/div[1]",
+        "domain": "blog.dsacademy.com.br",
+        "title": "10 Soft Skills Que Vão Aumentar Sua Empregabilidade",
+        "url": "https://blog.dsacademy.com.br/10-soft-skills-que-vao-aumentar-sua_empregabilidade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.dsacademy.com.br › 10-soft-skills-que-vao-...",
+        "website_name": "Data Science Academy",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "3 de set. de 2026 — O Que São Soft Skills? · 1. Capacidade de Resolver Problemas · 2. Inteligência Emocional · 3. Growth Mindset · 4. Habilidades de Comunicação · 5 ...",
+        "pre_snippet": "09/03/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "1. Capacidade de Resolver Problemas"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-09-03 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "related_searches",
+        "rank_group": 1,
+        "rank_absolute": 12,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[2]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "items": [
+         "Hard skills",
+         "Soft skills exemplos",
+         "Soft skills tradução",
+         "Soft skills para que serve",
+         "Soft skills no currículo",
+         "Soft skills e hard skills o que é",
+         "Soft skills lista",
+         "Soft skills e hard skills exemplos"
+        ],
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

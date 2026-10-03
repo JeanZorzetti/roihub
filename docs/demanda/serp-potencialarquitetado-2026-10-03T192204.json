@@ -1,0 +1,830 @@
+{
+ "procedencia": {
+  "fonte": "dataforseo serp google organic live advanced",
+  "projeto": "potencialarquitetado",
+  "consultadoEm": "2026-10-03T19:22:04.649Z",
+  "regiao": "Brazil",
+  "idioma": "pt",
+  "device": "desktop",
+  "termos": [
+   "pdi o que é",
+   "modelo de pdi",
+   "inteligência emocional",
+   "como desenvolver inteligência emocional",
+   "curso de liderança e gestão de pessoas",
+   "soft skills"
+  ],
+  "custoUsd": 0.002
+ },
+ "resposta": {
+  "version": "0.1.20260917",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "3.1356 sec.",
+  "cost": 0.002,
+  "tasks_count": 6,
+  "tasks_error": 5,
+  "tasks": [
+   {
+    "id": "10031922-1993-0139-0000-4ae7e0e9f163",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "2.9459 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "pdi o que é",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "pdi o que é",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=pdi%20o%20que%20%C3%A9&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:22:04 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "organic",
+       "people_also_ask",
+       "images",
+       "video"
+      ],
+      "se_results_count": 95000,
+      "pages_count": 1,
+      "items_count": 11,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "PDI significa **Plano de Desenvolvimento Individual** , uma ferramenta estratégica usada no ambiente corporativo e de carreira para orientar o crescimento profissional de uma pessoa.[[1]](https://www.unicesumar.edu.br/blog/o-que-e-pdi-e-como-montar-um-para-organizar-os-estudos/)[[2]](https://www.my-mooc.com/pt/video/o-que-e-pdi-plano-de-desenvolvimento-pessoal-e-como-construir-ede2b992-6ae1-4e06-bf7e-a9db0ad91596)\n\nEle funciona como um guia prático que responde a três perguntas centrais:[[1]](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual)\n\n- Onde a pessoa está hoje (qualificação atual).\n- Onde ela deseja ou precisa chegar (metas de carreira ou da empresa).\n- O que será feito para reduzir essa distância (ações práticas, cursos, mentorias).[[1]](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual)\n\nPara aprender mais sobre como estruturar essa ferramenta, você pode conferir o guia completo da [Gupy sobre PDI](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual) ou ver as orientações da [TOTVS sobre PDI](https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/).[[1]](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual)[[2]](https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/)\n\nSe você quiser, posso te ajudar a montar um PDI. Me conte:\n\n- Qual é o seu **cargo ou área de atuação** atual?\n- Qual é o seu **principal objetivo profissional** para os próximos meses?",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "PDI significa Plano de Desenvolvimento Individual, uma ferramenta estratégica usada no ambiente corporativo e de carreira para orientar o crescimento profissional de uma pessoa.",
+          "markdown": "PDI significa **Plano de Desenvolvimento Individual** , uma ferramenta estratégica usada no ambiente corporativo e de carreira para orientar o crescimento profissional de uma pessoa.[[1]](https://www.unicesumar.edu.br/blog/o-que-e-pdi-e-como-montar-um-para-organizar-os-estudos/)[[2]](https://www.my-mooc.com/pt/video/o-que-e-pdi-plano-de-desenvolvimento-pessoal-e-como-construir-ede2b992-6ae1-4e06-bf7e-a9db0ad91596)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Unicesumar",
+            "domain": "www.unicesumar.edu.br",
+            "url": "https://www.unicesumar.edu.br/blog/o-que-e-pdi-e-como-montar-um-para-organizar-os-estudos/",
+            "title": "O que é PDI e como montar um para organizar os estudos? - Unicesumar",
+            "text": "O Plano de Desenvolvimento Individual (PDI) é uma ferramenta estratégica que define objetivos, metas e ações para o crescimento pr..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "My Mooc",
+            "domain": "www.my-mooc.com",
+            "url": "https://www.my-mooc.com/pt/video/o-que-e-pdi-plano-de-desenvolvimento-pessoal-e-como-construir-ede2b992-6ae1-4e06-bf7e-a9db0ad91596",
+            "title": "O QUE É PDI (PLANO DE DESENVOLVIMENTO PESSOAL) ...",
+            "text": "O QUE É PDI (PLANO DE DESENVOLVIMENTO PESSOAL) E COMO CONSTRUIR existe uma ferramenta que ajuda a alinhar as aspirações de carreir..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Ele funciona como um guia prático que responde a três perguntas centrais:",
+          "markdown": "Ele funciona como um guia prático que responde a três perguntas centrais:[[1]](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual",
+            "title": "PDI: como funciona o Plano de Desenvolvimento Individual nas ...",
+            "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Na prática, o PDI responde a três perguntas centrais: * Onde a pessoa está hoj..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Onde a pessoa está hoje (qualificação atual). Onde ela deseja ou precisa chegar (metas de carreira ou da empresa). O que será feito para reduzir essa distância (ações práticas, cursos, mentorias).",
+          "markdown": "- Onde a pessoa está hoje (qualificação atual).\n- Onde ela deseja ou precisa chegar (metas de carreira ou da empresa).\n- O que será feito para reduzir essa distância (ações práticas, cursos, mentorias).[[1]](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual",
+            "title": "PDI: como funciona o Plano de Desenvolvimento Individual nas ...",
+            "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Na prática, o PDI responde a três perguntas centrais: * Onde a pessoa está hoj..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Para aprender mais sobre como estruturar essa ferramenta, você pode conferir o guia completo da Gupy sobre PDI ou ver as orientações da TOTVS sobre PDI.",
+          "markdown": "Para aprender mais sobre como estruturar essa ferramenta, você pode conferir o guia completo da [Gupy sobre PDI](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual) ou ver as orientações da [TOTVS sobre PDI](https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/).[[1]](https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual)[[2]](https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "Gupy sobre PDI",
+            "description": null,
+            "url": "https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual",
+            "domain": "www.gupy.io"
+           },
+           {
+            "type": "link_element",
+            "title": "TOTVS sobre PDI",
+            "description": null,
+            "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/",
+            "domain": "www.totvs.com"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Gupy",
+            "domain": "www.gupy.io",
+            "url": "https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual",
+            "title": "PDI: como funciona o Plano de Desenvolvimento Individual nas ...",
+            "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Na prática, o PDI responde a três perguntas centrais: * Onde a pessoa está hoj..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "TOTVS",
+            "domain": "www.totvs.com",
+            "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/",
+            "title": "O que é PDI? Entenda o conceito e a aplicação - TOTVS",
+            "text": "O que é PDI? Entenda o conceito e a aplicação - TOTVS. ... Explore nossos conteúdos * Gestão Hoteleira. * Gestão Industrial. * Ges..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se você quiser, posso te ajudar a montar um PDI. Me conte:Qual é o seu cargo ou área de atuação atual?\nQual é o seu principal objetivo profissional para os próximos meses?",
+          "markdown": "Se você quiser, posso te ajudar a montar um PDI. Me conte:\n\n- Qual é o seu **cargo ou área de atuação** atual?\n- Qual é o seu **principal objetivo profissional** para os próximos meses?",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Gupy",
+          "domain": "www.gupy.io",
+          "url": "https://www.gupy.io/blog/pdi-plano-de-desenvolvimento-individual",
+          "title": "PDI: como funciona o Plano de Desenvolvimento Individual nas ...",
+          "text": "* Conteúdos em destaque. * Materiais gratuitos. ... Na prática, o PDI responde a três perguntas centrais: * Onde a pessoa está hoj..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Unicesumar",
+          "domain": "www.unicesumar.edu.br",
+          "url": "https://www.unicesumar.edu.br/blog/o-que-e-pdi-e-como-montar-um-para-organizar-os-estudos/",
+          "title": "O que é PDI e como montar um para organizar os estudos? - Unicesumar",
+          "text": "O Plano de Desenvolvimento Individual (PDI) é uma ferramenta estratégica que define objetivos, metas e ações para o crescimento pr..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "TOTVS",
+          "domain": "www.totvs.com",
+          "url": "https://www.totvs.com/blog/gestao-para-recursos-humanos/o-que-e-pdi/",
+          "title": "O que é PDI? Entenda o conceito e a aplicação - TOTVS",
+          "text": "O que é PDI? Entenda o conceito e a aplicação - TOTVS. ... Explore nossos conteúdos * Gestão Hoteleira. * Gestão Industrial. * Ges..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "My Mooc",
+          "domain": "www.my-mooc.com",
+          "url": "https://www.my-mooc.com/pt/video/o-que-e-pdi-plano-de-desenvolvimento-pessoal-e-como-construir-ede2b992-6ae1-4e06-bf7e-a9db0ad91596",
+          "title": "O QUE É PDI (PLANO DE DESENVOLVIMENTO PESSOAL) ...",
+          "text": "O QUE É PDI (PLANO DE DESENVOLVIMENTO PESSOAL) E COMO CONSTRUIR existe uma ferramenta que ajuda a alinhar as aspirações de carreir..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]/div[1]",
+        "domain": "www.mywork.com.br",
+        "title": "Plano de Desenvolvimento Individual: o que é e como ...",
+        "url": "https://www.mywork.com.br/blog/plano-de-desenvolvimento-individual-o-que-%C3%A9-e-como-fazer-um-pdi",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.mywork.com.br › Blog",
+        "website_name": "mywork",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "22 de dez. de 2023 — De forma geral, o PDI é um plano que detalha metas, objetivos e ações específicas para aprimorar habilidades e competências dos profissionais.",
+        "pre_snippet": "12/22/2023 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2023-12-22 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Como fazer o PDI?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quem deve elaborar o PDI?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "O que é um PDI para colaboradores?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "O que é um PDI escolar?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[5]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQnuI1yK_UKF7kACkHWcTZL1bU9K1QQ:1791055323287&q=pdi+o+que+%C3%A9&udm=2&source=univ&fir=Kvc-hVguNEh5FM%252CABWejbZctEadgM%252C_%253BgSE5eGWGl6xLcM%252CT3ZqycVIHPr9DM%252C_%253BnK9aR-AmkLW3eM%252CS6SnbwpRM-XUfM%252C_%253BDa9tSFA0nvOvIM%252C6w80mQaTPFbkUM%252C_%253BuIYF5rStbDRk-M%252Cf_QIe6Kkrwl7IM%252C_%253B2GnPqt240UgaMM%252C38-9VN3z1Ydr7M%252C_%253Bwmk-pL5Fu8X4TM%252C7e_HBuuM5UIlJM%252C_%253BMQxIUYkMy_w6rM%252CBqs-agXkdDJIFM%252C_%253BoKC1C5-ybWjmcM%252Cf_QIe6Kkrwl7IM%252C_&usg=AI4_-kTpvcLPC1uCyali2hD4E5Dqiryoig&sa=X&ved=2ahUKEwjfzcOCyZ6XAxVPSEEAHWweBZ4Q7Al6BAglEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "PDI: significado, importância e como criar um plano de ...",
+          "url": "https://www.alperman.com/post/pdi-significado-import%C3%A2ncia-e-como-criar",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-4ae7e0e9f163:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI Plano de Desenvolvimento Individual | Na Prática",
+          "url": "https://napratica.org.br/noticias/pdi-plano-de-desenvolvimento-individual",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-4ae7e0e9f163:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: O que é, como montar e exemplos para a empresa (2026)",
+          "url": "https://www.moodar.com.br/blogmoodar/o-que-e-pdi-e-como-inserir-na-rotina-das-empresas",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031922-1993-0139-0000-4ae7e0e9f163:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "O que é PDI, como montar, exemplos e boas práticas",
+          "url": "https://www.zoho.com/blog/pt-br/workplace/como-montar-pdi-para-seu-time.html",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTsuopxHnQLOIegHu9fgG0XCesS3H-yr2BfxVP0FhPWRZyGs-u3mUNAGn8&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: o que é, como elaborar e como aplicar [Modelo para baixar]",
+          "url": "https://twygo.com/blog/plano-de-desenvolvimento-individual-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmB_1f2KZ5-QVhJZn35OvQ6SToQ8h0IftDorzaozNrAq510hGFny_igQE&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Você sabe o que é PDI e PDC? 👆 Essas ferramentas fazem ...",
+          "url": "https://www.facebook.com/quintoelementoconsultoria/posts/voc%C3%AA-sabe-o-que-%C3%A9-pdi-e-pdc-essas-ferramentas-fazem-parte-de-um-rh-estrat%C3%A9gico-e/3702444679791878/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKBXZqe5zVVNurgs6-VSDGGckIO5y0pCUkyLsR0lheArWA_pLoZwS7BEY&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Você já ouviu falar no PDI? O Programa de Desenvolvimento ...",
+          "url": "https://www.instagram.com/p/DCyyfFypJAc/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTF9mEYHD45qLqiygqfkCSON1Edm4OClnfOqrKx1SO6SUb4W78WDWmeT_s&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "O que é Plano de Desenvolvimento Individual (PDI) e como fazer",
+          "url": "https://gestaodesegurancaprivada.com.br/plano-de-desenvolvimento-individual-pdi-o-que-e-como-fazer/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuJTQXNeyu0qAbpLLuhogkKfOT5AdCG66HspHOpqKWl2-5QtkDIKF_EeE&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "PDI: o que é, como elaborar e como aplicar [Modelo para baixar]",
+          "url": "https://twygo.com/blog/plano-de-desenvolvimento-individual-pdi/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIS8bUA52knQDoXZPypNtiiGQOQew_UdxBI364gjkAxqitZb3J2KeEOBA&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[7]/div[1]/div[1]",
+        "domain": "www.edusense.com.br",
+        "title": "PDI: Plano de Desenvolvimento Individual que Impulsiona ...",
+        "url": "https://www.edusense.com.br/blog/plano-de-desenvolvimento-individual/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.edusense.com.br › blog › plano-de-desenvol...",
+        "website_name": "Edusense",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "13 de fev. de 2026 — O PDI é uma ferramenta estruturada que define o caminho de crescimento de um colaborador. Ele estabelece objetivos, metas e ações práticas para ...",
+        "pre_snippet": "02/13/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "é uma ferramenta estruturada que define o caminho de crescimento de um colaborador"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-02-13 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[9]/div[1]/div[1]",
+        "domain": "www.plantareducacao.com.br",
+        "title": "Descubra os passos essenciais para criar um PDI de ...",
+        "url": "https://www.plantareducacao.com.br/pdi-o-que-e/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.plantareducacao.com.br › Blog",
+        "website_name": "Plantar Educação",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "27 de ago. de 2024 — O PDI (Plano de Desenvolvimento Individual) atua como um guia para ajudar cada profissional a aprimorar suas competências e desenvolver suas ...",
+        "pre_snippet": "08/27/2024 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI (Plano de Desenvolvimento Individual"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2024-08-27 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[11]/div[1]/div[1]",
+        "domain": "blog.vindi.com.br",
+        "title": "Plano de Desenvolvimento Individual: o que é e relato real",
+        "url": "https://blog.vindi.com.br/plano-de-desenvolvimento-individual/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.vindi.com.br › ... › Mercado & Negócios",
+        "website_name": "Blog Vindi",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "27 de mai. de 2022 — Um Plano de Desenvolvimento Individual é um roteiro que o profissional ou empresa define para a sua carreira. Como todo planejamento, o PDI ...",
+        "pre_snippet": "05/27/2022 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "é um roteiro que o profissional ou empresa define para a sua carreira"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2022-05-27 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "video",
+        "rank_group": 1,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[13]/div[1]",
+        "items": [
+         {
+          "type": "video_element",
+          "source": "Instagram · Alelo Brasil",
+          "title": "Você sabe o que é PDI? O PDI é o seu Plano ...",
+          "timestamp": "2025-02-20 00:00:00 +00:00",
+          "url": "https://www.instagram.com/reel/DGTw5O0yXxs/"
+         },
+         {
+          "type": "video_element",
+          "source": "YouTube · Qulture Rocks",
+          "title": "O que é um PDI (Plano de Desenvolvimento Individual)?",
+          "timestamp": null,
+          "url": "https://www.youtube.com/watch?v=emehKNUuTeU"
+         },
+         {
+          "type": "video_element",
+          "source": "Instagram · RHesultaí | Recrutamento e Seleção de Pessoas",
+          "title": "Você sabe o que é um PDI?  O Plano de Desenvolvimento ...",
+          "timestamp": null,
+          "url": "https://www.instagram.com/reel/DcL0lL2O6eo/"
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[15]/div[1]/div[1]",
+        "domain": "blog.kienbaum.com.br",
+        "title": "Você sabe o que é o PDI e sua importância para a empresa ...",
+        "url": "https://blog.kienbaum.com.br/pdi/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.kienbaum.com.br › pdi",
+        "website_name": "Kienbaum Brasil",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O PDI é ferramenta capaz de ajudar na ascensão do profissional enquanto traz melhorias em toda a empresa, da cultura ao clima e, inclusive, na produtividade.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[17]/div[1]/div[1]",
+        "domain": "4cinco.com",
+        "title": "PDI: Conheça as vantagens do Plano de Desenvolvimento ...",
+        "url": "https://4cinco.com/pdi/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://4cinco.com › pdi",
+        "website_name": "4CINCO",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O PDI (Plano de Desenvolvimento Individual) é uma prática da Gestão de Pessoas, ou seja, o conjunto de processos com o objetivo de reter, engajar e desenvolver ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "é uma prática da Gestão de Pessoas"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[19]/div[1]/div[1]",
+        "domain": "mastersoul.com.br",
+        "title": "Como fazer um PDI: a chave para o crescimento ...",
+        "url": "https://mastersoul.com.br/artigo/como-fazer-um-pdi",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://mastersoul.com.br › artigo › como-fazer-um-pdi",
+        "website_name": "Mastersoul",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O Plano de Desenvolvimento Individual (PDI) é uma ferramenta estratégica que ajuda a direcionar o crescimento profissional de cada colaborador, alinhando suas ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "PDI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031922-1993-0139-0000-4dc15c0452c3",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "modelo de pdi",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10031922-1993-0139-0000-0d6faadf037b",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "inteligência emocional",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10031922-1993-0139-0000-f5f94fe65a41",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "como desenvolver inteligência emocional",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10031922-1993-0139-0000-e0237d39953e",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "curso de liderança e gestão de pessoas",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10031922-1993-0139-0000-f95c38bfb988",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "soft skills",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   }
+  ]
+ }
+}
