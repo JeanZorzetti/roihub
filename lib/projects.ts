@@ -132,7 +132,7 @@ export async function listProjects(): Promise<Project[]> {
  *
  *  01/10/2026: a Procura entra (pedido do Jean) no dia em que mudou para `procuramarketing.com`. O
  *  slug segue `verticemarketing`: é a chave da pipeline que o formulário do site envia. */
-export const SLUGS_DE_BUSCA = ["atma", "sirius", "tapepro", "roilabs", "verticemarketing"];
+export const SLUGS_DE_BUSCA = ["atma", "sirius", "tapepro", "roilabs", "verticemarketing", "nimblabs"];
 
 /** Os projetos que as corridas de busca percorrem e que têm mapa, na ordem de `SLUGS_DE_BUSCA`.
  *  `deBusca()` (lib/projects.mjs) exige card curado e `url` — quem não tem site não tem o que

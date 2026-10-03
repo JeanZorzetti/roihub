@@ -48,12 +48,12 @@
     "proximaDecisao": "O kill-gate marcou EM RISCO em 11/07 — dobrar a aposta ou deixar morrer no D+180?"
   },
   "nimblabs": {
-    "oQueE": "Hub do portfólio de micro-SaaS em inglês — lista e liga os bets (Aftercare, ReviewShield, Context Keeper, CannibalScan, SEO Forecaster).",
-    "paraQuem": "Ninguém paga o hub; a receita viria dos bets.",
+    "oQueE": "Site institucional de fábrica de software: produtos próprios (cadastro fiscal 2027, integração de sistemas, portal do cliente) e software sob medida.",
+    "paraQuem": "Empresa média com sistema próprio, legado ou mais de um sistema; para o cadastro fiscal, quem precisa emitir nota com IBS e CBS.",
     "estado": "no-ar",
-    "dinheiro": "R$ 0 — nenhum dos cinco bets faturou até hoje.",
-    "oQueTrava": "Cinco bets abertos, nenhum com receita, e a régua de kill (D+90/180/270) mede tráfego em vez de dinheiro.",
-    "proximaDecisao": "Manter os 5 bets ou fechar WIP em 3 e matar os dois piores?"
+    "dinheiro": "R$ 0 — o site ainda está em homologação (noindex) e nenhum produto tem preço testado.",
+    "oQueTrava": "As 3 páginas de produto estão com publicado:false; sem elas no ar, o lançamento de 06/10 leva só a home e o sob medida.",
+    "proximaDecisao": "Quais páginas de produto vão ao ar em 06/10, e se o cadastro fiscal entra antes da temporada de nov–jan?"
   },
   "cardiorisk": {
     "oQueE": "Landing de análise de risco cardiovascular por IA. A análise roda num backend FastAPI que existe no repo e não está hospedado.",
