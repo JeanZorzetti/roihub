@@ -1,0 +1,653 @@
+{
+ "procedencia": {
+  "fonte": "dataforseo serp google organic live advanced",
+  "projeto": "matchfios",
+  "consultadoEm": "2026-10-03T20:52:45.474Z",
+  "regiao": "Brazil",
+  "idioma": "pt",
+  "device": "desktop",
+  "termos": [
+   "fornecedor de fio",
+   "fiação de algodão",
+   "fornecedor de tecido",
+   "tecido atacado",
+   "marketplace têxtil"
+  ],
+  "custoUsd": 0.002
+ },
+ "resposta": {
+  "version": "0.1.20260917",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "4.0032 sec.",
+  "cost": 0.002,
+  "tasks_count": 5,
+  "tasks_error": 4,
+  "tasks": [
+   {
+    "id": "10032052-1993-0139-0000-e8efc81ef382",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "3.8708 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "fornecedor de fio",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "fornecedor de fio",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=fornecedor%20de%20fio&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 20:52:45 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "organic",
+       "images",
+       "people_also_ask"
+      ],
+      "se_results_count": 296000,
+      "pages_count": 1,
+      "items_count": 11,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": true,
+        "markdown": null,
+        "items": null,
+        "references": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]",
+        "domain": "innovcable.com.br",
+        "title": "Fabricante de Fios e Cabos Elétricos: Qualidade ISO 9001",
+        "url": "https://innovcable.com.br/fabricante-de-fios-e-cabos-eletricos/?srsltid=AU7gw4WoISbw_e2FCsWm67s3TwudWmqNLjPBR1-MI1qoldBhSFbvCPx5",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://innovcable.com.br › ... › Inovações",
+        "website_name": "Innovcable",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "20 de set. de 2025 — Busca um Fabricante de Fios e Cabos Elétricos confiável? A Innovcable oferece qualidade ISO e soluções customizadas. Fale com a engenharia.",
+        "pre_snippet": "09/20/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "A Innovcable oferece qualidade ISO e soluções customizadas"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-09-20 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[4]/div[1]/div[1]",
+        "domain": "palmasluz.com.br",
+        "title": "Cabos e Fios Elétricos em Feira de Santana",
+        "url": "https://palmasluz.com.br/produtos/cabos-e-fios",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://palmasluz.com.br › produtos › cabos-e-fios",
+        "website_name": "Palmas Luz Materiais Elétricos",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Distribuidora Muchila · Atacado. R. G, 142 — Muchila Feira de Santana/BA · CEP 44005-352. (75) 3223-3855(75) 3603-8883. Linhas de produto. Cabos e Fios ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Distribuidora Muchila"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[6]/div[1]/div[1]",
+        "domain": "miriadecomercial.com.br",
+        "title": "Fios e Cabos em Guarulhos - Elétrica Industrial - Miríade",
+        "url": "https://miriadecomercial.com.br/fios-e-cabos-em-guarulhos",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://miriadecomercial.com.br › fios-e-cabos-em-guaru...",
+        "website_name": "miriadecomercial.com.br",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Se você busca por fios e cabos em Guarulhos, com a Miríade você encontra o melhor que o mercado oferece. Clique para saber mais!",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "com a Miríade você encontra o melhor que o mercado oferece"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[8]/div[1]/div[1]",
+        "domain": "quemfornece.com",
+        "title": "Fornecedores de Fios de Algodão",
+        "url": "https://quemfornece.com/fornecedores-de/fios-de-algodao",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://quemfornece.com › Categorias",
+        "website_name": "Quem Fornece",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Encontre fornecedores de Fios de Algodão em todo o Brasil. Use filtros dinâmicos e explore mais de 31.500 categorias de produtos e serviços de todos os ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Encontre fornecedores de Fios de Algodão em todo o Brasil"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[10]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=a2004747c6c5ec35&hl=pt&gl=BR&sxsrf=APpeQns20U9a3tiCimd4bTbpYiAFs1JtaA:1791060764083&q=fornecedor+de+fio&udm=2&source=univ&fir=jobhIGO9PP0x5M%252Cfq9grXTyuoLRcM%252C_%253B6XKP7MX1JP2GlM%252CQo9p5in6XoZdFM%252C_%253B7IpqQ4Po8Cb0BM%252CXyhfTIrfX9TUbM%252C_%253Bwsz2fjDUb-BqhM%252CNwAXNcdqik5sEM%252C_%253BwmMJ9Lo3a3Mb0M%252CFGLWP0zuatPlYM%252C_%253BShHCbR64RFfTkM%252CQo9p5in6XoZdFM%252C_%253B9cFh22CkKELd_M%252CZ0fy5mKUkSZnEM%252C_%253BhuIj8gLmruUIEM%252C5tbtUNSSlfVL4M%252C_%253BMGcaosTfqRVGDM%252CKdZWSsZl-UFBuM%252C_&usg=AI4_-kRDC1GjFZwNIjF1I1D1eU9M0FxBDA&sa=X&ved=2ahUKEwiT8POk3Z6XAxUdNIYAHbYGOvEQ7Al6BAgmEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Fio - Dicatex fornecedor de fio para indústria têxtil e ...",
+          "url": "https://www.dicatex.com.br/categoria-produto/fio/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10032052-1993-0139-0000-e8efc81ef382:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "Fios e cabos eletricos preço - Bras Distribuidora",
+          "url": "https://www.brasdistribuidora.com.br/fios-cabos-eletricos-preco",
+          "image_url": "https://api.dataforseo.com/cdn/i/10032052-1993-0139-0000-e8efc81ef382:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "Indústria de fios e cabos elétricos",
+          "url": "https://www.tecnocabos.com.br/produtos/cabos-eletricos/industria-de-fios-e-cabos-eletricos",
+          "image_url": "https://api.dataforseo.com/cdn/i/10032052-1993-0139-0000-e8efc81ef382:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "Quem compra fio sabe: o que mais vale é ter fornecedor de confiança,  produto no prazo e preço que faça sentido. 🫡 , ⠀, Na Dimflex, esses três  pontos andam juntos:, 1️⃣ Produção própria: a gente ...",
+          "url": "https://www.instagram.com/reel/DQZYzJMjQtg/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHm84c5nZP27VYcWr4bz6ciiEnNo0aHyzXyAaQvZtQM1CcTJDXHZgMeS0aGg&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Fornecedor de fios - Elétrica Tensão",
+          "url": "https://www.eletricatensao.com.br/fornecedor-de-fios",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmETj8W-x8BRBbxOH2hZtObCyHEkjAtsD4yR235ytJDfPcT9_En_EoJ1U&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Fios e cabos eletricos preço - Bras Distribuidora",
+          "url": "https://www.brasdistribuidora.com.br/fios-cabos-eletricos-preco",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrkSW09FOnt4sfhN-vcfdUXQ7EPIM2X01RccbeHHDjxiJU-eDYcvaVckU&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "🚨 ATACADISTAS DE PLANTÃO! 🚨, Sabe aquele fornecedor bom, barato e com  variedade de fio de cristal no atacado?, Achou! E ele tem nome: Ladeira  Armarinhos 💛, Acabamos de descarregar um container INTEIRO ...",
+          "url": "https://www.instagram.com/reel/DKsHgw9PaTU/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRzduZ-75LcOWGPeDbjdo89xoO0BTdGJ2ToIHt5KY8r3vbT3P3-1MwrVfg&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Fornecedores de fios e cabos elétricos - Condex",
+          "url": "https://www.condexcabos.com.br/fornecedores-fios-e-cabos-eletricos",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFMulRilYbMGjSqWJaneAA9-fRGWSyYqHZln3EDJgH714DSEGuAZNXcqA&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Distribuidor de Fio Elétrico Adesivo Jardim Europa - Fio ...",
+          "url": "https://www.esquemaseletricos.com.br/fio-eletrico/fio-eletrico-cabo-flexivel-750/distribuidor-de-fio-eletrico-adesivo-jardim-europa",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRo-j_B8XSbHLca8Sasod05y6Quk8yneTCZEIhhLkWFKV0eCcPkqrr3RRA&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[12]/div[1]/div[1]",
+        "domain": "www.rofedistribuidora.com.br",
+        "title": "FIO PARALELO 2X1,5MM BRANCO - COBRECOM",
+        "url": "https://www.rofedistribuidora.com.br/fio-paralelo-2x15mm-branco--cobrecom-161026",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.rofedistribuidora.com.br › fio-paralelo-2x15...",
+        "website_name": "Rofe Distribuidora",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "FIO PARALELO 2X1,5MM BRANCO - COBRECOM · Código do Fabricante: 1200403401 · Código: 161026 · Código NCM: 85444900 · Código de Barras do Produto: 7898259252560 ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "FIO PARALELO 2X1,5MM BRANCO - COBRECOM"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[14]/div[1]/div[1]",
+        "domain": "www.instagram.com",
+        "title": "Fios DIMFLEX com preço de distribuidor é na MULTIX! ...",
+        "url": "https://www.instagram.com/p/DUCLi7hj-uo/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "3 marcações \"Gostei\"  ·  há 8 meses",
+        "website_name": "Instagram · multix.vpx",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "A Lafeber tem o mix completo para todas elas: cabo elétrico, cabo de alumínio, cabo fotovoltaico, cabo PP, cordão paralelo e fio de som. Um só ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "fio"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[16]/div[1]/div[1]",
+        "domain": "bonfio.com.br",
+        "title": "A BONFIO fabrica fio de poliéster texturizado?",
+        "url": "https://bonfio.com.br/faq/a-bonfio-fabrica-fio-de-poliester-texturizado/2818",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://bonfio.com.br › faq › a-bonfio-fabrica-fio-de-p...",
+        "website_name": "Bonfio",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Sim, a BONFIO oferece a maior gama de produtos e títulos de linhas e fios para costura no mercado brasileiro. Um deles é o Fio de Poliéster Texturizado ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "fios",
+         "Fio"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[18]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Como comprar fio direto da fábrica?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[18]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Onde comprar fio mais barato?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[18]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Qual o preço de 100 m de fio?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[18]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Onde posso encontrar fornecedores de cabos elétricos?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[18]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[20]/div[1]/div[1]",
+        "domain": "www.universodolar.com.br",
+        "title": "Fio Paralelo 2 x 2,5mm Marrom - 100 Metros para Ligação ...",
+        "url": "https://www.universodolar.com.br/fio-paralelo-2-x-2-5mm-marrom---100-metros-para-ligacao-de-equipamentos-eletricos-23221-corfio-eletrocal-000-n-mr?srsltid=AU7gw4VTJOGCFYhl44fFMFb968-g6xNIMJQB6THDKa-N5NnWjJR6TtEC",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.universodolar.com.br › fio-paralelo-2-x-2-...",
+        "website_name": "Universo do Lar",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O Fio Paralelo 2 x 2,5mm da Corfio é a escolha perfeita para garantir segurança e eficiência na condução de energia. Com 100 metros de comprimento, você terá a ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": {
+         "current": 919.04,
+         "regular": null,
+         "max_value": null,
+         "currency": "BRL",
+         "is_price_range": false,
+         "displayed_price": "R$ 919,04"
+        },
+        "highlighted": [
+         "Fio"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10032052-1993-0139-0000-f31f47508129",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "fiação de algodão",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10032052-1993-0139-0000-d96b3e2678b6",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "fornecedor de tecido",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10032052-1993-0139-0000-5b7a12b083ad",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "tecido atacado",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   },
+   {
+    "id": "10032052-1993-0139-0000-973ac144a638",
+    "status_code": 40000,
+    "status_message": "You can set only one task at a time.",
+    "time": "0 sec.",
+    "cost": 0,
+    "result_count": 0,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "marketplace têxtil",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10
+    },
+    "result": null
+   }
+  ]
+ }
+}
