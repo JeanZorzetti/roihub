@@ -87,14 +87,6 @@
     "oQueTrava": "Foi desindexado entre 09/06 e 10/06 e perdeu 98% das impressões. Reindexado em 31/07; tráfego é indicador atrasado.",
     "proximaDecisao": "Quando as impressões voltarem, vale testar a preference do MercadoPago numa base separada para provar a venda?"
   },
-  "moderador": {
-    "oQueE": "Resume o que rolou num grupo de WhatsApp quatro vezes por dia.",
-    "paraQuem": "Quem está em grupo grande e não consegue acompanhar.",
-    "estado": "no-ar",
-    "dinheiro": "R$ 0 — sem preço e sem caminho de pagamento; a entrada é WhatsApp.",
-    "oQueTrava": "Nunca foi rastreado pelo Google e não tem cobrança: nem audiência nem receita começaram.",
-    "proximaDecisao": "Isso é produto ou é feature de um produto maior de WhatsApp, junto do whatsmeow?"
-  },
   "seo-forecaster": {
     "oQueE": "Prevê o termo de busca antes de o volume aparecer, cruzando Hacker News, Reddit e GDELT em pgvector com Chronos.",
     "paraQuem": "Quem produz conteúdo e quer pegar a tendência no dia zero.",

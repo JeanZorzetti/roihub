@@ -345,32 +345,6 @@
     }
   },
   {
-    "slug": "moderador",
-    "nome": "Moderador — resumo do grupo de WhatsApp 4×/dia",
-    "url": "https://moderador.roilabs.com.br/",
-    "repo": "moderador",
-    "receita": 2,
-    "receitaNota": "Sem preço e sem caminho de pagamento; entrada por WhatsApp",
-    "blockers": 3,
-    "blockersLista": [
-      {
-        "texto": "'Discovered - currently not indexed': o Google conhece a URL e NUNCA a rastreou (lastCrawl vazio)",
-        "humano": false
-      },
-      {
-        "texto": "Sem caminho de cobrança no repo",
-        "humano": false
-      }
-    ],
-    "seoSeed": 2,
-    "decay": 3,
-    "decayNota": "Home 200 e sitemap XML válido, mas nunca rastreado pelo Google",
-    "acaoDesc": "Medido em 30/07: home 200 com título próprio, sitemap.xml XML válido (1 URL, landing de página única). A URL Inspection devolve 'Discovered - currently not indexed' SEM lastCrawl — o Google descobriu a URL e nunca chegou a buscá-la. Isso é diferente do Atma (que foi rastreado, indexado e depois caiu) e diferente do pathfinder/compass ('URL is unknown to Google', nem descoberto). Aqui o sitemap fez o trabalho de descoberta e falta o crawl acontecer, o que costuma ser questão de tempo e de sinal — não há bug a caçar. GSC 0/0 nas duas janelas, coerente. Sem caminho de dinheiro no repo: o grep de pagamento volta vazio e a página não exibe preço; a entrada é WhatsApp. Receita 2 pela mesma régua do aprovai.",
-    "acao": "Esperar o crawl — descoberto e nunca rastreado. Não há bug a caçar aqui",
-    "familia": "cobranca",
-    "estado": "no-ar"
-  },
-  {
     "slug": "seo-forecaster",
     "perfil": "A",
     "nome": "SEO Forecaster — o termo antes do volume de busca",
