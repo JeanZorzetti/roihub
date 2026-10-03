@@ -2029,5 +2029,57 @@
       "adequação reforma tributária",
       "como se preparar para a reforma tributária"
     ]
+  },
+  "claudeloop": {
+    "procedencia": {
+      "fonte": "dataforseo google_ads keywords_for_keywords",
+      "congeladoEm": "2026-10-03",
+      "consultadoEm": "2026-10-03T20:35:52.349Z",
+      "consultas": [
+        {
+          "arquivo": "docs/demanda/dataforseo-claudeloop-2026-10-03T203552.json",
+          "fonte": "dataforseo google_ads keywords_for_keywords",
+          "regiao": "United States",
+          "consultadoEm": "2026-10-03T20:35:52.349Z",
+          "custoUsd": 0.09
+        }
+      ],
+      "janela": {
+        "inicio": "2026-10-03",
+        "fim": "2026-10-03"
+      },
+      "piso": 10,
+      "dimensao": "volume Google Ads (DataForSEO keywords_for_keywords)",
+      "hosts": [
+        "claudeloop.roilabs.com.br"
+      ],
+      "excluiMarca": [
+        "claudeloop"
+      ],
+      "foraDoCatalogo": {},
+      "excluidos": {
+        "rafas burritos north loop and hawkins": "sem relação com o produto",
+        "ralph lauren pave hoop earrings": "sem relação com o produto"
+      },
+      "porque": "termos do nicho com volume ≥ 10/mês em United States, a partir das sementes claude code loop, ralph loop, ralph wiggum claude code, claude code autonomous, claude code overnight, claude code headless, claude code rate limit, claude code usage limit, claude code multiple accounts, claude code automation, claude code unattended, claude code auto continue, continuous claude, claude code context window, autonomous coding agent, claude code limit reached"
+    },
+    "termos": [
+      "ralph loop",
+      "ralph wiggum claude code",
+      "claude code loop",
+      "claude code usage limit",
+      "claude code context window",
+      "claude code headless",
+      "autonomous coding agent",
+      "claude code automation",
+      "continuous claude",
+      "claude code rate limit",
+      "claude code multiple accounts",
+      "claude code limit reached",
+      "claude code autonomous",
+      "claude code auto continue",
+      "claude code overnight",
+      "claude code unattended"
+    ]
   }
 }

@@ -2278,5 +2278,70 @@
       "adequação reforma tributária": 10,
       "como se preparar para a reforma tributária": 10
     }
+  },
+  "claudeloop": {
+    "procedencia": {
+      "fonte": "dataforseo google_ads keywords_for_keywords",
+      "congeladoEm": "2026-10-03",
+      "consultadoEm": "2026-10-03T20:35:52.349Z",
+      "consultas": [
+        {
+          "arquivo": "docs/demanda/dataforseo-claudeloop-2026-10-03T203552.json",
+          "fonte": "dataforseo google_ads keywords_for_keywords",
+          "regiao": "United States",
+          "consultadoEm": "2026-10-03T20:35:52.349Z",
+          "custoUsd": 0.09
+        }
+      ],
+      "inventarioCongeladoEm": "2026-10-03",
+      "regiao": "United States",
+      "idioma": "en",
+      "custoUsd": 0.09,
+      "piso": 10,
+      "sementes": [
+        "claude code loop",
+        "ralph loop",
+        "ralph wiggum claude code",
+        "claude code autonomous",
+        "claude code overnight",
+        "claude code headless",
+        "claude code rate limit",
+        "claude code usage limit",
+        "claude code multiple accounts",
+        "claude code automation",
+        "claude code unattended",
+        "claude code auto continue",
+        "continuous claude",
+        "claude code context window",
+        "autonomous coding agent",
+        "claude code limit reached"
+      ],
+      "segmentos": [],
+      "movidos": {},
+      "foraDoCatalogo": {},
+      "excluidos": {
+        "rafas burritos north loop and hawkins": "sem relação com o produto",
+        "ralph lauren pave hoop earrings": "sem relação com o produto"
+      },
+      "semVolume": []
+    },
+    "termos": {
+      "ralph loop": 5400,
+      "ralph wiggum claude code": 1300,
+      "claude code loop": 1000,
+      "claude code usage limit": 1000,
+      "claude code context window": 480,
+      "claude code headless": 260,
+      "autonomous coding agent": 170,
+      "claude code automation": 140,
+      "continuous claude": 110,
+      "claude code rate limit": 90,
+      "claude code multiple accounts": 90,
+      "claude code limit reached": 40,
+      "claude code autonomous": 20,
+      "claude code auto continue": 20,
+      "claude code overnight": 10,
+      "claude code unattended": 10
+    }
   }
 }
