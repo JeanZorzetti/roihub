@@ -174,21 +174,17 @@
     "repo": "nimblabs-site",
     "receita": 3,
     "receitaNota": "Site institucional da fábrica: vende sob medida e os produtos pelo WhatsApp, sem checkout; os leads do /contato caem no painel /admin (25/09)",
-    "blockers": 2,
+    "blockers": 1,
     "blockersLista": [
       {
         "texto": "Homologação até 06/10: o site responde noindex (PUBLIC_AMBIENTE=homologacao). No lançamento só esse interruptor muda; antes disso o Google não tem o que indexar",
         "humano": false
-      },
-      {
-        "texto": "As 3 páginas de produto estão com publicado:false. O cadastro fiscal 2027 espera preço por teste e prazo medido no protótipo; o portal do cliente não tem busca (Mapa de Desejo 29/09). Publicar ou não é decisão dos sócios",
-        "humano": true
       }
     ],
     "seoSeed": 2,
     "decay": 1,
     "decayNota": "Site novo (Astro na Vercel, repo nimblabs-site) no domínio desde 23/09; lança em 06/10",
-    "acaoDesc": "Reiniciada do zero em 22/09/2026: site institucional de fábrica de software com produtos próprios e sob medida (repo nimblabs-site, código em C:/dev/nimblabs). Tudo o que este card dizia antes (portfólio de micro-SaaS, Context Keeper, CannibalScan) é histórico. Plano de SEO em /gsc/mapa/nimblabs/plano com demanda congelada em 03/10/2026: 3 consultas DataForSEO (Brasil), curadoria em docs/demanda/curadoria-nimblabs.json. O produto com demanda é o cadastro fiscal 2027 (cclasstrib 9.900/mês, ibs cbs 8.100); a temporada é nov–jan. Portal do cliente: 22.200 buscas de 'portal do cliente' são login no portal de outra empresa, ficou 1 termo.",
+    "acaoDesc": "Reiniciada do zero em 22/09/2026: site institucional de fábrica de software com produtos próprios e sob medida (repo nimblabs-site, código em C:/dev/nimblabs). Tudo o que este card dizia antes (portfólio de micro-SaaS, Context Keeper, CannibalScan) é histórico. Plano de SEO em /gsc/mapa/nimblabs/plano com demanda congelada em 03/10/2026: 3 consultas DataForSEO (Brasil), curadoria em docs/demanda/curadoria-nimblabs.json. O produto com demanda é o cadastro fiscal 2027 (cclasstrib 9.900/mês, ibs cbs 8.100); a temporada é nov–jan. Portal do cliente: 22.200 buscas de 'portal do cliente' são login no portal de outra empresa, ficou 1 termo. 03/10: as 3 páginas de produto foram publicadas SEM preço (decisão do Jean: os valores vinham de um documento sem origem; cada dispensa está registrada no código do site), e /tabela-cclasstrib responde o cluster de 14.900 buscas numa página só (tabela da Receita V0059 + planilha CSV), no lugar das 10 páginas que o plano propunha.",
     "acao": "Lançar em 06/10 (PUBLIC_AMBIENTE=producao) e disparar crawl, série e indexação do hub no mesmo dia",
     "familia": "venda",
     "estado": "no-ar"

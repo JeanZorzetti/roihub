@@ -52,8 +52,8 @@
     "paraQuem": "Empresa média com sistema próprio, legado ou mais de um sistema; para o cadastro fiscal, quem precisa emitir nota com IBS e CBS.",
     "estado": "no-ar",
     "dinheiro": "R$ 0 — o site ainda está em homologação (noindex) e nenhum produto tem preço testado.",
-    "oQueTrava": "As 3 páginas de produto estão com publicado:false; sem elas no ar, o lançamento de 06/10 leva só a home e o sob medida.",
-    "proximaDecisao": "Quais páginas de produto vão ao ar em 06/10, e se o cadastro fiscal entra antes da temporada de nov–jan?"
+    "oQueTrava": "Nenhum produto tem preço testado: as 3 páginas foram ao ar sem preço, e o preço sai na proposta.",
+    "proximaDecisao": "Qual preço testar primeiro com cliente pagante, começando pelo cadastro fiscal antes da temporada de nov–jan?"
   },
   "cardiorisk": {
     "oQueE": "Landing de análise de risco cardiovascular por IA. A análise roda num backend FastAPI que existe no repo e não está hospedado.",

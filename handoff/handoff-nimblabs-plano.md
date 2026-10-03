@@ -80,38 +80,37 @@ As sementes são as da primeira consulta. Semente nova é consulta nova (US$ 0,0
 0 falha) e série (25 dias de `nimblabs.com`). O mapa foi aberto uma vez, às 12:35, para fotografar os
 cards.
 
-- **Backlog:** 152 tarefas, com **27 páginas novas** propostas. Dez delas são variações de cClassTrib.
-- **Projeção aos 180 dias:**
-  - 91,4% do TAM: 34.350 das 37.590 buscas/mês, em termos com página estabilizada.
-  - 30 de 117 termos na página 1.
-  - 687 cliques/mês.
+**Primeira leitura (03/10, 12:35):** 152 tarefas e 27 páginas novas, dez delas variações de cClassTrib.
+Cada uma somava o termo principal `cclasstrib` (9.900) no impacto, pela regra literal da D14: o rótulo de
+uma página planejada cobre todo termo cujas palavras estão nele. O resultado eram 91,4% do TAM e 687
+cliques/mês aos 180 dias, com dez páginas disputando a mesma busca.
+
+**Resolvido do lado do site no mesmo dia** (nimblabs-site `cd8a422`): `/tabela-cclasstrib` traz a tabela
+da Receita (V0059) e uma planilha CSV. O título e o H1, juntos, têm todas as palavras dos dez termos com
+100 ou mais buscas/mês, verificado por teste no repo do site. Foi o mesmo caminho de `/produtos/fita-gomada`
+na Tape Pro. A D14 do hub não mudou; a clarify continua aberta para o próximo caso.
+
+**Leitura depois do crawl de 03/10 (≈13h):**
+- **Backlog:** 105 tarefas (106 antes de tirar a tarefa da planilha), **17 páginas novas**, nenhuma de cClassTrib. `/tabela-cclasstrib` é a página
+  do cluster, e a primeira tarefa dela é apontar links internos (295 cliques/mês).
+- **Projeção aos 180 dias:** 52,2% do TAM (19.620 das 37.590 buscas/mês), 20 de 117 termos na página 1,
+  392 cliques/mês.
 - **Aos 90 dias:** Top 20 = 0%. Nenhuma página amadurece a tempo, com a premissa de 12 semanas.
-- **Esta semana:**
-  - cobrir «tabela cst cclasstrib», «tabela cclasstrib excel» e «tabela cclasstrib»;
-  - consertar o índice de `/saneamento-cadastro-fiscal`, `/` e `/integracao-de-sistemas` (hoje estão em
-    `noindex`).
-
-### 🚩 Por que essa projeção está inflada
-
-1. **Uma página por variação de cClassTrib.** A regra literal da D14 faz o rótulo de uma página planejada
-   cobrir todo termo cujas palavras estão nele. Assim, «tabela cst cclasstrib», «tabela cclasstrib excel»,
-   «consulta cclasstrib» e as outras sete somam, cada uma, o termo-cabeça `cclasstrib` (9.900) no
-   impacto. São 10 páginas disputando a mesma busca: é canibalização. É o mesmo achado aberto da Tape Pro
-   (memória da 057).
-   - Saída do lado do site: **uma** página de cClassTrib cujo título e H1 cubram os modificadores
-     (tabela, CST, consulta, por NCM, planilha, excel). Foi o que se fez com `/produtos/fita-gomada`.
-   - Saída do lado do hub: clarify da D14, para que a página planejada cubra só o próprio termo.
-2. **«ibs cbs» virou página nova**, mesmo com `/saneamento-cadastro-fiscal` existindo. O plano acha a
-   página do cluster pela frase exata da semente no caminho ou no título, e o título é "IBS **e** CBS na
-   nota". O termo `ibs cbs` em si conta como coberto pela página de produto, porque a cobertura do termo
-   é palavra a palavra.
+- **Ainda em aberto:** «ibs cbs» segue como página nova, mesmo com `/saneamento-cadastro-fiscal`
+  existindo. O plano acha a página do cluster pela frase exata da semente no caminho ou no título, e o
+  título é "IBS **e** CBS na nota". O termo `ibs cbs` em si conta como coberto, porque a cobertura do termo
+  é palavra a palavra.
+- **Crawl:** a planilha `.csv` linkada saía como página sem título e virava tarefa. Corrigido no crawler
+  (`28b4abe`): resposta que não é HTML fica fora da lista de páginas e do grafo, em todo projeto.
 
 ## Pendências
 
 1. **Lançamento em 06/10.** Até lá o site responde `noindex` e o Google não tem o que indexar. No dia,
    disparar `POST /api/indexacao` (hoje ela só diria "excluída por noindex" e gastaria cota).
-2. **As 3 páginas de produto estão com `publicado: false`.** Se o cadastro fiscal não for ao ar, os dois
-   maiores clusters (ibs cbs e cclasstrib, 24.140/mês) ficam sem página que responda. Decisão dos sócios.
+2. **As 3 páginas de produto foram publicadas sem preço** (decisão do Jean, 03/10; nimblabs-site
+   `145278e`). Os valores do rascunho vinham de um documento sem origem. Cada dispensa (preço, prazo,
+   prova, piloto, pares de sistemas) está registrada no código, com nome e data. O preço volta quando
+   houver teste pago.
 3. **Versão 1 do plano e metas**: decisão do dono, não foi criada.
 4. **As 9 sementes são proposta minha.** Saíram das páginas que o site declara e do Mapa de Desejo do
    cadastro fiscal. "Desenvolvimento de software" (4.400) é na maior parte estudante e carreira. Ficou como
