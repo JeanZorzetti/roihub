@@ -47,14 +47,6 @@
     "oQueTrava": "Nenhum produto tem preço testado: as 3 páginas foram ao ar sem preço, e o preço sai na proposta.",
     "proximaDecisao": "Qual preço testar primeiro com cliente pagante, começando pelo cadastro fiscal antes da temporada de nov–jan?"
   },
-  "cardiorisk": {
-    "oQueE": "Landing de análise de risco cardiovascular por IA. A análise roda num backend FastAPI que existe no repo e não está hospedado.",
-    "paraQuem": "Indefinido — nem médico nem paciente foram escolhidos como cliente.",
-    "estado": "no-ar-inutilizavel",
-    "dinheiro": "R$ 0 e sem caminho: não há preço nem checkout no repo.",
-    "oQueTrava": "cardioapi.roilabs.com.br é NXDOMAIN (confirmado 31/07): o formulário promete uma análise que nada entrega.",
-    "proximaDecisao": "Sobe o backend FastAPI ou tira o formulário e assume que é vitrine?"
-  },
   "potencialarquitetado": {
     "oQueE": "Biblioteca de frameworks de carreira e soft skills. O conteúdo é estático e funciona; a área logada e o /admin não.",
     "paraQuem": "Profissional em transição de carreira — sem cobrança de nenhum tipo.",

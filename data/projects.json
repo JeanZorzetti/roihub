@@ -161,33 +161,6 @@
     "estado": "no-ar"
   },
   {
-    "slug": "cardiorisk",
-    "nome": "CardioRisk — Estratificação de Risco Cardiovascular",
-    "url": "https://cardiorisk.roilabs.com.br/",
-    "repo": "cardio-risk-insight-hub",
-    "gscInicio": "2026-07-30",
-    "receita": 2,
-    "receitaNota": "Landing e API no ar e FUNCIONANDO de verdade (verificado 15/08); ferramenta acadêmica sem modelo de cobrança, então a nota segue baixa por falta de monetização, não por bug",
-    "blockers": 1,
-    "blockersLista": [
-      {
-        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 15/08: a decisão 'sobe o backend ou vira vitrine' foi tomada fora do hub — subiu o backend. cardioapi.roilabs.com.br responde 200 em / e valida payloads de verdade em /risco/rapido e /risco/prevent (testado ao vivo). Entre 14-15/08 o produto foi reconstruído: o score fake baseado em SHAP/ad-hoc virou escores clínicos reais e validados (Framingham office-based e PREVENT/AHA), o frontend virou Next.js com 3 rotas (/calculadora, /calculadora/prevent, /metodologia), e ganhou marca própria, favicon e correções de acessibilidade (labels e contraste em dark mode)",
-        "humano": false
-      },
-      {
-        "texto": "✅ RESOLVIDO E VERIFICADO NO AR 31/07: o H1 era 'Sistema IA Médica' e agora bate com o <title> ('CardioRisk — Calculadora de Risco Cardiovascular')",
-        "humano": false
-      }
-    ],
-    "seoSeed": 2,
-    "decay": 2,
-    "decayNota": "Front e backend em 200, API validando e respondendo de verdade — a saúde aparente agora é real, não engana mais",
-    "acaoDesc": "Renomeado de cardio-risk-insight-hub → cardiorisk em 30/07, e ABSORVEU o cardioqwen3code: o Jean decidiu que eram o mesmo produto, o repo do irmão já tinha sido apagado do GitHub, e o host dele agora é 308 pra cá. Este card pedia uma decisão ('subir o backend ou virar vitrine') que já tinha sido tomada e executada em 14-15/08, sem passar pelo hub: o backend FastAPI subiu de verdade (cardioapi.roilabs.com.br, verificado 200 e validando payloads em 15/08), o score fake foi trocado por Framingham+PREVENT reais, e o frontend foi reescrito em Next.js com 3 rotas dedicadas, marca e acessibilidade. A premissa do card antigo ('produto não funciona') não é mais verdade — produto é uma ferramenta acadêmica funcional ponta a ponta, sem monetização.",
-    "acao": "Sem blocker técnico: produto funciona ponta a ponta. Falta tração — GSC começou em 30/07, ainda sem histórico útil; segue sem plano de monetização por ser ferramenta acadêmica",
-    "familia": "produto",
-    "estado": "no-ar"
-  },
-  {
     "slug": "potencialarquitetado",
     "nome": "Arquitetura do Potencial — frameworks de carreira",
     "url": "https://potencialarquitetado.roilabs.com.br/",
