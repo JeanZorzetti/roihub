@@ -1,0 +1,2818 @@
+{
+ "procedencia": {
+  "fonte": "dataforseo serp google organic live advanced",
+  "projeto": "pathfinder",
+  "consultadoEm": "2026-10-03T19:32:01.581Z",
+  "regiao": "Brazil",
+  "idioma": "pt",
+  "device": "desktop",
+  "termos": [
+   "teste de personalidade",
+   "teste mbti",
+   "teste disc",
+   "teste de perfil profissional"
+  ],
+  "custoUsd": 0.008
+ },
+ "resposta": {
+  "cost": 0.008,
+  "tasks": [
+   {
+    "id": "10031931-1993-0139-0000-90f7b54655ea",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "9.5392 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "teste de personalidade",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "teste de personalidade",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=teste%20de%20personalidade&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:31:47 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "organic",
+       "images",
+       "people_also_ask",
+       "related_searches"
+      ],
+      "se_results_count": 248000,
+      "pages_count": 1,
+      "items_count": 12,
+      "items": [
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "domain": "apps.apple.com",
+        "title": "MindType: Teste Personalidade - App Store - Apple",
+        "url": "https://apps.apple.com/us/app/mindtype-teste-personalidade/id6759395676?l=pt-BR",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://apps.apple.com › app › mindtype-teste-personali...",
+        "website_name": "Apple",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "MindType: Teste Personalidade · Idade. +13. Anos · Categoria. Estilo de vida · Desenvolvido por. Bugra Gunay · Idioma. PT. + 8 · Tamanho. 48,4. MB.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "MindType: Teste Personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "Você pode fazer um teste de personalidade gratuito e detalhado acessando o [16Personalities](https://www.16personalities.com/br/teste-de-personalidade).[[1]](https://www.16personalities.com/br/teste-de-personalidade)\n\n### Principais Modelos de Testes\n\n- **MBTI (16Personalities):** Baseado nas teorias de Carl Jung, divide perfis em [16 tipos de personalidade](https://www.tuasaude.com/teste/personalidade/) usando quatro dicotomias (como introversão e extroversão).[[1]](https://www.tuasaude.com/teste/personalidade/)[[2]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[3]](https://www.youtube.com/watch?v=9UtmjLZB4cQ)\n- **Big Five (OCEAN):** Abordagem científica focada em cinco grandes traços (Abertura, Conscienciosidade, Extroversão, Amabilidade e Neuroticismo).[[1]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[2]](https://bigfive-test.com/pt-br)\n- **DISC:** Focado no ambiente corporativo e em comportamentos observáveis ligados a Dominância, Influência, Estabilidade e Conformidade.[[1]](https://www.mydiscprofile.com/pt-br/free-personality-test.php)[[2]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[3]](https://www.mydiscprofile.com/pt-pt/free-personality-test.php)\n\n### Para Que Servem\n\n- **Autoconhecimento:** Ajuda a identificar pontos fortes e comportamentos naturais.\n- **Carreira:** Orienta escolhas profissionais e a adaptação ao ambiente de trabalho.\n- **Relacionamentos:** Melhora a comunicação e a gestão de conflitos interpessoais.[[1]](https://www.youtube.com/watch?v=Mqc_hILlgmk)[[2]](https://www.tuasaude.com/teste/personalidade/)[[3]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[4]](https://www.instagram.com/reel/DXxcQIio3uf/)[[5]](https://www.youtube.com/shorts/OnjaFfW-w4Q)\n\nSe você quiser, me diga:\n\n- Qual é o seu **objetivo principal** com o teste (trabalho, autoconhecimento, curiosidade)?\n- Prefere um teste baseado em **quatro letras (MBTI)** ou em **traços científicos (Big Five)**?\n\nPosso indicar a melhor opção para o seu caso.",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Você pode fazer um teste de personalidade gratuito e detalhado acessando o 16Personalities.",
+          "markdown": "Você pode fazer um teste de personalidade gratuito e detalhado acessando o [16Personalities](https://www.16personalities.com/br/teste-de-personalidade).[[1]](https://www.16personalities.com/br/teste-de-personalidade)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "16Personalities",
+            "description": null,
+            "url": "https://www.16personalities.com/br/teste-de-personalidade",
+            "domain": "www.16personalities.com"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "16Personalities",
+            "domain": "www.16personalities.com",
+            "url": "https://www.16personalities.com/br/teste-de-personalidade",
+            "title": "Teste de personalidade gratuito | 16Personalities",
+            "text": "16Personalities: teste de personalidade gratuito (NERIS Type Explorer). Passos: 1. Fazer o teste; 2. Ver resultados detalhados; 3."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Principais Modelos de Testes",
+          "text": "MBTI (16Personalities): Baseado nas teorias de Carl Jung, divide perfis em 16 tipos de personalidade usando quatro dicotomias (como introversão e extroversão). Big Five (OCEAN): Abordagem científica focada em cinco grandes traços (Abertura, Conscienciosidade, Extroversão, Amabilidade e Neuroticismo). DISC: Focado no ambiente corporativo e em comportamentos observáveis ligados a Dominância, Influência, Estabilidade e Conformidade.",
+          "markdown": "- **MBTI (16Personalities):** Baseado nas teorias de Carl Jung, divide perfis em [16 tipos de personalidade](https://www.tuasaude.com/teste/personalidade/) usando quatro dicotomias (como introversão e extroversão).[[1]](https://www.tuasaude.com/teste/personalidade/)[[2]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[3]](https://www.youtube.com/watch?v=9UtmjLZB4cQ)\n- **Big Five (OCEAN):** Abordagem científica focada em cinco grandes traços (Abertura, Conscienciosidade, Extroversão, Amabilidade e Neuroticismo).[[1]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[2]](https://bigfive-test.com/pt-br)\n- **DISC:** Focado no ambiente corporativo e em comportamentos observáveis ligados a Dominância, Influência, Estabilidade e Conformidade.[[1]](https://www.mydiscprofile.com/pt-br/free-personality-test.php)[[2]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[3]](https://www.mydiscprofile.com/pt-pt/free-personality-test.php)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "16 tipos de personalidade",
+            "description": null,
+            "url": "https://www.tuasaude.com/teste/personalidade/",
+            "domain": "www.tuasaude.com"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Tua Saúde",
+            "domain": "www.tuasaude.com",
+            "url": "https://www.tuasaude.com/teste/personalidade/",
+            "title": "Teste de personalidade: saiba seu estilo de personalidade - Tua Saúde",
+            "text": "* Gravidez saudável Alimentação na gravidez Exercício na gravidez Exames da gravidez Desconfortos da gravidez. * Saúde Mental Ansi..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pravaler",
+            "domain": "www.pravaler.com.br",
+            "url": "https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/",
+            "title": "Teste de personalidade online e grátis! | Pravaler",
+            "text": "* Testes de personalidade: ferramentas de autoconhecimento, não sentenças definitivas. * Benefícios: autoconhecimento, melhoria em..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=9UtmjLZB4cQ",
+            "title": "YouTube",
+            "text": "a combinação dessas dimensões resulta nos famosos tipos de personalidade. do MBTI representados por quatro letras o primeiro pilar..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pravaler",
+            "domain": "www.pravaler.com.br",
+            "url": "https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/",
+            "title": "Teste de personalidade online e grátis! | Pravaler",
+            "text": "* Testes de personalidade: ferramentas de autoconhecimento, não sentenças definitivas. * Benefícios: autoconhecimento, melhoria em..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "BigFive Personality Test",
+            "domain": "bigfive-test.com",
+            "url": "https://bigfive-test.com/pt-br",
+            "title": "Teste BigFive de traços de personalidade gratuito e de código ...",
+            "text": "Aprenda a se conhecer melhor com um teste de personalidade gratuito e de código aberto. O teste a seguir contém 120 questões que l..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "myDISCprofile",
+            "domain": "www.mydiscprofile.com",
+            "url": "https://www.mydiscprofile.com/pt-br/free-personality-test.php",
+            "title": "Teste gratuito de personalidade - myDISCprofile",
+            "text": "Este teste de personalidade foi desenvolvido para medir algumas das principais características de sua personalidade e usá-las para..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "myDISCprofile",
+            "domain": "www.mydiscprofile.com",
+            "url": "https://www.mydiscprofile.com/pt-pt/free-personality-test.php",
+            "title": "Teste gratuito de personalidade - myDISCprofile",
+            "text": "* Teste: myDISCprofile gratuito * Questões: 24 (4 opções por questão: mais e menos aplicável) * Duração: <10 min * Sistema DISC: D..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Para Que Servem",
+          "text": "Autoconhecimento: Ajuda a identificar pontos fortes e comportamentos naturais. Carreira: Orienta escolhas profissionais e a adaptação ao ambiente de trabalho. Relacionamentos: Melhora a comunicação e a gestão de conflitos interpessoais.",
+          "markdown": "- **Autoconhecimento:** Ajuda a identificar pontos fortes e comportamentos naturais.\n- **Carreira:** Orienta escolhas profissionais e a adaptação ao ambiente de trabalho.\n- **Relacionamentos:** Melhora a comunicação e a gestão de conflitos interpessoais.[[1]](https://www.youtube.com/watch?v=Mqc_hILlgmk)[[2]](https://www.tuasaude.com/teste/personalidade/)[[3]](https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/)[[4]](https://www.instagram.com/reel/DXxcQIio3uf/)[[5]](https://www.youtube.com/shorts/OnjaFfW-w4Q)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=Mqc_hILlgmk",
+            "title": "Teste de Personalidade na seleção: o guia completo para RH",
+            "text": "Teste de Personalidade na seleção: o guia completo para RH olá tudo bem você realmente sabe usar um teste de personalidade. no seu..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Tua Saúde",
+            "domain": "www.tuasaude.com",
+            "url": "https://www.tuasaude.com/teste/personalidade/",
+            "title": "Teste de personalidade: saiba seu estilo de personalidade - Tua Saúde",
+            "text": "* Gravidez saudável Alimentação na gravidez Exercício na gravidez Exames da gravidez Desconfortos da gravidez. * Saúde Mental Ansi..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pravaler",
+            "domain": "www.pravaler.com.br",
+            "url": "https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/",
+            "title": "Teste de personalidade online e grátis! | Pravaler",
+            "text": "* Testes de personalidade: ferramentas de autoconhecimento, não sentenças definitivas. * Benefícios: autoconhecimento, melhoria em..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Instagram",
+            "domain": "www.instagram.com",
+            "url": "https://www.instagram.com/reel/DXxcQIio3uf/",
+            "title": "Teste de personalidade gratuito por 24hrs ali no meu story! Vai ali e ...",
+            "text": "Teste de personalidade gratuito por 24hrs ali no meu story! Vai ali e responda pra saber qual ser perfil comportamental completinh..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/shorts/OnjaFfW-w4Q",
+            "title": "Qual é o seu perfil de personalidade?",
+            "text": "Qual é o seu perfil de personalidade? um exercício bacana para você fazer com as suas equipes seja ela de projeto ou não é entende..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se você quiser, me diga:Qual é o seu objetivo principal com o teste (trabalho, autoconhecimento, curiosidade)?\nPrefere um teste baseado em quatro letras (MBTI) ou em traços científicos (Big Five) ?\nPosso indicar a melhor opção para o seu caso.",
+          "markdown": "Se você quiser, me diga:\n\n- Qual é o seu **objetivo principal** com o teste (trabalho, autoconhecimento, curiosidade)?\n- Prefere um teste baseado em **quatro letras (MBTI)** ou em **traços científicos (Big Five)**?\n\nPosso indicar a melhor opção para o seu caso.",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "16Personalities",
+          "domain": "www.16personalities.com",
+          "url": "https://www.16personalities.com/br/teste-de-personalidade",
+          "title": "Teste de personalidade gratuito | 16Personalities",
+          "text": "16Personalities: teste de personalidade gratuito (NERIS Type Explorer). Passos: 1. Fazer o teste; 2. Ver resultados detalhados; 3."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Tua Saúde",
+          "domain": "www.tuasaude.com",
+          "url": "https://www.tuasaude.com/teste/personalidade/",
+          "title": "Teste de personalidade: saiba seu estilo de personalidade - Tua Saúde",
+          "text": "* Gravidez saudável Alimentação na gravidez Exercício na gravidez Exames da gravidez Desconfortos da gravidez. * Saúde Mental Ansi..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Pravaler",
+          "domain": "www.pravaler.com.br",
+          "url": "https://www.pravaler.com.br/pra-testar/testes/teste-de-personalidade/",
+          "title": "Teste de personalidade online e grátis! | Pravaler",
+          "text": "* Testes de personalidade: ferramentas de autoconhecimento, não sentenças definitivas. * Benefícios: autoconhecimento, melhoria em..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "myDISCprofile",
+          "domain": "www.mydiscprofile.com",
+          "url": "https://www.mydiscprofile.com/pt-br/free-personality-test.php",
+          "title": "Teste gratuito de personalidade - myDISCprofile",
+          "text": "Este teste de personalidade foi desenvolvido para medir algumas das principais características de sua personalidade e usá-las para..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "BigFive Personality Test",
+          "domain": "bigfive-test.com",
+          "url": "https://bigfive-test.com/pt-br",
+          "title": "Teste BigFive de traços de personalidade gratuito e de código ...",
+          "text": "Aprenda a se conhecer melhor com um teste de personalidade gratuito e de código aberto. O teste a seguir contém 120 questões que l..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "myDISCprofile",
+          "domain": "www.mydiscprofile.com",
+          "url": "https://www.mydiscprofile.com/pt-pt/free-personality-test.php",
+          "title": "Teste gratuito de personalidade - myDISCprofile",
+          "text": "* Teste: myDISCprofile gratuito * Questões: 24 (4 opções por questão: mais e menos aplicável) * Duração: <10 min * Sistema DISC: D..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=Mqc_hILlgmk",
+          "title": "Teste de Personalidade na seleção: o guia completo para RH",
+          "text": "Teste de Personalidade na seleção: o guia completo para RH olá tudo bem você realmente sabe usar um teste de personalidade. no seu..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/shorts/OnjaFfW-w4Q",
+          "title": "Qual é o seu perfil de personalidade?",
+          "text": "Qual é o seu perfil de personalidade? um exercício bacana para você fazer com as suas equipes seja ela de projeto ou não é entende..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Instagram",
+          "domain": "www.instagram.com",
+          "url": "https://www.instagram.com/reel/DXxcQIio3uf/",
+          "title": "Teste de personalidade gratuito por 24hrs ali no meu story! Vai ali e ...",
+          "text": "Teste de personalidade gratuito por 24hrs ali no meu story! Vai ali e responda pra saber qual ser perfil comportamental completinh..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=9UtmjLZB4cQ",
+          "title": "YouTube",
+          "text": "a combinação dessas dimensões resulta nos famosos tipos de personalidade. do MBTI representados por quatro letras o primeiro pilar..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[3]/div[1]/div[1]",
+        "domain": "eadbox.com",
+        "title": "Teste de Personalidade MBTI: Descubra seu tipo com este ...",
+        "url": "https://eadbox.com/teste-de-personalidade-mbti-2/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://eadbox.com › Cursos online",
+        "website_name": "Eadbox",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "10 de mar. de 2024 — O MBTI (Myers-Briggs Type Indicator) é um instrumento de avaliação psicológica que estuda o comportamento humano baseado em quatro dimensões: ...",
+        "pre_snippet": "03/10/2024 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "é um instrumento de avaliação psicológica"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2024-03-10 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[5]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQntn9yJIv2ToYY2ZA2tCVhwm7McrBQ:1791055906111&q=teste+de+personalidade&udm=2&source=univ&fir=D7Eav_YF6L4KtM%252CEarQJfMsKQAaoM%252C_%253BJz9jn17K_NbnvM%252CuxVLvkcGiCo-hM%252C_%253BMnPoyw_nQqGW_M%252CydF_JOQCxWeWkM%252C_%253BGleK3oF7rLq8SM%252C8JOWL5f-zjA-cM%252C_%253BrXYniEgeKLPrUM%252Ca0WZ12w7RgjZoM%252C_%253BeBPuZsRnP05sXM%252C7fMGTBanBaH5uM%252C_%253BDZi7jExUnJRn1M%252CY7JzBTSlkca01M%252C_%253Bltg2rLIBNHwnCM%252CAQ5u8xtmIvdXbM%252C_%253BXiK5kaTyYegjqM%252COto1zWSeHrV0PM%252C_&usg=AI4_-kT5iSGEqBYVOAJd5Tb-pUPQeDKmyA&sa=X&ved=2ahUKEwi1u7mYy56XAxWl1gIHHcjeFHAQ7Al6BAgdEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Teste de Personalidade DISC | Cursos da Ilan",
+          "url": "https://ilanchurch.online/cursos/test/teste-de-personalidade-disc/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-90f7b54655ea:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste MBTI: 16 tipos de personalidade e como usar no RH [2026]",
+          "url": "https://twygo.com/blog/teste-mbti/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-90f7b54655ea:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "Quiz de personalidade: veja como funciona o famoso teste MBTI",
+          "url": "https://eutenhodireito.com.br/quiz-de-personalidade-mbti/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-90f7b54655ea:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste de Personalidade: faça e descubra como pode ajudar na ...",
+          "url": "https://napratica.org.br/noticias/entenda-o-teste-de-personalidade",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-RzZI2JZm9RVuv2wzYni9iRjT7UDOFnKfG26e2GoioPiWF70xbk1vjwY&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste MBTI: descubra qual é a sua personalidade! | PRAVALER",
+          "url": "https://www.pravaler.com.br/pra-testar/testes/teste-mbti/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgmt5saFtDdTAkM7deUZB9uLB4XURb2bVBjnDTyOo6OXevLv3bSGMjYVs&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste de personalidade de Myers-Briggs baseado na tipologia ...",
+          "url": "https://amenteemaravilhosa.com.br/teste-de-personalidade-de-myers-briggs/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPxqK8S3MX6MIjkvM83rGY_9xk0vPZ47srsprLenDIK0ZepxW73SyGgjM&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "MTBI: Conheça O Teste das Personalidades e Inicie Sua ...",
+          "url": "https://pt.linkedin.com/pulse/mtbi-conhe%C3%A7a-o-teste-das-personalidades-e-inicie-sua-jornada-sousa-w2s9f",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtTTgmlmszHM7OJDmBNvEEgUSes2s2LjZEgW0vgQxwDffR_9Av_s_BL8Y&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste de personalidade MBTI: como funciona e para que serve",
+          "url": "https://www.unit.br/blog/mbti-teste-de-personalidade",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRu3Qta9GOkggUAafB17d4T0IC5s15JopAxGt2_Goih8j9ki1B2CLkCpc&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "MBTI: O Teste das 16 Personalidades! Qual a Sua?",
+          "url": "https://www.youtube.com/watch?v=Stj8PJir_i8",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvsPXsyp1O8Qr6kO9FIUmsMy6AOexfBM2utN_EyeMD&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[7]/div[1]/div[1]",
+        "domain": "blog.mapahds.com",
+        "title": "Vantagens de fazer um teste psicológico de personalidade",
+        "url": "https://blog.mapahds.com/blog/vantagens-teste-psicologico-de-personalidade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.mapahds.com › blog › vantagens-teste-psic...",
+        "website_name": "Mapa HDS",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "7 de jul. de 2025 — Os testes psicológicos de personalidade servem como ferramentas valiosas para o autoconhecimento e o desenvolvimento pessoal e profissional.",
+        "pre_snippet": "07/07/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "testes",
+         "personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-07-07 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[9]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os testes de personalidade?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 7 testes de identidade?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 3 tipos de personalidade?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Como fazer o teste de personalidade?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[11]/div[1]/div[1]",
+        "domain": "pt.quizur.com",
+        "title": "Tipo A E Tipo B De Personalidade — 12 Perguntas",
+        "url": "https://pt.quizur.com/quiz/tipo-a-e-tipo-b-de-personalidade-UzHX",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.quizur.com › Testes de Personalidade",
+        "website_name": "Quizur",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "10 de jul. de 2023 — Testes de Personalidade. Tipo a e Tipo B de Personalidade. Descubra qual é o seu tipo de personalidade respondendo à apenas 12 perguntas.",
+        "pre_snippet": "07/10/2023 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Testes de Personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2023-07-10 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[13]/div[1]/div[1]",
+        "domain": "www.humansolutionsbrasil.com.br",
+        "title": "Teste de personalidade: como funciona e aplicação",
+        "url": "https://www.humansolutionsbrasil.com.br/artigos/teste-de-personalidade",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.humansolutionsbrasil.com.br › artigos › tes...",
+        "website_name": "Human Solutions",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "21 de ago. de 2024 — Um teste de personalidade é uma ferramenta usada para avaliar características psicológicas de um indivíduo. Trata-se de um recurso valioso, uma ...",
+        "pre_snippet": "08/21/2024 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "é uma ferramenta usada para avaliar características psicológicas de um indivíduo"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2024-08-21 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[15]/div[1]/div[1]",
+        "domain": "blog.runrun.it",
+        "title": "[TESTE] Sua personalidade está sabotando seu próprio ...",
+        "url": "https://blog.runrun.it/teste-de-personalidade-sucesso/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.runrun.it › teste-de-personalidade-sucesso",
+        "website_name": "Runrun.it Blog",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "24 de jun. de 2022 — O teste de personalidade pode te ajudar a traçar melhor seus objetivos de carreira. Clique para fazer o teste e descobrir seu resultado.",
+        "pre_snippet": "06/24/2022 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "teste de personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2022-06-24 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[17]/div[1]/div[1]",
+        "domain": "pt.pinterest.com",
+        "title": "Teste De Personalidade Com Imagens",
+        "url": "https://pt.pinterest.com/ideas/teste-de-personalidade-com-imagens/952558665601/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.pinterest.com › Explorar",
+        "website_name": "Pinterest",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Descobre as melhores ideias e inspirações do Pinterest sobre Teste de personalidade com imagens. Inspira-te e experimenta coisas novas.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Teste de personalidade com imagens"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[19]/div[1]/div[1]",
+        "domain": "blog.testvocacional.app",
+        "title": "Teste de Personalidade - Escolha sua Profissão",
+        "url": "https://blog.testvocacional.app/pt/teste-de-personalidade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://blog.testvocacional.app › teste-de-personalidade",
+        "website_name": "TestVocacional.app",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Este teste analisa a composição de cinco fatores da personalidade e avalia em que grau cada um está presente no indivíduo. Com base no resultado, é possível ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "analisa a composição de cinco fatores da personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "related_searches",
+        "rank_group": 1,
+        "rank_absolute": 12,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[3]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "items": [
+         "Teste de personalidade idrlabs",
+         "Teste de personalidade mbti",
+         "Runrun it teste de personalidade",
+         "Teste de personalidade para liderança",
+         "Teste de personalidade simples",
+         "Teste de personalidade 4 cores",
+         "Teste de personalidade app",
+         "Testes de personalidade Quiz"
+        ],
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031931-1993-0139-0000-76068631282c",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "2.7064 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "teste mbti",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "teste mbti",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=teste%20mbti&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:31:50 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "organic",
+       "people_also_ask",
+       "images",
+       "related_searches"
+      ],
+      "se_results_count": 135,
+      "pages_count": 1,
+      "items_count": 12,
+      "items": [
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "domain": "www.16personalities.com",
+        "title": "Teste de personalidade gratuito",
+        "url": "https://www.16personalities.com/br/teste-de-personalidade",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.16personalities.com › teste-de-personalidade",
+        "website_name": "16Personalities",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Faça nosso teste de personalidade gratuito e descubra seu tipo de personalidade em 10 minutos. Tenha uma descrição “incrivelmente precisa” de quem você é e ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Faça nosso teste de personalidade gratuito"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[1]/div[1]/div[1]",
+        "domain": "www.pravaler.com.br",
+        "title": "Teste MBTI: descubra qual é a sua personalidade!",
+        "url": "https://www.pravaler.com.br/pra-testar/testes/teste-mbti/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.pravaler.com.br › Testes",
+        "website_name": "Pravaler",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "11 de dez. de 2024 — Criado na metade do século XX, o teste MBTI é capaz de identificar até 16 tipos de personalidades diferentes, e vem sendo muito utilizado, ...",
+        "pre_snippet": "12/11/2024 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "teste MBTI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2024-12-11 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[2]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "Você pode fazer uma avaliação gratuita estilo MBTI acessando o [16Personalities](https://www.16personalities.com/br) para descobrir o seu perfil de quatro letras em cerca de 10 minutos.[[1]](https://www.16personalities.com/br)\n\n### O que é o MBTI?\n\n- **Definição** : O *Myers-Briggs Type Indicator* é um indicador de tipo psicológico criado por Katharine Cook Briggs e Isabel Briggs Myers com base na teoria de Carl Gustav Jung.\n- **Objetivo** : Ajuda no autoconhecimento, no desenvolvimento pessoal e na compreensão das preferências de comunicação e trabalho.\n- **Formato** : Gera um resultado de **4 letras** baseado em quatro dimensões principais.[[1]](https://www.pravaler.com.br/pra-testar/testes/teste-mbti/)[[2]](https://www.youtube.com/watch?v=7Q1XugxQBdA&t=10)[[3]](https://www.tuasaude.com/teste/personalidade/)[[4]](https://jobcannon.io/pt/tests/mbti)[[5]](https://twygo.com/blog/teste-mbti/)\n\n### As 4 Dimensões do Teste\n\n- **Energia** : Extroversão (**E** ) ou Introversão (**I** ) — de onde você recarrega suas forças.\n- **Percepção** : Sensação (**S** ) ou Intuição (**N** ) — como você absorve informações do mundo.\n- **Decisão** : Pensamento (**T** ) ou Sentimento (**F** ) — como você faz escolhas e julgamentos.\n- **Estilo de vida** : Julgamento (**J** ) ou Percepção (**P** ) — como você estrutura o seu dia a dia.[[1]](https://www.youtube.com/watch?v=9UtmjLZB4cQ&t=123)\n\nA combinação dessas escolhas forma **16 tipos de personalidade** diferentes, divididos em grupos como analistas, diplomatas, sentinelas e exploradores.[[1]](https://www.youtube.com/watch?v=MVPxhtmBQuM&vl=pt&t=67)[[2]](https://jobcannon.io/pt/tests/mbti)Se quiser, me diga:\n\n- Qual é o **seu objetivo** com o teste (carreira, autoconhecimento ou curiosidade)?\n- Se você já fez o teste antes e **qual foi o seu resultado**?\n\nEu posso detalhar mais sobre as características e pontos fortes do seu perfil.",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Você pode fazer uma avaliação gratuita estilo MBTI acessando o 16Personalities para descobrir o seu perfil de quatro letras em cerca de 10 minutos.",
+          "markdown": "Você pode fazer uma avaliação gratuita estilo MBTI acessando o [16Personalities](https://www.16personalities.com/br) para descobrir o seu perfil de quatro letras em cerca de 10 minutos.[[1]](https://www.16personalities.com/br)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "16Personalities",
+            "description": null,
+            "url": "https://www.16personalities.com/br",
+            "domain": "www.16personalities.com"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "16Personalities",
+            "domain": "www.16personalities.com",
+            "url": "https://www.16personalities.com/br",
+            "title": "Teste de personalidade gratuito, descrições dos tipos, conselhos sobre relacionamentos e carreira | 16Personalities",
+            "text": "- Platform: 16Personalities (NERIS Analytics Limited, 2011-2026) - Logo: 16 dots in 4 colors (purple, blue, yellow, green) in a ci..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "O que é o MBTI?",
+          "text": "Definição : O Myers-Briggs Type Indicator é um indicador de tipo psicológico criado por Katharine Cook Briggs e Isabel Briggs Myers com base na teoria de Carl Gustav Jung. Objetivo : Ajuda no autoconhecimento, no desenvolvimento pessoal e na compreensão das preferências de comunicação e trabalho. Formato : Gera um resultado de 4 letras baseado em quatro dimensões principais.",
+          "markdown": "- **Definição** : O *Myers-Briggs Type Indicator* é um indicador de tipo psicológico criado por Katharine Cook Briggs e Isabel Briggs Myers com base na teoria de Carl Gustav Jung.\n- **Objetivo** : Ajuda no autoconhecimento, no desenvolvimento pessoal e na compreensão das preferências de comunicação e trabalho.\n- **Formato** : Gera um resultado de **4 letras** baseado em quatro dimensões principais.[[1]](https://www.pravaler.com.br/pra-testar/testes/teste-mbti/)[[2]](https://www.youtube.com/watch?v=7Q1XugxQBdA&t=10)[[3]](https://www.tuasaude.com/teste/personalidade/)[[4]](https://jobcannon.io/pt/tests/mbti)[[5]](https://twygo.com/blog/teste-mbti/)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pravaler",
+            "domain": "www.pravaler.com.br",
+            "url": "https://www.pravaler.com.br/pra-testar/testes/teste-mbti/",
+            "title": "Teste MBTI: descubra qual é a sua personalidade! | PRAVALER ",
+            "text": "* **Origem:** Criado séc. XX (Segunda Guerra Mundial) por Katharine Cook Briggs e Isabel Briggs Myers; baseado em Carl Gustav Jung..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=7Q1XugxQBdA&t=10",
+            "title": "MBTI realmente funciona??",
+            "text": "MBTI realmente funciona?? vídeo Então se inscreve aqui no canal se você gosta desse tipo de conteúdo que toda semana tem um vídeo ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Tua Saúde",
+            "domain": "www.tuasaude.com",
+            "url": "https://www.tuasaude.com/teste/personalidade/",
+            "title": "Teste de personalidade: saiba seu estilo de personalidade - Tua Saúde",
+            "text": "- Atualizado: junho 2026. - Autores: Danielle Paiva (Revisão médica, CRM 9958-AM), Jonathan Panoeiro (Criador, neuropediatra). - B..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "JobCannon",
+            "domain": "jobcannon.io",
+            "url": "https://jobcannon.io/pt/tests/mbti",
+            "title": "Teste MBTI Grátis de Personalidade, 60 Questões · JobCannon",
+            "text": "Descubra Seu Tipo de Personalidade MBTI, Teste Gratuito de 60 Perguntas. Faça o teste MBTI gratuito online: descubra seu tipo de 4..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Twygo",
+            "domain": "twygo.com",
+            "url": "https://twygo.com/blog/teste-mbti/",
+            "title": "Teste MBTI: 16 tipos de personalidade e como usar no RH [2026] - Twygo",
+            "text": "Teste MBTI: os 16 tipos de personalidades e aplicação no desenvolvimento. O MBTI identifica 16 tipos de personalidade e, no conteú..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "As 4 Dimensões do Teste",
+          "text": "Energia : Extroversão ( E ) ou Introversão ( I ) — de onde você recarrega suas forças. Percepção : Sensação ( S ) ou Intuição ( N ) — como você absorve informações do mundo. Decisão : Pensamento ( T ) ou Sentimento ( F ) — como você faz escolhas e julgamentos. Estilo de vida : Julgamento ( J ) ou Percepção ( P ) — como você estrutura o seu dia a dia.",
+          "markdown": "- **Energia** : Extroversão (**E** ) ou Introversão (**I** ) — de onde você recarrega suas forças.\n- **Percepção** : Sensação (**S** ) ou Intuição (**N** ) — como você absorve informações do mundo.\n- **Decisão** : Pensamento (**T** ) ou Sentimento (**F** ) — como você faz escolhas e julgamentos.\n- **Estilo de vida** : Julgamento (**J** ) ou Percepção (**P** ) — como você estrutura o seu dia a dia.[[1]](https://www.youtube.com/watch?v=9UtmjLZB4cQ&t=123)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=9UtmjLZB4cQ&t=123",
+            "title": "TESTE MBTI: o que é, tipos de personalidade e uso no RH",
+            "text": "TESTE MBTI: o que é, tipos de personalidade e uso no RH inteligência ou desempenho o foco do MBTI é identificar preferências natur..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "A combinação dessas escolhas forma 16 tipos de personalidade diferentes, divididos em grupos como analistas, diplomatas, sentinelas e exploradores.",
+          "markdown": "A combinação dessas escolhas forma **16 tipos de personalidade** diferentes, divididos em grupos como analistas, diplomatas, sentinelas e exploradores.[[1]](https://www.youtube.com/watch?v=MVPxhtmBQuM&vl=pt&t=67)[[2]](https://jobcannon.io/pt/tests/mbti)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=MVPxhtmBQuM&vl=pt&t=67",
+            "title": "MBTI Test 16 Personalities for Team Management",
+            "text": "Teste MBTI 16 personalidades para gerenciamento de equipes esse teste é chamado de MBTI porque ele vem. do inglês Myers Brigs Type..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "JobCannon",
+            "domain": "jobcannon.io",
+            "url": "https://jobcannon.io/pt/tests/mbti",
+            "title": "Teste MBTI Grátis de Personalidade, 60 Questões · JobCannon",
+            "text": "Descubra Seu Tipo de Personalidade MBTI, Teste Gratuito de 60 Perguntas. Faça o teste MBTI gratuito online: descubra seu tipo de 4..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se quiser, me diga:Qual é o seu objetivo com o teste (carreira, autoconhecimento ou curiosidade)?\nSe você já fez o teste antes e qual foi o seu resultado ?\nEu posso detalhar mais sobre as características e pontos fortes do seu perfil.",
+          "markdown": "Se quiser, me diga:\n\n- Qual é o **seu objetivo** com o teste (carreira, autoconhecimento ou curiosidade)?\n- Se você já fez o teste antes e **qual foi o seu resultado**?\n\nEu posso detalhar mais sobre as características e pontos fortes do seu perfil.",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "16Personalities",
+          "domain": "www.16personalities.com",
+          "url": "https://www.16personalities.com/br",
+          "title": "Teste de personalidade gratuito, descrições dos tipos, conselhos sobre relacionamentos e carreira | 16Personalities",
+          "text": "- Platform: 16Personalities (NERIS Analytics Limited, 2011-2026) - Logo: 16 dots in 4 colors (purple, blue, yellow, green) in a ci..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Pravaler",
+          "domain": "www.pravaler.com.br",
+          "url": "https://www.pravaler.com.br/pra-testar/testes/teste-mbti/",
+          "title": "Teste MBTI: descubra qual é a sua personalidade! | PRAVALER ",
+          "text": "* **Origem:** Criado séc. XX (Segunda Guerra Mundial) por Katharine Cook Briggs e Isabel Briggs Myers; baseado em Carl Gustav Jung..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=7Q1XugxQBdA&t=10",
+          "title": "MBTI realmente funciona??",
+          "text": "MBTI realmente funciona?? vídeo Então se inscreve aqui no canal se você gosta desse tipo de conteúdo que toda semana tem um vídeo ..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "JobCannon",
+          "domain": "jobcannon.io",
+          "url": "https://jobcannon.io/pt/tests/mbti",
+          "title": "Teste MBTI Grátis de Personalidade, 60 Questões · JobCannon",
+          "text": "Descubra Seu Tipo de Personalidade MBTI, Teste Gratuito de 60 Perguntas. Faça o teste MBTI gratuito online: descubra seu tipo de 4..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Tua Saúde",
+          "domain": "www.tuasaude.com",
+          "url": "https://www.tuasaude.com/teste/personalidade/",
+          "title": "Teste de personalidade: saiba seu estilo de personalidade - Tua Saúde",
+          "text": "- Atualizado: junho 2026. - Autores: Danielle Paiva (Revisão médica, CRM 9958-AM), Jonathan Panoeiro (Criador, neuropediatra). - B..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=MVPxhtmBQuM&vl=pt&t=67",
+          "title": "MBTI Test 16 Personalities for Team Management",
+          "text": "Teste MBTI 16 personalidades para gerenciamento de equipes esse teste é chamado de MBTI porque ele vem. do inglês Myers Brigs Type..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=9UtmjLZB4cQ&t=123",
+          "title": "TESTE MBTI: o que é, tipos de personalidade e uso no RH",
+          "text": "TESTE MBTI: o que é, tipos de personalidade e uso no RH inteligência ou desempenho o foco do MBTI é identificar preferências natur..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Twygo",
+          "domain": "twygo.com",
+          "url": "https://twygo.com/blog/teste-mbti/",
+          "title": "Teste MBTI: 16 tipos de personalidade e como usar no RH [2026] - Twygo",
+          "text": "Teste MBTI: os 16 tipos de personalidades e aplicação no desenvolvimento. O MBTI identifica 16 tipos de personalidade e, no conteú..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[4]/div[1]/div[1]",
+        "domain": "www.unit.br",
+        "title": "Teste de personalidade MBTI: como funciona e para que ...",
+        "url": "https://www.unit.br/blog/mbti-teste-de-personalidade",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.unit.br › blog › mbti-teste-de-personalidade",
+        "website_name": "Universidade Tiradentes (Unit)",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O teste MBTI funciona por meio de um questionário com perguntas situacionais. O participante escolhe, entre alternativas, aquelas que mais representam suas ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "O teste MBTI funciona por meio de um questionário com perguntas situacionais"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[6]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Qual é o teste MBTI mais confiável?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[6]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Qual o MBTI mais raro?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[6]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Como descobrir meu MBTI?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[6]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "O MBTI é confiável?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[6]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[8]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQnv1nOGaoNDQJ4hFLFIMWAkH1XKteg:1791055909053&q=teste+mbti&udm=2&source=univ&fir=Jz9jn17K_NbnvM%252CuxVLvkcGiCo-hM%252C_%253BDZi7jExUnJRn1M%252CY7JzBTSlkca01M%252C_%253BUo0rQEgoltemMM%252CydF_JOQCxWeWkM%252C_%253BrXYniEgeKLPrUM%252Ca0WZ12w7RgjZoM%252C_%253BdYhRLnKDlIfDoM%252CGM6Nu4-dSVpSsM%252C_%253BXiK5kaTyYegjqM%252COto1zWSeHrV0PM%252C_%253B3K6iHHF_6NnmFM%252CRouFxPuXIfEYKM%252C_%253Bltg2rLIBNHwnCM%252CAQ5u8xtmIvdXbM%252C_%253Ba-6hVwMtl1RfwM%252CoQv5UB_uaxktrM%252C_&usg=AI4_-kQUMJ3s8WqzpsvaUXV3IIEB5j4GjA&sa=X&ved=2ahUKEwiYmeyZy56XAxXugf0HHS-xBuUQ7Al6BAhJEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Teste MBTI: 16 tipos de personalidade e como usar no RH [2026]",
+          "url": "https://twygo.com/blog/teste-mbti/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-76068631282c:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "MTBI: Conheça O Teste das Personalidades e Inicie Sua ...",
+          "url": "https://pt.linkedin.com/pulse/mtbi-conhe%C3%A7a-o-teste-das-personalidades-e-inicie-sua-jornada-sousa-w2s9f",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-76068631282c:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "Quiz de personalidade: veja como funciona o famoso teste MBTI",
+          "url": "https://eutenhodireito.com.br/quiz-de-personalidade-mbti/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-76068631282c:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste MBTI: descubra qual é a sua personalidade! | PRAVALER",
+          "url": "https://www.pravaler.com.br/pra-testar/testes/teste-mbti/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgmt5saFtDdTAkM7deUZB9uLB4XURb2bVBjnDTyOo6OXevLv3bSGMjYVs&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Modelo das Preferências Individuais - Inspiira",
+          "url": "https://inspiira.org/teoria/modelo-das-preferencias-individuais/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_Tn_PxUIt4lvUx1wXzMl9G9da7Yfx5pmt8NX8oCQDmF16ogeyhjZfVQg&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "MBTI: O Teste das 16 Personalidades! Qual a Sua?",
+          "url": "https://www.youtube.com/watch?v=Stj8PJir_i8",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvsPXsyp1O8Qr6kO9FIUmsMy6AOexfBM2utN_EyeMD&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "O Teste de Personalidade Myers-Briggs é confiável? (spoiler ...",
+          "url": "https://www.xibolete.org/p/myers-briggs",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRAnDpcU2rd_jKG5uU3MV-fIVa6Tj0StPBNASYBCzCjr86DNc1gtahuc_o&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste de personalidade MBTI: como funciona e para que serve",
+          "url": "https://www.unit.br/blog/mbti-teste-de-personalidade",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRu3Qta9GOkggUAafB17d4T0IC5s15JopAxGt2_Goih8j9ki1B2CLkCpc&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "DISC ou MBTI: os 4 fatores, os 16 tipos e qual usar",
+          "url": "https://www.sistemizecoach.com/blog/diferencas-entre-disc-e-mbti/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSr5Wxl6n11Qg002LBntvjV01zIR8w9lD0I7wx4gPKEla71m429WNCYpv4&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[10]/div[1]/div[1]",
+        "domain": "www.16personalities.com",
+        "title": "Teste de personalidade gratuito, descrições dos tipos ...",
+        "url": "https://www.16personalities.com/br",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.16personalities.com › ...",
+        "website_name": "16Personalities",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Conheça o teste de personalidade mais popular do mundo. Feito mais de um bilhão de vezes em mais de 45 idiomas, nosso teste de 10 minutos oferece insights",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Conheça o teste de personalidade mais popular do mundo"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[12]/div[1]/div[1]",
+        "domain": "play.google.com",
+        "title": "Teste MBTI 16 Personalidades",
+        "url": "https://play.google.com/store/apps/details?id=com.thyst.mbti&hl=pt_BR",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://play.google.com › store › apps › details › id=com...",
+        "website_name": "Google Play",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Descubra quem você realmente é! O melhor app gratuito de teste de personalidade MBTI. Obtenha insights de personalidade mais recentes e precisos com este teste ...",
+        "pre_snippet": null,
+        "extended_snippet": "4,1(534)  · Gratuito · ‎Android · ‎Estilo de vida",
+        "images": null,
+        "amp_version": false,
+        "rating": {
+         "rating_type": "Max5",
+         "value": 4.1,
+         "votes_count": 534,
+         "rating_max": 5
+        },
+        "price": null,
+        "highlighted": [
+         "O melhor app gratuito de teste de personalidade MBTI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[14]/div[1]/div[1]",
+        "domain": "www.tuasaude.com",
+        "title": "Teste de personalidade: saiba seu estilo de personalidade",
+        "url": "https://www.tuasaude.com/teste/personalidade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.tuasaude.com › Bem-estar › Saúde mental",
+        "website_name": "Tua Saúde",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "5 de jun. de 2026 — O teste de personalidade tem 50 perguntas com 2 a 3 opções de resposta. Para cada pergunta, a pessoa deve escolher a opção de resposta com que ...",
+        "pre_snippet": "06/05/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "O teste de personalidade tem 50 perguntas com 2 a 3 opções de resposta"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-06-05 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[16]/div[1]/div[1]",
+        "domain": "www.testes-online.org",
+        "title": "Teste de personalidade - MBTI teste",
+        "url": "https://www.testes-online.org/teste-de-personalidade",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.testes-online.org › teste-de-personalidade",
+        "website_name": "Testes Online",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Sê tu mesmo e responde às perguntas de forma honesta para descobrires o teu tipo de personalidade. O teste eneagrama é uma metodologia de autoconhecimento ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "responde às perguntas de forma honesta para descobrires o teu tipo de personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[18]/div[1]/div[1]",
+        "domain": "www.guiadacarreira.com.br",
+        "title": "Teste MBTI: Veja como descobrir sua personalidade",
+        "url": "https://www.guiadacarreira.com.br/blog/teste-mbti-personalidade-mais-comum",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.guiadacarreira.com.br › blog › teste-mbti-p...",
+        "website_name": "Guia da Carreira",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "19 de mai. de 2025 — Entenda o que é, como funciona, se é confiável e quais são os 16 tipos de personalidade do Teste MBTI.",
+        "pre_snippet": "05/19/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Teste MBTI"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-05-19 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "related_searches",
+        "rank_group": 1,
+        "rank_absolute": 12,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[3]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "items": [
+         "Teste mbti gratuito",
+         "Teste mbti 16 personalidades",
+         "Mbti teste confiável",
+         "O que é mbti",
+         "Teste mbti gratuito 16 personalidades",
+         "Teste mbti boo",
+         "Teste mbti funções cognitivas",
+         "Teste mbti carrd"
+        ],
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031931-1993-0139-0000-0059d11fcb7b",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "4.6894 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "teste disc",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "teste disc",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=teste%20disc&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:31:55 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "ai_overview",
+       "images",
+       "people_also_ask",
+       "organic",
+       "related_searches"
+      ],
+      "se_results_count": 110000,
+      "pages_count": 1,
+      "items_count": 12,
+      "items": [
+       {
+        "type": "ai_overview",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "asynchronous_ai_overview": false,
+        "markdown": "Você pode fazer uma avaliação gratuita do seu perfil comportamental agora mesmo no [Teste DISC da Pacto RH](https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/) ou explorar a plataforma [Mr. Coach](https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php).[[1]](https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/)[[2]](https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php)\n\n### O que é o Teste DISC?\n\n- Uma ferramenta de **avaliação comportamental** baseada na teoria de William Moulton Marston.\n- Mapeia tendências de ação, comunicação e preferências no ambiente pessoal e profissional.\n- Não possui respostas certas ou erradas; foca no **autoconhecimento**.[[1]](https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/)[[2]](https://gptw.com.br/conteudo/artigos/teste-disc/)[[3]](https://www.youtube.com/watch?v=tSeq1_L7kTY)[[4]](https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php)[[5]](https://www.pactorh.com.br/teste-disc/disc/)[[6]](https://trhends.com.br/teste-disc/teste-disc-gratuito/)\n\n### Os 4 Perfis Comportamentais\n\n- **Dominância (D):** Foco em resultados, desafios, rapidez e assertividade.\n- **Influência (I):** Facilidade de comunicação, persuasão, otimismo e interação social.\n- **Estabilidade (S):** Apreço por harmonia, paciência, consistência e trabalho em equipe.\n- **Conformidade (C):** Atenção a regras, detalhes, precisão, cautela e qualidade.[[1]](https://www.discusonline.com/pt/free-disc-test.php)[[2]](https://www.youtube.com/watch?v=AUWnEbRdkuI)\n\nSe você quiser, me conte:\n\n- Qual foi o seu **resultado principal** no teste?\n- Você está aplicando a ferramenta para o seu **autoconhecimento** ou para a **gestão de uma equipe**?\n\nPosso te ajudar a entender melhor os pontos fortes e os desafios desse perfil.",
+        "items": [
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Você pode fazer uma avaliação gratuita do seu perfil comportamental agora mesmo no Teste DISC da Pacto RH ou explorar a plataforma Mr. Coach.",
+          "markdown": "Você pode fazer uma avaliação gratuita do seu perfil comportamental agora mesmo no [Teste DISC da Pacto RH](https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/) ou explorar a plataforma [Mr. Coach](https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php).[[1]](https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/)[[2]](https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php)",
+          "links": [
+           {
+            "type": "link_element",
+            "title": "Teste DISC da Pacto RH",
+            "description": null,
+            "url": "https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/",
+            "domain": "www.pactorh.com.br"
+           },
+           {
+            "type": "link_element",
+            "title": "Mr. Coach",
+            "description": null,
+            "url": "https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php",
+            "domain": "www.mrcoach.com.br"
+           }
+          ],
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pacto RH",
+            "domain": "www.pactorh.com.br",
+            "url": "https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/",
+            "title": "Faça seu Teste DISC e descubra sua personalidade – Pacto RH",
+            "text": "Teste DISC (Pacto RH): * 30 perguntas total (4 alternativas cada). * Resultado final contabiliza características e traça perfil. *"
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Mr.Coach",
+            "domain": "www.mrcoach.com.br",
+            "url": "https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php",
+            "title": "Teste DISC Gratuito Online — Perfil Comportamental - Mr.Coach",
+            "text": "Faça o teste DISC gratuito e online: 40 perguntas para descobrir seu perfil comportamental, seus pontos fortes e seu estilo de com..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "O que é o Teste DISC?",
+          "text": "Uma ferramenta de avaliação comportamental baseada na teoria de William Moulton Marston. Mapeia tendências de ação, comunicação e preferências no ambiente pessoal e profissional. Não possui respostas certas ou erradas; foca no autoconhecimento.",
+          "markdown": "- Uma ferramenta de **avaliação comportamental** baseada na teoria de William Moulton Marston.\n- Mapeia tendências de ação, comunicação e preferências no ambiente pessoal e profissional.\n- Não possui respostas certas ou erradas; foca no **autoconhecimento**.[[1]](https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/)[[2]](https://gptw.com.br/conteudo/artigos/teste-disc/)[[3]](https://www.youtube.com/watch?v=tSeq1_L7kTY)[[4]](https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php)[[5]](https://www.pactorh.com.br/teste-disc/disc/)[[6]](https://trhends.com.br/teste-disc/teste-disc-gratuito/)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pacto RH",
+            "domain": "www.pactorh.com.br",
+            "url": "https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/",
+            "title": "Faça seu Teste DISC e descubra sua personalidade – Pacto RH",
+            "text": "Teste DISC (Pacto RH): * 30 perguntas total (4 alternativas cada). * Resultado final contabiliza características e traça perfil. *"
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "GPTW",
+            "domain": "gptw.com.br",
+            "url": "https://gptw.com.br/conteudo/artigos/teste-disc/",
+            "title": "Teste DISC: o que é, importância, vantagens e efeitos na empresa!",
+            "text": "* Metodologia DISC: criada por William Moulton Marston (publ. 1928, \"As emoções das pessoas normais\"). * Perfis: Dominância (D), I..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=tSeq1_L7kTY",
+            "title": "TESTE DISC: entenda a sua personalidade e venda mais!",
+            "text": "TESTE DISC: entenda a sua personalidade e venda mais! o autoconhecimento é uma das melhores ferramentas que você possui para ser u..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Mr.Coach",
+            "domain": "www.mrcoach.com.br",
+            "url": "https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php",
+            "title": "Teste DISC Gratuito Online — Perfil Comportamental - Mr.Coach",
+            "text": "Faça o teste DISC gratuito e online: 40 perguntas para descobrir seu perfil comportamental, seus pontos fortes e seu estilo de com..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Pacto RH",
+            "domain": "www.pactorh.com.br",
+            "url": "https://www.pactorh.com.br/teste-disc/disc/",
+            "title": "Teste DISC – Pacto RH",
+            "text": "DISC test (Disc Assessment): - Tool for psychological/behavioral profiling and self-awareness. - Format: 40 questions or fewer, 4 ..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "Trhends RH",
+            "domain": "trhends.com.br",
+            "url": "https://trhends.com.br/teste-disc/teste-disc-gratuito/",
+            "title": "Teste DISC gratuito - Trhends RH",
+            "text": "Quer saber qual é o seu perfil DISC? Faça este pequeno teste grátis! Você está a poucos minutos de descobrir o seu perfil comporta..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": "Os 4 Perfis Comportamentais",
+          "text": "Dominância (D): Foco em resultados, desafios, rapidez e assertividade. Influência (I): Facilidade de comunicação, persuasão, otimismo e interação social. Estabilidade (S): Apreço por harmonia, paciência, consistência e trabalho em equipe. Conformidade (C): Atenção a regras, detalhes, precisão, cautela e qualidade.",
+          "markdown": "- **Dominância (D):** Foco em resultados, desafios, rapidez e assertividade.\n- **Influência (I):** Facilidade de comunicação, persuasão, otimismo e interação social.\n- **Estabilidade (S):** Apreço por harmonia, paciência, consistência e trabalho em equipe.\n- **Conformidade (C):** Atenção a regras, detalhes, precisão, cautela e qualidade.[[1]](https://www.discusonline.com/pt/free-disc-test.php)[[2]](https://www.youtube.com/watch?v=AUWnEbRdkuI)",
+          "links": null,
+          "images": null,
+          "references": [
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "www.discusonline.com",
+            "domain": "www.discusonline.com",
+            "url": "https://www.discusonline.com/pt/free-disc-test.php",
+            "title": "Teste DISC grátis - Discus Online",
+            "text": "Teste DISC grátis. Nosso teste gratuito rápido e fácil lhe dará uma visão geral de sua personalidade e mostrará como você pode des..."
+           },
+           {
+            "type": "ai_overview_reference",
+            "position": "left",
+            "source": "YouTube",
+            "domain": "www.youtube.com",
+            "url": "https://www.youtube.com/watch?v=AUWnEbRdkuI",
+            "title": "DISC Personality Test in Excel | Free Spreadsheet",
+            "text": "Teste DISC no Excel para Perfil Comportamental | Planilha Grátis teste de método Disc totalmente gratuito para você o método Disc ..."
+           }
+          ]
+         },
+         {
+          "type": "ai_overview_element",
+          "position": "left",
+          "title": null,
+          "text": "Se você quiser, me conte:Qual foi o seu resultado principal no teste?\nVocê está aplicando a ferramenta para o seu autoconhecimento ou para a gestão de uma equipe ?\nPosso te ajudar a entender melhor os pontos fortes e os desafios desse perfil.",
+          "markdown": "Se você quiser, me conte:\n\n- Qual foi o seu **resultado principal** no teste?\n- Você está aplicando a ferramenta para o seu **autoconhecimento** ou para a **gestão de uma equipe**?\n\nPosso te ajudar a entender melhor os pontos fortes e os desafios desse perfil.",
+          "links": null,
+          "images": null,
+          "references": null
+         }
+        ],
+        "references": [
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Pacto RH",
+          "domain": "www.pactorh.com.br",
+          "url": "https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/",
+          "title": "Faça seu Teste DISC e descubra sua personalidade – Pacto RH",
+          "text": "Teste DISC (Pacto RH): * 30 perguntas total (4 alternativas cada). * Resultado final contabiliza características e traça perfil. *"
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Mr.Coach",
+          "domain": "www.mrcoach.com.br",
+          "url": "https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php",
+          "title": "Teste DISC Gratuito Online — Perfil Comportamental - Mr.Coach",
+          "text": "Faça o teste DISC gratuito e online: 40 perguntas para descobrir seu perfil comportamental, seus pontos fortes e seu estilo de com..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "www.discusonline.com",
+          "domain": "www.discusonline.com",
+          "url": "https://www.discusonline.com/pt/free-disc-test.php",
+          "title": "Teste DISC grátis - Discus Online",
+          "text": "Teste DISC grátis. Nosso teste gratuito rápido e fácil lhe dará uma visão geral de sua personalidade e mostrará como você pode des..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Trhends RH",
+          "domain": "trhends.com.br",
+          "url": "https://trhends.com.br/teste-disc/teste-disc-gratuito/",
+          "title": "Teste DISC gratuito - Trhends RH",
+          "text": "Quer saber qual é o seu perfil DISC? Faça este pequeno teste grátis! Você está a poucos minutos de descobrir o seu perfil comporta..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=tSeq1_L7kTY",
+          "title": "TESTE DISC: entenda a sua personalidade e venda mais!",
+          "text": "TESTE DISC: entenda a sua personalidade e venda mais! o autoconhecimento é uma das melhores ferramentas que você possui para ser u..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "GPTW",
+          "domain": "gptw.com.br",
+          "url": "https://gptw.com.br/conteudo/artigos/teste-disc/",
+          "title": "Teste DISC: o que é, importância, vantagens e efeitos na empresa!",
+          "text": "* Metodologia DISC: criada por William Moulton Marston (publ. 1928, \"As emoções das pessoas normais\"). * Perfis: Dominância (D), I..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "Pacto RH",
+          "domain": "www.pactorh.com.br",
+          "url": "https://www.pactorh.com.br/teste-disc/disc/",
+          "title": "Teste DISC – Pacto RH",
+          "text": "DISC test (Disc Assessment): - Tool for psychological/behavioral profiling and self-awareness. - Format: 40 questions or fewer, 4 ..."
+         },
+         {
+          "type": "ai_overview_reference",
+          "position": "right",
+          "source": "YouTube",
+          "domain": "www.youtube.com",
+          "url": "https://www.youtube.com/watch?v=AUWnEbRdkuI",
+          "title": "DISC Personality Test in Excel | Free Spreadsheet",
+          "text": "Teste DISC no Excel para Perfil Comportamental | Planilha Grátis teste de método Disc totalmente gratuito para você o método Disc ..."
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "images",
+        "rank_group": 1,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/div[1]",
+        "title": "Imagens",
+        "url": "https://www.google.com/search?sca_esv=8474f7961478e1e3&hl=pt&gl=BR&sxsrf=APpeQntIoFfkPS1a5NowdxPW3j3iIuQ7Gw:1791055913151&q=teste+disc&udm=2&source=univ&fir=oXBn1PTF1s_lrM%252Caz6KIb2QSFIV3M%252C_%253B0XE4L24TvA46QM%252Cx2SrcMlI-tVeiM%252C_%253BUnSQsIHbLrVsqM%252CAtyduXL2xSgpuM%252C_%253BuFvQKJp-U-Kg7M%252C6KZH05nCmA-vuM%252C_%253Brx3YNR4Ilef9xM%252C7kwFTH81amX_UM%252C_%253BrezIoh3Rmi7jsM%252CH8zZ3z4SzrY3tM%252C_%253BaaZhgXprm07oAM%252CV2O_XTjAZbW0SM%252C_%253B7gvdFR-Mh6KqMM%252CkHQ93PEeAVNc5M%252C_%253BSdQL1q-AN-7bbM%252C7B0sRvk1SntyFM%252C_&usg=AI4_-kRR9CviV40u3P6iqr_REFNzQ5b2UQ&sa=X&ved=2ahUKEwjSpOeby56XAxXZZkEAHUxcDGMQ7Al6BAgiEAU",
+        "items": [
+         {
+          "type": "images_element",
+          "alt": "Como usar o teste DISC para atender melhor o cliente | IBRESP",
+          "url": "https://www.ibresp.com.br/blogs/2023/como-usar-o-teste-disc-para-atender-melhor-o-cliente/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-0059d11fcb7b:0"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste DISC: o que é, perfis comportamentais e como aplicar!",
+          "url": "https://www.pontotel.com.br/teste-disc/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-0059d11fcb7b:1"
+         },
+         {
+          "type": "images_element",
+          "alt": "O Teste DISC Mais Assertivo do Mundo | Innermetrix™ Brazil",
+          "url": "https://innermetrix.com.br/analise-de-perfil-comportamental/disc-index/",
+          "image_url": "https://api.dataforseo.com/cdn/i/10031931-1993-0139-0000-0059d11fcb7b:2"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste DISC explicado: perfis, aplicações no RH e como usar ...",
+          "url": "https://blog.abler.com.br/disc/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmoa53Bw6rTdSHFeojQNZM1WbkDErmA_H_D09JNwS-ZnOkkL1NWb17rNQ&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste DISC: o que significa cada letra e as vantagens para o ...",
+          "url": "https://www.cingo.com.br/teste-disc-o-que-significa-cada-letra-e-as-vantagens-para-o-rh/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRK5zTgzN2X5f2fMRPQ_P0bPLlOeEJdaM4v_K9sZlFxkF4z-NrYmP86tw&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "O que é e como Fazer o Teste de Perfil Comportamental DISC ...",
+          "url": "https://blog.luz.vc/gestao-de-pessoas/teste-de-perfil-comportamental-disc/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3L6FHZaPGoeJc8MXCtoKahVMzdtRQFaldbbX5AM-3w5o7fpTubQLHCQM&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste DISC: descubra seu perfil comportamental - Flowup",
+          "url": "https://www.flowup.me/blog/teste-disc-perfil-comportamental/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhgDIHrzYN14chDcixt0Iby2TEcAvheCMSBM2AQ0yIj3aSa4hCfD9m1vY&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Faça seu Teste DISC e descubra sua personalidade – Pacto RH",
+          "url": "https://www.pactorh.com.br/teste-disc/disc/faca-agora-teste-disc/",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJZopmeDL9AmRk0qoMrQfezm8efEfLAbkmbGNX8Foc5iErXYKr-arbAf0&s"
+         },
+         {
+          "type": "images_element",
+          "alt": "Teste DISC de Perfil Comportamental | PDF",
+          "url": "https://pt.scribd.com/document/821337982/Teste-DISC-de-Perfil-Comportamental-V-impressao",
+          "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTlhAnMwslsS2HssOGN-BExvLzNCVMGMei3WdgGE39gBJRb_wpxMFIVi-I&s"
+         }
+        ],
+        "related_image_searches": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 4 perfis comportamentais DISC?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Qual é o perfil DISC mais raro?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Como é o teste do DISC?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "O teste DISC é confiável?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_ai_overview_expanded_element",
+            "items": null,
+            "references": null,
+            "asynchronous_ai_overview": true
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[5]/div[1]/div[1]",
+        "domain": "pt.quizur.com",
+        "title": "Teste DISC- Descubra O Seu! — 20 Perguntas",
+        "url": "https://pt.quizur.com/quiz/teste-disc-descubra-o-seu-1r7lT",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.quizur.com › Testes de Personalidade",
+        "website_name": "Quizur",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "25 de out. de 2025 — DISC - identifique qual perfil de comportamento predomina em você. O DISC é utilizado para fazer avaliação comportamental a fim de identificar ...",
+        "pre_snippet": "10/25/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "identifique qual perfil de comportamento predomina em você"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-10-25 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[7]/div[1]/div[1]",
+        "domain": "www.discusonline.com",
+        "title": "Teste DISC: convites e questionários - Discus Online",
+        "url": "https://www.discusonline.com/pt-br/features/disc-invitations-and-questionnaires.php",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.discusonline.com › pt-br › features › disc-in...",
+        "website_name": "discusonline.com",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "20 de ago. de 2026 — Elimine o tempo administrativo com nosso sistema automatizado de convites DISC. Implemente questionários na Web para uma avaliação global e ...",
+        "pre_snippet": "08/20/2026 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "DISC"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2026-08-20 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[9]/div[1]/div[1]",
+        "domain": "labcarreiras.com.br",
+        "title": "Como desenvolver seu Potencial com o Teste DISC",
+        "url": "https://labcarreiras.com.br/desenvolvimento-profissional/como-desenvolver-seu-potencial-com-o-teste-disc/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://labcarreiras.com.br › desenvolvimento-profissional",
+        "website_name": "LabCarreiras",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Desenvolver o potencial com o Teste DISC envolve compreender e utilizar os insights proporcionados por essa ferramenta de avaliação de personalidade.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Teste DISC"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[11]/div[1]/div[1]",
+        "domain": "www.perfilanalisado.com",
+        "title": "Teste DISC gratuito e relatório pago: o que você recebe ...",
+        "url": "https://www.perfilanalisado.com/behavioural/blog/teste-disc-gratuito-e-relatorio-pago",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.perfilanalisado.com › behavioural › blog",
+        "website_name": "Perfil Analisado",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "No Perfil Analisado, a entrada DISC leva ao teste comportamental. Responder às perguntas é gratuito; acessar o relatório completo depende de uma compra ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "DISC",
+         "teste"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[13]/div[1]/div[1]",
+        "domain": "www.rhpersone.com.br",
+        "title": "disc, teste disc, perfil comportamental - RH PERSONE",
+        "url": "https://www.rhpersone.com.br/teste-disc-perfil-comportamental/nova-odessa",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.rhpersone.com.br › nova-odessa",
+        "website_name": "rhpersone.com.br",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Teste Comportamental DISC. Para conhecer o perfil comportamental dos seus colaboradores ou dos candidatos de um processo seletivo da sua empresa. Através do ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Teste Comportamental DISC"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[14]/div[1]/div[1]/div[1]",
+        "domain": "www.youtube.com",
+        "title": "O que é o DISC e Como Ele Funciona ?",
+        "url": "https://www.youtube.com/watch?v=TV6x4mnsfIM",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "Mais de 690 visualizações  ·  há 5 anos",
+        "website_name": "YouTube · Lidere Sua Vida Com Evelyn Tasca",
+        "is_image": false,
+        "is_video": true,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": [
+         "is_video"
+        ],
+        "description": "... DISC? Assiste o vídeo até o final e confira. ;) Link para você fazer o teste: https://www.pactorh.com.br/ teste - disc /disc/faca-agora- teste - disc ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "teste",
+         "disc"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2021-07-05 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[16]/div[1]/div[1]",
+        "domain": "jpefconsultoria.com.br",
+        "title": "O que o Teste DISC Permite Identificar?",
+        "url": "https://jpefconsultoria.com.br/artigos/o-que-o-teste-disc-permite-identificar",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://jpefconsultoria.com.br › artigos › o-que-o-teste-...",
+        "website_name": "JPeF Consultoria",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "25 de set. de 2025 — A sigla DISC representa os quatro perfis comportamentais principais: Dominância (D), Influência (I), Estabilidade (S) e Conformidade (C).",
+        "pre_snippet": "09/25/2025 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "DISC"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2025-09-25 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[1]/div[2]/div[1]/div[1]/div[2]/div[18]/div[1]/div[1]",
+        "domain": "pt.scribd.com",
+        "title": "Teste DISC para Avaliação Pessoal | PDF",
+        "url": "https://pt.scribd.com/document/829652552/01-TESTE-DO-DISC",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://pt.scribd.com › document › 01-TESTE-DO-DISC",
+        "website_name": "Scribd",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O documento apresenta um teste de perfil comportamental DISC, onde o usuário deve escolher suas principais características entre opções listadas.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "teste",
+         "DISC"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "related_searches",
+        "rank_group": 1,
+        "rank_absolute": 12,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[2]/div[2]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "items": [
+         "Teste DISC grátis",
+         "Teste DISC resultados",
+         "Teste DISC comprar",
+         "Plataforma teste disc",
+         "Teste DISC Gratuito para Imprimir",
+         "Teste DISC Gratuito para baixar",
+         "Teste disc cores",
+         "Como aplicar o teste DISC"
+        ],
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "10031931-1993-0139-0000-1041ebaa5092",
+    "status_code": 20000,
+    "status_message": "Ok.",
+    "time": "5.8991 sec.",
+    "cost": 0.002,
+    "result_count": 1,
+    "path": [
+     "v3",
+     "serp",
+     "google",
+     "organic",
+     "live",
+     "advanced"
+    ],
+    "data": {
+     "api": "serp",
+     "function": "live",
+     "se": "google",
+     "se_type": "organic",
+     "keyword": "teste de perfil profissional",
+     "location_name": "Brazil",
+     "language_code": "pt",
+     "device": "desktop",
+     "depth": 10,
+     "os": "windows"
+    },
+    "result": [
+     {
+      "keyword": "teste de perfil profissional",
+      "type": "organic",
+      "se_domain": "google.com",
+      "location_code": 2076,
+      "language_code": "pt",
+      "check_url": "https://www.google.com/search?q=teste%20de%20perfil%20profissional&hl=pt&gl=BR&ie=UTF-8&uule=w+CAIQIFISCc8ozOvHWZwAEWM-KfIGFVop",
+      "datetime": "2026-10-03 19:32:01 +00:00",
+      "spell": null,
+      "refinement_chips": null,
+      "item_types": [
+       "organic",
+       "people_also_ask",
+       "related_searches"
+      ],
+      "se_results_count": 139,
+      "pages_count": 1,
+      "items_count": 11,
+      "items": [
+       {
+        "type": "organic",
+        "rank_group": 1,
+        "rank_absolute": 1,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]/div[1]",
+        "domain": "www.soar.net.br",
+        "title": "Teste de Personalidade Profissional Gratuito | Soar",
+        "url": "https://www.soar.net.br/teste-de-personalidade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.soar.net.br › teste-de-personalidade",
+        "website_name": "soar.net.br",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Faça o teste gratuito, descubra as características de seu perfil profissional e obtenha maior autoconhecimento para alavancar sua carreira.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": {
+         "rating_type": "Max5",
+         "value": 4.5,
+         "votes_count": 273,
+         "rating_max": 5
+        },
+        "price": null,
+        "highlighted": [
+         "Faça o teste gratuito, descubra as características de seu perfil profissional"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 2,
+        "rank_absolute": 2,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[3]/div[1]/div[1]",
+        "domain": "www.mrcoach.com.br",
+        "title": "Teste DISC Gratuito Online — Perfil Comportamental",
+        "url": "https://www.mrcoach.com.br/teste-perfil-comportamental-disc.php",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.mrcoach.com.br › teste-perfil-comportament...",
+        "website_name": "Mr.Coach",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Faça o teste DISC gratuito e online : 40 perguntas para descobrir seu perfil comportamental, seus pontos fortes e seu estilo de comunicação.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Faça o teste DISC gratuito e online"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 3,
+        "rank_absolute": 3,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[5]/div[1]/div[1]",
+        "domain": "www.educamaisbrasil.com.br",
+        "title": "Teste Vocacional Gratuito",
+        "url": "https://www.educamaisbrasil.com.br/teste/vocacional",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.educamaisbrasil.com.br › teste › vocacional",
+        "website_name": "Educa Mais Brasil",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O teste vocacional gratuito do Educa, baseado na teoria de Gardner, ajuda a descobrir suas habilidades e avaliar seu perfil intelectual. Faça o teste online!",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "O teste vocacional gratuito do Educa, baseado na teoria de Gardner"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 4,
+        "rank_absolute": 4,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[7]/div[1]/div[1]",
+        "domain": "www.mydiscprofile.com",
+        "title": "Teste de personalidade gratuito: descubra seus pontos ...",
+        "url": "https://www.mydiscprofile.com/pt-br/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.mydiscprofile.com › pt-br",
+        "website_name": "myDISCprofile",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Faça o nosso teste gratuito de personalidade para descobrir a sua personalidade central e o seu trabalho ideal.",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Faça o nosso teste gratuito de personalidade"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "people_also_ask",
+        "rank_group": 1,
+        "rank_absolute": 5,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]",
+        "items": [
+         {
+          "type": "people_also_ask_element",
+          "title": "Como descobrir o meu perfil profissional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[1]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_expanded_element",
+            "featured_title": null,
+            "url": "https://estacio.br/blog/carreiras/perfil-profissional#:~:text=A%20maneira%20mais%20simples%20de,lista%20para%20compor%20um%20perfil.",
+            "domain": "estacio.br",
+            "title": "Veja como descobrir o seu perfil profissional! | Blog Estácio",
+            "description": "A maneira mais simples de fazer isso é focar nas realizações. Então, identifique — levando em consideração a sua formação, cursos, atividades e experiência profissional —, quais são as habilidades e traços que aparecem com mais frequência. Posteriormente, agrupe essas características em uma lista para compor um perfil.",
+            "images": null,
+            "timestamp": null,
+            "table": null
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 4 tipos de perfil profissional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_expanded_element",
+            "featured_title": "Agora, vamos conhecer os principais tipos de perfil profissional e como eles podem impactar sua trajetória.",
+            "url": "https://prepara.com.br/blog/tecnologia/quais-sao-os-diferentes-tipos-de-perfil-profissional-e-como-eles-impactam-sua-carreira/",
+            "domain": "prepara.com.br",
+            "title": "5 tipos de perfil profissional: qual é o seu? - Prepara IA",
+            "description": "Perfil Analítico. O perfil analítico é caracterizado por pessoas metódicas, detalhistas e que valorizam a lógica e os dados na tomada de decisão. ...\nPerfil Comunicador. ...\nPerfil Executor. ...\nPerfil Planejador. ...\nPerfil Criativo.",
+            "images": null,
+            "timestamp": null,
+            "table": null
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "Quais são os 4 tipos de perfis comportamentais?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[3]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_expanded_element",
+            "featured_title": "Existem quatro tipos de perfis comportamentais:",
+            "url": "https://solides.com.br/blog/o-que-e-perfil-comportamental/",
+            "domain": "solides.com.br",
+            "title": "Perfil Comportamental: o que é e como mapear? - Solides",
+            "description": "Comunicador,\nExecutor,\nPlanejador.\nAnalista.",
+            "images": null,
+            "timestamp": null,
+            "table": null
+           }
+          ]
+         },
+         {
+          "type": "people_also_ask_element",
+          "title": "O que é teste de perfil profissional?",
+          "seed_question": null,
+          "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[9]/div[1]/div[1]/div[1]/div[1]/div[2]/div[4]",
+          "expanded_element": [
+           {
+            "type": "people_also_ask_expanded_element",
+            "featured_title": null,
+            "url": "https://www.soar.net.br/teste-de-personalidade/#:~:text=O%20que%20%C3%A9%20o%20Teste,influenciam%20sua%20maneira%20de%20trabalhar.",
+            "domain": "www.soar.net.br",
+            "title": "Teste de Personalidade Profissional Gratuito | Soar",
+            "description": "O que é o Teste de Personalidade Profissional? É uma ferramenta de avaliação que visa identificar suas preferências profissionais e como elas influenciam sua maneira de trabalhar.",
+            "images": null,
+            "timestamp": null,
+            "table": null
+           }
+          ]
+         }
+        ],
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 5,
+        "rank_absolute": 6,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[11]/div[1]/div[1]",
+        "domain": "www.16personalities.com",
+        "title": "Teste de personalidade gratuito",
+        "url": "https://www.16personalities.com/br/teste-de-personalidade",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.16personalities.com › teste-de-personalidade",
+        "website_name": "16Personalities",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Faça nosso teste de personalidade gratuito e descubra seu tipo de personalidade em 10 minutos. Tenha uma descrição “incrivelmente precisa” de quem você é e ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Faça nosso teste de personalidade gratuito"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 6,
+        "rank_absolute": 7,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[13]/div[1]/div[1]",
+        "domain": "perfilprofissional.microlins.com.br",
+        "title": "Teste Vocacional Grátis e Teste de Perfil Profissional | Microlins",
+        "url": "https://perfilprofissional.microlins.com.br/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://perfilprofissional.microlins.com.br",
+        "website_name": "Microlins",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "O Teste de Perfil é uma ferramenta gratuita que identifica suas principais habilidades comportamentais, preferências e pontos fortes. Nosso teste vocacional é ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Teste de Perfil",
+         "teste"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 7,
+        "rank_absolute": 8,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[15]/div[1]/div[1]",
+        "domain": "www.pravaler.com.br",
+        "title": "Teste de perfil comportamental: descubra qual o seu!",
+        "url": "https://www.pravaler.com.br/pra-testar/testes/teste-de-perfil-comportamental-online-gratis/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://www.pravaler.com.br › Testes",
+        "website_name": "Pravaler",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "11 de dez. de 2024 — O teste de perfil comportamental é um questionário que identifica as competências de uma pessoa agrupando-os de acordo com características ...",
+        "pre_snippet": "12/11/2024 00:00:00",
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "teste de perfil"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": "2024-12-11 00:00:00 +00:00",
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 8,
+        "rank_absolute": 9,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[17]/div[1]/div[1]",
+        "domain": "g1.globo.com",
+        "title": "Teste Perfil Comportamental",
+        "url": "https://g1.globo.com/jornalhoje/download/0,,4867-1,00.pdf",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://g1.globo.com › jornalhoje › download",
+        "website_name": "G1",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Este teste tem como objetivo demonstrar de forma clara e simples qual o seu perfil comportamental mais evidente. Apresentando seus comportamentos positivos, ...",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "teste",
+         "perfil"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "organic",
+        "rank_group": 9,
+        "rank_absolute": 10,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[2]/div[2]/div[1]/div[1]/div[19]/div[1]/div[1]",
+        "domain": "solides.com.br",
+        "title": "Teste de personalidade: o que é, tipos e como usar no RH",
+        "url": "https://solides.com.br/blog/teste-de-personalidade/",
+        "cache_url": null,
+        "related_search_url": null,
+        "breadcrumb": "https://solides.com.br › ... › Gestão de Pessoas",
+        "website_name": "Sólides",
+        "is_image": false,
+        "is_video": false,
+        "is_featured_snippet": false,
+        "is_malicious": false,
+        "is_web_story": false,
+        "checks": null,
+        "description": "Teste de personalidade é um instrumento usado para avaliar características e padrões comportamentais de um indivíduo. Acesse e saiba tudo!",
+        "pre_snippet": null,
+        "extended_snippet": null,
+        "images": null,
+        "amp_version": false,
+        "rating": null,
+        "price": null,
+        "highlighted": [
+         "Teste"
+        ],
+        "links": null,
+        "faq": null,
+        "extended_people_also_search": null,
+        "about_this_result": null,
+        "related_result": null,
+        "timestamp": null,
+        "rectangle": null
+       },
+       {
+        "type": "related_searches",
+        "rank_group": 1,
+        "rank_absolute": 11,
+        "page": 1,
+        "position": "left",
+        "xpath": "/html[1]/body[1]/div[3]/div[1]/div[13]/div[1]/div[3]/div[1]/div[3]/div[1]/div[1]/div[1]/div[1]/div[2]",
+        "items": [
+         "Teste perfil profissional gratuito",
+         "Teste de perfil profissional online",
+         "Teste de perfil profissional disc",
+         "Teste de perfil profissional grátis para imprimir",
+         "Teste de perfil comportamental",
+         "Teste disc gratuito",
+         "Teste perfil comportamental pdf grátis",
+         "Teste de perfil profissional solides"
+        ],
+        "rectangle": null
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
