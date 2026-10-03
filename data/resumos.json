@@ -55,14 +55,6 @@
     "oQueTrava": "arquiteturaapi.roilabs.com.br é NXDOMAIN (confirmado 31/07): tudo que fica atrás de login não roda.",
     "proximaDecisao": "O conteúdo vira produto pago (curso ou comunidade) ou fica como vitrine gratuita?"
   },
-  "matchfios": {
-    "oQueE": "Plataforma B2B que casa fiação e tecelagem com comprador na indústria têxtil.",
-    "paraQuem": "Indústria têxtil — planos anunciados de R$ 500 e R$ 100 na própria página.",
-    "estado": "no-ar",
-    "dinheiro": "R$ 0 — tem preço público, mas o botão só rola a página até o formulário.",
-    "oQueTrava": "O lead não tem destino: nenhuma integração de formulário aparece no repo.",
-    "proximaDecisao": "B2B têxtil fecha por formulário mesmo — quem atende esse lead quando ele chegar?"
-  },
   "verticemarketing": {
     "oQueE": "Procura (até 30/09/2026, Vértice Marketing): site de agência de marketing em Goiânia e Aparecida de Goiânia, em procuramarketing.com (repo vertex-landing-craft). NÃO confundir com o vertice, que é SaaS de onboarding.",
     "paraQuem": "Empresa de Goiânia e Aparecida de Goiânia que contrataria serviço de agência.",

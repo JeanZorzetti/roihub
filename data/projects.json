@@ -192,29 +192,6 @@
     "estado": "no-ar-inutilizavel"
   },
   {
-    "slug": "matchfios",
-    "nome": "Matchfios — plataforma B2B para indústria têxtil",
-    "url": "https://matchfios.roilabs.com.br/",
-    "repo": "matchfios-textile-connector",
-    "gscInicio": "2026-07-30",
-    "receita": 3,
-    "receitaNota": "Preço definido na página (R$ 500 e R$ 100), mas o CTA só rola pro formulário — não há checkout",
-    "blockers": 3,
-    "blockersLista": [
-      {
-        "texto": "PricingSection tem preço mas o botão faz scrollToSignup: nenhum caminho de pagamento existe",
-        "humano": false
-      }
-    ],
-    "seoSeed": 2,
-    "decay": 3,
-    "decayNota": "Site 200, estático, sem dependência de backend",
-    "acaoDesc": "✅ RESOLVIDO em 16/08 (commit 548aeb7): o form só simulava o envio (setTimeout), lead nenhum saía do browser. Criado api/lead.ts (proxy serverless Vercel) que envia pro POST /api/crm/leads do roihub (pipeline matchfios), com ROIHUB_CRM_SECRET mantido no servidor — falha FECHADA (503 sem env var configurada, 502 se o CRM recusar, só 200 com lead realmente salvo). Env vars confirmadas no Vercel e lead real gravado em crm_leads. Próximo passo é medir se o formulário converte, não mais destino do lead.",
-    "acao": "Medir se o formulário do B2B têxtil converte lead real — a captura já entrega no CRM do hub",
-    "familia": "cobranca",
-    "estado": "no-ar-inutilizavel"
-  },
-  {
     "slug": "verticemarketing",
     "perfil": "C",
     "nome": "Procura — agência de marketing em Goiânia e Aparecida",
