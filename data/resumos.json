@@ -39,14 +39,6 @@
     "oQueTrava": "A home ainda vende protótipo em vez de 'site de produção': a spec 012 (T001–T017) nunca foi implementada.",
     "proximaDecisao": "Cobrar assinatura por cima do BYOS ou vender a orquestração por projeto?"
   },
-  "reviewshield": {
-    "oQueE": "Serviço que contesta review falsa no Google Business Profile e só cobra pela que sai.",
-    "paraQuem": "Home services nos EUA (encanador, elétrica, HVAC) com nota derrubada por review injusta.",
-    "estado": "no-ar",
-    "dinheiro": "R$ 0 — o OAuth do GBP funciona E2E desde 13/07 e nenhuma disputa foi paga.",
-    "oQueTrava": "O /checker, que é a página que converte, está em p78: o blog traz gente que nunca chega ao produto.",
-    "proximaDecisao": "O kill-gate marcou EM RISCO em 11/07 — dobrar a aposta ou deixar morrer no D+180?"
-  },
   "nimblabs": {
     "oQueE": "Site institucional de fábrica de software: produtos próprios (cadastro fiscal 2027, integração de sistemas, portal do cliente) e software sob medida.",
     "paraQuem": "Empresa média com sistema próprio, legado ou mais de um sistema; para o cadastro fiscal, quem precisa emitir nota com IBS e CBS.",

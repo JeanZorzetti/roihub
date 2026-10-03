@@ -154,10 +154,10 @@ const githubTransport = (project, handler) => async (url, init = {}) => {
   return handler(route, init);
 };
 
-test("configura exatamente os dez projetos e remotes", () => {
-  assert.equal(PROJECTS.length, 10);
+test("configura exatamente os nove projetos e remotes", () => {
+  assert.equal(PROJECTS.length, 9);
   assert.equal(projectBySlug("goiania").repository, "JeanZorzetti/roilabs");
-  assert.equal(projectBySlug("reviewshield").conversionUrl, "https://reviewshield.nimblabs.com/checker");
+  assert.equal(projectBySlug("reviewshield"), null); // parado em 03/10/2026
   assert.equal(projectBySlug("missing"), null);
 });
 
@@ -572,7 +572,6 @@ test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
     "roilabs",
     "polarisia",
     "estetiacrm",
-    "reviewshield",
     "context",
     "aftercare",
   ]);
@@ -581,7 +580,7 @@ test("runner exporta os dez slugs e calcula a data de São Paulo", async () => {
   assert.equal(runner.runDateInSaoPaulo(new Date("2026-07-24T03:00:00.000Z")), "2026-07-24");
 });
 
-test("a fila gira um projeto por dia e continua sendo os mesmos dez", async () => {
+test("a fila gira um projeto por dia e continua sendo os mesmos nove", async () => {
   const { PROJECT_SLUGS, projectQueue } = await import("../scripts/run-autopublish.mjs");
   const dia1 = projectQueue("2026-07-25");
   const dia2 = projectQueue("2026-07-26");
@@ -590,9 +589,9 @@ test("a fila gira um projeto por dia e continua sendo os mesmos dez", async () =
   assert.notDeepEqual(dia1, dia2);
   assert.equal(dia2[0], dia1[1]);
   assert.equal(dia2.at(-1), dia1[0]);
-  // Em dez dias todo projeto passa por todas as dez posições — ninguém é sempre o último.
+  // Em N dias todo projeto passa por todas as N posições — ninguém é sempre o último.
   const ultimos = new Set(
-    Array.from({ length: 10 }, (_, i) => projectQueue(`2026-07-${String(10 + i).padStart(2, "0")}`).at(-1))
+    Array.from({ length: PROJECT_SLUGS.length }, (_, i) => projectQueue(`2026-07-${String(10 + i).padStart(2, "0")}`).at(-1))
   );
   assert.equal(ultimos.size, PROJECT_SLUGS.length);
   assert.deepEqual(projectQueue("nao-e-data"), PROJECT_SLUGS);
