@@ -8,7 +8,8 @@
  *
  * Opções: --sementes "a,b" (padrão: `produtos` do projeto em lib/autopublish-projects.mjs),
  * --regiao "Brazil" (padrão: do idioma do projeto), --marca "a,b" (termos de marca além do slug e da
- * marca do card), --mover "termo=semente" e --excluir "termo:motivo", repetíveis.
+ * marca do card), --mover "termo=semente" e --excluir "termo:motivo", repetíveis, ou --curadoria arquivo.json
+ * com {excluir: {termo: motivo}, mover: {termo: semente}} quando a lista não cabe na linha de comando.
  *
  * Projeto sem autopublishing (agência, institucional) não está em lib/autopublish-projects.mjs: o card
  * de data/projects.json dá o host e a marca, e --sementes e --idioma "pt-BR" passam a ser obrigatórios.
@@ -54,7 +55,7 @@ const opcao = (nome) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const repetida = (nome) => args.flatMap((a, i) => (a === nome && args[i + 1] !== undefined ? [args[i + 1]] : []));
-const COM_VALOR = new Set(["--sementes", "--regiao", "--idioma", "--marca", "--mover", "--excluir", "--de", "--piso"]);
+const COM_VALOR = new Set(["--sementes", "--regiao", "--idioma", "--marca", "--mover", "--excluir", "--curadoria", "--de", "--piso"]);
 const slug = args.find((a, i) => !a.startsWith("--") && !COM_VALOR.has(args[i - 1]));
 const consultar = args.includes("--consultar");
 const gravar = args.includes("--gravar");
@@ -193,17 +194,21 @@ for (const s of sementes) if (!porTermo.has(s)) porTermo.set(s, null);
 const reMarca = new RegExp(regexDeMarca(marca), "i");
 const ehSemente = new Set(sementes.map(normalizar));
 const quedas = { marca: 0, piso: 0, semVolume: 0 };
-const excluir = Object.fromEntries(
-  repetida("--excluir").map((e) => {
+// --curadoria arquivo.json ({excluir: {termo: motivo}, mover: {termo: semente}}): hundreds of
+// --excluir with their reasons overflow the Windows command line (32k chars, nimblabs 03/10/2026).
+const curadoria = opcao("--curadoria") ? lerJson(pathToFileURL(resolve(opcao("--curadoria")))) : {};
+const excluir = Object.fromEntries([
+  ...Object.entries(curadoria.excluir ?? {}),
+  ...repetida("--excluir").map((e) => {
     const i = e.indexOf(":");
     if (i <= 0) sair(2, `--excluir "${e}": use "termo:motivo"`);
-    return [e.slice(0, i).trim().toLowerCase(), e.slice(i + 1).trim()];
+    return [e.slice(0, i), e.slice(i + 1)];
   }),
-);
+].map(([t, m]) => [t.trim().toLowerCase(), m.trim()]));
 const movidos = Object.fromEntries(
-  repetida("--mover").map((m) => {
-    const [termo, semente] = m.split("=").map((x) => x.trim());
-    if (!termo || !produtos.includes(semente)) sair(2, `--mover "${m}": a semente tem de ser uma de ${produtos.join(", ")}`);
+  [...Object.entries(curadoria.mover ?? {}), ...repetida("--mover").map((m) => m.split("="))].map(([t, s]) => {
+    const [termo, semente] = [t, s].map((x) => String(x ?? "").trim());
+    if (!termo || !produtos.includes(semente)) sair(2, `mover "${t}=${s}": a semente tem de ser uma de ${produtos.join(", ")}`);
     return [termo.toLowerCase(), semente];
   }),
 );
