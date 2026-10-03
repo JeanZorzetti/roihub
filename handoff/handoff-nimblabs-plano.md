@@ -105,8 +105,12 @@ na Tape Pro. A D14 do hub não mudou; a clarify continua aberta para o próximo 
 
 ## Pendências
 
-1. **Lançamento em 06/10.** Até lá o site responde `noindex` e o Google não tem o que indexar. No dia,
-   disparar `POST /api/indexacao` (hoje ela só diria "excluída por noindex" e gastaria cota).
+1. **Lançado em 03/10 à tarde, antes do previsto (06/10), por decisão do Jean.** Foi criada
+   `PUBLIC_AMBIENTE=producao` em Production na Vercel e feito um redeploy. As 8 URLs do sitemap responderam
+   sem `noindex`; a 404 e o `/admin` continuam fora do índice. O sitemap foi reenviado e aceito. A
+   inspeção de indexação não foi disparada à mão, porque o Google ainda não tinha voltado ao site: ler a
+   corrida automática do hub por volta de 10/10. Pedir indexação de `/saneamento-cadastro-fiscal` e
+   `/tabela-cclasstrib` na interface do Search Console (não existe API para isso).
 2. **As 3 páginas de produto foram publicadas sem preço** (decisão do Jean, 03/10; nimblabs-site
    `145278e`). Os valores do rascunho vinham de um documento sem origem. Cada dispensa (preço, prazo,
    prova, piloto, pares de sistemas) está registrada no código, com nome e data. O preço volta quando
