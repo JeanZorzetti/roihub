@@ -111,14 +111,6 @@
     "oQueTrava": "É a tese mais defensável do nimblabs e o Google nunca rastreou o site: a régua de kill nem começou a contar.",
     "proximaDecisao": "Cobrar por isso (rodar custa caro) ou usar internamente para pautar o autopublishing?"
   },
-  "cannibal_scan": {
-    "oQueE": "Detecta canibalização entre páginas do próprio site rodando Rust compilado para WASM direto no browser.",
-    "paraQuem": "Quem cuida de SEO de site grande.",
-    "estado": "no-ar",
-    "dinheiro": "R$ 0 — a landing anuncia 'free' e não há gateway no repo.",
-    "oQueTrava": "O sitemap tem uma URL só (a landing) e o Google ainda não rastreou: não há superfície para ser encontrado.",
-    "proximaDecisao": "Free tool para audiência ou produto pago? Rodar no browser custa ~zero — dá para ser grátis de propósito."
-  },
   "roi-labs-links": {
     "oQueE": "Página de links institucional da ROI Labs, destino de bio de rede social.",
     "paraQuem": "Ninguém paga — é infraestrutura de marca.",
