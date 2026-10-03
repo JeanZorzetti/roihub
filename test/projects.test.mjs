@@ -56,15 +56,15 @@ test("dois sites no mesmo repo continuam sendo dois projetos", () => {
 });
 
 test("repo com homepage e sem curadoria entra zerado e com ação de curar", () => {
-  const out = mergeProjects([], [repo("qprime", { homepage: "qprime.com.br", description: "  Q Prime  " })]);
+  const out = mergeProjects([], [repo("novo", { homepage: "novo.com.br", description: "  Novo  " })]);
   assert.equal(out.length, 1);
-  assert.equal(out[0].slug, "qprime");
-  assert.equal(out[0].nome, "Q Prime");
-  assert.equal(out[0].url, "https://qprime.com.br/");
+  assert.equal(out[0].slug, "novo");
+  assert.equal(out[0].nome, "Novo");
+  assert.equal(out[0].url, "https://novo.com.br/");
   assert.equal(out[0].curated, false);
   assert.equal(out[0].receita, 0);
   assert.equal(out[0].seoSeed, 0);
-  assert.match(out[0].acao, /Curar qprime/);
+  assert.match(out[0].acao, /Curar novo/);
   assert.deepEqual(out[0].blockersLista, []); // default não pode ser compartilhado por referência
 });
 
@@ -92,14 +92,20 @@ test("reposSemSite lista só repo vivo, não curado e sem homepage", () => {
     [cur("fabrica", "https://estetia.estetiacrm.com.br/", { repo: "estetia-demo" })],
     [
       repo("estetia-demo"),
-      repo("qprime"),
+      repo("novo"),
       repo("morto", { archived: true }),
       repo("tem-site", { homepage: "x.com" }),
       repo("roihub"),
       repo("repo-de-teste"),
     ]
   );
-  assert.deepEqual(out.map((r) => r.name), ["qprime"]);
+  assert.deepEqual(out.map((r) => r.name), ["novo"]);
+});
+
+test("repo fora do hub não entra no ranking nem na lista de sem site", () => {
+  const repos = [repo("mana", { homepage: "https://mana-nine-phi.vercel.app" }), repo("compass")];
+  assert.deepEqual(mergeProjects([], repos), []);
+  assert.deepEqual(reposSemSite([], repos), []);
 });
 
 // ── 026: hosts declarados e a separação do que é medido junto sem ser do site ────────────────
