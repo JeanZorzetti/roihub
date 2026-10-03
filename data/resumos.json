@@ -119,14 +119,6 @@
     "oQueTrava": "Nunca foi rastreado pelo Google e não tem cobrança: nem audiência nem receita começaram.",
     "proximaDecisao": "Isso é produto ou é feature de um produto maior de WhatsApp, junto do whatsmeow?"
   },
-  "meridian": {
-    "oQueE": "Peça de portfólio front-end: site institucional de app de finanças em estética Dark Swiss, feito para a candidatura FitNext.",
-    "paraQuem": "Recrutador. Não é produto e não deve vender.",
-    "estado": "no-ar",
-    "dinheiro": "R$ 0, por design.",
-    "oQueTrava": "Nada de negócio. A pendência é técnica: /admin ainda é stub em 302 e falta o round-trip do Figma.",
-    "proximaDecisao": null
-  },
   "seo-forecaster": {
     "oQueE": "Prevê o termo de busca antes de o volume aparecer, cruzando Hacker News, Reddit e GDELT em pgvector com Chronos.",
     "paraQuem": "Quem produz conteúdo e quer pegar a tendência no dia zero.",
