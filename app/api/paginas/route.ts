@@ -53,6 +53,9 @@ type Buscada = {
   redirecionada: boolean;
   erro: string | null;
   extraida: ReturnType<typeof extrair> | null;
+  /** A linked file (CSV, PDF), not a page: it has no title or Schema to miss, so it never enters the
+   *  page list (nimblabs /tabela-cclasstrib.csv came out as "sem título" and a plan task, 03/10/2026). */
+  arquivo?: true;
 };
 
 /**
@@ -77,6 +80,8 @@ async function buscarPagina(url: string, ano: number): Promise<Buscada> {
     if (status !== null && status >= 400) {
       return { pedida, url: final, status, redirecionada, erro: `HTTP ${status}`, extraida: null };
     }
+    const tipo = String(r.headers?.["content-type"] ?? "");
+    if (tipo && !/html/i.test(tipo)) return { pedida, url: final, status, redirecionada, erro: null, extraida: null, arquivo: true };
     return { pedida, url: final, status, redirecionada, erro: null, extraida: extrair(r.corpo, ano) };
   } catch (e) {
     return { pedida: url, url, status: null, redirecionada: false, erro: trunca(e), extraida: null };
@@ -153,8 +158,16 @@ export async function POST() {
       const arestas: { de: string; para: string; ancora: string }[] = [];
       const destinos = new Map<string, string>();
       let tetoAtingido = false;
+      const arquivos = new Set<string>();
 
       const registrar = (b: Buscada) => {
+        if (b.arquivo) {
+          for (const u of [b.pedida, b.url]) {
+            vistas.add(u);
+            arquivos.add(u);
+          }
+          return;
+        }
         vistas.add(b.pedida);
         vistas.add(b.url);
         destinos.set(b.pedida, b.url);
@@ -206,7 +219,7 @@ export async function POST() {
       }
 
       // ── As duas leituras do mesmo grafo (D2) ────────────────────────────
-      const resolvidas = resolverArestas(arestas, destinos);
+      const resolvidas = resolverArestas(arestas.filter((a) => !arquivos.has(a.para)), destinos);
       const nav = navegacao(resolvidas, buscadas.size);
       const contextuais = densidades(resolvidas, nav);
       const prof = profundidades(resolvidas, home, teto);
