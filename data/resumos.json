@@ -71,14 +71,6 @@
     "oQueTrava": "Nada mais no caminho do lead: era agência sem formulário funcionando (500 em produção, credencial do Sirius nunca configurada). Desde 16/08 o formulário grava no CRM do hub.",
     "proximaDecisao": "Decidido em 16/08: é agência que capta. Falta o primeiro lead real chegar no CRM."
   },
-  "claudeloop": {
-    "oQueE": "Roda a CLI do Claude Code em loop contra um plano em arquivo, sem o contexto crescer entre iterações.",
-    "paraQuem": "Dev que usa Claude Code — hoje só a própria ROI Labs.",
-    "estado": "no-ar",
-    "dinheiro": "R$ 0 e sem intenção declarada de cobrar.",
-    "oQueTrava": "Ferramenta de casa com landing pública: não há tese comercial nem audiência sendo construída.",
-    "proximaDecisao": "Vale investir em audiência de dev (playbook GEO/AEO) ou é só ferramenta interna?"
-  },
   "swarm": {
     "oQueE": "Pesquisa em enxame de Small Language Models coordenados por memória epistêmica compartilhada, sem modelo central.",
     "paraQuem": "Ninguém — é repo público de pesquisa.",
