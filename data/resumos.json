@@ -111,14 +111,6 @@
     "oQueTrava": "Nada. Está indexado e cumpre a função.",
     "proximaDecisao": null
   },
-  "cyberspace": {
-    "oQueE": "Não existe produto: o subdomínio serve o template default do `npm create vite` (title 'Vite + React + TS', favicon /vite.svg).",
-    "paraQuem": "Ninguém.",
-    "estado": "prototipo",
-    "dinheiro": "R$ 0 — não há o que vender.",
-    "oQueTrava": "Não há projeto, só um subdomínio ocupado num domínio que hospeda mais de uma dúzia de projetos reais.",
-    "proximaDecisao": "O cyberspace ganha um produto ou o subdomínio passa a servir outra coisa?"
-  },
   "portfolio": {
     "oQueE": "CV e portfólio do Jean Zorzetti ('Full-Stack Engineer, AI-augmented').",
     "paraQuem": "Recrutador e cliente. Não vende e não deve vender.",

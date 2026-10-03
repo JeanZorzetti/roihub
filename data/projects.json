@@ -415,36 +415,6 @@
     "estado": "no-ar"
   },
   {
-    "slug": "cyberspace",
-    "nome": "Cyberspace — boilerplate Vite servido em subdomínio próprio",
-    "url": "https://cyberspace.roilabs.com.br/",
-    "repo": "cyberspace",
-    "receita": 0,
-    "receitaNota": "Não existe produto: o site é o template default do Vite",
-    "blockers": 5,
-    "blockersLista": [
-      {
-        "texto": "🚨 Serve <title>Vite + React + TS</title> e favicon /vite.svg — é o boilerplate default do Vite, publicado em subdomínio próprio de roilabs.com.br",
-        "humano": false
-      },
-      {
-        "texto": "'Discovered - currently not indexed': descoberto e nunca rastreado",
-        "humano": false
-      },
-      {
-        "texto": "DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite",
-        "humano": true
-      }
-    ],
-    "seoSeed": 2,
-    "decay": 6,
-    "decayNota": "Está 200 e com sitemap válido, mas o que serve é template — nunca teve conteúdo",
-    "acaoDesc": "É o corte mais óbvio dos quinze e o único que não tem tese nenhuma. Medido em 30/07: responde 200, o sitemap.xml é XML válido com 1 URL e o canonical está declarado — tecnicamente tudo certo. O problema é o conteúdo: o HTML servido tem <title>Vite + React + TS</title>, <link rel='icon' href='/vite.svg'> e lang='en'. É o template que o `npm create vite` gera, publicado num subdomínio próprio de roilabs.com.br. Os chunks carregados incluem three-base, então houve alguma experiência 3D, mas nada disso chegou ao HTML servido. URL Inspection: 'Discovered - currently not indexed'. GSC 0/0. A régua vigente é zero arquivamentos, então o card entra — mas entra dizendo a verdade, e a decisão que falta é do Jean, não uma tarefa de execução: ou o cyberspace ganha um produto, ou o subdomínio passa a servir outra coisa. Escrever uma ação de SEO ou de receita aqui seria inventar trabalho para um projeto que ainda não existe, que é exatamente como card apodrece.",
-    "acao": "DECISÃO DO JEAN: o que o cyberspace vai ser? Hoje serve o template default do Vite",
-    "familia": "produto",
-    "estado": "no-ar-inutilizavel"
-  },
-  {
     "slug": "portfolio",
     "nome": "Jean Zorzetti — portfólio / CV",
     "url": "https://portfolio-three-mu-lfixsylpsz.vercel.app/",
